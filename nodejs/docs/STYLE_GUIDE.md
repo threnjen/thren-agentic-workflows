@@ -1,69 +1,78 @@
-## Python Style
+## Node.js Style
 
-*When to referrence*: When writing new modules, creating new classes, or unfamiliar with project conventions.
+*When to reference*: When writing new modules, creating new classes, or unfamiliar with project conventions.
 
 ### Logging
-- Use Python's `logging` module for all output
-- Never use `print()` statements
-- Configure logging at application startup
+- Use a structured logger (e.g. `pino` or `winston`) for all output
+- Never use `console.log()` in production code; use `console.error()` only for fatal startup failures
+- Configure log level via environment variable (e.g. `LOG_LEVEL`)
+- Log with structured fields, not interpolated strings
 
 ### Configuration
-- All configurable variables belong in a `config.py`
+- All configurable variables belong in a `config.ts` (or `config.js`)
 - No magic strings or hardcoded values in business logic
 - Group related constants together
-- Read environment variables in config file
-- Provide sensible environment variable defaults where appropriate
-- Validate required variables early
+- Read environment variables in the config file using `process.env`
+- Provide sensible defaults where appropriate
+- Validate required variables at startup (e.g. with `zod` or `envalid`)
 
 ### Style
-- Always prefer object-oriented programming
-- Prefer classes over standalone functions for related functionality
-- Use meaningful class names that describe their purpose
-- Encapsulate related methods and state within classes
+- Prefer functional patterns (pure functions, immutability) over classes where appropriate
+- Use classes for stateful services and when modeling domain entities
+- Keep modules small and focused on a single responsibility
+- Avoid side effects at module load time
 
 ### Variables
-- Do not use global variables
+- Use `const` by default; use `let` only when reassignment is necessary
+- Never use `var`
+- Do not use global mutable state
+
+### Async
+- Always use `async/await`; avoid raw `.then()` / `.catch()` chains
+- Never mix callbacks and promises in the same code path
+- Propagate errors with `throw`; do not swallow them silently
+- Use `Promise.all` / `Promise.allSettled` for concurrent operations
 
 ### Caching
-- Use `~lru_cache` for expensive or repeated lookups
-- Set appropriate maxsize based on expected usage
-- Only use with hashable arguments
+- Use in-memory Maps or a dedicated cache library (e.g. `lru-cache`) for expensive lookups
+- Set explicit TTLs and max-size limits
+- Avoid caching mutable objects by reference
 
-### Exception Handling
-- Catch specific exceptions, not bare `except:`
-- Custom exceptions end with `Error`
-- Log errors with appropriate level
-- Include context in error messages
+### Error Handling
+- Extend `Error` for custom exceptions; name them with an `Error` suffix (e.g. `ValidationError`)
+- Always include a descriptive message and relevant context
+- Log errors with appropriate level before re-throwing or responding
+- Never suppress errors with empty `catch` blocks
 
 ### Naming
-- `lower_with_under` for modules/functions/variables
-- `CapWords` for classes
-- `CAPS_WITH_UNDER` for constants
-- `_prefix` for internal/private
+- `camelCase` for variables, functions, and module-level constants that are values
+- `PascalCase` for classes, types, interfaces, and enums
+- `UPPER_SNAKE_CASE` for true compile-time or environment constants
+- `_prefix` for private class members (or use `#` private fields in TypeScript/ES2022+)
+- File names use `kebab-case`
 
 ### Imports
-- One per line, sorted lexicographically
-- Order: stdlib → third-party → local
-- Full paths only, no relative imports
-- Imports at the top of the file
+- Use ES module `import`/`export` syntax (not CommonJS `require`)
+- One import per module per line
+- Order: Node built-ins → third-party → local (enforce with ESLint `import/order`)
+- Use path aliases (e.g. `@/services/...`) rather than deep relative paths
 
-### Type Annotations
-- Required for public APIs
-- Use `X | None` not `Optional[X]`
-- Prefer `collections.abc` types for parameters
-- Use `typing` module for complext types
+### TypeScript
+- Enable `strict` mode in `tsconfig.json`
+- Required type annotations for all public function signatures
+- Prefer `interface` for object shapes; use `type` for unions, intersections, and aliases
+- Use `unknown` instead of `any`; narrow with type guards before use
+- Use `T | null` for nullable values; avoid `undefined` in return types unless intentional
 
-### Docstrings
-- Triple double quotes, summary ≤80 chars
-- Include `Args:`, `Returns:`, `Raises:` sections
-
-### Defaults
-- Never mutable defaults (`[]`, `{}`)
-- Use `None` with check: `if x is None: x = []`
+### JSDoc / Comments
+- Public functions and classes require JSDoc with `@param` and `@returns`
+- Keep summaries ≤80 chars
+- Do not add comments that merely restate what the code does
 
 ### Functions
 - Small and focused (~40 lines max)
-- Avoid metaclasses, `__del__`, import hacks
+- Prefer named exports over default exports for easier refactoring
+- Avoid mutating function arguments
 
 ## Communication
 
