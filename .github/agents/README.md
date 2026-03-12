@@ -4,6 +4,37 @@ Specialized agents for structured software development workflows.
 
 ---
 
+## How to Use an Agent
+
+### 1. Open GitHub Copilot Chat
+
+Open the Copilot Chat panel in VS Code (`Ctrl+Shift+I` / `Cmd+Shift+I`, or click the Copilot icon in the sidebar).
+
+### 2. Select an agent
+
+At the top of the chat panel, click the **agent picker** (the dropdown that might say "Ask" or "Chat" or show a model name). You'll see the available agents listed by name. Select the one you want — for example, **feature-planner**.
+
+Alternatively, in some configurations you can type `@feature-planner` directly in the chat input to invoke an agent by name.
+
+### 3. Give it context and a prompt
+
+Write your request in the chat input. Be specific about what you want:
+
+```
+Plan a new user notification service. Here are the requirements:
+- Send email and SMS notifications
+- Support scheduling for future delivery
+- Integrate with our existing auth service
+```
+
+The agent will ask clarifying questions if it needs more context before proceeding.
+
+### 4. Review the output
+
+Each agent produces structured output — plan documents, implementation summaries, review tables, etc. Review what the agent produces before moving to the next step.
+
+---
+
 ## Available Agents (4)
 
 | Agent | Model | Purpose |
@@ -13,9 +44,23 @@ Specialized agents for structured software development workflows.
 | **code-reviewer** | opus | Review an implementation against the plan for accuracy, bugs, and completeness |
 | **test-suite-evaluator** | sonnet | Evaluate an existing test suite for redundancy, coverage gaps, and consolidation opportunities |
 
+### What each agent does
+
+**feature-planner** (read-only — does not write code)
+> Give it a problem statement or spec. It produces a structured plan with numbered acceptance criteria, an architecture analysis, edge-case identification, and a test strategy. Output goes to `dev/active/[task-name]/`.
+
+**implementation-executor** (full tool access — reads and writes code)
+> Give it an approved plan. It implements each acceptance criterion incrementally, writes tests as it goes, and produces a traceable implementation summary showing what was done and where.
+
+**code-reviewer** (read-only — does not modify code)
+> Give it a plan and the implementation to review. It checks traceability, hunts for bugs and edge cases, flags inconsistencies, and produces a prioritized issue table. It will NOT fix anything — only report.
+
+**test-suite-evaluator** (read-only — does not modify tests)
+> Give it a test directory to analyze. It categorizes tests by value (must-keep vs. redundant vs. questionable), assesses removal risk, and produces a staged reduction plan. It will NOT delete or change any tests.
+
 ---
 
-## Recommended Invocation Order
+## Recommended Workflow
 
 These agents form a development pipeline. Use them in sequence for maximum rigor:
 
@@ -25,6 +70,13 @@ These agents form a development pipeline. Use them in sequence for maximum rigor
 3. code-reviewer           → Reviews implementation against the plan
 4. test-suite-evaluator    → Evaluates the resulting test suite quality
 ```
+
+### Step-by-step example
+
+1. **Plan**: Switch to `feature-planner`. Describe what you want to build. Review and approve the plan it produces.
+2. **Implement**: Switch to `implementation-executor`. Point it at the plan files. It implements incrementally, one acceptance criterion at a time.
+3. **Review**: Switch to `code-reviewer`. Point it at both the plan and the implementation. Fix any issues it surfaces.
+4. **Evaluate tests**: Switch to `test-suite-evaluator`. Point it at the test files. Use its analysis to improve test quality.
 
 ### When to use each step
 
@@ -52,6 +104,16 @@ dev/active/[task-name]/
 ```
 
 The `code-reviewer` appends its review to the same task directory. The `test-suite-evaluator` writes its analysis there as well.
+
+---
+
+## Adding Agents to Another Project
+
+Each agent file is standalone. To use these agents in a different repository:
+
+1. Create a `.github/agents/` directory in the target repo.
+2. Copy the agent `.md` files you want into that directory.
+3. That's it — VS Code will discover them automatically.
 
 ---
 
