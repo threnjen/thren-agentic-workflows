@@ -81,6 +81,8 @@ Based on patterns observed in the current suite, provide 5–8 concise principle
 
 ## Output Format
 
+Ask the user to move to Agent mode to write the plan documents after the user has confirmed the plan is complete. The output should be a structured plan document (in markdown) that can be handed directly to an implementation agent. The plan should include all sections above, with clear traceability from acceptance criteria to code areas and tests.
+
 Write your evaluation to the task documentation directory:
 
 ```

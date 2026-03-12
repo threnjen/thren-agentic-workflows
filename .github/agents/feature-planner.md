@@ -71,6 +71,8 @@ You need these inputs. If any are missing, ask the minimum critical questions be
 
 ## Output Format
 
+Ask the user to move to Agent mode to write the plan documents after the user has confirmed the plan is complete. The output should be a structured plan document (in markdown) that can be handed directly to an implementation agent. The plan should include all sections above, with clear traceability from acceptance criteria to code areas and tests.
+
 Produce your plan as **three files** in the task documentation directory:
 
 ```
