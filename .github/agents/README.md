@@ -46,8 +46,8 @@ Each agent produces structured output — plan documents, implementation summari
 
 ### What each agent does
 
-**feature-planner** (read-only — does not write code)
-> Give it a problem statement or spec. It produces a structured plan with numbered acceptance criteria, an architecture analysis, edge-case identification, and a test strategy. Output goes to `dev/active/[task-name]/`.
+**feature-planner** (document-only — does not write code)
+> Give it a problem statement or spec. It first scans the codebase for context, then asks targeted questions. Once you confirm the plan outline, it writes a structured plan with numbered acceptance criteria, architecture analysis, edge-case identification, and a test strategy to `dev/active/[task-name]/`. It will not create any files until you explicitly approve.
 
 **implementation-executor** (full tool access — reads and writes code)
 > Give it an approved plan. It implements each acceptance criterion incrementally, writes tests as it goes, and produces a traceable implementation summary showing what was done and where.
@@ -55,8 +55,8 @@ Each agent produces structured output — plan documents, implementation summari
 **code-reviewer** (read-only — does not modify code)
 > Give it a plan and the implementation to review. It checks traceability, hunts for bugs and edge cases, flags inconsistencies, and produces a prioritized issue table. It will NOT fix anything — only report.
 
-**test-suite-evaluator** (read-only — does not modify tests)
-> Give it a test directory to analyze. It categorizes tests by value (must-keep vs. redundant vs. questionable), assesses removal risk, and produces a staged reduction plan. It will NOT delete or change any tests.
+**test-suite-evaluator** (document-only — does not modify tests)
+> Give it a test directory to analyze. It scans the tests and asks targeted questions about scope and pain points. Once you confirm the findings summary, it writes a categorized inventory, risk assessment, and staged reduction plan to `dev/active/[task-name]/`. It will not create any files until you explicitly approve.
 
 ---
 
@@ -121,4 +121,5 @@ Each agent file is standalone. To use these agents in a different repository:
 
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each agent file works standalone — just copy the `.md` file into any project's `.github/agents/` directory.
-- **Read-only agents**: `feature-planner`, `code-reviewer`, and `test-suite-evaluator` are restricted to read-only tools. They analyze and report but do not modify code. Only `implementation-executor` has full tool access.
+- **Read-only agents**: `code-reviewer` is restricted to read-only tools. It analyzes and reports but does not modify code.
+- **Document-writing agents**: `feature-planner` and `test-suite-evaluator` have read/search/edit access, but will **never write a file without your explicit confirmation**. They always present a summary outline or findings summary and ask for your approval before creating any documents. Only `implementation-executor` has full tool access to write implementation files.
