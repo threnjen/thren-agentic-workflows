@@ -1,5 +1,8 @@
 # Agent Guidelines
 
+## Virtual environments
+- Always use a virtual environment to install or run projects. `.venv` with a `requirements.txt` file is sufficient.
+
 ## Principles
 
 - Incremental progress over big bangs — small changes that compile and pass tests
