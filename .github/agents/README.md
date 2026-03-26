@@ -35,7 +35,7 @@ Each agent produces structured output — plan documents, implementation summari
 
 ---
 
-## Available Agents (11)
+## Available Agents (12)
 
 ### Planning & Implementation
 
@@ -51,6 +51,12 @@ Each agent produces structured output — plan documents, implementation summari
 |-------|-------|---------|
 | **Test Writer** | Opus | Bootstrap a test suite from scratch for untested code |
 | **Test Analyst** | Opus | Evaluate an existing test suite for redundancy, coverage gaps, and consolidation opportunities |
+
+### QA
+
+| Agent | Model | Purpose |
+|-------|-------|---------|
+| **QA Writer** | Opus | Write manual QA test plans with acceptance checklists for integration points not covered by automated tests |
 
 ### Code Quality
 
@@ -83,8 +89,8 @@ Each agent produces structured output — plan documents, implementation summari
 **Implementer** (full tool access — reads and writes code)
 > Give it an approved plan. It implements each acceptance criterion incrementally using Red-Green-Refactor TDD and writes a structured implementation record (`[task-name]-implementation.md`) to `dev/active/[task-name]/`. This file lists every changed file with rationale, maps changes back to acceptance criteria, and highlights focus areas for the Reviewer.
 
-**Reviewer** (read-only — does not modify code)
-> Give it a plan and implementation to review. It checks traceability, hunts for bugs and edge cases, flags inconsistencies, and produces a prioritized issue table. It has access to PR tools and can pull Copilot review comments. It will NOT fix anything — only report.
+**Reviewer** (read-only — does not modify code unless approved)
+> Give it a plan and implementation to review. It checks traceability, hunts for bugs and edge cases, flags inconsistencies, and produces a prioritized issue table. It has access to PR tools and can pull Copilot review comments. After the review (and any approved fixes), it writes a review record (`[task-name]-review.md`) to `dev/active/[task-name]/` capturing the verdict, all issues found, fixes applied, and remaining concerns.
 
 **Test Writer** (writes test code only — does not modify source)
 > Give it a module or directory to cover. It scans the codebase, proposes a test plan, and after your approval writes working test files and configuration. It verifies the suite passes before finishing.
@@ -103,6 +109,9 @@ Each agent produces structured output — plan documents, implementation summari
 
 **Web Researcher** (read-only — uses fetch)
 > Give it a problem or topic. It generates multiple search query variations, searches across GitHub issues, Stack Overflow, Reddit, forums, and docs, and compiles a structured findings report with sources.
+
+**QA Writer** (document-only — does not modify code)
+> Give it a task folder with planning, implementation, and review documents. It identifies every manual testing gap — API calls with real keys, UI interactions, user input edge cases, cross-service flows — and writes a checkbox-based QA plan to `dev/active/[task-name]/[task-name]-qa.md`.
 
 **Infrastructure Auditor** (document-only — does not modify files)
 > Give it infrastructure files to audit. It evaluates Dockerfiles, CI/CD pipelines, IaC templates, build scripts, and config files for security, best practices, consistency, and operational risk. Produces a structured report.
@@ -127,6 +136,7 @@ The core development pipeline — plan, build, review, ship.
 | 3 | **Reviewer** | "Review the implementation" | Planner docs output, Implementer record (`[task-name]-implementation.md`) |
 | 4 | — | Push to GitHub and open PR with Copilot review | — |
 | 5 | **Reviewer** | "Pull the PR Copilot review comments and address problems" | Planner docs output, Implementer record |
+| 6 | **QA Writer** | "Write a manual QA plan for this feature" | All task docs in `dev/active/[task-name]/` |
 
 ### Pipeline 2: Test Suite Bootstrap
 
@@ -244,7 +254,12 @@ dev/active/[task-name]/
 └── [task-name]-implementation.md   # Files changed, AC traceability, reviewer focus areas
 ```
 
-The **Reviewer** appends its review to the relevant task directory.
+The **Reviewer** writes a review record to the same directory:
+
+```
+dev/active/[task-name]/
+└── [task-name]-review.md   # Verdict, issues found, fixes applied, remaining concerns
+```
 
 ---
 

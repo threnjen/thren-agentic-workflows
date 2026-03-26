@@ -162,3 +162,66 @@ Once approved:
 - Apply only the fixes the user confirmed
 - Do NOT make unsolicited improvements beyond the approved scope
 - Report each file edited after completing the changes
+- Then proceed to **Write Review Record** below
+
+If the user declines fixes (or there are none to apply), proceed directly to **Write Review Record**.
+
+## Write Review Record
+
+After the review is complete — and after any approved fixes have been applied — write a structured review record to the task's output directory. This file captures the final state of the review for traceability and downstream use.
+
+1. **Determine the output path**: Use the same `dev/active/[task-name]/` directory as the plan and implementation documents. If those were provided as attachments, match the `[task-name]` from their path. If no task directory exists, create one using a slug of the task or PR description.
+2. **Write `[task-name]-review.md`** using the exact template below.
+3. **Do not skip this step** — downstream pipeline steps and future audits depend on this file.
+
+### Template: `[task-name]-review.md`
+
+```markdown
+# Review Record: [Task Name]
+
+## Summary
+<!-- One to three sentences: overall review verdict and confidence level -->
+
+## Verdict
+<!-- One of: Approved | Approved with Reservations | Changes Requested -->
+
+## Traceability
+
+| AC | Status | Code Location | Notes |
+|----|--------|---------------|-------|
+| AC1 | Verified | `src/foo.py:12-45` | Matches spec |
+| AC2 | Divergent | `src/bar.py:30` | Uses polling instead of webhook — see issue #3 |
+
+## Issues Found
+
+| # | Issue | Severity | File:Line | AC | Status |
+|---|-------|----------|-----------|-----|--------|
+| 1 | Missing null check on user input | High | `src/handler.py:45` | AC3 | Fixed |
+| 2 | Inconsistent naming: `getData` vs `fetch_data` | Low | `src/utils.py:12` | — | Open |
+
+**Status values**: Fixed (applied during this review) | Open (not addressed) | Wont-Fix (declined with rationale)
+
+## Fixes Applied
+<!-- "None" if no fixes were requested/applied -->
+
+| File | What Changed | Issue # |
+|------|--------------|---------|
+| `src/handler.py` | Added null check for `user_id` parameter | 1 |
+
+## Remaining Concerns
+<!-- Issues still open after fixes, ordered by severity. "None" if all clear -->
+- [e.g., Issue #2: naming inconsistency — low severity, defer to next cleanup pass]
+
+## Test Coverage Assessment
+<!-- Brief summary of test coverage relative to acceptance criteria -->
+- Covered: AC1, AC2, AC3
+- Missing: [e.g., No integration test for the retry path in AC4]
+
+## Risk Summary
+<!-- 2-5 bullet points on the most important things to watch -->
+- [e.g., `src/handler.py:45-78` — complex validation, manually verified but could use property tests]
+- [e.g., New dependency on external API — no circuit breaker yet]
+```
+
+After writing the review record, tell the user:
+> **"Review complete. The review record has been written to `dev/active/[task-name]/[task-name]-review.md`."**
