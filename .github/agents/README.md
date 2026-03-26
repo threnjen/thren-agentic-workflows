@@ -81,7 +81,7 @@ Each agent produces structured output — plan documents, implementation summari
 > Give it a problem statement or spec. It scans the codebase for context, asks targeted questions, then writes a structured plan with numbered acceptance criteria, architecture analysis, edge-case identification, and a test strategy to `dev/active/[task-name]/`. It will not create any files until you explicitly approve.
 
 **Implementer** (full tool access — reads and writes code)
-> Give it an approved plan. It implements each acceptance criterion incrementally using Red-Green-Refactor TDD, and produces a traceable implementation summary showing what was done and where.
+> Give it an approved plan. It implements each acceptance criterion incrementally using Red-Green-Refactor TDD and writes a structured implementation record (`[task-name]-implementation.md`) to `dev/active/[task-name]/`. This file lists every changed file with rationale, maps changes back to acceptance criteria, and highlights focus areas for the Reviewer.
 
 **Reviewer** (read-only — does not modify code)
 > Give it a plan and implementation to review. It checks traceability, hunts for bugs and edge cases, flags inconsistencies, and produces a prioritized issue table. It has access to PR tools and can pull Copilot review comments. It will NOT fix anything — only report.
@@ -124,9 +124,9 @@ The core development pipeline — plan, build, review, ship.
 |------|-------|--------|-------------|
 | 1 | **Planner** | Describe the feature in detail | Spec docs (optional) |
 | 2 | **Implementer** | "Implement the plan" | Planner docs output (`dev/active/[task-name]/`) |
-| 3 | **Reviewer** | "Review the implementation" | Planner docs output |
+| 3 | **Reviewer** | "Review the implementation" | Planner docs output, Implementer record (`[task-name]-implementation.md`) |
 | 4 | — | Push to GitHub and open PR with Copilot review | — |
-| 5 | **Reviewer** | "Pull the PR Copilot review comments and address problems" | Planner docs output |
+| 5 | **Reviewer** | "Pull the PR Copilot review comments and address problems" | Planner docs output, Implementer record |
 
 ### Pipeline 2: Test Suite Bootstrap
 
@@ -147,7 +147,7 @@ For projects where tests have grown unwieldy — analyze, plan reductions, execu
 | 1 | **Test Analyst** | "Analyze the test suite in `[test directory]`" | None (reads test files) |
 | 2 | **Planner** | "Create a plan to implement the test reduction recommendations" | Test Analyst docs output (`dev/active/[task-name]/`) |
 | 3 | **Implementer** | "Implement the plan" | Planner docs output |
-| 4 | **Reviewer** | "Review the test changes" | Planner docs output, Test Analyst docs output |
+| 4 | **Reviewer** | "Review the test changes" | Planner docs output, Test Analyst docs output, Implementer record |
 
 ### Pipeline 4: Code Quality Improvement
 
@@ -158,7 +158,7 @@ Audit the codebase, plan fixes, implement, and review.
 | 1 | **Code Auditor** | "Audit the codebase" (or specify a directory) | None (reads codebase) |
 | 2 | **Planner** | "Create a plan to address the audit findings" | Code Auditor report (`dev/active/[audit-name]/`) |
 | 3 | **Implementer** | "Implement the plan" | Planner docs output |
-| 4 | **Reviewer** | "Review the implementation" | Planner docs output, Code Auditor report |
+| 4 | **Reviewer** | "Review the implementation" | Planner docs output, Code Auditor report, Implementer record |
 
 ### Pipeline 5: Refactoring
 
@@ -199,7 +199,7 @@ Audit infrastructure files, plan fixes, and implement.
 | 1 | **Infrastructure Auditor** | "Audit infrastructure files" | None |
 | 2 | **Planner** | "Create a plan to address the infrastructure findings" | Infrastructure Auditor report (`dev/active/[audit-name]/`) |
 | 3 | **Implementer** | "Implement the plan" | Planner docs output |
-| 4 | **Reviewer** | "Review the implementation" | Planner docs output, Infrastructure Auditor report |
+| 4 | **Reviewer** | "Review the implementation" | Planner docs output, Infrastructure Auditor report, Implementer record |
 
 ---
 
@@ -237,7 +237,14 @@ dev/active/[audit-name]/
 └── [audit-name]-summary.md  # Executive summary with priority actions
 ```
 
-The **Reviewer** appends its review to the relevant task directory. The **Implementer** tracks its progress in the same location.
+The **Implementer** writes an implementation record to the same directory:
+
+```
+dev/active/[task-name]/
+└── [task-name]-implementation.md   # Files changed, AC traceability, reviewer focus areas
+```
+
+The **Reviewer** appends its review to the relevant task directory.
 
 ---
 

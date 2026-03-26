@@ -95,6 +95,63 @@ Handle explicitly:
 - Handle config/env vars/secrets per existing conventions
 - Update docs if behavior changes
 
+### F. Write Implementation Record
+
+After all ACs are implemented and tests pass, write a structured implementation record to the task's output directory. This file is the primary handoff artifact to the Reviewer.
+
+1. **Determine the output path**: Use the same `dev/active/[task-name]/` directory as the plan documents. If plan documents were provided as attachments, match the `[task-name]` from their path. If no plan directory exists, create one using a slug of the task description.
+2. **Write `[task-name]-implementation.md`** using the exact template below.
+3. **Do not skip this step** — the Reviewer depends on this file to scope its review.
+
+#### Template: `[task-name]-implementation.md`
+
+```markdown
+# Implementation Record: [Task Name]
+
+## Summary
+<!-- One to three sentences: what was built and why -->
+
+## Acceptance Criteria Status
+
+| AC | Description | Status | Implementing Files | Notes |
+|----|-------------|--------|--------------------|-------|
+| AC1 | ... | Done | `src/foo.py`, `src/bar.py` | ... |
+| AC2 | ... | Done | `src/baz.py` | ... |
+
+## Files Changed
+
+### Source Files
+
+| File | Change Type | What Changed | Why |
+|------|-------------|--------------|-----|
+| `src/foo.py` | Modified | Added request validation to `handle()` | AC1: input must be validated before processing |
+| `src/bar.py` | Created | New utility for rate limiting | AC2: rate limiting required per spec |
+
+### Test Files
+
+| File | Change Type | What Changed | Covers |
+|------|-------------|--------------|--------|
+| `tests/test_foo.py` | Modified | Added 3 test cases for validation | AC1 |
+| `tests/test_bar.py` | Created | Rate limiter unit tests | AC2 |
+
+## Test Results
+- **Baseline**: [X passed, Y failed] (before implementation)
+- **Final**: [X passed, Y failed] (after implementation)
+- **New tests added**: [count]
+- **Regressions**: None | [describe]
+
+## Deviations from Plan
+<!-- "None" or list each deviation with rationale and risk -->
+
+## Gaps
+<!-- "None" or list what couldn't be implemented and why -->
+
+## Reviewer Focus Areas
+<!-- 2-5 bullet points directing the reviewer to the most important or riskiest changes -->
+- [e.g., Validation logic in `src/foo.py:45-78` — complex conditional, verify edge cases]
+- [e.g., New dependency on `rate-limiter` library — confirm it matches repo conventions]
+```
+
 ## Execution Rules
 
 1. **No assumption-driven work** — If anything is ambiguous, stop and ask clarifying questions (max 8) before proceeding
@@ -104,9 +161,17 @@ Handle explicitly:
 
 ## Deliverables
 
-When implementation is complete, provide:
+When implementation is complete, you produce TWO outputs:
 
-### 1. Implementation Summary
+### A. Written Artifact: `[task-name]-implementation.md`
+
+This is the **primary deliverable**. Write it to `dev/active/[task-name]/` as described in Section F above. The Reviewer agent consumes this file to scope its review. It must be written before the chat summary below.
+
+### B. Chat Summary
+
+After writing the implementation record, provide the following summary in chat:
+
+#### 1. Implementation Summary
 
 Map each AC to what was done:
 
@@ -115,14 +180,7 @@ Map each AC to what was done:
 | AC1 | Done | Implemented in `src/handler.py` |
 | AC2 | Done | Added validation logic |
 
-### 2. Files Changed
-
-| File | Purpose |
-|------|---------|
-| `src/handler.py` | Added request validation |
-| `tests/test_handler.py` | Added AC1-AC3 test coverage |
-
-### 3. Review Checklist
+#### 2. Review Checklist
 
 - [ ] Green baseline established before any code changes
 - [ ] Each AC followed Red-Green-Refactor cycle
@@ -133,17 +191,23 @@ Map each AC to what was done:
 - [ ] Edge cases and error handling covered
 - [ ] Observability added where needed
 - [ ] Tests cover acceptance criteria
+- [ ] Implementation record written to `dev/active/[task-name]/`
 
-### 4. Deviations (if any)
+#### 3. Deviations (if any)
 
 List any deviations from the plan with:
 - What changed
 - Rationale
 - Risk assessment
 
-### 5. Gaps (if any)
+#### 4. Gaps (if any)
 
 If something couldn't be fully implemented:
 - Isolate the gap
 - Explain why
 - Propose the smallest next step
+
+#### 5. Next Step
+
+Tell the user:
+> **"Implementation complete. To review, open a new chat with `@Reviewer` and attach the plan documents and `dev/active/[task-name]/[task-name]-implementation.md`."**
