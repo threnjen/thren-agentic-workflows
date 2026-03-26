@@ -56,7 +56,7 @@ Each agent produces structured output — plan documents, implementation summari
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
-| **QA Writer** | Opus | Write manual QA test plans with acceptance checklists for integration points not covered by automated tests |
+| **QA Writer** | Opus | Write manual QA documents — auto-detects Pre-Implementation Skeleton (plan only) or Release QA Plan (plan + implementation + review) based on available documents |
 
 ### Code Quality
 
@@ -111,7 +111,7 @@ Each agent produces structured output — plan documents, implementation summari
 > Give it a problem or topic. It generates multiple search query variations, searches across GitHub issues, Stack Overflow, Reddit, forums, and docs, and compiles a structured findings report with sources.
 
 **QA Writer** (document-only — does not modify code)
-> Give it a task folder with planning, implementation, and review documents. It identifies every manual testing gap — API calls with real keys, UI interactions, user input edge cases, cross-service flows — and writes a checkbox-based QA plan to `dev/active/[task-name]/[task-name]-qa.md`.
+> Give it a task folder. It auto-detects its mode from the available documents: with only plan docs, it produces a **Pre-Implementation QA Skeleton** — a high-level checklist of anticipated manual testing areas. With plan + implementation + review + code/tests, it produces a full **Release QA Plan** — an execution-ready checklist with concrete steps, expected results, and coverage gap analysis. If a skeleton already exists, the Release mode expands it into the final plan. Output goes to `dev/active/[task-name]/[task-name]-qa.md`.
 
 **Infrastructure Auditor** (document-only — does not modify files)
 > Give it infrastructure files to audit. It evaluates Dockerfiles, CI/CD pipelines, IaC templates, build scripts, and config files for security, best practices, consistency, and operational risk. Produces a structured report.
@@ -132,11 +132,12 @@ The core development pipeline — plan, build, review, ship.
 | Step | Agent | Prompt | Attachments |
 |------|-------|--------|-------------|
 | 1 | **Planner** | Describe the feature in detail | Spec docs (optional) |
-| 2 | **Implementer** | "Implement the plan" | Planner docs output (`dev/active/[task-name]/`) |
-| 3 | **Reviewer** | "Review the implementation" | Planner docs output, Implementer record (`[task-name]-implementation.md`) |
-| 4 | — | Push to GitHub and open PR with Copilot review | — |
-| 5 | **Reviewer** | "Pull the PR Copilot review comments and address problems" | Planner docs output, Implementer record |
-| 6 | **QA Writer** | "Write a manual QA plan for this feature" | All task docs in `dev/active/[task-name]/` |
+| 2 | **QA Writer** | "Write a QA skeleton for this feature" | Planner docs output (`dev/active/[task-name]/`) |
+| 3 | **Implementer** | "Implement the plan" | Planner docs output |
+| 4 | **Reviewer** | "Review the implementation" | Planner docs output, Implementer record, QA skeleton (`[task-name]-qa.md`) |
+| 5 | — | Push to GitHub and open PR with Copilot review | — |
+| 6 | **Reviewer** | "Pull the PR Copilot review comments and address problems" | Planner docs output, Implementer record |
+| 7 | **QA Writer** | "Write the release QA plan for this feature" | All task docs in `dev/active/[task-name]/` |
 
 ### Pipeline 2: Test Suite Bootstrap
 
