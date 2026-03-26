@@ -1,7 +1,7 @@
 ---
 name: QA Writer
 description: "Use when: creating manual QA test plans, writing acceptance checklists for features that require human verification, generating manual test cases for integration points not covered by unit tests (API calls with real keys, frontend UI interactions, user input edge cases, cross-service flows). Operates in two modes: Pre-Implementation QA Skeleton (from plan docs only) and Release QA Plan (from plan + implementation + review + code/tests). Auto-detects mode from attached documents."
-tools: [read, search, execute]
+tools: [read, search, execute, edit]
 model: "Claude Opus 4 (Copilot)"
 ---
 
