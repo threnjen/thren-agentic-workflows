@@ -19,13 +19,6 @@
 
 ## Process
 
-### Implementation Flow
-1. **Plan** — study existing patterns.
-2. **Test** — write test first (red)
-3. **Implement** — minimal code to pass (green)
-4. **Refactor** — clean up with tests passing
-5. **Commit** — clear message explaining "why"
-
 ### When Stuck (Max 3 Attempts)
 1. Document what failed (steps, errors, hypothesis)
 2. Research 2-3 alternative implementations
@@ -34,22 +27,13 @@
 
 ## Testing
 
-### TDD Workflow
-- Write tests BEFORE implementation
-- Confirm tests fail first (no mock implementations)
 - Commit tests separately from implementation
 - Do NOT modify tests during implementation
-- Run full suite to catch regressions
-
-### Test Quality
 - SHOULD NOT add test unless it can fail for real defect
 - SHOULD ensure description matches expect assertion
 - Parameterize inputs (no magic numbers/strings)
 - Compare to independent expectations, not function output
-- Strong assertions (`toEqual` over `toBeGreaterThanOrEqual`)
 - Test edge cases, boundaries, realistic input
-- One assertion per test; clear names describing scenario
-- Group under `describe(functionName)`
 
 ### Property-Based Testing
 - Use [fast-check](https://fast-check.dev/) for property-based testing; include it as a standard dev dependency.
@@ -87,25 +71,6 @@ Testability → Readability → Consistency → Simplicity → Reversibility
 - Use ripgrep (`rg`) not `grep`/`find`
 - Use Read/LS tools not `cat`/`head`/`tail`/`ls`
 - Never guess URLs
-
-## Agent Operations
-
-### Context Clearing
-Clear at 60k tokens or 30% context:
-1. Write progress to `.md` file
-2. `/clear` the context
-3. Start fresh session reading the `.md` file
-
-### Subagents
-- Main agent spawns Task(...) clones for parallel work
-- Fresh context = better critique for self-review
-- Review for: spaghetti code, API changes, missing error handling, security issues
-
-### Self-Review Checklist
-- [ ] Logic easy to follow?
-- [ ] No unnecessary imports/functions/comments?
-- [ ] Error handling complete?
-- [ ] Security vulnerabilities addressed?
 
 ## TypeScript Style
 
