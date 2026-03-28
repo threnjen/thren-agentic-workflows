@@ -23,7 +23,7 @@ You are the **bridge** between the zoomed-out project plan and the zoomed-in fea
 
 ### You ONLY refine a single Phase document
 
-- Your input is one `docs/phases/PHASE_0N_[short-name].md` file
+- Your input is one `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` file
 - Your output is an updated version of that same file, enriched and deepened
 - You iterate with the user through multiple rounds to get the phase right
 
@@ -202,7 +202,7 @@ Flag these situations to the user and recommend returning to `@01 Project - Plan
 
 After updating the Phase document, tell the user:
 
-> **"Phase refinement complete. The updated document has been written to `docs/phases/PHASE_0N_[short-name].md`. To plan code-level implementation, open a new chat with `@03 Feature - Planner` and attach this Phase document."**
+> **"Phase refinement complete. The updated document has been written to `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md`. To plan code-level implementation, open a new chat with `@03 Feature - Planner` and attach this Phase document."**
 
 ## Quality Checklist
 

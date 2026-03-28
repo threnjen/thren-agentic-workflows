@@ -149,12 +149,12 @@ The core development pipeline — plan, build, review, ship.
 | 1 | **01 Project - Planner** | Plan out the project scope and trajectory at a high level | Spec docs (optional) |
 | 2 | **02 Project - Phase Refiner** | "Refine and deepen this Phase document" | Individual Phase document (`docs/phases/PHASE_0N_*.md`) |
 | 3 | **03 Feature - Planner** | "Prepare implementation plans for individual features" | (`docs/phases/PHASE_0N_*.md`) |
-| 5 | **04 Feature - Implementer** | "Implement the plan" | 03 Feature - Planner docs output (`dev/[task-name]/`) |
-| 6 | **05 Feature - Reviewer** | "Review the implementation" | 03 Feature - Planner docs output, 04 Feature - Implementer record, QA skeleton (`[task-name]-qa.md`) |
-| 7 | — | Push to GitHub and open PR with Copilot review | — |
-| 8 | **05 Feature - Reviewer** | "Pull the PR Copilot review comments and address problems" | 03 Feature - Planner docs output, 04 Feature - Implementer record |
-| 9 | **06 QA - Writer** | "Write the release QA plan for this feature" | All task docs in `dev/[task-name]/` |
-| 10 | **07 Final Code Review** | "Evaluate readiness for manual QA" | All task docs in `dev/[task-name]/` |
+| 4 | **04 Feature - Implementer** | "Implement the plan" | 03 Feature - Planner docs output (`dev/[task-name]/`) |
+| 5 | **05 Feature - Reviewer** | "Review the implementation" | 03 Feature - Planner docs output, 04 Feature - Implementer record, QA skeleton (`[task-name]-qa.md`) |
+| 6 | — | Push to GitHub and open PR with Copilot review | — |
+| 7 | **05 Feature - Reviewer** | "Pull the PR Copilot review comments and address problems" | 03 Feature - Planner docs ouput, 04 Feature - Implementer record |
+| 8 | **06 QA - Writer** | "Write the release QA plan for this feature" | All task docs in `dev/[task-name]/` |
+| 9 | **07 Final Code Review** | "Evaluate readiness for manual QA" | All task docs in `dev/[task-name]/` |
 
 ### Pipeline 2: Test Suite Bootstrap
 

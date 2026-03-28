@@ -20,7 +20,7 @@ You are a **QA Document Specialist** who writes manual QA test plans.
 
 Before writing, ensure you have (ask if missing):
 
-1. **Task folder** — Path to `dev/[task-name]/` or equivalent containing planning/implementation/review documents
+1. **Phase folder** — Path to `docs/phases/PHASE_xx/` for the phase being tested, containing the phase summary and any feature documents
 
 ## What Requires Manual QA
 
@@ -51,36 +51,41 @@ Exclude these from the QA plan—they belong in automated tests:
 
 ### Phase 1: Document Analysis (Read-Only)
 
-Read all available documents in the task folder:
+Read all available documents in the phase folder (`docs/phases/PHASE_xx/`):
 
-1. **Plan documents** — Extract acceptance criteria, requirements, and non-goals
-2. **Implementation records** — Identify changed files, new endpoints, UI components, integrations
-3. **Review documents** — Note flagged risks, edge cases, and reviewer concerns
-4. **Source code** — Scan changed files to understand actual behavior and integration points
-5. **Automated tests** — Run the existing test suite to see what passes, what fails, and what coverage exists. Inspect test files to understand exactly which behaviors are already verified by unit/integration tests
+1. **Phase summary** — `PHASE_xx_SUMMARY.md` for the full phase scope, objectives, and success criteria
+2. **Feature plan documents** — Extract acceptance criteria, requirements, and non-goals for each feature in the phase
+3. **Implementation records** — Identify changed files, new endpoints, UI components, integrations
+4. **Review documents** — Note flagged risks, edge cases, and reviewer concerns
+5. **Source code** — Scan changed files to understand actual behavior and integration points
+6. **Automated tests** — Run the existing test suite to see what passes, what fails, and what coverage exists. Inspect test files to understand exactly which behaviors are already verified by unit/integration tests
+7. **Existing QA documents** — Check whether `PHASE_xx-coverage-map-qa.md` and `PHASE_xx-qa.md` already exist in the phase folder. If they do, you are in **update mode** — read them carefully before proceeding so you can merge new coverage into the existing documents rather than replacing them
 
 Build a mental map of:
-- What changed (files, APIs, UI components)
-- What the acceptance criteria require
+- What changed (files, APIs, UI components) — across all features in the phase
+- What the acceptance criteria require — per feature and for the phase as a whole
 - What automated tests already cover (from test plans or test files)
 - What gaps remain that only a human can verify
+- If updating: which ACs are new vs. already documented
 
 ### Phase 2: Coverage Filtering (Required)
 
-Before proceeding, produce an **AC Coverage Map** — a table or list that classifies every acceptance criterion:
+Before proceeding, produce an **AC Coverage Map** — a table or list that classifies every acceptance criterion across all features in the phase:
 
-| AC | Automated Coverage | Manual QA Needed? | Reason |
-|----|-------------------|-------------------|--------|
-| AC1 | Unit tests verify output format | No | Pure logic, assertable |
-| AC2 | No tests for real Stripe webhook | Yes | Requires live webhook delivery |
-| AC3 | Unit tests cover validation rules | Partial — only visual feedback | Validation logic is tested; error UX is not |
+| Feature | AC | Automated Coverage | Manual QA Needed? | Reason |
+|---------|----|--------------------|-------------------|--------|
+| Auth    | AC1 | Unit tests verify output format | No | Pure logic, assertable |
+| Payments | AC2 | No tests for real Stripe webhook | Yes | Requires live webhook delivery |
+| Payments | AC3 | Unit tests cover validation rules | Partial — only visual feedback | Validation logic is tested; error UX is not |
 
 **Rules for this gate:**
 - Default to "No" for manual QA. You must provide a specific reason to include an AC.
 - The reason must reference why a human is needed (visual, real environment, live service, UX judgment).
 - If all ACs are covered by automated tests, the correct output is a QA plan with zero manual checklist items (just the coverage summary and a "No manual QA required" note).
 
-Write the QA coverage map to `dev/[task-name]/[task-name]-coverage-map-qa.md`.
+**If updating an existing coverage map:** Add new feature rows to the existing table. Do not remove or modify rows for previously documented features unless their automated coverage has changed.
+
+Write (or update) the QA coverage map at `docs/phases/PHASE_xx/PHASE_xx-coverage-map-qa.md`.
 
 ### Phase 3: Clarification (Interactive)
 
@@ -93,24 +98,31 @@ Ask questions needed to scope the QA plan:
 
 ### Phase 4: Write QA Document
 
-Write the QA document to `dev/[task-name]/[task-name]-qa.md`.
+Write (or update) the QA document at `docs/phases/PHASE_xx/PHASE_xx-qa.md`.
+
+**If a QA document already exists for this phase:** Do not replace it. Instead, merge the new feature coverage in:
+- Add new checklist sections under the relevant integration surfaces, or create new surface sections as needed
+- Update the "Summary of Changes" and "Automated Test Coverage" sections to reflect the additions
+- Append a dated **"Update — [date]: [Feature name]"** note at the top of the Notes section so reviewers can see what was added and when
+- Do NOT remove or modify existing checklist items unless a prior item is directly invalidated by the new implementation
 
 ## Template: Release QA Plan
 
 ```markdown
-# QA Plan: [Task Name]
+# QA Plan: [Phase Name]
 
 **Date:** [date]
+**Last Updated:** [date of most recent update, if applicable]
 **Mode:** Release QA Plan
-**Scope:** [brief description of features/changes under test]
+**Scope:** [brief description of phase and features under test]
 **Environment:** [where testing should occur]
 **Prerequisites:** [accounts, API keys, test data, services that must be running—include exact setup commands derived from the project]
 
 ## References
 
-- Plan: `[task-name]-plan.md`
-- Implementation: `[task-name]-implementation.md`
-- Review: `[task-name]-review.md` (if available)
+- Phase Summary: `PHASE_xx_SUMMARY.md`
+- Coverage Map: `PHASE_xx-coverage-map-qa.md`
+- Feature plans and implementation records: see `docs/phases/PHASE_xx/`
 
 ---
 
@@ -174,7 +186,7 @@ Organized by integration surface, not by AC. Each section references the ACs it 
 
 After writing the QA document, provide the appropriate next step:
 
-> **"Release QA plan complete. The plan has been written to `dev/[task-name]/[task-name]-qa.md`. To perform the final pre-production readiness analysis, open a new chat with `@07 Final Code Review` and attach all documents from `dev/[task-name]/`."**
+> **"Release QA plan complete. The plan has been written to `docs/phases/PHASE_xx/PHASE_xx-qa.md`. To perform the final pre-production readiness analysis, open a new chat with `@07 Final Code Review` and attach all documents from `docs/phases/PHASE_xx/`."**
 
 ## Quality Standards for QA Items
 
