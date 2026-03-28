@@ -1,7 +1,14 @@
 # Agent Guidelines
 
 ## Virtual environments
-- Always use a virtual environment to install or run projects. `.venv` with a `requirements.txt` file is sufficient.
+- Use `uv` for environment and dependency management; `pyproject.toml` is the single source of truth for dependencies.
+- Create the virtual environment with `uv venv` and install dependencies with `uv sync`.
+- Do not use `requirements.txt`; define all dependencies (including dev dependencies) in `pyproject.toml`.
+
+## Base Classes & Data Models
+- Use **Pydantic v2** for data models; prefer `model_config = ConfigDict(frozen=True)` by default to enforce immutability.
+- Only disable `frozen` when mutability is explicitly required and justified.
+- Validate at system boundaries (user input, external APIs); trust internal Pydantic models after construction.
 
 ## Principles
 
@@ -38,6 +45,11 @@
 - SHOULD NOT add test unless it can fail for a real defect.
 - Strong assertions (`toEqual` over `toBeGreaterThanOrEqual`)
 - One assertion per test; group under `describe(functionName)`
+
+### Property-Based Testing
+- Use [Hypothesis](https://hypothesis.readthedocs.io/) for property-based testing; include it as a standard dev dependency.
+- Prefer Hypothesis strategies over hand-crafted edge-case inputs when testing data ranges, formats, or invariants.
+- Combine with unit tests — Hypothesis finds edge cases, unit tests document known behavior.
 
 ### When Requirements Change
 - Udpate/delete affected tests FIRST, then change code

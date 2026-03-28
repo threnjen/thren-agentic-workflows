@@ -1,5 +1,10 @@
 # Agent Guidelines
 
+## Package Management
+- `package.json` is the single source of truth for all dependencies (prod and dev).
+- Always commit `package-lock.json`; use `npm ci` in CI/automated environments for reproducible installs.
+- Install dev-only tools (e.g. `fast-check`, `vitest`) with `npm install --save-dev`.
+
 ## Principles
 
 - Incremental progress over big bangs — small changes that compile and pass tests
@@ -45,6 +50,12 @@
 - Test edge cases, boundaries, realistic input
 - One assertion per test; clear names describing scenario
 - Group under `describe(functionName)`
+
+### Property-Based Testing
+- Use [fast-check](https://fast-check.dev/) for property-based testing; include it as a standard dev dependency.
+- Prefer `fast-check` strategies over hand-crafted edge-case inputs when testing data ranges, formats, or invariants.
+- Use `fc.assert(fc.property(...))` integrated with Vitest `test()` blocks.
+- Combine with unit tests — fast-check finds edge cases, unit tests document known behavior.
 
 ## Quality Standards
 
