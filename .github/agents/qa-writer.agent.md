@@ -182,6 +182,8 @@ Every checkbox item must follow this pattern:
 
 **`[ ] Bold action — Step-by-step instruction. Expected: observable result`**
 
+For each manual item, provide a runnable snippet or exact steps. The tester should copy-paste and observe, not figure out how to test it.
+
 Good:
 - `[ ] **Submit form with empty email** — Leave the email field blank and click Submit. **Expected:** Red validation error appears below the field saying "Email is required"`
 
