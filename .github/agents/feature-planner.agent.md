@@ -110,6 +110,29 @@ If the incoming work is a single cohesive feature, skip this phase and note that
 
 Ask the minimum critical questions needed to avoid wrong assumptions (max 10). Prefer questions that prevent rework later.
 
+**Question triage — only ask questions that pass this filter:**
+
+**ASK — architectural decisions that are expensive to change once code is written:**
+- Data model choices that propagate across modules ("Should notifications be stored per-user or in a shared log?")
+- Interface contracts between services or modules that other code will depend on
+- Error handling strategy when it affects user-visible behavior ("Should we fail open or fail closed?")
+- Concurrency/ordering guarantees that affect correctness
+- Security boundaries and auth model decisions
+- Choices between fundamentally different approaches where switching later means rewriting, not refactoring
+
+**DON'T ASK — decisions the implementer can make with reasonable defaults:**
+- Internal naming (follow existing codebase conventions)
+- Which utility library or helper to use for common tasks
+- Code organization within a single module
+- Specific error message wording (unless user-facing and brand-sensitive)
+- Test structure, fixture design, or mock strategy
+- Implementation ordering within a stage
+- Anything where the codebase already demonstrates a clear pattern
+
+**The test**: *"Would a senior dev need to weigh in here, or could any competent implementer make a reasonable default choice?"* If the latter, make the default choice in the plan and note your reasoning — don't ask.
+
+When you do ask, **state the trade-off, not just the question**. Instead of "How should we handle errors?", ask "Failed API calls can either retry 3x with backoff (more resilient, adds complexity) or fail immediately and surface to the user (simpler, might frustrate users). Which fits better?"
+
 Ensure you have:
 1. **Problem statement** — What problem are we solving? What does success look like?
 2. **Source of truth** — Tickets, specs, ADRs, or README context

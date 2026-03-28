@@ -171,15 +171,14 @@ Incorporate all feedback and loop back through the roadmap as many times as need
 
 ### Phase 4: Write Documents (Only After Approval)
 
-Once approved, create:
-```
-docs/phases/
-├── PHASES_OVERVIEW.md
-├── PHASE_01_[short-name].md
-├── PHASE_02_[short-name].md
-├── PHASE_03_[short-name].md
-└── ...
-```
+Once approved, write documents **one at a time in order** to prevent context loss:
+
+1. Write `docs/phases/PHASES_OVERVIEW.md` first and confirm it is complete
+2. Write `docs/phases/PHASE_01_[short-name].md` and confirm it is complete
+3. Write `docs/phases/PHASE_02_[short-name].md` and confirm it is complete
+4. Continue writing each subsequent phase document individually, in order, until all are written
+
+Do not batch-write multiple documents at once. Complete and verify each file before moving to the next.
 
 ### Phase 5: Lifecycle Management
 
