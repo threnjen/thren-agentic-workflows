@@ -174,7 +174,7 @@ Organized by integration surface, not by AC. Each section references the ACs it 
 
 After writing the QA document, provide the appropriate next step:
 
-> **"Release QA plan complete. The plan has been written to `dev/[task-name]/[task-name]-qa.md`. To perform the final pre-production readiness analysis, open a new chat with `@07 QA - Analyst` and attach all documents from `dev/[task-name]/`."**
+> **"Release QA plan complete. The plan has been written to `dev/[task-name]/[task-name]-qa.md`. To perform the final pre-production readiness analysis, open a new chat with `@07 Final Code Review` and attach all documents from `dev/[task-name]/`."**
 
 ## Quality Standards for QA Items
 

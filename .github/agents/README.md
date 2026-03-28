@@ -62,7 +62,7 @@ Each agent produces structured output — plan documents, implementation summari
 | Agent | Model | Purpose |
 |-------|-------|---------|
 | **06 QA - Writer** | Opus | Write manual QA documents — Release QA Plan (plan + implementation + review) based on available documents |
-| **07 QA - Analyst** | Opus | Final pre-production readiness gate — cross-validates all pipeline documents and produces a go/no-go recommendation before manual QA begins |
+| **07 Final Code Review** | Opus | Final pre-production readiness gate — cross-validates all pipeline documents and produces a go/no-go recommendation before manual QA begins |
 
 ### Code Quality
 
@@ -125,8 +125,8 @@ Each agent produces structured output — plan documents, implementation summari
 **06 QA - Writer** (document-only — does not modify code)
 > Give it a task folder. With plan + implementation + review + code/tests, it produces a full **Release QA Plan** — an execution-ready checklist with concrete steps, expected results, and coverage gap analysis. Output goes to `dev/[task-name]/[task-name]-qa.md`.
 
-**07 QA - Analyst** (document-only — does not modify code or documents)
-> Give it the complete `dev/[task-name]/` folder containing all pipeline documents (plan, context, tasks, implementation record, review record, and QA plan). It performs an exhaustive cross-validation of every document against every other document, verifies the actual code matches the records, runs the test suite, and evaluates the QA plan's completeness. Produces a detailed readiness analysis with a **GO / GO WITH CONDITIONS / NO-GO** verdict, a full traceability matrix, a risk register, and actionable recommendations. This is the final automated gate before manual QA execution. Output goes to `dev/[task-name]/[task-name]-qa-analysis.md`.
+**07 Final Code Review** (document-only — does not modify code or documents)
+> Give it the complete `dev/[task-name]/` folder containing all pipeline documents (plan, context, tasks, implementation record, review record, and QA plan). It performs an exhaustive cross-validation of every document against every other document, verifies the actual code matches the records, runs the test suite, and evaluates the QA plan's completeness. Produces a detailed readiness analysis with a **GO / GO WITH CONDITIONS / NO-GO** verdict, a full traceability matrix, a risk register, and actionable recommendations. This is the final automated gate before manual QA execution and release. Output goes to `dev/[task-name]/[task-name]-qa-analysis.md`.
 
 **Auditor - Infra** (document-only — does not modify files)
 > Give it infrastructure files to audit. It evaluates Dockerfiles, CI/CD pipelines, IaC templates, build scripts, and config files for security, best practices, consistency, and operational risk. Produces a structured report.
@@ -154,7 +154,7 @@ The core development pipeline — plan, build, review, ship.
 | 7 | — | Push to GitHub and open PR with Copilot review | — |
 | 8 | **05 Feature - Reviewer** | "Pull the PR Copilot review comments and address problems" | 03 Feature - Planner docs output, 04 Feature - Implementer record |
 | 9 | **06 QA - Writer** | "Write the release QA plan for this feature" | All task docs in `dev/[task-name]/` |
-| 10 | **07 QA - Analyst** | "Evaluate readiness for manual QA" | All task docs in `dev/[task-name]/` |
+| 10 | **07 Final Code Review** | "Evaluate readiness for manual QA" | All task docs in `dev/[task-name]/` |
 
 ### Pipeline 2: Test Suite Bootstrap
 
@@ -279,7 +279,7 @@ dev/[task-name]/
 └── [task-name]-review.md   # Verdict, issues found, fixes applied, remaining concerns
 ```
 
-The **07 QA - Analyst** writes a readiness analysis to the same directory:
+The **07 Final Code Review** writes a readiness analysis to the same directory:
 
 ```
 dev/[task-name]/
@@ -302,6 +302,6 @@ Each agent file is standalone. To use these agents in a different repository:
 
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each agent file works standalone — just copy the `.md` file into any project's `.github/agents/` directory.
-- **Read-only agents**: **05 Feature - Reviewer**, **Auditor - Code**, **Auditor - Infra**, **Test - Analyst**, and **07 QA - Analyst** do not modify code. They analyze and report only.
-- **Approval-gated agents**: **01 Project - Planner**, **02 Project - Phase Refiner**, **03 Feature - Planner**, **Test - Analyst**, **Auditor - Code**, **Auditor - Infra**, and **07 QA - Analyst** always present findings and ask for explicit approval before creating any files.
+- **Read-only agents**: **05 Feature - Reviewer**, **Auditor - Code**, **Auditor - Infra**, **Test - Analyst**, and **07 Final Code Review** do not modify code. They analyze and report only.
+- **Approval-gated agents**: **01 Project - Planner**, **02 Project - Phase Refiner**, **03 Feature - Planner**, **Test - Analyst**, **Auditor - Code**, **Auditor - Infra**, and **07 Final Code Review** always present findings and ask for explicit approval before creating any files.
 - **Code-writing agents**: **04 Feature - Implementer**, **Refactor**, **Test - Writer**, and **Debugger - Frontend** have full tool access to create and modify files.
