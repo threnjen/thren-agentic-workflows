@@ -27,10 +27,10 @@ Before beginning, ensure ALL of the following are available. If any are missing,
 | Feature plan | 03 Feature - Planner | `[task-name]-plan.md` |
 | Context document | 03 Feature - Planner | `[task-name]-context.md` |
 | Task checklist | 03 Feature - Planner | `[task-name]-tasks.md` |
-| Implementation record | 05 Feature - Implementer | `[task-name]-implementation.md` |
-| Review record | 06 Feature - Reviewer | `[task-name]-review.md` |
-| QA skeleton | 04 QA - Writer | `[task-name]-qa.md` (pre-implementation version, if available) |
-| Release QA plan | 04 QA - Writer | `[task-name]-qa.md` (release version) |
+| Implementation record | 04 Feature - Implementer | `[task-name]-implementation.md` |
+| Review record | 05 Feature - Reviewer | `[task-name]-review.md` |
+| QA skeleton | 06 QA - Writer | `[task-name]-qa.md` (pre-implementation version, if available) |
+| Release QA plan | 06 QA - Writer | `[task-name]-qa.md` (release version) |
 
 If the QA skeleton and release QA plan are the same file (the release plan replaced the skeleton), that is acceptable — note it and proceed.
 
@@ -174,9 +174,9 @@ Three to five sentences covering:
 | Feature Plan | `[task-name]-plan.md` | 03 Feature - Planner | Yes/No | — |
 | Context | `[task-name]-context.md` | 03 Feature - Planner | Yes/No | — |
 | Tasks | `[task-name]-tasks.md` | 03 Feature - Planner | Yes/No | — |
-| Implementation Record | `[task-name]-implementation.md` | 05 Feature - Implementer | Yes/No | — |
-| Review Record | `[task-name]-review.md` | 06 Feature - Reviewer | Yes/No | — |
-| QA Plan | `[task-name]-qa.md` | 04 QA - Writer | Yes/No | Skeleton / Release / Both |
+| Implementation Record | `[task-name]-implementation.md` | 04 Feature - Implementer | Yes/No | — |
+| Review Record | `[task-name]-review.md` | 05 Feature - Reviewer | Yes/No | — |
+| QA Plan | `[task-name]-qa.md` | 06 QA - Writer | Yes/No | Skeleton / Release / Both |
 
 ### Traceability Matrix
 
@@ -228,9 +228,9 @@ Use this table to determine where the user should return:
 | Root Cause | Return To | When |
 |------------|-----------|------|
 | **03 Feature - Planner** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
-| **05 Feature - Implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
-| **06 Feature - Reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
-| **04 QA - Writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites |
+| **04 Feature - Implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
+| **05 Feature - Reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
+| **06 QA - Writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites |
 
 #### Blocking Items List
 
@@ -289,9 +289,9 @@ After writing the analysis record, provide the appropriate next step:
 
 Provide a specific re-entry recommendation based on the root cause analysis. Examples:
 
-> **"QA readiness analysis complete. Verdict: NO-GO. The analysis has been written to `dev/[task-name]/[task-name]-qa-analysis.md`. 3 blocking items must be resolved before manual QA can begin. Root cause analysis indicates the plan itself has gaps — AC2 is ambiguous and AC5 is missing edge case coverage. Recommended next step: open a new chat with `@03 Feature - Planner` and attach the current plan documents along with this analysis. After the plan is revised, re-run the pipeline from `@05 Feature - Implementer` forward."**
+> **"QA readiness analysis complete. Verdict: NO-GO. The analysis has been written to `dev/[task-name]/[task-name]-qa-analysis.md`. 3 blocking items must be resolved before manual QA can begin. Root cause analysis indicates the plan itself has gaps — AC2 is ambiguous and AC5 is missing edge case coverage. Recommended next step: open a new chat with `@03 Feature - Planner` and attach the current plan documents along with this analysis. After the plan is revised, re-run the pipeline from `@04 Feature - Implementer` forward."**
 
-> **"QA readiness analysis complete. Verdict: NO-GO. The analysis has been written to `dev/[task-name]/[task-name]-qa-analysis.md`. 2 blocking items must be resolved. The plan is sound but implementation is incomplete — AC3 was silently dropped and AC4 is missing error handling. Recommended next step: open a new chat with `@05 Feature - Implementer` and attach the plan documents and this analysis. After implementation is updated, re-run `@06 Feature - Reviewer` → `@04 QA - Writer` (release mode) → `@07 QA - Analyst`."**
+> **"QA readiness analysis complete. Verdict: NO-GO. The analysis has been written to `dev/[task-name]/[task-name]-qa-analysis.md`. 2 blocking items must be resolved. The plan is sound but implementation is incomplete — AC3 was silently dropped and AC4 is missing error handling. Recommended next step: open a new chat with `@04 Feature - Implementer` and attach the plan documents and this analysis. After implementation is updated, re-run `@05 Feature - Reviewer` → `@06 QA - Writer` (release mode) → `@07 QA - Analyst`."**
 
 Always specify:
 1. Which agent to return to and why

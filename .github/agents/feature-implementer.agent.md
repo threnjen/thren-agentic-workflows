@@ -1,5 +1,5 @@
 ---
-name: 05 Feature - Implementer
+name: 04 Feature - Implementer
 description: "Use when: implementing a feature from a plan, writing code, building functionality, executing on requirements, or coding from acceptance criteria. Produces traceable implementation that passes review."
 tools: [read, edit, search, execute, todo, run in terminal]
 model: "Claude Opus 4 (Copilot)"
@@ -210,4 +210,4 @@ If something couldn't be fully implemented:
 #### 5. Next Step
 
 Tell the user:
-> **"Implementation complete. To review, open a new chat with `@06 Feature - Reviewer` and attach the plan documents and `dev/[task-name]/[task-name]-implementation.md`."**
+> **"Implementation complete. To review, open a new chat with `@05 Feature - Reviewer` and attach the plan documents and `dev/[task-name]/[task-name]-implementation.md`."**

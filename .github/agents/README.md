@@ -47,8 +47,8 @@ Each agent produces structured output — plan documents, implementation summari
 
 ### Implementation
 
-| **05 Feature - Implementer** | Opus | Implement from an approved plan with strict traceability and TDD |
-| **06 Feature - Reviewer** | Opus | Review implementation against a plan for accuracy, bugs, and completeness |
+| **04 Feature - Implementer** | Opus | Implement from an approved plan with strict traceability and TDD |
+| **05 Feature - Reviewer** | Opus | Review implementation against a plan for accuracy, bugs, and completeness |
 
 ### Testing
 
@@ -61,7 +61,7 @@ Each agent produces structured output — plan documents, implementation summari
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
-| **04 QA - Writer** | Opus | Write manual QA documents — auto-detects Pre-Implementation Skeleton (plan only) or Release QA Plan (plan + implementation + review) based on available documents |
+| **06 QA - Writer** | Opus | Write manual QA documents — auto-detects Pre-Implementation Skeleton (plan only) or Release QA Plan (plan + implementation + review) based on available documents |
 | **07 QA - Analyst** | Opus | Final pre-production readiness gate — cross-validates all pipeline documents and produces a go/no-go recommendation before manual QA begins |
 
 ### Code Quality
@@ -98,10 +98,10 @@ Each agent produces structured output — plan documents, implementation summari
 **03 Feature - Planner** (document-only — does not write code)
 > Give it a problem statement or spec. It scans the codebase for context, asks targeted questions, then writes a structured plan with numbered acceptance criteria, architecture analysis, edge-case identification, and a test strategy to `dev/[task-name]/`. It will not create any files until you explicitly approve.
 
-**05 Feature - Implementer** (full tool access — reads and writes code)
-> Give it an approved plan. It implements each acceptance criterion incrementally using Red-Green-Refactor TDD and writes a structured implementation record (`[task-name]-implementation.md`) to `dev/[task-name]/`. This file lists every changed file with rationale, maps changes back to acceptance criteria, and highlights focus areas for the 06 Feature - Reviewer.
+**04 Feature - Implementer** (full tool access — reads and writes code)
+> Give it an approved plan. It implements each acceptance criterion incrementally using Red-Green-Refactor TDD and writes a structured implementation record (`[task-name]-implementation.md`) to `dev/[task-name]/`. This file lists every changed file with rationale, maps changes back to acceptance criteria, and highlights focus areas for the 05 Feature - Reviewer.
 
-**06 Feature - Reviewer** (read-only — does not modify code unless approved)
+**05 Feature - Reviewer** (read-only — does not modify code unless approved)
 > Give it a plan and implementation to review. It checks traceability, hunts for bugs and edge cases, flags inconsistencies, and produces a prioritized issue table. It has access to PR tools and can pull Copilot review comments. After the review (and any approved fixes), it writes a review record (`[task-name]-review.md`) to `dev/[task-name]/` capturing the verdict, all issues found, fixes applied, and remaining concerns.
 
 **Test - Writer** (writes test code only — does not modify source)
@@ -122,7 +122,7 @@ Each agent produces structured output — plan documents, implementation summari
 **Web Researcher** (read-only — uses fetch)
 > Give it a problem or topic. It generates multiple search query variations, searches across GitHub issues, Stack Overflow, Reddit, forums, and docs, and compiles a structured findings report with sources.
 
-**04 QA - Writer** (document-only — does not modify code)
+**06 QA - Writer** (document-only — does not modify code)
 > Give it a task folder. It auto-detects its mode from the available documents: with only plan docs, it produces a **Pre-Implementation QA Skeleton** — a high-level checklist of anticipated manual testing areas. With plan + implementation + review + code/tests, it produces a full **Release QA Plan** — an execution-ready checklist with concrete steps, expected results, and coverage gap analysis. If a skeleton already exists, the Release mode expands it into the final plan. Output goes to `dev/[task-name]/[task-name]-qa.md`.
 
 **07 QA - Analyst** (document-only — does not modify code or documents)
@@ -149,12 +149,12 @@ The core development pipeline — plan, build, review, ship.
 | 1 | **01 Project - Planner** | Plan out the project scope and trajectory at a high level | Spec docs (optional) |
 | 2 | **02 Project - Phase Refiner** | "Refine and deepen this Phase document" | Individual Phase document (`docs/phases/PHASE_0N_*.md`) |
 | 3 | **03 Feature - Planner** | "Prepare implementation plans for individual features" | (`docs/phases/PHASE_0N_*.md`) |
-| 4 | **04 QA - Writer** | "Write a QA skeleton for this feature" | 03 Feature - Planner docs output (`dev/[task-name]/`) |
-| 5 | **05 Feature - Implementer** | "Implement the plan" | 03 Feature - Planner docs output (`dev/[task-name]/`) |
-| 6 | **06 Feature - Reviewer** | "Review the implementation" | 03 Feature - Planner docs output, 05 Feature - Implementer record, QA skeleton (`[task-name]-qa.md`) |
+| 4 | **06 QA - Writer** | "Write a QA skeleton for this feature" | 03 Feature - Planner docs output (`dev/[task-name]/`) |
+| 5 | **04 Feature - Implementer** | "Implement the plan" | 03 Feature - Planner docs output (`dev/[task-name]/`) |
+| 6 | **05 Feature - Reviewer** | "Review the implementation" | 03 Feature - Planner docs output, 04 Feature - Implementer record, QA skeleton (`[task-name]-qa.md`) |
 | 7 | — | Push to GitHub and open PR with Copilot review | — |
-| 8 | **06 Feature - Reviewer** | "Pull the PR Copilot review comments and address problems" | 03 Feature - Planner docs output, 05 Feature - Implementer record |
-| 9 | **04 QA - Writer** | "Write the release QA plan for this feature" | All task docs in `dev/[task-name]/` |
+| 8 | **05 Feature - Reviewer** | "Pull the PR Copilot review comments and address problems" | 03 Feature - Planner docs output, 04 Feature - Implementer record |
+| 9 | **06 QA - Writer** | "Write the release QA plan for this feature" | All task docs in `dev/[task-name]/` |
 | 10 | **07 QA - Analyst** | "Evaluate readiness for manual QA" | All task docs in `dev/[task-name]/` |
 
 ### Pipeline 2: Test Suite Bootstrap
@@ -165,7 +165,7 @@ For projects with no tests or low coverage — create a test suite, then validat
 |------|-------|--------|-------------|
 | 1 | **Test - Writer** | "Bootstrap tests for `[directory or module]`" | None (reads codebase) |
 | 2 | **Test - Analyst** | "Evaluate the test suite" | None (reads test files) |
-| 3 | **05 Feature - Implementer** | "Implement the Test - Analyst's recommendations" | Test - Analyst docs output (`dev/[task-name]/`) |
+| 3 | **04 Feature - Implementer** | "Implement the Test - Analyst's recommendations" | Test - Analyst docs output (`dev/[task-name]/`) |
 
 ### Pipeline 3: Test Suite Cleanup
 
@@ -175,8 +175,8 @@ For projects where tests have grown unwieldy — analyze, plan reductions, execu
 |------|-------|--------|-------------|
 | 1 | **Test - Analyst** | "Analyze the test suite in `[test directory]`" | None (reads test files) |
 | 2 | **03 Feature - Planner** | "Create a plan to implement the test reduction recommendations" | Test - Analyst docs output (`dev/[task-name]/`) |
-| 3 | **05 Feature - Implementer** | "Implement the plan" | 03 Feature - Planner docs output |
-| 4 | **06 Feature - Reviewer** | "Review the test changes" | 03 Feature - Planner docs output, Test - Analyst docs output, 05 Feature - Implementer record |
+| 3 | **04 Feature - Implementer** | "Implement the plan" | 03 Feature - Planner docs output |
+| 4 | **05 Feature - Reviewer** | "Review the test changes" | 03 Feature - Planner docs output, Test - Analyst docs output, 04 Feature - Implementer record |
 
 ### Pipeline 4: Code Quality Improvement
 
@@ -186,8 +186,8 @@ Audit the codebase, plan fixes, implement, and review.
 |------|-------|--------|-------------|
 | 1 | **Auditor - Code** | "Audit the codebase" (or specify a directory) | None (reads codebase) |
 | 2 | **03 Feature - Planner** | "Create a plan to address the audit findings" | Auditor - Code report (`dev/[audit-name]/`) |
-| 3 | **05 Feature - Implementer** | "Implement the plan" | 03 Feature - Planner docs output |
-| 4 | **06 Feature - Reviewer** | "Review the implementation" | 03 Feature - Planner docs output, Auditor - Code report, 05 Feature - Implementer record |
+| 3 | **04 Feature - Implementer** | "Implement the plan" | 03 Feature - Planner docs output |
+| 4 | **05 Feature - Reviewer** | "Review the implementation" | 03 Feature - Planner docs output, Auditor - Code report, 04 Feature - Implementer record |
 
 ### Pipeline 5: Refactoring
 
@@ -197,7 +197,7 @@ Audit for structural issues, then refactor with review.
 |------|-------|--------|-------------|
 | 1 | **Auditor - Code** | "Audit `[area]` for structural and organizational issues" | None (reads codebase) |
 | 2 | **Refactor** | "Refactor based on the audit findings" | Auditor - Code report |
-| 3 | **06 Feature - Reviewer** | "Review the refactoring" | Auditor - Code report |
+| 3 | **05 Feature - Reviewer** | "Review the refactoring" | Auditor - Code report |
 
 ### Pipeline 6: Bug Investigation and Fix
 
@@ -207,7 +207,7 @@ Research a tricky bug, fix it, and review — useful when the root cause is uncl
 |------|-------|--------|-------------|
 | 1 | **Web Researcher** | Describe the error message or behavior | None |
 | 2 | **Debugger - Frontend** or **Debugger - Backend** | "Investigate and fix the error" | Web Researcher findings (optional) |
-| 3 | **06 Feature - Reviewer** | "Review the fix" | None |
+| 3 | **05 Feature - Reviewer** | "Review the fix" | None |
 
 ### Pipeline 7: Documentation Overhaul
 
@@ -227,8 +227,8 @@ Audit infrastructure files, plan fixes, and implement.
 |------|-------|--------|-------------|
 | 1 | **Auditor - Infra** | "Audit infrastructure files" | None |
 | 2 | **03 Feature - Planner** | "Create a plan to address the infrastructure findings" | Auditor - Infra report (`dev/[audit-name]/`) |
-| 3 | **05 Feature - Implementer** | "Implement the plan" | 03 Feature - Planner docs output |
-| 4 | **06 Feature - Reviewer** | "Review the implementation" | 03 Feature - Planner docs output, Auditor - Infra report, 05 Feature - Implementer record |
+| 3 | **04 Feature - Implementer** | "Implement the plan" | 03 Feature - Planner docs output |
+| 4 | **05 Feature - Reviewer** | "Review the implementation" | 03 Feature - Planner docs output, Auditor - Infra report, 04 Feature - Implementer record |
 
 ---
 
@@ -237,7 +237,7 @@ Audit infrastructure files, plan fixes, and implement.
 Not everything needs a pipeline. These agents work well on their own:
 
 - **Auditor - Code** or **Auditor - Infra** — Run anytime for a health check
-- **06 Feature - Reviewer** — Point at any PR or set of changes for an independent review
+- **05 Feature - Reviewer** — Point at any PR or set of changes for an independent review
 - **Test - Analyst** — Evaluate test quality during maintenance windows
 - **Web Researcher** — Research a technical question or debug a tricky issue
 - **Docs Writer** — Update documentation after any significant change
@@ -266,14 +266,14 @@ dev/[audit-name]/
 └── [audit-name]-summary.md  # Executive summary with priority actions
 ```
 
-The **05 Feature - Implementer** writes an implementation record to the same directory:
+The **04 Feature - Implementer** writes an implementation record to the same directory:
 
 ```
 dev/[task-name]/
 └── [task-name]-implementation.md   # Files changed, AC traceability, reviewer focus areas
 ```
 
-The **06 Feature - Reviewer** writes a review record to the same directory:
+The **05 Feature - Reviewer** writes a review record to the same directory:
 
 ```
 dev/[task-name]/
@@ -303,6 +303,6 @@ Each agent file is standalone. To use these agents in a different repository:
 
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each agent file works standalone — just copy the `.md` file into any project's `.github/agents/` directory.
-- **Read-only agents**: **06 Feature - Reviewer**, **Auditor - Code**, **Auditor - Infra**, **Test - Analyst**, and **07 QA - Analyst** do not modify code. They analyze and report only.
+- **Read-only agents**: **05 Feature - Reviewer**, **Auditor - Code**, **Auditor - Infra**, **Test - Analyst**, and **07 QA - Analyst** do not modify code. They analyze and report only.
 - **Approval-gated agents**: **01 Project - Planner**, **02 Project - Phase Refiner**, **03 Feature - Planner**, **Test - Analyst**, **Auditor - Code**, **Auditor - Infra**, and **07 QA - Analyst** always present findings and ask for explicit approval before creating any files.
-- **Code-writing agents**: **05 Feature - Implementer**, **Refactor**, **Test - Writer**, and **Debugger - Frontend** have full tool access to create and modify files.
+- **Code-writing agents**: **04 Feature - Implementer**, **Refactor**, **Test - Writer**, and **Debugger - Frontend** have full tool access to create and modify files.

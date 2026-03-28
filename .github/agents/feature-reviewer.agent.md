@@ -1,5 +1,5 @@
 ---
-name: 06 Feature - Reviewer
+name: 05 Feature - Reviewer
 description: "Use when: reviewing code, checking implementation against requirements, auditing for bugs, evaluating code quality, or validating that implementation matches the plan. Provides structured code review."
 model: "Claude Opus 4 (Copilot)"
 ---
@@ -226,8 +226,8 @@ After writing the review record, provide the appropriate next step based on the 
 
 **If this was an initial code review (no PR yet):**
 
-> **"Review complete. The review record has been written to `dev/[task-name]/[task-name]-review.md`. Next, push your branch to GitHub and open a PR with Copilot review enabled. Once the PR review comments are in, open a new chat with `@06 Feature - Reviewer` and attach the plan documents and implementation record to address the PR feedback."**
+> **"Review complete. The review record has been written to `dev/[task-name]/[task-name]-review.md`. Next, push your branch to GitHub and open a PR with Copilot review enabled. Once the PR review comments are in, open a new chat with `@05 Feature - Reviewer` and attach the plan documents and implementation record to address the PR feedback."**
 
 **If this was a PR review (addressing Copilot or reviewer comments):**
 
-> **"Review complete. The review record has been written to `dev/[task-name]/[task-name]-review.md`. To generate the release QA plan, open a new chat with `@04 QA - Writer` and attach all documents from `dev/[task-name]/`."**
+> **"Review complete. The review record has been written to `dev/[task-name]/[task-name]-review.md`. To generate the release QA plan, open a new chat with `@06 QA - Writer` and attach all documents from `dev/[task-name]/`."**

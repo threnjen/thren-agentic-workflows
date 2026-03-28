@@ -185,7 +185,7 @@ All other stages follow the standard format:
 
 After writing the planning documents, tell the user:
 
-> **"Planning complete. Documents have been written to `dev/[task-name]/`. To generate a QA skeleton for this feature, open a new chat with `@04 QA - Writer` and attach the plan documents from `dev/[task-name]/`. To skip QA and move directly to implementation, open a new chat with `@05 Feature - Implemeter` and attach the plan documents from `dev/[task-name]/`."**
+> **"Planning complete. Documents have been written to `dev/[task-name]/`. To proceed to implementation, open a new chat with `@04 Feature - Implementer` and attach the plan documents from `dev/[task-name]/`."**
 
 ## Quality Checklist
 
