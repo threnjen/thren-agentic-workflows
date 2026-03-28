@@ -15,13 +15,6 @@
 - Include context for debugging; handle errors at appropriate level; never silently swallow exceptions
 - If you need to explain it, it's too complex
 
-## Plan Mode Rules
-
-- **NEVER** output code blocks in Plan mode
-- Describe changes for someone else to execute later
-- If you catch yourself writing implementation, **STOP**
-- Link to files and reference `symbols`, don't show code
-
 ## Process
 
 ### Implementation Flow
@@ -92,24 +85,6 @@ Clear at 60k tokens or 30% context:
 - [ ] No unnecessary imports/functions/comments?
 - [ ] Error handling complete?
 - [ ] Security vulnerabilities addressed?
-
-## Task Documentation
-
-### Three-File Pattern
-```
-dev/[task-name]/
-├── [task-name]-plan.md      # Accepted plan with stages
-├── [task-name]-context.md   # Key files, decisions
-└── [task-name]-tasks.md     # Checklist of work
-```
-
-### Plan Template
-```markdown
-## Stage N: [Name]
-**Goal**: [Specific deliverable]
-**Success Criteria**: [Testable outcomes]
-**Status**: [Not Started|In Progress|Complete]
-```
 
 ### Workflow
 - Create task directory when starting large work
