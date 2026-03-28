@@ -210,4 +210,4 @@ If something couldn't be fully implemented:
 #### 5. Next Step
 
 Tell the user:
-> **"Implementation complete. To review, open a new chat with `@Reviewer` and attach the plan documents and `dev/[task-name]/[task-name]-implementation.md`."**
+> **"Implementation complete. To review, open a new chat with `@06 Feature - Reviewer` and attach the plan documents and `dev/[task-name]/[task-name]-implementation.md`."**
