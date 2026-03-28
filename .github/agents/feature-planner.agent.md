@@ -1,5 +1,5 @@
 ---
-name: Feature Planner
+name: Feature - Planner
 description: "Use when: planning a feature, designing architecture, creating requirements, writing specs, breaking down tasks, or preparing for implementation. Helps produce review-ready plans with acceptance criteria, test plans, and traceability."
 tools: [read, search, edit, fetch, run in terminal]
 model: "Claude Opus 4 (Copilot)"
@@ -162,7 +162,7 @@ All other stages follow the standard format:
 
 After writing the planning documents, tell the user:
 
-> **"Planning complete. Documents have been written to `dev/[task-name]/`. To generate a QA skeleton for this feature, open a new chat with `@QA Writer` and attach the plan documents from `dev/[task-name]/`."**
+> **"Planning complete. Documents have been written to `dev/[task-name]/`. To generate a QA skeleton for this feature, open a new chat with `@QA - Writer` and attach the plan documents from `dev/[task-name]/`."**
 
 ## Quality Checklist
 

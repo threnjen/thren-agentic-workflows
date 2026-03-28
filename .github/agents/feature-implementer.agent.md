@@ -1,5 +1,5 @@
 ---
-name: Feature Implementer
+name: Feature - Implementer
 description: "Use when: implementing a feature from a plan, writing code, building functionality, executing on requirements, or coding from acceptance criteria. Produces traceable implementation that passes review."
 tools: [read, edit, search, execute, todo, run in terminal]
 model: "Claude Opus 4 (Copilot)"

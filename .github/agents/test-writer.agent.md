@@ -1,5 +1,5 @@
 ---
-name: Test Writer
+name: Test - Writer
 description: "Use when: bootstrapping a test suite from scratch, creating tests for untested code, establishing baseline test coverage, or setting up test infrastructure. Produces working test files and configuration."
 tools: [read, edit, search, execute, run_in_terminal]
 model: "Claude Opus 4 (Copilot)"

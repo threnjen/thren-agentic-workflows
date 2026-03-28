@@ -1,5 +1,5 @@
 ---
-name: QA Writer
+name: QA - Writer
 description: "Use when: creating manual QA test plans, writing acceptance checklists for features that require human verification, generating manual test cases for integration points not covered by unit tests (API calls with real keys, frontend UI interactions, user input edge cases, cross-service flows). Operates in two modes: Pre-Implementation QA Skeleton (from plan docs only) and Release QA Plan (from plan + implementation + review + code/tests). Auto-detects mode from attached documents."
 tools: [read, edit, search, execute, todo, run in terminal]
 model: "Claude Opus 4 (Copilot)"
@@ -266,11 +266,11 @@ After writing the QA document, provide the appropriate next step based on the mo
 
 **Pre-Implementation QA Skeleton mode:**
 
-> **"QA skeleton complete. The skeleton has been written to `dev/[task-name]/[task-name]-qa.md`. To implement the feature, open a new chat with `@Feature Implementer` and attach the plan documents from `dev/[task-name]/`."**
+> **"QA skeleton complete. The skeleton has been written to `dev/[task-name]/[task-name]-qa.md`. To implement the feature, open a new chat with `@Feature - Implementer` and attach the plan documents from `dev/[task-name]/`."**
 
 **Release QA Plan mode:**
 
-> **"Release QA plan complete. The plan has been written to `dev/[task-name]/[task-name]-qa.md`. To perform the final pre-production readiness analysis, open a new chat with `@QA Analyst` and attach all documents from `dev/[task-name]/`."**
+> **"Release QA plan complete. The plan has been written to `dev/[task-name]/[task-name]-qa.md`. To perform the final pre-production readiness analysis, open a new chat with `@QA - Analyst` and attach all documents from `dev/[task-name]/`."**
 
 ## Quality Standards for QA Items
 

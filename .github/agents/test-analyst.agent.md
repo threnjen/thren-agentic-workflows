@@ -1,5 +1,5 @@
 ---
-name: Test Analyst
+name: Test - Analyst
 description: "Use when: evaluating test suites, analyzing test coverage, identifying redundant tests, planning test cleanup, or improving test quality. Produces test analysis and reduction plans without modifying tests."
 tools: [read, search, edit, fetch, run in terminal]
 model: "Claude Opus 4 (Copilot)"
