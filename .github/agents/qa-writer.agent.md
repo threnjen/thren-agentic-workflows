@@ -270,7 +270,7 @@ After writing the QA document, provide the appropriate next step based on the mo
 
 **Release QA Plan mode:**
 
-> **"Release QA plan complete. The plan has been written to `dev/[task-name]/[task-name]-qa.md`. The development pipeline for this feature is now complete — the QA plan is ready for manual execution."**
+> **"Release QA plan complete. The plan has been written to `dev/[task-name]/[task-name]-qa.md`. To perform the final pre-production readiness analysis, open a new chat with `@QA Analyst` and attach all documents from `dev/[task-name]/`."**
 
 ## Quality Standards for QA Items
 
