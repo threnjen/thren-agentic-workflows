@@ -97,7 +97,7 @@ Clear at 60k tokens or 30% context:
 
 ### Three-File Pattern
 ```
-dev/active/[task-name]/
+dev/[task-name]/
 ├── [task-name]-plan.md      # Accepted plan with stages
 ├── [task-name]-context.md   # Key files, decisions
 └── [task-name]-tasks.md     # Checklist of work
@@ -114,12 +114,11 @@ dev/active/[task-name]/
 ### Workflow
 - Create task directory when starting large work
 - Update status immediately as tasks complete
-- Check `/dev/active/` for existing tasks before starting
+- Check `/dev/` for existing tasks before starting
 - Read all three files before proceeding with existing task
 - Remove plan file when all stages done
 
 ## Extended Guides
 
 Load when applicable:
-- *Phase Planning* -> `docs/PLANNING_WORKFLOW.md` - for migrations or multi-stage projects spanning multiple commits
 - *Style Guide* -> `docs/STYLE_GUIDE.md` - When writing new modules or unfamiliar with project conventions

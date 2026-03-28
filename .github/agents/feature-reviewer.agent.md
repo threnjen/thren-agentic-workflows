@@ -1,7 +1,7 @@
 ---
-name: Reviewer
+name: Feature Reviewer
 description: "Use when: reviewing code, checking implementation against requirements, auditing for bugs, evaluating code quality, or validating that implementation matches the plan. Provides structured code review."
-tools: [read, search, edit, github-pull-request_activePullRequest, github-pull-request_issue_fetch, get_changed_files, run_in_terminal]
+tools: [read, search, edit, github-pull-request_activePullRequest, github-pull-request_issue_fetch, get_changed_files, run_in_terminal, fetch, get_changed_files]
 model: "Claude Opus 4 (Copilot)"
 ---
 
@@ -170,7 +170,7 @@ If the user declines fixes (or there are none to apply), proceed directly to **W
 
 After the review is complete — and after any approved fixes have been applied — write a structured review record to the task's output directory. This file captures the final state of the review for traceability and downstream use.
 
-1. **Determine the output path**: Use the same `dev/active/[task-name]/` directory as the plan and implementation documents. If those were provided as attachments, match the `[task-name]` from their path. If no task directory exists, create one using a slug of the task or PR description.
+1. **Determine the output path**: Use the same `dev/[task-name]/` directory as the plan and implementation documents. If those were provided as attachments, match the `[task-name]` from their path. If no task directory exists, create one using a slug of the task or PR description.
 2. **Write `[task-name]-review.md`** using the exact template below.
 3. **Do not skip this step** — downstream pipeline steps and future audits depend on this file.
 
@@ -223,5 +223,12 @@ After the review is complete — and after any approved fixes have been applied 
 - [e.g., New dependency on external API — no circuit breaker yet]
 ```
 
-After writing the review record, tell the user:
-> **"Review complete. The review record has been written to `dev/active/[task-name]/[task-name]-review.md`."**
+After writing the review record, provide the appropriate next step based on the review context:
+
+**If this was an initial code review (no PR yet):**
+
+> **"Review complete. The review record has been written to `dev/[task-name]/[task-name]-review.md`. Next, push your branch to GitHub and open a PR with Copilot review enabled. Once the PR review comments are in, open a new chat with `@Feature Reviewer` and attach the plan documents and implementation record to address the PR feedback."**
+
+**If this was a PR review (addressing Copilot or reviewer comments):**
+
+> **"Review complete. The review record has been written to `dev/[task-name]/[task-name]-review.md`. To generate the release QA plan, open a new chat with `@QA Writer` and attach all documents from `dev/[task-name]/`."**

@@ -51,7 +51,7 @@ Must NOT include:
 - Deployment steps or CI/CD pipeline instructions
 - Infrastructure provisioning details
 
-### ARCHITECTURE.md (root)
+### ARCHITECTURE.md (docs/)
 **Audience**: Developers
 **Purpose**: Visual and written map of the codebase structure and data flow
 
@@ -61,7 +61,7 @@ Must include:
 - Key design decisions (brief)
 - Any important external dependencies and how they integrate
 
-### CODEBASE_CONTEXT.md (root or docs/)
+### CODEBASE_CONTEXT.md (docs/)
 **Audience**: AI agents and LLMs
 **Purpose**: Dense, structured facts about the repo so agents can orient in one read
 
@@ -72,7 +72,17 @@ Format guidelines:
 - Include a "Do not" section: anti-patterns, things that look right but are wrong
 - Keep it under 300 lines — ruthlessly omit anything an agent can infer from code
 
-### TROUBLESHOOTING.md (root or docs/)
+### LOCAL_DEVELOPMENT.md (docs/)
+**Audience**: Developers
+**Purpose**: Guide for setting up a local dev environment, running the project, and testing
+
+Must include:
+- Prerequisites (software, versions, environment variables)
+- Step-by-step local setup instructions
+- How to run the project locally
+- How to run tests and interpret results
+
+### TROUBLESHOOTING.md (docs/)
 **Audience**: Developers
 **Purpose**: Indexed reference for common errors and their resolutions
 

@@ -1,5 +1,5 @@
 ---
-name: Implementer
+name: Feature Implementer
 description: "Use when: implementing a feature from a plan, writing code, building functionality, executing on requirements, or coding from acceptance criteria. Produces traceable implementation that passes review."
 tools: [read, edit, search, execute, todo, run in terminal]
 model: "Claude Opus 4 (Copilot)"
@@ -99,7 +99,7 @@ Handle explicitly:
 
 After all ACs are implemented and tests pass, write a structured implementation record to the task's output directory. This file is the primary handoff artifact to the Reviewer.
 
-1. **Determine the output path**: Use the same `dev/active/[task-name]/` directory as the plan documents. If plan documents were provided as attachments, match the `[task-name]` from their path. If no plan directory exists, create one using a slug of the task description.
+1. **Determine the output path**: Use the same `dev/[task-name]/` directory as the plan documents. If plan documents were provided as attachments, match the `[task-name]` from their path. If no plan directory exists, create one using a slug of the task description.
 2. **Write `[task-name]-implementation.md`** using the exact template below.
 3. **Do not skip this step** — the Reviewer depends on this file to scope its review.
 
@@ -165,7 +165,7 @@ When implementation is complete, you produce TWO outputs:
 
 ### A. Written Artifact: `[task-name]-implementation.md`
 
-This is the **primary deliverable**. Write it to `dev/active/[task-name]/` as described in Section F above. The Reviewer agent consumes this file to scope its review. It must be written before the chat summary below.
+This is the **primary deliverable**. Write it to `dev/[task-name]/` as described in Section F above. The Reviewer agent consumes this file to scope its review. It must be written before the chat summary below.
 
 ### B. Chat Summary
 
@@ -191,7 +191,7 @@ Map each AC to what was done:
 - [ ] Edge cases and error handling covered
 - [ ] Observability added where needed
 - [ ] Tests cover acceptance criteria
-- [ ] Implementation record written to `dev/active/[task-name]/`
+- [ ] Implementation record written to `dev/[task-name]/`
 
 #### 3. Deviations (if any)
 
@@ -210,4 +210,4 @@ If something couldn't be fully implemented:
 #### 5. Next Step
 
 Tell the user:
-> **"Implementation complete. To review, open a new chat with `@Reviewer` and attach the plan documents and `dev/active/[task-name]/[task-name]-implementation.md`."**
+> **"Implementation complete. To review, open a new chat with `@Reviewer` and attach the plan documents and `dev/[task-name]/[task-name]-implementation.md`."**

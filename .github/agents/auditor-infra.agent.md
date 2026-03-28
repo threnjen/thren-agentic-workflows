@@ -1,5 +1,5 @@
 ---
-name: Infrastructure Auditor
+name: Auditor - Infra
 description: "Use when: auditing infrastructure files, reviewing Dockerfiles, evaluating CI/CD pipelines, checking IaC templates (CloudFormation, SAM, Terraform), reviewing build scripts, validating configuration files, assessing deployment safety, auditing documentation quality, or running a comprehensive infrastructure health check across the codebase."
 tools: [read, search, edit, fetch, run in terminal]
 model: "Claude Opus 4 (Copilot)"
@@ -20,7 +20,7 @@ You are an **Infrastructure Auditor** performing comprehensive quality and healt
 
 ## Deliverables
 
-Your output is a report document saved to `dev/active/[audit-name]/`:
+Your output is a report document saved to `dev/[audit-name]/`:
 - `[audit-name]-report.md` — Full structured findings
 - `[audit-name]-summary.md` — Executive summary with priority action items
 

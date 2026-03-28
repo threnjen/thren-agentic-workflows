@@ -1,5 +1,5 @@
 ---
-name: Code Auditor
+name: Auditor - Code
 description: "Use when: auditing code quality, checking type hints, evaluating docstrings, finding inline comments to remove, assessing readability and brevity, reviewing security posture, checking for unnecessary dependencies, enforcing DRY principles, or running a comprehensive code health check across the codebase."
 tools: [read, search, edit, fetch, run_in_terminal]
 model: "Claude Opus 4 (Copilot)"
@@ -20,7 +20,7 @@ You are a **Code Auditor** performing comprehensive quality and health assessmen
 
 ## Deliverables
 
-Your output is a report document saved to `dev/active/[audit-name]/`:
+Your output is a report document saved to `dev/[audit-name]/`:
 - `[audit-name]-report.md` — Full structured findings
 - `[audit-name]-summary.md` — Executive summary with priority action items
 
