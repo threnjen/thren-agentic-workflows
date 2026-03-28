@@ -35,14 +35,18 @@ Each agent produces structured output — plan documents, implementation summari
 
 ---
 
-## Available Agents (14)
+## Available Agents (15)
 
-### Planning & Implementation
+### Planning
 
 | Agent | Model | Purpose |
-|-------|-------|---------|
-| **Project Planner** | Opus | Create a project roadmap broken into phases that feed into the Feature Planner |
+|-------|-------|--------|
+| **Project Planner** | Opus | Create a project roadmap broken into phases that feed into the Phase Planner Iteration |
+| **Phase Planner Iteration** | Opus | Refine and deepen an individual Phase document before Feature Planner decomposition |
 | **Feature Planner** | Opus | Plan a feature with testable acceptance criteria, architecture fit, and a test strategy |
+
+### Implementation
+
 | **Feature Implementer** | Opus | Implement from an approved plan with strict traceability and TDD |
 | **Feature Reviewer** | Opus | Review implementation against a plan for accuracy, bugs, and completeness |
 
@@ -87,6 +91,9 @@ Each agent produces structured output — plan documents, implementation summari
 
 **Project Planner** (document-only — does not write code)
 > Give it a project scope or high-level goal. It iterates with you to produce a phased roadmap (`docs/phases/PHASES_OVERVIEW.md` and individual `docs/phases/PHASE_0N_[short-name].md` files). Each phase document is self-contained and designed to be handed off to the Feature Planner for decomposition into individual features. It will not create any files until you explicitly approve.
+
+**Phase Planner Iteration** (document-only — does not write code)
+> Give it a single Phase document (`docs/phases/PHASE_0N_[short-name].md`) from the Project Planner. It iterates with you to refine scope, probe edge cases, surface hidden dependencies, stress-test decomposition readiness, and walk through user flows — deepening the Phase document until it's fully ready for Feature Planner decomposition. It updates the Phase document in place and will not write changes until you explicitly approve. If iteration reveals that the overall project roadmap needs changes, it flags this and recommends returning to `@Project Planner`.
 
 **Feature Planner** (document-only — does not write code)
 > Give it a problem statement or spec. It scans the codebase for context, asks targeted questions, then writes a structured plan with numbered acceptance criteria, architecture analysis, edge-case identification, and a test strategy to `dev/[task-name]/`. It will not create any files until you explicitly approve.
@@ -140,14 +147,15 @@ The core development pipeline — plan, build, review, ship.
 | Step | Agent | Prompt | Attachments |
 |------|-------|--------|-------------|
 | 1 | **Project Planner** | Plan out the project scope and trajectory at a high level | Spec docs (optional) |
-| 2 | **Feature Planner** | Prepare implementation plans for individual features | High-level project plan Phase document or other spec doc |
-| 3 | **QA Writer** | "Write a QA skeleton for this feature" | Feature Planner docs output (`dev/[task-name]/`) |
-| 4 | **Feature Implementer** | "Implement the plan" | Feature Planner docs output |
-| 5 | **Feature Reviewer** | "Review the implementation" | Feature Planner docs output, Feature Implementer record, QA skeleton (`[task-name]-qa.md`) |
-| 6 | — | Push to GitHub and open PR with Copilot review | — |
-| 7 | **Feature Reviewer** | "Pull the PR Copilot review comments and address problems" | Feature Planner docs output, Feature Implementer record |
-| 8 | **QA Writer** | "Write the release QA plan for this feature" | All task docs in `dev/[task-name]/` |
-| 9 | **QA Analyst** | "Evaluate readiness for manual QA" | All task docs in `dev/[task-name]/` |
+| 2 | **Phase Planner Iteration** | Refine and deepen this Phase document | Individual Phase document (`docs/phases/PHASE_0N_*.md`) |
+| 3 | **Feature Planner** | Prepare implementation plans for individual features | Refined Phase document |
+| 4 | **QA Writer** | "Write a QA skeleton for this feature" | Feature Planner docs output (`dev/[task-name]/`) |
+| 5 | **Feature Implementer** | "Implement the plan" | Feature Planner docs output |
+| 6 | **Feature Reviewer** | "Review the implementation" | Feature Planner docs output, Feature Implementer record, QA skeleton (`[task-name]-qa.md`) |
+| 7 | — | Push to GitHub and open PR with Copilot review | — |
+| 8 | **Feature Reviewer** | "Pull the PR Copilot review comments and address problems" | Feature Planner docs output, Feature Implementer record |
+| 9 | **QA Writer** | "Write the release QA plan for this feature" | All task docs in `dev/[task-name]/` |
+| 10 | **QA Analyst** | "Evaluate readiness for manual QA" | All task docs in `dev/[task-name]/` |
 
 ### Pipeline 2: Test Suite Bootstrap
 
@@ -296,5 +304,5 @@ Each agent file is standalone. To use these agents in a different repository:
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each agent file works standalone — just copy the `.md` file into any project's `.github/agents/` directory.
 - **Read-only agents**: **Feature Reviewer**, **Auditor - Code**, **Auditor - Infra**, **Test Analyst**, and **QA Analyst** do not modify code. They analyze and report only.
-- **Approval-gated agents**: **Project Planner**, **Feature Planner**, **Test Analyst**, **Auditor - Code**, **Auditor - Infra**, and **QA Analyst** always present findings and ask for explicit approval before creating any files.
+- **Approval-gated agents**: **Project Planner**, **Phase Planner Iteration**, **Feature Planner**, **Test Analyst**, **Auditor - Code**, **Auditor - Infra**, and **QA Analyst** always present findings and ask for explicit approval before creating any files.
 - **Code-writing agents**: **Feature Implementer**, **Refactor**, **Test Writer**, and **Debugger - Frontend** have full tool access to create and modify files.
