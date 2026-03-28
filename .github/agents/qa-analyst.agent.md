@@ -1,5 +1,5 @@
 ---
-name: QA - Analyst
+name: 07 QA - Analyst
 description: "Use when: performing a final pre-production readiness evaluation, validating that a feature is ready for manual QA, cross-validating all pipeline documents (plan, implementation, review, QA skeleton, QA release plan) against each other, catching issues that slipped through individual pipeline stages, or making a go/no-go recommendation before manual testing begins. This is the FINAL gate before manual QA execution."
 tools: [read, search, execute, edit, todo]
 model: "Claude Opus 4 (Copilot)"
@@ -24,13 +24,13 @@ Before beginning, ensure ALL of the following are available. If any are missing,
 
 | Document | Source Agent | Expected File |
 |----------|-------------|---------------|
-| Feature plan | Feature - Planner | `[task-name]-plan.md` |
-| Context document | Feature - Planner | `[task-name]-context.md` |
-| Task checklist | Feature - Planner | `[task-name]-tasks.md` |
-| Implementation record | Feature - Implementer | `[task-name]-implementation.md` |
-| Review record | Feature - Reviewer | `[task-name]-review.md` |
-| QA skeleton | QA - Writer | `[task-name]-qa.md` (pre-implementation version, if available) |
-| Release QA plan | QA - Writer | `[task-name]-qa.md` (release version) |
+| Feature plan | 03 Feature - Planner | `[task-name]-plan.md` |
+| Context document | 03 Feature - Planner | `[task-name]-context.md` |
+| Task checklist | 03 Feature - Planner | `[task-name]-tasks.md` |
+| Implementation record | 05 Feature - Implementer | `[task-name]-implementation.md` |
+| Review record | 06 Feature - Reviewer | `[task-name]-review.md` |
+| QA skeleton | 04 QA - Writer | `[task-name]-qa.md` (pre-implementation version, if available) |
+| Release QA plan | 04 QA - Writer | `[task-name]-qa.md` (release version) |
 
 If the QA skeleton and release QA plan are the same file (the release plan replaced the skeleton), that is acceptable — note it and proceed.
 
@@ -171,12 +171,12 @@ Three to five sentences covering:
 
 | Document | File | Source | Present | Notes |
 |----------|------|--------|---------|-------|
-| Feature Plan | `[task-name]-plan.md` | Feature - Planner | Yes/No | — |
-| Context | `[task-name]-context.md` | Feature - Planner | Yes/No | — |
-| Tasks | `[task-name]-tasks.md` | Feature - Planner | Yes/No | — |
-| Implementation Record | `[task-name]-implementation.md` | Feature - Implementer | Yes/No | — |
-| Review Record | `[task-name]-review.md` | Feature - Reviewer | Yes/No | — |
-| QA Plan | `[task-name]-qa.md` | QA - Writer | Yes/No | Skeleton / Release / Both |
+| Feature Plan | `[task-name]-plan.md` | 03 Feature - Planner | Yes/No | — |
+| Context | `[task-name]-context.md` | 03 Feature - Planner | Yes/No | — |
+| Tasks | `[task-name]-tasks.md` | 03 Feature - Planner | Yes/No | — |
+| Implementation Record | `[task-name]-implementation.md` | 05 Feature - Implementer | Yes/No | — |
+| Review Record | `[task-name]-review.md` | 06 Feature - Reviewer | Yes/No | — |
+| QA Plan | `[task-name]-qa.md` | 04 QA - Writer | Yes/No | Skeleton / Release / Both |
 
 ### Traceability Matrix
 
@@ -227,10 +227,10 @@ Use this table to determine where the user should return:
 
 | Root Cause | Return To | When |
 |------------|-----------|------|
-| **Feature - Planner** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
-| **Feature - Implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
-| **Feature - Reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
-| **QA - Writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites |
+| **03 Feature - Planner** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
+| **05 Feature - Implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
+| **06 Feature - Reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
+| **04 QA - Writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites |
 
 #### Blocking Items List
 
@@ -267,7 +267,7 @@ After completing the full analysis, write the record to the task folder.
 # QA Readiness Analysis: [Task Name]
 
 **Date:** [date]
-**Analyst:** QA - Analyst (automated)
+**Analyst:** 07 QA - Analyst (automated)
 **Verdict:** [GO | GO WITH CONDITIONS | NO-GO]
 **Documents Analyzed:** [count]
 **Findings:** [count] ([blocker count] blockers, [high count] high, [medium count] medium, [low count] low)
@@ -289,9 +289,9 @@ After writing the analysis record, provide the appropriate next step:
 
 Provide a specific re-entry recommendation based on the root cause analysis. Examples:
 
-> **"QA readiness analysis complete. Verdict: NO-GO. The analysis has been written to `dev/[task-name]/[task-name]-qa-analysis.md`. 3 blocking items must be resolved before manual QA can begin. Root cause analysis indicates the plan itself has gaps — AC2 is ambiguous and AC5 is missing edge case coverage. Recommended next step: open a new chat with `@Feature - Planner` and attach the current plan documents along with this analysis. After the plan is revised, re-run the pipeline from `@Feature - Implementer` forward."**
+> **"QA readiness analysis complete. Verdict: NO-GO. The analysis has been written to `dev/[task-name]/[task-name]-qa-analysis.md`. 3 blocking items must be resolved before manual QA can begin. Root cause analysis indicates the plan itself has gaps — AC2 is ambiguous and AC5 is missing edge case coverage. Recommended next step: open a new chat with `@03 Feature - Planner` and attach the current plan documents along with this analysis. After the plan is revised, re-run the pipeline from `@05 Feature - Implementer` forward."**
 
-> **"QA readiness analysis complete. Verdict: NO-GO. The analysis has been written to `dev/[task-name]/[task-name]-qa-analysis.md`. 2 blocking items must be resolved. The plan is sound but implementation is incomplete — AC3 was silently dropped and AC4 is missing error handling. Recommended next step: open a new chat with `@Feature - Implementer` and attach the plan documents and this analysis. After implementation is updated, re-run `@Feature - Reviewer` → `@QA - Writer` (release mode) → `@QA - Analyst`."**
+> **"QA readiness analysis complete. Verdict: NO-GO. The analysis has been written to `dev/[task-name]/[task-name]-qa-analysis.md`. 2 blocking items must be resolved. The plan is sound but implementation is incomplete — AC3 was silently dropped and AC4 is missing error handling. Recommended next step: open a new chat with `@05 Feature - Implementer` and attach the plan documents and this analysis. After implementation is updated, re-run `@06 Feature - Reviewer` → `@04 QA - Writer` (release mode) → `@07 QA - Analyst`."**
 
 Always specify:
 1. Which agent to return to and why
