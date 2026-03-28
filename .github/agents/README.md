@@ -61,7 +61,7 @@ Each agent produces structured output — plan documents, implementation summari
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
-| **06 QA - Writer** | Opus | Write manual QA documents — auto-detects Pre-Implementation Skeleton (plan only) or Release QA Plan (plan + implementation + review) based on available documents |
+| **06 QA - Writer** | Opus | Write manual QA documents — Release QA Plan (plan + implementation + review) based on available documents |
 | **07 QA - Analyst** | Opus | Final pre-production readiness gate — cross-validates all pipeline documents and produces a go/no-go recommendation before manual QA begins |
 
 ### Code Quality
@@ -123,7 +123,7 @@ Each agent produces structured output — plan documents, implementation summari
 > Give it a problem or topic. It generates multiple search query variations, searches across GitHub issues, Stack Overflow, Reddit, forums, and docs, and compiles a structured findings report with sources.
 
 **06 QA - Writer** (document-only — does not modify code)
-> Give it a task folder. It auto-detects its mode from the available documents: with only plan docs, it produces a **Pre-Implementation QA Skeleton** — a high-level checklist of anticipated manual testing areas. With plan + implementation + review + code/tests, it produces a full **Release QA Plan** — an execution-ready checklist with concrete steps, expected results, and coverage gap analysis. If a skeleton already exists, the Release mode expands it into the final plan. Output goes to `dev/[task-name]/[task-name]-qa.md`.
+> Give it a task folder. With plan + implementation + review + code/tests, it produces a full **Release QA Plan** — an execution-ready checklist with concrete steps, expected results, and coverage gap analysis. Output goes to `dev/[task-name]/[task-name]-qa.md`.
 
 **07 QA - Analyst** (document-only — does not modify code or documents)
 > Give it the complete `dev/[task-name]/` folder containing all pipeline documents (plan, context, tasks, implementation record, review record, and QA plan). It performs an exhaustive cross-validation of every document against every other document, verifies the actual code matches the records, runs the test suite, and evaluates the QA plan's completeness. Produces a detailed readiness analysis with a **GO / GO WITH CONDITIONS / NO-GO** verdict, a full traceability matrix, a risk register, and actionable recommendations. This is the final automated gate before manual QA execution. Output goes to `dev/[task-name]/[task-name]-qa-analysis.md`.
@@ -149,7 +149,6 @@ The core development pipeline — plan, build, review, ship.
 | 1 | **01 Project - Planner** | Plan out the project scope and trajectory at a high level | Spec docs (optional) |
 | 2 | **02 Project - Phase Refiner** | "Refine and deepen this Phase document" | Individual Phase document (`docs/phases/PHASE_0N_*.md`) |
 | 3 | **03 Feature - Planner** | "Prepare implementation plans for individual features" | (`docs/phases/PHASE_0N_*.md`) |
-| 4 | **06 QA - Writer** | "Write a QA skeleton for this feature" | 03 Feature - Planner docs output (`dev/[task-name]/`) |
 | 5 | **04 Feature - Implementer** | "Implement the plan" | 03 Feature - Planner docs output (`dev/[task-name]/`) |
 | 6 | **05 Feature - Reviewer** | "Review the implementation" | 03 Feature - Planner docs output, 04 Feature - Implementer record, QA skeleton (`[task-name]-qa.md`) |
 | 7 | — | Push to GitHub and open PR with Copilot review | — |
