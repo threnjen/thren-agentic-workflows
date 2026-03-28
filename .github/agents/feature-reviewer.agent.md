@@ -1,7 +1,6 @@
 ---
 name: Feature Reviewer
 description: "Use when: reviewing code, checking implementation against requirements, auditing for bugs, evaluating code quality, or validating that implementation matches the plan. Provides structured code review."
-tools: [read, search, edit, github-pull-request_activePullRequest, github-pull-request_issue_fetch, get_changed_files, run_in_terminal, fetch, get_changed_files]
 model: "Claude Opus 4 (Copilot)"
 ---
 
