@@ -152,22 +152,22 @@ Ask the user targeted questions to build a complete picture. Focus on:
 8. **External context** — Any links, specs, designs, or reference material to review?
 9. **Multi-repo coordination** — Does this project span multiple repos (e.g., frontend + backend)? If so, which ones?
 
-Keep questions to the **minimum needed** to avoid wrong assumptions. Prefer questions that prevent rework later. Aim for no more than 10 questions total, and batch them rather than asking one at a time.
+Batch related questions when possible rather than asking one at a time. Multiple rounds of clarification are expected and encouraged — follow-up questions based on the user's answers are better than guessing, and challenging assumptions is a core part of this process.
 
 If the user provides external URLs, **fetch and review them** during this phase to inform the roadmap.
 
-### Phase 3: Present Roadmap (STOP HERE)
+### Phase 3: Present Roadmap (Iterate Until Ready)
 
 Present the complete roadmap to the user:
 - List all phases with names, ordering, dependencies, and brief descriptions
 - Explain your rationale for the phase boundaries
 - Highlight any decision points or alternatives you considered
 
-Then ask:
+Then invite the user to continue iterating:
 
-> **"I've drafted the roadmap with N phases. May I now write the planning documents to `docs/phases/`?"**
+> **"Here's the current roadmap with N phases. I'd love to keep refining this with you — let me know if you'd like to adjust scope, shift phase boundaries, explore alternatives, or dig into any phase further. When you feel ready, just say so and I'll write the planning documents to `docs/phases/`.**"
 
-**WAIT for the user to explicitly approve before proceeding.** Incorporate any feedback before writing.
+Incorporate all feedback and loop back through the roadmap as many times as needed. Do not write files until the user explicitly signals they are done iterating.
 
 ### Phase 4: Write Documents (Only After Approval)
 

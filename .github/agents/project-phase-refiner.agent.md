@@ -133,16 +133,16 @@ Present a structured assessment to the user:
 
 Work through each gap area with the user. For each round:
 
-1. **Ask focused questions** — no more than 5 per round, targeting a specific focus area
+1. **Ask focused questions** — target a specific focus area per round, and ask as many as needed to fully probe it
 2. **Propose specific enrichments** — show exactly what you'd add or change in the document
 3. **Get feedback** — incorporate the user's answers and corrections
-4. **Move to the next area** — once a focus area is resolved, advance to the next one
+4. **Check in before moving on** — after each round, explicitly invite further questions or new concerns before advancing to the next focus area
 
-Keep rounds tight and focused. Don't try to cover everything at once.
+Keep rounds tight and focused — address one area at a time, but expect and welcome many rounds. After working through all initially identified gaps, explicitly invite the user to raise anything else before moving forward.
 
-### Phase 4: Present Refined Document (STOP HERE)
+### Phase 4: Present Refined Document (Iterate Until Ready)
 
-Once all focus areas have been addressed, present the complete refined Phase document to the user. Show what changed:
+After working through the identified gaps and any additional concerns the user raises, present the complete refined Phase document when the user indicates they're ready to move forward. Show what changed:
 
 > **Refinement Summary**:
 > - **Scope**: [What was clarified, added, or narrowed]
@@ -150,9 +150,9 @@ Once all focus areas have been addressed, present the complete refined Phase doc
 > - **Dependencies**: [What was surfaced or resolved]
 > - **Decomposition guidance**: [How the 03 Feature - Planner notes were improved]
 >
-> **May I now update `docs/phases/PHASE_0N_[short-name].md` with these refinements?**
+> **Let me know if there's anything you'd like to revisit, adjust, or dig into further. When you feel the phase is ready, just say so and I'll update the document.**
 
-**WAIT for the user to explicitly approve before writing.**
+Do not write the file until the user explicitly signals they are done iterating.
 
 ### Phase 5: Write Updated Document (Only After Approval)
 
