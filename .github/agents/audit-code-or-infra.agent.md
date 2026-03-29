@@ -1,8 +1,8 @@
 ---
-name: Audit - Code or Infra
-description: "Use when: running a full audit-then-fix workflow, performing a code or infrastructure audit and then implementing the fixes, orchestrating an end-to-end audit with optional automated remediation, or requesting an audit with follow-through on corrections."
+name: Audit - Code, Infra, Refactor
+description: "Use when: performing a code, infra, or refactor audit and then implementing the fixes, orchestrating an end-to-end audit with optional automated remediation, or requesting an audit with follow-through on corrections."
 tools: [agent, read, search, todo]
-agents: [Auditor - Code, Auditor - Infra, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Phase - Final Review]
+agents: [Auditor - Code, Auditor - Infra, Auditor - Refactor, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Prod Code Review]
 model: "Claude Opus 4 (Copilot)"
 ---
 
@@ -31,6 +31,7 @@ Ask the user:
 >
 > 1. **CODE** — Audit application source code (type hints, docstrings, security, readability, DRY, etc.)
 > 2. **INFRA** — Audit infrastructure files (Dockerfiles, CI/CD, IaC, config, docs, etc.)
+> 3. **REFACTOR** — Audit codebase structure and architecture (module organization, dependency graphs, component decomposition, coupling, separation of concerns)
 
 Wait for the user's answer before proceeding. Do not assume.
 
@@ -58,6 +59,12 @@ Invoke the **Auditor - Code** subagent:
 Invoke the **Auditor - Infra** subagent:
 
 > "Perform a comprehensive infrastructure audit of [scope]. Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
+
+#### If REFACTOR audit:
+
+Invoke the **Auditor - Refactor** subagent:
+
+> "Perform a comprehensive structural and architectural audit of [scope]. Analyze module organization, import/dependency graphs, component decomposition, coupling and cohesion, separation of concerns, and restructuring opportunities. Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
 
 After the subagent returns:
 1. Verify the report and summary files exist in `dev/[audit-name]/`
@@ -127,7 +134,7 @@ Update the todo list to mark this task as completed. Proceed to the next task.
 
 ### Phase 7: Final Review
 
-After ALL tasks are complete, invoke the **Phase - Final Review** subagent:
+After ALL tasks are complete, invoke the **Prod Code Review** subagent:
 
 > "Perform the final pre-production readiness analysis for the audit remediation. The following task folders contain all pipeline documents: [list all dev/[audit-name]/[task-name]/ paths]. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `dev/[audit-name]/[audit-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
 

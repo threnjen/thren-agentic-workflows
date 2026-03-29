@@ -50,7 +50,7 @@ The core development workflow. **You interact with steps 1–3. Everything else 
 │  │  ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ │                │
 │  │  Loop back for next feature                  │                │
 │  └──────────────────────────────────────────────┘                │
-│  Phase - Final Review   → GO / NO-GO verdict                     │
+│  Prod Code Review   → GO / NO-GO verdict                     │
 │                                                                   │
 │  ──► Report back to you: "Phase complete. Ready for PR."         │
 └───────────────────────────────────────────────────────────────────┘
@@ -85,7 +85,7 @@ Interactive — you iterate to probe edge cases, dependencies, and decomposition
    - **Implement** → Red-Green-Refactor TDD, writes implementation record
    - **Review** → Finds bugs, applies fixes, writes review record
    - **QA Plan** → Writes manual QA checklist for non-automatable testing
-3. Runs the **Phase - Final Review** across all features
+3. Runs the **Prod Code Review** across all features
 4. Reports the verdict back to you
 
 **After completion:** Push the branch and open a PR for final human review.
@@ -99,10 +99,10 @@ Step 1: 01 Project - Planner    → Phase documents
 Step 2: 02 Phase - Refiner       → Refined phase document
 Step 3: Feature - Decomposer     → Feature plans with acceptance criteria
 Step 4: (you write the code)
-Step 5: Phase - Final Review     → Validates your code against the plans
+Step 5: Prod Code Review     → Validates your code against the plans
 ```
 
-**Feature - Decomposer** gives you structured plans with numbered acceptance criteria, test strategy, and architecture analysis in `dev/[task-name]/` — the same plans the automated pipeline uses. Implement against them at your own pace, then run **Phase - Final Review** to validate your work.
+**Feature - Decomposer** gives you structured plans with numbered acceptance criteria, test strategy, and architecture analysis in `dev/[task-name]/` — the same plans the automated pipeline uses. Implement against them at your own pace, then run **Prod Code Review** to validate your work.
 
 You can also skip straight to Step 3 if you already have a clear idea of what to build — just describe it to the Feature - Decomposer directly.
 
@@ -118,7 +118,7 @@ You can also skip straight to Step 3 if you already have a clear idea of what to
 | **02 Phase - Refiner** | Opus | Refine and deepen an individual Phase document |
 | **03 Phase - Execute** | Opus | Orchestrate full phase execution — decompose, implement, review, QA |
 | **Feature - Decomposer** | Opus | Decompose a phase into features with structured plans (also used in manual path) |
-| **Phase - Final Review** | Opus | Final pre-production readiness gate (also usable standalone) |
+| **Prod Code Review** | Opus | Final pre-production readiness gate (also usable standalone) |
 | **Test - Writer** | Opus | Bootstrap a test suite from scratch for untested code |
 | **Test - Analyst** | Opus | Evaluate an existing test suite for redundancy, coverage gaps, and consolidation |
 | **Auditor - Code** | Opus | Comprehensive code quality, security, and health audit — report only |
@@ -150,7 +150,7 @@ These agents are not visible in the picker. They run automatically as part of th
 > Give it a single Phase document from the 01 Project - Planner. It iterates with you to refine scope, probe edge cases, surface hidden dependencies, stress-test decomposition readiness, and walk through user flows — deepening the Phase document until it's fully ready for automated execution. It updates the Phase document in place and will not write changes until you explicitly approve.
 
 **03 Phase - Execute** (orchestrator — delegates to subagents)
-> Give it a refined Phase document. It decomposes the phase into features, then runs the implement → review → QA cycle for each feature automatically. After all features complete, it runs the Phase - Final Review and reports GO / NO-GO back to you. No user interaction required after launch.
+> Give it a refined Phase document. It decomposes the phase into features, then runs the implement → review → QA cycle for each feature automatically. After all features complete, it runs the Prod Code Review and reports GO / NO-GO back to you. No user interaction required after launch.
 
 **Feature - Decomposer** (document-only — does not write code)
 > Give it a refined Phase document (or describe a feature directly). It scans the codebase for context and writes structured plans with numbered acceptance criteria, architecture analysis, and test strategy to `dev/[task-name]/` for each independent feature. In standalone mode, it presents the decomposition for your review before writing. Also runs automatically as part of the Phase - Execute pipeline.
@@ -161,7 +161,7 @@ These agents are not visible in the picker. They run automatically as part of th
 
 **Feature - QA Writer** *(hidden subagent)* — Reads all pipeline docs, identifies what can't be verified by automated tests, and writes `[task-name]-qa.md` — an execution-ready checklist with concrete steps and expected results.
 
-**Phase - Final Review** (document-only — does not modify code)
+**Prod Code Review** (document-only — does not modify code)
 > Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Can be invoked standalone or automatically by the orchestrator.
 
 **Test - Writer** (writes test code only — does not modify source)
@@ -251,7 +251,7 @@ These pipelines use agents manually in sequence. Each step runs in a new chat co
 Not everything needs a pipeline. These agents work well on their own:
 
 - **Feature - Decomposer** — Decompose any project idea or phase doc into structured feature plans
-- **Phase - Final Review** — Point at any `dev/[task-name]/` folder for an independent readiness check
+- **Prod Code Review** — Point at any `dev/[task-name]/` folder for an independent readiness check
 - **Auditor - Code** or **Auditor - Infra** — Run anytime for a health check
 - **Test - Analyst** — Evaluate test quality during maintenance windows
 - **Web Researcher** — Research a technical question or debug a tricky issue
@@ -274,7 +274,7 @@ dev/[task-name]/
 └── [task-name]-qa.md                # Manual QA checklist (Feature - QA Writer)
 ```
 
-The **Phase - Final Review** writes its readiness analysis to:
+The **Prod Code Review** writes its readiness analysis to:
 
 ```
 dev/[phase-name]-qa-analysis.md      # GO/NO-GO verdict, traceability matrix, risk register
@@ -317,6 +317,6 @@ For the project pipeline, copy all files including the hidden subagents. For sta
 - **Self-contained**: Each agent file works standalone — just copy the `.md` file into any project's `.github/agents/` directory.
 - **Orchestrator pattern**: **03 Phase - Execute** delegates to hidden subagents with `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/[task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
-- **Read-only agents**: **Phase - Final Review**, **Auditor - Code**, **Auditor - Infra**, and **Test - Analyst** do not modify code. They analyze and report only.
+- **Read-only agents**: **Prod Code Review**, **Auditor - Code**, **Auditor - Infra**, and **Test - Analyst** do not modify code. They analyze and report only.
 - **Approval-gated agents**: **01 Project - Planner** and **02 Phase - Refiner** always present findings and ask for explicit approval before creating files.
 - **Code-writing agents**: **Refactor**, **Test - Writer**, **Debugger - Frontend**, and **Debugger - Backend** have full tool access to create and modify files.

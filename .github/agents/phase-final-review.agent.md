@@ -1,5 +1,5 @@
 ---
-name: Phase - Final Review
+name: Prod Code Review
 description: "Use when: performing a final pre-production readiness evaluation for an entire phase, cross-validating all pipeline documents (plan, implementation, review, QA release plan) across all features in the phase, catching issues that slipped through individual pipeline stages, or making a go/no-go recommendation before manual testing begins. This is the FINAL gate before manual QA execution and release."
 tools: [read, search, execute, edit, todo]
 model: "Claude Opus 4 (Copilot)"
@@ -267,7 +267,7 @@ After completing the full analysis, write the record to the task folder.
 # QA Readiness Analysis: [Task Name]
 
 **Date:** [date]
-**Analyst:** Phase - Final Review (automated)
+**Analyst:** Prod Code Review (automated)
 **Verdict:** [GO | GO WITH CONDITIONS | NO-GO]
 **Documents Analyzed:** [count]
 **Findings:** [count] ([blocker count] blockers, [high count] high, [medium count] medium, [low count] low)

@@ -2,7 +2,7 @@
 name: 03 Phase - Execute
 description: "Use when: executing a refined phase end-to-end, automating the full feature development loop, or shipping all features in a phase without manual intervention. Takes a refined Phase document and orchestrates decomposition, implementation, review, and QA for every feature — then runs the final phase-level review."
 tools: [agent, read, search, todo, execute]
-agents: [Feature - Decomposer, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Phase - Final Review]
+agents: [Feature - Decomposer, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Prod Code Review]
 model: "Claude Opus 4 (Copilot)"
 ---
 
@@ -79,7 +79,7 @@ Update the todo list to mark this feature as completed. Proceed to the next feat
 
 ### Step 3: Phase Final Review
 
-After ALL features are complete, invoke the **Phase - Final Review** subagent:
+After ALL features are complete, invoke the **Prod Code Review** subagent:
 
 > "Perform the final pre-production readiness analysis for the phase. The following feature task folders contain all pipeline documents: [list all dev/[task-name]/ paths]. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
 

@@ -153,7 +153,7 @@ All other stages follow the standard format:
 
 **Standalone mode:** Present the decomposition and plan summaries for user review. After writing, tell the user:
 
-> **"Feature plans written to `dev/[task-name]/` for each feature. You can now implement these yourself, or hand them to `@03 Phase - Execute` for automated implementation. When you're done, run `@Phase - Final Review` to validate your work against the plans."**
+> **"Feature plans written to `dev/[task-name]/` for each feature. You can now implement these yourself, or hand them to `@03 Phase - Execute` for automated implementation. When you're done, run `@Prod Code Review` to validate your work against the plans."**
 
 ## Quality Checklist
 
