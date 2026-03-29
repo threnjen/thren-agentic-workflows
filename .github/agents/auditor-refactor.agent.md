@@ -171,22 +171,14 @@ Evaluate the codebase against ALL of the following:
 
 ## Output Format
 
-### Executive Summary
+Load the `audit-report-format` skill and follow its report structure (Executive Summary, Findings by Category table, Cross-Cutting Observations, Recommended Priority Order). Use the severity meanings defined above.
 
-- Total files audited
-- Findings by severity (Critical / High / Medium / Low)
-- Top 5 highest-priority structural issues
+In addition to the common sections, include these domain-specific sections:
+
+### Executive Summary Extension
+
+Add to the standard executive summary:
 - Architectural health score summary (organization, dependencies, decomposition, coupling, concerns, encapsulation)
-
-### Findings by Category
-
-For each category, present a table:
-
-#### [Category Name]
-
-| # | File(s) | Line(s) | Severity | Finding | Detail |
-|---|---------|---------|----------|---------|--------|
-| 1 | `services/user.py`, `api/routes.py` | — | High | Circular import | `user.py` imports `routes.py` which imports `user.py` via `auth` module |
 
 ### Dependency Graph Observations
 

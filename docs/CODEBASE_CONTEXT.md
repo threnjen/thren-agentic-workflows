@@ -8,6 +8,8 @@ Quick-reference for AI agents working on this repository.
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
 - 19 agent definitions in `.github/agents/` (9 user-facing, 10 hidden subagents)
+- 3 skills in `.github/skills/` (shared templates extracted from agents)
+- 1 instruction file in `.github/instructions/` (cross-cutting convention)
 - Users copy files into their own projects and customize them
 
 ## Folder Structure
@@ -18,6 +20,15 @@ README.md                       # Repo overview, usage instructions
   agents/
     README.md                   # Agent documentation, pipelines, and usage guide
     *.agent.md                  # 19 agent definition files
+  skills/
+    phase-document-writing/     # Phase Doc & Overview templates, quality checklist
+      SKILL.md
+    audit-report-format/        # Report structure, findings table, severity levels
+      SKILL.md
+    feature-plan-set/           # Three-file plan convention, sections A–F, stage format
+      SKILL.md
+  instructions/
+    dev-task-folder.instructions.md  # dev/[task-name]/ naming convention (applies to all agents)
 docs/
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
@@ -51,6 +62,22 @@ python/
 - All agents use `model: "Claude Opus 4 (Copilot)"` except Docs Writer (no model specified)
 - Orchestrators list their subagents in the `agents:` frontmatter field
 
+### Skills (.github/skills/)
+
+- Each skill is a `SKILL.md` file in its own named subdirectory
+- Skills have YAML frontmatter with `name` and `description`
+- Agents load skills by name at runtime — skills are not auto-loaded
+- Skills contain templates and formats that would otherwise be duplicated across agents
+- `phase-document-writing` — Phase Document Template + Phases Overview Template + quality checklist (used by Planner, Refiner)
+- `audit-report-format` — Report structure, findings table, severity levels, priority tiers (used by all 3 Auditors)
+- `feature-plan-set` — Three-file plan convention, sections A–F, stage format, decomposition rules (used by Decomposer)
+
+### Instructions (.github/instructions/)
+
+- Instruction files use `.instructions.md` extension with YAML frontmatter
+- The `applyTo` field is a glob pattern — matching agents receive the instruction automatically
+- `dev-task-folder.instructions.md` — Standardizes `dev/[task-name]/` naming; applies to `.github/agents/**`
+
 ## File Relationships
 
 - `nodejs/AGENTS.md` references `docs/STYLE_GUIDE.md` (relative to project root after copying)
@@ -58,6 +85,9 @@ python/
 - No cross-references between `nodejs/` and `python/` — they are independent
 - `.github/agents/README.md` documents all agents — keep it in sync when adding/removing agents
 - Orchestrator agent files reference their subagents by name in YAML `agents:` field
+- Agents reference skills by name in their instructions (e.g., "Load the `phase-document-writing` skill")
+- Skills are single-source-of-truth — agents do NOT duplicate skill content inline
+- Instruction files auto-load into agents matching their `applyTo` glob pattern
 
 ## Conventions
 
@@ -75,6 +105,9 @@ python/
 - **Adding a new language**: Create a new top-level folder (e.g., `go/`) with the same `AGENTS.md` + `docs/STYLE_GUIDE.md` structure
 - **Adding/removing an agent**: Update the agent file in `.github/agents/` AND update `.github/agents/README.md` to keep tables, descriptions, and pipelines current
 - **Adding a new orchestrator**: Add the orchestrator file, add its subagents (with `user-invocable: false`), and update the README agent tables
+- **Changing a shared template or format**: Edit the corresponding skill in `.github/skills/` — do NOT re-inline the content in agent files
+- **Adding a new skill**: Create `.github/skills/<name>/SKILL.md` with YAML frontmatter (`name`, `description`). Update agent files to reference it. Update ARCHITECTURE.md and this file.
+- **Adding a new instruction**: Create `.github/instructions/<name>.instructions.md` with `applyTo` glob. Update ARCHITECTURE.md and this file.
 - **Updating README.md**: Keep the structure tree, usage instructions, and comparison table current
 
 ## Do Not

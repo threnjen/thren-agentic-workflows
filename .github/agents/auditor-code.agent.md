@@ -219,34 +219,4 @@ Evaluate EVERY file against ALL of the following:
 
 ## Output Format
 
-### Executive Summary
-
-- Total files audited
-- Findings by severity (Critical / High / Medium / Low)
-- Top 5 highest-priority items
-
-### Findings by Category
-
-For each category, present a table:
-
-#### [Category Name]
-
-| # | File | Line(s) | Severity | Finding | Detail |
-|---|------|---------|----------|---------|--------|
-| 1 | `services/config.py` | L12-L15 | Medium | Missing type hints | `get_config()` has no parameter or return type annotations |
-
-### Cross-Cutting Observations
-
-Patterns that span multiple files:
-- Consistency issues observed across modules
-- DRY violations with locations of each duplicate
-- Library usage patterns that should be standardized
-
-### Recommended Priority Order
-
-Numbered list of what to address first, grouped by effort level:
-
-1. **Quick wins** — Low effort, high impact
-2. **Important fixes** — Security and correctness items
-3. **Improvement pass** — Type hints, docstrings, DRY cleanup
-4. **Polish** — Style, inline comment removal, minor readability
+Load the `audit-report-format` skill and follow its report structure (Executive Summary, Findings by Category table, Cross-Cutting Observations, Recommended Priority Order). Use the severity meanings defined above.

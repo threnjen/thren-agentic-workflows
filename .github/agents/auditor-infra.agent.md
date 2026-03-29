@@ -274,33 +274,4 @@ Evaluate EVERY file against ALL applicable categories:
 
 ## Output Format
 
-### Executive Summary
-
-- Total files audited
-- Findings by severity (Critical / High / Medium / Low)
-- Top 5 highest-priority items
-
-### Findings by Category
-
-For each category, present a table:
-
-#### [Category Name]
-
-| # | File | Line(s) | Severity | Finding | Detail |
-|---|------|---------|----------|---------|--------|
-| 1 | `Dockerfile` | L3 | High | Unversioned base image | Base image uses `latest` tag instead of a pinned version |
-
-### Cross-Cutting Observations
-
-Patterns that span multiple files:
-- Consistency issues observed across configuration files
-- DRY violations with locations of each duplicate
-- Security patterns that should be standardized
-
-### Recommended Priority Order
-
-Numbered list of what to address first, grouped by effort level:
-
-1. **Quick wins** — Low effort, high impact
-2. **Important fixes** — Security and deployment safety items
-3. **Improvement pass** — Best practices, documentation, DRY cleanup
+Load the `audit-report-format` skill and follow its report structure (Executive Summary, Findings by Category table, Cross-Cutting Observations, Recommended Priority Order). Use the severity meanings defined above.
