@@ -54,15 +54,15 @@ Exclude these from the QA plan—they belong in automated tests:
 
 ### Phase 1: Document Analysis (Read-Only)
 
-Read all available documents in the phase folder (`docs/phases/PHASE_xx/`):
+Read all available documents in the phase folder (`docs/phases/[phase-name]/`):
 
-1. **Phase summary** — `PHASE_xx_SUMMARY.md` for the full phase scope, objectives, and success criteria
+1. **Phase summary** — `[phase-name]_SUMMARY.md` for the full phase scope, objectives, and success criteria
 2. **Feature plan documents** — Extract acceptance criteria, requirements, and non-goals for each feature in the phase
 3. **Implementation records** — Identify changed files, new endpoints, UI components, integrations
 4. **Review documents** — Note flagged risks, edge cases, and reviewer concerns
 5. **Source code** — Scan changed files to understand actual behavior and integration points
 6. **Automated tests** — Run the existing test suite to see what passes, what fails, and what coverage exists. Inspect test files to understand exactly which behaviors are already verified by unit/integration tests
-7. **Existing QA documents** — Check whether `PHASE_xx-coverage-map-qa.md` and `PHASE_xx-qa.md` already exist in the phase folder. If they do, you are in **update mode** — read them carefully before proceeding so you can merge new coverage into the existing documents rather than replacing them
+7. **Existing QA documents** — Check whether `[phase-name]-coverage-map-qa.md` and `[phase-name]-qa.md` already exist in the phase folder. If they do, you are in **update mode** — read them carefully before proceeding so you can merge new coverage into the existing documents rather than replacing them
 
 Build a mental map of:
 - What changed (files, APIs, UI components) — across all features in the phase
@@ -88,11 +88,11 @@ Before proceeding, produce an **AC Coverage Map** — a table or list that class
 
 **If updating an existing coverage map:** Add new feature rows to the existing table. Do not remove or modify rows for previously documented features unless their automated coverage has changed.
 
-Write (or update) the QA coverage map at `docs/phases/PHASE_xx/PHASE_xx-coverage-map-qa.md`.
+Write (or update) the QA coverage map at `docs/phases/[phase-name]/[phase-name]-coverage-map-qa.md`.
 
 ### Phase 3: Write QA Document
 
-Write (or update) the QA document at `dev/[task-name]/[task-name]-qa.md`.
+Write (or update) the QA document at `docs/phases/[phase-name]/[phase-name]-QA.md`.
 
 **If a QA document already exists for this phase:** Do not replace it. Instead, merge the new feature coverage in:
 - Add new checklist sections under the relevant integration surfaces, or create new surface sections as needed
@@ -114,9 +114,9 @@ Write (or update) the QA document at `dev/[task-name]/[task-name]-qa.md`.
 
 ## References
 
-- Phase Summary: `PHASE_xx_SUMMARY.md`
-- Coverage Map: `PHASE_xx-coverage-map-qa.md`
-- Feature plans and implementation records: see `docs/phases/PHASE_xx/`
+- Phase Summary: `[phase-name]_SUMMARY.md`
+- Coverage Map: `[phase-name]-coverage-map-qa.md`
+- Feature plans and implementation records: see `docs/phases/[phase-name]/`
 
 ---
 

@@ -21,7 +21,7 @@ You do NOT write code, plans, reviews, or QA documents yourself. You coordinate 
 
 ## Required Input
 
-One refined Phase document: `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md`
+One refined Phase document: `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`
 
 Before starting, verify the phase document exists and read it to extract the phase name and scope.
 
@@ -31,7 +31,7 @@ Before starting, verify the phase document exists and read it to extract the pha
 
 Invoke the **Feature - Decomposer** subagent:
 
-> "Decompose the phase defined at `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` into independent features. For each feature, write the three-file plan set (`[task-name]-plan.md`, `[task-name]-context.md`, `[task-name]-tasks.md`) to `dev/[task-name]/`. Return the list of task-name folders you created."
+> "Decompose the phase defined at `docs/phases/[phase-name]/[phase-name]_SUMMARY.md` into independent features. For each feature, write the three-file plan set (`[task-name]-plan.md`, `[task-name]-context.md`, `[task-name]-tasks.md`) to `dev/[task-name]/`. Return the list of task-name folders you created."
 
 After the subagent returns:
 1. Parse the list of feature task names from its response
@@ -81,7 +81,7 @@ Update the todo list to mark this feature as completed. Proceed to the next feat
 
 After ALL features are complete, invoke the **Phase - Final Review** subagent:
 
-> "Perform the final pre-production readiness analysis for the phase. The following feature task folders contain all pipeline documents: [list all dev/[task-name]/ paths]. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `dev/[phase-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
+> "Perform the final pre-production readiness analysis for the phase. The following feature task folders contain all pipeline documents: [list all dev/[task-name]/ paths]. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
 
 ### Step 4: Report to User
 
@@ -91,7 +91,7 @@ After the Final Review subagent returns, present the results:
 
 > **Phase execution complete.**
 >
-> **Phase:** PHASE_0N [Name]
+> **Phase:** [phase-name] [Name]
 > **Features completed:** [count]
 > **Final verdict:** [GO / GO WITH CONDITIONS]
 >
