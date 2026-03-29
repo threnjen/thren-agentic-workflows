@@ -17,6 +17,13 @@ Claude Code reads `AGENTS.md` files at the root and in subdirectories of your pr
 ```
 .
 ├── README.md
+├── .github/
+│   └── agents/                # VS Code Copilot agent definitions
+│       ├── README.md          # Agent documentation, pipelines, and usage guide
+│       └── *.agent.md         # 19 agent files (9 user-facing, 10 hidden subagents)
+├── docs/
+│   ├── ARCHITECTURE.md        # Structure diagram and design decisions
+│   └── CODEBASE_CONTEXT.md    # Agent-oriented quick-reference
 ├── nodejs/
 │   ├── AGENTS.md              # Agent guidelines for Node.js/TypeScript projects
 │   └── docs/
@@ -24,7 +31,7 @@ Claude Code reads `AGENTS.md` files at the root and in subdirectories of your pr
 └── python/
     ├── AGENTS.md              # Agent guidelines for Python projects
     └── docs/
-        └── STYLE_GUIDE.md    # Python coding conventions
+        └── STYLE_GUIDE.md     # Python coding conventions
 ```
 
 ## Usage
@@ -92,5 +99,6 @@ Detailed, language-specific coding conventions covering:
 
 ## Further Reading
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — How the template files are structured and relate to each other
+- [.github/agents/README.md](.github/agents/README.md) — Full agent documentation: pipelines, usage, and what each agent does
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — How the template files and agents are structured and relate to each other
 - [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — Agent-oriented quick-reference for working on this repo
