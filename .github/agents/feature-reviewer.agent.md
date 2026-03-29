@@ -155,12 +155,11 @@ When reviewing a pull request (rather than local files), use the GitHub PR tools
 
 After completing the full review:
 
-1. Apply fixes for all **Blocker** and **High** severity issues directly
-2. Apply fixes for **Medium** issues that are straightforward (< 10 lines changed)
-3. Leave **Low** severity and complex Medium issues as documented findings
-4. Run the test suite after all fixes to verify no regressions
-5. Report each file edited
-6. Proceed to **Write Review Record** below
+1. Apply fixes for all **Blocker** and **High** and **Medium** severity issues directly
+2. Leave **Low** severity and complex Medium issues as documented findings
+3. Run the test suite after all fixes to verify no regressions
+4. Report each file edited
+5. Proceed to **Write Review Record** below
 
 If a fix would require significant rearchitecting (> 50 lines or crosses multiple modules), document it as an open issue rather than attempting the fix.
 
