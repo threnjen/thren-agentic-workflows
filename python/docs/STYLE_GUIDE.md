@@ -1,6 +1,6 @@
 ## Python Style
 
-*When to referrence*: When writing new modules, creating new classes, or unfamiliar with project conventions.
+*When to reference*: When writing new modules, creating new classes, or unfamiliar with project conventions.
 
 ### Logging
 - Use Python's `logging` module for all output
@@ -51,7 +51,7 @@
 - Required for public APIs
 - Use `X | None` not `Optional[X]`
 - Prefer `collections.abc` types for parameters
-- Use `typing` module for complext types
+- Use `typing` module for complex types
 
 ### Docstrings
 - Triple double quotes, summary ≤80 chars

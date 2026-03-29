@@ -29,8 +29,11 @@ flowchart TD
     Skills --> S1["phase-document-writing\n(Planner, Refiner)"]
     Skills --> S2["audit-report-format\n(3 Auditors)"]
     Skills --> S3["feature-plan-set\n(Decomposer)"]
+    Skills --> S4["implementation-pipeline-loop\n(Orchestrators)"]
 
     Instructions --> I1["dev-task-folder\n(all agents)"]
+    Instructions --> I2["orchestrator-conventions\n(3 orchestrators)"]
+    Instructions --> I3["read-only-agent\n(8 read-only agents)"]
 
     NodeDir --> NodeAgents[AGENTS.md<br/>Agent guidelines]
     NodeDir --> NodeDocs[docs/]
@@ -153,8 +156,7 @@ Skills (`.github/skills/<name>/SKILL.md`) extract shared templates and formats t
 |-------|---------|-----------------|
 | `phase-document-writing` | 01 Project - Planner, 02 Phase - Refiner | Phase Document Template, Phases Overview Template, quality checklist |
 | `audit-report-format` | Auditor - Code, Auditor - Infra, Auditor - Refactor | Report structure, findings table format, severity levels, priority tiers |
-| `feature-plan-set` | Feature - Decomposer | Three-file plan convention, plan sections A–F, stage format, decomposition rules |
-
+| `feature-plan-set` | Feature - Decomposer | Three-file plan convention, plan sections A–F, stage format, decomposition rules || `implementation-pipeline-loop` | Orchestrators (reference) | Standard Implement → Review → QA → Mark Complete cycle, prompt templates, error handling |
 ## Instructions
 
 Instructions (`.github/instructions/*.instructions.md`) inject conventions into agents via `applyTo` glob matching. Unlike skills (which agents load explicitly), instructions are loaded automatically when the agent's file path matches the `applyTo` pattern.
@@ -162,3 +164,5 @@ Instructions (`.github/instructions/*.instructions.md`) inject conventions into 
 | Instruction | Applies To | What It Does |
 |-------------|-----------|--------------|
 | `dev-task-folder` | `.github/agents/**` | Standardizes `dev/[task-name]/` naming and file suffix conventions |
+| `orchestrator-conventions` | 3 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
+| `read-only-agent` | 8 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |

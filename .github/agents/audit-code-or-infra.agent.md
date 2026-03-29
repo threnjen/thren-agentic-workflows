@@ -14,11 +14,7 @@ You do NOT perform audits, write code, write reviews, or write QA plans yourself
 
 - DO NOT perform the audit yourself — delegate to the appropriate auditor subagent
 - DO NOT write source code, test files, or configuration directly
-- DO NOT write plan documents, review records, or QA plans directly
-- DO NOT skip steps or reorder the pipeline — the sequence matters
-- DO NOT proceed past a subagent failure without attempting remediation
-- ALWAYS track progress using the todo tool
-- ALWAYS verify subagent outputs exist on disk before proceeding to the next step
+- DO NOT write review records or QA plans directly — delegate to subagents
 - ALWAYS ask the user before proceeding to the fix phase
 
 ## Workflow
@@ -165,19 +161,6 @@ After the Final Review subagent returns, present the results:
 Report the blocking items from the Final Review and recommend specific remediation. Do NOT retry automatically — the user should review the NO-GO findings before deciding how to proceed.
 
 ## Error Handling
-
-### Subagent Fails to Produce Expected Output
-
-If a subagent returns but the expected output file doesn't exist on disk:
-1. Re-invoke the subagent once with an explicit reminder about the expected output path
-2. If still missing after retry, report the failure to the user and stop
-
-### Review Reject Loop
-
-If the Reviewer returns "Changes Requested" twice for the same task:
-1. Log both review summaries
-2. Continue to QA and Final Review — the Final Review will surface the unresolved issues
-3. Note the unresolved review in the final report to the user
 
 ### Test Failures
 

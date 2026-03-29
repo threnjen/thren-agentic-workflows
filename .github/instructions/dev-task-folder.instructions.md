@@ -17,5 +17,6 @@ All pipeline subagents write their output to `dev/[task-name]/` directories. Use
 | `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results |
 | `-review.md` | Feature - Reviewer | Verdict, issues found, fixes applied |
 | `-qa.md` | Feature - QA Writer | Manual QA checklist |
+| `-coverage-map-qa.md` | Feature - QA Writer | AC coverage map (automated vs manual) |
 | `-report.md` | Auditor subagents | Full structured audit findings |
 | `-summary.md` | Auditor subagents | Executive summary with priority actions |

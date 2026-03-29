@@ -8,8 +8,8 @@ Quick-reference for AI agents working on this repository.
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
 - 19 agent definitions in `.github/agents/` (9 user-facing, 10 hidden subagents)
-- 3 skills in `.github/skills/` (shared templates extracted from agents)
-- 1 instruction file in `.github/instructions/` (cross-cutting convention)
+- 4 skills in `.github/skills/` (shared templates and patterns extracted from agents)
+- 3 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
 
 ## Folder Structure
@@ -27,8 +27,12 @@ README.md                       # Repo overview, usage instructions
       SKILL.md
     feature-plan-set/           # Three-file plan convention, sections A–F, stage format
       SKILL.md
+    implementation-pipeline-loop/ # Standard Implement → Review → QA loop for orchestrators
+      SKILL.md
   instructions/
-    dev-task-folder.instructions.md  # dev/[task-name]/ naming convention (applies to all agents)
+    dev-task-folder.instructions.md     # dev/[task-name]/ naming convention (applies to all agents)
+    orchestrator-conventions.instructions.md  # Shared orchestrator constraints (applies to 3 orchestrators)
+    read-only-agent.instructions.md     # No-modification + approval constraints (applies to 8 agents)
 docs/
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
@@ -71,12 +75,15 @@ python/
 - `phase-document-writing` — Phase Document Template + Phases Overview Template + quality checklist (used by Planner, Refiner)
 - `audit-report-format` — Report structure, findings table, severity levels, priority tiers (used by all 3 Auditors)
 - `feature-plan-set` — Three-file plan convention, sections A–F, stage format, decomposition rules (used by Decomposer)
+- `implementation-pipeline-loop` — Standard development cycle (Implement → Review → QA → Mark Complete) with prompt templates and error handling (referenced by orchestrators)
 
 ### Instructions (.github/instructions/)
 
 - Instruction files use `.instructions.md` extension with YAML frontmatter
 - The `applyTo` field is a glob pattern — matching agents receive the instruction automatically
 - `dev-task-folder.instructions.md` — Standardizes `dev/[task-name]/` naming; applies to `.github/agents/**`
+- `orchestrator-conventions.instructions.md` — Progress tracking, output verification, pipeline discipline, review reject loop; applies to 3 orchestrators
+- `read-only-agent.instructions.md` — No codebase modification + approval-before-writing; applies to 8 read-only agents (with subagent exception)
 
 ## File Relationships
 

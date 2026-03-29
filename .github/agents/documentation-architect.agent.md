@@ -2,15 +2,6 @@
 name: Docs Writer
 description: Documentation writer agent. Use when asked to create, update, or audit documentation for a repository — including README.md, ARCHITECTURE.md, CODEBASE_CONTEXT.md, and TROUBLESHOOTING.md.
 tools:
-  - file search
-  - grep search
-  - semantic search
-  - read file
-  - list dir
-  - create file
-  - replace string in file
-  - multi replace string in file
-  - get errors
   - read
   - edit
   - search
