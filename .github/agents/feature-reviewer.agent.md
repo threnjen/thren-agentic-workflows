@@ -156,7 +156,7 @@ When reviewing a pull request (rather than local files), use the GitHub PR tools
 After completing the full review:
 
 1. Apply fixes for all **Blocker** and **High** and **Medium** severity issues directly
-2. Leave **Low** severity and complex Medium issues as documented findings
+2. Leave **Low** severity issues as documented findings
 3. Run the test suite after all fixes to verify no regressions
 4. Report each file edited
 5. Proceed to **Write Review Record** below
