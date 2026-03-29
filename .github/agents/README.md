@@ -1,6 +1,6 @@
 # Agents
 
-Specialized agents for structured software development workflows. The core workflow uses an **orchestrator + subagent** pattern — you interact with 3 agents, and the orchestrator drives the rest automatically.
+Specialized agents for structured software development workflows. The core workflow uses an **orchestrator + subagent** pattern — you interact with a few agents, and the orchestrator drives the rest automatically. A **manual implementation path** is also available for users who prefer to write their own code.
 
 ---
 
@@ -90,6 +90,22 @@ Interactive — you iterate to probe edge cases, dependencies, and decomposition
 
 **After completion:** Push the branch and open a PR for final human review.
 
+### Manual Implementation Path
+
+Prefer to write your own code? Use the planning agents, then implement yourself:
+
+```
+Step 1: 01 Project - Planner    → Phase documents
+Step 2: 02 Phase - Refiner       → Refined phase document
+Step 3: Feature - Decomposer     → Feature plans with acceptance criteria
+Step 4: (you write the code)
+Step 5: Phase - Final Review     → Validates your code against the plans
+```
+
+**Feature - Decomposer** gives you structured plans with numbered acceptance criteria, test strategy, and architecture analysis in `dev/[task-name]/` — the same plans the automated pipeline uses. Implement against them at your own pace, then run **Phase - Final Review** to validate your work.
+
+You can also skip straight to Step 3 if you already have a clear idea of what to build — just describe it to the Feature - Decomposer directly.
+
 ---
 
 ## Available Agents
@@ -101,6 +117,7 @@ Interactive — you iterate to probe edge cases, dependencies, and decomposition
 | **01 Project - Planner** | Opus | Create a project roadmap broken into phases |
 | **02 Phase - Refiner** | Opus | Refine and deepen an individual Phase document |
 | **03 Phase - Execute** | Opus | Orchestrate full phase execution — decompose, implement, review, QA |
+| **Feature - Decomposer** | Opus | Decompose a phase into features with structured plans (also used in manual path) |
 | **Phase - Final Review** | Opus | Final pre-production readiness gate (also usable standalone) |
 | **Test - Writer** | Opus | Bootstrap a test suite from scratch for untested code |
 | **Test - Analyst** | Opus | Evaluate an existing test suite for redundancy, coverage gaps, and consolidation |
@@ -118,7 +135,6 @@ These agents are not visible in the picker. They run automatically as part of th
 
 | Agent | Purpose |
 |-------|---------|
-| **Feature - Decomposer** | Decompose a phase into independent features with 3-file plan sets |
 | **Feature - Implementer** | Implement a feature plan using Red-Green-Refactor TDD |
 | **Feature - Reviewer** | Review implementation, apply fixes, produce review record |
 | **Feature - QA Writer** | Write manual QA plan for non-automatable test cases |
@@ -136,7 +152,8 @@ These agents are not visible in the picker. They run automatically as part of th
 **03 Phase - Execute** (orchestrator — delegates to subagents)
 > Give it a refined Phase document. It decomposes the phase into features, then runs the implement → review → QA cycle for each feature automatically. After all features complete, it runs the Phase - Final Review and reports GO / NO-GO back to you. No user interaction required after launch.
 
-**Feature - Decomposer** *(hidden subagent)* — Reads a phase doc, scans the codebase for context, and writes structured plans with numbered acceptance criteria, architecture analysis, and test strategy to `dev/[task-name]/` for each independent feature.
+**Feature - Decomposer** (document-only — does not write code)
+> Give it a refined Phase document (or describe a feature directly). It scans the codebase for context and writes structured plans with numbered acceptance criteria, architecture analysis, and test strategy to `dev/[task-name]/` for each independent feature. In standalone mode, it presents the decomposition for your review before writing. Also runs automatically as part of the Phase - Execute pipeline.
 
 **Feature - Implementer** *(hidden subagent)* — Reads plan docs from `dev/[task-name]/`, implements each acceptance criterion using Red-Green-Refactor TDD, and writes `[task-name]-implementation.md` mapping changes to acceptance criteria.
 
@@ -233,6 +250,7 @@ These pipelines use agents manually in sequence. Each step runs in a new chat co
 
 Not everything needs a pipeline. These agents work well on their own:
 
+- **Feature - Decomposer** — Decompose any project idea or phase doc into structured feature plans
 - **Phase - Final Review** — Point at any `dev/[task-name]/` folder for an independent readiness check
 - **Auditor - Code** or **Auditor - Infra** — Run anytime for a health check
 - **Test - Analyst** — Evaluate test quality during maintenance windows
