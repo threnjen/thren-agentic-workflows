@@ -4,7 +4,7 @@
 
 This is a static template repository — it contains no runnable code. It provides two things:
 
-1. **AGENTS.md and style guide templates** that configure Claude Code's behavior when copied into a target project
+1. **AGENTS.md and style guide templates** that configure GitHub Copilot's behavior when copied into a target project
 2. **VS Code Copilot agent definitions** (`.github/agents/`) that provide specialized development workflow agents
 
 ## Template Structure
@@ -12,7 +12,7 @@ This is a static template repository — it contains no runnable code. It provid
 %% Shows how template files and agent definitions are organized
 ```mermaid
 flowchart TD
-    Root[claude-docs-source-of-truth]
+    Root[github-agents-source-of-truth]
     Root --> GH[.github/]
     Root --> NodeDir[nodejs/]
     Root --> PyDir[python/]
@@ -53,7 +53,7 @@ Each language folder contains a two-file system:
 
 ### AGENTS.md (Primary)
 
-The main instruction file that Claude Code discovers and reads automatically. It defines:
+The main instruction file that GitHub Copilot discovers and reads automatically. It defines:
 
 - **Workflow rules** — TDD process, commit standards, when to stop and reassess
 - **Quality gates** — What must be true before every commit
@@ -80,8 +80,8 @@ flowchart LR
     Customize --> AgentsFile[AGENTS.md at project root]
     Customize --> StyleFile[docs/STYLE_GUIDE.md]
     Customize --> AgentDefs[.github/agents/*.agent.md]
-    AgentsFile -->|auto-discovered by| Claude[Claude Code]
-    StyleFile -->|loaded on demand by| Claude
+    AgentsFile -->|auto-discovered by| Copilot[GitHub Copilot]
+    StyleFile -->|loaded on demand by| Copilot
     AgentDefs -->|discovered by| VSCode[VS Code Copilot Chat]
 ```
 

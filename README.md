@@ -1,10 +1,10 @@
-# claude-docs-source-of-truth
+# github-agents-source-of-truth
 
-Opinionated, ready-to-use `AGENTS.md` and style guide templates that standardize how [Claude Code](https://docs.anthropic.com/en/docs/claude-code) behaves in your Node.js and Python projects.
+Opinionated, ready-to-use `AGENTS.md` and style guide templates that standardize how [GitHub Copilot](https://docs.github.com/en/copilot) behaves in your Node.js and Python projects.
 
 ## Why This Exists
 
-Claude Code reads `AGENTS.md` files at the root and in subdirectories of your project to learn coding conventions, workflow rules, and quality standards. Writing these from scratch for every repo is tedious and error-prone. This template repo gives you a tested starting point covering:
+GitHub Copilot reads `AGENTS.md` files at the root and in subdirectories of your project to learn coding conventions, workflow rules, and quality standards. Writing these from scratch for every repo is tedious and error-prone. This template repo gives you a tested starting point covering:
 
 - Coding principles and TDD workflow
 - Language-specific style conventions (TypeScript/Node.js and Python)
@@ -57,15 +57,15 @@ Edit the copied files to match your project's specifics:
 - **AGENTS.md** — Adjust dependency tooling, testing framework preferences, or commit conventions to match your team's workflow.
 - **docs/STYLE_GUIDE.md** — Modify naming rules, import ordering, or style preferences to align with your existing codebase.
 
-### 3. Use with Claude Code
+### 3. Use with GitHub Copilot
 
-Once the files are in your project, Claude Code automatically discovers and follows them. No additional configuration is needed.
+Once the files are in your project, GitHub Copilot automatically discovers and follows them. No additional configuration is needed.
 
 ## What's in Each File
 
 ### AGENTS.md
 
-The core instructions file that Claude Code reads. Both language variants share a common structure:
+The core instructions file that GitHub Copilot reads. Both language variants share a common structure:
 
 | Section | Purpose |
 |---|---|

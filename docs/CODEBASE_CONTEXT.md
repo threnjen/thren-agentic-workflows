@@ -37,11 +37,11 @@ docs/
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
 nodejs/
-  AGENTS.md                     # Claude Code instructions for Node.js/TS projects
+  AGENTS.md                     # GitHub Copilot instructions for Node.js/TS projects
   docs/
     STYLE_GUIDE.md              # Node.js/TS coding conventions (loaded on demand)
 python/
-  AGENTS.md                     # Claude Code instructions for Python projects
+  AGENTS.md                     # GitHub Copilot instructions for Python projects
   docs/
     STYLE_GUIDE.md              # Python coding conventions (loaded on demand)
 ```

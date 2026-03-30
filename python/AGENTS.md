@@ -63,7 +63,7 @@
 - Use `--no-verify` to bypass hooks
 - Disable tests instead of fixing them
 - Commit code that doesn't compile
-- Reference "Claude" or "AI-generated" in messages
+- Reference "Copilot" or "AI-generated" in messages
 
 ### Decision Priority
 Testability → Readability → Consistency → Simplicity → Reversibility
