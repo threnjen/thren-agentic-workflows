@@ -146,7 +146,7 @@ They diverge on:
 - **Orchestrator + subagent pattern for agents**: Complex workflows are decomposed into focused subagents (marked `user-invocable: false`) coordinated by orchestrators. This keeps each agent's instructions small and prevents unintended user interaction with intermediate pipeline steps.
 - **Shared subagents across orchestrators**: Feature - Implementer and Feature - Reviewer are reused by Phase - Execute, the Audit orchestrator, and the Test orchestrator — avoiding duplication of the implementation/review workflow.
 - **Skills for shared templates**: When multiple agents use identical templates or report formats, those are extracted into `.github/skills/` as single-source-of-truth references. Agents load the skill at runtime instead of containing inline copies. This trades self-containment for DRY — a deliberate shift from the "fully self-contained" philosophy used for AGENTS.md templates, which are designed to be copied into other repos. Agent skills stay in this repo and are never copied, so the DRY benefit outweighs the cost.
-- **Instructions for cross-cutting conventions**: `.github/instructions/` files with `applyTo` glob patterns inject shared conventions (like the `dev/[task-name]/` folder naming scheme) into all matching agents automatically, removing the need to duplicate the instruction in each agent file.
+- **Instructions for cross-cutting conventions**: `.github/instructions/` files with `applyTo` glob patterns inject shared conventions (like the `dev/feature/[task-name]/` folder naming scheme) into all matching agents automatically, removing the need to duplicate the instruction in each agent file.
 
 ## Skills
 
@@ -163,6 +163,6 @@ Instructions (`.github/instructions/*.instructions.md`) inject conventions into 
 
 | Instruction | Applies To | What It Does |
 |-------------|-----------|--------------|
-| `dev-task-folder` | `.github/agents/**` | Standardizes `dev/[task-name]/` naming and file suffix conventions |
+| `dev-task-folder` | `.github/agents/**` | Standardizes `dev/feature/[task-name]/` naming and file suffix conventions |
 | `orchestrator-conventions` | 3 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
 | `read-only-agent` | 8 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |

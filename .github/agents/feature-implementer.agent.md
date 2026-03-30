@@ -20,7 +20,7 @@ You operate autonomously — do not ask questions or wait for confirmation. Make
 
 ## Required Inputs
 
-Read these from the `dev/[task-name]/` folder:
+Read these from the `dev/feature/[task-name]/` folder:
 
 1. **Plan documents** — `[task-name]-plan.md`, `[task-name]-context.md`, `[task-name]-tasks.md`
 2. **Scope** — Derive from plan: files/modules to change and what must NOT change
@@ -102,7 +102,7 @@ Handle explicitly:
 
 After all ACs are implemented and tests pass, write a structured implementation record to the task's output directory. This file is the primary handoff artifact to the Reviewer.
 
-1. **Determine the output path**: Use the same `dev/[task-name]/` directory as the plan documents. If plan documents were provided as attachments, match the `[task-name]` from their path. If no plan directory exists, create one using a slug of the task description.
+1. **Determine the output path**: Use the same `dev/feature/[task-name]/` directory as the plan documents. If plan documents were provided as attachments, match the `[task-name]` from their path. If no plan directory exists, create one using a slug of the task description.
 2. **Write `[task-name]-implementation.md`** using the exact template below.
 3. **Do not skip this step** — the Reviewer depends on this file to scope its review.
 
@@ -168,7 +168,7 @@ When implementation is complete, you produce TWO outputs:
 
 ### A. Written Artifact: `[task-name]-implementation.md`
 
-This is the **primary deliverable**. Write it to `dev/[task-name]/` as described in Section F above. The Feature - Reviewer subagent consumes this file to scope its review. It must be written before the return summary.
+This is the **primary deliverable**. Write it to `dev/feature/[task-name]/` as described in Section F above. The Feature - Reviewer subagent consumes this file to scope its review. It must be written before the return summary.
 
 ### B. Return Summary
 

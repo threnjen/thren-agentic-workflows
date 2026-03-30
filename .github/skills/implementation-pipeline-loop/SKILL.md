@@ -36,27 +36,18 @@ Invoke the **Feature - Reviewer** subagent:
 After the subagent returns:
 - Verify `[plan-path]/[task-name]-review.md` exists
 - Check the verdict:
-  - **Approved** or **Approved with Reservations** → proceed to Step C (if applicable) or Step D
+  - **Approved** or **Approved with Reservations** → proceed to Step C
   - **Changes Requested** → Re-invoke the Implementer with the review findings, then re-invoke the Reviewer. Retry once. If still "Changes Requested" after retry, log the issue and proceed
 
-### Step C: QA Plan (when applicable)
-
-**Include this step when:** the orchestrator's pipeline includes QA (Phase - Execute, Audit orchestrator). **Skip when:** the pipeline does not include QA (Test orchestrator).
-
-Invoke the **Feature - QA Writer** subagent:
-
-> "Write the release QA plan for the task at `[plan-path]`. Read all documents in the folder (plan, context, tasks, implementation record, review record) and the source code. Write the QA plan to `[plan-path]/[task-name]-qa.md`. Return a summary of what manual QA is needed."
-
-After the subagent returns:
-- Verify `[plan-path]/[task-name]-qa.md` exists
-
-### Step D: Mark Complete
+### Step C: Mark Complete
 
 Update the todo list to mark this task as completed. Proceed to the next task.
 
+> **Note:** QA is not produced per-task. The orchestrator runs a consolidated QA step after all tasks complete. See the Phase - Execute or Audit orchestrator agents for details.
+
 ## Path Conventions
 
-- `[plan-path]` is the directory containing the task's plan files (e.g., `dev/[task-name]/` or `dev/[audit-name]/[task-name]/`)
+- `[plan-path]` is the directory containing the task's plan files (e.g., `dev/feature/[task-name]/` or `dev/[audit-name]/[task-name]/`)
 - `[task-name]` is the kebab-case identifier for the task, matching the plan file prefix
 
 ## Test Failure Handling

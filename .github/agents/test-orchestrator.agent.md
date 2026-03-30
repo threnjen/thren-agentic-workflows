@@ -2,7 +2,7 @@
 name: Test - Orchestrator
 description: "analyze test suites, write new tests, or fix broken tests. Orchestrates test subagents and optionally drives remediation through the feature development pipeline."
 tools: [agent, read, search, todo]
-agents: [Test - Analyst, Test - Writer, Test - Fixer, Feature - Implementer, Feature - Reviewer]
+agents: [Test - Analyst, Test - Writer, Test - Fixer, Feature - Implementer, Feature - Reviewer, Docs Writer]
 model: "Claude Opus 4 (Copilot)"
 ---
 
@@ -41,23 +41,23 @@ If the user already specified scope in their initial message, skip this step.
 
 ### Phase 3: Run Subagent
 
-Based on the user's choice, determine the output directory name. Use the format `dev/[task-name]/` where `[task-name]` is descriptive (e.g., `test-analysis`, `test-bootstrap`, `test-fixes`, or a user-specified name).
+Based on the user's choice, determine the output directory name. Use the format `dev/feature/[task-name]/` where `[task-name]` is descriptive (e.g., `test-analysis`, `test-bootstrap`, `test-fixes`, or a user-specified name).
 
 #### If ANALYZE:
 
 Invoke the **Test - Analyst** subagent:
 
-> "Perform a comprehensive test suite analysis of [scope]. Categorize all tests by value, identify redundancies and gaps, produce a staged reduction plan, and write the planning documents to `dev/[task-name]/`. Return the complete analysis summary including high-value tests, questionable tests, likely redundant tests, and consolidation candidates."
+> "Perform a comprehensive test suite analysis of [scope]. Categorize all tests by value, identify redundancies and gaps, produce a staged reduction plan, and write the planning documents to `dev/feature/[task-name]/`. Return the complete analysis summary including high-value tests, questionable tests, likely redundant tests, and consolidation candidates."
 
 After the subagent returns:
-1. Verify the planning documents exist in `dev/[task-name]/`
+1. Verify the planning documents exist in `dev/feature/[task-name]/`
 2. Present the analysis summary to the user
 
 #### If WRITE:
 
 Invoke the **Test - Writer** subagent:
 
-> "Bootstrap a test suite for [scope]. Discover the project structure, assess what needs tests, create test files with meaningful baseline coverage, verify all tests pass, and return a summary of test files created, test count, and coverage. Write a test suite summary to `dev/[task-name]/[task-name]-summary.md`."
+> "Bootstrap a test suite for [scope]. Discover the project structure, assess what needs tests, create test files with meaningful baseline coverage, verify all tests pass, and return a summary of test files created, test count, and coverage. Write a test suite summary to `dev/feature/[task-name]/[task-name]-summary.md`."
 
 After the subagent returns:
 1. Verify test files were created
@@ -67,7 +67,7 @@ After the subagent returns:
 
 Invoke the **Test - Fixer** subagent:
 
-> "Diagnose and fix the failing tests in [scope]. Reproduce failures, classify root causes, apply targeted fixes to test code only (never modify source code), verify all tests pass, and return a structured fix summary. Write the fix report to `dev/[task-name]/[task-name]-report.md`."
+> "Diagnose and fix the failing tests in [scope]. Reproduce failures, classify root causes, apply targeted fixes to test code only (never modify source code), verify all tests pass, and return a structured fix summary. Write the fix report to `dev/feature/[task-name]/[task-name]-report.md`."
 
 After the subagent returns:
 1. Verify the fix report exists
@@ -89,7 +89,7 @@ If the user accepts, proceed to Phase 5.
 
 Read the subagent output and convert findings into actionable task file sets. Group related findings into logical tasks.
 
-For each task, create a three-file plan set in `dev/[task-name]/[fix-name]/`:
+For each task, create a three-file plan set in `dev/feature/[task-name]/[fix-name]/`:
 - `[fix-name]-plan.md` — What to fix, acceptance criteria derived from findings
 - `[fix-name]-context.md` — Affected files, relevant findings with file:line references
 - `[fix-name]-tasks.md` — Ordered implementation steps
@@ -104,20 +104,20 @@ For **each task** (in priority order), run steps 6A and 6B sequentially. Complet
 
 Invoke the **Feature - Implementer** subagent:
 
-> "Implement the plan at `dev/[task-name]/[fix-name]/`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `dev/[task-name]/[fix-name]/[fix-name]-implementation.md`. Return a summary of what was implemented and test results."
+> "Implement the plan at `dev/feature/[task-name]/[fix-name]/`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[task-name]/[fix-name]/[fix-name]-implementation.md`. Return a summary of what was implemented and test results."
 
 After the subagent returns:
-- Verify `dev/[task-name]/[fix-name]/[fix-name]-implementation.md` exists
+- Verify `dev/feature/[task-name]/[fix-name]/[fix-name]-implementation.md` exists
 - Check the summary for any reported gaps or blockers
 
 #### Step 6B: Review
 
 Invoke the **Feature - Reviewer** subagent:
 
-> "Review the implementation at `dev/[task-name]/[fix-name]/`. Read the plan files and implementation record, review all changed code, apply fixes for any issues found, and write the review record to `dev/[task-name]/[fix-name]/[fix-name]-review.md`. Return the verdict and a summary of issues found and fixes applied."
+> "Review the implementation at `dev/feature/[task-name]/[fix-name]/`. Read the plan files and implementation record, review all changed code, apply fixes for any issues found, and write the review record to `dev/feature/[task-name]/[fix-name]/[fix-name]-review.md`. Return the verdict and a summary of issues found and fixes applied."
 
 After the subagent returns:
-- Verify `dev/[task-name]/[fix-name]/[fix-name]-review.md` exists
+- Verify `dev/feature/[task-name]/[fix-name]/[fix-name]-review.md` exists
 - Check the verdict:
   - **Approved** or **Approved with Reservations** → proceed to Step 6C
   - **Changes Requested** → Re-invoke the Implementer with the review findings, then re-invoke the Reviewer. Retry once. If still "Changes Requested" after retry, log the issue and proceed
@@ -140,7 +140,17 @@ After ALL tasks are complete, present the results:
 > | [fix-1] | Done | Approved |
 > | [fix-2] | Done | Approved |
 >
-> All pipeline documents are in `dev/[task-name]/`.
+> All pipeline documents are in `dev/feature/[task-name]/`.
+
+### Phase 8: Update Documentation
+
+After reporting results to the user, invoke the **Docs Writer** subagent to update any documentation that may be stale after the test remediation:
+
+> "[SUBAGENT-MODE] Test remediation has just been completed. Operation: [ANALYZE / WRITE / FIX]. Tasks completed: [list task names]. Update any stale documentation across the repository. Return a summary of which documents were updated and what changed."
+
+This step is best-effort. If the Docs Writer reports no changes needed, that is expected. Do not block the pipeline on this step.
+
+**Note:** This step only runs when the remediation pipeline was executed (Phases 5–7). If the user declined remediation after Phase 4, skip this step — no code was changed.
 
 ## Error Handling
 

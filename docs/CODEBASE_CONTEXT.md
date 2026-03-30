@@ -30,7 +30,7 @@ README.md                       # Repo overview, usage instructions
     implementation-pipeline-loop/ # Standard Implement → Review → QA loop for orchestrators
       SKILL.md
   instructions/
-    dev-task-folder.instructions.md     # dev/[task-name]/ naming convention (applies to all agents)
+    dev-task-folder.instructions.md     # dev/feature/[task-name]/ naming convention (applies to all agents)
     orchestrator-conventions.instructions.md  # Shared orchestrator constraints (applies to 3 orchestrators)
     read-only-agent.instructions.md     # No-modification + approval constraints (applies to 8 agents)
 docs/
@@ -63,6 +63,8 @@ python/
 - **6 standalone user-facing agents**: 01 Project - Planner, 02 Phase - Refiner, Debugger, Docs Writer, Prod Code Review, Web Researcher
 - **10 hidden subagents** (`user-invocable: false`): Feature - Decomposer, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Auditor - Code, Auditor - Infra, Auditor - Refactor, Test - Analyst, Test - Writer, Test - Fixer
 - Feature - Implementer and Feature - Reviewer are shared across all three orchestrators
+- Docs Writer is dual-use: standalone user-facing agent AND invoked as a subagent by all three orchestrators at the end of the pipeline to update stale documentation
+- 01 Project - Planner and 02 Phase - Refiner check for missing critical docs (`README.md`, `docs/CODEBASE_CONTEXT.md`) during discovery and recommend running the Docs Writer before proceeding
 - All agents use `model: "Claude Opus 4 (Copilot)"` except Docs Writer (no model specified)
 - Orchestrators list their subagents in the `agents:` frontmatter field
 
@@ -81,7 +83,7 @@ python/
 
 - Instruction files use `.instructions.md` extension with YAML frontmatter
 - The `applyTo` field is a glob pattern — matching agents receive the instruction automatically
-- `dev-task-folder.instructions.md` — Standardizes `dev/[task-name]/` naming; applies to `.github/agents/**`
+- `dev-task-folder.instructions.md` — Standardizes `dev/feature/[task-name]/` naming; applies to `.github/agents/**`
 - `orchestrator-conventions.instructions.md` — Progress tracking, output verification, pipeline discipline, review reject loop; applies to 3 orchestrators
 - `read-only-agent.instructions.md` — No codebase modification + approval-before-writing; applies to 8 read-only agents (with subagent exception)
 

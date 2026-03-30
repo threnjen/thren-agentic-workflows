@@ -2,7 +2,7 @@
 name: Audit - Code, Infra, Refactor
 description: "Use when: performing a code, infra, or refactor audit and then implementing the fixes, orchestrating an end-to-end audit with optional automated remediation, or requesting an audit with follow-through on corrections."
 tools: [agent, read, search, todo, edit, web, run_in_terminal]
-agents: [Auditor - Code, Auditor - Infra, Auditor - Refactor, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Prod Code Review]
+agents: [Auditor - Code, Auditor - Infra, Auditor - Refactor, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Prod Code Review, Docs Writer]
 model: "Claude Opus 4 (Copilot)"
 ---
 
@@ -91,7 +91,7 @@ Group findings by audit category or logical concern. Each task should be indepen
 
 ### Phase 6: Feature Development Loop
 
-For **each task** (in priority order from the audit), run steps 6A through 6D sequentially. Complete ALL steps for one task before starting the next.
+For **each task** (in priority order from the audit), run steps 6A through 6C sequentially. Complete ALL steps for one task before starting the next.
 
 #### Step 6A: Implement
 
@@ -115,26 +115,29 @@ After the subagent returns:
   - **Approved** or **Approved with Reservations** → proceed to Step 6C
   - **Changes Requested** → Re-invoke the Implementer with the review findings, then re-invoke the Reviewer. Retry once. If still "Changes Requested" after retry, log the issue and proceed (the Final Review will catch it)
 
-#### Step 6C: QA Plan
-
-Invoke the **Feature - QA Writer** subagent:
-
-> "Write the release QA plan for the task at `dev/[audit-name]/[task-name]/`. Read all documents in the folder (plan, context, tasks, implementation record, review record) and the source code. Write the QA plan to `dev/[audit-name]/[task-name]/[task-name]-qa.md`. Return a summary of what manual QA is needed."
-
-After the subagent returns:
-- Verify `dev/[audit-name]/[task-name]/[task-name]-qa.md` exists
-
-#### Step 6D: Mark Complete
+#### Step 6C: Mark Complete
 
 Update the todo list to mark this task as completed. Proceed to the next task.
 
-### Phase 7: Final Review
+### Phase 7: Consolidated QA
 
-After ALL tasks are complete, invoke the **Prod Code Review** subagent:
+After ALL tasks are implemented and reviewed, produce a single consolidated QA document covering the entire audit remediation.
 
-> "Perform the final pre-production readiness analysis for the audit remediation. The following task folders contain all pipeline documents: [list all dev/[audit-name]/[task-name]/ paths]. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `dev/[audit-name]/[audit-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
+Invoke the **Feature - QA Writer** subagent:
 
-### Phase 8: Report to User
+> "Write a consolidated release QA plan covering ALL tasks in this audit remediation. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following task folders: [list all dev/[audit-name]/[task-name]/ paths]. Write the consolidated QA plan to `dev/[audit-name]/[audit-name]-qa.md` and the coverage map to `dev/[audit-name]/[audit-name]-coverage-map-qa.md`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all tasks."
+
+After the subagent returns:
+- Verify `dev/[audit-name]/[audit-name]-qa.md` exists
+- Verify `dev/[audit-name]/[audit-name]-coverage-map-qa.md` exists
+
+### Phase 8: Final Review
+
+Invoke the **Prod Code Review** subagent:
+
+> "Perform the final pre-production readiness analysis for the audit remediation. The following task folders contain all pipeline documents: [list all dev/[audit-name]/[task-name]/ paths]. The consolidated QA plan is at `dev/[audit-name]/[audit-name]-qa.md`. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `dev/[audit-name]/[audit-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
+
+### Phase 9: Report to User
 
 After the Final Review subagent returns, present the results:
 
@@ -147,11 +150,12 @@ After the Final Review subagent returns, present the results:
 > **Tasks completed:** [count]
 > **Final verdict:** [GO / GO WITH CONDITIONS]
 >
-> | Task | Impl | Review | QA |
-> |------|------|--------|----|
-> | [task-1] | Done | Approved | Written |
-> | [task-2] | Done | Approved | Written |
+> | Task | Impl | Review |
+> |------|------|--------|
+> | [task-1] | Done | Approved |
+> | [task-2] | Done | Approved |
 >
+> **QA document:** `dev/[audit-name]/[audit-name]-qa.md`
 > All pipeline documents are in `dev/[audit-name]/`.
 >
 > [If GO WITH CONDITIONS: list the conditions]
@@ -159,6 +163,16 @@ After the Final Review subagent returns, present the results:
 **If NO-GO:**
 
 Report the blocking items from the Final Review and recommend specific remediation. Do NOT retry automatically — the user should review the NO-GO findings before deciding how to proceed.
+
+### Phase 10: Update Documentation
+
+After reporting results to the user, invoke the **Docs Writer** subagent to update any documentation that may be stale after the audit remediation:
+
+> "[SUBAGENT-MODE] The following audit remediation has just been completed: [audit-name] ([CODE / INFRA / REFACTOR]). Tasks completed: [list task names]. Update any stale documentation across the repository. Return a summary of which documents were updated and what changed."
+
+This step is best-effort. If the Docs Writer reports no changes needed, that is expected. Do not block the pipeline on this step.
+
+**Note:** This step only runs when the remediation pipeline was executed (Phases 5–9). If the user declined remediation after Phase 4, skip this step — no code was changed.
 
 ## Error Handling
 

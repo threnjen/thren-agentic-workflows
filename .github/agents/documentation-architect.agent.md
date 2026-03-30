@@ -121,3 +121,12 @@ After creating docs, do a self-check:
 - Do not write docs for placeholder or example files unless they are representative patterns
 - Do not add deployment, infrastructure, or CI/CD content to any document
 - Keep language plain and direct — no marketing language, no unnecessary adjectives
+
+## Subagent Mode
+
+When invoked by an orchestrator with a `[SUBAGENT-MODE]` prefix in the prompt, you operate autonomously:
+
+- **Skip Step 2 (Plan)** — Do not ask the user for confirmation. Proceed directly from exploration to writing.
+- **Focus on updates** — Prioritize updating existing documentation to reflect recent changes. Only create new documents if a critical doc is missing.
+- **Full sweep** — Assess all documents you manage (README.md, ARCHITECTURE.md, CODEBASE_CONTEXT.md, LOCAL_DEVELOPMENT.md, TROUBLESHOOTING.md) and update any that are stale relative to the current codebase state.
+- **Be concise** — Return a brief summary of which documents were updated and what changed.

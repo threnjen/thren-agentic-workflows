@@ -50,6 +50,22 @@ Read the codebase, any existing documentation, and any external links or specs t
 - External resources the user shares (product specs, API docs, design docs, reference implementations)
 - The current state of the project (greenfield vs. existing)
 
+#### Documentation Freshness Check
+
+After reading the codebase, check whether these critical documentation files exist:
+- `README.md` (repo root)
+- `docs/CODEBASE_CONTEXT.md`
+
+If either file is missing, present a recommendation before continuing:
+
+> **Documentation gap detected.** The following critical doc(s) are missing: [list missing files]. Well-maintained documentation helps agents orient quickly and humans onboard faster.
+>
+> **Recommendation:** Run `@Docs Writer` to generate the missing documentation before continuing with project planning. This ensures the planning process starts from an accurate, well-documented baseline.
+>
+> You can proceed without this step — just let me know.
+
+Wait for the user to acknowledge before continuing to Phase 2. If the user chooses to proceed without running Docs Writer, continue normally.
+
 ### Phase 2: Clarification (Interactive)
 
 Ask the user targeted questions to build a complete picture. Focus on:
@@ -81,16 +97,16 @@ Then invite the user to continue iterating:
 
 Incorporate all feedback and loop back through the roadmap as many times as needed. Do not write files until the user explicitly signals they are done iterating.
 
-### Phase 4: Write Documents (Only After Approval)
+### Phase 4: Write Documents Incrementally (Only After Approval)
 
-Once approved, write documents **one at a time in order** to prevent context loss:
+Once approved, write documents incrementally to avoid scope creep and allow priorities to evolve:
 
-1. Write `docs/phases/PHASES_OVERVIEW.md` first and confirm it is complete
-2. Write `docs/phases/PHASE_01/PHASE_01_SUMMARY.md` and confirm it is complete
-3. Write `docs/phases/PHASE_02/PHASE_02_SUMMARY.md` and confirm it is complete
-4. Continue writing each subsequent phase document individually, in order, until all are written
+1. **Check existing phase documents** — Scan `docs/phases/` to see which `PHASE_0N_SUMMARY.md` files already exist on disk
+2. **Write or regenerate `PHASES_OVERVIEW.md`** — Always regenerate this file on each run to keep the roadmap in sync with any changes to project scope or priorities
+3. **Write the next unwritten phase document** — Write only the next single phase that hasn't been created yet (e.g., if `PHASE_01_SUMMARY.md` exists, write only `PHASE_02_SUMMARY.md`)
+4. **Present and prepare for refinement** — Show the newly written phase document and prepare it for handoff to `@02 Phase - Refiner` for refinement
 
-Do not batch-write multiple documents at once. Complete and verify each file before moving to the next.
+**Why incremental?** Writing all phases upfront leads to scope creep and inconsistencies as priorities shift. By writing one phase at a time, refinements to earlier phases naturally influence later ones. When the user returns after completing a phase (e.g., after Phase 1 is done executing), you'll detect the next unwritten phase and continue iterating.
 
 ### Phase 5: Lifecycle Management
 
@@ -112,9 +128,11 @@ Do not batch-write multiple documents at once. Complete and verify each file bef
 
 ## Pipeline Next Step
 
-After writing the phase documents, tell the user:
+After writing each phase document, tell the user:
 
-> **"Project roadmap complete. Phase documents have been written to `docs/phases/`. To refine the first phase, open a new chat with `@02 Phase - Refiner` and attach the relevant phase document (e.g., `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`)."**
+> **"Phase document written to `docs/phases/`. To refine this phase, open a new chat with `@02 Phase - Refiner` and attach the phase document (e.g., `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`). Once you've completed executing phase 1, return here to write the next phase."**
+
+When the user returns after completing a phase, detect the next unwritten `PHASE_0N_SUMMARY.md` and continue writing incrementally.
 
 ## Quality Checklist
 

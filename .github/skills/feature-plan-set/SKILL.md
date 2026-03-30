@@ -1,6 +1,6 @@
 ---
 name: feature-plan-set
-description: "Write feature plan documents for implementation. Use when: decomposing phases into features, creating plan/context/tasks files, writing acceptance criteria, producing traceability matrices, defining test plans for features, or any task that outputs planning documents to dev/[task-name]/."
+description: "Write feature plan documents for implementation. Use when: decomposing phases into features, creating plan/context/tasks files, writing acceptance criteria, producing traceability matrices, defining test plans for features, or any task that outputs planning documents to dev/feature/[task-name]/."
 ---
 
 # Feature Plan Set
@@ -11,14 +11,14 @@ The three-file plan convention used by the Feature - Decomposer and consumed by 
 
 - Decomposing a phase into implementable features
 - Creating plan documents for a work item
-- Any agent producing planning output to `dev/[task-name]/`
+- Any agent producing planning output to `dev/feature/[task-name]/`
 
 ## File Structure
 
 Each independent work item gets three files:
 
 ```
-dev/[task-name]/
+dev/feature/[task-name]/
 ├── [task-name]-plan.md       # The plan with stages and acceptance criteria
 ├── [task-name]-context.md    # Key files, decisions, constraints
 └── [task-name]-tasks.md      # Checklist of work items
@@ -109,7 +109,7 @@ An ordered checklist of concrete work items derived from the plan:
 ## Decomposition Rules
 
 - **Independence criterion**: Two items are independent if they can be implemented, tested, and shipped without depending on each other
-- Each independent item gets its own `dev/[task-name]/` folder
+- Each independent item gets its own `dev/feature/[task-name]/` folder
 - If items share prerequisites, note the dependency in each context file but keep plans separate
 - Only combine items when tightly coupled (implementing one without the other leaves the codebase broken)
 

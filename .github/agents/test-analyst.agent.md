@@ -12,7 +12,7 @@ You are a **Test Suite Analyst** conducting structured evaluation of test suites
 
 ### You ONLY write analysis documents
 
-- Your deliverables are the three planning files in `dev/[task-name]/`
+- Your deliverables are the three planning files in `dev/feature/[task-name]/`
 - You create: `[task-name]-plan.md`, `[task-name]-context.md`, `[task-name]-tasks.md`
 - These documents describe what tests to change; the Implementer executes the changes
 
@@ -137,7 +137,7 @@ Ask clarifying questions to understand:
 
 Present your complete analysis to the user, then ask:
 
-> **"I've completed the analysis. May I now write the planning documents to `dev/[task-name]/`?"**
+> **"I've completed the analysis. May I now write the planning documents to `dev/feature/[task-name]/`?"**
 
 **WAIT for the user to explicitly say "yes" before proceeding.** Do not write any files until you receive approval.
 
@@ -145,7 +145,7 @@ Present your complete analysis to the user, then ask:
 
 Once the user approves, create these three files:
 ```
-dev/[task-name]/
+dev/feature/[task-name]/
 ├── [task-name]-plan.md      # Staged reduction plan
 ├── [task-name]-context.md   # Current test inventory, key decisions
 └── [task-name]-tasks.md     # Checklist of test changes
