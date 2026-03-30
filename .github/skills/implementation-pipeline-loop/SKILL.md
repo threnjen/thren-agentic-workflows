@@ -1,6 +1,6 @@
 ---
 name: implementation-pipeline-loop
-description: "Standard feature development loop used by orchestrators. Defines the Implement → Review → (optional QA) → Mark Complete cycle, including invocation prompts, verification steps, and error handling. Use when: orchestrating the implementation pipeline for tasks or features."
+description: "Standard feature development loop used by orchestrators. Defines the Implement → Review → Commit → Mark Complete cycle, including invocation prompts, verification steps, and error handling. Use when: orchestrating the implementation pipeline for tasks or features."
 ---
 
 # Implementation Pipeline Loop
@@ -39,7 +39,16 @@ After the subagent returns:
   - **Approved** or **Approved with Reservations** → proceed to Step C
   - **Changes Requested** → Re-invoke the Implementer with the review findings, then re-invoke the Reviewer. Retry once. If still "Changes Requested" after retry, log the issue and proceed
 
-### Step C: Mark Complete
+### Step C: Commit
+
+Invoke the **Git Commit** subagent:
+
+> "Create an atomic commit for the completed task. The plan path is `[plan-path]` and the task name is `[task-name]`. Read the implementation and review records, stage all changes, and commit with a conventional commit message."
+
+After the subagent returns:
+- Confirm it reports a successful commit (or "Nothing to commit" if no changes were staged)
+
+### Step D: Mark Complete
 
 Update the todo list to mark this task as completed. Proceed to the next task.
 

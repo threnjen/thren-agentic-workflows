@@ -1,8 +1,8 @@
 ---
 name: Test - Orchestrator
 description: "analyze test suites, write new tests, or fix broken tests. Orchestrates test subagents and optionally drives remediation through the feature development pipeline."
-tools: [agent, read, search, todo]
-agents: [Test - Analyst, Test - Writer, Test - Fixer, Feature - Implementer, Feature - Reviewer, Docs Writer]
+tools: [agent, read, search, todo, run_in_terminal]
+agents: [Test - Analyst, Test - Writer, Test - Fixer, Feature - Implementer, Feature - Reviewer, Git Commit, Docs Writer]
 model: "Claude Opus 4 (Copilot)"
 ---
 
@@ -85,7 +85,18 @@ If the user declines, stop here. The deliverables from the subagent are complete
 
 If the user accepts, proceed to Phase 5.
 
-### Phase 5: Generate Task Files
+### Phase 5: Create Working Branch
+
+Create a dedicated branch for the test remediation so all code changes are isolated from the default branch.
+
+Run:
+```
+git checkout -b test/<operation>-<task-name>
+```
+
+Use the lowercased operation (`analyze`, `write`, or `fix`) and the kebab-case `[task-name]` chosen in Phase 3 (e.g., `test/fix-api-routes`, `test/write-auth`). If the branch already exists, append a numeric suffix (e.g., `test/fix-api-routes-2`) and retry. If the checkout fails for any other reason (e.g., uncommitted changes), report the error to the user and stop — do not proceed until the user resolves it.
+
+### Phase 6: Generate Task Files
 
 Read the subagent output and convert findings into actionable task file sets. Group related findings into logical tasks.
 
@@ -96,11 +107,11 @@ For each task, create a three-file plan set in `dev/feature/[task-name]/[fix-nam
 
 Each task should be independently implementable.
 
-### Phase 6: Feature Development Loop
+### Phase 7: Feature Development Loop
 
-For **each task** (in priority order), run steps 6A and 6B sequentially. Complete ALL steps for one task before starting the next.
+For **each task** (in priority order), run steps 7A through 7D sequentially. Complete ALL steps for one task before starting the next.
 
-#### Step 6A: Implement
+#### Step 7A: Implement
 
 Invoke the **Feature - Implementer** subagent:
 
@@ -110,7 +121,7 @@ After the subagent returns:
 - Verify `dev/feature/[task-name]/[fix-name]/[fix-name]-implementation.md` exists
 - Check the summary for any reported gaps or blockers
 
-#### Step 6B: Review
+#### Step 7B: Review
 
 Invoke the **Feature - Reviewer** subagent:
 
@@ -119,14 +130,23 @@ Invoke the **Feature - Reviewer** subagent:
 After the subagent returns:
 - Verify `dev/feature/[task-name]/[fix-name]/[fix-name]-review.md` exists
 - Check the verdict:
-  - **Approved** or **Approved with Reservations** → proceed to Step 6C
+  - **Approved** or **Approved with Reservations** → proceed to Step 7C
   - **Changes Requested** → Re-invoke the Implementer with the review findings, then re-invoke the Reviewer. Retry once. If still "Changes Requested" after retry, log the issue and proceed
 
-#### Step 6C: Mark Complete
+#### Step 7C: Commit
+
+Invoke the **Git Commit** subagent:
+
+> "Create an atomic commit for the completed task. The plan path is `dev/feature/[task-name]/[fix-name]/` and the task name is `[fix-name]`. Read the implementation and review records, stage all changes, and commit with a conventional commit message."
+
+After the subagent returns:
+- Confirm it reports a successful commit (or "Nothing to commit" if the reviewer made no additional changes beyond what the implementer already staged)
+
+#### Step 7D: Mark Complete
 
 Update the todo list to mark this task as completed. Proceed to the next task.
 
-### Phase 7: Report to User
+### Phase 8: Report to User
 
 After ALL tasks are complete, present the results:
 
@@ -141,8 +161,10 @@ After ALL tasks are complete, present the results:
 > | [fix-2] | Done | Approved |
 >
 > All pipeline documents are in `dev/feature/[task-name]/`.
+>
+> **Next step:** Push the branch and open a PR for review.
 
-### Phase 8: Update Documentation
+### Phase 9: Update Documentation
 
 After reporting results to the user, invoke the **Docs Writer** subagent to update any documentation that may be stale after the test remediation:
 
@@ -150,7 +172,7 @@ After reporting results to the user, invoke the **Docs Writer** subagent to upda
 
 This step is best-effort. If the Docs Writer reports no changes needed, that is expected. Do not block the pipeline on this step.
 
-**Note:** This step only runs when the remediation pipeline was executed (Phases 5–7). If the user declined remediation after Phase 4, skip this step — no code was changed.
+**Note:** This step only runs when the remediation pipeline was executed (Phases 5–8). If the user declined remediation after Phase 4, skip this step — no code was changed, and no branch was created.
 
 ## Error Handling
 

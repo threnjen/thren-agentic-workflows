@@ -2,7 +2,7 @@
 name: Audit - Code, Infra, Refactor
 description: "Use when: performing a code, infra, or refactor audit and then implementing the fixes, orchestrating an end-to-end audit with optional automated remediation, or requesting an audit with follow-through on corrections."
 tools: [agent, read, search, todo, edit, web, run_in_terminal]
-agents: [Auditor - Code, Auditor - Infra, Auditor - Refactor, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Prod Code Review, Docs Writer]
+agents: [Auditor - Code, Auditor - Infra, Auditor - Refactor, Feature - Implementer, Feature - Reviewer, Git Commit, Feature - QA Writer, Prod Code Review, Docs Writer]
 model: "Claude Opus 4 (Copilot)"
 ---
 
@@ -78,7 +78,18 @@ If the user declines, stop here. The audit deliverables are complete.
 
 If the user accepts, proceed to Phase 5.
 
-### Phase 5: Generate Task Files
+### Phase 5: Create Working Branch
+
+Create a dedicated branch for the audit remediation so all code changes are isolated from the default branch.
+
+Run:
+```
+git checkout -b audit/<audit-type>-<audit-name>
+```
+
+Use the lowercased audit type (`code`, `infra`, or `refactor`) and the kebab-case `[audit-name]` chosen in Phase 3 (e.g., `audit/code-payments`, `audit/refactor-api`). If the branch already exists, append a numeric suffix (e.g., `audit/code-payments-2`) and retry. If the checkout fails for any other reason (e.g., uncommitted changes), report the error to the user and stop — do not proceed until the user resolves it.
+
+### Phase 6: Generate Task Files
 
 Read the audit report at `dev/[audit-name]/[audit-name]-report.md` and convert findings into actionable task file sets. Group related findings into logical tasks (e.g., all type hint findings in one task, all security findings in another).
 
@@ -89,11 +100,11 @@ For each task, create a three-file plan set in `dev/[audit-name]/[task-name]/`:
 
 Group findings by audit category or logical concern. Each task should be independently implementable.
 
-### Phase 6: Feature Development Loop
+### Phase 7: Feature Development Loop
 
-For **each task** (in priority order from the audit), run steps 6A through 6C sequentially. Complete ALL steps for one task before starting the next.
+For **each task** (in priority order from the audit), run steps 7A through 7D sequentially. Complete ALL steps for one task before starting the next.
 
-#### Step 6A: Implement
+#### Step 7A: Implement
 
 Invoke the **Feature - Implementer** subagent:
 
@@ -103,7 +114,7 @@ After the subagent returns:
 - Verify `dev/[audit-name]/[task-name]/[task-name]-implementation.md` exists
 - Check the summary for any reported gaps or blockers
 
-#### Step 6B: Review
+#### Step 7B: Review
 
 Invoke the **Feature - Reviewer** subagent:
 
@@ -112,14 +123,23 @@ Invoke the **Feature - Reviewer** subagent:
 After the subagent returns:
 - Verify `dev/[audit-name]/[task-name]/[task-name]-review.md` exists
 - Check the verdict:
-  - **Approved** or **Approved with Reservations** → proceed to Step 6C
+  - **Approved** or **Approved with Reservations** → proceed to Step 7C
   - **Changes Requested** → Re-invoke the Implementer with the review findings, then re-invoke the Reviewer. Retry once. If still "Changes Requested" after retry, log the issue and proceed (the Final Review will catch it)
 
-#### Step 6C: Mark Complete
+#### Step 7C: Commit
+
+Invoke the **Git Commit** subagent:
+
+> "Create an atomic commit for the completed task. The plan path is `dev/[audit-name]/[task-name]/` and the task name is `[task-name]`. Read the implementation and review records, stage all changes, and commit with a conventional commit message."
+
+After the subagent returns:
+- Confirm it reports a successful commit (or "Nothing to commit" if the reviewer made no additional changes beyond what the implementer already staged)
+
+#### Step 7D: Mark Complete
 
 Update the todo list to mark this task as completed. Proceed to the next task.
 
-### Phase 7: Consolidated QA
+### Phase 8: Consolidated QA
 
 After ALL tasks are implemented and reviewed, produce a single consolidated QA document covering the entire audit remediation.
 
@@ -131,13 +151,13 @@ After the subagent returns:
 - Verify `dev/[audit-name]/[audit-name]-qa.md` exists
 - Verify `dev/[audit-name]/[audit-name]-coverage-map-qa.md` exists
 
-### Phase 8: Final Review
+### Phase 9: Final Review
 
 Invoke the **Prod Code Review** subagent:
 
 > "Perform the final pre-production readiness analysis for the audit remediation. The following task folders contain all pipeline documents: [list all dev/[audit-name]/[task-name]/ paths]. The consolidated QA plan is at `dev/[audit-name]/[audit-name]-qa.md`. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `dev/[audit-name]/[audit-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
 
-### Phase 9: Report to User
+### Phase 10: Report to User
 
 After the Final Review subagent returns, present the results:
 
@@ -158,13 +178,15 @@ After the Final Review subagent returns, present the results:
 > **QA document:** `dev/[audit-name]/[audit-name]-qa.md`
 > All pipeline documents are in `dev/[audit-name]/`.
 >
+> **Next step:** Push the branch and open a PR for review.
+>
 > [If GO WITH CONDITIONS: list the conditions]
 
 **If NO-GO:**
 
 Report the blocking items from the Final Review and recommend specific remediation. Do NOT retry automatically — the user should review the NO-GO findings before deciding how to proceed.
 
-### Phase 10: Update Documentation
+### Phase 11: Update Documentation
 
 After reporting results to the user, invoke the **Docs Writer** subagent to update any documentation that may be stale after the audit remediation:
 
@@ -172,7 +194,7 @@ After reporting results to the user, invoke the **Docs Writer** subagent to upda
 
 This step is best-effort. If the Docs Writer reports no changes needed, that is expected. Do not block the pipeline on this step.
 
-**Note:** This step only runs when the remediation pipeline was executed (Phases 5–9). If the user declined remediation after Phase 4, skip this step — no code was changed.
+**Note:** This step only runs when the remediation pipeline was executed (Phases 5–10). If the user declined remediation after Phase 4, skip this step — no code was changed, and no branch was created.
 
 ## Error Handling
 

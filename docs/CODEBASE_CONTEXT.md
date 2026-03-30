@@ -9,7 +9,7 @@ Quick-reference for AI agents working on this repository.
 - Two language variants for templates: Node.js/TypeScript and Python
 - 19 agent definitions in `.github/agents/` (9 user-facing, 10 hidden subagents)
 - 4 skills in `.github/skills/` (shared templates and patterns extracted from agents)
-- 3 instruction files in `.github/instructions/` (cross-cutting conventions)
+- 4 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
 
 ## Folder Structure
@@ -82,8 +82,7 @@ python/
 ### Instructions (.github/instructions/)
 
 - Instruction files use `.instructions.md` extension with YAML frontmatter
-- The `applyTo` field is a glob pattern — matching agents receive the instruction automatically
-- `dev-task-folder.instructions.md` — Standardizes `dev/feature/[task-name]/` naming; applies to `.github/agents/**`
+- The `applyTo` field is a glob pattern — matching agents receive the instruction automatically- `codebase-context-bootstrap.instructions.md` — Reads `docs/CODEBASE_CONTEXT.md` before discovery to reduce redundant scanning; applies to `.github/agents/**`- `dev-task-folder.instructions.md` — Standardizes `dev/feature/[task-name]/` naming; applies to `.github/agents/**`
 - `orchestrator-conventions.instructions.md` — Progress tracking, output verification, pipeline discipline, review reject loop; applies to 3 orchestrators
 - `read-only-agent.instructions.md` — No codebase modification + approval-before-writing; applies to 8 read-only agents (with subagent exception)
 
@@ -96,6 +95,7 @@ python/
 - Orchestrator agent files reference their subagents by name in YAML `agents:` field
 - Agents reference skills by name in their instructions (e.g., "Load the `phase-document-writing` skill")
 - Skills are single-source-of-truth — agents do NOT duplicate skill content inline
+- `codebase-context-bootstrap.instructions.md` auto-loads into all agents and directs them to read `docs/CODEBASE_CONTEXT.md` (if it exists) before starting discovery
 - Instruction files auto-load into agents matching their `applyTo` glob pattern
 
 ## Conventions

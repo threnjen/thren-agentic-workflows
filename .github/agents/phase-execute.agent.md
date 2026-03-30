@@ -1,8 +1,8 @@
 ---
 name: 03 Phase - Execute
 description: "Use when: executing a refined phase end-to-end, automating the full feature development loop, or shipping all features in a phase without manual intervention. Takes a refined Phase document and orchestrates decomposition, implementation, review, and QA for every feature — then runs the final phase-level review."
-tools: [agent, read, search, todo, execute]
-agents: [Feature - Decomposer, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Prod Code Review, Docs Writer]
+tools: [agent, read, search, todo, execute, run_in_terminal]
+agents: [Feature - Decomposer, Feature - Implementer, Feature - Reviewer, Git Commit, Feature - QA Writer, Prod Code Review, Docs Writer]
 model: "Claude Opus 4 (Copilot)"
 ---
 
@@ -23,6 +23,17 @@ Before starting, verify the phase document exists and read it to extract the pha
 
 ## Execution Pipeline
 
+### Step 0: Create Working Branch
+
+Create a dedicated branch for this phase so all changes are isolated from the default branch.
+
+Run:
+```
+git checkout -b phase/<phase-name>
+```
+
+Use the kebab-case `[phase-name]` extracted from the phase document path. If the branch already exists, append a numeric suffix (e.g., `phase/<phase-name>-2`) and retry. If the checkout fails for any other reason (e.g., uncommitted changes), report the error to the user and stop — do not proceed until the user resolves it.
+
 ### Step 1: Decompose Phase into Features
 
 Invoke the **Feature - Decomposer** subagent:
@@ -36,7 +47,7 @@ After the subagent returns:
 
 ### Step 2: Feature Development Loop
 
-For **each feature** (in the order returned by the Decomposer), run steps 2A through 2C sequentially. Complete ALL steps for one feature before starting the next.
+For **each feature** (in the order returned by the Decomposer), run steps 2A through 2D sequentially. Complete ALL steps for one feature before starting the next.
 
 #### Step 2A: Implement
 
@@ -60,7 +71,16 @@ After the subagent returns:
   - **Approved** or **Approved with Reservations** → proceed to Step 2C
   - **Changes Requested** → Re-invoke the Implementer with the review findings, then re-invoke the Reviewer. Retry once. If still "Changes Requested" after retry, log the issue and proceed (the Phase Final Review will catch it)
 
-#### Step 2C: Mark Complete
+#### Step 2C: Commit
+
+Invoke the **Git Commit** subagent:
+
+> "Create an atomic commit for the completed feature. The plan path is `dev/feature/[task-name]/` and the task name is `[task-name]`. Read the implementation and review records, stage all changes, and commit with a conventional commit message."
+
+After the subagent returns:
+- Confirm it reports a successful commit (or "Nothing to commit" if the reviewer made no additional changes beyond what the implementer already staged)
+
+#### Step 2D: Mark Complete
 
 Update the todo list to mark this feature as completed. Proceed to the next feature.
 
