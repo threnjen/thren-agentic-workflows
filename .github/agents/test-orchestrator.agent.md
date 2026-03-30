@@ -14,10 +14,6 @@ You do NOT analyze tests, write tests, fix tests, or write source code yourself.
 
 - DO NOT perform test analysis, writing, or fixing yourself — delegate to the appropriate subagent
 - DO NOT write source code, test files, or configuration directly
-- DO NOT skip steps or reorder the pipeline — the sequence matters
-- DO NOT proceed past a subagent failure without attempting remediation
-- ALWAYS track progress using the todo tool
-- ALWAYS verify subagent outputs exist on disk before proceeding to the next step
 - ALWAYS ask the user before proceeding to the fix phase
 
 ## Workflow
@@ -148,14 +144,8 @@ After ALL tasks are complete, present the results:
 
 ## Error Handling
 
-### Subagent Fails to Produce Expected Output
+### Pipeline Asymmetry (by design)
 
-If a subagent returns but the expected output file doesn't exist on disk:
-1. Re-invoke the subagent once with an explicit reminder about the expected output path
-2. If still missing after retry, report the failure to the user and stop
+This orchestrator omits the QA Writer and Prod Code Review steps that the Audit and Phase-Execute orchestrators include. Rationale: test remediation tasks are scoped narrowly to test code changes, which are self-validating (tests either pass or fail). A full QA plan and prod readiness gate add overhead without proportional value for test-only changes.
 
-### Review Reject Loop
 
-If the Reviewer returns "Changes Requested" twice for the same task:
-1. Log both review summaries
-2. Note the unresolved review in the final report to the user

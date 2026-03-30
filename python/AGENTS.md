@@ -41,7 +41,7 @@
 - Combine with unit tests — Hypothesis finds edge cases, unit tests document known behavior.
 
 ### When Requirements Change
-- Udpate/delete affected tests FIRST, then change code
+- Update/delete affected tests FIRST, then change code
 - Stale tests (for removed behavior) should be deleted, not skipped
 - Deprecated functions: remove tests entirely or update to test new stub behavior
 - If unsure whether a test is stale: check if the requirement still exists
@@ -63,10 +63,19 @@
 - Use `--no-verify` to bypass hooks
 - Disable tests instead of fixing them
 - Commit code that doesn't compile
-- Reference "Claude" or "AI-generated" in messages
+- Reference "Copilot" or "AI-generated" in messages
 
 ### Decision Priority
 Testability → Readability → Consistency → Simplicity → Reversibility
+
+## Communication
+
+- No preamble/postamble unless requested
+- No code comments unless asked
+- No explanations for refusals
+- Use ripgrep (`rg`) not `grep`/`find`
+- Use Read/LS tools not `cat`/`head`/`tail`/`ls`
+- Never guess URLs
 
 ## Extended Guides
 

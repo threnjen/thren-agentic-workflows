@@ -299,6 +299,24 @@ The orchestrator uses subagents. Ensure these settings are configured:
 
 ---
 
+## Skills and Instructions
+
+Agents reference **skills** (`.github/skills/<name>/SKILL.md`) for shared templates and formats that would otherwise be duplicated. Skills are loaded on demand when an agent's instructions say "Load the `<name>` skill."
+
+| Skill | Used By | Purpose |
+|-------|---------|---------|
+| `phase-document-writing` | 01 Project - Planner, 02 Phase - Refiner | Phase Document Template, Phases Overview Template, quality checklist |
+| `audit-report-format` | Auditor - Code, Auditor - Infra, Auditor - Refactor | Report structure, findings table format, severity levels, priority tiers |
+| `feature-plan-set` | Feature - Decomposer | Three-file plan convention, plan sections A–F, stage format, decomposition rules |
+
+**Instructions** (`.github/instructions/*.instructions.md`) inject cross-cutting conventions into agents automatically via `applyTo` glob patterns.
+
+| Instruction | Applies To | Purpose |
+|-------------|-----------|---------|
+| `dev-task-folder` | `.github/agents/**` | Standardizes `dev/[task-name]/` naming and file suffix conventions |
+
+---
+
 ## Adding Agents to Another Project
 
 Each agent file is standalone. To use these agents in a different repository:

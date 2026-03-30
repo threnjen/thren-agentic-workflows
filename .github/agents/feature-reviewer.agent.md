@@ -123,33 +123,6 @@ If you're uncertain about an issue:
 - Still give your best assessment from current code
 - Mark confidence level (Low/Medium/High)
 
-## PR Review Workflow
-
-When reviewing a pull request (rather than local files), use the GitHub PR tools to gather full context before starting the review:
-
-### 1. Gather PR Context
-
-- Use `github-pull-request_activePullRequest` to retrieve the active PR's description, changed files, and existing review comments
-- Use `get_changed_files` to get the git diff of all modified files
-- Use `github-pull-request_issue_fetch` to fetch any linked issues or referenced PRs for requirements context
-
-### 2. Incorporate Review Comments
-
-- Read all existing review comments and conversations on the PR
-- Address each unresolved comment thread in your review — confirm whether the concern is valid, resolved, or still outstanding
-- Reference specific comment threads when they relate to your findings
-
-### 3. Review Against PR Description
-
-- Treat the PR description as a source of intent — verify the implementation matches what was described
-- Cross-reference the PR description with any linked issues or acceptance criteria
-- Flag discrepancies between what the PR claims to do and what the code actually does
-
-### 4. Diff-Focused Review
-
-- Focus your review on the changed lines (the diff), not the entire file
-- Note when changes in one file require corresponding changes in another that are missing
-- Check that the diff doesn't introduce inconsistencies with unchanged surrounding code
 
 ## Fix Workflow
 

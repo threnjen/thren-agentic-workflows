@@ -4,7 +4,7 @@
 
 This is a static template repository — it contains no runnable code. It provides two things:
 
-1. **AGENTS.md and style guide templates** that configure Claude Code's behavior when copied into a target project
+1. **AGENTS.md and style guide templates** that configure GitHub Copilot's behavior when copied into a target project
 2. **VS Code Copilot agent definitions** (`.github/agents/`) that provide specialized development workflow agents
 
 ## Template Structure
@@ -12,15 +12,28 @@ This is a static template repository — it contains no runnable code. It provid
 %% Shows how template files and agent definitions are organized
 ```mermaid
 flowchart TD
-    Root[claude-docs-source-of-truth]
-    Root --> GH[.github/agents/]
+    Root[github-agents-source-of-truth]
+    Root --> GH[.github/]
     Root --> NodeDir[nodejs/]
     Root --> PyDir[python/]
 
-    GH --> Orchestrators["Orchestrators (3)\n Phase-Execute, Audit, Test"]
-    GH --> UserAgents["User-Facing Standalone (6)\nPlanner, Refiner, Debugger,\nProd Review, Web Research, Docs"]
-    GH --> Subagents["Hidden Subagents (10)\nDecomposer, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer"]
+    GH --> Agents[agents/]
+    GH --> Skills[skills/]
+    GH --> Instructions[instructions/]
+
+    Agents --> Orchestrators["Orchestrators (3)\n Phase-Execute, Audit, Test"]
+    Agents --> UserAgents["User-Facing Standalone (6)\nPlanner, Refiner, Debugger,\nProd Review, Web Research, Docs"]
+    Agents --> Subagents["Hidden Subagents (10)\nDecomposer, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer"]
     Orchestrators -->|delegate to| Subagents
+
+    Skills --> S1["phase-document-writing\n(Planner, Refiner)"]
+    Skills --> S2["audit-report-format\n(3 Auditors)"]
+    Skills --> S3["feature-plan-set\n(Decomposer)"]
+    Skills --> S4["implementation-pipeline-loop\n(Orchestrators)"]
+
+    Instructions --> I1["dev-task-folder\n(all agents)"]
+    Instructions --> I2["orchestrator-conventions\n(3 orchestrators)"]
+    Instructions --> I3["read-only-agent\n(8 read-only agents)"]
 
     NodeDir --> NodeAgents[AGENTS.md<br/>Agent guidelines]
     NodeDir --> NodeDocs[docs/]
@@ -40,7 +53,7 @@ Each language folder contains a two-file system:
 
 ### AGENTS.md (Primary)
 
-The main instruction file that Claude Code discovers and reads automatically. It defines:
+The main instruction file that GitHub Copilot discovers and reads automatically. It defines:
 
 - **Workflow rules** — TDD process, commit standards, when to stop and reassess
 - **Quality gates** — What must be true before every commit
@@ -67,8 +80,8 @@ flowchart LR
     Customize --> AgentsFile[AGENTS.md at project root]
     Customize --> StyleFile[docs/STYLE_GUIDE.md]
     Customize --> AgentDefs[.github/agents/*.agent.md]
-    AgentsFile -->|auto-discovered by| Claude[Claude Code]
-    StyleFile -->|loaded on demand by| Claude
+    AgentsFile -->|auto-discovered by| Copilot[GitHub Copilot]
+    StyleFile -->|loaded on demand by| Copilot
     AgentDefs -->|discovered by| VSCode[VS Code Copilot Chat]
 ```
 
@@ -132,3 +145,24 @@ They diverge on:
 - **No shared/base file**: Despite significant overlap, each AGENTS.md is self-contained. This avoids inheritance complexity and makes each file independently usable after copying.
 - **Orchestrator + subagent pattern for agents**: Complex workflows are decomposed into focused subagents (marked `user-invocable: false`) coordinated by orchestrators. This keeps each agent's instructions small and prevents unintended user interaction with intermediate pipeline steps.
 - **Shared subagents across orchestrators**: Feature - Implementer and Feature - Reviewer are reused by Phase - Execute, the Audit orchestrator, and the Test orchestrator — avoiding duplication of the implementation/review workflow.
+- **Skills for shared templates**: When multiple agents use identical templates or report formats, those are extracted into `.github/skills/` as single-source-of-truth references. Agents load the skill at runtime instead of containing inline copies. This trades self-containment for DRY — a deliberate shift from the "fully self-contained" philosophy used for AGENTS.md templates, which are designed to be copied into other repos. Agent skills stay in this repo and are never copied, so the DRY benefit outweighs the cost.
+- **Instructions for cross-cutting conventions**: `.github/instructions/` files with `applyTo` glob patterns inject shared conventions (like the `dev/[task-name]/` folder naming scheme) into all matching agents automatically, removing the need to duplicate the instruction in each agent file.
+
+## Skills
+
+Skills (`.github/skills/<name>/SKILL.md`) extract shared templates and formats that would otherwise be duplicated across multiple agent files. Agents reference skills by name; the skill is loaded on demand when the agent needs it.
+
+| Skill | Used By | What It Contains |
+|-------|---------|-----------------|
+| `phase-document-writing` | 01 Project - Planner, 02 Phase - Refiner | Phase Document Template, Phases Overview Template, quality checklist |
+| `audit-report-format` | Auditor - Code, Auditor - Infra, Auditor - Refactor | Report structure, findings table format, severity levels, priority tiers |
+| `feature-plan-set` | Feature - Decomposer | Three-file plan convention, plan sections A–F, stage format, decomposition rules || `implementation-pipeline-loop` | Orchestrators (reference) | Standard Implement → Review → QA → Mark Complete cycle, prompt templates, error handling |
+## Instructions
+
+Instructions (`.github/instructions/*.instructions.md`) inject conventions into agents via `applyTo` glob matching. Unlike skills (which agents load explicitly), instructions are loaded automatically when the agent's file path matches the `applyTo` pattern.
+
+| Instruction | Applies To | What It Does |
+|-------------|-----------|--------------|
+| `dev-task-folder` | `.github/agents/**` | Standardizes `dev/[task-name]/` naming and file suffix conventions |
+| `orchestrator-conventions` | 3 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
+| `read-only-agent` | 8 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |
