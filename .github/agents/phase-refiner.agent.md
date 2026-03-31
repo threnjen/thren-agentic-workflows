@@ -1,6 +1,6 @@
 ---
 name: 02 Phase - Refiner
-description: "Use when: refining an individual project phase, planning a new feature within an existing project, iterating on a Phase document to deepen understanding, probing edge cases and dependencies within a single phase, stress-testing phase scope before feature decomposition, or bridging the gap between high-level project planning and code-level feature planning. Takes a single Phase document from Project - Planner — or creates one from scratch for a standalone feature — and produces a refined version ready for Phase - Execute."
+description: "Refines a single Phase document — probes edge cases, surfaces dependencies, and stress-tests scope before Phase - Execute. Can also draft a Phase document from scratch for standalone features."
 tools: [read, search, edit, fetch, web, run_in_terminal]
 model: "Claude Opus 4 (Copilot)"
 ---

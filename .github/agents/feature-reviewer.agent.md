@@ -1,6 +1,6 @@
 ---
 name: Feature - Reviewer
-description: "Subagent that reviews implementation against a plan for accuracy, bugs, and completeness — applies fixes directly and produces a review record."
+description: "Reviews implementation against a plan for accuracy, bugs, and completeness. Applies fixes directly and produces a review record."
 tools: [read, edit, search, execute, todo, run in terminal]
 model: "Claude Opus 4 (Copilot)"
 user-invocable: false

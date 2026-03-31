@@ -1,6 +1,6 @@
 ---
 name: Auditor - Refactor
-description: "Use when: auditing codebase structure and architecture, evaluating module organization, analyzing import/dependency graphs, assessing component decomposition, reviewing coupling and cohesion, checking separation of concerns, identifying restructuring opportunities, or running a comprehensive structural health check across the codebase."
+description: "Audits codebase structure and architecture — module organization, coupling, cohesion, and separation of concerns. Produces a structured findings report."
 tools: [read, search, edit, fetch, run_in_terminal]
 model: "Claude Opus 4 (Copilot)"
 user-invocable: false

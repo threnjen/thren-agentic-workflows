@@ -1,6 +1,6 @@
 ---
 name: Audit - Code, Infra, Refactor
-description: "Use when: performing a code, infra, or refactor audit and then implementing the fixes, orchestrating an end-to-end audit with optional automated remediation, or requesting an audit with follow-through on corrections."
+description: "Orchestrates code, infrastructure, or refactor audits with optional automated remediation through the feature pipeline."
 tools: [agent, read, search, todo, edit, web, run_in_terminal]
 agents: [Auditor - Code, Auditor - Infra, Auditor - Refactor, Feature - Implementer, Feature - Reviewer, Git Commit, Feature - QA Writer, Prod Code Review, Docs Writer]
 model: "Claude Opus 4 (Copilot)"

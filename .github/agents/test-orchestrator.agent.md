@@ -1,6 +1,6 @@
 ---
 name: Test - Orchestrator
-description: "analyze test suites, write new tests, or fix broken tests. Orchestrates test subagents and optionally drives remediation through the feature development pipeline."
+description: "Orchestrates test operations — delegates analysis, writing, or fixing to test subagents with optional remediation through the feature pipeline."
 tools: [agent, read, search, todo, run_in_terminal]
 agents: [Test - Analyst, Test - Writer, Test - Fixer, Feature - Implementer, Feature - Reviewer, Git Commit, Docs Writer]
 model: "Claude Opus 4 (Copilot)"

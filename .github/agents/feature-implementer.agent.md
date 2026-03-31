@@ -1,6 +1,6 @@
 ---
 name: Feature - Implementer
-description: "Subagent that implements a feature from an approved plan using Red-Green-Refactor TDD, producing traceable implementation with an implementation record."
+description: "Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record."
 tools: [read, edit, search, execute, todo, run in terminal]
 model: "Claude Opus 4 (Copilot)"
 user-invocable: false

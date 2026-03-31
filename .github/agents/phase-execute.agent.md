@@ -1,6 +1,6 @@
 ---
 name: 03 Phase - Execute
-description: "Use when: executing a refined phase end-to-end, automating the full feature development loop, or shipping all features in a phase without manual intervention. Takes a refined Phase document and orchestrates decomposition, implementation, review, and QA for every feature — then runs the final phase-level review."
+description: "Orchestrates end-to-end execution of a refined Phase document — delegates decomposition, implementation, review, QA, and documentation to subagents."
 tools: [agent, read, search, todo, execute, run_in_terminal]
 agents: [Feature - Decomposer, Feature - Implementer, Feature - Reviewer, Git Commit, Feature - QA Writer, Prod Code Review, Docs Writer]
 model: "Claude Opus 4 (Copilot)"

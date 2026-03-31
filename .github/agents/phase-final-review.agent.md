@@ -1,6 +1,6 @@
 ---
 name: Prod Code Review
-description: "Use when: performing a final pre-production readiness evaluation for an entire phase, cross-validating all pipeline documents (plan, implementation, review, QA release plan) across all features in the phase, catching issues that slipped through individual pipeline stages, or making a go/no-go recommendation before manual testing begins. This is the FINAL gate before manual QA execution and release."
+description: "Final pre-production gate — cross-validates all pipeline documents across every feature in a phase and produces a go/no-go readiness assessment."
 tools: [read, search, execute, edit, todo]
 model: "Claude Opus 4 (Copilot)"
 ---

@@ -1,6 +1,6 @@
 ---
 name: 01 Project - Planner
-description: "Use when: creating a project roadmap, breaking a project into phases, high-level planning, defining project scope and milestones, establishing a phased implementation strategy, or planning an entire project end-to-end. Iterates with the user to produce self-contained phase documents that the Phase - Refiner agent can refine before Phase - Execute automation."
+description: "Creates phased project roadmaps. Iterates with the user to produce self-contained phase documents ready for Phase - Refiner."
 tools: [read, search, edit, fetch, run in terminal]
 model: "Claude Opus 4 (Copilot)"
 ---

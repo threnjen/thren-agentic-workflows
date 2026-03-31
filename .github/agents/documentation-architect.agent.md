@@ -1,6 +1,6 @@
 ---
 name: Docs Writer
-description: Documentation writer agent. Use when asked to create, update, or audit documentation for a repository — including README.md, ARCHITECTURE.md, CODEBASE_CONTEXT.md, and TROUBLESHOOTING.md.
+description: "Creates and updates repository documentation — README, ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT, and TROUBLESHOOTING."
 tools:
   - read
   - edit

@@ -1,6 +1,6 @@
 ---
 name: Test - Fixer
-description: "Use when: tests are failing, broken, or erroring out and need to be diagnosed and fixed. Handles test failures caused by source code changes, dependency updates, configuration drift, flaky tests, or incorrect assertions. Fixes test code only — never modifies source code."
+description: "Diagnoses and fixes broken tests — updates assertions, mocks, fixtures, and configuration. Never modifies source code."
 tools: [read, edit, search, execute, run_in_terminal]
 user-invocable: false
 model: "Claude Opus 4 (Copilot)"

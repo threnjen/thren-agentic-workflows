@@ -1,6 +1,6 @@
 ---
 name: Feature - Decomposer
-description: "Decomposes a refined Phase document into independent features, producing a three-file plan set per feature with acceptance criteria, architecture analysis, and test strategy. Use when: breaking down a phase into implementable feature plans, planning features before manual or automated implementation."
+description: "Breaks a refined Phase document into independent features, producing a three-file plan set (plan, context, tasks) per feature."
 tools: [read, search, edit, fetch, run in terminal]
 model: "Claude Opus 4 (Copilot)"
 user-invocable: false

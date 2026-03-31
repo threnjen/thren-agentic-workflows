@@ -23,7 +23,7 @@ flowchart TD
 
     Agents --> Orchestrators["Orchestrators (3)\n Phase-Execute, Audit, Test"]
     Agents --> UserAgents["User-Facing Standalone (6)\nPlanner, Refiner, Debugger,\nProd Review, Web Research, Docs"]
-    Agents --> Subagents["Hidden Subagents (10)\nDecomposer, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer"]
+    Agents --> Subagents["Hidden Subagents (11)\nDecomposer, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer,\nGit Commit"]
     Orchestrators -->|delegate to| Subagents
 
     Skills --> S1["phase-document-writing\n(Planner, Refiner)"]
@@ -87,7 +87,7 @@ flowchart LR
 
 ## Agent Architecture
 
-The `.github/agents/` directory contains 19 agent definitions organized in an **orchestrator + subagent** pattern:
+The `.github/agents/` directory contains 20 agent definitions organized in an **orchestrator + subagent** pattern:
 
 %% Shows the orchestrator delegation model
 ```mermaid

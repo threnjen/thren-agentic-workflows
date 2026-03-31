@@ -20,7 +20,7 @@ GitHub Copilot reads `AGENTS.md` files at the root and in subdirectories of your
 ├── .github/
 │   └── agents/                # VS Code Copilot agent definitions
 │       ├── README.md          # Agent documentation, pipelines, and usage guide
-│       └── *.agent.md         # 19 agent files (9 user-facing, 10 hidden subagents)
+│       └── *.agent.md         # 20 agent files (9 user-facing, 11 hidden subagents)
 ├── docs/
 │   ├── ARCHITECTURE.md        # Structure diagram and design decisions
 │   └── CODEBASE_CONTEXT.md    # Agent-oriented quick-reference

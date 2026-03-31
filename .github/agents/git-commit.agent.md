@@ -1,6 +1,6 @@
 ---
 name: Git Commit
-description: "Subagent that creates an atomic Git commit after a feature has been implemented and reviewed. Stages all changes, reads pipeline records to generate a conventional commit message, and commits locally."
+description: "Creates an atomic Git commit after implementation and review. Generates a conventional commit message from pipeline records."
 tools: [run_in_terminal, read]
 model: "Claude Opus 4 (Copilot)"
 user-invocable: false

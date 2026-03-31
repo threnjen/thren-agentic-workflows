@@ -1,6 +1,6 @@
 ---
 name: Debugger
-description: "Use when: encountering application errors — frontend (build errors, TypeScript issues, React errors, styling problems) or backend (server crashes, unhandled exceptions, database failures, API errors, auth issues, dependency problems). Triages as frontend, backend, or full-stack, then diagnoses and applies targeted fixes."
+description: "Diagnoses and fixes application errors across frontend and backend — triages by domain, traces root causes, and applies targeted fixes."
 tools: [read, edit, search, execute, todo, run in terminal]
 model: "Claude Opus 4 (Copilot)"
 color: red

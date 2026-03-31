@@ -7,7 +7,7 @@ Quick-reference for AI agents working on this repository.
 - A **template repository** of `AGENTS.md`, style guide files, and VS Code Copilot agent definitions
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
-- 19 agent definitions in `.github/agents/` (9 user-facing, 10 hidden subagents)
+- 20 agent definitions in `.github/agents/` (9 user-facing, 11 hidden subagents)
 - 4 skills in `.github/skills/` (shared templates and patterns extracted from agents)
 - 5 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
@@ -19,7 +19,7 @@ README.md                       # Repo overview, usage instructions
 .github/
   agents/
     README.md                   # Agent documentation, pipelines, and usage guide
-    *.agent.md                  # 19 agent definition files
+    *.agent.md                  # 20 agent definition files
   skills/
     phase-document-writing/     # Phase Doc & Overview templates, quality checklist
       SKILL.md
@@ -63,7 +63,7 @@ python/
 - All agent files use `.agent.md` extension with YAML frontmatter
 - **3 orchestrators** (user-facing): 03 Phase - Execute, Audit - Code, Infra, Refactor, Test - Orchestrator
 - **6 standalone user-facing agents**: 01 Project - Planner, 02 Phase - Refiner, Debugger, Docs Writer, Prod Code Review, Web Researcher
-- **10 hidden subagents** (`user-invocable: false`): Feature - Decomposer, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Auditor - Code, Auditor - Infra, Auditor - Refactor, Test - Analyst, Test - Writer, Test - Fixer
+- **11 hidden subagents** (`user-invocable: false`): Feature - Decomposer, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Auditor - Code, Auditor - Infra, Auditor - Refactor, Test - Analyst, Test - Writer, Test - Fixer, Git Commit
 - Feature - Implementer and Feature - Reviewer are shared across all three orchestrators
 - Docs Writer is dual-use: standalone user-facing agent AND invoked as a subagent by all three orchestrators at the end of the pipeline to update stale documentation
 - 01 Project - Planner and 02 Phase - Refiner check for missing critical docs (`README.md`, `docs/CODEBASE_CONTEXT.md`) during discovery and recommend running the Docs Writer before proceeding
