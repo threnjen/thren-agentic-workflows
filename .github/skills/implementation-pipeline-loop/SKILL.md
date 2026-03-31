@@ -64,3 +64,13 @@ Update the todo list to mark this task as completed. Proceed to the next task.
 If the Implementer reports test failures:
 1. The Reviewer subagent will catch this and request fixes
 2. If tests still fail after the review cycle, the final review (if present) will flag it as a blocker
+
+## Post-Loop: Documentation Update
+
+After all tasks are complete and reported to the user, invoke the **Docs Writer** subagent to update any documentation that may be stale:
+
+> "[SUBAGENT-MODE] [Describe what was just completed — include the pipeline type (phase/audit/test), name/scope, and list of completed tasks/features]. Update any stale documentation across the repository. Return a summary of which documents were updated and what changed."
+
+This step is best-effort. If the Docs Writer reports no changes needed, that is expected. Do not block the pipeline on this step.
+
+**Conditional execution:** This step only runs when the implementation pipeline was actually executed (i.e., code changes were made). If the user declined remediation or implementation after the analysis/audit phase, skip this step — no code was changed, and no branch was created.

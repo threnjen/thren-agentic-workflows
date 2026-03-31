@@ -109,42 +109,9 @@ Each task should be independently implementable.
 
 ### Phase 7: Feature Development Loop
 
-For **each task** (in priority order), run steps 7A through 7D sequentially. Complete ALL steps for one task before starting the next.
+For **each task** (in priority order), run the implementation pipeline loop.
 
-#### Step 7A: Implement
-
-Invoke the **Feature - Implementer** subagent:
-
-> "Implement the plan at `dev/feature/[task-name]/[fix-name]/`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[task-name]/[fix-name]/[fix-name]-implementation.md`. Return a summary of what was implemented and test results."
-
-After the subagent returns:
-- Verify `dev/feature/[task-name]/[fix-name]/[fix-name]-implementation.md` exists
-- Check the summary for any reported gaps or blockers
-
-#### Step 7B: Review
-
-Invoke the **Feature - Reviewer** subagent:
-
-> "Review the implementation at `dev/feature/[task-name]/[fix-name]/`. Read the plan files and implementation record, review all changed code, apply fixes for any issues found, and write the review record to `dev/feature/[task-name]/[fix-name]/[fix-name]-review.md`. Return the verdict and a summary of issues found and fixes applied."
-
-After the subagent returns:
-- Verify `dev/feature/[task-name]/[fix-name]/[fix-name]-review.md` exists
-- Check the verdict:
-  - **Approved** or **Approved with Reservations** → proceed to Step 7C
-  - **Changes Requested** → Re-invoke the Implementer with the review findings, then re-invoke the Reviewer. Retry once. If still "Changes Requested" after retry, log the issue and proceed
-
-#### Step 7C: Commit
-
-Invoke the **Git Commit** subagent:
-
-> "Create an atomic commit for the completed task. The plan path is `dev/feature/[task-name]/[fix-name]/` and the task name is `[fix-name]`. Read the implementation and review records, stage all changes, and commit with a conventional commit message."
-
-After the subagent returns:
-- Confirm it reports a successful commit (or "Nothing to commit" if the reviewer made no additional changes beyond what the implementer already staged)
-
-#### Step 7D: Mark Complete
-
-Update the todo list to mark this task as completed. Proceed to the next task.
+Load the `implementation-pipeline-loop` skill and execute Steps A through D for each task, using `dev/feature/[task-name]/[fix-name]/` as the `[plan-path]` and `[fix-name]` as the task identifier.
 
 ### Phase 8: Report to User
 
@@ -166,11 +133,9 @@ After ALL tasks are complete, present the results:
 
 ### Phase 9: Update Documentation
 
-After reporting results to the user, invoke the **Docs Writer** subagent to update any documentation that may be stale after the test remediation:
+Follow the Post-Loop: Documentation Update section from the `implementation-pipeline-loop` skill. Use this prompt:
 
 > "[SUBAGENT-MODE] Test remediation has just been completed. Operation: [ANALYZE / WRITE / FIX]. Tasks completed: [list task names]. Update any stale documentation across the repository. Return a summary of which documents were updated and what changed."
-
-This step is best-effort. If the Docs Writer reports no changes needed, that is expected. Do not block the pipeline on this step.
 
 **Note:** This step only runs when the remediation pipeline was executed (Phases 5–8). If the user declined remediation after Phase 4, skip this step — no code was changed, and no branch was created.
 

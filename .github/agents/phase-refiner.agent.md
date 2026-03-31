@@ -155,19 +155,7 @@ Read the Phase document and any referenced materials:
 
 #### Documentation Freshness Check
 
-After reading the codebase, check whether these critical documentation files exist:
-- `README.md` (repo root)
-- `docs/CODEBASE_CONTEXT.md`
-
-If either file is missing, present a recommendation before continuing:
-
-> **Documentation gap detected.** The following critical doc(s) are missing: [list missing files]. Well-maintained documentation helps agents orient quickly and humans onboard faster.
->
-> **Recommendation:** Run `@Docs Writer` to generate the missing documentation before continuing with phase refinement. This ensures the refinement process works from an accurate, well-documented baseline.
->
-> You can proceed without this step — just let me know.
-
-Wait for the user to acknowledge before continuing to Phase 3. If the user chooses to proceed without running Docs Writer, continue normally.
+Run the Documentation Freshness Check (see auto-loaded instructions). Wait for the user to acknowledge before continuing to Phase 3.
 
 Then proceed to Phase 3.
 
@@ -179,19 +167,7 @@ When the user comes directly with a feature idea:
 
 #### Documentation Freshness Check
 
-After reading the codebase, check whether these critical documentation files exist:
-- `README.md` (repo root)
-- `docs/CODEBASE_CONTEXT.md`
-
-If either file is missing, present a recommendation before continuing:
-
-> **Documentation gap detected.** The following critical doc(s) are missing: [list missing files]. Well-maintained documentation helps agents orient quickly and humans onboard faster.
->
-> **Recommendation:** Run `@Docs Writer` to generate the missing documentation before continuing with phase refinement. This ensures the refinement process works from an accurate, well-documented baseline.
->
-> You can proceed without this step — just let me know.
-
-Wait for the user to acknowledge before continuing. If the user chooses to proceed without running Docs Writer, continue normally.
+Run the Documentation Freshness Check (see auto-loaded instructions). Wait for the user to acknowledge before continuing.
 
 2. **Ask clarifying questions** — Use the Question Triage rules above. Focus on scope boundaries, user-visible behavior, and integration concerns. Don't ask about implementation details.
 3. **Draft the Phase document** — Using the Phase Document Template above, create an initial draft. Fill in as much as you can from the codebase context and the user's description. Mark areas where you need input with `[TBD]`.

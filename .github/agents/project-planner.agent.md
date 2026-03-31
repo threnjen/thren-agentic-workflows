@@ -52,19 +52,7 @@ Read the codebase, any existing documentation, and any external links or specs t
 
 #### Documentation Freshness Check
 
-After reading the codebase, check whether these critical documentation files exist:
-- `README.md` (repo root)
-- `docs/CODEBASE_CONTEXT.md`
-
-If either file is missing, present a recommendation before continuing:
-
-> **Documentation gap detected.** The following critical doc(s) are missing: [list missing files]. Well-maintained documentation helps agents orient quickly and humans onboard faster.
->
-> **Recommendation:** Run `@Docs Writer` to generate the missing documentation before continuing with project planning. This ensures the planning process starts from an accurate, well-documented baseline.
->
-> You can proceed without this step — just let me know.
-
-Wait for the user to acknowledge before continuing to Phase 2. If the user chooses to proceed without running Docs Writer, continue normally.
+Run the Documentation Freshness Check (see auto-loaded instructions). Wait for the user to acknowledge before continuing to Phase 2.
 
 ### Phase 2: Clarification (Interactive)
 

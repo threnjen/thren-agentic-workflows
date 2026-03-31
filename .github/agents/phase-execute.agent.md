@@ -47,42 +47,9 @@ After the subagent returns:
 
 ### Step 2: Feature Development Loop
 
-For **each feature** (in the order returned by the Decomposer), run steps 2A through 2D sequentially. Complete ALL steps for one feature before starting the next.
+For **each feature** (in the order returned by the Decomposer), run the implementation pipeline loop.
 
-#### Step 2A: Implement
-
-Invoke the **Feature - Implementer** subagent:
-
-> "Implement the plan at `dev/feature/[task-name]/`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[task-name]/[task-name]-implementation.md`. Return a summary of what was implemented and test results."
-
-After the subagent returns:
-- Verify `dev/feature/[task-name]/[task-name]-implementation.md` exists
-- Check the summary for any reported gaps or blockers
-
-#### Step 2B: Review
-
-Invoke the **Feature - Reviewer** subagent:
-
-> "Review the implementation at `dev/feature/[task-name]/`. Read the plan files and implementation record, review all changed code, apply fixes for any issues found, and write the review record to `dev/feature/[task-name]/[task-name]-review.md`. Return the verdict and a summary of issues found and fixes applied."
-
-After the subagent returns:
-- Verify `dev/feature/[task-name]/[task-name]-review.md` exists
-- Check the verdict:
-  - **Approved** or **Approved with Reservations** → proceed to Step 2C
-  - **Changes Requested** → Re-invoke the Implementer with the review findings, then re-invoke the Reviewer. Retry once. If still "Changes Requested" after retry, log the issue and proceed (the Phase Final Review will catch it)
-
-#### Step 2C: Commit
-
-Invoke the **Git Commit** subagent:
-
-> "Create an atomic commit for the completed feature. The plan path is `dev/feature/[task-name]/` and the task name is `[task-name]`. Read the implementation and review records, stage all changes, and commit with a conventional commit message."
-
-After the subagent returns:
-- Confirm it reports a successful commit (or "Nothing to commit" if the reviewer made no additional changes beyond what the implementer already staged)
-
-#### Step 2D: Mark Complete
-
-Update the todo list to mark this feature as completed. Proceed to the next feature.
+Load the `implementation-pipeline-loop` skill and execute Steps A through D for each feature, using `dev/feature/[task-name]/` as the `[plan-path]` and `[task-name]` as the task identifier.
 
 ### Step 3: Consolidated QA
 
@@ -142,19 +109,15 @@ Report the blocking items from the Final Review and recommend specific remediati
 
 ### Step 6: Update Documentation
 
-After reporting results to the user, invoke the **Docs Writer** subagent to update any documentation that may be stale after the phase's changes:
+Follow the Post-Loop: Documentation Update section from the `implementation-pipeline-loop` skill. Use this prompt:
 
 > "[SUBAGENT-MODE] The following phase has just been implemented: [phase-name]. Features completed: [list feature task names]. Update any stale documentation across the repository. Return a summary of which documents were updated and what changed."
-
-This step is best-effort. If the Docs Writer reports no changes needed, that is expected. Do not block the pipeline on this step.
 
 ## Error Handling
 
 ### Test Failures
 
-If the Implementer reports test failures:
-1. The Reviewer subagent will catch this and request fixes
-2. If tests still fail after the review cycle, the Final Review will flag it as a blocker
+See the Test Failure Handling section of the `implementation-pipeline-loop` skill.
 
 ### Documentation Drift
 
