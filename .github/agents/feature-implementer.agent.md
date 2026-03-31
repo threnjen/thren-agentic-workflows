@@ -102,7 +102,7 @@ Handle explicitly:
 
 After all ACs are implemented and tests pass, write a structured implementation record to the task's output directory. This file is the primary handoff artifact to the Reviewer.
 
-1. **Determine the output path**: Use the same `dev/feature/[task-name]/` directory as the plan documents. If plan documents were provided as attachments, match the `[task-name]` from their path. If no plan directory exists, create one using a slug of the task description.
+1. **Determine the output path**: Use the same `dev/feature/[task-name]/` directory as the plan documents.
 2. **Write `[task-name]-implementation.md`** using the exact template below.
 3. **Do not skip this step** — the Reviewer depends on this file to scope its review.
 

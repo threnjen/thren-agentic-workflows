@@ -7,13 +7,6 @@ description: "Write or update Phase documents and Phases Overview files. Use whe
 
 Templates and quality standards for the two document types produced by the project planning pipeline: individual Phase summaries and the Phases Overview roadmap.
 
-## When to Use
-
-- Creating a new Phase document from scratch
-- Updating an existing Phase document during refinement
-- Writing or updating the Phases Overview roadmap
-- Any agent producing output to `docs/phases/`
-
 ## Phase Document Template
 
 Each `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` must include:
@@ -102,7 +95,6 @@ Tech stack, patterns, infrastructure choices.]
 
 Before presenting or writing any Phase document, verify:
 
-- [ ] Every phase has a clear, distinct objective
 - [ ] Phase ordering respects dependencies (no forward references)
 - [ ] Each phase is self-contained and independently valuable
 - [ ] Scope boundaries are explicit (in-scope AND out-of-scope per phase)
@@ -110,10 +102,6 @@ Before presenting or writing any Phase document, verify:
 - [ ] Technical context references specific files, modules, or patterns
 - [ ] "Notes for Feature - Decomposer" section provides decomposition guidance
 - [ ] Non-goals are defined at both project and phase level
-- [ ] Risks and dependencies are identified
-- [ ] Edge cases and failure modes are documented
-- [ ] Dependencies (internal, external, and cross-phase) are explicit
-- [ ] Key user flows have been walked through
-- [ ] Integration points with other phases/systems are identified
-- [ ] Risks have mitigations or fallback plans
-- [ ] No code-level details have leaked in (that's the Feature - Decomposer's job)
+- [ ] Edge cases, failure modes, and key user flows documented
+- [ ] Dependencies (internal, external, cross-phase) and risks have mitigations
+- [ ] Integration points with other phases/systems identified

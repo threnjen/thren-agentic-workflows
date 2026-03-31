@@ -7,12 +7,6 @@ description: "Standard feature development loop used by orchestrators. Defines t
 
 The standard development cycle used by orchestrators to process tasks through subagents. Each task runs through the full loop before the next task begins.
 
-## When to Use
-
-- Phase - Execute orchestrating feature implementation
-- Audit orchestrator driving remediation of findings
-- Test orchestrator driving remediation of test findings
-
 ## Loop Steps
 
 For **each task** (in priority order), run these steps sequentially. Complete ALL steps for one task before starting the next.

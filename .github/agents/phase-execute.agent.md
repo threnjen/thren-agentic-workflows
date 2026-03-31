@@ -10,11 +10,6 @@ You are a **Phase Execution Orchestrator**. Your job is to take a refined Phase 
 
 You do NOT write code, plans, reviews, or QA documents yourself. You coordinate subagents that do.
 
-## Constraints
-
-- DO NOT write source code, test files, or configuration directly
-- DO NOT write plan documents, review records, or QA plans directly
-
 ## Required Input
 
 One refined Phase document: `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`
@@ -25,14 +20,7 @@ Before starting, verify the phase document exists and read it to extract the pha
 
 ### Step 0: Create Working Branch
 
-Create a dedicated branch for this phase so all changes are isolated from the default branch.
-
-Run:
-```
-git checkout -b phase/<phase-name>
-```
-
-Use the kebab-case `[phase-name]` extracted from the phase document path. If the branch already exists, append a numeric suffix (e.g., `phase/<phase-name>-2`) and retry. If the checkout fails for any other reason (e.g., uncommitted changes), report the error to the user and stop — do not proceed until the user resolves it.
+Create a branch using prefix `phase/<phase-name>`. See auto-loaded orchestrator conventions for the full procedure.
 
 ### Step 1: Decompose Phase into Features
 
@@ -55,15 +43,7 @@ Load the `implementation-pipeline-loop` skill and execute Steps A through D for 
 
 After ALL features are implemented and reviewed, produce a single consolidated QA document covering the entire phase.
 
-#### Determine QA Output Path
-
-1. Check if `docs/phases/[phase-name]/[phase-name]_QA.md` already exists → use it as the update target
-2. Else if `docs/phases/[phase-name]/` exists → target `docs/phases/[phase-name]/[phase-name]_QA.md` as a new file
-3. Else → target `dev/feature/[phase-name]-qa.md` as a new file
-
-Determine the coverage map path by placing it alongside the QA doc:
-- If QA target is in `docs/phases/`: `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md`
-- If QA target is in `dev/feature/`: `dev/feature/[phase-name]-coverage-map-qa.md`
+Determine QA output paths using the conventions in the auto-loaded `dev-task-folder` instruction (Consolidated QA Documents table). Check for existing QA files at those paths.
 
 #### Invoke QA Writer
 
@@ -83,29 +63,10 @@ Invoke the **Prod Code Review** subagent:
 
 ### Step 5: Report to User
 
-After the Final Review subagent returns, present the results:
-
-**If GO or GO WITH CONDITIONS:**
-
-> **Phase execution complete.**
->
-> **Phase:** [phase-name] [Name]
-> **Features completed:** [count]
-> **Final verdict:** [GO / GO WITH CONDITIONS]
-> **QA document:** [QA output path]
->
-> | Feature | Impl | Review |
-> |---------|------|--------|
-> | [task-1] | Done | Approved |
-> | [task-2] | Done | Approved |
->
-> **Next step:** Push the branch and open a PR for review. All pipeline documents are in the `dev/` folders listed above.
->
-> [If GO WITH CONDITIONS: list the conditions]
-
-**If NO-GO:**
-
-Report the blocking items from the Final Review and recommend specific remediation. Do NOT retry automatically — the user should review the NO-GO findings before deciding how to proceed.
+Present results using the Pipeline Completion Report format from the auto-loaded orchestrator conventions. Use these field labels:
+- Scope label: **Phase**
+- Items label: **Features completed**
+- Include the QA document path
 
 ### Step 6: Update Documentation
 

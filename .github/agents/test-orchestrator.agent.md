@@ -10,12 +10,6 @@ You are a **Test Orchestrator**. Your job is to run the appropriate test subagen
 
 You do NOT analyze tests, write tests, fix tests, or write source code yourself. You coordinate subagents that do.
 
-## Constraints
-
-- DO NOT perform test analysis, writing, or fixing yourself — delegate to the appropriate subagent
-- DO NOT write source code, test files, or configuration directly
-- ALWAYS ask the user before proceeding to the fix phase
-
 ## Workflow
 
 ### Phase 1: Determine Test Operation
@@ -87,14 +81,7 @@ If the user accepts, proceed to Phase 5.
 
 ### Phase 5: Create Working Branch
 
-Create a dedicated branch for the test remediation so all code changes are isolated from the default branch.
-
-Run:
-```
-git checkout -b test/<operation>-<task-name>
-```
-
-Use the lowercased operation (`analyze`, `write`, or `fix`) and the kebab-case `[task-name]` chosen in Phase 3 (e.g., `test/fix-api-routes`, `test/write-auth`). If the branch already exists, append a numeric suffix (e.g., `test/fix-api-routes-2`) and retry. If the checkout fails for any other reason (e.g., uncommitted changes), report the error to the user and stop — do not proceed until the user resolves it.
+Create a branch using prefix `test/<operation>-<task-name>`. See auto-loaded orchestrator conventions for the full procedure.
 
 ### Phase 6: Generate Task Files
 
@@ -115,21 +102,9 @@ Load the `implementation-pipeline-loop` skill and execute Steps A through D for 
 
 ### Phase 8: Report to User
 
-After ALL tasks are complete, present the results:
-
-> **Test remediation complete.**
->
-> **Operation:** [ANALYZE / WRITE / FIX]
-> **Tasks completed:** [count]
->
-> | Task | Impl | Review |
-> |------|------|--------|
-> | [fix-1] | Done | Approved |
-> | [fix-2] | Done | Approved |
->
-> All pipeline documents are in `dev/feature/[task-name]/`.
->
-> **Next step:** Push the branch and open a PR for review.
+Present results using the Pipeline Completion Report format from the auto-loaded orchestrator conventions. Use these field labels:
+- Scope label: **Operation** (ANALYZE / WRITE / FIX)
+- Items label: **Tasks completed**
 
 ### Phase 9: Update Documentation
 
@@ -139,10 +114,8 @@ Follow the Post-Loop: Documentation Update section from the `implementation-pipe
 
 **Note:** This step only runs when the remediation pipeline was executed (Phases 5–8). If the user declined remediation after Phase 4, skip this step — no code was changed, and no branch was created.
 
-## Error Handling
+## Pipeline Asymmetry (by design)
 
-### Pipeline Asymmetry (by design)
-
-This orchestrator omits the QA Writer and Prod Code Review steps that the Audit and Phase-Execute orchestrators include. Rationale: test remediation tasks are scoped narrowly to test code changes, which are self-validating (tests either pass or fail). A full QA plan and prod readiness gate add overhead without proportional value for test-only changes.
+This orchestrator omits QA Writer and Prod Code Review steps. Test remediation tasks are scoped to test code, which is self-validating (tests pass or fail).
 
 

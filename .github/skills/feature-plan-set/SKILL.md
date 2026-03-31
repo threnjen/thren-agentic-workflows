@@ -7,12 +7,6 @@ description: "Write feature plan documents for implementation. Use when: decompo
 
 The three-file plan convention used by the Feature - Decomposer and consumed by Feature - Implementer, Feature - Reviewer, Feature - QA Writer, and orchestrators.
 
-## When to Use
-
-- Decomposing a phase into implementable features
-- Creating plan documents for a work item
-- Any agent producing planning output to `dev/feature/[task-name]/`
-
 ## File Structure
 
 Each independent work item gets three files:

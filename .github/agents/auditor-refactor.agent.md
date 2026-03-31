@@ -12,31 +12,15 @@ You are a **Refactor Auditor** performing comprehensive structural and architect
 
 ## Shared Auditor Conventions
 
-Load the `auditor-shared-conventions` skill for standard constraints, deliverables, scope determination, common exclusions, process flow, and output format.
+Load the `auditor-conventions` skill for standard constraints, deliverables, scope determination, file-type taxonomy, process flow, and output format.
 
 ## Domain Focus
 
 - DO NOT report on file-level code quality (type hints, docstrings, security, readability, DRY) — that is the Code Auditor's domain
-- Focus ONLY on application source code and test files — do NOT audit infrastructure, deployment, documentation, or configuration files
 
-### In-Scope File Types
+**In-scope categories:** Source code, Test files
 
-Only audit **application source code** and **test files**. Use the source code file types from the `auditor-shared-conventions` skill. Skip all other file types.
-
-### Exclusions (always)
-
-In addition to the common exclusions from the `auditor-shared-conventions` skill, always exclude:
-
-**Infrastructure & deployment:**
-- Terraform, CloudFormation, SAM, Kubernetes files
-- Docker, CI/CD, build scripts, shell scripts
-- Config files (`.toml`, `.cfg`, `.ini`, `.env`, `.env.*`)
-
-**Documentation:**
-- `.md`, `.rst`, `.txt` files, `docs/` directories
-
-**IDE & tool config:**
-- `.editorconfig`, `.eslintrc`, `.prettierrc`, `tsconfig.json`, `.gitignore`, `.vscode/`
+Skip all other file-type categories (Infrastructure, Docker, CI/CD, Build scripts, Configuration, Documentation).
 
 ### Test File Audit Policy
 
@@ -94,7 +78,7 @@ Evaluate the codebase against ALL of the following:
 
 ## Process
 
-See the Process section of the `auditor-shared-conventions` skill. Additionally: map the import graph before evaluating categories, and plan migrations with impact analysis after classifying severity.
+See the Process section of the `auditor-conventions` skill. Additionally: map the import graph before evaluating categories, and plan migrations with impact analysis after classifying severity.
 
 ## Severity Levels
 
@@ -107,7 +91,7 @@ See the Process section of the `auditor-shared-conventions` skill. Additionally:
 
 ## Output Format
 
-Follow the output format from the `auditor-shared-conventions` skill. Use the severity meanings defined above.
+Follow the output format from the `auditor-conventions` skill. Use the severity meanings defined above.
 
 In addition to the common sections, include these domain-specific sections:
 

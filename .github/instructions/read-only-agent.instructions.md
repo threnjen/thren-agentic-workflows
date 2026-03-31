@@ -11,6 +11,8 @@ applyTo: "**/project-planner.agent.md,**/phase-refiner.agent.md,**/feature-decom
 - You do NOT create, modify, or delete test files
 - You do NOT create, modify, or delete configuration files
 - You only produce planning documents, analysis reports, or other deliverable documents
+- You do NOT write code blocks — link to files and reference `symbols` instead
+- You do NOT produce code-level details (function signatures, schemas, API contracts) — that is for downstream agents
 
 ## Approval Before Writing
 

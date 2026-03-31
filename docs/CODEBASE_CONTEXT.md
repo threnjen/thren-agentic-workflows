@@ -8,7 +8,7 @@ Quick-reference for AI agents working on this repository.
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
 - 19 agent definitions in `.github/agents/` (9 user-facing, 10 hidden subagents)
-- 5 skills in `.github/skills/` (shared templates and patterns extracted from agents)
+- 4 skills in `.github/skills/` (shared templates and patterns extracted from agents)
 - 5 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
 
@@ -23,9 +23,7 @@ README.md                       # Repo overview, usage instructions
   skills/
     phase-document-writing/     # Phase Doc & Overview templates, quality checklist
       SKILL.md
-    audit-report-format/        # Report structure, findings table, severity levels
-      SKILL.md
-    auditor-shared-conventions/ # Shared constraints, deliverables, scope, exclusions for all auditors
+    auditor-conventions/        # Merged auditor skill: constraints, deliverables, file-type taxonomy, report format, severity levels
       SKILL.md
     feature-plan-set/           # Three-file plan convention, sections A–F, stage format
       SKILL.md
@@ -35,8 +33,8 @@ README.md                       # Repo overview, usage instructions
     codebase-context-bootstrap.instructions.md  # Reads CODEBASE_CONTEXT.md before discovery (applies to all agents)
     dev-task-folder.instructions.md     # dev/feature/[task-name]/ naming convention (applies to all agents)
     documentation-freshness-check.instructions.md  # Checks for README.md and CODEBASE_CONTEXT.md, recommends @Docs Writer (applies to planner, refiner)
-    orchestrator-conventions.instructions.md  # Shared orchestrator constraints (applies to 3 orchestrators)
-    read-only-agent.instructions.md     # No-modification + approval constraints (applies to 8 agents)
+    orchestrator-conventions.instructions.md  # Shared orchestrator constraints, branch creation, reporting (applies to 3 orchestrators)
+    read-only-agent.instructions.md     # No-modification, no code blocks, no code-level details, approval constraints (applies to 8 agents)
 docs/
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
@@ -79,8 +77,7 @@ python/
 - Agents load skills by name at runtime — skills are not auto-loaded
 - Skills contain templates and formats that would otherwise be duplicated across agents
 - `phase-document-writing` — Phase Document Template + Phases Overview Template + quality checklist (used by Planner, Refiner)
-- `audit-report-format` — Report structure, findings table, severity levels, priority tiers (used by all 3 Auditors)
-- `auditor-shared-conventions` — Standard constraints, deliverables, scope determination, common exclusions, process flow, output format (used by all 3 Auditors; complements `audit-report-format`)
+- `auditor-conventions` — Merged auditor skill: standard constraints, deliverables, file-type taxonomy, scope determination, process flow, report format, severity levels (used by all 3 Auditors)
 - `feature-plan-set` — Three-file plan convention, sections A–F, stage format, decomposition rules (used by Decomposer)
 - `implementation-pipeline-loop` — Standard development cycle (Implement → Review → Commit → Mark Complete) with prompt templates, error handling, and post-loop Docs Writer step (referenced by all 3 orchestrators)
 
@@ -91,8 +88,8 @@ python/
 - `codebase-context-bootstrap.instructions.md` — Reads `docs/CODEBASE_CONTEXT.md` before discovery to reduce redundant scanning; applies to `.github/agents/**`
 - `dev-task-folder.instructions.md` — Standardizes `dev/feature/[task-name]/` naming; applies to `.github/agents/**`
 - `documentation-freshness-check.instructions.md` — Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing; applies to project-planner, phase-refiner
-- `orchestrator-conventions.instructions.md` — Progress tracking, output verification, pipeline discipline, review reject loop; applies to 3 orchestrators
-- `read-only-agent.instructions.md` — No codebase modification + approval-before-writing; applies to 8 read-only agents (with subagent exception)
+- `orchestrator-conventions.instructions.md` — Common constraints, branch creation, progress tracking, output verification, pipeline discipline, review reject loop, reporting template; applies to 3 orchestrators
+- `read-only-agent.instructions.md` — No codebase modification, no code blocks, no code-level details, approval-before-writing; applies to 8 read-only agents (with subagent exception)
 
 ## File Relationships
 
