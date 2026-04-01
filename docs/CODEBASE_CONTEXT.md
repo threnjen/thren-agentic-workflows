@@ -67,7 +67,7 @@ python/
 - Feature - Implementer and Feature - Reviewer are shared across all three orchestrators
 - Docs Writer is dual-use: standalone user-facing agent AND invoked as a subagent by all three orchestrators at the end of the pipeline to update stale documentation
 - 01 Project - Planner and 02 Phase - Refiner check for missing critical docs (`README.md`, `docs/CODEBASE_CONTEXT.md`) during discovery and recommend running the Docs Writer before proceeding
-- All agents use `model: "Claude Opus 4 (Copilot)"` except Docs Writer (no model specified)
+- All agents use `` except Docs Writer (no model specified)
 - Orchestrators list their subagents in the `agents:` frontmatter field
 
 ### Skills (.github/skills/)

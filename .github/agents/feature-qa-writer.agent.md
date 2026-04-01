@@ -2,7 +2,7 @@
 name: Feature - QA Writer
 description: "Writes a consolidated manual QA checklist covering integration points not verifiable by automated tests."
 tools: [read, edit, search, execute, todo, run in terminal]
-model: "Claude Opus 4 (Copilot)"
+
 user-invocable: false
 ---
 

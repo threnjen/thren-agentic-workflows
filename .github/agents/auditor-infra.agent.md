@@ -2,7 +2,7 @@
 name: Auditor - Infra
 description: "Audits infrastructure and configuration files — Dockerfiles, CI/CD pipelines, IaC templates, build scripts, and documentation. Produces a structured findings report."
 tools: [read, search, edit, fetch, run in terminal]
-model: "Claude Opus 4 (Copilot)"
+
 user-invocable: false
 ---
 

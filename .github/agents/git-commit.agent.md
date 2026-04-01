@@ -2,7 +2,7 @@
 name: Git Commit
 description: "Creates an atomic Git commit after implementation and review. Generates a conventional commit message from pipeline records."
 tools: [run_in_terminal, read]
-model: "Claude Opus 4 (Copilot)"
+
 user-invocable: false
 ---
 

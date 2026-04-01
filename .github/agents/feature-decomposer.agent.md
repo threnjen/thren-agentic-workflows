@@ -2,7 +2,7 @@
 name: Feature - Decomposer
 description: "Breaks a refined Phase document into independent features, producing a three-file plan set (plan, context, tasks) per feature."
 tools: [read, search, edit, fetch, run in terminal]
-model: "Claude Opus 4 (Copilot)"
+
 user-invocable: false
 ---
 
