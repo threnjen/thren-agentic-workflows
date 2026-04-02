@@ -27,8 +27,8 @@ Before beginning, ensure ALL of the following are available. If any are missing,
 | Document | Source Agent | Expected File |
 |----------|-------------|---------------|
 | Feature plan | Feature - Decomposer | `[task-name]-plan.md` |
-| Context document | Feature - Decomposer | `[task-name]-context.md` |
-| Task checklist | Feature - Decomposer | `[task-name]-tasks.md` |
+| Context document | Feature - Plan Expander | `[task-name]-context.md` |
+| Task checklist | Feature - Plan Expander | `[task-name]-tasks.md` |
 | Implementation record | Feature - Implementer | `[task-name]-implementation.md` |
 | Review record | Feature - Reviewer | `[task-name]-review.md` |
 
@@ -179,8 +179,8 @@ Three to five sentences covering:
 | Document | File | Source | Present | Notes |
 |----------|------|--------|---------|-------|
 | Feature Plan | `[task-name]-plan.md` | Feature - Decomposer | Yes/No | — |
-| Context | `[task-name]-context.md` | Feature - Decomposer | Yes/No | — |
-| Tasks | `[task-name]-tasks.md` | Feature - Decomposer | Yes/No | — |
+| Context | `[task-name]-context.md` | Feature - Plan Expander | Yes/No | — |
+| Tasks | `[task-name]-tasks.md` | Feature - Plan Expander | Yes/No | — |
 | Implementation Record | `[task-name]-implementation.md` | Feature - Implementer | Yes/No | — |
 | Review Record | `[task-name]-review.md` | Feature - Reviewer | Yes/No | — |
 

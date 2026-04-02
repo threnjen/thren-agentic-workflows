@@ -2,8 +2,6 @@
 name: Feature - Plan Expander
 description: "Reads feature plan files and generates companion context and tasks files."
 tools: [read, search, edit, run in terminal]
-model: <model>
-
 user-invocable: false
 ---
 
