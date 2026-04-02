@@ -7,7 +7,7 @@ Quick-reference for AI agents working on this repository.
 - A **template repository** of `AGENTS.md`, style guide files, and VS Code Copilot agent definitions
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
-- 20 agent definitions in `.github/agents/` (9 user-facing, 11 hidden subagents)
+- 21 agent definitions in `.github/agents/` (10 user-facing, 11 hidden subagents)
 - 4 skills in `.github/skills/` (shared templates and patterns extracted from agents)
 - 5 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
@@ -19,7 +19,7 @@ README.md                       # Repo overview, usage instructions
 .github/
   agents/
     README.md                   # Agent documentation, pipelines, and usage guide
-    *.agent.md                  # 20 agent definition files
+    *.agent.md                  # 21 agent definition files
   skills/
     phase-document-writing/     # Phase Doc & Overview templates, quality checklist
       SKILL.md
@@ -61,11 +61,12 @@ python/
 ### Agent Definitions (.github/agents/)
 
 - All agent files use `.agent.md` extension with YAML frontmatter
-- **3 orchestrators** (user-facing): 03 Phase - Execute, Audit - Code, Infra, Refactor, Test - Orchestrator
-- **6 standalone user-facing agents**: 01 Project - Planner, 02 Phase - Refiner, Debugger, Docs Writer, Prod Code Review, Web Researcher
-- **11 hidden subagents** (`user-invocable: false`): Feature - Decomposer, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Auditor - Code, Auditor - Infra, Auditor - Refactor, Test - Analyst, Test - Writer, Test - Fixer, Git Commit
+- **3 orchestrators** (user-facing): 04 Phase - Execute, Audit - Code, Infra, Refactor, Test - Orchestrator
+- **7 standalone user-facing agents**: 01 Project - Planner, 02 Phase - Refiner, 03 Feature - Decomposer, Debugger, Docs Writer, Prod Code Review, Web Researcher
+- **11 hidden subagents** (`user-invocable: false`): Feature - Plan Expander, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Auditor - Code, Auditor - Infra, Auditor - Refactor, Test - Analyst, Test - Writer, Test - Fixer, Git Commit
 - Feature - Implementer and Feature - Reviewer are shared across all three orchestrators
 - Docs Writer is dual-use: standalone user-facing agent AND invoked as a subagent by all three orchestrators at the end of the pipeline to update stale documentation
+- 03 Feature - Decomposer is dual-use: standalone user-facing agent for creating feature plans AND invoked as a subagent by 04 Phase - Execute when plans are missing. Produces only `-plan.md`; the hidden Feature - Plan Expander subagent generates `-context.md` and `-tasks.md` from existing plans
 - 01 Project - Planner and 02 Phase - Refiner check for missing critical docs (`README.md`, `docs/CODEBASE_CONTEXT.md`) during discovery and recommend running the Docs Writer before proceeding
 - All agents use `` except Docs Writer (no model specified)
 - Orchestrators list their subagents in the `agents:` frontmatter field
@@ -78,7 +79,7 @@ python/
 - Skills contain templates and formats that would otherwise be duplicated across agents
 - `phase-document-writing` — Phase Document Template + Phases Overview Template + quality checklist (used by Planner, Refiner)
 - `auditor-conventions` — Merged auditor skill: standard constraints, deliverables, file-type taxonomy, scope determination, process flow, report format, severity levels (used by all 3 Auditors)
-- `feature-plan-set` — Three-file plan convention, sections A–F, stage format, decomposition rules (used by Decomposer)
+- `feature-plan-set` — Three-file plan convention, sections A–F, stage format, decomposition rules (used by Decomposer and Plan Expander)
 - `implementation-pipeline-loop` — Standard development cycle (Implement → Review → Commit → Mark Complete) with prompt templates, error handling, and post-loop Docs Writer step (referenced by all 3 orchestrators)
 
 ### Instructions (.github/instructions/)

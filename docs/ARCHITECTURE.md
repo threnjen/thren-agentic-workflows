@@ -22,13 +22,13 @@ flowchart TD
     GH --> Instructions[instructions/]
 
     Agents --> Orchestrators["Orchestrators (3)\n Phase-Execute, Audit, Test"]
-    Agents --> UserAgents["User-Facing Standalone (6)\nPlanner, Refiner, Debugger,\nProd Review, Web Research, Docs"]
-    Agents --> Subagents["Hidden Subagents (11)\nDecomposer, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer,\nGit Commit"]
+    Agents --> UserAgents["User-Facing Standalone (7)\nPlanner, Refiner, Decomposer,\nDebugger, Prod Review,\nWeb Research, Docs"]
+    Agents --> Subagents["Hidden Subagents (11)\nPlan Expander, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer,\nGit Commit"]
     Orchestrators -->|delegate to| Subagents
 
     Skills --> S1["phase-document-writing\n(Planner, Refiner)"]
     Skills --> S2["audit-report-format\n(3 Auditors)"]
-    Skills --> S3["feature-plan-set\n(Decomposer)"]
+    Skills --> S3["feature-plan-set\n(Decomposer, Plan Expander)"]
     Skills --> S4["implementation-pipeline-loop\n(Orchestrators)"]
 
     Instructions --> I1["dev-task-folder\n(all agents)"]
@@ -87,16 +87,17 @@ flowchart LR
 
 ## Agent Architecture
 
-The `.github/agents/` directory contains 20 agent definitions organized in an **orchestrator + subagent** pattern:
+The `.github/agents/` directory contains 21 agent definitions organized in an **orchestrator + subagent** pattern:
 
 %% Shows the orchestrator delegation model
 ```mermaid
 flowchart TD
-    PE["03 Phase - Execute\n(orchestrator)"]
+    PE["04 Phase - Execute\n(orchestrator)"]
     AO["Audit - Code, Infra, Refactor\n(orchestrator)"]
     TO["Test - Orchestrator\n(orchestrator)"]
 
     PE --> FD[Feature - Decomposer]
+    PE --> FPE[Feature - Plan Expander]
     PE --> FI[Feature - Implementer]
     PE --> FR[Feature - Reviewer]
     PE --> FQ[Feature - QA Writer]
@@ -156,7 +157,7 @@ Skills (`.github/skills/<name>/SKILL.md`) extract shared templates and formats t
 |-------|---------|-----------------|
 | `phase-document-writing` | 01 Project - Planner, 02 Phase - Refiner | Phase Document Template, Phases Overview Template, quality checklist |
 | `audit-report-format` | Auditor - Code, Auditor - Infra, Auditor - Refactor | Report structure, findings table format, severity levels, priority tiers |
-| `feature-plan-set` | Feature - Decomposer | Three-file plan convention, plan sections A–F, stage format, decomposition rules || `implementation-pipeline-loop` | Orchestrators (reference) | Standard Implement → Review → QA → Mark Complete cycle, prompt templates, error handling |
+| `feature-plan-set` | Feature - Decomposer, Feature - Plan Expander | Three-file plan convention, plan sections A–F, stage format, decomposition rules || `implementation-pipeline-loop` | Orchestrators (reference) | Standard Implement → Review → QA → Mark Complete cycle, prompt templates, error handling |
 ## Instructions
 
 Instructions (`.github/instructions/*.instructions.md`) inject conventions into agents via `applyTo` glob matching. Unlike skills (which agents load explicitly), instructions are loaded automatically when the agent's file path matches the `applyTo` pattern.
