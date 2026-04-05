@@ -34,7 +34,7 @@ The core development workflow. **You interact with steps 1–3. Everything else 
 │                                                                 │
 │  Step 1: 01 Project - Planner    → Phase documents              │
 │  Step 2: 02 Phase - Refiner      → Refined phase document       │
-│  Step 3: 03 Phase - Execute      → Hands-free from here ──┐    │
+│  Step 3: 04 Phase - Execute      → Hands-free from here ──┐    │
 │                                                             │    │
 └─────────────────────────────────────────────────────────────│────┘
                                                               │
@@ -77,18 +77,19 @@ Interactive — you iterate to probe edge cases, dependencies, and decomposition
 
 | Agent | Prompt | Output |
 |-------|--------|--------|
-| **03 Phase - Execute** | "Execute this phase" + attach refined phase doc | All features implemented, reviewed, QA'd |
+| **04 Phase - Execute** | "Execute this phase" + attach refined phase doc | All features implemented, reviewed, QA'd |
 
 **Hands-free from here.** The orchestrator automatically:
 
 1. Decomposes the phase into features (via Feature - Decomposer subagent)
-2. For each feature, runs the full cycle:
+2. Expands plans with context and tasks (via Feature - Plan Expander subagent)
+3. For each feature, runs the full cycle:
    - **Implement** → Red-Green-Refactor TDD, writes implementation record
    - **Review** → Finds bugs, applies fixes, writes review record
    - **QA Plan** → Writes manual QA checklist for non-automatable testing
-3. Runs the **Prod Code Review** across all features
-4. Reports the verdict back to you
-5. Runs the **Docs Writer** to update any stale documentation
+4. Runs the **Prod Code Review** across all features
+5. Reports the verdict back to you
+6. Runs the **Docs Writer** to update any stale documentation
 
 **After completion:** Push the branch and open a PR for final human review.
 
@@ -97,15 +98,16 @@ Interactive — you iterate to probe edge cases, dependencies, and decomposition
 Prefer to write your own code? Use the planning agents, then implement yourself:
 
 ```
-Step 1: 01 Project - Planner    → Phase documents
-Step 2: 02 Phase - Refiner       → Refined phase document
-Step 3: (you write the code from the refined phase doc)
-Step 4: Prod Code Review     → Validates your code against the plans
+Step 1: 01 Project - Planner       → Phase documents
+Step 2: 02 Phase - Refiner          → Refined phase document
+Step 3: 03 Feature - Decomposer     → Feature plans (optional)
+Step 4: (you write the code from the plans)
+Step 5: Prod Code Review        → Validates your code against the plans
 ```
 
 The refined Phase document from Step 2 contains detailed scope, requirements, and acceptance criteria — enough to implement directly. When you're ready for validation, run **Prod Code Review** to check your work against the plan.
 
-**Tip:** If you want structured feature decomposition before implementing, launch **03 Phase - Execute** with your refined phase doc — it will create detailed feature plans in `dev/feature/[task-name]/` via the Feature - Decomposer subagent. You can then implement from those plans at your own pace.
+**Tip:** For structured feature decomposition without automated execution, use **03 Feature - Decomposer** directly — it creates plan files in `dev/feature/[task-name]/` that you can implement at your own pace. Or launch **04 Phase - Execute** to run the full automated pipeline.
 
 ---
 
@@ -113,17 +115,18 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 
 ### User-Facing (in agent picker)
 
-| Agent | Model | Purpose |
-|-------|-------|---------|
-| **01 Project - Planner** | Opus | Create a project roadmap broken into phases |
-| **02 Phase - Refiner** | Opus | Refine and deepen an individual Phase document |
-| **03 Phase - Execute** | Opus | Orchestrate full phase execution — decompose, implement, review, QA |
-| **Audit - Code, Infra, Refactor** | Opus | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
-| **Debugger** | Opus | Diagnose and fix frontend or backend application errors |
-| **Docs Writer** | — | Create or update repo documentation; also invoked automatically by orchestrators after pipeline completion |
-| **Prod Code Review** | Opus | Final pre-production readiness gate (also usable standalone) |
-| **Test - Orchestrator** | Opus | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
-| **Web Researcher** | Opus | Research solutions across GitHub issues, forums, and documentation |
+| Agent | Purpose |
+|-------|---------|
+| **01 Project - Planner** | Create a project roadmap broken into phases |
+| **02 Phase - Refiner** | Refine and deepen an individual Phase document |
+| **03 Feature - Decomposer** | Break a phase into features with structured plan files |
+| **04 Phase - Execute** | Orchestrate full phase execution — decompose, implement, review, QA |
+| **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
+| **Debugger** | Diagnose and fix frontend or backend application errors |
+| **Docs Writer** | Create or update repo documentation; also invoked automatically by orchestrators after pipeline completion |
+| **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
+| **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
+| **Web Researcher** | Research solutions across GitHub issues, forums, and documentation |
 
 ### Hidden Subagents
 
@@ -134,7 +137,7 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Auditor - Code** | Audit orchestrator | Comprehensive code quality, security, and health audit |
 | **Auditor - Infra** | Audit orchestrator | Audit Dockerfiles, CI/CD pipelines, IaC templates, and config files |
 | **Auditor - Refactor** | Audit orchestrator | Audit codebase structure, module organization, and architecture |
-| **Feature - Decomposer** | Phase - Execute | Decompose a phase into features with structured plans |
+| **Feature - Plan Expander** | Phase - Execute | Generate context and tasks files from existing plan files |
 | **Feature - Implementer** | Phase - Execute, Audit orchestrator, Test orchestrator | Implement a feature plan using Red-Green-Refactor TDD |
 | **Feature - Reviewer** | Phase - Execute, Audit orchestrator, Test orchestrator | Review implementation, apply fixes, produce review record |
 | **Feature - QA Writer** | Phase - Execute, Audit orchestrator | Write manual QA plan for non-automatable test cases |
@@ -155,8 +158,11 @@ These agents are not visible in the picker. They run automatically as part of or
 **02 Phase - Refiner** (document-only — does not write code)
 > Give it a single Phase document from the 01 Project - Planner (or describe a standalone feature). It iterates with you to refine scope, probe edge cases, surface hidden dependencies, stress-test decomposition readiness, and walk through user flows — deepening the Phase document until it's fully ready for automated execution. It updates the Phase document in place and will not write changes until you explicitly approve.
 
-**03 Phase - Execute** (orchestrator — delegates to subagents)
-> Give it a refined Phase document. It decomposes the phase into features, then runs the implement → review → QA cycle for each feature automatically. After all features complete, it runs the Prod Code Review, reports GO / NO-GO back to you, and updates documentation via the Docs Writer. No user interaction required after launch.
+**03 Feature - Decomposer** (document-only — does not write code)
+> Give it a refined Phase document or describe a feature. It scans the codebase, decomposes the work into independent features, and writes a structured `-plan.md` file for each to `dev/feature/[task-name]/`. In standalone mode, it asks for approval before writing. Also invoked automatically by 04 Phase - Execute when plans are missing.
+
+**04 Phase - Execute** (orchestrator — delegates to subagents)
+> Give it a refined Phase document. It checks for existing plans (invoking the Decomposer if missing), expands plans via the Plan Expander, then runs the implement → review → QA cycle for each feature automatically. After all features complete, it runs the Prod Code Review, reports GO / NO-GO back to you, and updates documentation via the Docs Writer. No user interaction required after launch.
 
 **Audit - Code, Infra, Refactor** (orchestrator — delegates to subagents)
 > Asks which audit type to run (CODE, INFRA, or REFACTOR), delegates to the appropriate auditor subagent, and presents findings. Optionally drives automated remediation by converting audit findings into task plans and running them through the Feature - Implementer → Feature - Reviewer → Feature - QA Writer pipeline. After remediation, updates documentation via the Docs Writer.
@@ -178,7 +184,7 @@ These agents are not visible in the picker. They run automatically as part of or
 
 ### Hidden Subagents
 
-**Feature - Decomposer** *(subagent of Phase - Execute)* — Scans the codebase for context and writes structured plans with numbered acceptance criteria, architecture analysis, and test strategy to `dev/feature/[task-name]/` for each independent feature.
+**Feature - Plan Expander** *(subagent of Phase - Execute)* — Reads existing `-plan.md` files and generates companion `-context.md` and `-tasks.md` files in the same `dev/feature/[task-name]/` directory. Does not modify plan files.
 
 **Feature - Implementer** *(subagent of Phase - Execute, Audit orchestrator, Test orchestrator)* — Reads plan docs from `dev/feature/[task-name]/`, implements each acceptance criterion using Red-Green-Refactor TDD, and writes `[task-name]-implementation.md` mapping changes to acceptance criteria.
 
@@ -272,8 +278,8 @@ The pipeline subagents produce output in the `dev/feature/[task-name]/` director
 ```
 dev/feature/[task-name]/
 ├── [task-name]-plan.md              # Plan with stages (Feature - Decomposer)
-├── [task-name]-context.md           # Key files, decisions, constraints (Feature - Decomposer)
-├── [task-name]-tasks.md             # Checklist of work items (Feature - Decomposer)
+├── [task-name]-context.md           # Key files, decisions, constraints (Feature - Plan Expander)
+├── [task-name]-tasks.md             # Checklist of work items (Feature - Plan Expander)
 ├── [task-name]-implementation.md    # Files changed, AC traceability (Feature - Implementer)
 └── [task-name]-review.md            # Verdict, issues, fixes applied (Feature - Reviewer)
 ```
@@ -319,14 +325,19 @@ Agents reference **skills** (`.github/skills/<name>/SKILL.md`) for shared templa
 | Skill | Used By | Purpose |
 |-------|---------|---------|
 | `phase-document-writing` | 01 Project - Planner, 02 Phase - Refiner | Phase Document Template, Phases Overview Template, quality checklist |
-| `audit-report-format` | Auditor - Code, Auditor - Infra, Auditor - Refactor | Report structure, findings table format, severity levels, priority tiers |
-| `feature-plan-set` | Feature - Decomposer | Three-file plan convention, plan sections A–F, stage format, decomposition rules |
+| `auditor-conventions` | Auditor - Code, Auditor - Infra, Auditor - Refactor | Standard constraints, deliverables, file-type taxonomy, report format, severity levels |
+| `feature-plan-set` | Feature - Decomposer, Feature - Plan Expander | Three-file plan convention, plan sections A–F, stage format, decomposition rules |
+| `implementation-pipeline-loop` | Phase - Execute, Audit orchestrator, Test orchestrator | Standard Implement → Review → Commit → Mark Complete cycle, prompt templates, error handling |
 
 **Instructions** (`.github/instructions/*.instructions.md`) inject cross-cutting conventions into agents automatically via `applyTo` glob patterns.
 
 | Instruction | Applies To | Purpose |
 |-------------|-----------|---------|
+| `codebase-context-bootstrap` | `.github/agents/**` | Reads `docs/CODEBASE_CONTEXT.md` before discovery to reduce redundant codebase scanning |
 | `dev-task-folder` | `.github/agents/**` | Standardizes `dev/feature/[task-name]/` naming and file suffix conventions |
+| `documentation-freshness-check` | project-planner, phase-refiner | Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing |
+| `orchestrator-conventions` | 3 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
+| `read-only-agent` | 9 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |
 
 ---
 
@@ -346,10 +357,11 @@ For the project pipeline, copy all files including the hidden subagents. For sta
 
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each agent file works standalone — just copy the `.md` file into any project's `.github/agents/` directory.
-- **Three orchestrators**: **03 Phase - Execute**, **Audit - Code, Infra, Refactor**, and **Test - Orchestrator** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
+- **Three orchestrators**: **04 Phase - Execute**, **Audit - Code, Infra, Refactor**, and **Test - Orchestrator** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
 - **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by all three orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is invoked by all three orchestrators at the end of the pipeline to update stale documentation (it remains user-invocable for standalone use as well).
+- **Dual-use agents**: **03 Feature - Decomposer** is user-facing for standalone plan creation and also invoked by **04 Phase - Execute** when plans are missing. **Docs Writer** is user-facing and also invoked by all three orchestrators.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
 - **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, and **Test - Analyst** do not modify code. They analyze and report only.
-- **Approval-gated agents**: **01 Project - Planner** and **02 Phase - Refiner** always present findings and ask for explicit approval before creating files. They also check for missing critical documentation (`README.md`, `docs/CODEBASE_CONTEXT.md`) and recommend running the **Docs Writer** before continuing. The **Audit** and **Test** orchestrators ask before proceeding to the remediation phase.
+- **Approval-gated agents**: **01 Project - Planner**, **02 Phase - Refiner**, and **03 Feature - Decomposer** always present findings and ask for explicit approval before creating files. They also check for missing critical documentation (`README.md`, `docs/CODEBASE_CONTEXT.md`) and recommend running the **Docs Writer** before continuing. The **Audit** and **Test** orchestrators ask before proceeding to the remediation phase.
 - **Code-writing agents**: **Debugger**, **Test - Writer**, **Test - Fixer**, **Feature - Implementer**, and **Feature - Reviewer** have full tool access to create and modify files.
 - **Prod Code Review** does not modify code — it analyzes and reports only, producing a GO / NO-GO verdict.

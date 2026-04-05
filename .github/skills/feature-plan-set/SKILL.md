@@ -5,7 +5,7 @@ description: "Write feature plan documents for implementation. Use when: decompo
 
 # Feature Plan Set
 
-The three-file plan convention used by the Feature - Decomposer and consumed by Feature - Implementer, Feature - Reviewer, Feature - QA Writer, and orchestrators.
+The three-file plan convention: `-plan.md` is produced by the Feature - Decomposer; `-context.md` and `-tasks.md` are produced by the Feature - Plan Expander. All three files are consumed by Feature - Implementer, Feature - Reviewer, Feature - QA Writer, and orchestrators.
 
 ## File Structure
 

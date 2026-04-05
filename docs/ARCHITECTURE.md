@@ -22,18 +22,20 @@ flowchart TD
     GH --> Instructions[instructions/]
 
     Agents --> Orchestrators["Orchestrators (3)\n Phase-Execute, Audit, Test"]
-    Agents --> UserAgents["User-Facing Standalone (6)\nPlanner, Refiner, Debugger,\nProd Review, Web Research, Docs"]
-    Agents --> Subagents["Hidden Subagents (11)\nDecomposer, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer,\nGit Commit"]
+    Agents --> UserAgents["User-Facing Standalone (7)\nPlanner, Refiner, Decomposer,\nDebugger, Prod Review,\nWeb Research, Docs"]
+    Agents --> Subagents["Hidden Subagents (11)\nPlan Expander, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer,\nGit Commit"]
     Orchestrators -->|delegate to| Subagents
 
     Skills --> S1["phase-document-writing\n(Planner, Refiner)"]
-    Skills --> S2["audit-report-format\n(3 Auditors)"]
-    Skills --> S3["feature-plan-set\n(Decomposer)"]
+    Skills --> S2["auditor-conventions\n(3 Auditors)"]
+    Skills --> S3["feature-plan-set\n(Decomposer, Plan Expander)"]
     Skills --> S4["implementation-pipeline-loop\n(Orchestrators)"]
 
     Instructions --> I1["dev-task-folder\n(all agents)"]
     Instructions --> I2["orchestrator-conventions\n(3 orchestrators)"]
-    Instructions --> I3["read-only-agent\n(8 read-only agents)"]
+    Instructions --> I3["read-only-agent\n(9 read-only agents)"]
+    Instructions --> I4["codebase-context-bootstrap\n(all agents)"]
+    Instructions --> I5["documentation-freshness-check\n(planner, refiner)"]
 
     NodeDir --> NodeAgents[AGENTS.md<br/>Agent guidelines]
     NodeDir --> NodeDocs[docs/]
@@ -87,20 +89,26 @@ flowchart LR
 
 ## Agent Architecture
 
-The `.github/agents/` directory contains 20 agent definitions organized in an **orchestrator + subagent** pattern:
+The `.github/agents/` directory contains 21 agent definitions organized in an **orchestrator + subagent** pattern:
 
 %% Shows the orchestrator delegation model
 ```mermaid
 flowchart TD
-    PE["03 Phase - Execute\n(orchestrator)"]
+    PE["04 Phase - Execute\n(orchestrator)"]
     AO["Audit - Code, Infra, Refactor\n(orchestrator)"]
     TO["Test - Orchestrator\n(orchestrator)"]
 
+    GC[Git Commit]
+    DW[Docs Writer]
+
     PE --> FD[Feature - Decomposer]
+    PE --> FPE[Feature - Plan Expander]
     PE --> FI[Feature - Implementer]
     PE --> FR[Feature - Reviewer]
     PE --> FQ[Feature - QA Writer]
     PE --> PR[Prod Code Review]
+    PE --> GC
+    PE --> DW
 
     AO --> AC[Auditor - Code]
     AO --> AI[Auditor - Infra]
@@ -109,12 +117,16 @@ flowchart TD
     AO --> FR
     AO --> FQ
     AO --> PR
+    AO --> GC
+    AO --> DW
 
     TO --> TA[Test - Analyst]
     TO --> TW[Test - Writer]
     TO --> TF[Test - Fixer]
     TO --> FI
     TO --> FR
+    TO --> GC
+    TO --> DW
 ```
 
 Three orchestrators share **Feature - Implementer** and **Feature - Reviewer** as common subagents for driving automated remediation. Each orchestrator follows the same pattern: analyze/audit first, then optionally run fixes through the implementation pipeline.
@@ -155,14 +167,18 @@ Skills (`.github/skills/<name>/SKILL.md`) extract shared templates and formats t
 | Skill | Used By | What It Contains |
 |-------|---------|-----------------|
 | `phase-document-writing` | 01 Project - Planner, 02 Phase - Refiner | Phase Document Template, Phases Overview Template, quality checklist |
-| `audit-report-format` | Auditor - Code, Auditor - Infra, Auditor - Refactor | Report structure, findings table format, severity levels, priority tiers |
-| `feature-plan-set` | Feature - Decomposer | Three-file plan convention, plan sections A–F, stage format, decomposition rules || `implementation-pipeline-loop` | Orchestrators (reference) | Standard Implement → Review → QA → Mark Complete cycle, prompt templates, error handling |
+| `auditor-conventions` | Auditor - Code, Auditor - Infra, Auditor - Refactor | Standard constraints, deliverables, file-type taxonomy, report format, severity levels |
+| `feature-plan-set` | Feature - Decomposer, Feature - Plan Expander | Three-file plan convention, plan sections A–F, stage format, decomposition rules |
+| `implementation-pipeline-loop` | Orchestrators (reference) | Standard Implement → Review → Commit → Mark Complete cycle, prompt templates, error handling |
+
 ## Instructions
 
 Instructions (`.github/instructions/*.instructions.md`) inject conventions into agents via `applyTo` glob matching. Unlike skills (which agents load explicitly), instructions are loaded automatically when the agent's file path matches the `applyTo` pattern.
 
 | Instruction | Applies To | What It Does |
 |-------------|-----------|--------------|
+| `codebase-context-bootstrap` | `.github/agents/**` | Reads `docs/CODEBASE_CONTEXT.md` before discovery to reduce redundant codebase scanning |
 | `dev-task-folder` | `.github/agents/**` | Standardizes `dev/feature/[task-name]/` naming and file suffix conventions |
+| `documentation-freshness-check` | project-planner, phase-refiner | Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing |
 | `orchestrator-conventions` | 3 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
-| `read-only-agent` | 8 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |
+| `read-only-agent` | 9 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |

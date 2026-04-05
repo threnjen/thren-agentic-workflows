@@ -12,8 +12,8 @@ All pipeline subagents write their output to `dev/feature/[task-name]/` director
 | Suffix | Producer | Content |
 |--------|----------|---------|
 | `-plan.md` | Feature - Decomposer | Plan with stages and acceptance criteria |
-| `-context.md` | Feature - Decomposer | Key files, decisions, constraints |
-| `-tasks.md` | Feature - Decomposer | Ordered checklist of work items |
+| `-context.md` | Feature - Plan Expander | Key files, decisions, constraints |
+| `-tasks.md` | Feature - Plan Expander | Ordered checklist of work items |
 | `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results |
 | `-review.md` | Feature - Reviewer | Verdict, issues found, fixes applied |
 | `-report.md` | Auditor subagents | Full structured audit findings |

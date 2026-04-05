@@ -41,7 +41,7 @@ Search for test files, test configuration, and test runner setup in the project.
 
 If no test files exist or test coverage is below 50%:
 - **STOP** — Do not proceed with implementation
-- Inform the user: *"This project has insufficient test coverage to safely implement changes. I recommend invoking `@test-writer` to bootstrap a test suite before proceeding."*
+- Inform the user: *"This project has insufficient test coverage to safely implement changes. I recommend invoking `@Test - Writer` to bootstrap a test suite before proceeding."*
 - Do not continue unless the user explicitly overrides this gate
 
 **Branch: Tests exist, all pass**

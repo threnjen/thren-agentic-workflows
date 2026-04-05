@@ -1,7 +1,7 @@
 ---
 name: Audit - Code, Infra, Refactor
-description: "Orchestrates code, infrastructure, or refactor audits with optional automated remediation through the feature pipeline."
-tools: [agent, read, search, todo, edit, web, run_in_terminal]
+description: "Orchestrates code, infrastructure, or refactor audits (audit-only: documents; with remediation: documents + code) — delegates to auditor subagents with optional automated remediation through the feature pipeline."
+tools: [agent, read, search, todo, edit, web, execute]
 agents: [Auditor - Code, Auditor - Infra, Auditor - Refactor, Feature - Implementer, Feature - Reviewer, Git Commit, Feature - QA Writer, Prod Code Review, Docs Writer]
 
 ---
