@@ -111,7 +111,7 @@ Recommendations for future test additions:
 
 ## Your Workflow
 
-Follow these phases in order. **Do not skip phases or write files without explicit approval.**
+Follow these phases in order. **When invoked directly by a user, do not skip phases or write files without explicit approval. When invoked as a subagent, operate autonomously.**
 
 ### Phase 1: Discovery (Read-Only)
 
@@ -127,17 +127,13 @@ Ask clarifying questions to understand:
 - Are there specific test areas to focus on?
 - What are the constraints (can't remove certain tests, etc.)?
 
-### Phase 3: Present Analysis and Confirm (STOP HERE)
+### Phase 3: Present Analysis and Write Documents
 
-Present your complete analysis to the user, then ask:
+Present your complete analysis, then proceed to write the planning documents.
 
-> **"I've completed the analysis. May I now write the planning documents to `dev/feature/[task-name]/`?"**
+When invoked as a subagent (`user-invocable: false`), operate autonomously — proceed directly to writing documents without waiting for user confirmation. When invoked directly by a user, present findings first and ask for approval before writing.
 
-**WAIT for the user to explicitly say "yes" before proceeding.** Do not write any files until you receive approval.
-
-### Phase 4: Write Documents (Only After Approval)
-
-Once the user approves, create these three files:
+Create these three files:
 ```
 dev/feature/[task-name]/
 ├── [task-name]-plan.md      # Staged reduction plan

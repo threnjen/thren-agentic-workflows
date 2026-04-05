@@ -34,7 +34,7 @@ README.md                       # Repo overview, usage instructions
     dev-task-folder.instructions.md     # dev/feature/[task-name]/ naming convention (applies to all agents)
     documentation-freshness-check.instructions.md  # Checks for README.md and CODEBASE_CONTEXT.md, recommends @Docs Writer (applies to planner, refiner)
     orchestrator-conventions.instructions.md  # Shared orchestrator constraints, branch creation, reporting (applies to 3 orchestrators)
-    read-only-agent.instructions.md     # No-modification, no code blocks, no code-level details, approval constraints (applies to 8 agents)
+    read-only-agent.instructions.md     # No-modification, no code blocks, no code-level details, approval constraints (applies to 9 agents)
 docs/
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
@@ -68,7 +68,6 @@ python/
 - Docs Writer is dual-use: standalone user-facing agent AND invoked as a subagent by all three orchestrators at the end of the pipeline to update stale documentation
 - 03 Feature - Decomposer is dual-use: standalone user-facing agent for creating feature plans AND invoked as a subagent by 04 Phase - Execute when plans are missing. Produces only `-plan.md`; the hidden Feature - Plan Expander subagent generates `-context.md` and `-tasks.md` from existing plans
 - 01 Project - Planner and 02 Phase - Refiner check for missing critical docs (`README.md`, `docs/CODEBASE_CONTEXT.md`) during discovery and recommend running the Docs Writer before proceeding
-- All agents use `` except Docs Writer (no model specified)
 - Orchestrators list their subagents in the `agents:` frontmatter field
 
 ### Skills (.github/skills/)
@@ -90,7 +89,7 @@ python/
 - `dev-task-folder.instructions.md` — Standardizes `dev/feature/[task-name]/` naming; applies to `.github/agents/**`
 - `documentation-freshness-check.instructions.md` — Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing; applies to project-planner, phase-refiner
 - `orchestrator-conventions.instructions.md` — Common constraints, branch creation, progress tracking, output verification, pipeline discipline, review reject loop, reporting template; applies to 3 orchestrators
-- `read-only-agent.instructions.md` — No codebase modification, no code blocks, no code-level details, approval-before-writing; applies to 8 read-only agents (with subagent exception)
+- `read-only-agent.instructions.md` — No codebase modification, no code blocks, no code-level details, approval-before-writing; applies to 9 read-only agents (with subagent exception)
 
 ## File Relationships
 
@@ -109,7 +108,7 @@ python/
 - All files are Markdown (`.md`)
 - AGENTS.md uses H2 (`##`) for top-level sections, H3 (`###`) for subsections
 - Style guides use H2 for the language header, H3 for topics
-- Agent files use YAML frontmatter with `name`, `description`, `tools`, `model`, and optionally `agents` and `user-invocable`
+- Agent files use YAML frontmatter with `name`, `description`, `tools`, and optionally `agents` and `user-invocable`
 - Checklist items use `- [ ]` syntax
 - Tables use pipe-delimited Markdown format
 

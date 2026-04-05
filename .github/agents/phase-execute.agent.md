@@ -1,7 +1,7 @@
 ---
 name: 04 Phase - Execute
-description: "Orchestrates end-to-end execution of a refined Phase document — checks for existing plans, invokes Decomposer if missing, expands plans via Plan Expander, then delegates implementation, review, QA, and documentation to subagents."
-tools: [agent, read, search, todo, execute, run_in_terminal]
+description: "Orchestrates end-to-end execution of a refined Phase document (documents + code via subagents) — checks for existing plans, invokes Decomposer if missing, expands plans via Plan Expander, then delegates implementation, review, QA, and documentation."
+tools: [agent, read, search, todo, execute, execute]
 agents: [03 Feature - Decomposer, Feature - Plan Expander, Feature - Implementer, Feature - Reviewer, Git Commit, Feature - QA Writer, Prod Code Review, Docs Writer]
 
 ---

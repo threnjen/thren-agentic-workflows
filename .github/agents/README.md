@@ -115,18 +115,18 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 
 ### User-Facing (in agent picker)
 
-| Agent | Model | Purpose |
-|-------|-------|---------|
-| **01 Project - Planner** | Opus | Create a project roadmap broken into phases |
-| **02 Phase - Refiner** | Opus | Refine and deepen an individual Phase document |
-| **03 Feature - Decomposer** | Opus | Break a phase into features with structured plan files |
-| **04 Phase - Execute** | Opus | Orchestrate full phase execution — decompose, implement, review, QA |
-| **Audit - Code, Infra, Refactor** | Opus | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
-| **Debugger** | Opus | Diagnose and fix frontend or backend application errors |
-| **Docs Writer** | — | Create or update repo documentation; also invoked automatically by orchestrators after pipeline completion |
-| **Prod Code Review** | Opus | Final pre-production readiness gate (also usable standalone) |
-| **Test - Orchestrator** | Opus | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
-| **Web Researcher** | Opus | Research solutions across GitHub issues, forums, and documentation |
+| Agent | Purpose |
+|-------|---------|
+| **01 Project - Planner** | Create a project roadmap broken into phases |
+| **02 Phase - Refiner** | Refine and deepen an individual Phase document |
+| **03 Feature - Decomposer** | Break a phase into features with structured plan files |
+| **04 Phase - Execute** | Orchestrate full phase execution — decompose, implement, review, QA |
+| **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
+| **Debugger** | Diagnose and fix frontend or backend application errors |
+| **Docs Writer** | Create or update repo documentation; also invoked automatically by orchestrators after pipeline completion |
+| **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
+| **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
+| **Web Researcher** | Research solutions across GitHub issues, forums, and documentation |
 
 ### Hidden Subagents
 
@@ -325,14 +325,19 @@ Agents reference **skills** (`.github/skills/<name>/SKILL.md`) for shared templa
 | Skill | Used By | Purpose |
 |-------|---------|---------|
 | `phase-document-writing` | 01 Project - Planner, 02 Phase - Refiner | Phase Document Template, Phases Overview Template, quality checklist |
-| `audit-report-format` | Auditor - Code, Auditor - Infra, Auditor - Refactor | Report structure, findings table format, severity levels, priority tiers |
+| `auditor-conventions` | Auditor - Code, Auditor - Infra, Auditor - Refactor | Standard constraints, deliverables, file-type taxonomy, report format, severity levels |
 | `feature-plan-set` | Feature - Decomposer, Feature - Plan Expander | Three-file plan convention, plan sections A–F, stage format, decomposition rules |
+| `implementation-pipeline-loop` | Phase - Execute, Audit orchestrator, Test orchestrator | Standard Implement → Review → Commit → Mark Complete cycle, prompt templates, error handling |
 
 **Instructions** (`.github/instructions/*.instructions.md`) inject cross-cutting conventions into agents automatically via `applyTo` glob patterns.
 
 | Instruction | Applies To | Purpose |
 |-------------|-----------|---------|
+| `codebase-context-bootstrap` | `.github/agents/**` | Reads `docs/CODEBASE_CONTEXT.md` before discovery to reduce redundant codebase scanning |
 | `dev-task-folder` | `.github/agents/**` | Standardizes `dev/feature/[task-name]/` naming and file suffix conventions |
+| `documentation-freshness-check` | project-planner, phase-refiner | Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing |
+| `orchestrator-conventions` | 3 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
+| `read-only-agent` | 9 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |
 
 ---
 
