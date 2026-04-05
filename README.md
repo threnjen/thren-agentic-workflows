@@ -1,16 +1,16 @@
 # github-agents-source-of-truth
 
-Opinionated, ready-to-use `AGENTS.md` and style guide templates that standardize how [GitHub Copilot](https://docs.github.com/en/copilot) behaves in your Node.js and Python projects.
+Opinionated templates and VS Code Copilot agent definitions for standardizing how [GitHub Copilot](https://docs.github.com/en/copilot) behaves in your projects. Two things in one repo:
+
+1. **`AGENTS.md` + style guide templates** (Node.js and Python) — copy into your project so Copilot follows your coding conventions, TDD workflow, and quality gates
+2. **21 VS Code Copilot agent definitions** — a full orchestrator + subagent system for planning, implementing, reviewing, auditing, testing, and documenting entire projects hands-free
 
 ## Why This Exists
 
-GitHub Copilot reads `AGENTS.md` files at the root and in subdirectories of your project to learn coding conventions, workflow rules, and quality standards. Writing these from scratch for every repo is tedious and error-prone. This template repo gives you a tested starting point covering:
+GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rules, and quality standards. Writing these from scratch for every repo is tedious and error-prone. This repo gives you tested starting points for both:
 
-- Coding principles and TDD workflow
-- Language-specific style conventions (TypeScript/Node.js and Python)
-- Testing strategies including property-based testing
-- Agent operation guidelines (context management, self-review, subagents)
-- Quality gates for every commit
+- **Coding standards** — Principles, TDD workflow, language-specific style conventions, property-based testing, agent operation guidelines, and quality gates
+- **Development workflow agents** — A pipeline that takes a project from planning through implementation, code review, QA, and documentation with minimal manual intervention
 
 ## Repository Structure
 
@@ -22,7 +22,16 @@ GitHub Copilot reads `AGENTS.md` files at the root and in subdirectories of your
 │   │   ├── README.md          # Agent documentation, pipelines, and usage guide
 │   │   └── *.agent.md         # 21 agent files (10 user-facing, 11 hidden subagents)
 │   ├── skills/                # Shared templates and formats loaded by agents on demand
+│   │   ├── auditor-conventions/       # Audit constraints, report format, severity levels
+│   │   ├── feature-plan-set/          # Three-file plan convention, sections A–F
+│   │   ├── implementation-pipeline-loop/  # Implement → Review → Commit cycle
+│   │   └── phase-document-writing/    # Phase doc templates and quality checklist
 │   └── instructions/          # Cross-cutting conventions injected via applyTo globs
+│       ├── codebase-context-bootstrap.instructions.md
+│       ├── dev-task-folder.instructions.md
+│       ├── documentation-freshness-check.instructions.md
+│       ├── orchestrator-conventions.instructions.md
+│       └── read-only-agent.instructions.md
 ├── docs/
 │   ├── ARCHITECTURE.md        # Structure diagram and design decisions
 │   └── CODEBASE_CONTEXT.md    # Agent-oriented quick-reference
@@ -38,9 +47,11 @@ GitHub Copilot reads `AGENTS.md` files at the root and in subdirectories of your
 
 ## Usage
 
-### 1. Pick your language
+### AGENTS.md Templates
 
-Copy the folder matching your project's language into your repository root:
+Copy the template files for your language into your project, then customize them.
+
+#### 1. Pick your language
 
 ```bash
 # For a Node.js/TypeScript project
@@ -52,20 +63,51 @@ cp -r python/AGENTS.md /path/to/your-project/AGENTS.md
 cp -r python/docs/STYLE_GUIDE.md /path/to/your-project/docs/STYLE_GUIDE.md
 ```
 
-### 2. Customize
-
-Edit the copied files to match your project's specifics:
+#### 2. Customize
 
 - **AGENTS.md** — Adjust dependency tooling, testing framework preferences, or commit conventions to match your team's workflow.
 - **docs/STYLE_GUIDE.md** — Modify naming rules, import ordering, or style preferences to align with your existing codebase.
 
-### 3. Use with GitHub Copilot
+#### 3. Use with GitHub Copilot
 
 Once the files are in your project, GitHub Copilot automatically discovers and follows them. No additional configuration is needed.
 
+### VS Code Copilot Agents
+
+Copy the `.github/` directory into your project to get the full agent system:
+
+```bash
+cp -r .github/agents /path/to/your-project/.github/agents
+cp -r .github/skills /path/to/your-project/.github/skills
+cp -r .github/instructions /path/to/your-project/.github/instructions
+```
+
+The agents appear in the VS Code Copilot Chat agent picker. See [.github/agents/README.md](.github/agents/README.md) for the full usage guide, pipeline documentation, and per-agent descriptions.
+
+#### The Project Pipeline (3 user steps)
+
+The core workflow requires only three interactions — everything else is automated:
+
+1. **01 Project - Planner** — Describe your project scope. Produces phase documents in `docs/phases/`.
+2. **02 Phase - Refiner** — Hand it a phase document. Iterates to refine scope, edge cases, and dependencies.
+3. **04 Phase - Execute** — Hand it one refined phase. The orchestrator automatically decomposes into features, implements via TDD, reviews, writes QA plans, runs a production code review, and updates documentation.
+
+#### Standalone Agents
+
+These work independently outside the pipeline:
+
+| Agent | Purpose |
+|-------|---------|
+| **Audit - Code, Infra, Refactor** | Run code, infrastructure, or structural audits with optional automated remediation |
+| **Test - Orchestrator** | Analyze, write, or fix tests on demand |
+| **Debugger** | Diagnose and fix frontend or backend errors |
+| **Docs Writer** | Create or update repository documentation |
+| **Prod Code Review** | Production readiness gate with GO/NO-GO verdict |
+| **Web Researcher** | Research solutions across GitHub issues, forums, and docs |
+
 ## What's in Each File
 
-### AGENTS.md
+### AGENTS.md (templates)
 
 The core instructions file that GitHub Copilot reads. Both language variants share a common structure:
 
@@ -79,7 +121,7 @@ The core instructions file that GitHub Copilot reads. Both language variants sha
 | **Agent Operations** | Context clearing, subagent usage, self-review checklist |
 | **Extended Guides** | Pointer to `docs/STYLE_GUIDE.md` for detailed conventions |
 
-### docs/STYLE_GUIDE.md
+### docs/STYLE_GUIDE.md (templates)
 
 Detailed, language-specific coding conventions covering:
 
@@ -88,6 +130,39 @@ Detailed, language-specific coding conventions covering:
 - Type annotations and documentation standards
 - Async patterns (Node.js) / OOP preferences (Python)
 - Function size and structure guidelines
+
+### Agent Definitions (.github/agents/)
+
+21 agent files using an **orchestrator + subagent** pattern:
+
+- **3 orchestrators** — Phase - Execute, Audit - Code/Infra/Refactor, Test - Orchestrator
+- **7 standalone user-facing agents** — Project Planner, Phase Refiner, Feature Decomposer, Debugger, Docs Writer, Prod Code Review, Web Researcher
+- **11 hidden subagents** — Feature Implementer, Feature Reviewer, Feature Plan Expander, Feature QA Writer, 3 Auditors, Test Analyst, Test Writer, Test Fixer, Git Commit
+
+Orchestrators delegate to subagents automatically. Shared subagents (Feature - Implementer, Feature - Reviewer) are reused across all three orchestrators. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation.
+
+### Skills (.github/skills/)
+
+Shared templates and formats loaded by agents on demand, avoiding duplication across agent files:
+
+| Skill | Used By | What It Contains |
+|-------|---------|-----------------|
+| `phase-document-writing` | Planner, Refiner | Phase document and overview templates, quality checklist |
+| `auditor-conventions` | 3 Auditors | Constraints, file-type taxonomy, report format, severity levels |
+| `feature-plan-set` | Decomposer, Plan Expander | Three-file plan convention, sections A–F, stage format |
+| `implementation-pipeline-loop` | Orchestrators | Implement → Review → Commit → Mark Complete cycle |
+
+### Instructions (.github/instructions/)
+
+Cross-cutting conventions injected automatically into matching agents via `applyTo` glob patterns:
+
+| Instruction | Applies To | What It Does |
+|-------------|-----------|--------------|
+| `codebase-context-bootstrap` | All agents | Reads `docs/CODEBASE_CONTEXT.md` before discovery |
+| `dev-task-folder` | All agents | Standardizes `dev/feature/[task-name]/` output naming |
+| `documentation-freshness-check` | Planner, Refiner | Recommends Docs Writer if critical docs are missing |
+| `orchestrator-conventions` | 3 orchestrators | Shared pipeline discipline, progress tracking, reporting |
+| `read-only-agent` | 9 read-only agents | Prevents codebase modification, requires approval before writing |
 
 ## Key Differences Between Languages
 
@@ -98,6 +173,12 @@ Detailed, language-specific coding conventions covering:
 | Data models | TypeScript interfaces | Pydantic v2 with frozen config |
 | Style preference | Functional patterns where appropriate | Object-oriented programming |
 | Logging | `pino` or `winston` | Python `logging` module |
+
+## Further Reading
+
+- [.github/agents/README.md](.github/agents/README.md) — Full agent documentation, pipeline diagrams, and per-agent descriptions
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Mermaid diagrams of repo structure, agent architecture, and design decisions
+- [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — Dense structured facts for AI agent orientation
 
 ## Further Reading
 
