@@ -31,7 +31,7 @@ README.md                       # Repo overview, usage instructions
       SKILL.md
   instructions/
     codebase-context-bootstrap.instructions.md  # Reads CODEBASE_CONTEXT.md before discovery (applies to all agents)
-    dev-task-folder.instructions.md     # dev/feature/[task-name]/ naming convention (applies to all agents)
+    dev-task-folder.instructions.md     # dev/feature/[task-name]/ and dev/research/[topic-name]/ output naming conventions (applies to all agents)
     documentation-freshness-check.instructions.md  # Checks for README.md and CODEBASE_CONTEXT.md, recommends @Docs Writer (applies to planner, refiner)
     orchestrator-conventions.instructions.md  # Shared orchestrator constraints, branch creation, reporting (applies to 3 orchestrators)
     read-only-agent.instructions.md     # No-modification, no code blocks, no code-level details, approval constraints (applies to 9 agents)
@@ -86,7 +86,7 @@ python/
 - Instruction files use `.instructions.md` extension with YAML frontmatter
 - The `applyTo` field is a glob pattern — matching agents receive the instruction automatically
 - `codebase-context-bootstrap.instructions.md` — Reads `docs/CODEBASE_CONTEXT.md` before discovery to reduce redundant scanning; applies to `.github/agents/**`
-- `dev-task-folder.instructions.md` — Standardizes `dev/feature/[task-name]/` naming; applies to `.github/agents/**`
+- `dev-task-folder.instructions.md` — Standardizes `dev/feature/[task-name]/` and `dev/research/[topic-name]/` output conventions; applies to `.github/agents/**`
 - `documentation-freshness-check.instructions.md` — Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing; applies to project-planner, phase-refiner
 - `orchestrator-conventions.instructions.md` — Common constraints, branch creation, progress tracking, output verification, pipeline discipline, review reject loop, reporting template; applies to 3 orchestrators
 - `read-only-agent.instructions.md` — No codebase modification, no code blocks, no code-level details, approval-before-writing; applies to 9 read-only agents (with subagent exception)

@@ -16,8 +16,12 @@ All pipeline subagents write their output to `dev/feature/[task-name]/` director
 | `-tasks.md` | Feature - Plan Expander | Ordered checklist of work items |
 | `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results |
 | `-review.md` | Feature - Reviewer | Verdict, issues found, fixes applied |
-| `-report.md` | Auditor subagents | Full structured audit findings |
-| `-summary.md` | Auditor subagents | Executive summary with priority actions |
+| `-report.md` | Auditor subagents, Web Researcher | Full structured audit findings or research findings with citations |
+| `-summary.md` | Auditor subagents, Web Researcher | Executive summary with priority actions or recommendations |
+
+## Research Output Directory
+
+Web Researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
 ## Consolidated QA Documents
 

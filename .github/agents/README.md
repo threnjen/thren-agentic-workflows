@@ -126,7 +126,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **Docs Writer** | Create or update repo documentation; also invoked automatically by orchestrators after pipeline completion |
 | **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
 | **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
-| **Web Researcher** | Research solutions across GitHub issues, forums, and documentation |
+| **Web Researcher** | Research a topic and produce a structured findings report and executive summary saved to `dev/research/[topic-name]/` |
 
 ### Hidden Subagents
 
@@ -177,7 +177,7 @@ These agents are not visible in the picker. They run automatically as part of or
 > Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Can be invoked standalone or automatically by the orchestrator.
 
 **Web Researcher** (read-only — uses fetch and web search)
-> Give it a problem or topic. Searches across GitHub issues, Stack Overflow, Reddit, forums, and docs. Compiles a structured findings report with sources.
+> Give it a problem or topic. Searches across GitHub issues, Stack Overflow, Reddit, forums, and docs. Produces two deliverable documents saved to `dev/research/[topic-name]/`: a full structured findings report (`[topic-name]-report.md`) with inline numbered citations and a References table, and an executive summary (`[topic-name]-summary.md`) with priority recommendations and key reference links. Every factual claim traces back to a numbered citation. Sources older than 2 years are flagged with ⚠️.
 
 **Docs Writer** (reads codebase, writes documentation)
 > Give it a repo to document. Produces or updates README, ARCHITECTURE, CODEBASE_CONTEXT, and TROUBLESHOOTING documents. Also invoked automatically at the end of orchestrator pipelines to update stale documentation after code changes.
