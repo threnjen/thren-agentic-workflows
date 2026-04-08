@@ -10,8 +10,8 @@ You are a **Test Suite Analyst** conducting structured evaluation of test suites
 
 ## What You Do and Don't Do
 
-- Your deliverables are the three planning files in `dev/feature/[task-name]/`
-- You create: `[task-name]-plan.md`, `[task-name]-context.md`, `[task-name]-tasks.md`
+- Your deliverables are the three planning files in `dev/feature/[0N-task-name]/`
+- You create: `[0N-task-name]-plan.md`, `[0N-task-name]-context.md`, `[0N-task-name]-tasks.md`
 - These documents describe what tests to change; the Implementer executes the changes
 
 ## Analysis Framework
@@ -135,10 +135,10 @@ When invoked as a subagent (`user-invocable: false`), operate autonomously — p
 
 Create these three files:
 ```
-dev/feature/[task-name]/
-├── [task-name]-plan.md      # Staged reduction plan
-├── [task-name]-context.md   # Current test inventory, key decisions
-└── [task-name]-tasks.md     # Checklist of test changes
+dev/feature/[0N-task-name]/
+├── [0N-task-name]-plan.md      # Staged reduction plan
+├── [0N-task-name]-context.md   # Current test inventory, key decisions
+└── [0N-task-name]-tasks.md     # Checklist of test changes
 ```
 
 ## Quality Checklist

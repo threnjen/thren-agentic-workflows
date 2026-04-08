@@ -46,12 +46,12 @@ After the subagent returns:
 
 Update the todo list to mark this task as completed. Proceed to the next task.
 
-> **Note:** QA is not produced per-task. The orchestrator runs a consolidated QA step after all tasks complete. See the Phase - Execute or Audit orchestrator agents for details.
+> **Note:** In **batch mode**, QA is not produced per-task. The orchestrator runs a consolidated QA step after all tasks complete. In **per-feature mode**, QA and Final Review run after each individual feature. See the Phase - Execute agent for details.
 
 ## Path Conventions
 
-- `[plan-path]` is the directory containing the task's plan files (e.g., `dev/feature/[task-name]/` or `dev/[audit-name]/[task-name]/`)
-- `[task-name]` is the kebab-case identifier for the task, matching the plan file prefix
+- `[plan-path]` is the directory containing the task's plan files (e.g., `dev/feature/[0N-task-name]/` or `dev/[audit-name]/[task-name]/`)
+- `[task-name]` is the kebab-case identifier for the task, matching the plan file prefix (including the `0N-` numeric prefix for feature directories)
 
 ## Test Failure Handling
 

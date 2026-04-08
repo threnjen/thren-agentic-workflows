@@ -1,6 +1,6 @@
 ---
 name: feature-plan-set
-description: "Write feature plan documents for implementation. Use when: decomposing phases into features, creating plan/context/tasks files, writing acceptance criteria, producing traceability matrices, defining test plans for features, or any task that outputs planning documents to dev/feature/[task-name]/."
+description: "Write feature plan documents for implementation. Use when: decomposing phases into features, creating plan/context/tasks files, writing acceptance criteria, producing traceability matrices, defining test plans for features, or any task that outputs planning documents to dev/feature/[0N-task-name]/."
 ---
 
 # Feature Plan Set
@@ -12,13 +12,19 @@ The three-file plan convention: `-plan.md` is produced by the Feature - Decompos
 Each independent work item gets three files:
 
 ```
-dev/feature/[task-name]/
-├── [task-name]-plan.md       # The plan with stages and acceptance criteria
-├── [task-name]-context.md    # Key files, decisions, constraints
-└── [task-name]-tasks.md      # Checklist of work items
+dev/feature/[0N-task-name]/
+├── [0N-task-name]-plan.md       # The plan with stages and acceptance criteria
+├── [0N-task-name]-context.md    # Key files, decisions, constraints
+└── [0N-task-name]-tasks.md      # Checklist of work items
 ```
 
-**Naming**: `[task-name]` is a short, descriptive, kebab-case identifier (e.g., `auth-login`, `rate-limiter`, `test-bootstrap`).
+**Naming**: `[0N-task-name]` is a zero-padded two-digit prefix followed by a short, descriptive, kebab-case identifier (e.g., `01-auth-login`, `02-rate-limiter`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order.
+
+**Numbering rules**:
+- Start numbering at `01`
+- Features that can be executed in parallel share the same number
+- Features with prerequisites must have a higher number than their dependencies
+- If only one feature exists, still use the `01-` prefix for consistency
 
 ## Plan Template (`-plan.md`)
 
@@ -103,9 +109,10 @@ An ordered checklist of concrete work items derived from the plan:
 ## Decomposition Rules
 
 - **Independence criterion**: Two items are independent if they can be implemented, tested, and shipped without depending on each other
-- Each independent item gets its own `dev/feature/[task-name]/` folder
+- Each independent item gets its own `dev/feature/[0N-task-name]/` folder
 - If items share prerequisites, note the dependency in each context file but keep plans separate
 - Only combine items when tightly coupled (implementing one without the other leaves the codebase broken)
+- Assign numeric prefixes based on dependency order: prerequisites get lower numbers, dependents get higher numbers
 
 ## Quality Checklist
 

@@ -20,12 +20,23 @@ You operate autonomously — do not ask questions or wait for confirmation. Make
 
 ## Required Inputs
 
-Read these from the `dev/feature/[task-name]/` folder:
+Read these from the `dev/feature/[0N-task-name]/` folder:
 
-1. **Plan documents** — `[task-name]-plan.md`, `[task-name]-context.md`, `[task-name]-tasks.md`
+1. **Plan documents** — `[0N-task-name]-plan.md`, `[0N-task-name]-context.md`, `[0N-task-name]-tasks.md`
 2. **Scope** — Derive from plan: files/modules to change and what must NOT change
 3. **Conventions** — Discover from the codebase: lint, format, test tools, runtime constraints
 4. **Non-goals** — Extract from the plan's non-goals section
+
+### Sibling Feature Awareness
+
+Before starting implementation, scan `dev/feature/` for all numbered feature directories. Read the `-plan.md` file from each sibling directory (but do NOT implement them). Use this context to:
+
+- Understand how the current feature fits into the broader phase
+- Avoid creating interfaces or designs that conflict with upcoming features
+- Note any shared modules that sibling features will also modify
+- Document sibling awareness in the implementation record
+
+**You only implement the single feature directory you were given.** Do not modify files solely for the benefit of sibling features.
 
 ## Implementation Workflow
 
@@ -102,17 +113,20 @@ Handle explicitly:
 
 After all ACs are implemented and tests pass, write a structured implementation record to the task's output directory. This file is the primary handoff artifact to the Reviewer.
 
-1. **Determine the output path**: Use the same `dev/feature/[task-name]/` directory as the plan documents.
-2. **Write `[task-name]-implementation.md`** using the exact template below.
+1. **Determine the output path**: Use the same `dev/feature/[0N-task-name]/` directory as the plan documents.
+2. **Write `[0N-task-name]-implementation.md`** using the exact template below.
 3. **Do not skip this step** — the Reviewer depends on this file to scope its review.
 
-#### Template: `[task-name]-implementation.md`
+#### Template: `[0N-task-name]-implementation.md`
 
 ```markdown
 # Implementation Record: [Task Name]
 
 ## Summary
 <!-- One to three sentences: what was built and why -->
+
+## Sibling Features
+<!-- List other feature directories in dev/feature/ and note any interactions or shared modules -->
 
 ## Acceptance Criteria Status
 
@@ -166,9 +180,9 @@ After all ACs are implemented and tests pass, write a structured implementation 
 
 When implementation is complete, you produce TWO outputs:
 
-### A. Written Artifact: `[task-name]-implementation.md`
+### A. Written Artifact: `[0N-task-name]-implementation.md`
 
-This is the **primary deliverable**. Write it to `dev/feature/[task-name]/` as described in Section F above. The Feature - Reviewer subagent consumes this file to scope its review. It must be written before the return summary.
+This is the **primary deliverable**. Write it to `dev/feature/[0N-task-name]/` as described in Section F above. The Feature - Reviewer subagent consumes this file to scope its review. It must be written before the return summary.
 
 ### B. Return Summary
 

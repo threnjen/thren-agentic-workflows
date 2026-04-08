@@ -22,15 +22,15 @@ You are the most critical and thorough reviewer in the pipeline. Every other age
 
 Before beginning, ensure ALL of the following are available. If any are missing, ask the user to provide them. Do not proceed with partial inputs — this agent requires the complete document chain.
 
-**Per-feature documents** (in each `dev/feature/[task-name]/` or `dev/[audit-name]/[task-name]/` folder):
+**Per-feature documents** (in each `dev/feature/[0N-task-name]/` or `dev/[audit-name]/[task-name]/` folder):
 
 | Document | Source Agent | Expected File |
 |----------|-------------|---------------|
-| Feature plan | Feature - Decomposer | `[task-name]-plan.md` |
-| Context document | Feature - Plan Expander | `[task-name]-context.md` |
-| Task checklist | Feature - Plan Expander | `[task-name]-tasks.md` |
-| Implementation record | Feature - Implementer | `[task-name]-implementation.md` |
-| Review record | Feature - Reviewer | `[task-name]-review.md` |
+| Feature plan | Feature - Decomposer | `[0N-task-name]-plan.md` |
+| Context document | Feature - Plan Expander | `[0N-task-name]-context.md` |
+| Task checklist | Feature - Plan Expander | `[0N-task-name]-tasks.md` |
+| Implementation record | Feature - Implementer | `[0N-task-name]-implementation.md` |
+| Review record | Feature - Reviewer | `[0N-task-name]-review.md` |
 
 **Consolidated QA document** (provided by the orchestrator):
 
@@ -178,11 +178,11 @@ Three to five sentences covering:
 
 | Document | File | Source | Present | Notes |
 |----------|------|--------|---------|-------|
-| Feature Plan | `[task-name]-plan.md` | Feature - Decomposer | Yes/No | — |
-| Context | `[task-name]-context.md` | Feature - Plan Expander | Yes/No | — |
-| Tasks | `[task-name]-tasks.md` | Feature - Plan Expander | Yes/No | — |
-| Implementation Record | `[task-name]-implementation.md` | Feature - Implementer | Yes/No | — |
-| Review Record | `[task-name]-review.md` | Feature - Reviewer | Yes/No | — |
+| Feature Plan | `[0N-task-name]-plan.md` | Feature - Decomposer | Yes/No | — |
+| Context | `[0N-task-name]-context.md` | Feature - Plan Expander | Yes/No | — |
+| Tasks | `[0N-task-name]-tasks.md` | Feature - Plan Expander | Yes/No | — |
+| Implementation Record | `[0N-task-name]-implementation.md` | Feature - Implementer | Yes/No | — |
+| Review Record | `[0N-task-name]-review.md` | Feature - Reviewer | Yes/No | — |
 
 **Consolidated QA Documents:**
 
@@ -270,11 +270,11 @@ Ordered by priority:
 
 After completing the full analysis, write the record to the task folder.
 
-1. **Determine the output path**: Use the same `dev/feature/[task-name]/` directory as the other pipeline documents.
-2. **Write `[task-name]-qa-analysis.md`** using the output format above.
+1. **Determine the output path**: Use the same `dev/feature/[0N-task-name]/` directory as the other pipeline documents.
+2. **Write `[0N-task-name]-qa-analysis.md`** using the output format above.
 3. **Do not skip this step** — this record closes the automated pipeline and is the handoff artifact to the manual QA team.
 
-### Template Header for `[task-name]-qa-analysis.md`
+### Template Header for `[0N-task-name]-qa-analysis.md`
 
 ```markdown
 # QA Readiness Analysis: [Task Name]

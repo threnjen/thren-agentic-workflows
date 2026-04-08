@@ -159,7 +159,7 @@ Cross-cutting conventions injected automatically into matching agents via `apply
 | Instruction | Applies To | What It Does |
 |-------------|-----------|--------------|
 | `codebase-context-bootstrap` | All agents | Reads `docs/CODEBASE_CONTEXT.md` before discovery |
-| `dev-task-folder` | All agents | Standardizes `dev/feature/[task-name]/` output naming |
+| `dev-task-folder` | All agents | Standardizes `dev/feature/[0N-task-name]/` output naming |
 | `documentation-freshness-check` | Planner, Refiner | Recommends Docs Writer if critical docs are missing |
 | `orchestrator-conventions` | 3 orchestrators | Shared pipeline discipline, progress tracking, reporting |
 | `read-only-agent` | 9 read-only agents | Prevents codebase modification, requires approval before writing |

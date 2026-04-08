@@ -19,10 +19,10 @@ Be skeptical and thorough. You operate autonomously — apply fixes directly wit
 
 ## Required Inputs
 
-Read these from the `dev/feature/[task-name]/` folder:
+Read these from the `dev/feature/[0N-task-name]/` folder:
 
-1. **Planning documents** — `[task-name]-plan.md`, `[task-name]-context.md`, `[task-name]-tasks.md`
-2. **Implementation record** — `[task-name]-implementation.md`
+1. **Planning documents** — `[0N-task-name]-plan.md`, `[0N-task-name]-context.md`, `[0N-task-name]-tasks.md`
+2. **Implementation record** — `[0N-task-name]-implementation.md`
 3. **Source code** — All files listed in the implementation record
 
 ## Review Categories
@@ -140,11 +140,11 @@ If a fix would require significant rearchitecting (> 50 lines or crosses multipl
 
 After the review is complete — and after any approved fixes have been applied — write a structured review record to the task's output directory. This file captures the final state of the review for traceability and downstream use.
 
-1. **Determine the output path**: Use the same `dev/feature/[task-name]/` directory as the plan and implementation documents. If those were provided as attachments, match the `[task-name]` from their path. If no task directory exists, create one using a slug of the task or PR description.
-2. **Write `[task-name]-review.md`** using the exact template below.
+1. **Determine the output path**: Use the same `dev/feature/[0N-task-name]/` directory as the plan and implementation documents. If those were provided as attachments, match the `[0N-task-name]` from their path. If no task directory exists, create one using a slug of the task or PR description.
+2. **Write `[0N-task-name]-review.md`** using the exact template below.
 3. **Do not skip this step** — downstream pipeline steps and future audits depend on this file.
 
-### Template: `[task-name]-review.md`
+### Template: `[0N-task-name]-review.md`
 
 ```markdown
 # Review Record: [Task Name]

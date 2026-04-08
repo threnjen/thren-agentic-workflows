@@ -35,23 +35,23 @@ If the user already specified scope in their initial message, skip this step.
 
 ### Phase 3: Run Subagent
 
-Based on the user's choice, determine the output directory name. Use the format `dev/feature/[task-name]/` where `[task-name]` is descriptive (e.g., `test-analysis`, `test-bootstrap`, `test-fixes`, or a user-specified name).
+Based on the user's choice, determine the output directory name. Use the format `dev/feature/[0N-task-name]/` where `[0N-task-name]` is a zero-padded prefix plus descriptive name (e.g., `01-test-analysis`, `01-test-bootstrap`, `01-test-fixes`, or a user-specified name).
 
 #### If ANALYZE:
 
 Invoke the **Test - Analyst** subagent:
 
-> "Perform a comprehensive test suite analysis of [scope]. Categorize all tests by value, identify redundancies and gaps, produce a staged reduction plan, and write the planning documents to `dev/feature/[task-name]/`. Return the complete analysis summary including high-value tests, questionable tests, likely redundant tests, and consolidation candidates."
+> "Perform a comprehensive test suite analysis of [scope]. Categorize all tests by value, identify redundancies and gaps, produce a staged reduction plan, and write the planning documents to `dev/feature/[0N-task-name]/`. Return the complete analysis summary including high-value tests, questionable tests, likely redundant tests, and consolidation candidates."
 
 After the subagent returns:
-1. Verify the planning documents exist in `dev/feature/[task-name]/`
+1. Verify the planning documents exist in `dev/feature/[0N-task-name]/`
 2. Present the analysis summary to the user
 
 #### If WRITE:
 
 Invoke the **Test - Writer** subagent:
 
-> "Bootstrap a test suite for [scope]. Discover the project structure, assess what needs tests, create test files with meaningful baseline coverage, verify all tests pass, and return a summary of test files created, test count, and coverage. Write a test suite summary to `dev/feature/[task-name]/[task-name]-summary.md`."
+> "Bootstrap a test suite for [scope]. Discover the project structure, assess what needs tests, create test files with meaningful baseline coverage, verify all tests pass, and return a summary of test files created, test count, and coverage. Write a test suite summary to `dev/feature/[0N-task-name]/[0N-task-name]-summary.md`."
 
 After the subagent returns:
 1. Verify test files were created
@@ -61,7 +61,7 @@ After the subagent returns:
 
 Invoke the **Test - Fixer** subagent:
 
-> "Diagnose and fix the failing tests in [scope]. Reproduce failures, classify root causes, apply targeted fixes to test code only (never modify source code), verify all tests pass, and return a structured fix summary. Write the fix report to `dev/feature/[task-name]/[task-name]-report.md`."
+> "Diagnose and fix the failing tests in [scope]. Reproduce failures, classify root causes, apply targeted fixes to test code only (never modify source code), verify all tests pass, and return a structured fix summary. Write the fix report to `dev/feature/[0N-task-name]/[0N-task-name]-report.md`."
 
 After the subagent returns:
 1. Verify the fix report exists
@@ -87,7 +87,7 @@ Create a branch using prefix `test/<operation>-<task-name>`. See auto-loaded orc
 
 Read the subagent output and convert findings into actionable task file sets. Group related findings into logical tasks.
 
-For each task, create a three-file plan set in `dev/feature/[task-name]/[fix-name]/`:
+For each task, create a three-file plan set in `dev/feature/[0N-task-name]/[fix-name]/`:
 - `[fix-name]-plan.md` — What to fix, acceptance criteria derived from findings
 - `[fix-name]-context.md` — Affected files, relevant findings with file:line references
 - `[fix-name]-tasks.md` — Ordered implementation steps
@@ -98,7 +98,7 @@ Each task should be independently implementable.
 
 For **each task** (in priority order), run the implementation pipeline loop.
 
-Load the `implementation-pipeline-loop` skill and execute Steps A through D for each task, using `dev/feature/[task-name]/[fix-name]/` as the `[plan-path]` and `[fix-name]` as the task identifier.
+Load the `implementation-pipeline-loop` skill and execute Steps A through D for each task, using `dev/feature/[0N-task-name]/[fix-name]/` as the `[plan-path]` and `[fix-name]` as the task identifier.
 
 ### Phase 8: Report to User
 
