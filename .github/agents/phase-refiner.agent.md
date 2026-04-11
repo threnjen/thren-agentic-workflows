@@ -81,6 +81,8 @@ Read the Phase document and any referenced materials:
 
 Whenever internet research would improve your understanding of the phase — for example, reviewing external API docs, researching unfamiliar technologies, validating third-party integration assumptions, or checking official documentation — delegate to `@Web Researcher` rather than attempting to fetch or browse directly.
 
+**Proactive research over asking the user** — When you encounter an unfamiliar technology, API, service, pattern, or constraint during refinement, **invoke `@Web Researcher` immediately** rather than asking the user to explain it. The user expects you to look things up yourself. Only ask the user for information that is inherently project-specific and cannot be found online (e.g., business priorities, internal team decisions, undocumented requirements). Default to researching first, then presenting what you found alongside any remaining questions that truly require the user's input.
+
 As you work through this phase, keep a running list of any additional context gathered beyond the codebase itself — web research results, additional folders/projects referenced, and user-provided documentation. This will be persisted to a `PHASE_0N_DISCOVERY_CONTEXT.md` file so downstream agents don't need the user to re-provide it.
 
 #### Documentation Freshness Check

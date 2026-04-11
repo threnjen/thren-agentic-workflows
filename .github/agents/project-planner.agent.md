@@ -47,6 +47,8 @@ Read the codebase, any existing documentation, and any external links or specs t
 
 Whenever internet research would improve your understanding — for example, reviewing external specs, researching unfamiliar technologies, checking API documentation, or validating assumptions against official docs — delegate to `@Web Researcher` rather than attempting to fetch or browse directly.
 
+**Proactive research over asking the user** — When you encounter an unfamiliar technology, API, service, pattern, or constraint, **invoke `@Web Researcher` immediately** rather than asking the user to explain it. The user expects you to look things up yourself. Only ask the user for information that is inherently project-specific and cannot be found online (e.g., business priorities, internal team decisions, undocumented requirements). Default to researching first, then presenting what you found alongside any remaining questions that truly require the user's input.
+
 #### Track Additional Context
 
 As you work through Discovery and Clarification, keep a running list of any additional context gathered beyond the codebase itself. This includes:

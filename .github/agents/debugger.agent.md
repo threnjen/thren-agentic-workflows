@@ -66,3 +66,4 @@ Before diving in, classify the error by examining:
 - Document complex fixes with brief inline comments
 - If an error seems systemic, identify the root cause rather than patching symptoms
 - Check both application code and configuration/environment when diagnosing issues
+- **Proactive research over asking the user** — When you encounter an unfamiliar error, library behavior, deprecation, or version-specific issue, **invoke `@Web Researcher` immediately** rather than asking the user to explain it. The user expects you to look things up yourself. Only ask the user for information that is inherently project-specific and cannot be found online (e.g., business logic intent, undocumented internal decisions). If you're unsure whether an error is a known issue, a library bug, or a misconfiguration — research it first, then present findings.
