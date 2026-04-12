@@ -1,7 +1,7 @@
 ---
 name: 03 Feature - Decomposer
 description: "Breaks a refined Phase document into independent features, producing a plan file per feature."
-tools: [read, search, edit, fetch, run in terminal]
+tools: [read, search, edit, fetch, execute]
 
 ---
 

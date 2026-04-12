@@ -1,7 +1,7 @@
 ---
 name: 01 Project - Planner
 description: "Creates phased project roadmaps. Iterates with the user to produce self-contained phase documents ready for Phase - Refiner."
-tools: [read, search, edit, run in terminal]
+tools: [read, search, edit, execute, agent]
 agents: [Web Researcher]
 
 ---

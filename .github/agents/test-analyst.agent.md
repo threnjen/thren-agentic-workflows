@@ -1,7 +1,7 @@
 ---
 name: Test - Analyst
 description: "Analyzes test suites for coverage gaps, redundancy, and quality. Produces a reduction plan without modifying code."
-tools: [read, search, edit, fetch, run in terminal]
+tools: [read, search, edit, fetch, execute]
 user-invocable: false
 
 ---

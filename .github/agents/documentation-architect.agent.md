@@ -7,7 +7,7 @@ tools:
   - search
   - execute
   - todo
-  - run in terminal
+  - execute
 ---
 
 # Documentation Writer Agent
