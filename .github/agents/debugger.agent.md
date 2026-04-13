@@ -61,14 +61,20 @@ Before diving in, classify the error by examining:
 
 ### Step 6 — Record Learnings
 
-After completing a fix, append a concise entry to `.github/learnings/debugging-learnings.md` with:
+After completing a fix, append a concise entry to the appropriate learnings file:
+- **Project-specific findings** (shader names, framework quirks, config issues) → `.github/learnings/project-learnings.md` in the project repo. Create the file if it doesn't exist.
+- **Cross-project patterns** (pipeline gaps, architectural anti-patterns, agent workflow failures) → `.github/learnings/debugging-learnings.md` in the agents repo.
+
+Each entry should include:
 - **Date and short title**
 - **Problem** — What was broken and how it manifested
 - **Root cause** — The actual underlying issue
 - **Fix** — What was changed
 - **Watch for** — A sentence on how to spot this pattern early next time
 
-Before diagnosing any new issue, read `.github/learnings/debugging-learnings.md` first — a similar pattern may already be documented.
+Before diagnosing any new issue, read both learnings files if they exist — a similar pattern may already be documented:
+1. `.github/learnings/project-learnings.md` (project repo — project-specific)
+2. `.github/learnings/debugging-learnings.md` (agents repo — cross-project)
 
 **Key Principles:**
 - Never make changes beyond what's necessary to fix the error
