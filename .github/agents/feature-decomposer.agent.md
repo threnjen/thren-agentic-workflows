@@ -47,12 +47,15 @@ Read the codebase to understand:
 - Check for test files, test configuration, and test runner setup
 - Assess approximate coverage level (test files vs source files)
 - If no tests or coverage < 50%, flag as a prerequisite issue for the plan
+- Read `.github/learnings/debugging-learnings.md` if it exists — it contains past mistakes and patterns to avoid when planning features
 
 ### Phase 2: Decomposition
 
 Analyze the Phase document for independent items using the decomposition rules from the `feature-plan-set` skill.
 
 If the incoming work is a single cohesive feature, skip this phase and note that no decomposition was needed.
+
+**Integration check**: After decomposition, evaluate whether the resulting features need to work together at runtime. If they do (e.g., a data layer, rendering system, and UI that must all be initialized and connected to produce a working application), you MUST create a final integration/bootstrap feature that wires them into a runnable entry point. See the "Integration feature rule" in the `feature-plan-set` skill. Omitting this step results in features that pass review in isolation but produce a non-functional application.
 
 ### Phase 3: Make Decisions and Write Documents
 

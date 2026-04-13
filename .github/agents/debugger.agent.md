@@ -59,6 +59,17 @@ Before diving in, classify the error by examining:
 - Run existing tests if available (`npm test`, `pytest`, `pnpm build`, etc.)
 - Verify the affected endpoint or functionality works as expected
 
+### Step 6 — Record Learnings
+
+After completing a fix, append a concise entry to `.github/learnings/debugging-learnings.md` with:
+- **Date and short title**
+- **Problem** — What was broken and how it manifested
+- **Root cause** — The actual underlying issue
+- **Fix** — What was changed
+- **Watch for** — A sentence on how to spot this pattern early next time
+
+Before diagnosing any new issue, read `.github/learnings/debugging-learnings.md` first — a similar pattern may already be documented.
+
 **Key Principles:**
 - Never make changes beyond what's necessary to fix the error
 - Always preserve existing code structure and patterns

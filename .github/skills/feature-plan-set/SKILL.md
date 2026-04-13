@@ -113,6 +113,7 @@ An ordered checklist of concrete work items derived from the plan:
 - If items share prerequisites, note the dependency in each context file but keep plans separate
 - Only combine items when tightly coupled (implementing one without the other leaves the codebase broken)
 - Assign numeric prefixes based on dependency order: prerequisites get lower numbers, dependents get higher numbers
+- **Integration feature rule**: When a phase produces multiple features that must work together at runtime (e.g., a data system, a renderer, and a UI that all need to be wired into a running application), the **final numbered feature** must be an integration/bootstrap task. This feature initializes and connects the other features into a runnable application entry point (e.g., a scene bootstrap script, an app startup module, a main entry point). Its acceptance criteria must include: the application launches and all features operate together, and a human or automated smoke test can verify the combined output. Without this, individual features may pass review in isolation but never actually run together.
 
 ## Quality Checklist
 
@@ -126,3 +127,4 @@ Before delivering plan documents, verify:
 - [ ] Test plan covers all acceptance criteria
 - [ ] Test coverage prerequisite assessed (≥ 50% or `@test-writer` recommended)
 - [ ] Observability and operability considered
+- [ ] **Integration check**: If the phase has multiple features that must run together, an integration/bootstrap feature exists as the final numbered task with acceptance criteria verifying the combined output is launchable and observable
