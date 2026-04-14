@@ -30,7 +30,7 @@ The orchestrator provides:
 
 ## What Requires Manual QA
 
-Focus ONLY on aspects that automated tests cannot fully verify. For each category below, only the *italicized aspect* warrants manual QA—the underlying logic is almost always unit-testable:
+For each category below, only the *italicized aspect* warrants manual QA—the underlying logic is almost always unit-testable:
 
 - **Real API interactions** — *Live calls* using real API keys, *actual third-party responses*, webhook deliveries over the network
 - **Frontend UI behavior** — *Visual rendering*, layout, responsive behavior, animations, and *perceived UX*

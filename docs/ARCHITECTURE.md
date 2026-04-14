@@ -186,3 +186,6 @@ Instructions (`.github/instructions/*.instructions.md`) inject conventions into 
 | `read-only-agent` | 9 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |
 | `challenge-assumptions` | project-planner, phase-refiner | Push back on user requests that break patterns or add unnecessary complexity |
 | `proactive-research` | project-planner, phase-refiner, debugger | Invoke `@Web Researcher` for unfamiliar technologies, errors, or APIs instead of asking the user |
+| `learnings-bootstrap` | implementer, reviewer, decomposer, debugger | Read `.github/learnings/*.md` files before starting work |
+| `tech-stack-detection` | implementer, reviewer | Detect specialized tech stacks and load matching skills before proceeding |
+| `subagent-autonomy` | implementer, reviewer, plan-expander, git-commit | Operate autonomously — no questions, no confirmation, sensible defaults |

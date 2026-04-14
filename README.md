@@ -27,11 +27,7 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 │   │   ├── implementation-pipeline-loop/  # Implement → Review → Commit cycle
 │   │   └── phase-document-writing/    # Phase doc templates and quality checklist
 │   └── instructions/          # Cross-cutting conventions injected via applyTo globs
-│       ├── codebase-context-bootstrap.instructions.md
-│       ├── dev-task-folder.instructions.md
-│       ├── documentation-freshness-check.instructions.md
-│       ├── orchestrator-conventions.instructions.md
-│       └── read-only-agent.instructions.md
+│       └── *.instructions.md  # 10 instruction files (see ARCHITECTURE.md for full list)
 ├── docs/
 │   ├── ARCHITECTURE.md        # Structure diagram and design decisions
 │   └── CODEBASE_CONTEXT.md    # Agent-oriented quick-reference

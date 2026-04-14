@@ -72,10 +72,6 @@ Each entry should include:
 - **Fix** — What was changed
 - **Watch for** — A sentence on how to spot this pattern early next time
 
-Before diagnosing any new issue, read the learnings files if they exist — a similar pattern may already be documented:
-1. `.github/learnings/project-learnings.md`
-2. `.github/learnings/debugging-learnings.md`
-
 **Key Principles:**
 - Never make changes beyond what's necessary to fix the error
 - Always preserve existing code structure and patterns

@@ -36,8 +36,6 @@ Read the codebase to understand:
 - Check for test files, test configuration, and test runner setup
 - Assess approximate coverage level (test files vs source files)
 - If no tests or coverage < 50%, flag as a prerequisite issue for the plan
-- Read `.github/learnings/project-learnings.md` and `.github/learnings/debugging-learnings.md` if they exist — they contain past mistakes and patterns to avoid when planning features
-- Read `.github/learnings/cross-phase-decisions.md` if it exists — it contains deferred work and known gaps from previous phases that may need to be addressed in the current phase
 
 #### Cross-Phase Decision Enforcement
 

@@ -9,7 +9,7 @@ Quick-reference for AI agents working on this repository.
 - Two language variants for templates: Node.js/TypeScript and Python
 - 21 agent definitions in `.github/agents/` (10 user-facing, 11 hidden subagents)
 - 4 skills in `.github/skills/` (shared templates and patterns extracted from agents)
-- 7 instruction files in `.github/instructions/` (cross-cutting conventions)
+- 10 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
 
 ## Folder Structure
@@ -37,6 +37,9 @@ README.md                       # Repo overview, usage instructions
     orchestrator-conventions.instructions.md  # Shared orchestrator constraints, branch creation, reporting (applies to 3 orchestrators)
     proactive-research.instructions.md  # Invoke @Web Researcher for unfamiliar technologies/errors instead of asking the user (applies to planner, refiner, debugger)
     read-only-agent.instructions.md     # No-modification, no code blocks, no code-level details, approval constraints (applies to 9 agents)
+    learnings-bootstrap.instructions.md  # Read .github/learnings/*.md files before starting work (applies to implementer, reviewer, decomposer, debugger)
+    tech-stack-detection.instructions.md # Detect specialized tech stacks and load matching skills (applies to implementer, reviewer)
+    subagent-autonomy.instructions.md   # Operate autonomously, no questions, sensible defaults (applies to implementer, reviewer, plan-expander, git-commit)
 docs/
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
@@ -73,7 +76,7 @@ python/
 
 ### Instructions (.github/instructions/)
 
-7 instruction files with `applyTo` glob matching. See [ARCHITECTURE.md](ARCHITECTURE.md#instructions) for the full mapping.
+10 instruction files with `applyTo` glob matching. See [ARCHITECTURE.md](ARCHITECTURE.md#instructions) for the full mapping.
 
 ## File Relationships
 
