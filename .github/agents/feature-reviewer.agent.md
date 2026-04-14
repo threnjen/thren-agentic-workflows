@@ -24,7 +24,7 @@ Read these from the `dev/feature/[0N-task-name]/` folder:
 1. **Planning documents** — `[0N-task-name]-plan.md`, `[0N-task-name]-context.md`, `[0N-task-name]-tasks.md`
 2. **Implementation record** — `[0N-task-name]-implementation.md`
 3. **Source code** — All files listed in the implementation record
-4. **Learnings** — Read `.github/learnings/project-learnings.md`, `.github/learnings/review-learnings.md`, and `.github/learnings/cross-phase-decisions.md` (project repo) and `.github/learnings/debugging-learnings.md` (agents repo) if they exist. Check for known patterns that apply to the code under review.
+4. **Learnings** — Read `.github/learnings/project-learnings.md`, `.github/learnings/review-learnings.md`, `.github/learnings/debugging-learnings.md`, and `.github/learnings/cross-phase-decisions.md` if they exist. Check for known patterns that apply to the code under review.
 
 ## Review Categories
 
@@ -196,7 +196,7 @@ After the review is complete — and after any approved fixes have been applied 
 
 ## Update Review Learnings
 
-After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append a dated entry to `.github/learnings/review-learnings.md` in the project repo. Follow the existing format: Pattern, Impact, Watch for.
+After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append a dated entry to `.github/learnings/review-learnings.md`. Follow the existing format: Pattern, Impact, Watch for.
 
 Also check for **decisions that affect future phases** (deferred work, documented deviations, scope gaps). If found, append them to `.github/learnings/cross-phase-decisions.md` under the appropriate section. Follow the existing format and categorization.
 

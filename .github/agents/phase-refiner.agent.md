@@ -78,7 +78,7 @@ Read the Phase document and any referenced materials:
 - Referenced codebase areas and existing implementations
 - External links, specs, or documentation referenced in the phase — invoke `@Web Researcher` to review these
 - Prior and subsequent phase documents (for dependency context only — do not modify them)
-- `.github/learnings/cross-phase-decisions.md` (project repo) if it exists — contains deferred work, known gaps, and design decisions from prior phases that may need to be pulled into this phase's scope
+- `.github/learnings/cross-phase-decisions.md` if it exists — contains deferred work, known gaps, and design decisions from prior phases that may need to be pulled into this phase's scope
 
 Whenever internet research would improve your understanding of the phase — for example, reviewing external API docs, researching unfamiliar technologies, validating third-party integration assumptions, or checking official documentation — delegate to `@Web Researcher` rather than attempting to fetch or browse directly.
 
@@ -96,7 +96,7 @@ Then proceed to Phase 3.
 
 When the user comes directly with a feature idea:
 
-1. **Gather context** — Read the codebase to understand the project structure, tech stack, conventions, and the areas relevant to the requested feature. Read `.github/learnings/cross-phase-decisions.md` (project repo) if it exists — it contains deferred work and known gaps from prior phases. If the feature involves external services, APIs, or unfamiliar technologies, invoke `@Web Researcher` to gather the necessary context.
+1. **Gather context** — Read the codebase to understand the project structure, tech stack, conventions, and the areas relevant to the requested feature. Read `.github/learnings/cross-phase-decisions.md` if it exists — it contains deferred work and known gaps from prior phases. If the feature involves external services, APIs, or unfamiliar technologies, invoke `@Web Researcher` to gather the necessary context.
 
 As you work through this phase, keep a running list of any additional context gathered beyond the codebase itself — web research results, additional folders/projects referenced, and user-provided documentation. This will be persisted to a `PHASE_0N_DISCOVERY_CONTEXT.md` file so downstream agents don't need the user to re-provide it.
 
