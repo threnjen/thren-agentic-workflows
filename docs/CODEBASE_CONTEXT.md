@@ -9,7 +9,7 @@ Quick-reference for AI agents working on this repository.
 - Two language variants for templates: Node.js/TypeScript and Python
 - 21 agent definitions in `.github/agents/` (10 user-facing, 11 hidden subagents)
 - 4 skills in `.github/skills/` (shared templates and patterns extracted from agents)
-- 5 instruction files in `.github/instructions/` (cross-cutting conventions)
+- 7 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
 
 ## Folder Structure
@@ -33,7 +33,9 @@ README.md                       # Repo overview, usage instructions
     codebase-context-bootstrap.instructions.md  # Reads CODEBASE_CONTEXT.md before discovery (applies to all agents)
     dev-task-folder.instructions.md     # dev/feature/[0N-task-name]/ and dev/research/[topic-name]/ output naming conventions, per-feature QA paths (applies to all agents)
     documentation-freshness-check.instructions.md  # Checks for README.md and CODEBASE_CONTEXT.md, recommends @Docs Writer (applies to planner, refiner)
+    challenge-assumptions.instructions.md  # Push back on user requests that break patterns or add unnecessary complexity (applies to planner, refiner)
     orchestrator-conventions.instructions.md  # Shared orchestrator constraints, branch creation, reporting (applies to 3 orchestrators)
+    proactive-research.instructions.md  # Invoke @Web Researcher for unfamiliar technologies/errors instead of asking the user (applies to planner, refiner, debugger)
     read-only-agent.instructions.md     # No-modification, no code blocks, no code-level details, approval constraints (applies to 9 agents)
 docs/
   ARCHITECTURE.md               # Structure diagram and design decisions
@@ -71,7 +73,7 @@ python/
 
 ### Instructions (.github/instructions/)
 
-5 instruction files with `applyTo` glob matching. See [ARCHITECTURE.md](ARCHITECTURE.md#instructions) for the full mapping.
+7 instruction files with `applyTo` glob matching. See [ARCHITECTURE.md](ARCHITECTURE.md#instructions) for the full mapping.
 
 ## File Relationships
 

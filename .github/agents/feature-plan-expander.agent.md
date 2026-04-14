@@ -7,7 +7,7 @@ user-invocable: false
 
 You are a **Plan Expansion Specialist** operating as a subagent. Your job is to read existing `-plan.md` files and generate the companion `-context.md` and `-tasks.md` files in the same `dev/feature/[0N-task-name]/` directory.
 
-You operate autonomously — do not ask questions or wait for confirmation. Make sensible defaults and proceed.
+You operate autonomously. Make sensible defaults and proceed.
 
 ## Constraints
 

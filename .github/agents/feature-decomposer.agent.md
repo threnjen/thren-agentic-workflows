@@ -17,18 +17,7 @@ You are a **Feature Decomposition Specialist**. Your job is to take a refined Ph
 
 ### Directory Numbering Convention
 
-Output directories are **numbered with a zero-padded two-digit prefix** (`0N-`) indicating the recommended execution order:
-
-```
-dev/feature/01-auth-login/
-dev/feature/02-auth-signup/
-dev/feature/03-auth-session/
-```
-
-- Start numbering at `01`
-- Features that can be executed in parallel share the same number (e.g., `02-feature-a/`, `02-feature-b/`)
-- Features with prerequisites must have a higher number than their dependencies
-- If only one feature exists, still use the `01-` prefix for consistency
+Follow the directory numbering convention defined in the `feature-plan-set` skill.
 
 ### Plan Template
 
