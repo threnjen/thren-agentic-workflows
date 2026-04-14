@@ -40,6 +40,24 @@ Before starting implementation, scan `dev/feature/` for all numbered feature dir
 
 ## Implementation Workflow
 
+### Pre-Implementation: Read Learnings
+
+Before writing any code, read the following files if they exist:
+
+1. `.github/learnings/project-learnings.md` — past mistakes, framework gotchas, patterns to follow
+2. `.github/learnings/review-learnings.md` — recurring review findings to avoid
+3. `.github/learnings/debugging-learnings.md` — diagnosed root causes and fixes
+4. `.github/learnings/cross-phase-decisions.md` — deferred work, known gaps, and design decisions from prior phases
+
+Check for patterns that apply to the current feature. If a learnings entry describes a bug class you're about to introduce (e.g., a UI framework routing pattern, a lifecycle ordering issue, a registration gap), **follow the documented fix pattern proactively**.
+
+### Pre-Implementation: Tech-Stack Skill Detection
+
+Check whether the project uses a specialized tech stack that has a corresponding skill:
+
+- Look for indicators: `copilot-instructions.md` mentioning a stack, presence of framework-specific project files (e.g., `Assets/` + `ProjectSettings/` for Unity, `package.json` for Node.js)
+- If a matching skill exists (e.g., `unity-development`), **load and read it before proceeding** — it contains stack-specific implementation rules and known pitfalls
+
 ### Pre-Implementation: Test Baseline
 
 Before any code changes, establish the test baseline. This is a mandatory gate.
@@ -168,6 +186,16 @@ After all ACs are implemented and tests pass, write a structured implementation 
 - [e.g., Validation logic in `src/foo.py:45-78` — complex conditional, verify edge cases]
 - [e.g., New dependency on `rate-limiter` library — confirm it matches repo conventions]
 ```
+
+### G. Pre-Handoff Self-Check
+
+Before writing the implementation record, verify:
+
+1. **Runtime reachability** — Every new public class is instantiated or initialized somewhere at runtime (not just in tests). If the project has a bootstrap/entry point, confirm it's wired.
+2. **Per-frame callers** — Every new method that needs to run each frame has an explicit caller in a game loop, `Update()`, or equivalent. Pure library classes with no caller are inert at runtime.
+3. **Event handler completeness** — Every event handler performs the actual action, not just UI changes. If a button fires an event, the handler must execute the domain logic (e.g., destroy the entity), not just hide a panel.
+4. **Test authenticity** — Tests use real types, not simplified stand-ins that mask framework behavior differences (e.g., don't substitute a plain container for a framework widget that has different child-routing behavior).
+5. **Stack-specific rules** — If a tech-stack skill was loaded, re-check its checklist items now.
 
 ## Execution Rules
 

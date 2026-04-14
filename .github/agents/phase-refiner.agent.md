@@ -116,6 +116,13 @@ Then proceed to Phase 3.
 
 ### Phase 3: Initial Assessment
 
+#### Cross-Phase Decision Enforcement
+
+After reading `cross-phase-decisions.md`, check for any items tagged "Must-do before Phase N" where N matches the current phase. For each such item:
+
+- **If it's not addressed in the Phase document** — flag it as a gap in the assessment and recommend adding it to the scope
+- **If the user explicitly defers it** — document the deferral in the Phase document with a rationale, so downstream agents (Feature - Decomposer, Feature - Implementer) are aware
+
 Present a structured assessment to the user:
 
 > **Phase Assessment: PHASE_0N [Name]**

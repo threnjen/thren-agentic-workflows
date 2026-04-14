@@ -50,6 +50,16 @@ Read the codebase to understand:
 - Read `.github/learnings/project-learnings.md` and `.github/learnings/debugging-learnings.md` if they exist — they contain past mistakes and patterns to avoid when planning features
 - Read `.github/learnings/cross-phase-decisions.md` if it exists — it contains deferred work and known gaps from previous phases that may need to be addressed in the current phase
 
+#### Cross-Phase Decision Enforcement
+
+After reading `cross-phase-decisions.md`, check for any items tagged "Must-do before Phase N" where N matches the current phase. For each such item:
+
+1. **If the item is in scope for one of the features being planned** — include it as an explicit acceptance criterion in that feature's plan
+2. **If the item requires its own feature** — create a dedicated feature plan for it (typically as one of the earlier numbered features)
+3. **If the item is being deferred again** — document the deferral explicitly in the plan with a justification. Do not silently skip it.
+
+This prevents "must-do" items from being buried in a learnings file while multiple phases ship without addressing them.
+
 ### Phase 2: Decomposition
 
 Analyze the Phase document for independent items using the decomposition rules from the `feature-plan-set` skill.

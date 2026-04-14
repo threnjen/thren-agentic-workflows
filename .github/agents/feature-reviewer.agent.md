@@ -26,6 +26,13 @@ Read these from the `dev/feature/[0N-task-name]/` folder:
 3. **Source code** — All files listed in the implementation record
 4. **Learnings** — Read `.github/learnings/project-learnings.md`, `.github/learnings/review-learnings.md`, `.github/learnings/debugging-learnings.md`, and `.github/learnings/cross-phase-decisions.md` if they exist. Check for known patterns that apply to the code under review.
 
+### Tech-Stack Skill Detection
+
+Check whether the project uses a specialized tech stack that has a corresponding skill:
+
+- Look for indicators: `copilot-instructions.md` mentioning a stack, presence of framework-specific project files (e.g., `Assets/` + `ProjectSettings/` for Unity, `package.json` for Node.js)
+- If a matching skill exists (e.g., `unity-development`), **load and read it before reviewing** — it contains stack-specific review criteria and known pitfalls
+
 ## Review Categories
 
 Complete ALL of these:
