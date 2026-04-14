@@ -343,22 +343,11 @@ The orchestrator uses subagents. Ensure these settings are configured:
 
 Agents reference **skills** (`.github/skills/<name>/SKILL.md`) for shared templates and formats that would otherwise be duplicated. Skills are loaded on demand when an agent's instructions say "Load the `<name>` skill."
 
-| Skill | Used By | Purpose |
-|-------|---------|---------|
-| `phase-document-writing` | 01 Project - Planner, 02 Phase - Refiner | Phase Document Template, Phases Overview Template, quality checklist |
-| `auditor-conventions` | Auditor - Code, Auditor - Infra, Auditor - Refactor | Standard constraints, deliverables, file-type taxonomy, report format, severity levels |
-| `feature-plan-set` | Feature - Decomposer, Feature - Plan Expander | Three-file plan convention, plan sections A–F, stage format, decomposition rules |
-| `implementation-pipeline-loop` | Phase - Execute, Audit orchestrator, Test orchestrator | Standard Implement → Review → Commit → Mark Complete cycle, prompt templates, error handling |
+See [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md#skills) for the full skills inventory.
 
 **Instructions** (`.github/instructions/*.instructions.md`) inject cross-cutting conventions into agents automatically via `applyTo` glob patterns.
 
-| Instruction | Applies To | Purpose |
-|-------------|-----------|---------|
-| `codebase-context-bootstrap` | `.github/agents/**` | Reads `docs/CODEBASE_CONTEXT.md` before discovery to reduce redundant codebase scanning |
-| `dev-task-folder` | `.github/agents/**` | Standardizes `dev/feature/[0N-task-name]/` naming, file suffixes, and per-feature QA output paths |
-| `documentation-freshness-check` | project-planner, phase-refiner | Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing |
-| `orchestrator-conventions` | 3 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
-| `read-only-agent` | 9 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |
+See [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md#instructions) for the full instructions inventory.
 
 ---
 
