@@ -64,12 +64,3 @@
 ### Functions
 - Small and focused (~40 lines max)
 - Avoid metaclasses, `__del__`, import hacks
-
-## Communication
-
-- No preamble/postamble unless requested
-- No code comments unless asked
-- No explanations for refusals
-- Use ripgrep (`rg`) not `grep`/`find`
-- Use Read/LS tools not `cat`/`head`/`tail`/`ls`
-- Never guess URLs

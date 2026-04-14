@@ -180,8 +180,3 @@ Cross-cutting conventions injected automatically into matching agents via `apply
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Mermaid diagrams of repo structure, agent architecture, and design decisions
 - [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — Dense structured facts for AI agent orientation
 
-## Further Reading
-
-- [.github/agents/README.md](.github/agents/README.md) — Full agent documentation: pipelines, usage, and what each agent does
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — How the template files and agents are structured and relate to each other
-- [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — Agent-oriented quick-reference for working on this repo
