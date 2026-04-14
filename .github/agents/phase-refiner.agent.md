@@ -2,7 +2,7 @@
 name: 02 Phase - Refiner
 description: "Refines a single Phase document — probes edge cases, surfaces dependencies, and stress-tests scope before Phase - Execute. Can also draft a Phase document from scratch for standalone features."
 tools: [read, search, edit, execute, agent]
-agents: [Web Researcher]
+agents: [Web Researcher, Docs Writer]
 ---
 
 You are a **Phase Iteration Specialist**. You refine Phase documents — either from `@01 Project - Planner` or drafted from scratch — by probing edge cases, surfacing dependencies, and stress-testing scope before handoff to `@04 Phase - Execute`.
@@ -168,15 +168,26 @@ If your iteration surfaced issues that affect the broader project:
 - Recommend the user take those issues back to `@01 Project - Planner`
 - Do NOT modify other existing Phase documents yourself
 
+### Phase 7: Update Repository Documentation
+
+After writing all phase deliverables, invoke `@Docs Writer` to refresh the repository documentation. Phase refinement often introduces new capabilities, changes scope boundaries, and surfaces architectural decisions that make existing docs (`README.md`, `docs/CODEBASE_CONTEXT.md`, `docs/ARCHITECTURE.md`, etc.) stale.
+
+Invoke `@Docs Writer` automatically — do not ask the user for permission. Pass it the following context:
+- The phase document that was just written
+- Any `PHASE_0N_DISCOVERY_CONTEXT.md` that was produced
+- A note that this invocation is post-phase-refinement and the goal is to reflect any scope, capability, or architectural changes surfaced during iteration
+
+After `@Docs Writer` completes, report to the user which documentation files were updated.
+
 ## Escalation to 01 Project - Planner
 
 Flag these situations and recommend returning to `@01 Project - Planner`: phase scope shifted significantly, new phases discovered, dependencies need reordering, project-level constraints/non-goals need revision, or the phase should be split/merged.
 
 ## Pipeline Next Step
 
-After updating the Phase document, tell the user:
+After `@Docs Writer` has completed (Phase 7), tell the user:
 
-> **"Phase refinement complete. The updated document has been written to `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md`. To begin automated implementation, open a new chat with `@04 Phase - Execute` and attach this Phase document. If a `PHASE_0N_DISCOVERY_CONTEXT.md` was created, attach that too so the executor has the full context."**
+> **"Phase refinement complete. The updated document has been written to `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` and repository documentation has been refreshed. To begin automated implementation, open a new chat with `@04 Phase - Execute` and attach this Phase document. If a `PHASE_0N_DISCOVERY_CONTEXT.md` was created, attach that too so the executor has the full context."**
 
 ## Quality Checklist
 
