@@ -131,7 +131,7 @@ Ask clarifying questions to understand:
 
 Present your complete analysis, then proceed to write the planning documents.
 
-When invoked as a subagent (`user-invocable: false`), operate autonomously — proceed directly to writing documents without waiting for user confirmation. When invoked directly by a user, present findings first and ask for approval before writing.
+When invoked as a subagent, operate autonomously and write documents directly. When invoked by a user, present findings and ask for approval before writing.
 
 Create these three files:
 ```

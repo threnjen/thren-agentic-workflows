@@ -30,28 +30,20 @@ The orchestrator provides:
 
 ## What Requires Manual QA
 
-Focus ONLY on aspects that automated tests cannot fully verify. For each category below, only the *italicized aspect* warrants manual QA—the underlying logic is almost always unit-testable:
+For each category below, only the *italicized aspect* warrants manual QA—the underlying logic is almost always unit-testable:
 
-- **Real API interactions** — *Live calls* using real API keys, *actual third-party responses*, webhook deliveries over the network. (Mock-based API tests cover request/response shapes—manual QA covers real-network behavior.)
-- **Frontend UI behavior** — *Visual rendering*, layout, responsive behavior, animations, and *perceived UX*. (DOM assertions cover element presence and text—manual QA covers what it looks and feels like to a human.)
-- **User input flows** — *Multi-step navigation*, *visual feedback* (spinners, progress bars, focus states), and *UX during error recovery*. (Validation logic and error message content are unit-testable—manual QA covers the interaction experience.)
-- **Cross-service integration** — *End-to-end flows* that span multiple deployed services or systems. (Individual service behavior is integration-testable—manual QA covers the deployed system working together.)
-- **Authentication & authorization** — *Real login flows*, SSO redirects, session expiry *in a browser*. (Permission checks and role logic are unit-testable—manual QA covers the actual auth UX.)
-- **Environment-specific behavior** — Behavior that *changes between environments*: feature flags in production, environment-specific config, deployment-triggered migrations. (Feature flag logic is unit-testable—manual QA verifies the flag is actually set correctly in the target environment.)
-- **Data persistence** — *Observed state* after operations in a real database: data survives restarts, migrations apply correctly, caches invalidate. (CRUD operations and query logic are integration-testable—manual QA covers real-environment persistence.)
-- **Error states in production context** — *Real network failures*, timeouts with actual services, behavior under *real concurrent load*. (Error handling logic and mocked failure paths are unit-testable—manual QA covers what happens when real infrastructure misbehaves.)
+- **Real API interactions** — *Live calls* using real API keys, *actual third-party responses*, webhook deliveries over the network
+- **Frontend UI behavior** — *Visual rendering*, layout, responsive behavior, animations, and *perceived UX*
+- **User input flows** — *Multi-step navigation*, *visual feedback* (spinners, progress bars, focus states), and *UX during error recovery*
+- **Cross-service integration** — *End-to-end flows* that span multiple deployed services or systems
+- **Authentication & authorization** — *Real login flows*, SSO redirects, session expiry *in a browser*
+- **Environment-specific behavior** — Behavior that *changes between environments*: feature flags in production, environment-specific config, deployment-triggered migrations
+- **Data persistence** — *Observed state* after operations in a real database: data survives restarts, migrations apply correctly, caches invalidate
+- **Error states in production context** — *Real network failures*, timeouts with actual services, behavior under *real concurrent load*
 
 ## What Does NOT Require Manual QA
 
-Exclude these from the QA plan—they belong in automated tests:
-
-- **Pure business logic** — Calculations, transformations, conditional branching, state machines
-- **Validation rules** — Input validation, schema enforcement, type checking, boundary value checks
-- **Return values and data shapes** — API response formats, function outputs, serialization
-- **Error message content** — Specific error strings, error codes, error object structures
-- **State transitions** — Redux/store updates, model state changes, workflow progressions
-- **Permission and role checks** — "User with role X can/cannot do Y" (the logic, not the login flow)
-- **Anything expressible as `assert X == Y`** — If the expected result is a concrete value that code can compare, it's a unit test
+Exclude anything whose expected result is a concrete value that code can compare (`assert X == Y`): pure business logic, validation rules, return values and data shapes, error message content, state transitions, and permission/role checks.
 
 ## Workflow
 

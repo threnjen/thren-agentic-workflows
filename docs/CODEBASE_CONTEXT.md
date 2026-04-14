@@ -9,7 +9,7 @@ Quick-reference for AI agents working on this repository.
 - Two language variants for templates: Node.js/TypeScript and Python
 - 21 agent definitions in `.github/agents/` (10 user-facing, 11 hidden subagents)
 - 4 skills in `.github/skills/` (shared templates and patterns extracted from agents)
-- 5 instruction files in `.github/instructions/` (cross-cutting conventions)
+- 10 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
 
 ## Folder Structure
@@ -33,8 +33,13 @@ README.md                       # Repo overview, usage instructions
     codebase-context-bootstrap.instructions.md  # Reads CODEBASE_CONTEXT.md before discovery (applies to all agents)
     dev-task-folder.instructions.md     # dev/feature/[0N-task-name]/ and dev/research/[topic-name]/ output naming conventions, per-feature QA paths (applies to all agents)
     documentation-freshness-check.instructions.md  # Checks for README.md and CODEBASE_CONTEXT.md, recommends @Docs Writer (applies to planner, refiner)
+    challenge-assumptions.instructions.md  # Push back on user requests that break patterns or add unnecessary complexity (applies to planner, refiner)
     orchestrator-conventions.instructions.md  # Shared orchestrator constraints, branch creation, reporting (applies to 3 orchestrators)
+    proactive-research.instructions.md  # Invoke @Web Researcher for unfamiliar technologies/errors instead of asking the user (applies to planner, refiner, debugger)
     read-only-agent.instructions.md     # No-modification, no code blocks, no code-level details, approval constraints (applies to 9 agents)
+    learnings-bootstrap.instructions.md  # Read .github/learnings/*.md files before starting work (applies to implementer, reviewer, decomposer, debugger)
+    tech-stack-detection.instructions.md # Detect specialized tech stacks and load matching skills (applies to implementer, reviewer)
+    subagent-autonomy.instructions.md   # Operate autonomously, no questions, sensible defaults (applies to implementer, reviewer, plan-expander, git-commit)
 docs/
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
@@ -60,36 +65,18 @@ python/
 
 ### Agent Definitions (.github/agents/)
 
-- All agent files use `.agent.md` extension with YAML frontmatter
-- **3 orchestrators** (user-facing): 04 Phase - Execute, Audit - Code, Infra, Refactor, Test - Orchestrator
-- **7 standalone user-facing agents**: 01 Project - Planner, 02 Phase - Refiner, 03 Feature - Decomposer, Debugger, Docs Writer, Prod Code Review, Web Researcher
-- **11 hidden subagents** (`user-invocable: false`): Feature - Plan Expander, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Auditor - Code, Auditor - Infra, Auditor - Refactor, Test - Analyst, Test - Writer, Test - Fixer, Git Commit
-- Feature - Implementer and Feature - Reviewer are shared across all three orchestrators
-- Docs Writer is dual-use: standalone user-facing agent AND invoked as a subagent by all three orchestrators at the end of the pipeline to update stale documentation
-- 03 Feature - Decomposer is dual-use: standalone user-facing agent for creating feature plans AND invoked as a subagent by 04 Phase - Execute when plans are missing. Produces numbered `-plan.md` files in `dev/feature/[0N-task-name]/` directories; the hidden Feature - Plan Expander subagent generates `-context.md` and `-tasks.md` from existing plans
-- 01 Project - Planner and 02 Phase - Refiner check for missing critical docs (`README.md`, `docs/CODEBASE_CONTEXT.md`) during discovery and recommend running the Docs Writer before proceeding
-- Orchestrators list their subagents in the `agents:` frontmatter field
+- **3 orchestrators** (user-facing): Phase - Execute, Audit - Code/Infra/Refactor, Test - Orchestrator
+- **7 standalone user-facing**: Planner, Refiner, Decomposer, Debugger, Docs Writer, Prod Code Review, Web Researcher
+- **11 hidden subagents** (`user-invocable: false`): Plan Expander, Implementer, Reviewer, QA Writer, 3 Auditors, Test Analyst/Writer/Fixer, Git Commit
+- See [agents/README.md](../.github/agents/README.md) for detailed descriptions and invocation patterns.
 
 ### Skills (.github/skills/)
 
-- Each skill is a `SKILL.md` file in its own named subdirectory
-- Skills have YAML frontmatter with `name` and `description`
-- Agents load skills by name at runtime — skills are not auto-loaded
-- Skills contain templates and formats that would otherwise be duplicated across agents
-- `phase-document-writing` — Phase Document Template + Phases Overview Template + quality checklist (used by Planner, Refiner)
-- `auditor-conventions` — Merged auditor skill: standard constraints, deliverables, file-type taxonomy, scope determination, process flow, report format, severity levels (used by all 3 Auditors)
-- `feature-plan-set` — Three-file plan convention, sections A–F, stage format, decomposition rules, `0N-` directory numbering (used by Decomposer and Plan Expander)
-- `implementation-pipeline-loop` — Standard development cycle (Implement → Review → Commit → Mark Complete) with prompt templates, error handling, batch/per-feature mode notes, and post-loop Docs Writer step (referenced by all 3 orchestrators)
+4 skills loaded by agents on demand. See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the mapping of skills to consuming agents.
 
 ### Instructions (.github/instructions/)
 
-- Instruction files use `.instructions.md` extension with YAML frontmatter
-- The `applyTo` field is a glob pattern — matching agents receive the instruction automatically
-- `codebase-context-bootstrap.instructions.md` — Reads `docs/CODEBASE_CONTEXT.md` before discovery to reduce redundant scanning; applies to `.github/agents/**`
-- `dev-task-folder.instructions.md` — Standardizes `dev/feature/[0N-task-name]/` and `dev/research/[topic-name]/` output conventions with per-feature QA paths; applies to `.github/agents/**`
-- `documentation-freshness-check.instructions.md` — Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing; applies to project-planner, phase-refiner
-- `orchestrator-conventions.instructions.md` — Common constraints, branch creation, progress tracking, output verification, pipeline discipline, review reject loop, reporting template; applies to 3 orchestrators
-- `read-only-agent.instructions.md` — No codebase modification, no code blocks, no code-level details, approval-before-writing; applies to 9 read-only agents (with subagent exception)
+10 instruction files with `applyTo` glob matching. See [ARCHITECTURE.md](ARCHITECTURE.md#instructions) for the full mapping.
 
 ## File Relationships
 

@@ -27,11 +27,7 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 │   │   ├── implementation-pipeline-loop/  # Implement → Review → Commit cycle
 │   │   └── phase-document-writing/    # Phase doc templates and quality checklist
 │   └── instructions/          # Cross-cutting conventions injected via applyTo globs
-│       ├── codebase-context-bootstrap.instructions.md
-│       ├── dev-task-folder.instructions.md
-│       ├── documentation-freshness-check.instructions.md
-│       ├── orchestrator-conventions.instructions.md
-│       └── read-only-agent.instructions.md
+│       └── *.instructions.md  # 10 instruction files (see ARCHITECTURE.md for full list)
 ├── docs/
 │   ├── ARCHITECTURE.md        # Structure diagram and design decisions
 │   └── CODEBASE_CONTEXT.md    # Agent-oriented quick-reference
@@ -86,24 +82,11 @@ The agents appear in the VS Code Copilot Chat agent picker. See [.github/agents/
 
 #### The Project Pipeline (3 user steps)
 
-The core workflow requires only three interactions — everything else is automated:
+1. **01 Project - Planner** — Describe your project scope. Produces phase documents.
+2. **02 Phase - Refiner** — Refine scope, edge cases, and dependencies.
+3. **04 Phase - Execute** — Automated: decomposes, implements via TDD, reviews, QA, docs.
 
-1. **01 Project - Planner** — Describe your project scope. Produces phase documents in `docs/phases/`.
-2. **02 Phase - Refiner** — Hand it a phase document. Iterates to refine scope, edge cases, and dependencies.
-3. **04 Phase - Execute** — Hand it one refined phase. The orchestrator automatically decomposes into features, implements via TDD, reviews, writes QA plans, runs a production code review, and updates documentation.
-
-#### Standalone Agents
-
-These work independently outside the pipeline:
-
-| Agent | Purpose |
-|-------|---------|
-| **Audit - Code, Infra, Refactor** | Run code, infrastructure, or structural audits with optional automated remediation |
-| **Test - Orchestrator** | Analyze, write, or fix tests on demand |
-| **Debugger** | Diagnose and fix frontend or backend errors |
-| **Docs Writer** | Create or update repository documentation |
-| **Prod Code Review** | Production readiness gate with GO/NO-GO verdict |
-| **Web Researcher** | Research solutions across GitHub issues, forums, and docs |
+See [.github/agents/README.md](.github/agents/README.md#the-project-pipeline-3-user-steps) for the full pipeline documentation.
 
 ## What's in Each File
 
@@ -133,36 +116,15 @@ Detailed, language-specific coding conventions covering:
 
 ### Agent Definitions (.github/agents/)
 
-21 agent files using an **orchestrator + subagent** pattern:
-
-- **3 orchestrators** — Phase - Execute, Audit - Code/Infra/Refactor, Test - Orchestrator
-- **7 standalone user-facing agents** — Project Planner, Phase Refiner, Feature Decomposer, Debugger, Docs Writer, Prod Code Review, Web Researcher
-- **11 hidden subagents** — Feature Implementer, Feature Reviewer, Feature Plan Expander, Feature QA Writer, 3 Auditors, Test Analyst, Test Writer, Test Fixer, Git Commit
-
-Orchestrators delegate to subagents automatically. Shared subagents (Feature - Implementer, Feature - Reviewer) are reused across all three orchestrators. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation.
+21 agent files using an **orchestrator + subagent** pattern (3 orchestrators, 7 standalone user-facing, 11 hidden subagents). Orchestrators delegate to subagents automatically; shared subagents are reused across all three orchestrators. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation and pipeline descriptions.
 
 ### Skills (.github/skills/)
 
-Shared templates and formats loaded by agents on demand, avoiding duplication across agent files:
-
-| Skill | Used By | What It Contains |
-|-------|---------|-----------------|
-| `phase-document-writing` | Planner, Refiner | Phase document and overview templates, quality checklist |
-| `auditor-conventions` | 3 Auditors | Constraints, file-type taxonomy, report format, severity levels |
-| `feature-plan-set` | Decomposer, Plan Expander | Three-file plan convention, sections A–F, stage format |
-| `implementation-pipeline-loop` | Orchestrators | Implement → Review → Commit → Mark Complete cycle |
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#skills) for the full skills inventory.
 
 ### Instructions (.github/instructions/)
 
-Cross-cutting conventions injected automatically into matching agents via `applyTo` glob patterns:
-
-| Instruction | Applies To | What It Does |
-|-------------|-----------|--------------|
-| `codebase-context-bootstrap` | All agents | Reads `docs/CODEBASE_CONTEXT.md` before discovery |
-| `dev-task-folder` | All agents | Standardizes `dev/feature/[0N-task-name]/` output naming |
-| `documentation-freshness-check` | Planner, Refiner | Recommends Docs Writer if critical docs are missing |
-| `orchestrator-conventions` | 3 orchestrators | Shared pipeline discipline, progress tracking, reporting |
-| `read-only-agent` | 9 read-only agents | Prevents codebase modification, requires approval before writing |
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#instructions) for the full instructions inventory.
 
 ## Key Differences Between Languages
 
@@ -180,8 +142,3 @@ Cross-cutting conventions injected automatically into matching agents via `apply
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Mermaid diagrams of repo structure, agent architecture, and design decisions
 - [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — Dense structured facts for AI agent orientation
 
-## Further Reading
-
-- [.github/agents/README.md](.github/agents/README.md) — Full agent documentation: pipelines, usage, and what each agent does
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — How the template files and agents are structured and relate to each other
-- [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — Agent-oriented quick-reference for working on this repo

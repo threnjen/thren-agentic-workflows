@@ -72,10 +72,6 @@ Each entry should include:
 - **Fix** — What was changed
 - **Watch for** — A sentence on how to spot this pattern early next time
 
-Before diagnosing any new issue, read the learnings files if they exist — a similar pattern may already be documented:
-1. `.github/learnings/project-learnings.md`
-2. `.github/learnings/debugging-learnings.md`
-
 **Key Principles:**
 - Never make changes beyond what's necessary to fix the error
 - Always preserve existing code structure and patterns
@@ -83,4 +79,4 @@ Before diagnosing any new issue, read the learnings files if they exist — a si
 - Document complex fixes with brief inline comments
 - If an error seems systemic, identify the root cause rather than patching symptoms
 - Check both application code and configuration/environment when diagnosing issues
-- **Proactive research over asking the user** — When you encounter an unfamiliar error, library behavior, deprecation, or version-specific issue, **invoke `@Web Researcher` immediately** rather than asking the user to explain it. The user expects you to look things up yourself. Only ask the user for information that is inherently project-specific and cannot be found online (e.g., business logic intent, undocumented internal decisions). If you're unsure whether an error is a known issue, a library bug, or a misconfiguration — research it first, then present findings.
+

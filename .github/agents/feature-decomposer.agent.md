@@ -17,18 +17,7 @@ You are a **Feature Decomposition Specialist**. Your job is to take a refined Ph
 
 ### Directory Numbering Convention
 
-Output directories are **numbered with a zero-padded two-digit prefix** (`0N-`) indicating the recommended execution order:
-
-```
-dev/feature/01-auth-login/
-dev/feature/02-auth-signup/
-dev/feature/03-auth-session/
-```
-
-- Start numbering at `01`
-- Features that can be executed in parallel share the same number (e.g., `02-feature-a/`, `02-feature-b/`)
-- Features with prerequisites must have a higher number than their dependencies
-- If only one feature exists, still use the `01-` prefix for consistency
+Follow the directory numbering convention defined in the `feature-plan-set` skill.
 
 ### Plan Template
 
@@ -47,8 +36,6 @@ Read the codebase to understand:
 - Check for test files, test configuration, and test runner setup
 - Assess approximate coverage level (test files vs source files)
 - If no tests or coverage < 50%, flag as a prerequisite issue for the plan
-- Read `.github/learnings/project-learnings.md` and `.github/learnings/debugging-learnings.md` if they exist — they contain past mistakes and patterns to avoid when planning features
-- Read `.github/learnings/cross-phase-decisions.md` if it exists — it contains deferred work and known gaps from previous phases that may need to be addressed in the current phase
 
 #### Cross-Phase Decision Enforcement
 

@@ -36,6 +36,8 @@ flowchart TD
     Instructions --> I3["read-only-agent\n(9 read-only agents)"]
     Instructions --> I4["codebase-context-bootstrap\n(all agents)"]
     Instructions --> I5["documentation-freshness-check\n(planner, refiner)"]
+    Instructions --> I6["challenge-assumptions\n(planner, refiner)"]
+    Instructions --> I7["proactive-research\n(planner, refiner, debugger)"]
 
     NodeDir --> NodeAgents[AGENTS.md<br/>Agent guidelines]
     NodeDir --> NodeDocs[docs/]
@@ -182,3 +184,8 @@ Instructions (`.github/instructions/*.instructions.md`) inject conventions into 
 | `documentation-freshness-check` | project-planner, phase-refiner | Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing |
 | `orchestrator-conventions` | 3 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
 | `read-only-agent` | 9 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |
+| `challenge-assumptions` | project-planner, phase-refiner | Push back on user requests that break patterns or add unnecessary complexity |
+| `proactive-research` | project-planner, phase-refiner, debugger | Invoke `@Web Researcher` for unfamiliar technologies, errors, or APIs instead of asking the user |
+| `learnings-bootstrap` | implementer, reviewer, decomposer, debugger | Read `.github/learnings/*.md` files before starting work |
+| `tech-stack-detection` | implementer, reviewer | Detect specialized tech stacks and load matching skills before proceeding |
+| `subagent-autonomy` | implementer, reviewer, plan-expander, git-commit | Operate autonomously — no questions, no confirmation, sensible defaults |
