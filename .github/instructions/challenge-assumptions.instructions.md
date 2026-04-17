@@ -1,6 +1,6 @@
 ---
 description: "Requires planning agents to push back on user requests that break patterns or add unnecessary complexity."
-applyTo: "**/project-planner.agent.md,**/phase-refiner.agent.md"
+applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md"
 ---
 
 # Challenge User Assumptions

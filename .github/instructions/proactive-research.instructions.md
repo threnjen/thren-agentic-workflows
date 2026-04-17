@@ -1,6 +1,6 @@
 ---
 description: "Requires agents to invoke @Web Researcher for unfamiliar technologies, errors, or APIs instead of asking the user."
-applyTo: "**/project-planner.agent.md,**/phase-refiner.agent.md,**/debugger.agent.md"
+applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/debugger.agent.md"
 ---
 
 # Proactive Research Over Asking the User

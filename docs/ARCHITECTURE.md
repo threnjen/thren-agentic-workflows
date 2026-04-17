@@ -183,11 +183,11 @@ Instructions (`.github/instructions/*.instructions.md`) inject conventions into 
 |-------------|-----------|--------------|
 | `codebase-context-bootstrap` | `.github/agents/**` | Reads `docs/CODEBASE_CONTEXT.md` before discovery to reduce redundant codebase scanning |
 | `dev-task-folder` | `.github/agents/**` | Standardizes `dev/feature/[0N-task-name]/` naming, file suffixes, and per-feature QA output paths |
-| `documentation-freshness-check` | project-planner, phase-refiner | Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing |
+| `documentation-freshness-check` | 01-project-planner, 02-phase-refiner | Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing |
 | `orchestrator-conventions` | 3 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
 | `read-only-agent` | 9 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |
-| `challenge-assumptions` | project-planner, phase-refiner | Push back on user requests that break patterns or add unnecessary complexity |
-| `proactive-research` | project-planner, phase-refiner, debugger | Invoke `@Web Researcher` for unfamiliar technologies, errors, or APIs instead of asking the user |
+| `challenge-assumptions` | 01-project-planner, 02-phase-refiner | Push back on user requests that break patterns or add unnecessary complexity |
+| `proactive-research` | 01-project-planner, 02-phase-refiner, debugger | Invoke `@Web Researcher` for unfamiliar technologies, errors, or APIs instead of asking the user |
 | `learnings-bootstrap` | implementer, reviewer, decomposer, debugger | Read `.github/learnings/*.md` files before starting work |
 | `tech-stack-detection` | implementer, reviewer | Detect specialized tech stacks and load matching skills before proceeding |
 | `subagent-autonomy` | implementer, reviewer, plan-expander, git-commit | Operate autonomously — no questions, no confirmation, sensible defaults |
