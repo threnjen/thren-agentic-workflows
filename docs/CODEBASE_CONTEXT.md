@@ -8,7 +8,7 @@ Quick-reference for AI agents working on this repository.
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
 - 21 agent definitions in `.github/agents/` (10 user-facing, 11 hidden subagents)
-- 4 skills in `.github/skills/` (shared templates and patterns extracted from agents)
+- 5 skills in `.github/skills/` (shared templates and patterns extracted from agents)
 - 10 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
 
@@ -72,7 +72,7 @@ python/
 
 ### Skills (.github/skills/)
 
-4 skills loaded by agents on demand. See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the mapping of skills to consuming agents.
+5 skills loaded by agents on demand. See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the mapping of skills to consuming agents.
 
 ### Instructions (.github/instructions/)
 

@@ -25,7 +25,8 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 │   │   ├── auditor-conventions/       # Audit constraints, report format, severity levels
 │   │   ├── feature-plan-set/          # Three-file plan convention, sections A–F
 │   │   ├── implementation-pipeline-loop/  # Implement → Review → Commit cycle
-│   │   └── phase-document-writing/    # Phase doc templates and quality checklist
+│   │   ├── phase-document-writing/    # Phase doc templates and quality checklist
+│   │   └── unity-development/         # Unity C# implementation and review rules
 │   └── instructions/          # Cross-cutting conventions injected via applyTo globs
 │       └── *.instructions.md  # 10 instruction files (see ARCHITECTURE.md for full list)
 ├── docs/

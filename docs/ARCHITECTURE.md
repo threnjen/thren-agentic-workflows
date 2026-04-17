@@ -30,6 +30,7 @@ flowchart TD
     Skills --> S2["auditor-conventions\n(3 Auditors)"]
     Skills --> S3["feature-plan-set\n(Decomposer, Plan Expander)"]
     Skills --> S4["implementation-pipeline-loop\n(Orchestrators)"]
+    Skills --> S5["unity-development\n(Implementer, Reviewer\nUnity projects)"]
 
     Instructions --> I1["dev-task-folder\n(all agents)"]
     Instructions --> I2["orchestrator-conventions\n(3 orchestrators)"]
@@ -172,6 +173,7 @@ Skills (`.github/skills/<name>/SKILL.md`) extract shared templates and formats t
 | `auditor-conventions` | Auditor - Code, Auditor - Infra, Auditor - Refactor | Standard constraints, deliverables, file-type taxonomy, report format, severity levels |
 | `feature-plan-set` | Feature - Decomposer, Feature - Plan Expander | Three-file plan convention, plan sections A–F, stage format, `0N-` directory numbering |
 | `implementation-pipeline-loop` | Orchestrators (reference) | Standard Implement → Review → Commit → Mark Complete cycle, prompt templates, error handling |
+| `unity-development` | Feature - Implementer, Feature - Reviewer (Unity projects) | Implementation and review rules for Unity C# projects: MonoBehaviour lifecycle, UI Toolkit pitfalls, test authenticity, bootstrap verification, batch compilation gates |
 
 ## Instructions
 
