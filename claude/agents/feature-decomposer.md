@@ -63,6 +63,10 @@ For any architectural decisions that would normally require clarification, apply
 3. **Choose the safest default** — For data models, prefer immutability. For error handling, prefer fail-fast. For interfaces, prefer the narrowest contract. For security, prefer the more restrictive option.
 4. **Document the decision** — Note what you chose and why in the plan file itself.
 
+**Path rule (non-negotiable):** All files MUST be written to `dev/feature/[0N-task-name]/[0N-task-name]-plan.md`. Never write to `dev/phases/`, `docs/`, or any other path. Directory names use a zero-padded two-digit numeric prefix and kebab-case (e.g., `01-auth-login`). The filename must match the directory name.
+
+**Pre-write verification:** Before calling Write, confirm: (a) the path starts with `dev/feature/`, (b) the directory name uses a zero-padded numeric prefix and kebab-case, (c) the filename matches the directory name exactly.
+
 Create this file **for each independent plan**:
 ```
 dev/feature/[0N-task-name]/
