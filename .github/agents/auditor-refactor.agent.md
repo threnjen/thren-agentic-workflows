@@ -14,6 +14,21 @@ You are a **Refactor Auditor** performing comprehensive structural and architect
 
 Load the `auditor-conventions` skill for standard constraints, deliverables, scope determination, file-type taxonomy, process flow, and output format.
 
+## Unity Detection & Skill Loading
+
+Before starting discovery, detect whether the target repository is a Unity project.
+
+Use these indicators:
+- `.github/copilot-instructions.md` identifies the project as Unity
+- Repository contains both `Assets/` and `ProjectSettings/`
+- Repository contains Unity assembly definition files (`*.asmdef`)
+
+If any indicator matches, load BOTH skills immediately before proceeding:
+- `unity-development`
+- `unity-review-knowledge`
+
+Then apply relevant Unity architecture and runtime-system review guidance during the audit.
+
 ## Domain Focus
 
 - DO NOT report on file-level code quality (type hints, docstrings, security, readability, DRY) — that is the Code Auditor's domain

@@ -38,7 +38,29 @@ Before beginning, ensure ALL of the following are available. If any are missing,
 | Consolidated QA plan | Feature - QA Writer | Path provided by orchestrator |
 | Consolidated coverage map | Feature - QA Writer | Alongside QA plan |
 
+## Unity Detection & Skill Loading
+
+Before beginning analysis, detect whether the target repository is a Unity project.
+
+Use these indicators:
+- `.github/copilot-instructions.md` identifies the project as Unity
+- Repository contains both `Assets/` and `ProjectSettings/`
+- Repository contains Unity assembly definition files (`*.asmdef`)
+
+If any indicator matches, load BOTH skills immediately before proceeding:
+- `unity-development`
+- `unity-review-knowledge`
+
+Then apply relevant Unity runtime wiring, lifecycle, architecture, and review guidance while evaluating implementation quality, test authenticity, and residual risk.
+
 ## Evaluation Workflow
+
+### Phase 0: Detect Unity Context
+
+Run Unity detection using the indicators above.
+
+- If Unity is detected, load both Unity skills before continuing.
+- If Unity is not detected, continue with the standard workflow.
 
 ### Phase 1: Document Inventory
 

@@ -12,6 +12,21 @@ You do NOT perform audits, write code, write reviews, or write QA plans yourself
 
 ## Workflow
 
+### Phase 0: Detect Unity Context
+
+Before asking audit type, detect whether the target repository is a Unity project.
+
+Use these indicators:
+- `.github/copilot-instructions.md` identifies the project as Unity
+- Repository contains both `Assets/` and `ProjectSettings/`
+- Repository contains Unity assembly definition files (`*.asmdef`)
+
+Set `unity_context = true` if any indicator matches; otherwise `false`.
+
+If `unity_context = true`, include this requirement in every auditor invocation prompt:
+
+> "This appears to be a Unity project. Before auditing, load both the `unity-development` and `unity-review-knowledge` skills, then apply their relevant rules while auditing."
+
 ### Phase 1: Determine Audit Type
 
 Ask the user:
@@ -41,19 +56,19 @@ Based on the user's choice, determine the output directory name. Use the format 
 
 Invoke the **Auditor - Code** subagent:
 
-> "Perform a comprehensive code audit of [scope]. Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
+> "Perform a comprehensive code audit of [scope]. [If unity_context=true: This appears to be a Unity project. Before auditing, load both the `unity-development` and `unity-review-knowledge` skills, then apply their relevant rules while auditing.] Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
 
 #### If INFRA audit:
 
 Invoke the **Auditor - Infra** subagent:
 
-> "Perform a comprehensive infrastructure audit of [scope]. Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
+> "Perform a comprehensive infrastructure audit of [scope]. [If unity_context=true: This appears to be a Unity project. Before auditing, load both the `unity-development` and `unity-review-knowledge` skills, then apply their relevant rules while auditing.] Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
 
 #### If REFACTOR audit:
 
 Invoke the **Auditor - Refactor** subagent:
 
-> "Perform a comprehensive structural and architectural audit of [scope]. Analyze module organization, import/dependency graphs, component decomposition, coupling and cohesion, separation of concerns, and restructuring opportunities. Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
+> "Perform a comprehensive structural and architectural audit of [scope]. [If unity_context=true: This appears to be a Unity project. Before auditing, load both the `unity-development` and `unity-review-knowledge` skills, then apply their relevant rules while auditing.] Analyze module organization, import/dependency graphs, component decomposition, coupling and cohesion, separation of concerns, and restructuring opportunities. Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
 
 After the subagent returns:
 1. Verify the report and summary files exist in `dev/[audit-name]/`
