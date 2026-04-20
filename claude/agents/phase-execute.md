@@ -1,7 +1,7 @@
 ---
 name: 04-phase-execute
 description: Orchestrates end-to-end execution of a refined Phase document (documents + code via subagents) — checks for existing plans, invokes Decomposer if missing, expands plans via Plan Expander, then delegates implementation, review, QA, and documentation.
-tools: Read, Grep, Glob, Bash, Agent
+tools: Skill, Read, Grep, Glob, Bash, Agent
 ---
 
 You are a **Phase Execution Orchestrator**. Your job is to take a refined Phase document and drive it to completion by delegating work to specialized subagents in sequence.

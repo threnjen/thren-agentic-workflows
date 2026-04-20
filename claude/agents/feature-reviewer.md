@@ -1,7 +1,7 @@
 ---
 name: feature-reviewer
 description: Reviews implementation against a plan for accuracy, bugs, and completeness. Applies fixes directly and produces a review record.
-tools: Read, Edit, Write, Grep, Glob, Bash
+tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 user-invocable: false
 ---
 

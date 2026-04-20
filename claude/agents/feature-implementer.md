@@ -1,7 +1,7 @@
 ---
 name: feature-implementer
 description: Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record.
-tools: Read, Edit, Write, Grep, Glob, Bash
+tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 user-invocable: false
 ---
 

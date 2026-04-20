@@ -1,7 +1,7 @@
 ---
 name: auditor-code
 description: Audits source code for quality, security, readability, DRY, type hints, and dependencies. Produces a structured findings report.
-tools: Read, Grep, Glob, Edit, Write, WebFetch, Bash
+tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch, Bash
 user-invocable: false
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: test-analyst
 description: Analyzes test suites for coverage gaps, redundancy, and quality. Produces a reduction plan without modifying code.
-tools: Read, Grep, Glob, Edit, Write, WebFetch, Bash
+tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch, Bash
 user-invocable: false
 ---
 

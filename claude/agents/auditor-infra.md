@@ -1,7 +1,7 @@
 ---
 name: auditor-infra
 description: Audits infrastructure and configuration files — Dockerfiles, CI/CD pipelines, IaC templates, build scripts, and documentation. Produces a structured findings report.
-tools: Read, Grep, Glob, Edit, Write, WebFetch, Bash
+tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch, Bash
 user-invocable: false
 ---
 

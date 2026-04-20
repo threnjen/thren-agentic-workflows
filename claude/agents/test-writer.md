@@ -1,7 +1,7 @@
 ---
 name: test-writer
 description: Bootstraps test suites from scratch — creates test files, fixtures, and configuration for untested code.
-tools: Read, Edit, Write, Grep, Glob, Bash
+tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 user-invocable: false
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: feature-plan-expander
 description: Reads feature plan files and generates companion context and tasks files.
-tools: Read, Grep, Glob, Edit, Write, Bash
+tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
 

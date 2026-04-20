@@ -1,7 +1,7 @@
 ---
 name: test-fixer
 description: Diagnoses and fixes broken tests — updates assertions, mocks, fixtures, and configuration. Never modifies source code.
-tools: Read, Edit, Write, Grep, Glob, Bash
+tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 user-invocable: false
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: auditor-refactor
 description: Audits codebase structure and architecture — module organization, coupling, cohesion, and separation of concerns. Produces a structured findings report.
-tools: Read, Grep, Glob, Edit, Write, WebFetch, Bash
+tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch, Bash
 user-invocable: false
 ---
 

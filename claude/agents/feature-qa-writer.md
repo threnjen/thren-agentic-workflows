@@ -1,7 +1,7 @@
 ---
 name: feature-qa-writer
 description: Writes a consolidated manual QA checklist covering integration points not verifiable by automated tests.
-tools: Read, Grep, Glob, Edit, Write, Bash
+tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
 

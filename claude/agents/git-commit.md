@@ -1,7 +1,7 @@
 ---
 name: git-commit
 description: Creates an atomic Git commit after implementation and review. Generates a conventional commit message from pipeline records.
-tools: Read, Bash
+tools: Skill, Read, Bash
 user-invocable: false
 ---
 
