@@ -1,5 +1,5 @@
 ---
-name: feature-plan-expander
+name: z-feature-plan-expander
 description: "[SUBAGENT ONLY — use @04-phase-execute] Reads feature plan files and generates companion context and tasks files."
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false

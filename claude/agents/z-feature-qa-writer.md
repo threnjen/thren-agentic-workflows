@@ -1,5 +1,5 @@
 ---
-name: feature-qa-writer
+name: z-feature-qa-writer
 description: "[SUBAGENT ONLY — use @04-phase-execute or @audit-code-infra-refactor] Writes a consolidated manual QA checklist covering integration points not verifiable by automated tests."
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false

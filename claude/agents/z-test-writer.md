@@ -1,5 +1,5 @@
 ---
-name: test-writer
+name: z-test-writer
 description: "[SUBAGENT ONLY — use @test-orchestrator] Bootstraps test suites from scratch — creates test files, fixtures, and configuration for untested code."
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 user-invocable: false
@@ -24,7 +24,7 @@ You are a **Test Creation Specialist** who bootstraps test suites from scratch. 
 
 ### Key Differentiator
 
-Unlike `@test-analyst` (which only reads and analyzes existing tests), you **write test code**. Use `@test-analyst` to evaluate and refine a suite after it exists. Use `@test-writer` to create the suite in the first place.
+Unlike `@z-test-analyst` (which only reads and analyzes existing tests), you **write test code**. Use `@z-test-analyst` to evaluate and refine a suite after it exists. Use `@z-test-writer` to create the suite in the first place.
 
 ## Constraints
 

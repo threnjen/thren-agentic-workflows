@@ -52,19 +52,19 @@ Based on the user's choice, determine the output directory name. Use the format 
 
 #### If CODE audit:
 
-Invoke the **auditor-code** subagent:
+Invoke the **z-auditor-code** subagent:
 
 > "[SUBAGENT-MODE] Perform a comprehensive code audit of [scope]. [If unity_context=true: This appears to be a Unity project. Before auditing, load both the `unity-development` and `unity-review-knowledge` skills, then apply their relevant rules while auditing.] Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
 
 #### If INFRA audit:
 
-Invoke the **auditor-infra** subagent:
+Invoke the **z-auditor-infra** subagent:
 
 > "[SUBAGENT-MODE] Perform a comprehensive infrastructure audit of [scope]. [If unity_context=true: This appears to be a Unity project. Before auditing, load both the `unity-development` and `unity-review-knowledge` skills, then apply their relevant rules while auditing.] Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
 
 #### If REFACTOR audit:
 
-Invoke the **auditor-refactor** subagent:
+Invoke the **z-auditor-refactor** subagent:
 
 > "[SUBAGENT-MODE] Perform a comprehensive structural and architectural audit of [scope]. [If unity_context=true: This appears to be a Unity project. Before auditing, load both the `unity-development` and `unity-review-knowledge` skills, then apply their relevant rules while auditing.] Analyze module organization, import/dependency graphs, component decomposition, coupling and cohesion, separation of concerns, and restructuring opportunities. Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
 
@@ -109,7 +109,7 @@ Load the `implementation-pipeline-loop` skill and execute Steps A through D for 
 
 After ALL tasks are implemented and reviewed, produce a single consolidated QA document.
 
-Invoke the **feature-qa-writer** subagent:
+Invoke the **z-feature-qa-writer** subagent:
 
 > "Write a consolidated release QA plan covering ALL tasks in this audit remediation. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following task folders: [list all dev/[audit-name]/[task-name]/ paths]. Write the consolidated QA plan to `dev/[audit-name]/[audit-name]-qa.md` and the coverage map to `dev/[audit-name]/[audit-name]-coverage-map-qa.md`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all tasks."
 

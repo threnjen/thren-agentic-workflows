@@ -1,5 +1,5 @@
 ---
-name: git-commit
+name: z-git-commit
 description: "[SUBAGENT ONLY — use @04-phase-execute] Creates an atomic Git commit after implementation and review. Generates a conventional commit message from pipeline records."
 tools: Skill, Read, Bash
 user-invocable: false

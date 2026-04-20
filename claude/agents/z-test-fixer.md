@@ -1,5 +1,5 @@
 ---
-name: test-fixer
+name: z-test-fixer
 description: "[SUBAGENT ONLY — use @test-orchestrator] Diagnoses and fixes broken tests — updates assertions, mocks, fixtures, and configuration. Never modifies source code."
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 user-invocable: false

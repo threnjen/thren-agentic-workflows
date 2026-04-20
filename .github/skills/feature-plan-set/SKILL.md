@@ -74,7 +74,7 @@ When tests are missing or coverage is below 50%, plans must lead with a prerequi
 
 ```markdown
 ## Stage 0: Test Prerequisites
-**Goal**: Establish baseline test coverage using `@test-writer`
+**Goal**: Establish baseline test coverage using `@z-test-writer`
 **Success Criteria**: Test suite exists, coverage ≥ 50%, all tests pass
 **Status**: Required before implementation begins
 ```
@@ -125,6 +125,6 @@ Before delivering plan documents, verify:
 - [ ] Edge cases and error handling addressed
 - [ ] Existing patterns identified and followed
 - [ ] Test plan covers all acceptance criteria
-- [ ] Test coverage prerequisite assessed (≥ 50% or `@test-writer` recommended)
+- [ ] Test coverage prerequisite assessed (≥ 50% or `@z-test-writer` recommended)
 - [ ] Observability and operability considered
 - [ ] **Integration check**: If the phase has multiple features that must run together, an integration/bootstrap feature exists as the final numbered task with acceptance criteria verifying the combined output is launchable and observable

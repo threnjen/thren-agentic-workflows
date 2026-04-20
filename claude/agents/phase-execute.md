@@ -57,7 +57,7 @@ After the subagent returns:
 
 ### Step 2: Expand Plans
 
-Invoke the **feature-plan-expander** subagent:
+Invoke the **z-feature-plan-expander** subagent:
 
 > "[SUBAGENT-MODE] Generate the companion context and tasks files for the following feature plans: [list all `dev/feature/[0N-task-name]/` paths]. For each plan, read the `-plan.md` file and produce `-context.md` and `-tasks.md` in the same directory. Return a summary of what was generated."
 
@@ -94,7 +94,7 @@ Determine QA output paths using the dev-task-folder conventions. Check for exist
 
 **Per-feature mode:** Cover only the single feature just implemented.
 
-Invoke the **feature-qa-writer** subagent:
+Invoke the **z-feature-qa-writer** subagent:
 
 **Batch mode:**
 > "[SUBAGENT-MODE] Write a consolidated release QA plan covering ALL features in this phase. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following feature folders: [list all dev/feature/[0N-task-name]/ paths]. Write the consolidated QA plan to `[determined QA output path]` and the coverage map to `[determined coverage map path]`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all features."

@@ -1,5 +1,5 @@
 ---
-name: auditor-infra
+name: z-auditor-infra
 description: "[SUBAGENT ONLY — use @audit-code-infra-refactor] Audits infrastructure and configuration files — Dockerfiles, CI/CD pipelines, IaC templates, build scripts, and documentation. Produces a structured findings report."
 tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch, Bash
 user-invocable: false
