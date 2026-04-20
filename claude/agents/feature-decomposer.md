@@ -24,7 +24,7 @@ Load the `feature-plan-set` skill for the plan template (sections A–F), file s
 
 ## Your Workflow
 
-> **STANDALONE MODE GATE:** If you were invoked directly by a user (not by `04-phase-execute` or another orchestrator agent), you are in **standalone mode**. In standalone mode you MUST present your full decomposition and all plan content in chat and wait for the user to explicitly say "write it" or equivalent before touching the filesystem. DO NOT write any files autonomously. This gate takes precedence over all other instructions.
+> **MODE GATE:** If this prompt contains `[SUBAGENT-MODE]`, operate autonomously. Otherwise you are in **standalone mode**: present your full decomposition and all plan content in chat and wait for the user to explicitly say "write it" or equivalent before touching the filesystem. DO NOT write any files autonomously in standalone mode. This gate takes precedence over all other instructions.
 
 Follow these phases in order.
 

@@ -1,6 +1,6 @@
 ---
 name: auditor-code
-description: Audits source code for quality, security, readability, DRY, type hints, and dependencies. Produces a structured findings report.
+description: "[SUBAGENT ONLY — use @audit-code-infra-refactor] Audits source code for quality, security, readability, DRY, type hints, and dependencies. Produces a structured findings report."
 tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch, Bash
 user-invocable: false
 ---
@@ -128,6 +128,8 @@ Evaluate EVERY file against ALL of the following:
 
 ## Process
 
+> **SUBAGENT-ONLY GATE:** This agent is designed to be invoked by orchestrators, not directly by users. If you are a user invoking this agent directly, use `@audit-code-infra-refactor` instead — it manages the full audit and optional remediation pipeline. Only proceed if this prompt contains `[SUBAGENT-MODE]`.
+
 See the Process section of the `auditor-conventions` skill. Evaluate against all 14 categories.
 
 ## Severity Levels
@@ -167,9 +169,9 @@ Before starting your discovery or exploration phase, check whether `docs/CODEBAS
 
 ### Task Output Directory Convention
 
-All pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories. Use a zero-padded two-digit prefix followed by descriptive, kebab-case names for `[task-name]`.
+Audit output is written to `dev/[audit-name]/` (e.g., `dev/code-audit/`), where `[audit-name]` is determined by the invoking orchestrator.
 
-| Suffix | Producer | Content |
-|--------|----------|---------|
-| `-report.md` | Auditor subagents | Full structured audit findings with citations |
-| `-summary.md` | Auditor subagents | Executive summary with priority actions |
+| Suffix | Content |
+|--------|---------|
+| `-report.md` | Full structured audit findings with citations |
+| `-summary.md` | Executive summary with priority actions |

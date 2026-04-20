@@ -74,9 +74,19 @@ End each review with a summary table:
 
 Followed by a one-paragraph assessment of overall code quality.
 
+## Phase 3.5: Write Review Report
+
+After presenting findings in chat per the format above, write a report file so Phase 6 has a source document:
+
+1. Determine an `[audit-name]` from the review scope (kebab-case, e.g., `unity-code-review`, `unity-review-[filename]`)
+2. Write the full findings to `dev/[audit-name]/[audit-name]-report.md` using the same output format as Phase 3
+3. Write an executive summary to `dev/[audit-name]/[audit-name]-summary.md`
+
+Present these paths to the user before moving to Phase 4.
+
 ## Phase 4: Offer Fix Implementation
 
-After presenting review results, ask the user:
+After writing the report, ask the user:
 
 > **Would you like me to implement the fixes?**
 >

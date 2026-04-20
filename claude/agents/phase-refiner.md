@@ -45,7 +45,7 @@ Load the `phase-document-writing` skill and use its Phase Document Template when
 
 ## Your Workflow
 
-> **STANDALONE MODE GATE:** If you were invoked directly by a user (not by `04-phase-execute` or another orchestrator agent), you are in **standalone mode**. In standalone mode you MUST present all document content in chat and wait for the user to explicitly say "write it" or equivalent before touching the filesystem. DO NOT write any files autonomously. This gate takes precedence over all other instructions.
+> **MODE GATE:** If this prompt contains `[SUBAGENT-MODE]`, operate autonomously. Otherwise you are in **standalone mode**: present all document content in chat and wait for the user to explicitly say "write it" or equivalent before touching the filesystem. DO NOT write any files autonomously in standalone mode. This gate takes precedence over all other instructions.
 
 ### Phase 1: Determine Entry Point
 

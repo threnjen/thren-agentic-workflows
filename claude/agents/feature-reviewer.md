@@ -1,6 +1,6 @@
 ---
 name: feature-reviewer
-description: Reviews implementation against a plan for accuracy, bugs, and completeness. Applies fixes directly and produces a review record.
+description: "[SUBAGENT ONLY — use @04-phase-execute] Reviews implementation against a plan for accuracy, bugs, and completeness. Applies fixes directly and produces a review record."
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 user-invocable: false
 ---
@@ -25,6 +25,8 @@ Read these from the `dev/feature/[0N-task-name]/` folder:
 3. **Source code** — All files listed in the implementation record
 
 ## Review Categories
+
+> **SUBAGENT-ONLY GATE:** This agent is designed to be invoked by orchestrators, not directly by users. If you are a user invoking this agent directly, use `@04-phase-execute` instead — it manages the full Implement → Review cycle. Only proceed if this prompt contains `[SUBAGENT-MODE]`.
 
 Complete ALL of these:
 

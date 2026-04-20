@@ -15,7 +15,7 @@ For **each task** (in priority order), run these steps sequentially. Complete AL
 
 Invoke the **Feature - Implementer** subagent:
 
-> "Implement the plan at `[plan-path]`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `[plan-path]/[task-name]-implementation.md`. Return a summary of what was implemented and test results."
+> "[SUBAGENT-MODE] Implement the plan at `[plan-path]`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `[plan-path]/[task-name]-implementation.md`. Return a summary of what was implemented and test results."
 
 After the subagent returns:
 - Verify `[plan-path]/[task-name]-implementation.md` exists
@@ -25,7 +25,7 @@ After the subagent returns:
 
 Invoke the **Feature - Reviewer** subagent:
 
-> "Review the implementation at `[plan-path]`. Read the plan files and implementation record, review all changed code, apply fixes for any issues found, and write the review record to `[plan-path]/[task-name]-review.md`. Return the verdict and a summary of issues found and fixes applied."
+> "[SUBAGENT-MODE] Review the implementation at `[plan-path]`. Read the plan files and implementation record, review all changed code, apply fixes for any issues found, and write the review record to `[plan-path]/[task-name]-review.md`. Return the verdict and a summary of issues found and fixes applied."
 
 After the subagent returns:
 - Verify `[plan-path]/[task-name]-review.md` exists
@@ -37,7 +37,7 @@ After the subagent returns:
 
 Invoke the **Git Commit** subagent:
 
-> "Create an atomic commit for the completed task. The plan path is `[plan-path]` and the task name is `[task-name]`. Read the implementation and review records, stage all changes, and commit with a conventional commit message."
+> "[SUBAGENT-MODE] Create an atomic commit for the completed task. The plan path is `[plan-path]` and the task name is `[task-name]`. Read the implementation and review records, stage only the files listed in the implementation record, and commit with a conventional commit message."
 
 After the subagent returns:
 - Confirm it reports a successful commit (or "Nothing to commit" if no changes were staged)

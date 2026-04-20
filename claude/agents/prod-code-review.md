@@ -240,9 +240,7 @@ After writing the analysis record, return the verdict and structured summary to 
 - You do NOT create, modify, or delete source code, test, or configuration files
 - You only produce planning documents, analysis reports, or other deliverable documents
 
-**Approval Before Writing:** ALWAYS ask the user for explicit approval before creating or writing any files. Present findings in chat first.
-
-**Exception:** When operating as a subagent invoked by an orchestrator, operate autonomously.
+**Mode detection:** If the invoking prompt contains `[SUBAGENT-MODE]`, operate autonomously — write the analysis record without asking for confirmation. Otherwise (standalone mode), present all findings in chat first and ask for explicit approval before writing the `[0N-task-name]-qa-analysis.md` file.
 
 ### Codebase Context Bootstrap
 

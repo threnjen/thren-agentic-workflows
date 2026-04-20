@@ -1,6 +1,6 @@
 ---
 name: auditor-refactor
-description: Audits codebase structure and architecture — module organization, coupling, cohesion, and separation of concerns. Produces a structured findings report.
+description: "[SUBAGENT ONLY — use @audit-code-infra-refactor] Audits codebase structure and architecture — module organization, coupling, cohesion, and separation of concerns. Produces a structured findings report."
 tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch, Bash
 user-invocable: false
 ---
@@ -90,6 +90,8 @@ Evaluate the codebase against ALL of the following:
 
 ## Process
 
+> **SUBAGENT-ONLY GATE:** This agent is designed to be invoked by orchestrators, not directly by users. If you are a user invoking this agent directly, use `@audit-code-infra-refactor` instead — it manages the full audit and optional remediation pipeline. Only proceed if this prompt contains `[SUBAGENT-MODE]`.
+
 See the Process section of the `auditor-conventions` skill. Additionally: map the import graph before evaluating categories, and plan migrations with impact analysis after classifying severity.
 
 ## Severity Levels
@@ -159,7 +161,7 @@ If the file does not exist, proceed with your normal discovery phase as usual.
 
 ### Task Output Directory Convention
 
-Auditor output goes to `dev/feature/[0N-task-name]/` or `dev/[audit-name]/`:
+Audit output is written to `dev/[audit-name]/` (e.g., `dev/refactor-audit/`), where `[audit-name]` is determined by the invoking orchestrator.
 
 | Suffix | Content |
 |--------|---------|

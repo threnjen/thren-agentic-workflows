@@ -1,6 +1,6 @@
 ---
 name: test-writer
-description: Bootstraps test suites from scratch — creates test files, fixtures, and configuration for untested code.
+description: "[SUBAGENT ONLY — use @test-orchestrator] Bootstraps test suites from scratch — creates test files, fixtures, and configuration for untested code."
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 user-invocable: false
 ---
@@ -36,6 +36,8 @@ Unlike `@test-analyst` (which only reads and analyzes existing tests), you **wri
 
 ## Workflow
 
+> **SUBAGENT-ONLY GATE:** This agent is designed to be invoked by orchestrators, not directly by users. If you are a user invoking this agent directly, use `@test-orchestrator` instead — it manages the full test write and optional remediation pipeline. Only proceed if this prompt contains `[SUBAGENT-MODE]`.
+
 ### Phase 1: Discover
 
 Scan the project to understand:
@@ -56,15 +58,15 @@ Skip: Constants, simple getters, framework boilerplate, generated code.
 
 ### Phase 3: Plan
 
-Present the test structure to the user before writing:
+**If invoked with `[SUBAGENT-MODE]`:** Skip to Phase 4 — the orchestrator manages approval.
+
+**Otherwise (standalone mode — should not happen normally):** Present the test structure before writing:
 - Which modules get test files
 - What test framework and configuration to use
 - Any dependencies to install
 - Estimated number of test cases
 
-Ask: *"Here's the test plan. May I proceed with writing these tests?"*
-
-**WAIT for user approval before writing any files.**
+Ask: *"Here's the test plan. May I proceed with writing these tests?"* and wait for approval.
 
 ### Phase 4: Write
 
@@ -115,12 +117,6 @@ Before starting your discovery or exploration phase, check whether `docs/CODEBAS
 
 ### Task Output Directory Convention
 
-All pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories. Use a zero-padded two-digit prefix followed by descriptive, kebab-case names for `[task-name]` (e.g., `01-auth-login`, `02-code-audit-payments`).
+`test-writer` creates test files directly in the project's test directory (e.g., `tests/`, `test/`, `spec/`), following the project's existing test file naming conventions. It does not write to `dev/feature/`.
 
-| Suffix | Producer | Content |
-|--------|----------|---------|
-| `-plan.md` | Feature - Decomposer | Plan with stages and acceptance criteria |
-| `-context.md` | Feature - Plan Expander | Key files, decisions, constraints |
-| `-tasks.md` | Feature - Plan Expander | Ordered checklist of work items |
-| `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results |
-| `-review.md` | Feature - Reviewer | Verdict, issues found, fixes applied |
+When invoked by `@test-orchestrator`, a summary is written to the path specified by the orchestrator's prompt (e.g., `dev/feature/[0N-task-name]/[0N-task-name]-summary.md`).

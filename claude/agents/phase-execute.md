@@ -97,10 +97,10 @@ Determine QA output paths using the dev-task-folder conventions. Check for exist
 Invoke the **feature-qa-writer** subagent:
 
 **Batch mode:**
-> "Write a consolidated release QA plan covering ALL features in this phase. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following feature folders: [list all dev/feature/[0N-task-name]/ paths]. Write the consolidated QA plan to `[determined QA output path]` and the coverage map to `[determined coverage map path]`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all features."
+> "[SUBAGENT-MODE] Write a consolidated release QA plan covering ALL features in this phase. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following feature folders: [list all dev/feature/[0N-task-name]/ paths]. Write the consolidated QA plan to `[determined QA output path]` and the coverage map to `[determined coverage map path]`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all features."
 
 **Per-feature mode:**
-> "Write a QA plan for the feature just implemented. Read all documents from `dev/feature/[0N-task-name]/`. Write the QA plan to `dev/feature/[0N-task-name]/[0N-task-name]-qa.md` and the coverage map to `dev/feature/[0N-task-name]/[0N-task-name]-coverage-map-qa.md`. Return a summary of what manual QA is needed."
+> "[SUBAGENT-MODE] Write a QA plan for the feature just implemented. Read all documents from `dev/feature/[0N-task-name]/`. Write the QA plan to `dev/feature/[0N-task-name]/[0N-task-name]-qa.md` and the coverage map to `dev/feature/[0N-task-name]/[0N-task-name]-coverage-map-qa.md`. Return a summary of what manual QA is needed."
 
 After the subagent returns:
 - Verify the QA document exists at the determined path
@@ -112,13 +112,13 @@ After the subagent returns:
 
 Invoke the **prod-code-review** subagent:
 
-> "Perform the final pre-production readiness analysis for the phase. The following feature task folders contain all pipeline documents: [list all dev/feature/[0N-task-name]/ paths]. The consolidated QA plan is at `[QA output path]`. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
+> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. The following feature task folders contain all pipeline documents: [list all dev/feature/[0N-task-name]/ paths]. The consolidated QA plan is at `[QA output path]`. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
 
 **Per-feature mode:**
 
 Invoke the **prod-code-review** subagent:
 
-> "Perform a readiness analysis for the single feature just implemented. The feature task folder is `dev/feature/[0N-task-name]/`. The QA plan is at `dev/feature/[0N-task-name]/[0N-task-name]-qa.md`. Cross-validate all documents, verify implementation, run tests, and evaluate QA plan completeness. Write the analysis to `dev/feature/[0N-task-name]/[0N-task-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
+> "[SUBAGENT-MODE] Perform a readiness analysis for the single feature just implemented. The feature task folder is `dev/feature/[0N-task-name]/`. The QA plan is at `dev/feature/[0N-task-name]/[0N-task-name]-qa.md`. Cross-validate all documents, verify implementation, run tests, and evaluate QA plan completeness. Write the analysis to `dev/feature/[0N-task-name]/[0N-task-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
 
 ### Step 6: Report to User
 

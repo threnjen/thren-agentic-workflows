@@ -1,6 +1,6 @@
 ---
 name: feature-qa-writer
-description: Writes a consolidated manual QA checklist covering integration points not verifiable by automated tests.
+description: "[SUBAGENT ONLY — use @04-phase-execute or @audit-code-infra-refactor] Writes a consolidated manual QA checklist covering integration points not verifiable by automated tests."
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
@@ -45,6 +45,8 @@ For each category below, only the *italicized aspect* warrants manual QA:
 Exclude anything whose expected result is a concrete value that code can compare (`assert X == Y`): pure business logic, validation rules, return values and data shapes, error message content, state transitions, and permission/role checks.
 
 ## Workflow
+
+> **SUBAGENT-ONLY GATE:** This agent is designed to be invoked by orchestrators, not directly by users. If you are a user invoking this agent directly, use `@04-phase-execute` (for feature phases) or `@audit-code-infra-refactor` (for audit remediations) instead. Only proceed if this prompt contains `[SUBAGENT-MODE]`.
 
 ### Phase 1: Document Analysis (Read-Only)
 

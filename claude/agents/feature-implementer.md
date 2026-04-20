@@ -1,6 +1,6 @@
 ---
 name: feature-implementer
-description: Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record.
+description: "[SUBAGENT ONLY — use @04-phase-execute] Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record."
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 user-invocable: false
 ---
@@ -36,6 +36,8 @@ Before starting implementation, scan `dev/feature/` for all numbered feature dir
 **You only implement the single feature directory you were given.** Do not modify files solely for the benefit of sibling features.
 
 ## Implementation Workflow
+
+> **SUBAGENT-ONLY GATE:** This agent is designed to be invoked by orchestrators, not directly by users. If you are a user invoking this agent directly, use `@04-phase-execute` instead — it runs the full Decompose → Expand → Implement → Review → Commit pipeline. Only proceed if this prompt contains `[SUBAGENT-MODE]`.
 
 ### Pre-Implementation: Test Baseline
 

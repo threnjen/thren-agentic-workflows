@@ -1,6 +1,6 @@
 ---
 name: feature-plan-expander
-description: Reads feature plan files and generates companion context and tasks files.
+description: "[SUBAGENT ONLY — use @04-phase-execute] Reads feature plan files and generates companion context and tasks files."
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
@@ -19,6 +19,8 @@ You are a **Plan Expansion Specialist** operating as a subagent. Your job is to 
 One or more `dev/feature/[0N-task-name]/` paths containing `-plan.md` files.
 
 ## Workflow
+
+> **SUBAGENT-ONLY GATE:** This agent is designed to be invoked by orchestrators, not directly by users. If you are a user invoking this agent directly, use `@04-phase-execute` instead — it manages the full pipeline including plan expansion. Only proceed if this prompt contains `[SUBAGENT-MODE]`.
 
 Follow these steps for each provided plan path:
 

@@ -1,6 +1,6 @@
 ---
 name: test-analyst
-description: Analyzes test suites for coverage gaps, redundancy, and quality. Produces a reduction plan without modifying code.
+description: "[SUBAGENT ONLY — use @test-orchestrator] Analyzes test suites for coverage gaps, redundancy, and quality. Produces a reduction plan without modifying code."
 tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch, Bash
 user-invocable: false
 ---
@@ -103,7 +103,7 @@ Recommendations for future test additions based on findings.
 
 ## Your Workflow
 
-**When invoked directly by a user, do not skip phases or write files without explicit approval. When invoked as a subagent, operate autonomously.**
+> **SUBAGENT-ONLY GATE:** This agent is designed to be invoked by orchestrators, not directly by users. If you are a user invoking this agent directly, use `@test-orchestrator` instead — it manages the full test analysis and optional remediation pipeline. Only proceed if this prompt contains `[SUBAGENT-MODE]`.
 
 ### Phase 1: Discovery (Read-Only)
 
