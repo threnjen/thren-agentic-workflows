@@ -92,7 +92,7 @@ The stage format (including Stage 0 for test prerequisites) is defined in the `f
 
 **Standalone mode:** Present the decomposition and plan summaries for user review. After writing, tell the user:
 
-> **"Feature plans written to `dev/feature/[0N-task-name]/` for each feature (numbered by execution order). You can now implement these yourself, or hand them to `@04 Phase - Execute` for automated implementation. When you're done, run `@Prod Code Review` to validate your work against the plans."**
+> **"Feature plans written to `dev/feature/[0N-task-name]/` for each feature (numbered by execution order). You can now implement these yourself, or hand them to `@04-phase-execute` for automated implementation. When you're done, run `@prod-code-review` to validate your work against the plans."**
 
 ## Quality Checklist
 
