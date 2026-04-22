@@ -146,4 +146,6 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#instructions) for the full instr
 - [.github/agents/README.md](.github/agents/README.md) — Full agent documentation, pipeline diagrams, and per-agent descriptions
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Mermaid diagrams of repo structure, agent architecture, and design decisions
 - [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — Dense structured facts for AI agent orientation
+- [docs/AGENT_REGRESSION_BENCHMARK_SPEC.md](docs/AGENT_REGRESSION_BENCHMARK_SPEC.md) — Project-specific benchmark design for A/B testing model and agent changes
+- [docs/benchmarks/B001/README.md](docs/benchmarks/B001/README.md) — First concrete benchmark pack with 30 core task cards and run/grader templates
 

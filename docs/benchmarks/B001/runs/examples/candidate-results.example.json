@@ -1,0 +1,32 @@
+{
+    "variant": "candidate-B",
+    "tasks": [
+        {
+            "task_id": "B001-A01",
+            "hard_pass": true,
+            "quality_score": 4.3,
+            "compliance_score": 4.7,
+            "latency_ms": 760,
+            "cost_usd": 0.040,
+            "tokens_total": 9100
+        },
+        {
+            "task_id": "B001-C01",
+            "hard_pass": true,
+            "quality_score": 4.0,
+            "compliance_score": 4.2,
+            "latency_ms": 1080,
+            "cost_usd": 0.067,
+            "tokens_total": 15000
+        },
+        {
+            "task_id": "B001-D01",
+            "hard_pass": false,
+            "quality_score": 3.9,
+            "compliance_score": 4.1,
+            "latency_ms": 910,
+            "cost_usd": 0.046,
+            "tokens_total": 11800
+        }
+    ]
+}

@@ -1,2 +1,7 @@
 .DS_Store
 dev/*
+__pycache__/
+*.pyc
+
+# Local benchmark runtime artifacts (reports/traces) to prevent branch checkout clashes
+docs/benchmarks/B001/runs/local/

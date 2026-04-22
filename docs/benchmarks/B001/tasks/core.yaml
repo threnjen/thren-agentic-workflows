@@ -1,0 +1,480 @@
+tasks:
+  - task_id: B001-A01
+    family: planning
+    difficulty: M
+    scoring_mode: hybrid
+    time_budget_s: 900
+    token_budget: 45000
+    tags: [scope-clarity, phase-refinement]
+    prompt_package:
+      user_request: Refine a phase summary and identify missing scope boundaries and explicit non-goals.
+      context_files: [docs/CODEBASE_CONTEXT.md]
+    constraints:
+      allowed_tools: [read_file, list_dir, grep_search]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [strengths, gaps_to_explore, suggested_iteration_rounds]
+
+  - task_id: B001-A02
+    family: planning
+    difficulty: M
+    scoring_mode: rubric
+    time_budget_s: 900
+    token_budget: 45000
+    tags: [dependency-mapping, planning]
+    prompt_package:
+      user_request: Identify hidden dependencies and ordering risks for a proposed phase change.
+      context_files: [docs/ARCHITECTURE.md, docs/CODEBASE_CONTEXT.md]
+    constraints:
+      allowed_tools: [read_file, grep_search]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [dependency_graph, risk_items, mitigation_notes]
+
+  - task_id: B001-A03
+    family: planning
+    difficulty: S
+    scoring_mode: deterministic
+    time_budget_s: 600
+    token_budget: 25000
+    tags: [non-goals, scope]
+    prompt_package:
+      user_request: Produce a clear in-scope and out-of-scope split for a feature request.
+      context_files: [README.md]
+    constraints:
+      allowed_tools: [read_file]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [in_scope, out_of_scope]
+
+  - task_id: B001-A04
+    family: planning
+    difficulty: M
+    scoring_mode: hybrid
+    time_budget_s: 900
+    token_budget: 40000
+    tags: [edge-cases, failure-modes]
+    prompt_package:
+      user_request: Expand planning coverage with unhappy paths and degraded-state handling.
+      context_files: [docs/CODEBASE_CONTEXT.md, docs/ARCHITECTURE.md]
+    constraints:
+      allowed_tools: [read_file, grep_search]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [happy_path, unhappy_paths, degraded_modes]
+
+  - task_id: B001-A05
+    family: planning
+    difficulty: M
+    scoring_mode: rubric
+    time_budget_s: 900
+    token_budget: 40000
+    tags: [risk-assessment]
+    prompt_package:
+      user_request: Rank top implementation risks and propose fallback plans.
+      context_files: [docs/ARCHITECTURE.md]
+    constraints:
+      allowed_tools: [read_file]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [top_risks, fallback_plans]
+
+  - task_id: B001-A06
+    family: planning
+    difficulty: S
+    scoring_mode: deterministic
+    time_budget_s: 600
+    token_budget: 25000
+    tags: [triage, question-quality]
+    prompt_package:
+      user_request: Ask only high-value clarifying questions and avoid low-value implementation details.
+      context_files: [docs/CODEBASE_CONTEXT.md]
+    constraints:
+      allowed_tools: [read_file]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [high_value_questions, why_each_matters]
+
+  - task_id: B001-A07
+    family: planning
+    difficulty: M
+    scoring_mode: hybrid
+    time_budget_s: 900
+    token_budget: 40000
+    tags: [decomposition-readiness]
+    prompt_package:
+      user_request: Assess whether a phase can be decomposed into 2 to 6 clean feature slices.
+      context_files: [docs/CODEBASE_CONTEXT.md, docs/ARCHITECTURE.md]
+    constraints:
+      allowed_tools: [read_file, grep_search]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [readiness_verdict, candidate_feature_slices]
+
+  - task_id: B001-A08
+    family: planning
+    difficulty: L
+    scoring_mode: rubric
+    time_budget_s: 1200
+    token_budget: 60000
+    tags: [tradeoffs, decision-quality]
+    prompt_package:
+      user_request: Challenge a user proposal that adds unnecessary complexity and provide a simpler alternative.
+      context_files: [docs/ARCHITECTURE.md, README.md]
+    constraints:
+      allowed_tools: [read_file]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [conflict_identified, complexity_cost, simpler_alternative, decision_options]
+
+  - task_id: B001-B01
+    family: decomposition
+    difficulty: M
+    scoring_mode: hybrid
+    time_budget_s: 900
+    token_budget: 45000
+    tags: [feature-splitting]
+    prompt_package:
+      user_request: Decompose phase requirements into independent feature units with dependency order.
+      context_files: [README.md, docs/ARCHITECTURE.md]
+    constraints:
+      allowed_tools: [read_file, grep_search]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [feature_units, dependencies, ordering]
+
+  - task_id: B001-B02
+    family: decomposition
+    difficulty: M
+    scoring_mode: deterministic
+    time_budget_s: 900
+    token_budget: 45000
+    tags: [traceability]
+    prompt_package:
+      user_request: Map acceptance criteria to modules and tests with no uncovered criteria.
+      context_files: [docs/CODEBASE_CONTEXT.md]
+    constraints:
+      allowed_tools: [read_file]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [traceability_matrix]
+
+  - task_id: B001-B03
+    family: decomposition
+    difficulty: M
+    scoring_mode: rubric
+    time_budget_s: 900
+    token_budget: 40000
+    tags: [integration-readiness]
+    prompt_package:
+      user_request: Ensure decomposed features include final integration/bootstrap verification.
+      context_files: [docs/ARCHITECTURE.md]
+    constraints:
+      allowed_tools: [read_file]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [integration_feature, launch_verification]
+
+  - task_id: B001-B04
+    family: decomposition
+    difficulty: S
+    scoring_mode: deterministic
+    time_budget_s: 600
+    token_budget: 30000
+    tags: [parallelization]
+    prompt_package:
+      user_request: Identify which feature tasks can run in parallel and which must be sequential.
+      context_files: [README.md]
+    constraints:
+      allowed_tools: [read_file]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [parallel_tasks, sequential_tasks, rationale]
+
+  - task_id: B001-B05
+    family: decomposition
+    difficulty: M
+    scoring_mode: hybrid
+    time_budget_s: 900
+    token_budget: 40000
+    tags: [task-quality]
+    prompt_package:
+      user_request: Produce an ordered, implementation-ready task checklist with clear completion criteria.
+      context_files: [docs/CODEBASE_CONTEXT.md]
+    constraints:
+      allowed_tools: [read_file]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [ordered_checklist, completion_criteria]
+
+  - task_id: B001-C01
+    family: implementation
+    difficulty: M
+    scoring_mode: hybrid
+    time_budget_s: 1200
+    token_budget: 60000
+    tags: [minimal-diff, correctness]
+    prompt_package:
+      user_request: Implement a focused change while minimizing unrelated churn.
+      context_files: [.github/agents/README.md]
+    constraints:
+      allowed_tools: [read_file, grep_search, apply_patch]
+      forbidden_actions: [destructive_git_commands]
+    expected_outcomes:
+      required_sections: [change_summary, verification_results]
+
+  - task_id: B001-C02
+    family: implementation
+    difficulty: M
+    scoring_mode: deterministic
+    time_budget_s: 1200
+    token_budget: 60000
+    tags: [instruction-compliance]
+    prompt_package:
+      user_request: Apply a small doc update and preserve existing style and conventions.
+      context_files: [README.md, docs/CODEBASE_CONTEXT.md]
+    constraints:
+      allowed_tools: [read_file, apply_patch]
+      forbidden_actions: [formatting_only_rewrites]
+    expected_outcomes:
+      required_sections: [updated_files, rationale]
+
+  - task_id: B001-C03
+    family: implementation
+    difficulty: L
+    scoring_mode: hybrid
+    time_budget_s: 1500
+    token_budget: 70000
+    tags: [multi-file-edit]
+    prompt_package:
+      user_request: Make coordinated edits in two files while preserving cross-file consistency.
+      context_files: [README.md, docs/ARCHITECTURE.md]
+    constraints:
+      allowed_tools: [read_file, apply_patch]
+      forbidden_actions: [unscoped_changes]
+    expected_outcomes:
+      required_sections: [consistency_notes, verification_results]
+
+  - task_id: B001-C04
+    family: implementation
+    difficulty: S
+    scoring_mode: deterministic
+    time_budget_s: 900
+    token_budget: 35000
+    tags: [safe-editing]
+    prompt_package:
+      user_request: Perform a one-file update with no unrelated modifications.
+      context_files: [docs/CODEBASE_CONTEXT.md]
+    constraints:
+      allowed_tools: [read_file, apply_patch]
+      forbidden_actions: [new_file_creation]
+    expected_outcomes:
+      required_sections: [changed_file, summary]
+
+  - task_id: B001-C05
+    family: implementation
+    difficulty: M
+    scoring_mode: hybrid
+    time_budget_s: 1200
+    token_budget: 60000
+    tags: [validation]
+    prompt_package:
+      user_request: Implement requested edits and validate there are no introduced file errors.
+      context_files: [README.md]
+    constraints:
+      allowed_tools: [read_file, apply_patch, get_errors]
+      forbidden_actions: [destructive_git_commands]
+    expected_outcomes:
+      required_sections: [edit_summary, error_check_result]
+
+  - task_id: B001-C06
+    family: implementation
+    difficulty: M
+    scoring_mode: rubric
+    time_budget_s: 1200
+    token_budget: 60000
+    tags: [constraint-discipline]
+    prompt_package:
+      user_request: Complete a requested edit while honoring strict formatting and linking constraints.
+      context_files: [README.md, docs/ARCHITECTURE.md]
+    constraints:
+      allowed_tools: [read_file, apply_patch]
+      forbidden_actions: [style_violations]
+    expected_outcomes:
+      required_sections: [compliance_notes, final_summary]
+
+  - task_id: B001-D01
+    family: review
+    difficulty: M
+    scoring_mode: rubric
+    time_budget_s: 900
+    token_budget: 45000
+    tags: [bug-finding, severity]
+    prompt_package:
+      user_request: Review a change set and identify the most severe defects first.
+      context_files: [docs/ARCHITECTURE.md]
+    constraints:
+      allowed_tools: [read_file, get_changed_files]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [findings_by_severity, residual_risks]
+
+  - task_id: B001-D02
+    family: review
+    difficulty: M
+    scoring_mode: hybrid
+    time_budget_s: 900
+    token_budget: 45000
+    tags: [false-positive-control]
+    prompt_package:
+      user_request: Provide only evidence-backed review findings and avoid speculative issues.
+      context_files: [README.md]
+    constraints:
+      allowed_tools: [read_file, get_changed_files]
+      forbidden_actions: [unsupported_claims]
+    expected_outcomes:
+      required_sections: [evidence_backed_findings]
+
+  - task_id: B001-D03
+    family: review
+    difficulty: S
+    scoring_mode: deterministic
+    time_budget_s: 600
+    token_budget: 30000
+    tags: [testing-gaps]
+    prompt_package:
+      user_request: Review for missing tests and identify highest-risk uncovered behavior.
+      context_files: [docs/CODEBASE_CONTEXT.md]
+    constraints:
+      allowed_tools: [read_file]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [missing_tests, risk_rationale]
+
+  - task_id: B001-D04
+    family: review
+    difficulty: M
+    scoring_mode: rubric
+    time_budget_s: 900
+    token_budget: 45000
+    tags: [regression-risk]
+    prompt_package:
+      user_request: Evaluate whether a proposed refactor introduces behavior regression risk.
+      context_files: [docs/ARCHITECTURE.md, docs/CODEBASE_CONTEXT.md]
+    constraints:
+      allowed_tools: [read_file, grep_search]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [regression_risks, confidence_level]
+
+  - task_id: B001-D05
+    family: review
+    difficulty: M
+    scoring_mode: hybrid
+    time_budget_s: 900
+    token_budget: 45000
+    tags: [review-communication]
+    prompt_package:
+      user_request: Produce a concise review with findings first, then open questions and summary.
+      context_files: [README.md]
+    constraints:
+      allowed_tools: [read_file]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [findings, open_questions, summary]
+
+  - task_id: B001-E01
+    family: documentation
+    difficulty: S
+    scoring_mode: deterministic
+    time_budget_s: 600
+    token_budget: 30000
+    tags: [docs-consistency]
+    prompt_package:
+      user_request: Update docs index links to include a new document without breaking existing formatting.
+      context_files: [README.md]
+    constraints:
+      allowed_tools: [read_file, apply_patch]
+      forbidden_actions: [unrelated_edits]
+    expected_outcomes:
+      required_sections: [updated_link_entry]
+
+  - task_id: B001-E02
+    family: documentation
+    difficulty: M
+    scoring_mode: hybrid
+    time_budget_s: 900
+    token_budget: 35000
+    tags: [context-freshness]
+    prompt_package:
+      user_request: Reconcile codebase context facts with architecture docs and call out stale sections.
+      context_files: [docs/CODEBASE_CONTEXT.md, docs/ARCHITECTURE.md]
+    constraints:
+      allowed_tools: [read_file, grep_search]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [stale_sections, proposed_updates]
+
+  - task_id: B001-E03
+    family: documentation
+    difficulty: M
+    scoring_mode: rubric
+    time_budget_s: 900
+    token_budget: 35000
+    tags: [doc-quality]
+    prompt_package:
+      user_request: Draft clear onboarding notes for a new contributor using existing project docs.
+      context_files: [README.md, docs/CODEBASE_CONTEXT.md, docs/ARCHITECTURE.md]
+    constraints:
+      allowed_tools: [read_file]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [quick_start, key_concepts, common_pitfalls]
+
+  - task_id: B001-F01
+    family: orchestration
+    difficulty: M
+    scoring_mode: hybrid
+    time_budget_s: 1200
+    token_budget: 55000
+    tags: [multi-step, tool-discipline]
+    prompt_package:
+      user_request: Gather context from multiple files and produce a single decision memo.
+      context_files: [README.md, docs/CODEBASE_CONTEXT.md, docs/ARCHITECTURE.md]
+    constraints:
+      allowed_tools: [read_file, list_dir, grep_search]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [decision_memo, assumptions, unresolved_items]
+
+  - task_id: B001-F02
+    family: orchestration
+    difficulty: L
+    scoring_mode: rubric
+    time_budget_s: 1500
+    token_budget: 70000
+    tags: [handoff-quality]
+    prompt_package:
+      user_request: Produce a handoff package that can be consumed by a downstream implementation agent.
+      context_files: [docs/AGENT_REGRESSION_BENCHMARK_SPEC.md, docs/ARCHITECTURE.md]
+    constraints:
+      allowed_tools: [read_file, grep_search]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [handoff_summary, required_inputs, acceptance_gates]
+
+  - task_id: B001-F03
+    family: orchestration
+    difficulty: M
+    scoring_mode: deterministic
+    time_budget_s: 1200
+    token_budget: 55000
+    tags: [ab-comparison]
+    prompt_package:
+      user_request: Compare two candidate agent outputs and issue a promotion recommendation using benchmark gates.
+      context_files: [docs/AGENT_REGRESSION_BENCHMARK_SPEC.md]
+    constraints:
+      allowed_tools: [read_file]
+      forbidden_actions: [code_edits]
+    expected_outcomes:
+      required_sections: [gate_evaluation, promotion_recommendation]

@@ -1,0 +1,32 @@
+{
+    "variant": "baseline-A",
+    "tasks": [
+        {
+            "task_id": "B001-A01",
+            "hard_pass": true,
+            "quality_score": 4.4,
+            "compliance_score": 4.8,
+            "latency_ms": 890,
+            "cost_usd": 0.048,
+            "tokens_total": 11200
+        },
+        {
+            "task_id": "B001-C01",
+            "hard_pass": true,
+            "quality_score": 4.1,
+            "compliance_score": 4.4,
+            "latency_ms": 1220,
+            "cost_usd": 0.082,
+            "tokens_total": 18600
+        },
+        {
+            "task_id": "B001-D01",
+            "hard_pass": true,
+            "quality_score": 4.3,
+            "compliance_score": 4.6,
+            "latency_ms": 970,
+            "cost_usd": 0.054,
+            "tokens_total": 13900
+        }
+    ]
+}
