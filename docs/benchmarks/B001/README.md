@@ -130,3 +130,77 @@ When checkout is enabled, the runner checks out baseline branch first, then each
 - Files under this pack are immutable once B001 is baseline.
 - Fixes create B001 patch notes plus a new benchmark version when needed.
 - Do not edit task prompts in place after baseline capture.
+
+## Agentic Master/Subagent Mode
+
+This benchmark can be run in agentic mode using:
+
+- `Agent Testing Agent` (master scorer/orchestrator)
+- `Agent Test Runner` (blind execution subagent)
+
+Flow:
+
+1. Master invokes one subagent for baseline using current branch (`branch_mode=current`, no checkout).
+2. Master invokes fresh subagent instances for each candidate branch (`branch_mode=checkout`).
+3. Each subagent executes tasks and returns raw result payloads only.
+4. Master scores all candidate payloads against baseline and writes final ranking/verdict report.
+5. Master cleans temporary artifacts and keeps the final scoring report.
+
+Important behavioral rules:
+
+- Baseline (A) is always current branch/state.
+- Subagents are blind to threshold logic and do not emit benchmark verdicts.
+- Subagents must restore original branch after candidate runs.
+
+### No-Extra-Prompt Usage
+
+The `Agent Testing Agent` is designed to work from a minimal command:
+
+- "do this against branch <branch-b>"
+- "do this against branches <branch-b> and <branch-c>"
+
+It should not require additional setup prompts for standard B001 runs.
+
+Copy/paste examples:
+
+- `Do this against branch feature/prompt-optimization.`
+- `Do this against branches feature/prompt-optimization and feature/token-minimized.`
+- `Do this against branch feature/prompt-optimization with run id B001-AGENTIC-EXAMPLE-001.`
+
+### Deterministic Artifact Contract
+
+Every agentic run writes to one deterministic directory:
+
+- `docs/benchmarks/B001/runs/local/agentic/[run-id]/`
+
+If `run_id` is not provided, it is derived from inputs:
+
+- `B001-AGENTIC-A-current-B-<branch-b>[-C-<branch-c>]`
+
+Required files in each run directory:
+
+- `run-contract.json`
+- `baseline-results.json`
+- `candidate-b-results.json`
+- `candidate-c-results.json` (only for 3-way runs)
+- `final-score-report.json`
+- `cleanup-summary.json`
+
+Determinism guarantees:
+
+- Candidate order is preserved from user input (`B` then optional `C`).
+- Task execution and emitted task rows are ordered by `task_id` ascending.
+- Reported deltas are rounded to 4 decimal places.
+
+### Cleanup/Retention Contract
+
+After scoring completes, `Agent Testing Agent` must delete temporary execution artifacts and retain only:
+
+- `run-contract.json`
+- `baseline-results.json`
+- `candidate-b-results.json`
+- `candidate-c-results.json` (if present)
+- `final-score-report.json`
+- `cleanup-summary.json`
+
+`final-score-report.json` is always retained.

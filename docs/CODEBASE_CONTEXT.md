@@ -7,7 +7,7 @@ Quick-reference for AI agents working on this repository.
 - A **template repository** of `AGENTS.md`, style guide files, and VS Code Copilot agent definitions
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
-- 22 agent definitions in `.github/agents/` (11 user-facing, 11 hidden subagents)
+- 24 agent definitions in `.github/agents/` (12 user-facing, 12 hidden subagents)
 - 6 skills in `.github/skills/` (shared templates and patterns extracted from agents)
 - 10 instruction files in `.github/instructions/` (cross-cutting conventions)
 - `.github/learnings/` directory with persistent per-project learnings for agent context
@@ -20,7 +20,7 @@ README.md                       # Repo overview, usage instructions
 .github/
   agents/
     README.md                   # Agent documentation, pipelines, and usage guide
-    *.agent.md                  # 22 agent definition files
+    *.agent.md                  # 24 agent definition files
   skills/
     phase-document-writing/     # Phase Doc & Overview templates, quality checklist
       SKILL.md
@@ -73,9 +73,9 @@ python/
 
 ### Agent Definitions (.github/agents/)
 
-- **3 orchestrators** (user-facing): Phase - Execute, Audit - Code/Infra/Refactor, Test - Orchestrator
+- **4 orchestrators** (user-facing): Phase - Execute, Audit - Code/Infra/Refactor, Test - Orchestrator, Agent Testing Agent
 - **8 standalone user-facing**: Planner, Refiner, Decomposer, Debugger, Docs Writer, Prod Code Review, Web Researcher, Unity Reviewer
-- **11 hidden subagents** (`user-invocable: false`): Plan Expander, Implementer, Reviewer, QA Writer, 3 Auditors, Test Analyst/Writer/Fixer, Git Commit
+- **12 hidden subagents** (`user-invocable: false`): Agent Test Runner, Plan Expander, Implementer, Reviewer, QA Writer, 3 Auditors, Test Analyst/Writer/Fixer, Git Commit
 - See [agents/README.md](../.github/agents/README.md) for detailed descriptions and invocation patterns.
 
 ### Skills (.github/skills/)
