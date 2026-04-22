@@ -69,6 +69,9 @@ Testability → Readability → Consistency → Simplicity → Reversibility
 ## Communication
 
 - Keep responses direct; avoid preamble/postamble unless requested.
+- Use delta-first structure: lead with changes/findings/actions, then brief background.
+- Treat response length guidance as soft targets, not hard limits.
+- Keep simple answers to 1-3 sentences; expand detail when safety, correctness, or review quality requires it.
 - Avoid unnecessary code comments and refusal explanations.
 - Prefer `rg` for text/file search.
 - Prefer read/list tools over shell output commands for context gathering.

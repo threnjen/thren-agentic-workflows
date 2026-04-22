@@ -9,7 +9,7 @@ Quick-reference for AI agents working on this repository.
 - Two language variants for templates: Node.js/TypeScript and Python
 - 24 agent definitions in `.github/agents/` (12 user-facing, 12 hidden subagents)
 - 6 skills in `.github/skills/` (shared templates and patterns extracted from agents)
-- 10 instruction files in `.github/instructions/` (cross-cutting conventions)
+- 11 instruction files in `.github/instructions/` (cross-cutting conventions)
 - `.github/learnings/` directory with persistent per-project learnings for agent context
 - `docs/phases/` contains the roadmap and per-phase planning summaries
 - Users copy files into their own projects and customize them
@@ -50,6 +50,7 @@ README.md                       # Repo overview, usage instructions
     learnings-bootstrap.instructions.md  # Read .github/learnings/*.md files before starting work (applies to implementer, reviewer, decomposer, debugger)
     tech-stack-detection.instructions.md # Detect specialized tech stacks and load matching skills (applies to implementer, reviewer)
     subagent-autonomy.instructions.md   # Operate autonomously, no questions, sensible defaults (applies to implementer, reviewer, plan-expander, git-commit)
+    output-verbosity-policy.instructions.md # Defines soft-target concision defaults, delta-first responses, and quality-preserving exceptions (applies to all `.github/agents/**`)
 docs/
   AGENT_REGRESSION_BENCHMARK_SPEC.md # Benchmark design spec for agent changes
   ARCHITECTURE.md               # Structure diagram and design decisions
@@ -92,7 +93,7 @@ python/
 
 ### Instructions (.github/instructions/)
 
-10 instruction files with `applyTo` glob matching. See [ARCHITECTURE.md](ARCHITECTURE.md#instructions) for the full mapping.
+11 instruction files with `applyTo` glob matching. See [ARCHITECTURE.md](ARCHITECTURE.md#instructions) for the full mapping.
 
 ## File Relationships
 

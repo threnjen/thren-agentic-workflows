@@ -29,7 +29,7 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 │   │   ├── unity-development/         # Unity C# implementation and review rules
 │   │   └── unity-review-knowledge/    # Unity best practices from official Unity ebooks
 │   ├── instructions/          # Cross-cutting conventions injected via applyTo globs
-│   │   └── *.instructions.md  # 10 instruction files (see ARCHITECTURE.md for full list)
+│   │   └── *.instructions.md  # 11 instruction files (see ARCHITECTURE.md for full list)
 │   └── learnings/             # Persistent review and implementation learnings for agents
 │       ├── project-learnings.md       # Project-specific lessons and recurring implementation notes
 │       └── review-learnings.md        # Recurring review issues and patterns
@@ -111,7 +111,7 @@ The core instructions file that GitHub Copilot reads. Both language variants sha
 | **Process** | TDD implementation flow (plan → test → implement → refactor → commit) |
 | **Testing** | TDD workflow, test quality rules, property-based testing (fast-check / Hypothesis) |
 | **Quality Standards** | Commit checklist, decision priority, never/always rules |
-| **Communication** | Concision and tooling preferences for predictable outputs |
+| **Communication** | Delta-first soft-target concision defaults and tooling preferences |
 | **Extended Guides** | Pointer to `docs/STYLE_GUIDE.md` for detailed conventions |
 
 Compaction note: shared guidance between `nodejs/AGENTS.md` and `python/AGENTS.md` is intentionally concise to reduce token usage while preserving safety, quality, and workflow constraints.
