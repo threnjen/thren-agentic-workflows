@@ -5,17 +5,13 @@
 - Always commit `package-lock.json`; use `npm ci` in CI/automated environments for reproducible installs.
 - Install dev-only tools (e.g. `fast-check`, `vitest`) with `npm install --save-dev`.
 
-## Principles
+## Core Engineering Principles
 
-- Incremental progress over big bangs — small changes that compile and pass tests
-- Learn from existing code — find 3 similar features, study patterns before implementing
-- Pragmatic over dogmatic — adapt to project reality
-- Clear intent over clever code — be boring and obvious
-- Single responsibility per function/class
-- Composition over inheritance; interfaces over singletons
-- Explicit data flow; fail fast with descriptive errors
-- Include context for debugging; handle errors at appropriate level; never silently swallow exceptions
-- If you need to explain it, it's too complex
+- Prefer small, reversible changes that compile and pass tests.
+- Match existing code patterns before introducing new structure.
+- Optimize for clarity and testability over cleverness.
+- Keep responsibilities narrow and data flow explicit.
+- Fail fast with descriptive errors; never silently swallow exceptions.
 
 ## Process
 
@@ -27,13 +23,11 @@
 
 ## Testing
 
-- Commit tests separately from implementation
-- Do NOT modify tests during implementation
-- SHOULD NOT add test unless it can fail for real defect
-- SHOULD ensure description matches expect assertion
-- Parameterize inputs (no magic numbers/strings)
-- Compare to independent expectations, not function output
-- Test edge cases, boundaries, realistic input
+- Commit tests separately from implementation changes.
+- Do not modify tests during implementation unless requirements changed.
+- Add tests only when they can fail for a real defect.
+- Use clear assertions and parameterized inputs (no magic values).
+- Cover realistic edge cases, boundaries, and error paths.
 
 ### Property-Based Testing
 - Use [fast-check](https://fast-check.dev/) for property-based testing; include it as a standard dev dependency.
@@ -49,7 +43,6 @@
 - [ ] Follow project formatting/linting
 - [ ] Have clear commit message (Conventional Commits)
 - [ ] No TODOs without issue numbers
-- [ ] Check plan is up-to-date before commit
 
 ### Always
 - Commit early and often with meaningful messages
@@ -65,12 +58,11 @@ Testability → Readability → Consistency → Simplicity → Reversibility
 
 ## Communication
 
-- No preamble/postamble unless requested
-- No code comments unless asked
-- No explanations for refusals
-- Use ripgrep (`rg`) not `grep`/`find`
-- Use Read/LS tools not `cat`/`head`/`tail`/`ls`
-- Never guess URLs
+- Keep responses direct; avoid preamble/postamble unless requested.
+- Avoid unnecessary code comments and refusal explanations.
+- Prefer `rg` for text/file search.
+- Prefer read/list tools over shell output commands for context gathering.
+- Never guess URLs.
 
 ## TypeScript Style
 

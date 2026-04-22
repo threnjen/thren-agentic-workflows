@@ -3,7 +3,7 @@
 Opinionated templates and VS Code Copilot agent definitions for standardizing how [GitHub Copilot](https://docs.github.com/en/copilot) behaves in your projects. Two things in one repo:
 
 1. **`AGENTS.md` + style guide templates** (Node.js and Python) — copy into your project so Copilot follows your coding conventions, TDD workflow, and quality gates
-2. **22 VS Code Copilot agent definitions** — a full orchestrator + subagent system for planning, implementing, reviewing, auditing, testing, and documenting entire projects hands-free
+2. **24 VS Code Copilot agent definitions** — a full orchestrator + subagent system for planning, implementing, reviewing, auditing, testing, and documenting entire projects hands-free
 
 ## Why This Exists
 
@@ -20,7 +20,7 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 ├── .github/
 │   ├── agents/                # VS Code Copilot agent definitions
 │   │   ├── README.md          # Agent documentation, pipelines, and usage guide
-│   │   └── *.agent.md         # 22 agent files (11 user-facing, 11 hidden subagents)
+│   │   └── *.agent.md         # 24 agent files (12 user-facing, 12 hidden subagents)
 │   ├── skills/                # Shared templates and formats loaded by agents on demand
 │   │   ├── auditor-conventions/       # Audit constraints, report format, severity levels
 │   │   ├── feature-plan-set/          # Three-file plan convention, sections A–F
@@ -31,11 +31,16 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 │   ├── instructions/          # Cross-cutting conventions injected via applyTo globs
 │   │   └── *.instructions.md  # 10 instruction files (see ARCHITECTURE.md for full list)
 │   └── learnings/             # Persistent review and implementation learnings for agents
-│       ├── project-learnings.md       # Cross-phase decisions and project-specific lessons
+│       ├── project-learnings.md       # Project-specific lessons and recurring implementation notes
 │       └── review-learnings.md        # Recurring review issues and patterns
+│       └── cross-phase-decisions.md   # Decisions that affect downstream features/phases
 ├── docs/
 │   ├── ARCHITECTURE.md        # Structure diagram and design decisions
-│   └── CODEBASE_CONTEXT.md    # Agent-oriented quick-reference
+│   ├── CODEBASE_CONTEXT.md    # Agent-oriented quick-reference
+│   └── phases/
+│       ├── PHASES_OVERVIEW.md # High-level project roadmap across phases
+│       └── PHASE_01/
+│           └── PHASE_01_SUMMARY.md # Current phase objective, scope, and success criteria
 ├── nodejs/
 │   ├── AGENTS.md              # Agent guidelines for Node.js/TypeScript projects
 │   └── docs/
@@ -102,12 +107,14 @@ The core instructions file that GitHub Copilot reads. Both language variants sha
 | Section | Purpose |
 |---|---|
 | **Package/Environment Management** | Dependency tooling (`npm` / `uv`) and lockfile rules |
-| **Principles** | Incremental progress, clear intent, single responsibility, fail-fast |
+| **Core Engineering Principles** | Compact, high-signal defaults for implementation behavior |
 | **Process** | TDD implementation flow (plan → test → implement → refactor → commit) |
 | **Testing** | TDD workflow, test quality rules, property-based testing (fast-check / Hypothesis) |
 | **Quality Standards** | Commit checklist, decision priority, never/always rules |
-| **Agent Operations** | Context clearing, subagent usage, self-review checklist |
+| **Communication** | Concision and tooling preferences for predictable outputs |
 | **Extended Guides** | Pointer to `docs/STYLE_GUIDE.md` for detailed conventions |
+
+Compaction note: shared guidance between `nodejs/AGENTS.md` and `python/AGENTS.md` is intentionally concise to reduce token usage while preserving safety, quality, and workflow constraints.
 
 ### docs/STYLE_GUIDE.md (templates)
 
@@ -121,7 +128,7 @@ Detailed, language-specific coding conventions covering:
 
 ### Agent Definitions (.github/agents/)
 
-22 agent files using an **orchestrator + subagent** pattern (3 orchestrators, 8 standalone user-facing, 11 hidden subagents). Orchestrators delegate to subagents automatically; shared subagents are reused across all three orchestrators. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation and pipeline descriptions.
+24 agent files using an **orchestrator + subagent** pattern (4 orchestrators, 8 standalone user-facing, 12 hidden subagents). Orchestrators delegate to subagents automatically; shared subagents are reused across orchestrator pipelines. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation and pipeline descriptions.
 
 ### Skills (.github/skills/)
 
@@ -146,6 +153,8 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#instructions) for the full instr
 - [.github/agents/README.md](.github/agents/README.md) — Full agent documentation, pipeline diagrams, and per-agent descriptions
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Mermaid diagrams of repo structure, agent architecture, and design decisions
 - [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — Dense structured facts for AI agent orientation
+- [docs/phases/PHASES_OVERVIEW.md](docs/phases/PHASES_OVERVIEW.md) — Current phased roadmap and scope sequencing
+- [docs/phases/PHASE_01/PHASE_01_SUMMARY.md](docs/phases/PHASE_01/PHASE_01_SUMMARY.md) — Detailed scope and quality gates for Phase 01
 - [docs/AGENT_REGRESSION_BENCHMARK_SPEC.md](docs/AGENT_REGRESSION_BENCHMARK_SPEC.md) — Project-specific benchmark design for A/B testing model and agent changes
 - [docs/benchmarks/B001/README.md](docs/benchmarks/B001/README.md) — First concrete benchmark pack with 30 core task cards and run/grader templates
 

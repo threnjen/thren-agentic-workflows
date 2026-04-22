@@ -5,16 +5,16 @@ applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md"
 
 # Documentation Freshness Check
 
-After reading the codebase during your discovery phase, check whether these critical documentation files exist:
+After discovery, check whether these critical documentation files exist:
 - `README.md` (repo root)
 - `docs/CODEBASE_CONTEXT.md`
 
-If either file is missing, present a recommendation before continuing your workflow:
+If either file is missing, present this recommendation before continuing:
 
-> **Documentation gap detected.** The following critical doc(s) are missing: [list missing files]. Well-maintained documentation helps agents orient quickly and humans onboard faster.
+> **Documentation gap detected.** Missing: [list missing files].
 >
-> **Recommendation:** Run `@Docs Writer` to generate the missing documentation before continuing. This ensures the process starts from an accurate, well-documented baseline.
+> **Recommendation:** Run `@Docs Writer` to generate the missing docs before continuing.
 >
-> You can proceed without this step — just let me know.
+> You may proceed without this step if the user explicitly confirms.
 
 Wait for the user to acknowledge before continuing. If the user chooses to proceed without running Docs Writer, continue normally.

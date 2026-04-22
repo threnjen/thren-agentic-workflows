@@ -11,6 +11,7 @@ Quick-reference for AI agents working on this repository.
 - 6 skills in `.github/skills/` (shared templates and patterns extracted from agents)
 - 10 instruction files in `.github/instructions/` (cross-cutting conventions)
 - `.github/learnings/` directory with persistent per-project learnings for agent context
+- `docs/phases/` contains the roadmap and per-phase planning summaries
 - Users copy files into their own projects and customize them
 
 ## Folder Structure
@@ -35,8 +36,9 @@ README.md                       # Repo overview, usage instructions
     unity-review-knowledge/     # Unity best practices from 11 official Unity ebooks (Unity 6 edition)
       SKILL.md
   learnings/
-    project-learnings.md        # Cross-phase decisions and project-specific lessons
+    project-learnings.md        # Project-specific lessons and recurring implementation notes
     review-learnings.md         # Recurring review issues loaded by implementer, reviewer, decomposer, debugger
+    cross-phase-decisions.md    # Decisions that affect downstream features/phases
   instructions/
     codebase-context-bootstrap.instructions.md  # Reads CODEBASE_CONTEXT.md before discovery (applies to all agents)
     dev-task-folder.instructions.md     # dev/feature/[0N-task-name]/ and dev/research/[topic-name]/ output naming conventions, per-feature QA paths (applies to all agents)
@@ -49,8 +51,13 @@ README.md                       # Repo overview, usage instructions
     tech-stack-detection.instructions.md # Detect specialized tech stacks and load matching skills (applies to implementer, reviewer)
     subagent-autonomy.instructions.md   # Operate autonomously, no questions, sensible defaults (applies to implementer, reviewer, plan-expander, git-commit)
 docs/
+  AGENT_REGRESSION_BENCHMARK_SPEC.md # Benchmark design spec for agent changes
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
+  phases/
+    PHASES_OVERVIEW.md          # Project roadmap and phase sequencing
+    PHASE_01/
+      PHASE_01_SUMMARY.md       # Phase 01 objective, scope, and quality gates
 nodejs/
   AGENTS.md                     # GitHub Copilot instructions for Node.js/TS projects
   docs/
@@ -67,6 +74,7 @@ python/
 
 - Each `AGENTS.md` contains an "Extended Guides" section pointing to `docs/STYLE_GUIDE.md`
 - The two AGENTS.md files share ~70% identical content (principles, process, testing, quality, agent ops)
+- Shared guidance is intentionally compacted into concise sections to reduce token usage while preserving critical constraints
 - Language-specific differences: dependency tooling, property-based testing library, data modeling, style preferences
 - No shared base file — each AGENTS.md is fully self-contained by design
 - Style guides are intentionally separate from AGENTS.md to save agent context window space
@@ -97,6 +105,7 @@ python/
 - Skills are single-source-of-truth — agents do NOT duplicate skill content inline
 - `codebase-context-bootstrap.instructions.md` auto-loads into all agents and directs them to read `docs/CODEBASE_CONTEXT.md` (if it exists) before starting discovery
 - Instruction files auto-load into agents matching their `applyTo` glob pattern
+- `docs/phases/PHASES_OVERVIEW.md` and `docs/phases/PHASE_01/PHASE_01_SUMMARY.md` capture current planning scope for downstream execution agents
 
 ## Conventions
 
