@@ -14,24 +14,22 @@ One refined Phase document: `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`
 
 Before starting, verify the phase document exists and read it to extract the phase name and scope.
 
-## Execution Mode Selection
+## QA Preference Selection
 
-Before creating any branches, ask the user:
+At the beginning of the conversation, before Step 0, ask the user:
 
-> **"How would you like to handle feature branches?"**
->
-> 1. **Batch mode** — All features on a single branch (`phase/<phase-name>`), one PR at the end
-> 2. **Per-feature mode** — Each feature gets its own branch (`feature/<0N-task-name>`), enabling a separate PR per feature
+> **"Do you want a QA document generated for this phase? (yes/no)"**
 
 Wait for the user's response before proceeding.
+
+- If the user says **yes**, run Step 4 as written.
+- If the user says **no**, skip Step 4 and continue to Step 5.
 
 ## Execution Pipeline
 
 ### Step 0: Create Working Branch
 
-**Batch mode:** Create a branch using prefix `phase/<phase-name>`. See orchestrator conventions for the full procedure.
-
-**Per-feature mode:** Do NOT create a branch yet. The branch is created in Step 3 for each feature individually.
+Create a branch using prefix `phase/<phase-name>`. See orchestrator conventions for the full procedure.
 
 ### Step 1: Obtain Feature Plans
 
@@ -67,40 +65,21 @@ After the subagent returns:
 
 ### Step 3: Feature Development Loop
 
-#### Batch Mode
-
 For **each feature** (in numeric prefix order), run the implementation pipeline loop.
 
 Load the `implementation-pipeline-loop` skill and execute Steps A through D for each feature, using `dev/feature/[0N-task-name]/` as the `[plan-path]` and `[0N-task-name]` as the task identifier.
 
 After ALL features are complete, proceed to Step 4.
 
-#### Per-Feature Mode
-
-Process **only the next unimplemented feature** (lowest numbered prefix without an implementation record).
-
-1. **Create a feature branch**: `feature/[0N-task-name]`
-2. Load the `implementation-pipeline-loop` skill and execute Steps A through D for this single feature
-3. After the feature is implemented and reviewed, proceed to Steps 4 and 5 **scoped to this single feature only**
-4. After Steps 4–5 complete, proceed to Step 6 with per-feature instructions
-
-**Do NOT implement any other feature directories.**
-
 ### Step 4: QA
 
 Determine QA output paths using the dev-task-folder conventions. Check for existing QA files at those paths.
 
-**Batch mode:** Cover ALL features in the phase.
-
-**Per-feature mode:** Cover only the single feature just implemented.
+Run this step only if the user selected **yes** in QA Preference Selection. If the user selected **no**, skip this step.
 
 Invoke the **z-feature-qa-writer** subagent:
 
-**Batch mode:**
 > "[SUBAGENT-MODE] Write a consolidated release QA plan covering ALL features in this phase. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following feature folders: [list all dev/feature/[0N-task-name]/ paths]. Write the consolidated QA plan to `[determined QA output path]` and the coverage map to `[determined coverage map path]`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all features."
-
-**Per-feature mode:**
-> "[SUBAGENT-MODE] Write a QA plan for the feature just implemented. Read all documents from `dev/feature/[0N-task-name]/`. Write the QA plan to `dev/feature/[0N-task-name]/[0N-task-name]-qa.md` and the coverage map to `dev/feature/[0N-task-name]/[0N-task-name]-coverage-map-qa.md`. Return a summary of what manual QA is needed."
 
 After the subagent returns:
 - Verify the QA document exists at the determined path
@@ -108,60 +87,28 @@ After the subagent returns:
 
 ### Step 5: Phase Final Review
 
-**Batch mode:**
-
 Invoke the **prod-code-review** subagent:
+
+If QA was generated, use this prompt:
 
 > "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. The following feature task folders contain all pipeline documents: [list all dev/feature/[0N-task-name]/ paths]. The consolidated QA plan is at `[QA output path]`. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
 
-**Per-feature mode:**
+If QA was skipped, use this prompt:
 
-Invoke the **prod-code-review** subagent:
-
-> "[SUBAGENT-MODE] Perform a readiness analysis for the single feature just implemented. The feature task folder is `dev/feature/[0N-task-name]/`. The QA plan is at `dev/feature/[0N-task-name]/[0N-task-name]-qa.md`. Cross-validate all documents, verify implementation, run tests, and evaluate QA plan completeness. Write the analysis to `dev/feature/[0N-task-name]/[0N-task-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
+> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. The following feature task folders contain all pipeline documents: [list all dev/feature/[0N-task-name]/ paths]. QA plan generation was intentionally skipped by user choice. Cross-validate all documents, verify implementations, run tests, and assess readiness without a QA plan. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings, including the risk impact of skipping QA documentation."
 
 ### Step 6: Report to User
 
-**Batch mode:** Present results using the Pipeline Completion Report format from the orchestrator conventions. Use these field labels:
+Present results using the Pipeline Completion Report format from the orchestrator conventions. Use these field labels:
 - Scope label: **Phase**
 - Items label: **Features completed**
-- Include the QA document path
-
-**Per-feature mode:** Present results for the single feature, then provide next-step guidance:
-
-> **Feature `[0N-task-name]` complete.**
->
-> **Branch:** `feature/[0N-task-name]`
-> **Final verdict:** [GO / GO WITH CONDITIONS / NO-GO]
->
-> | Feature | Impl | Review | QA |
-> |---------|------|--------|----|
-> | [0N-task-name] | Done | Approved | Written |
->
-> **Next step:** Push the branch and open a PR for `[0N-task-name]`.
->
-> **Remaining features in this phase:** [List remaining unimplemented features]
->
-> When you have merged this feature, re-invoke `@04-phase-execute` with the same phase document to implement the next feature.
+- Include the QA document path only if QA was generated
 
 ### Step 7: Update Documentation
 
 Follow the Post-Loop: Documentation Update section from the `implementation-pipeline-loop` skill. Use this prompt:
 
 > "[SUBAGENT-MODE] The following phase has just been implemented: [phase-name]. Features completed: [list feature task names]. Update any stale documentation across the repository. Return a summary of which documents were updated and what changed."
-
-**Per-feature mode:** Run this step after each feature.
-
-## Per-Feature Mode: Re-invocation Behavior
-
-When re-invoked after a feature has been merged:
-
-1. **Skip Step 0** — No phase-level branch needed
-2. **Step 1** — Detect existing plans; skip decomposition
-3. **Step 2** — Detect existing expanded files; skip expansion
-4. **Step 3** — Scan `dev/feature/*/` for directories that already have a `*-implementation.md`. Mark those complete. Pick the next unimplemented feature by numeric prefix order
-5. **Re-ask mode** — Do NOT re-ask the execution mode question. Continue in per-feature mode.
-6. If all features have implementation records, skip to a final consolidated report
 
 ## Error Handling
 
@@ -225,8 +172,9 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | Feature - Plan Expander | Ordered checklist of work items |
 | `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results |
 | `-review.md` | Feature - Reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | Feature - QA Writer (per-feature mode) | QA plan for a single feature |
-| `-qa-analysis.md` | Prod Code Review | GO/NO-GO verdict |
+| `[phase-name]_QA.md` | Feature - QA Writer (batch mode) | Consolidated QA plan for the phase |
+| `[phase-name]_QA_COVERAGE_MAP.md` | Feature - QA Writer (batch mode) | Consolidated QA coverage map for the phase |
+| `[phase-name]-qa-analysis.md` | Prod Code Review | GO/NO-GO phase readiness verdict |
 
 Consolidated QA documents (batch mode):
 
