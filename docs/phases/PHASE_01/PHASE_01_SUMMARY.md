@@ -1,6 +1,6 @@
 # Phase 1: Token Efficiency Optimization
 
-**Status**: Planned
+**Status**: Validation Complete - NO-GO (evidence normalization required)
 **Depends on**: None
 **Estimated complexity**: Medium
 **Cross-references**: `docs/AGENT_REGRESSION_BENCHMARK_SPEC.md` (Sections 19-25)
@@ -120,6 +120,35 @@ Pass/fail evaluation follows the benchmark spec:
 - PASS: >=30% reduction and all quality gates pass
 - FAIL: <30% reduction
 - REVIEW_REQUIRED: >=30% reduction with any quality-gate failure or incomplete evidence
+
+## End-to-End Validation Outcome (Feature 03)
+
+Validation date: 2026-04-22  
+Validation report: `dev/research/phase-01-end-to-end-validation-regression-analysis/phase-01-end-to-end-validation-regression-analysis-report.md`
+
+Benchmark outputs generated:
+- `docs/benchmarks/B001/runs/local/B001-PHASE01-20260422-candidate-B-report.json`
+- `docs/benchmarks/B001/runs/local/B001-PHASE01-20260422-candidate-C-report.json`
+
+Token delta summary (baseline total = 43,700 tokens):
+
+| Candidate | Variant total tokens | Reduction vs baseline | Outcome |
+|---|---:|---:|---|
+| Candidate B | 35,900 | 17.85% | Below 30% target |
+| Candidate C | 43,900 | -0.46% | Token regression |
+
+Quality and comparability summary:
+- Candidate B failed review-rigor indicators (pass-rate drop in review family and hard-fail gate).
+- Candidate C retained decomposition/review quality but did not improve token usage and remained below the 30% reduction target.
+- Edge-case discovery quality remains inconclusive with current benchmark-family signals and requires explicit evidence in a normalized rerun.
+- Current example payloads do not fully satisfy Phase 01 normative metadata/provenance requirements for comparable Phase 01 promotion evidence.
+
+Final gate verdict for Phase 01: **NO-GO**.
+
+Remediation routing:
+- Token optimization remediation -> `dev/feature/02-prompt-instruction-compaction/`
+- Output policy remediation -> `dev/feature/02-output-verbosity-policy/`
+- After remediation, rerun normalized baseline/variant capture and re-evaluate this phase.
 
 ## QA Considerations
 
