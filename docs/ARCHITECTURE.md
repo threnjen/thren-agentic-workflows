@@ -22,7 +22,7 @@ flowchart TD
     GH --> Instructions[instructions/]
 
     Agents --> Orchestrators["Orchestrators (3)\n Phase-Execute, Audit, Test"]
-    Agents --> UserAgents["User-Facing Standalone (7)\nPlanner, Refiner, Decomposer,\nDebugger, Prod Review,\nWeb Research, Docs"]
+    Agents --> UserAgents["User-Facing Standalone (8)\nPlanner, Refiner, Decomposer,\nDebugger, Prod Review,\nWeb Research, Docs, Unity Reviewer"]
     Agents --> Subagents["Hidden Subagents (11)\nPlan Expander, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer,\nGit Commit"]
     Orchestrators -->|delegate to| Subagents
 
@@ -174,6 +174,7 @@ Skills (`.github/skills/<name>/SKILL.md`) extract shared templates and formats t
 | `feature-plan-set` | Feature - Decomposer, Feature - Plan Expander | Three-file plan convention, plan sections A–F, stage format, `0N-` directory numbering |
 | `implementation-pipeline-loop` | Orchestrators (reference) | Standard Implement → Review → Commit → Mark Complete cycle, prompt templates, error handling |
 | `unity-development` | Feature - Implementer, Feature - Reviewer (Unity projects) | Implementation and review rules for Unity C# projects: MonoBehaviour lifecycle, UI Toolkit pitfalls, test authenticity, bootstrap verification, batch compilation gates |
+| `unity-review-knowledge` | Unity Reviewer | Unity best practices distilled from 11 official Unity ebooks (Unity 6 edition): C# style, performance/profiling, architecture/design patterns, DOTS/ECS, 2D art/rendering |
 
 ## Instructions
 

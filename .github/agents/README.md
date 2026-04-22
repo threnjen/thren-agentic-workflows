@@ -139,6 +139,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **Docs Writer** | Create or update repo documentation; also invoked automatically by orchestrators after pipeline completion |
 | **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
 | **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
+| **Unity Reviewer** | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
 | **Web Researcher** | Research a topic and produce a structured findings report and executive summary saved to `dev/research/[topic-name]/` |
 
 ### Hidden Subagents
@@ -194,6 +195,9 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Docs Writer** (reads codebase, writes documentation)
 > Give it a repo to document. Produces or updates README, ARCHITECTURE, CODEBASE_CONTEXT, and TROUBLESHOOTING documents. Also invoked automatically at the end of orchestrator pipelines to update stale documentation after code changes.
+
+**Unity Reviewer** (read-only — does not modify code)
+> Give it Unity C# source files or a directory to review. Loads Unity-specific skills (MonoBehaviour lifecycle, UI Toolkit pitfalls, performance rules, design patterns, style guide compliance) and produces structured review findings. Does not modify code — review output only.
 
 ### Hidden Subagents
 
@@ -279,6 +283,7 @@ Not everything needs a pipeline. These agents work well on their own:
 - **Test - Orchestrator** — Analyze, write, or fix tests on demand
 - **Prod Code Review** — Point at any `dev/feature/[0N-task-name]/` folder for an independent readiness check
 - **Debugger** — Fix a specific frontend or backend error without a full pipeline
+- **Unity Reviewer** — Review Unity C# code for architecture, performance, and pitfalls
 - **Web Researcher** — Research a technical question or debug a tricky issue
 - **Docs Writer** — Update documentation after any significant change
 

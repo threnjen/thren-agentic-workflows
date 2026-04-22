@@ -3,7 +3,7 @@
 Opinionated templates and VS Code Copilot agent definitions for standardizing how [GitHub Copilot](https://docs.github.com/en/copilot) behaves in your projects. Two things in one repo:
 
 1. **`AGENTS.md` + style guide templates** (Node.js and Python) — copy into your project so Copilot follows your coding conventions, TDD workflow, and quality gates
-2. **21 VS Code Copilot agent definitions** — a full orchestrator + subagent system for planning, implementing, reviewing, auditing, testing, and documenting entire projects hands-free
+2. **22 VS Code Copilot agent definitions** — a full orchestrator + subagent system for planning, implementing, reviewing, auditing, testing, and documenting entire projects hands-free
 
 ## Why This Exists
 
@@ -20,15 +20,19 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 ├── .github/
 │   ├── agents/                # VS Code Copilot agent definitions
 │   │   ├── README.md          # Agent documentation, pipelines, and usage guide
-│   │   └── *.agent.md         # 21 agent files (10 user-facing, 11 hidden subagents)
+│   │   └── *.agent.md         # 22 agent files (11 user-facing, 11 hidden subagents)
 │   ├── skills/                # Shared templates and formats loaded by agents on demand
 │   │   ├── auditor-conventions/       # Audit constraints, report format, severity levels
 │   │   ├── feature-plan-set/          # Three-file plan convention, sections A–F
 │   │   ├── implementation-pipeline-loop/  # Implement → Review → Commit cycle
 │   │   ├── phase-document-writing/    # Phase doc templates and quality checklist
-│   │   └── unity-development/         # Unity C# implementation and review rules
-│   └── instructions/          # Cross-cutting conventions injected via applyTo globs
-│       └── *.instructions.md  # 10 instruction files (see ARCHITECTURE.md for full list)
+│   │   ├── unity-development/         # Unity C# implementation and review rules
+│   │   └── unity-review-knowledge/    # Unity best practices from official Unity ebooks
+│   ├── instructions/          # Cross-cutting conventions injected via applyTo globs
+│   │   └── *.instructions.md  # 10 instruction files (see ARCHITECTURE.md for full list)
+│   └── learnings/             # Persistent review and implementation learnings for agents
+│       ├── project-learnings.md       # Cross-phase decisions and project-specific lessons
+│       └── review-learnings.md        # Recurring review issues and patterns
 ├── docs/
 │   ├── ARCHITECTURE.md        # Structure diagram and design decisions
 │   └── CODEBASE_CONTEXT.md    # Agent-oriented quick-reference
@@ -117,7 +121,7 @@ Detailed, language-specific coding conventions covering:
 
 ### Agent Definitions (.github/agents/)
 
-21 agent files using an **orchestrator + subagent** pattern (3 orchestrators, 7 standalone user-facing, 11 hidden subagents). Orchestrators delegate to subagents automatically; shared subagents are reused across all three orchestrators. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation and pipeline descriptions.
+22 agent files using an **orchestrator + subagent** pattern (3 orchestrators, 8 standalone user-facing, 11 hidden subagents). Orchestrators delegate to subagents automatically; shared subagents are reused across all three orchestrators. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation and pipeline descriptions.
 
 ### Skills (.github/skills/)
 

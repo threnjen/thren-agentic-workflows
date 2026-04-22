@@ -7,9 +7,10 @@ Quick-reference for AI agents working on this repository.
 - A **template repository** of `AGENTS.md`, style guide files, and VS Code Copilot agent definitions
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
-- 21 agent definitions in `.github/agents/` (10 user-facing, 11 hidden subagents)
-- 5 skills in `.github/skills/` (shared templates and patterns extracted from agents)
+- 22 agent definitions in `.github/agents/` (11 user-facing, 11 hidden subagents)
+- 6 skills in `.github/skills/` (shared templates and patterns extracted from agents)
 - 10 instruction files in `.github/instructions/` (cross-cutting conventions)
+- `.github/learnings/` directory with persistent per-project learnings for agent context
 - Users copy files into their own projects and customize them
 
 ## Folder Structure
@@ -19,7 +20,7 @@ README.md                       # Repo overview, usage instructions
 .github/
   agents/
     README.md                   # Agent documentation, pipelines, and usage guide
-    *.agent.md                  # 21 agent definition files
+    *.agent.md                  # 22 agent definition files
   skills/
     phase-document-writing/     # Phase Doc & Overview templates, quality checklist
       SKILL.md
@@ -29,6 +30,13 @@ README.md                       # Repo overview, usage instructions
       SKILL.md
     implementation-pipeline-loop/ # Standard Implement → Review → Commit → Mark Complete loop + post-loop Docs Writer step
       SKILL.md
+    unity-development/          # Unity C# implementation and review rules: MonoBehaviour lifecycle, UI Toolkit pitfalls, test authenticity
+      SKILL.md
+    unity-review-knowledge/     # Unity best practices from 11 official Unity ebooks (Unity 6 edition)
+      SKILL.md
+  learnings/
+    project-learnings.md        # Cross-phase decisions and project-specific lessons
+    review-learnings.md         # Recurring review issues loaded by implementer, reviewer, decomposer, debugger
   instructions/
     codebase-context-bootstrap.instructions.md  # Reads CODEBASE_CONTEXT.md before discovery (applies to all agents)
     dev-task-folder.instructions.md     # dev/feature/[0N-task-name]/ and dev/research/[topic-name]/ output naming conventions, per-feature QA paths (applies to all agents)
@@ -66,13 +74,13 @@ python/
 ### Agent Definitions (.github/agents/)
 
 - **3 orchestrators** (user-facing): Phase - Execute, Audit - Code/Infra/Refactor, Test - Orchestrator
-- **7 standalone user-facing**: Planner, Refiner, Decomposer, Debugger, Docs Writer, Prod Code Review, Web Researcher
+- **8 standalone user-facing**: Planner, Refiner, Decomposer, Debugger, Docs Writer, Prod Code Review, Web Researcher, Unity Reviewer
 - **11 hidden subagents** (`user-invocable: false`): Plan Expander, Implementer, Reviewer, QA Writer, 3 Auditors, Test Analyst/Writer/Fixer, Git Commit
 - See [agents/README.md](../.github/agents/README.md) for detailed descriptions and invocation patterns.
 
 ### Skills (.github/skills/)
 
-5 skills loaded by agents on demand. See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the mapping of skills to consuming agents.
+6 skills loaded by agents on demand. See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the mapping of skills to consuming agents.
 
 ### Instructions (.github/instructions/)
 
