@@ -4,6 +4,7 @@ description: "Isolated, blind benchmark execution subagent for a single variant.
 tools: [agent, read, search, edit, execute]
 agents: [02 Phase - Refiner, 03 Feature - Decomposer, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Docs Writer, Prod Code Review]
 user-invocable: false
+model: Claude Haiku 4.5 (copilot)
 
 ---
 

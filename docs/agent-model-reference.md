@@ -36,12 +36,12 @@
 | `auditor-refactor.agent.md` | Architecture audit: module organization, coupling, cohesion, separation of concerns | **High** | Sonnet 4.6 | GPT 5.4, Kimi-K2.6 |
 | `auditor-infra.agent.md` | Infrastructure/config audit: Dockerfiles, CI/CD, IaC, build scripts; structured findings report | **Medium** | Sonnet 4.6 | GLM 5.1, MiniMax 2.6 |
 | `agent-testing-agent.agent.md` | Meta-agent for testing other agents; complex judgment about agent behavior correctness | **High** | Sonnet 4.6 | GPT 5.4, Kimi-K2.6 |
-| `test-analyst.agent.md` | Analyzes test suites for coverage gaps, redundancy, and quality; produces reduction plan (no code changes) | **Medium** | Sonnet 4.6 | GLM 5.1, MiniMax 2.6 |
 | `web-research-specialist.agent.md` | Researches technical topics across the internet; synthesizes findings into structured report | **Medium** | Sonnet 4.6 | GLM 5.1, MiniMax 2.6 |
 | `documentation-architect.agent.md` | Creates and updates repository documentation; scans for staleness; writes README, ARCHITECTURE, etc. | **Medium** | Sonnet 4.6 | GLM 5.1, MiniMax 2.6 |
-| `test-orchestrator.agent.md` | Orchestrates test analysis, writing, and fixing pipelines; delegates to test subagents | **High** | Sonnet 4.6 | GPT 5.4 |
 | `agent-test-runner.agent.md` | Runs agent benchmark tests; collects and reports pass/fail results | **Low** | Haiku 4.6 | MiniMax 2.6, GLM 5.1 |
+| `test-orchestrator.agent.md` | Orchestrates test analysis, writing, and fixing pipelines; delegates to test subagents | **High** | Sonnet 4.6 | GPT 5.4 |
 | `test-writer.agent.md` | Bootstraps test suites from scratch; creates test files, fixtures, and config for untested code | **Medium** | GPT 5.3-Codex | Sonnet 4.6, GLM 5.1 |
+| `test-analyst.agent.md` | Analyzes test suites for coverage gaps, redundancy, and quality; produces reduction plan (no code changes) | **Medium** | Sonnet 4.6 | GLM 5.1, MiniMax 2.6 |
 | `test-fixer.agent.md` | Diagnoses and fixes broken tests; updates assertions, mocks, fixtures; never modifies source | **Medium** | GPT 5.3-Codex | Sonnet 4.6, GLM 5.1 |
 
 ---
