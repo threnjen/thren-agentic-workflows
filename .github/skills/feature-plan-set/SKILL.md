@@ -96,6 +96,31 @@ The context file captures:
 - Architectural decisions made during planning (what was chosen and why)
 - Constraints from the Phase document or codebase conventions
 - Relationships to sibling plans (shared prerequisites, suggested implementation order)
+- **Environment state** — tech stack, test runner command, lint/format commands, and test baseline; pre-captured by the Plan Expander so the Implementer skips discovery
+- **Relevant learnings** — filtered excerpts from `.github/learnings/` applicable to this feature's domain
+
+### Environment State section template
+
+```markdown
+## Environment State
+
+| Property | Value |
+|----------|-------|
+| Tech Stack | [e.g., Python 3.11 + FastAPI, Node 20 + React 18, Unity 6 + C#] |
+| Test Runner | `[exact command]` |
+| Test Baseline | [X passed, Y failed — captured YYYY-MM-DD] |
+| Lint | `[command]` or Not configured |
+| Format | `[command]` or Not configured |
+```
+
+### Relevant Learnings section template
+
+```markdown
+## Relevant Learnings
+
+[Filtered excerpts from .github/learnings/*.md relevant to this feature's domain.
+Record "None applicable" if no entries match.]
+```
 
 ## Tasks File (`-tasks.md`)
 

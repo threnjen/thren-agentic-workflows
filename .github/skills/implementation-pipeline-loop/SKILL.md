@@ -35,12 +35,38 @@ After the subagent returns:
 
 ### Step C: Commit
 
-Invoke the **z-git-commit** subagent:
+Execute the commit directly — do not invoke a subagent for this step.
 
-> "[SUBAGENT-MODE] Create an atomic commit for the completed task. The plan path is `[plan-path]` and the task name is `[task-name]`. Read the implementation and review records, stage only the files listed in the implementation record, and commit with a conventional commit message."
+1. **Collect files to stage** — From the "Files Changed" table in `[plan-path]/[task-name]-implementation.md`, collect every source file and test file path listed. Also include all pipeline documents in `[plan-path]/` (plan, context, tasks, implementation, review files).
 
-After the subagent returns:
-- Confirm it reports a successful commit (or "Nothing to commit" if no changes were staged)
+2. **Stage only those files**:
+   ```bash
+   git add <file1> <file2> ... [plan-path]/[task-name]-implementation.md [plan-path]/[task-name]-review.md
+   ```
+   Do NOT use `git add -A` — staging untracked files outside the implementation record risks including debug files or changes from adjacent features.
+
+3. **Generate a commit message** using conventional commit format. Derive type, scope, and summary from the implementation record:
+   ```
+   <type>(<scope>): <short summary — 50 chars or fewer, imperative mood>
+
+   <one paragraph: what changed and why, derived from implementation record summary>
+
+   Implements: <AC refs, e.g., AC1, AC2, AC3>
+   Reviewed-by: Feature - Reviewer
+   Verdict: <Approved | Approved with Reservations>
+   ```
+   **Type:** `feat` (new capability) · `fix` (bug fix) · `refactor` (restructure) · `test` (tests only) · `docs` (docs only) · `chore` (config/build)
+
+4. **Commit**:
+   ```bash
+   git commit -m "<message>"
+   ```
+
+5. **Verify**:
+   ```bash
+   git log --oneline -1
+   ```
+   Confirm the commit appears. If `git add` staged nothing, log "Nothing to commit" and proceed — this is not an error.
 
 ### Step D: Mark Complete
 

@@ -2,7 +2,7 @@
 name: Test - Orchestrator
 description: "Orchestrates test operations (analysis: documents; write/fix/remediation: documents + code) — delegates analysis, writing, or fixing to test subagents with optional remediation through the feature pipeline."
 tools: [agent, read, search, todo, execute]
-agents: [Test - Analyst, Test - Writer, Test - Fixer, Feature - Implementer, Feature - Reviewer, Git Commit, Docs Writer]
+agents: [Test - Analyst, Test - Writer, Test - Fixer, Feature - Implementer, Feature - Reviewer, Docs Writer]
 
 ---
 

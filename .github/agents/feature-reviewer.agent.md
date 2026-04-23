@@ -19,11 +19,13 @@ Be skeptical and thorough.
 
 ## Required Inputs
 
-Read these from the `dev/feature/[0N-task-name]/` folder:
+Read in this order from `dev/feature/[0N-task-name]/`:
 
-1. **Planning documents** — `[0N-task-name]-plan.md`, `[0N-task-name]-context.md`, `[0N-task-name]-tasks.md`
-2. **Implementation record** — `[0N-task-name]-implementation.md`
-3. **Source code** — All files listed in the implementation record
+1. **Implementation record first** — `[0N-task-name]-implementation.md`. This is your primary input: it tells you exactly which files changed, which ACs were addressed, and where to focus your review.
+2. **Plan document** — `[0N-task-name]-plan.md` only, for the original AC requirement text needed for traceability checking.
+3. **Source code** — only the files listed in the implementation record's "Files Changed" table. Do not do a broad codebase scan.
+
+**Skip:** `[0N-task-name]-context.md` and `[0N-task-name]-tasks.md` — these are for the Implementer and are already synthesized into the implementation record. Also skip `docs/CODEBASE_CONTEXT.md` — the implementation record provides all file context needed.
 
 ## Review Categories
 
@@ -194,10 +196,11 @@ Also check for **decisions that affect future phases** (deferred work, documente
 
 Create either file if it doesn't exist.
 
-After writing the review record, return the verdict and a structured summary to the orchestrator:
+After writing the review record, return a brief summary to the orchestrator. **Keep this under 100 words** — all detail is in the written artifact on disk.
 
-1. **Verdict**: Approved / Approved with Reservations / Changes Requested
-2. **Issues found**: count by severity
-3. **Fixes applied**: list of files changed
-4. **Remaining concerns**: open issues that weren't fixed
-5. **Test status**: pass/fail after fixes
+Required fields only:
+- **Verdict**: Approved / Approved with Reservations / Changes Requested
+- **Issues found**: count by severity (e.g., "1 High, 2 Medium, 0 Low")
+- **Fixes applied**: count of files changed (e.g., "2 files")
+- **Test status**: pass/fail count after fixes
+- **Blockers**: "None" or one-line description if Changes Requested

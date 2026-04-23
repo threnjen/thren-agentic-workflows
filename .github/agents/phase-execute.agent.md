@@ -2,7 +2,7 @@
 name: 04 Phase - Execute
 description: "Orchestrates end-to-end execution of a refined Phase document (documents + code via subagents) — checks for existing plans, invokes Decomposer if missing, expands plans via Plan Expander, then delegates implementation, review, QA, and documentation."
 tools: [agent, read, search, todo, execute, execute]
-agents: [03 Feature - Decomposer, Feature - Plan Expander, Feature - Implementer, Feature - Reviewer, Git Commit, Feature - QA Writer, Prod Code Review, Docs Writer]
+agents: [03 Feature - Decomposer, Feature - Plan Expander, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Prod Code Review, Docs Writer]
 
 ---
 
@@ -57,21 +57,42 @@ After the subagent returns:
 
 ### Step 2: Expand Plans
 
-Invoke the **Feature - Plan Expander** subagent to generate companion `-context.md` and `-tasks.md` files for each feature plan:
+Invoke one **Feature - Plan Expander** subagent **per feature, all in parallel** (one simultaneous invocation per feature directory):
 
-> "[SUBAGENT-MODE] Generate the companion context and tasks files for the following feature plans: [list all `dev/feature/[0N-task-name]/` paths]. For each plan, read the `-plan.md` file and produce `-context.md` and `-tasks.md` in the same directory. Return a summary of what was generated."
+For each `dev/feature/[0N-task-name]/` path:
 
-After the subagent returns:
+> "[SUBAGENT-MODE] Generate the companion context and tasks files for the feature plan at `dev/feature/[0N-task-name]/`. Read the `-plan.md` file and produce `-context.md` and `-tasks.md` in the same directory. Return a summary of what was generated."
+
+Wait for ALL expander instances to return before proceeding.
+
+After all return:
 1. Verify each `dev/feature/[0N-task-name]/` directory contains `-context.md` and `-tasks.md` alongside the existing `-plan.md`
-2. If any files are missing, re-invoke the Plan Expander with the specific missing paths
+2. If any files are missing, re-invoke the Plan Expander for the specific missing paths only
 
 ### Step 3: Feature Development Loop
 
-For **each feature** (in numeric prefix order), run the implementation pipeline loop.
+Load the `implementation-pipeline-loop` skill. Execute the loop in two phases:
 
-Load the `implementation-pipeline-loop` skill and execute Steps A through D for each feature, using `dev/feature/[0N-task-name]/` as the `[plan-path]` and `[0N-task-name]` as the task identifier.
+**Phase A — Parallel Implementation**
 
-After ALL features are complete, proceed to Step 4.
+Invoke one **Feature - Implementer** subagent per feature, all simultaneously:
+
+For each `dev/feature/[0N-task-name]/`:
+
+> "[SUBAGENT-MODE] Implement the plan at `dev/feature/[0N-task-name]/`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Return a summary of what was implemented and test results."
+
+Wait for ALL implementers to return before proceeding.
+
+If any implementer reports a blocker or test failure, note it — do not halt the other features. Address blockers in Phase B.
+
+**Phase B — Sequential Review + Commit**
+
+For each feature in numeric prefix order, execute Steps B through D from the `implementation-pipeline-loop` skill (Review → Commit → Mark Complete). Run these strictly one feature at a time to prevent git conflicts during fix application.
+
+As each reviewer returns, record its verdict:
+- `[0N-task-name]`: Approved | Approved with Reservations | Changes Requested
+
+After ALL features complete Phase B, determine: **are all recorded verdicts Approved or Approved with Reservations?** Store this as `all-approved: yes/no` — it controls Prod Review mode in Step 5.
 
 ### Step 4: QA
 
@@ -93,15 +114,31 @@ After the subagent returns:
 
 ### Step 5: Phase Final Review
 
-Invoke the **Prod Code Review** subagent:
+Invoke the **Prod Code Review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected in Step 3 Phase B.
 
-If QA was generated, use this prompt:
+**If QA was generated and all verdicts Approved:**
 
-> "Perform the final pre-production readiness analysis for the phase. The following feature task folders contain all pipeline documents: [list all dev/feature/[0N-task-name]/ paths]. The consolidated QA plan is at `[QA output path]`. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
+> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan: `[QA output path]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
+>
+> Review verdicts: [task-1: Approved, task-2: Approved, ...]. All verdicts Approved: YES — use fast-track mode."
 
-If QA was skipped, use this prompt:
+**If QA was generated and any verdict was not Approved:**
 
-> "Perform the final pre-production readiness analysis for the phase. The following feature task folders contain all pipeline documents: [list all dev/feature/[0N-task-name]/ paths]. QA plan generation was intentionally skipped by user choice. Cross-validate all documents, verify implementations, run tests, and assess readiness without a QA plan. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings, including the risk impact of skipping QA documentation."
+> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan: `[QA output path]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
+>
+> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. All verdicts Approved: NO — use standard mode."
+
+**If QA was skipped and all verdicts Approved:**
+
+> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan generation was intentionally skipped by user choice. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings, including the risk impact of skipping QA documentation.
+>
+> Review verdicts: [task-1: Approved, ...]. All verdicts Approved: YES — use fast-track mode."
+
+**If QA was skipped and any verdict was not Approved:**
+
+> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan generation was intentionally skipped by user choice. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings, including the risk impact of skipping QA documentation.
+>
+> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. All verdicts Approved: NO — use standard mode."
 
 ### Step 6: Report to User
 

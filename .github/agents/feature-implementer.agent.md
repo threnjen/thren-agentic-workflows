@@ -22,12 +22,12 @@ Read these from the `dev/feature/[0N-task-name]/` folder:
 
 1. **Plan documents** — `[0N-task-name]-plan.md`, `[0N-task-name]-context.md`, `[0N-task-name]-tasks.md`
 2. **Scope** — Derive from plan: files/modules to change and what must NOT change
-3. **Conventions** — Discover from the codebase: lint, format, test tools, runtime constraints
+3. **Conventions** — Read from `-context.md` Environment State section (tech stack, test runner command, lint/format commands). Only scan the codebase for conventions if this section is absent.
 4. **Non-goals** — Extract from the plan's non-goals section
 
 ### Sibling Feature Awareness
 
-Before starting implementation, scan `dev/feature/` for all numbered feature directories. Read the `-plan.md` file from each sibling directory (but do NOT implement them). Use this context to:
+Before starting implementation, scan `dev/feature/` for all numbered feature directories. For each sibling directory, read only the **first 5 lines** of its `-plan.md` file (the feature title and one-line overview) — do NOT read the full plan. Use this context to:
 
 - Understand how the current feature fits into the broader phase
 - Avoid creating interfaces or designs that conflict with upcoming features
@@ -42,9 +42,12 @@ Before starting implementation, scan `dev/feature/` for all numbered feature dir
 
 Before any code changes, establish the test baseline. This is a mandatory gate.
 
-**Step 0: Discover Tests**
+**Step 0: Establish Test Baseline**
 
-Search for test files, test configuration, and test runner setup in the project. Run the existing test suite to determine pass/fail status.
+Check `-context.md` Environment State for a recorded test runner command and baseline.
+
+- **If present:** Use that command directly. Run it now to confirm the current baseline (do not re-discover).
+- **If absent:** Search for test files, test configuration, and test runner setup in the project. Run the existing test suite to determine pass/fail status.
 
 **Branch: No tests or coverage < 50%**
 
@@ -109,56 +112,9 @@ Handle explicitly:
 
 ### F. Write Implementation Record
 
-After all ACs are implemented and tests pass, write a structured implementation record to the task's output directory. This file is the primary handoff artifact to the Reviewer.
+After all ACs are implemented and tests pass, write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`.
 
-1. **Determine the output path**: Use the same `dev/feature/[0N-task-name]/` directory as the plan documents.
-2. **Write `[0N-task-name]-implementation.md`** using the exact template below.
-3. **Do not skip this step** — the Reviewer depends on this file to scope its review.
-
-#### Template: `[0N-task-name]-implementation.md`
-
-```markdown
-# Implementation Record: [Task Name]
-
-## Summary
-
-## Sibling Features
-<!-- siblings and shared modules -->
-
-## Acceptance Criteria Status
-
-| AC | Description | Status | Implementing Files | Notes |
-|----|-------------|--------|--------------------|-------|
-
-## Files Changed
-
-### Source Files
-
-| File | Change Type | What Changed | Why |
-|------|-------------|--------------|-----|
-
-### Test Files
-
-| File | Change Type | What Changed | Covers |
-|------|-------------|--------------|--------|
-
-## Test Results
-- **Baseline**: [X passed, Y failed] (before implementation)
-- **Final**: [X passed, Y failed] (after implementation)
-- **New tests added**: [count]
-- **Regressions**: None | [describe]
-
-## Deviations from Plan
-<!-- "None" or list -->
-
-## Gaps
-<!-- "None" or list -->
-
-## Reviewer Focus Areas
-<!-- 2-5 bullets -->
-- [e.g., Validation logic in `src/foo.py:45-78` — complex conditional, verify edge cases]
-- [e.g., New dependency on `rate-limiter` library — confirm it matches repo conventions]
-```
+Load the `implementation-record` skill for the exact template. Do not skip this step — the Reviewer depends on this file to scope its review.
 
 ### G. Pre-Handoff Self-Check
 
@@ -187,28 +143,10 @@ This is the **primary deliverable**. Write it to `dev/feature/[0N-task-name]/` a
 
 ### B. Return Summary
 
-After writing the implementation record, return a structured summary to the orchestrator:
+After writing the implementation record, return a brief summary to the orchestrator. **Keep this under 100 words** — all detail is in the written artifact on disk.
 
-#### 1. Implementation Summary
-
-Map each AC to what was done:
-
-| AC | Status | Notes |
-|----|--------|-------|
-| AC1 | Done | Implemented in `src/handler.py` |
-| AC2 | Done | Added validation logic |
-
-#### 2. Test Results
-
-- Baseline: [X passed, Y failed]
-- Final: [X passed, Y failed]
-- Regressions: None | [describe]
-
-#### 3. Deviations (if any)
-
-- What changed from the plan
-- Rationale
-
-#### 4. Gaps (if any)
-
-- What couldn't be fully implemented and why
+Required fields only:
+- **Status**: Done / Blocked (and what is blocking)
+- **Test results**: Baseline → Final pass/fail counts
+- **Deviations**: "None" or one-line description per deviation
+- **Gaps**: "None" or one-line description per gap
