@@ -21,9 +21,9 @@ flowchart TD
     GH --> Skills[skills/]
     GH --> Instructions[instructions/]
 
-    Agents --> Orchestrators["Orchestrators (3)\n Phase-Execute, Audit, Test"]
+    Agents --> Orchestrators["Orchestrators (4)\nPhase-Execute, Audit,\nTest, Agent Testing"]
     Agents --> UserAgents["User-Facing Standalone (8)\nPlanner, Refiner, Decomposer,\nDebugger, Prod Review,\nWeb Research, Docs, Unity Reviewer"]
-    Agents --> Subagents["Hidden Subagents (11)\nPlan Expander, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer,\nGit Commit"]
+    Agents --> Subagents["Hidden Subagents (12)\nAgent Test Runner,\nPlan Expander, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer,\nGit Commit"]
     Orchestrators -->|delegate to| Subagents
 
     Skills --> S1["phase-document-writing\n(Planner, Refiner)"]
@@ -92,7 +92,7 @@ flowchart LR
 
 ## Agent Architecture
 
-The `.github/agents/` directory contains 21 agent definitions organized in an **orchestrator + subagent** pattern:
+The `.github/agents/` directory contains 24 agent definitions organized in an **orchestrator + subagent** pattern:
 
 %% Shows the orchestrator delegation model
 ```mermaid
@@ -192,3 +192,4 @@ Instructions (`.github/instructions/*.instructions.md`) inject conventions into 
 | `learnings-bootstrap` | implementer, reviewer, decomposer, debugger | Read `.github/learnings/*.md` files before starting work |
 | `tech-stack-detection` | implementer, reviewer | Detect specialized tech stacks and load matching skills before proceeding |
 | `subagent-autonomy` | implementer, reviewer, plan-expander, git-commit | Operate autonomously — no questions, no confirmation, sensible defaults |
+| `output-verbosity-policy` | `.github/agents/**` | Defines soft-target concision defaults, delta-first response shape, and quality-preserving exception triggers |

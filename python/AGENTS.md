@@ -10,17 +10,13 @@
 - Only disable `frozen` when mutability is explicitly required and justified.
 - Validate at system boundaries (user input, external APIs); trust internal Pydantic models after construction.
 
-## Principles
+## Core Engineering Principles
 
-- Incremental progress over big bangs — small changes that compile and pass tests
-- Learn from existing code — find 3 similar features, study patterns before implementing
-- Pragmatic over dogmatic — adapt to project reality
-- Clear intent over clever code — be boring and obvious
-- Single responsibility per function/class
-- Composition over inheritance; interfaces over singletons
-- Explicit data flow; fail fast with descriptive errors
-- Include context for debugging; handle errors at appropriate level; never silently swallow exceptions
-- If you need to explain it, it's too complex
+- Prefer small, reversible changes that compile and pass tests.
+- Match existing code patterns before introducing new structure.
+- Optimize for clarity and testability over cleverness.
+- Keep responsibilities narrow and data flow explicit.
+- Fail fast with descriptive errors; never silently swallow exceptions.
 
 ## Process
 
@@ -32,8 +28,11 @@
 
 ## Testing
 
-- SHOULD NOT add test unless it can fail for a real defect.
-- Strong assertions (`toEqual` over `toBeGreaterThanOrEqual`)
+- Commit tests separately from implementation changes.
+- Do not modify tests during implementation unless requirements changed.
+- Add tests only when they can fail for a real defect.
+- Prefer strong assertions over weak threshold checks.
+- Cover realistic edge cases, boundaries, and error paths.
 
 ### Property-Based Testing
 - Use [Hypothesis](https://hypothesis.readthedocs.io/) for property-based testing; include it as a standard dev dependency.
@@ -54,7 +53,6 @@
 - [ ] Follow project formatting/linting
 - [ ] Have clear commit message (Conventional Commits)
 - [ ] No TODOs without issue numbers
-- [ ] Check plan is up-to-date before commit
 
 ### Always
 - Commit early and often with meaningful messages
@@ -70,12 +68,14 @@ Testability → Readability → Consistency → Simplicity → Reversibility
 
 ## Communication
 
-- No preamble/postamble unless requested
-- No code comments unless asked
-- No explanations for refusals
-- Use ripgrep (`rg`) not `grep`/`find`
-- Use Read/LS tools not `cat`/`head`/`tail`/`ls`
-- Never guess URLs
+- Keep responses direct; avoid preamble/postamble unless requested.
+- Use delta-first structure: lead with changes/findings/actions, then brief background.
+- Treat response length guidance as soft targets, not hard limits.
+- Keep simple answers to 1-3 sentences; expand detail when safety, correctness, or review quality requires it.
+- Avoid unnecessary code comments and refusal explanations.
+- Prefer `rg` for text/file search.
+- Prefer read/list tools over shell output commands for context gathering.
+- Never guess URLs.
 
 ## Extended Guides
 

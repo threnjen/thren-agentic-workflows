@@ -111,7 +111,7 @@ Recommendations for future test additions:
 
 ## Your Workflow
 
-Follow these phases in order. **When invoked directly by a user, do not skip phases or write files without explicit approval. When invoked as a subagent, operate autonomously.**
+Follow these phases in order. Apply the auto-loaded read-only instruction behavior for approval/autonomy handling.
 
 ### Phase 1: Discovery (Read-Only)
 
@@ -130,8 +130,6 @@ Ask clarifying questions to understand:
 ### Phase 3: Present Analysis and Write Documents
 
 Present your complete analysis, then proceed to write the planning documents.
-
-When invoked as a subagent, operate autonomously and write documents directly. When invoked by a user, present findings and ask for approval before writing.
 
 Create these three files:
 ```

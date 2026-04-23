@@ -25,7 +25,7 @@ Load the `feature-plan-set` skill for the plan template (sections A–F), file s
 
 ## Your Workflow
 
-Follow these phases in order. **In standalone mode, do not write files without explicit user approval. In subagent mode, proceed autonomously.**
+Follow these phases in order. Apply the auto-loaded read-only instruction behavior for approval/autonomy handling.
 
 ### Phase 1: Discovery (Read-Only)
 
