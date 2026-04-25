@@ -3,7 +3,7 @@
 Opinionated templates and VS Code Copilot agent definitions for standardizing how [GitHub Copilot](https://docs.github.com/en/copilot) behaves in your projects. Two things in one repo:
 
 1. **`AGENTS.md` + style guide templates** (Node.js and Python) — copy into your project so Copilot follows your coding conventions, TDD workflow, and quality gates
-2. **24 VS Code Copilot agent definitions** — a full orchestrator + subagent system for planning, implementing, reviewing, auditing, testing, and documenting entire projects hands-free
+2. **23 VS Code Copilot agent definitions** — a full orchestrator + subagent system for planning, implementing, reviewing, auditing, testing, and documenting entire projects hands-free
 
 ## Why This Exists
 
@@ -20,11 +20,12 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 ├── .github/
 │   ├── agents/                # VS Code Copilot agent definitions
 │   │   ├── README.md          # Agent documentation, pipelines, and usage guide
-│   │   └── *.agent.md         # 24 agent files (12 user-facing, 12 hidden subagents)
+│   │   └── *.agent.md         # 23 agent files (12 user-facing, 11 hidden subagents)
 │   ├── skills/                # Shared templates and formats loaded by agents on demand
 │   │   ├── auditor-conventions/       # Audit constraints, report format, severity levels
 │   │   ├── feature-plan-set/          # Three-file plan convention, sections A–F
 │   │   ├── implementation-pipeline-loop/  # Implement → Review → Commit cycle
+│   │   ├── implementation-record/     # Implementation record artifact template
 │   │   ├── phase-document-writing/    # Phase doc templates and quality checklist
 │   │   ├── unity-development/         # Unity C# implementation and review rules
 │   │   └── unity-review-knowledge/    # Unity best practices from official Unity ebooks
@@ -37,10 +38,7 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 ├── docs/
 │   ├── ARCHITECTURE.md        # Structure diagram and design decisions
 │   ├── CODEBASE_CONTEXT.md    # Agent-oriented quick-reference
-│   └── phases/
-│       ├── PHASES_OVERVIEW.md # High-level project roadmap across phases
-│       └── PHASE_01/
-│           └── PHASE_01_SUMMARY.md # Current phase objective, scope, and success criteria
+│   └── phases/            # Phase planning documents added here as project progresses
 ├── nodejs/
 │   ├── AGENTS.md              # Agent guidelines for Node.js/TypeScript projects
 │   └── docs/

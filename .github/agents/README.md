@@ -160,7 +160,6 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
 | **Test - Writer** | Test orchestrator | Bootstrap a test suite from scratch for untested code |
-| **Git Commit** | Phase - Execute, Audit orchestrator, Test orchestrator | Create an atomic Git commit with a conventional commit message from pipeline records |
 
 ---
 
@@ -233,8 +232,6 @@ Example one-message prompts:
 **Test - Writer** *(subagent of Test orchestrator)* — Bootstraps a test suite from scratch. Scans the codebase, creates test files with meaningful coverage, and verifies the suite passes.
 
 **Test - Fixer** *(subagent of Test orchestrator)* — Diagnoses and fixes broken tests. Updates assertions, mocks, fixtures, and configuration to get a failing suite back to green — never modifies source code.
-
-**Git Commit** *(subagent of Phase - Execute, Audit orchestrator, Test orchestrator)* — Creates an atomic Git commit after implementation and review. Generates a conventional commit message from pipeline records.
 
 ---
 

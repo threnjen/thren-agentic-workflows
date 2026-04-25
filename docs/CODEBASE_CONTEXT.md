@@ -7,11 +7,11 @@ Quick-reference for AI agents working on this repository.
 - A **template repository** of `AGENTS.md`, style guide files, and VS Code Copilot agent definitions
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
-- 24 agent definitions in `.github/agents/` (12 user-facing, 12 hidden subagents)
-- 6 skills in `.github/skills/` (shared templates and patterns extracted from agents)
+- 23 agent definitions in `.github/agents/` (12 user-facing, 11 hidden subagents)
+- 7 skills in `.github/skills/` (shared templates and patterns extracted from agents)
 - 11 instruction files in `.github/instructions/` (cross-cutting conventions)
 - `.github/learnings/` directory with persistent per-project learnings for agent context
-- `docs/phases/` contains the roadmap and per-phase planning summaries
+- `docs/phases/` is empty — phase planning documents are added here as the project progresses
 - Users copy files into their own projects and customize them
 
 ## Folder Structure
@@ -21,7 +21,7 @@ README.md                       # Repo overview, usage instructions
 .github/
   agents/
     README.md                   # Agent documentation, pipelines, and usage guide
-    *.agent.md                  # 24 agent definition files
+    *.agent.md                  # 23 agent definition files
   skills/
     phase-document-writing/     # Phase Doc & Overview templates, quality checklist
       SKILL.md
@@ -30,6 +30,8 @@ README.md                       # Repo overview, usage instructions
     feature-plan-set/           # Three-file plan convention, sections A–F, stage format
       SKILL.md
     implementation-pipeline-loop/ # Standard Implement → Review → Commit → Mark Complete loop + post-loop Docs Writer step
+      SKILL.md
+    implementation-record/      # Template for the implementation record artifact produced by Feature - Implementer
       SKILL.md
     unity-development/          # Unity C# implementation and review rules: MonoBehaviour lifecycle, UI Toolkit pitfalls, test authenticity
       SKILL.md
@@ -55,10 +57,7 @@ docs/
   AGENT_REGRESSION_BENCHMARK_SPEC.md # Benchmark design spec for agent changes
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
-  phases/
-    PHASES_OVERVIEW.md          # Project roadmap and phase sequencing
-    PHASE_01/
-      PHASE_01_SUMMARY.md       # Phase 01 objective, scope, and quality gates
+  phases/                       # Phase planning documents added here as project progresses
 nodejs/
   AGENTS.md                     # GitHub Copilot instructions for Node.js/TS projects
   docs/
@@ -84,12 +83,12 @@ python/
 
 - **4 orchestrators** (user-facing): Phase - Execute, Audit - Code/Infra/Refactor, Test - Orchestrator, Agent Testing Agent
 - **8 standalone user-facing**: Planner, Refiner, Decomposer, Debugger, Docs Writer, Prod Code Review, Web Researcher, Unity Reviewer
-- **12 hidden subagents** (`user-invocable: false`): Agent Test Runner, Plan Expander, Implementer, Reviewer, QA Writer, 3 Auditors, Test Analyst/Writer/Fixer, Git Commit
+- **11 hidden subagents** (`user-invocable: false`): Agent Test Runner, Plan Expander, Implementer, Reviewer, QA Writer, 3 Auditors, Test Analyst/Writer/Fixer
 - See [agents/README.md](../.github/agents/README.md) for detailed descriptions and invocation patterns.
 
 ### Skills (.github/skills/)
 
-6 skills loaded by agents on demand. See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the mapping of skills to consuming agents.
+7 skills loaded by agents on demand. See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the mapping of skills to consuming agents.
 
 ### Instructions (.github/instructions/)
 
@@ -106,7 +105,7 @@ python/
 - Skills are single-source-of-truth — agents do NOT duplicate skill content inline
 - `codebase-context-bootstrap.instructions.md` auto-loads into all agents and directs them to read `docs/CODEBASE_CONTEXT.md` (if it exists) before starting discovery
 - Instruction files auto-load into agents matching their `applyTo` glob pattern
-- `docs/phases/PHASES_OVERVIEW.md` and `docs/phases/PHASE_01/PHASE_01_SUMMARY.md` capture current planning scope for downstream execution agents
+- Phase planning docs live in `docs/phases/` once created; the folder is currently empty
 
 ## Conventions
 
