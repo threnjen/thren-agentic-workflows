@@ -25,7 +25,7 @@ Project-specific findings and patterns discovered during development. All team m
 Entry format (for agents to follow when appending):
 
 ```markdown
-## YYYY-MM-DD — Short title
+## If you see X, check Y
 
 **Problem:** What was broken and how it manifested
 **Root cause:** The actual underlying issue
@@ -46,7 +46,7 @@ Recurring patterns found during code reviews. Read this before reviewing new fea
 Entry format:
 
 ```markdown
-## YYYY-MM-DD — Short title
+## If you see X, check Y
 
 **Pattern:** What the recurring issue is
 **Impact:** Low/Medium/High — what breaks or degrades
