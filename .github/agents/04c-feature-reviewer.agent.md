@@ -191,7 +191,7 @@ After the review is complete — and after any approved fixes have been applied 
 
 ## Update Review Learnings
 
-After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append a dated entry to `.github/learnings/review-learnings.md`. Follow the existing format: Pattern, Impact, Watch for.
+After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append an entry to `.github/learnings/review-learnings.md` as a durable, reusable rule — no dates or feature-specific references. Follow the existing format: Pattern, Impact, Watch for.
 
 Also check for **decisions that affect future phases** (deferred work, documented deviations, scope gaps). If found, append them to `.github/learnings/cross-phase-decisions.md` under the appropriate section. Follow the existing format and categorization.
 

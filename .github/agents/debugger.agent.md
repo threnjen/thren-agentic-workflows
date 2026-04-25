@@ -65,8 +65,10 @@ After completing a fix, append a concise entry to the appropriate learnings file
 - **Project-specific findings** (framework quirks, config issues, library behavior) → `.github/learnings/project-learnings.md`. Create the file if it doesn't exist.
 - **Debugging patterns** (pipeline gaps, architectural anti-patterns, agent workflow failures) → `.github/learnings/debugging-learnings.md`. Create the file if it doesn't exist.
 
+Each entry should be a durable, reusable rule — not an incident log. Write it as a pattern that will still be useful months later, without dates or references to the specific ticket/feature that triggered it.
+
 Each entry should include:
-- **Date and short title**
+- **Short title** as a `##` heading — phrase it as "If you see X" or a concise rule name
 - **Problem** — What was broken and how it manifested
 - **Root cause** — The actual underlying issue
 - **Fix** — What was changed
