@@ -2,7 +2,7 @@
 description: "Reviews implementation against a plan for accuracy, bugs, and completeness. Applies fixes directly and produces a review record."
 mode: subagent
 hidden: true
-model: DeepSeek V4 Pro
+deepseek/deepseek-v4-pro
 permission:
   read: allow
   edit: allow

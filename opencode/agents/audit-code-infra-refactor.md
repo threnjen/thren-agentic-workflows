@@ -1,6 +1,6 @@
 ---
 description: "Orchestrates code, infrastructure, or refactor audits (audit-only: documents; with remediation: documents + code) — delegates to auditor subagents with optional automated remediation through the feature pipeline."
-model: DeepSeek V4 Pro
+deepseek/deepseek-v4-pro
 permission:
   task: allow
   read: allow

@@ -1,7 +1,7 @@
 ---
 description: "Bootstraps test suites from scratch — creates test files, fixtures, and configuration for untested code."
 mode: subagent
-model: DeepSeek V4 Flash
+deepseek/deepseek-v4-flash
 hidden: true
 permission:
   read: allow

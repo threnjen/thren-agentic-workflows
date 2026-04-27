@@ -1,6 +1,6 @@
 ---
 description: "Creates and updates repository documentation — README, ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT, and TROUBLESHOOTING."
-model: DeepSeek V4 Flash
+deepseek/deepseek-v4-flash
 permission:
   read: allow
   edit: allow

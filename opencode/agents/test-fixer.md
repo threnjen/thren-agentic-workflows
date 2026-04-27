@@ -1,7 +1,7 @@
 ---
 description: "Diagnoses and fixes broken tests — updates assertions, mocks, fixtures, and configuration. Never modifies source code."
 mode: subagent
-model: DeepSeek V4 Flash
+deepseek/deepseek-v4-flash
 hidden: true
 permission:
   read: allow

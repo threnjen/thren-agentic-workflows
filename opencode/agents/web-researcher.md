@@ -1,7 +1,7 @@
 ---
 description: "Researches technical topics across the internet — searches GitHub issues, Stack Overflow, Reddit, forums, and documentation. Produces a structured research report with full citations saved to dev/research/[topic-name]/."
 color: info
-model: DeepSeek V4 Flash
+model: deepseek/deepseek-v4-flash
 permission:
   read: allow
   edit: allow

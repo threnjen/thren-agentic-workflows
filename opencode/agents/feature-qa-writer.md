@@ -1,7 +1,7 @@
 ---
 description: "Writes a consolidated manual QA checklist covering integration points not verifiable by automated tests."
 mode: subagent
-model: DeepSeek V4 Flash
+deepseek/deepseek-v4-flash
 hidden: true
 permission:
   read: allow

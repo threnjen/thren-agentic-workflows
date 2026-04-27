@@ -1,6 +1,6 @@
 ---
 description: "Orchestrates test operations (analysis: documents; write/fix/remediation: documents + code) — delegates analysis, writing, or fixing to test subagents with optional remediation through the feature pipeline."
-model: DeepSeek V4 Flash
+deepseek/deepseek-v4-flash
 permission:
   task: allow
   read: allow

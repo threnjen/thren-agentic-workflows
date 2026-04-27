@@ -1,6 +1,6 @@
 ---
 description: "Breaks a refined Phase document into independent features, producing a plan file per feature."
-model: DeepSeek V4 Pro
+deepseek/deepseek-v4-pro
 permission:
   read: allow
   grep: allow

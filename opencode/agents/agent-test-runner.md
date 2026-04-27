@@ -2,7 +2,7 @@
 description: "Isolated, blind benchmark execution subagent for a single variant. Optionally checks out a branch, runs task families through specialized agents, and returns raw results only."
 mode: subagent
 hidden: true
-model: DeepSeek V4 Flash
+model: deepseek/deepseek-v4-flash
 permission:
   task: allow
   read: allow

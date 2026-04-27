@@ -1,6 +1,6 @@
 ---
 description: "Orchestrates end-to-end execution of a refined Phase document (documents + code via subagents) — checks for existing plans, invokes Decomposer if missing, expands plans via Plan Expander, then delegates implementation, review, QA, and documentation."
-model: DeepSeek V4 Flash
+deepseek/deepseek-v4-flash
 permission:
   task: allow
   read: allow

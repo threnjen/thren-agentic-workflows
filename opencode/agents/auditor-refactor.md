@@ -2,7 +2,7 @@
 description: "Audits codebase structure and architecture — module organization, coupling, cohesion, and separation of concerns. Produces a structured findings report."
 mode: subagent
 hidden: true
-model: DeepSeek V4 Pro
+deepseek/deepseek-v4-pro
 permission:
   read: allow
   grep: allow

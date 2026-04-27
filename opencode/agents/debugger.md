@@ -1,6 +1,6 @@
 ---
 description: "Diagnoses and fixes application errors across frontend and backend — triages by domain, traces root causes, and applies targeted fixes."
-model: DeepSeek V4 Pro
+deepseek/deepseek-v4-pro
 permission:
   read: allow
   edit: allow

@@ -1,6 +1,6 @@
 ---
 description: "Creates phased project roadmaps. Iterates with the user to produce self-contained phase documents ready for Phase - Refiner."
-model: DeepSeek V4 Pro
+deepseek/deepseek-v4-pro
 permission:
   read: allow
   grep: allow

@@ -1,7 +1,7 @@
 ---
 description: "Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record."
 mode: subagent
-model: DeepSeek V4 Flash
+deepseek/deepseek-v4-flash
 hidden: true
 permission:
   read: allow

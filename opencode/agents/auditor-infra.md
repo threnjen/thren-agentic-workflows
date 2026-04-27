@@ -1,7 +1,7 @@
 ---
 description: "Audits infrastructure and configuration files — Dockerfiles, CI/CD pipelines, IaC templates, build scripts, and documentation. Produces a structured findings report."
 mode: subagent
-model: DeepSeek V4 Pro
+deepseek/deepseek-v4-pro
 hidden: true
 permission:
   read: allow
