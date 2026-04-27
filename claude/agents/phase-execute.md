@@ -69,17 +69,17 @@ After all return:
 
 ### Step 3: Feature Development Loop
 
-Load the `implementation-pipeline-loop` skill. Execute the loop in two phases:
+Load the `implementation-pipeline-loop` skill. Execute one feature at a time in numeric order. For each feature, complete implement -> review -> commit -> mark complete before starting the next feature:
 
 **Phase A — Parallel Implementation**
 
-Invoke one **z-feature-implementer** subagent per feature, all simultaneously:
+Invoke one **z-feature-implementer** subagent per feature:
 
 For each `dev/feature/[0N-task-name]/`:
 
 > "[SUBAGENT-MODE] Implement the plan at `dev/feature/[0N-task-name]/`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Return a summary of what was implemented and test results."
 
-Wait for ALL implementers to return before proceeding.
+After each implementer returns, continue immediately with review and commit for that same feature.
 
 If any implementer reports a blocker or test failure, note it — do not halt the other features. Address blockers in Phase B.
 
