@@ -71,7 +71,7 @@ After all return:
 
 Load the `implementation-pipeline-loop` skill. Execute one feature at a time in numeric order. For each feature, complete implement -> review -> commit -> mark complete before starting the next feature:
 
-**Phase A — Parallel Implementation**
+**Phase A — Sequential Feature Implementation**
 
 Invoke one **z-feature-implementer** subagent per feature:
 
