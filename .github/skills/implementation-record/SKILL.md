@@ -1,6 +1,6 @@
 ---
 name: implementation-record
-description: "Template for the implementation record artifact produced by the Feature - Implementer. Load when writing [0N-task-name]-implementation.md."
+description: "Template for the implementation record artifact produced by the 04b-feature-implementer. Load when writing [0N-task-name]-implementation.md."
 ---
 
 # Implementation Record Template

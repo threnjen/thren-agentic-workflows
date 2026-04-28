@@ -144,7 +144,7 @@ When implementation is complete, you produce TWO outputs:
 
 ### A. Written Artifact: `[0N-task-name]-implementation.md`
 
-This is the **primary deliverable**. Write it to `dev/feature/[0N-task-name]/` as described in Section F above. The Feature - Reviewer subagent consumes this file to scope its review. It must be written before the return summary.
+This is the **primary deliverable**. Write it to `dev/feature/[0N-task-name]/` as described in Section F above. The 04c-feaure-reviewer subagent consumes this file to scope its review. It must be written before the return summary.
 
 ### B. Return Summary
 

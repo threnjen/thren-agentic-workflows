@@ -41,17 +41,17 @@ Before beginning, ensure ALL of the following are available. If any are missing,
 | Document | Source Agent | Expected File |
 |----------|-------------|---------------|
 | Feature plan | Feature - Decomposer | `[0N-task-name]-plan.md` |
-| Context document | Feature - Plan Expander | `[0N-task-name]-context.md` |
-| Task checklist | Feature - Plan Expander | `[0N-task-name]-tasks.md` |
-| Implementation record | Feature - Implementer | `[0N-task-name]-implementation.md` |
-| Review record | Feature - Reviewer | `[0N-task-name]-review.md` |
+| Context document | 04a-feature-plan-expander | `[0N-task-name]-context.md` |
+| Task checklist | 04a-feature-plan-expander | `[0N-task-name]-tasks.md` |
+| Implementation record | 04b-feature-implementer | `[0N-task-name]-implementation.md` |
+| Review record | 04c-feaure-reviewer | `[0N-task-name]-review.md` |
 
 **Consolidated QA document** (provided by the orchestrator):
 
 | Document | Source Agent | Expected Location |
 |----------|-------------|-------------------|
-| Consolidated QA plan | Feature - QA Writer | Path provided by orchestrator (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/[audit-name]/[audit-name]-qa.md`) |
-| Consolidated coverage map | Feature - QA Writer | Alongside QA plan (e.g., `[phase-name]_QA_COVERAGE_MAP.md`) |
+| Consolidated QA plan | 04d-feature-qa-writer | Path provided by orchestrator (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/[audit-name]/[audit-name]-qa.md`) |
+| Consolidated coverage map | 04d-feature-qa-writer | Alongside QA plan (e.g., `[phase-name]_QA_COVERAGE_MAP.md`) |
 
 ## Unity Detection & Skill Loading
 
@@ -230,9 +230,9 @@ If the verdict is NO-GO, list every blocking item and trace it to its **root cau
 | Root Cause | Return To | When |
 |------------|-----------|------|
 | **Feature - Decomposer** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases | The plan itself is the problem |
-| **Feature - Implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps |
-| **Feature - Reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough |
-| **Feature - QA Writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework |
+| **04b-feature-implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps |
+| **04c-feaure-reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough |
+| **04d-feature-qa-writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework |
 
 ## Write Analysis Record
 

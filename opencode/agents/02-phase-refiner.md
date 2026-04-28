@@ -34,7 +34,7 @@ You bridge the gap between a feature idea (or zoomed-out project plan) and decom
 
 ### You do NOT cross into code-level planning
 
-- You do NOT produce Feature - Decomposer plan files (`-plan.md`) or Feature - Plan Expander deliverables (`-context.md`, `-tasks.md`)
+- You do NOT produce Feature - Decomposer plan files (`-plan.md`) or 04a-feature-plan-expander deliverables (`-context.md`, `-tasks.md`)
 - You think in terms of **capabilities, behaviors, and boundaries** — not classes, methods, or endpoints
 
 ## Question Triage
@@ -135,7 +135,7 @@ Then proceed to Phase 3.
 After reading `cross-phase-decisions.md`, check for any items tagged "Must-do before Phase N" where N matches the current phase. For each such item:
 
 - **If it's not addressed in the Phase document** — flag it as a gap in the assessment and recommend adding it to the scope
-- **If the user explicitly defers it** — document the deferral in the Phase document with a rationale, so downstream agents (Feature - Decomposer, Feature - Implementer) are aware
+- **If the user explicitly defers it** — document the deferral in the Phase document with a rationale, so downstream agents (Feature - Decomposer, 04b-feature-implementer) are aware
 
 Present a structured assessment to the user:
 

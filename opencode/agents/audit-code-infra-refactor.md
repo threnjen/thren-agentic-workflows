@@ -116,7 +116,7 @@ Load the `implementation-pipeline-loop` skill and execute Steps A through D for 
 
 After ALL tasks are implemented and reviewed, produce a single consolidated QA document covering the entire audit remediation.
 
-Invoke the **Feature - QA Writer** subagent:
+Invoke the **04d-feature-qa-writer** subagent:
 
 > "Write a consolidated release QA plan covering ALL tasks in this audit remediation. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following task folders: [list all dev/[audit-name]/[task-name]/ paths]. Write the consolidated QA plan to `dev/[audit-name]/[audit-name]-qa.md` and the coverage map to `dev/[audit-name]/[audit-name]-coverage-map-qa.md`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all tasks."
 
@@ -126,7 +126,7 @@ After the subagent returns:
 
 ### Phase 9: Final Review
 
-Invoke the **Prod Code Review** subagent:
+Invoke the **prod-code-review** subagent:
 
 > "Perform the final pre-production readiness analysis for the audit remediation. The following task folders contain all pipeline documents: [list all dev/[audit-name]/[task-name]/ paths]. The consolidated QA plan is at `dev/[audit-name]/[audit-name]-qa.md`. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `dev/[audit-name]/[audit-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
 

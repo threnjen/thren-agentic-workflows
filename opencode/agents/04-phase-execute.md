@@ -45,7 +45,7 @@ Check for existing `-plan.md` files in `dev/feature/*/` directories.
 
 **If no plans exist:**
 
-Invoke the **03 Feature - Decomposer** subagent:
+Invoke the **03-feature-decomposer* subagent:
 
 > "[SUBAGENT-MODE] Decompose the phase defined at `docs/phases/[phase-name]/[phase-name]_SUMMARY.md` into independent features. For each feature, write the plan file (`[0N-task-name]-plan.md`) to `dev/feature/[0N-task-name]/`, numbered by execution order. Return the list of task-name folders you created."
 
@@ -61,7 +61,7 @@ After the subagent returns:
 
 ### Step 2: Expand Plans
 
-Invoke one **Feature - Plan Expander** subagent **per feature, all in parallel** (one simultaneous invocation per feature directory):
+Invoke one **04a-feature-plan-expander** subagent **per feature, all in parallel** (one simultaneous invocation per feature directory):
 
 For each `dev/feature/[0N-task-name]/` path:
 
@@ -90,13 +90,13 @@ After ALL waves complete, determine: are all recorded verdicts Approved or Appro
 
 For each feature in the wave (in numeric prefix order), complete the full cycle before starting the next:
 
-**A. Implement** — Invoke **Feature - Implementer**:
+**A. Implement** — Invoke **04b-feature-implementer**:
 
 > "[SUBAGENT-MODE] Implement the plan at `dev/feature/[0N-task-name]/`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Return a summary of what was implemented and test results."
 
 Wait for the implementer to return before proceeding.
 
-**B. Review** — Invoke **Feature - Reviewer** per Steps B–C from the `implementation-pipeline-loop` skill. Wait for it to return.
+**B. Review** — Invoke **04c-feaure-reviewer** per Steps B–C from the `implementation-pipeline-loop` skill. Wait for it to return.
 
 **C. Commit** — Commit only the changed files for this feature (Step D from the skill). Stage and commit only files belonging to this feature's scope — do not include files from other features.
 
@@ -108,7 +108,7 @@ Wait for the implementer to return before proceeding.
 
 **Phase A — Implement all features simultaneously.**
 
-Invoke one **Feature - Implementer** per feature in the wave, all at the same time:
+Invoke one **04b-feature-implementer** per feature in the wave, all at the same time:
 
 > "[SUBAGENT-MODE] Implement the plan at `dev/feature/[0N-task-name]/`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Return a summary of what was implemented and test results."
 
@@ -116,7 +116,7 @@ Wait for ALL implementers in this wave to return before proceeding to Phase B.
 
 **Phase B — Review all features simultaneously.**
 
-Invoke one **Feature - Reviewer** per feature in the wave, all at the same time, per Steps B–C from the `implementation-pipeline-loop` skill.
+Invoke one **04c-feaure-reviewer** per feature in the wave, all at the same time, per Steps B–C from the `implementation-pipeline-loop` skill.
 
 Wait for ALL reviewers to return before proceeding to Phase C.
 
@@ -139,7 +139,7 @@ Run this step only if the user selected **yes** in QA Preference Selection. If t
 
 #### Invoke QA Writer
 
-Invoke the **Feature - QA Writer** subagent:
+Invoke the **04d-feature-qa-writer** subagent:
 
 > "Write a consolidated release QA plan covering ALL features in this phase. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following feature folders: [list all dev/feature/[0N-task-name]/ paths]. Write the consolidated QA plan to `[determined QA output path]` and the coverage map to `[determined coverage map path]`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all features."
 
@@ -149,7 +149,7 @@ After the subagent returns:
 
 ### Step 5: Phase Final Review
 
-Invoke the **Prod Code Review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected in Step 3 Phase B.
+Invoke the **prod-code-review** as a subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected in Step 3 Phase B.
 
 **If QA was generated and all verdicts Approved:**
 
