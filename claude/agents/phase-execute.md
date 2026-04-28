@@ -51,7 +51,9 @@ After the subagent returns:
 
 **After plans are obtained:**
 1. Sort feature directories by their numeric prefix to determine execution order
-2. Create a todo list entry for each feature with status `not-started`
+2. For each plan file, read its `## Execution Metadata` section and record: wave number, `parallel_safe` flag, `depends_on` list, and `key files modified`. Group features by wave number to build the execution schedule.
+3. If plan files do not contain `## Execution Metadata` (pre-existing plans), treat all features as `parallel_safe: no` and assign them to a single sequential wave.
+4. Create a todo list entry for each feature with status `not-started`
 
 ### Step 2: Expand Plans
 
@@ -69,28 +71,59 @@ After all return:
 
 ### Step 3: Feature Development Loop
 
-Load the `implementation-pipeline-loop` skill. Execute one feature at a time in numeric order. For each feature, complete implement -> review -> commit -> mark complete before starting the next feature:
+Load the `implementation-pipeline-loop` skill.
 
-**Phase A — Sequential Feature Implementation**
+Execute waves in numeric wave order according to the execution schedule built in Step 1. Within each wave, use sequential or parallel execution based on the `parallel_safe` flags.
 
-Invoke one **z-feature-implementer** subagent per feature:
+Record each reviewer's verdict as it returns:
+- `[0N-task-name]`: Approved | Approved with Reservations | Changes Requested
 
-For each `dev/feature/[0N-task-name]/`:
+After ALL waves complete, determine: are all recorded verdicts Approved or Approved with Reservations? Store as `all-approved: yes/no` — it controls Prod Review mode in Step 5.
+
+---
+
+#### Sequential wave — any feature in the wave is `parallel_safe: no`, or the wave has exactly one feature
+
+For each feature in the wave (in numeric prefix order), complete the full cycle before starting the next:
+
+**A. Implement** — Invoke **z-feature-implementer**:
 
 > "[SUBAGENT-MODE] Implement the plan at `dev/feature/[0N-task-name]/`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Return a summary of what was implemented and test results."
 
-After each implementer returns, continue immediately with review and commit for that same feature.
+Wait for the implementer to return before proceeding.
 
-If any implementer reports a blocker or test failure, note it — do not halt the other features. Address blockers in Phase B.
+**B. Review** — Invoke **z-feature-reviewer** per Steps B–C from the `implementation-pipeline-loop` skill. Wait for it to return.
 
-**Phase B — Sequential Review + Commit**
+**C. Commit** — Commit only the changed files for this feature (Step D from the skill). Stage and commit only files belonging to this feature's scope — do not include files from other features.
 
-For each feature in numeric prefix order, execute Steps B through D from the `implementation-pipeline-loop` skill (Review → Commit → Mark Complete). Run these strictly one feature at a time to prevent git conflicts during fix application.
+**D. Complete** — Mark the feature complete in the todo list. Begin the next feature.
 
-As each reviewer returns, record its verdict:
-- `[0N-task-name]`: Approved | Approved with Reservations | Changes Requested
+---
 
-After ALL features complete Phase B, determine: **are all recorded verdicts Approved or Approved with Reservations?** Store this as `all-approved: yes/no` — it controls Prod Review mode in Step 5.
+#### Parallel wave — all features in the wave are `parallel_safe: yes`
+
+**Phase A — Implement all features simultaneously.**
+
+Invoke one **z-feature-implementer** per feature in the wave, all at the same time:
+
+> "[SUBAGENT-MODE] Implement the plan at `dev/feature/[0N-task-name]/`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Return a summary of what was implemented and test results."
+
+Wait for ALL implementers in this wave to return before proceeding to Phase B.
+
+**Phase B — Review all features simultaneously.**
+
+Invoke one **z-feature-reviewer** per feature in the wave, all at the same time, per Steps B–C from the `implementation-pipeline-loop` skill.
+
+Wait for ALL reviewers to return before proceeding to Phase C.
+
+**Phase C — Commit each feature's files in numeric prefix order.**
+
+For each feature in the wave (in numeric prefix order):
+1. Commit only the changed files for that feature (Step D from the skill). Stage and commit only files belonging to this feature's scope.
+2. Wait for the commit to complete before committing the next feature.
+3. Mark the feature complete in the todo list.
+
+Because parallel-safe features have disjoint file scopes, sequential commits within the wave will not conflict.
 
 ### Step 4: QA
 
@@ -181,8 +214,10 @@ Orchestrators coordinate subagents — they do not perform work directly.
 
 **Pipeline Discipline:**
 - DO NOT skip steps or reorder the pipeline
-- Plan expansion (Step 2) and implementation (Step 3 Phase A) run in parallel across features
-- Review and commit (Step 3 Phase B) run strictly sequentially, one feature at a time, to prevent git conflicts
+- Plan expansion (Step 2) always runs in parallel across all features
+- Feature development (Step 3) follows the execution schedule from plan metadata:
+  - Sequential waves: implement → review → commit one feature at a time, full cycle before next
+  - Parallel waves: implement all simultaneously → review all simultaneously → commit each in numeric order (no conflicts since file scopes are disjoint)
 
 **Review Reject Loop:**
 If the Reviewer returns "Changes Requested" twice for the same task, log both reviews, continue, and note the unresolved review in the final report.

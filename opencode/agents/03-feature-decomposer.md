@@ -1,6 +1,6 @@
 ---
 description: "Breaks a refined Phase document into independent features, producing a plan file per feature."
-deepseek/deepseek-v4-pro
+model: anthropic/claude-sonnet-4-6
 permission:
   read: allow
   grep: allow
@@ -59,6 +59,25 @@ If the incoming work is a single cohesive feature, skip this phase and note that
 
 **Integration check**: After decomposition, evaluate whether the resulting features need to work together at runtime. If they do (e.g., a data layer, rendering system, and UI that must all be initialized and connected to produce a working application), you MUST create a final integration/bootstrap feature that wires them into a runnable entry point. See the "Integration feature rule" in the `feature-plan-set` skill. Omitting this step results in features that pass review in isolation but produce a non-functional application.
 
+### Phase 2b: Dependency & Parallelism Analysis
+
+After the feature list is finalized (including any integration feature), perform this analysis before writing any plan files.
+
+**Step 1 — File scope mapping.** For each feature, list the source files it will create or modify based on the codebase reading and the feature's scope. Be conservative: if a file *might* be touched, include it.
+
+**Step 2 — Dependency graph.** Feature B depends on Feature A if either:
+- A's output is a runtime prerequisite for B (e.g., A creates a module that B imports or extends), **or**
+- A and B both modify the same source file.
+
+Record each dependency as `[feature-B] depends_on [feature-A]`.
+
+**Step 3 — Wave assignment.** Assign each feature to the earliest execution wave where all its dependencies are in earlier waves:
+- Wave 1: features with no dependencies
+- Wave 2: features whose dependencies are all in Wave 1
+- Wave N: features whose dependencies are all in Waves 1 through N-1
+
+**Step 4 — Parallel safety.** Features in the same wave are `parallel_safe: yes` if and only if their file scope sets are fully disjoint (zero shared files). If two features in the same wave share any source file, both are `parallel_safe: no` within that wave — they must run sequentially relative to each other.
+
 ### Phase 3: Make Decisions and Write Documents
 
 For any architectural decisions that would normally require clarification, apply this framework:
@@ -74,7 +93,19 @@ dev/feature/[0N-task-name]/
 └── [0N-task-name]-plan.md      # The plan with stages
 ```
 
-When writing multiple plans, each plan file should note any relationships to sibling plans (shared prerequisites, suggested implementation order, etc.). The `0N-` prefix on the directory and file names encodes this order explicitly.
+Each plan file must begin with an `## Execution Metadata` section immediately after the plan title, populated from the Phase 2b analysis:
+
+```markdown
+## Execution Metadata
+
+- **Wave:** [wave number]
+- **Parallel safe:** yes | no
+- **Depends on:** [comma-separated feature names, or "none"]
+- **Key files modified:** [comma-separated list of files this feature creates or changes]
+- **Sequential reason:** [if parallel_safe: no — brief reason, e.g. "shares `src/app.ts` with 02-feature-name" or "runtime dependency on 01-feature-name"; if parallel_safe: yes — "n/a"]
+```
+
+When writing multiple plans, each plan file should note any relationships to sibling plans. The `0N-` prefix on the directory and file names encodes wave order explicitly.
 
 ## Output Format
 
@@ -85,9 +116,15 @@ The stage format (including Stage 0 for test prerequisites) is defined in the `f
 **Subagent mode:** After writing all plan files, return a structured summary to the orchestrator:
 
 1. List of feature task names created with their numbered prefixes (e.g., `01-auth-login`, `02-auth-signup`, `03-auth-session`)
-2. For each feature: one-line plan summary and the number of acceptance criteria
-3. Any cross-feature dependencies (reflected in the numbering order)
+2. For each feature: one-line plan summary, acceptance criteria count, wave number, and `parallel_safe` value
+3. Dependency graph — which features depend on which, and why (file conflict or runtime requirement)
 4. Any decisions made with rationale (so the orchestrator has visibility)
+5. Execution schedule — ordered waves for the executor:
+   - Wave 1 (parallel): `01-feature-a`, `02-feature-b`
+   - Wave 2 (sequential): `03-feature-c`, then `04-feature-d`
+   - Wave 3 (parallel): `05-feature-e`, `06-feature-f`
+
+   Label a wave `parallel` when all features in it are `parallel_safe: yes`. Label it `sequential` when any feature in it is `parallel_safe: no`.
 
 **Standalone mode:** Present the decomposition and plan summaries for user review. After writing, tell the user:
 
