@@ -126,7 +126,7 @@ Detailed, language-specific coding conventions covering:
 
 ### Agent Definitions (.github/agents/)
 
-24 agent files using an **orchestrator + subagent** pattern (4 orchestrators, 8 standalone user-facing, 12 hidden subagents). Orchestrators delegate to subagents automatically; shared subagents are reused across orchestrator pipelines. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation and pipeline descriptions.
+23 agent files using an **orchestrator + subagent** pattern (4 orchestrators, 8 standalone user-facing, 11 hidden subagents). Orchestrators delegate to subagents automatically; shared subagents are reused across orchestrator pipelines. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation and pipeline descriptions.
 
 ### Skills (.github/skills/)
 
@@ -151,8 +151,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#instructions) for the full instr
 - [.github/agents/README.md](.github/agents/README.md) — Full agent documentation, pipeline diagrams, and per-agent descriptions
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Mermaid diagrams of repo structure, agent architecture, and design decisions
 - [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — Dense structured facts for AI agent orientation
-- [docs/phases/PHASES_OVERVIEW.md](docs/phases/PHASES_OVERVIEW.md) — Current phased roadmap and scope sequencing
-- [docs/phases/PHASE_01/PHASE_01_SUMMARY.md](docs/phases/PHASE_01/PHASE_01_SUMMARY.md) — Detailed scope and quality gates for Phase 01
 - [docs/AGENT_REGRESSION_BENCHMARK_SPEC.md](docs/AGENT_REGRESSION_BENCHMARK_SPEC.md) — Project-specific benchmark design for A/B testing model and agent changes
 - [docs/benchmarks/B001/README.md](docs/benchmarks/B001/README.md) — First concrete benchmark pack with 30 core task cards and run/grader templates
+- [docs/agent-model-reference.md](docs/agent-model-reference.md) — Model selection guide for each agent role
 

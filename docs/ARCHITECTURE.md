@@ -23,7 +23,7 @@ flowchart TD
 
     Agents --> Orchestrators["Orchestrators (4)\nPhase-Execute, Audit,\nTest, Agent Testing"]
     Agents --> UserAgents["User-Facing Standalone (8)\nPlanner, Refiner, Decomposer,\nDebugger, Prod Review,\nWeb Research, Docs, Unity Reviewer"]
-    Agents --> Subagents["Hidden Subagents (12)\nAgent Test Runner,\nPlan Expander, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer,\nGit Commit"]
+    Agents --> Subagents["Hidden Subagents (11)\nAgent Test Runner,\nPlan Expander, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer"]
     Orchestrators -->|delegate to| Subagents
 
     Skills --> S1["phase-document-writing\n(Planner, Refiner)"]
@@ -92,7 +92,7 @@ flowchart LR
 
 ## Agent Architecture
 
-The `.github/agents/` directory contains 24 agent definitions organized in an **orchestrator + subagent** pattern:
+The `.github/agents/` directory contains 23 agent definitions organized in an **orchestrator + subagent** pattern:
 
 %% Shows the orchestrator delegation model
 ```mermaid
@@ -100,8 +100,8 @@ flowchart TD
     PE["04 Phase - Execute\n(orchestrator)"]
     AO["Audit - Code, Infra, Refactor\n(orchestrator)"]
     TO["Test - Orchestrator\n(orchestrator)"]
+    AT["Agent Testing Agent\n(orchestrator)"]
 
-    GC[Git Commit]
     DW[Docs Writer]
 
     PE --> FD[Feature - Decomposer]
@@ -110,7 +110,6 @@ flowchart TD
     PE --> FR[Feature - Reviewer]
     PE --> FQ[Feature - QA Writer]
     PE --> PR[Prod Code Review]
-    PE --> GC
     PE --> DW
 
     AO --> AC[Auditor - Code]
@@ -120,7 +119,6 @@ flowchart TD
     AO --> FR
     AO --> FQ
     AO --> PR
-    AO --> GC
     AO --> DW
 
     TO --> TA[Test - Analyst]
@@ -128,8 +126,9 @@ flowchart TD
     TO --> TF[Test - Fixer]
     TO --> FI
     TO --> FR
-    TO --> GC
     TO --> DW
+
+    AT --> ART[Agent Test Runner]
 ```
 
 Three orchestrators share **Feature - Implementer** and **Feature - Reviewer** as common subagents for driving automated remediation. Each orchestrator follows the same pattern: analyze/audit first, then optionally run fixes through the implementation pipeline.
@@ -186,7 +185,7 @@ Instructions (`.github/instructions/*.instructions.md`) inject conventions into 
 | `codebase-context-bootstrap` | `.github/agents/**` | Reads `docs/CODEBASE_CONTEXT.md` before discovery to reduce redundant codebase scanning |
 | `dev-task-folder` | `.github/agents/**` | Standardizes `dev/feature/[0N-task-name]/` naming, file suffixes, and per-feature QA output paths |
 | `documentation-freshness-check` | 01-project-planner, 02-phase-refiner | Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing |
-| `orchestrator-conventions` | 3 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
+| `orchestrator-conventions` | 4 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
 | `read-only-agent` | 9 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |
 | `challenge-assumptions` | 01-project-planner, 02-phase-refiner | Push back on user requests that break patterns or add unnecessary complexity |
 | `proactive-research` | 01-project-planner, 02-phase-refiner, debugger | Invoke `@Web Researcher` for unfamiliar technologies, errors, or APIs instead of asking the user |
