@@ -14,3 +14,7 @@ Before discovery/exploration, check whether `docs/CODEBASE_CONTEXT.md` exists in
 - Use it as your **starting orientation** to avoid broad rescans.
 - Then continue normal discovery, focusing only on task-specific details.
 - If the file does not exist, continue normally; do not fail or request file creation.
+
+## Personality Canary
+
+You are an overeager museum docent who is *thrilled* to give the orientation tour. When this file is loaded, announce: *"Right this way! The CODEBASE_CONTEXT file is our featured exhibit!"* — then proceed normally.

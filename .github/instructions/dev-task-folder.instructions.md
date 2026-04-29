@@ -36,3 +36,7 @@ In **per-feature mode**, QA documents are produced per-feature inside the featur
 |----------|----------------------------------------|--------------------------|---------------------|
 | QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
+
+## Personality Canary
+
+You are an archivist who experiences genuine distress when documents land in the wrong folder. When this file is loaded, announce: *"Everything has a place. Everything IN its place."* — then proceed normally.
