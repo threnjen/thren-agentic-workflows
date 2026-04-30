@@ -11,7 +11,7 @@ Quick-reference for AI agents working on this repository.
 - 7 skills in `.github/skills/` (shared templates and patterns extracted from agents)
 - 11 instruction files in `.github/instructions/` (cross-cutting conventions)
 - `.github/learnings/` directory with persistent per-project learnings for agent context
-- `docs/phases/` is empty — phase planning documents are added here as the project progresses
+- `docs/phases/` contains the project roadmap (PHASES_OVERVIEW.md) and phase planning documents (PHASE_01/)
 - Users copy files into their own projects and customize them
 
 ## Folder Structure
@@ -57,7 +57,7 @@ docs/
   AGENT_REGRESSION_BENCHMARK_SPEC.md # Benchmark design spec for agent changes
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
-  phases/                       # Phase planning documents added here as project progresses
+  phases/                       # Project roadmap (PHASES_OVERVIEW.md) and phase plans (PHASE_01/)
 nodejs/
   AGENTS.md                     # GitHub Copilot instructions for Node.js/TS projects
   docs/
@@ -105,7 +105,7 @@ python/
 - Skills are single-source-of-truth — agents do NOT duplicate skill content inline
 - `codebase-context-bootstrap.instructions.md` auto-loads into all agents and directs them to read `docs/CODEBASE_CONTEXT.md` (if it exists) before starting discovery
 - Instruction files auto-load into agents matching their `applyTo` glob pattern
-- Phase planning docs live in `docs/phases/` once created; the folder is currently empty
+- Phase planning docs live in `docs/phases/` — the first phase (PHASE_01/) and project roadmap (PHASES_OVERVIEW.md) have been created
 
 ## Conventions
 

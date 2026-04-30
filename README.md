@@ -38,7 +38,7 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 ├── docs/
 │   ├── ARCHITECTURE.md        # Structure diagram and design decisions
 │   ├── CODEBASE_CONTEXT.md    # Agent-oriented quick-reference
-│   └── phases/            # Phase planning documents added here as project progresses
+│   └── phases/            # Project roadmap (PHASES_OVERVIEW.md) and phase plans (PHASE_01/)
 ├── nodejs/
 │   ├── AGENTS.md              # Agent guidelines for Node.js/TypeScript projects
 │   └── docs/
