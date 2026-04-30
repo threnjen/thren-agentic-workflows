@@ -123,7 +123,7 @@ Once approved, write documents incrementally to avoid scope creep and allow prio
 
 After writing each phase document, tell the user:
 
-> **"Phase document written to `docs/phases/`. To refine this phase, open a new chat with `@02 Phase - Refiner` and attach the phase document (e.g., `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`). If a `DISCOVERY_CONTEXT.md` was created, attach that too so the refiner has the full context. Once you've completed executing phase 1, return here to write the next phase."**
+> **"Phase document written to `docs/phases/`. To refine this phase, use `/compact` to reduce context, then invoke `@02 Phase - Refiner` in this same chat. We recommend attaching the Phase document (e.g., `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`) and any `DISCOVERY_CONTEXT.md` so the refiner has full context. Once you've completed executing phase 1, return here to write the next phase."**
 
 When the user returns after completing a phase, detect the next unwritten `PHASE_0N_SUMMARY.md` and continue writing incrementally.
 

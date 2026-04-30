@@ -168,7 +168,7 @@ Flag these situations and recommend returning to `@01-project-planner`: phase sc
 
 After Phase 7 completes, tell the user:
 
-> **"Phase refinement complete. The updated document has been written to `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` and repository documentation has been refreshed. To continue, open a new chat with `@03-feature-decomposer` and attach this Phase document. If a `PHASE_0N_DISCOVERY_CONTEXT.md` was created, attach that too."**
+> **"Phase refinement complete. The updated document has been written to `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` and repository documentation has been refreshed. To continue, use `/compact` to reduce context, then invoke `@03-feature-decomposer` in this same chat. We recommend attaching the Phase document and any `PHASE_0N_DISCOVERY_CONTEXT.md` so decomposition has the full context."**
 
 ## Quality Checklist
 
