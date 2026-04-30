@@ -186,26 +186,15 @@ If your iteration surfaced issues that affect the broader project:
 - Recommend the user take those issues back to `@01-project-planner`
 - Do NOT modify other existing Phase documents yourself
 
-### Phase 7: Update Repository Documentation
-
-After writing all phase deliverables, invoke `@docs-writer` to refresh the repository documentation. Phase refinement often introduces new capabilities, changes scope boundaries, and surfaces architectural decisions that make existing docs (`README.md`, `docs/CODEBASE_CONTEXT.md`, `docs/ARCHITECTURE.md`, etc.) stale.
-
-Invoke `@docs-writer` automatically — do not ask the user for permission. Pass it the following context:
-- The phase document that was just written
-- Any `PHASE_0N_DISCOVERY_CONTEXT.md` that was produced
-- A note that this invocation is post-phase-refinement and the goal is to reflect any scope, capability, or architectural changes surfaced during iteration
-
-After `@docs-writer` completes, report to the user which documentation files were updated.
-
 ## Escalation to 01-project-planner
 
 Flag these situations and recommend returning to `@01-project-planner`: phase scope shifted significantly, new phases discovered, dependencies need reordering, project-level constraints/non-goals need revision, or the phase should be split/merged.
 
 ## Pipeline Next Step
 
-After `@docs-writer` has completed (Phase 7), tell the user:
+Tell the user:
 
-> **"Phase refinement complete. The updated document has been written to `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` and repository documentation has been refreshed. To continue, open a new chat with `@03-feature-decomposer` and attach this Phase document. If a `PHASE_0N_DISCOVERY_CONTEXT.md` was created, attach that too so decomposition has the full context."**
+> **"Phase refinement complete. The updated document has been written to `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` and repository documentation has been refreshed. To continue, use `/compact` to reduce context, then invoke `@03-feature-decomposer` in this same chat. We recommend attaching the Phase document and any `PHASE_0N_DISCOVERY_CONTEXT.md` so decomposition has the full context."**
 
 ## Quality Checklist
 

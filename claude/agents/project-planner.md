@@ -120,7 +120,7 @@ Once approved:
 
 After writing each phase document, tell the user:
 
-> **"Phase document written to `docs/phases/`. To refine this phase, open a new chat with `@02-phase-refiner` and attach the phase document. If a `DISCOVERY_CONTEXT.md` was created, attach that too. Once you've completed executing phase 1, return here to write the next phase."**
+> **"Phase document written to `docs/phases/`. To refine this phase, use `/compact` to reduce context, then invoke `@02-phase-refiner` in this same chat. We recommend attaching the Phase document (e.g., `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`) and any `DISCOVERY_CONTEXT.md` so the refiner has full context. Once you've completed executing phase 1, return here to write the next phase."**
 
 ## Quality Checklist
 

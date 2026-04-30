@@ -151,24 +151,15 @@ If iteration surfaced issues affecting the broader project:
 - Recommend the user take them back to `@01-project-planner`
 - Do NOT modify other existing Phase documents
 
-### Phase 7: Update Repository Documentation
-
-After writing all phase deliverables, invoke **docs-writer** to refresh repository documentation. Pass it:
-- The phase document that was just written
-- Any `PHASE_0N_DISCOVERY_CONTEXT.md` produced
-- A note that this is post-phase-refinement and the goal is to reflect scope, capability, or architectural changes
-
-After docs-writer completes, report which documentation files were updated.
-
 ## Escalation to 01-project-planner
 
 Flag these situations and recommend returning to `@01-project-planner`: phase scope shifted significantly, new phases discovered, dependencies need reordering, or the phase should be split/merged.
 
 ## Pipeline Next Step
 
-After Phase 7 completes, tell the user:
+Tell the user:
 
-> **"Phase refinement complete. The updated document has been written to `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` and repository documentation has been refreshed. To continue, open a new chat with `@03-feature-decomposer` and attach this Phase document. If a `PHASE_0N_DISCOVERY_CONTEXT.md` was created, attach that too."**
+> **"Phase refinement complete. The updated document has been written to `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` and repository documentation has been refreshed. To continue, use `/compact` to reduce context, then invoke `@03-feature-decomposer` in this same chat. We recommend attaching the Phase document and any `PHASE_0N_DISCOVERY_CONTEXT.md` so decomposition has the full context."**
 
 ## Quality Checklist
 
