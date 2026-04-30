@@ -193,3 +193,39 @@ Instructions (`.github/instructions/*.instructions.md`) inject conventions into 
 | `tech-stack-detection` | implementer, reviewer | Detect specialized tech stacks and load matching skills before proceeding |
 | `subagent-autonomy` | implementer, reviewer, plan-expander, git-commit | Operate autonomously — no questions, no confirmation, sensible defaults |
 | `output-verbosity-policy` | `.github/agents/**` | Defines soft-target concision defaults, delta-first response shape, and quality-preserving exception triggers |
+
+## Platform Variants
+
+This repository supports three AI coding platforms. The `.github/` directory is the **master source of truth** — `opencode/` and `claude/` are derived copies with platform-specific formatting.
+
+### Source of Truth
+
+- **`.github/agents/*.agent.md`** — Master agent definitions. All changes originate here.
+- **`.github/instructions/*.instructions.md`** — Master instruction files. Loaded by `.github/` agents via `applyTo` YAML patterns.
+- **`.github/skills/`** — Master skill definitions. Symlinked by both `opencode/` and `claude/`.
+
+When modifying agent behavior: edit the `.github/` master first, then apply equivalent changes to the `opencode/` and `claude/` copies.
+
+### How Each Platform Loads Components
+
+| Component | `.github/` (Copilot) | `opencode/` | `claude/` |
+|-----------|---------------------|-------------|-----------|
+| **Agent files** | `.github/agents/*.agent.md` (YAML frontmatter with `tools:`, `agents:`, `model:`) | `opencode/agents/*.md` (YAML frontmatter with `permission:`, `mode:`, `hidden:`) | `claude/agents/*.md` (Markdown with `tools:` line, `z-` prefix for subagents) |
+| **Instructions** | Loaded from `.github/instructions/` via `applyTo` glob patterns in YAML frontmatter | Loaded from `.github/instructions/` via glob in `~/.config/opencode/opencode.jsonc`: `"instructions": [".github/instructions/*.instructions.md"]` | **Inlined** in each agent under `## Auto-Loaded Instructions` — not loaded from instruction files |
+| **Skills** | Loaded from `.github/skills/` on demand | Symlinked to `.github/skills/` (set up via `SYMLINK_SETUP.md`) | Symlinked to `.github/skills/` (set up via `SYMLINK_SETUP.md`) |
+| **Learnings** | `.github/learnings/` | N/A | Symlinked to `.github/learnings/` |
+
+### Key Implication
+
+**Updating `.github/instructions/` automatically affects both `.github/` AND `opencode/` agents** because opencode loads the same instruction files. Claude agents require separate inline updates to their `## Auto-Loaded Instructions` sections.
+
+### Agent File Format Differences
+
+| Concern | `.github/` | `opencode/` | `claude/` |
+|---------|-----------|-------------|-----------|
+| File extension | `.agent.md` | `.md` | `.md` |
+| Tools declaration | `tools: [read, search, edit, execute, agent]` | `permission: {read: allow, edit: allow, ...}` | `tools: Skill, Read, Grep, Glob, Edit, Write, Bash, Agent` |
+| Model | `model: Claude Sonnet 4.6 (copilot)` | `deepseek/deepseek-v4-pro` | N/A (model set in Claude config) |
+| Subagent flag | `user-invocable: false` | `mode: subagent` + `hidden: true` | Filename prefixed with `z-` |
+| Agent references | `agents: [Web Researcher]` | N/A | Referenced by filename in workflow text |
+| Subagent naming | No prefix convention | No prefix convention | `z-` prefix (e.g., `z-feature-implementer.md`) |

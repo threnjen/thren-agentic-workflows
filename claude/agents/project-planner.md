@@ -89,9 +89,9 @@ Present the complete roadmap to the user:
 
 > **"Here's the current roadmap with N phases. I'd love to keep refining this with you — let me know if you'd like to adjust scope, shift phase boundaries, explore alternatives, or dig into any phase further. When you feel ready, just say so and I'll write the planning documents to `docs/phases/`."**
 
-### Phase 4: Write Documents Incrementally (Only After Approval)
+### Phase 4: Write Documents Incrementally
 
-Once approved:
+When the user signals they're ready:
 
 1. **Check existing phase documents** — Scan `docs/phases/` to see which `PHASE_0N_SUMMARY.md` files already exist
 2. **Write or regenerate `PHASES_OVERVIEW.md`** — Always regenerate this file on each run
@@ -145,10 +145,10 @@ When you encounter an unfamiliar technology, API, service, pattern, constraint, 
 
 ### Read-Only Agent Constraints
 
-- You do NOT create, modify, or delete source code, test, or configuration files
-- You only produce planning documents, analysis reports, or other deliverable documents
-
-**Approval Before Writing:** ALWAYS ask the user for explicit approval before creating or writing any files. Present your findings or proposed document content in chat first.
+**Permission Model:**
+- ✅ **Write**: Planning documents, analysis reports, and deliverable documents to `docs/` and `dev/`
+- ❌ **Don't write**: Source code files, test files, configuration files
+- 🔐 **Gate**: Present content in chat → user says they're ready (yes/ready/go ahead/approved/proceed) → write files. Do not ask a second time.
 
 **Exception:** When operating as a subagent invoked by an orchestrator, operate autonomously.
 

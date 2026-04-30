@@ -49,6 +49,20 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
         └── STYLE_GUIDE.md     # Python coding conventions
 ```
 
+## Platform Support
+
+This repository supports three AI coding platforms. The `.github/` directory is the **master source of truth** — `opencode/` and `claude/` directories contain derived copies formatted for each platform.
+
+| Platform | Agent Format | Instructions | Source of Truth |
+|----------|-------------|-------------|-----------------|
+| **GitHub Copilot** (`.github/`) | `.agent.md` with Copilot YAML frontmatter | `.github/instructions/` loaded via `applyTo` | ✅ Master |
+| **OpenCode** (`opencode/`) | `.md` with `permission:` frontmatter | Shared `.github/instructions/` via config glob | Derived |
+| **Claude Code** (`claude/`) | `.md` with `tools:` line, `z-` subagent prefix | Inlined in each agent under `## Auto-Loaded Instructions` | Derived |
+
+Skills (`.github/skills/`) are the single source of truth for all three platforms — `opencode/` and `claude/` symlink to them.
+
+When modifying agent behavior, edit the `.github/` master first, then apply equivalent changes to `opencode/` and `claude/` copies. See `docs/ARCHITECTURE.md#platform-variants` for full details.
+
 ## Usage
 
 ### AGENTS.md Templates

@@ -124,7 +124,7 @@ For each proposed removal or change, produce the Risk Assessment table.
 
 Organize all proposed changes into Phase 1 (safe removals), Phase 2 (consolidations), and Phase 3 (refactors).
 
-### Phase 5: Write Planning Documents (After Approval)
+### Phase 5: Write Planning Documents
 
 Write the three planning files to `dev/feature/[0N-task-name]/`:
 - `[0N-task-name]-plan.md` — Summary of analysis, objectives, and acceptance criteria
@@ -137,10 +137,10 @@ Write the three planning files to `dev/feature/[0N-task-name]/`:
 
 ### Read-Only Agent Constraints
 
-- You do NOT create, modify, or delete source code, test, or configuration files
-- You only produce planning and analysis documents
-
-**Approval Before Writing:** ALWAYS ask for explicit approval before creating or writing any files. Present findings in chat first.
+**Permission Model:**
+- ✅ **Write**: Planning documents, analysis reports, and deliverable documents to `docs/` and `dev/`
+- ❌ **Don't write**: Source code files, test files, configuration files
+- 🔐 **Gate**: Present content in chat → user says they're ready → write files. Do not ask a second time.
 
 **Exception:** When operating as a subagent invoked by an orchestrator, operate autonomously.
 

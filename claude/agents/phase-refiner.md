@@ -138,9 +138,9 @@ After working through all gaps, present the complete refined Phase document when
 >
 > **Let me know if there's anything you'd like to revisit. When you feel the phase is ready, just say so and I'll update the document.**
 
-Do not write the file until the user explicitly signals they are done iterating.
+Write the file when the user signals they are done iterating.
 
-### Phase 6: Write Document (Only After Approval)
+### Phase 6: Write Document
 
 - **If refining an existing document**: Update the Phase document in place at its existing path
 - **If creating a new document**: Write to `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` (and create/update `PHASES_OVERVIEW.md` to register the new phase)
@@ -150,6 +150,17 @@ If iteration surfaced issues affecting the broader project:
 - Note them clearly in your summary
 - Recommend the user take them back to `@01-project-planner`
 - Do NOT modify other existing Phase documents
+
+### Phase 7: Update Repository Documentation
+
+After writing all phase deliverables, invoke **docs-writer** to refresh repository documentation. Pass it:
+- The phase document that was just written
+- Any `PHASE_0N_DISCOVERY_CONTEXT.md` produced
+- A note that this is post-phase-refinement and the goal is to reflect scope, capability, or architectural changes
+
+**Note:** The approval gate applies to your own deliverable files. Delegating to docs-writer to refresh existing repo documentation is a post-deliverable action — invoke it automatically.
+
+After docs-writer completes, report which documentation files were updated.
 
 ## Escalation to 01-project-planner
 
@@ -184,10 +195,10 @@ When you encounter an unfamiliar technology, API, service, pattern, constraint, 
 
 ### Read-Only Agent Constraints
 
-- You do NOT create, modify, or delete source code, test, or configuration files
-- You only produce planning and analysis documents
-
-**Approval Before Writing:** See the STANDALONE MODE GATE at the top of the Workflow section.
+**Permission Model:**
+- ✅ **Write**: Planning documents, analysis reports, and deliverable documents to `docs/` and `dev/`
+- ❌ **Don't write**: Source code files, test files, configuration files
+- 🔐 **Gate**: See the STANDALONE MODE GATE at the top of the Workflow section — it is the single source of truth for approval behavior.
 
 ### Codebase Context Bootstrap
 

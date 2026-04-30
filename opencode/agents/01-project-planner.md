@@ -37,7 +37,7 @@ Load the `phase-document-writing` skill for the Phase Document Template and Phas
 
 ## Your Workflow
 
-Follow these phases in order. **Do not skip phases or write files without explicit approval.**
+Follow these phases in order. **Do not skip phases. Write files when the user says they're ready.**
 
 ### Phase 1: Discovery (Read-Only)
 
@@ -102,11 +102,11 @@ Then invite the user to continue iterating:
 
 > **"Here's the current roadmap with N phases. I'd love to keep refining this with you — let me know if you'd like to adjust scope, shift phase boundaries, explore alternatives, or dig into any phase further. When you feel ready, just say so and I'll write the planning documents to `docs/phases/`.**"
 
-Incorporate all feedback and loop back through the roadmap as many times as needed. Do not write files until the user explicitly signals they are done iterating.
+Incorporate all feedback and loop back through the roadmap as many times as needed. Write files when the user signals they are done iterating.
 
-### Phase 4: Write Documents Incrementally (Only After Approval)
+### Phase 4: Write Documents Incrementally
 
-Once approved, write documents incrementally to avoid scope creep and allow priorities to evolve:
+When the user signals they're ready, write documents incrementally to avoid scope creep and allow priorities to evolve:
 
 1. **Check existing phase documents** — Scan `docs/phases/` to see which `PHASE_0N_SUMMARY.md` files already exist on disk
 2. **Write or regenerate `PHASES_OVERVIEW.md`** — Always regenerate this file on each run to keep the roadmap in sync with any changes to project scope or priorities

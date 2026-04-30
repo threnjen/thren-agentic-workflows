@@ -173,9 +173,9 @@ After working through the identified gaps and any additional concerns the user r
 >
 > **Let me know if there's anything you'd like to revisit, adjust, or dig into further. When you feel the phase is ready, just say so and I'll update the document.**
 
-Do not write the file until the user explicitly signals they are done iterating.
+Write the file when the user signals they are done iterating.
 
-### Phase 6: Write Document (Only After Approval)
+### Phase 6: Write Document
 
 - **If refining an existing document**: Update the Phase document in place at its existing path.
 - **If creating a new document**: Write the Phase document to the determined path (e.g., `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md`). If you also need to create or update `PHASES_OVERVIEW.md` to register the new phase, do so.
@@ -185,6 +185,19 @@ If your iteration surfaced issues that affect the broader project:
 - Note them clearly in your summary
 - Recommend the user take those issues back to `@01-project-planner`
 - Do NOT modify other existing Phase documents yourself
+
+### Phase 7: Update Repository Documentation
+
+After writing all phase deliverables, invoke `@docs-writer` to refresh the repository documentation. Phase refinement often introduces new capabilities, changes scope boundaries, and surfaces architectural decisions that make existing docs (`README.md`, `docs/CODEBASE_CONTEXT.md`, `docs/ARCHITECTURE.md`, etc.) stale.
+
+**Note:** The read-only-agent approval gate applies to your own deliverable files (PHASE_0N_SUMMARY.md, PHASE_0N_DISCOVERY_CONTEXT.md). Delegating to `@docs-writer` to refresh existing repo documentation is a post-deliverable action — invoke it automatically without asking for additional user approval.
+
+Invoke `@docs-writer` automatically. Pass it the following context:
+- The phase document that was just written
+- Any `PHASE_0N_DISCOVERY_CONTEXT.md` that was produced
+- A note that this invocation is post-phase-refinement and the goal is to reflect any scope, capability, or architectural changes surfaced during iteration
+
+After `@docs-writer` completes, report to the user which documentation files were updated.
 
 ## Escalation to 01-project-planner
 
