@@ -5,3 +5,5 @@ __pycache__/
 
 # Local benchmark runtime artifacts (reports/traces) to prevent branch checkout clashes
 docs/benchmarks/B001/runs/local/
+# Added by code-review-graph
+.code-review-graph/
