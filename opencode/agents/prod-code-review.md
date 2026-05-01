@@ -44,7 +44,7 @@ Before beginning, ensure ALL of the following are available. If any are missing,
 | Context document | 04a-feature-plan-expander | `[0N-task-name]-context.md` |
 | Task checklist | 04a-feature-plan-expander | `[0N-task-name]-tasks.md` |
 | Implementation record | 04b-feature-implementer | `[0N-task-name]-implementation.md` |
-| Review record | 04c-feaure-reviewer | `[0N-task-name]-review.md` |
+| Review record | 04c-feature-reviewer | `[0N-task-name]-review.md` |
 
 **Consolidated QA document** (provided by the orchestrator):
 
@@ -231,7 +231,7 @@ If the verdict is NO-GO, list every blocking item and trace it to its **root cau
 |------------|-----------|------|
 | **Feature - Decomposer** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases | The plan itself is the problem |
 | **04b-feature-implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps |
-| **04c-feaure-reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough |
+| **04c-feature-reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough |
 | **04d-feature-qa-writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework |
 
 ## Write Analysis Record

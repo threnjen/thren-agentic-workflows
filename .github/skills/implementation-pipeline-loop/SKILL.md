@@ -52,7 +52,7 @@ Execute the commit directly — do not invoke a subagent for this step.
    <one paragraph: what changed and why, derived from implementation record summary>
 
    Implements: <AC refs, e.g., AC1, AC2, AC3>
-   Reviewed-by: 04c-feaure-reviewer
+   Reviewed-by: 04c-feature-reviewer
    Verdict: <Approved | Approved with Reservations>
    ```
    **Type:** `feat` (new capability) · `fix` (bug fix) · `refactor` (restructure) · `test` (tests only) · `docs` (docs only) · `chore` (config/build)

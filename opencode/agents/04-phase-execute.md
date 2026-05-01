@@ -96,7 +96,7 @@ For each feature in the wave (in numeric prefix order), complete the full cycle 
 
 Wait for the implementer to return before proceeding.
 
-**B. Review** — Invoke **04c-feaure-reviewer** per Steps B–C from the `implementation-pipeline-loop` skill. Wait for it to return.
+**B. Review** — Invoke **04c-feature-reviewer** per Steps B–C from the `implementation-pipeline-loop` skill. Wait for it to return.
 
 **C. Commit** — Commit only the changed files for this feature (Step D from the skill). Stage and commit only files belonging to this feature's scope — do not include files from other features.
 
@@ -116,7 +116,7 @@ Wait for ALL implementers in this wave to return before proceeding to Phase B.
 
 **Phase B — Review all features simultaneously.**
 
-Invoke one **04c-feaure-reviewer** per feature in the wave, all at the same time, per Steps B–C from the `implementation-pipeline-loop` skill.
+Invoke one **04c-feature-reviewer** per feature in the wave, all at the same time, per Steps B–C from the `implementation-pipeline-loop` skill.
 
 Wait for ALL reviewers to return before proceeding to Phase C.
 
