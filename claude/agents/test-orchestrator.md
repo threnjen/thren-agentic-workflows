@@ -168,3 +168,17 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results |
 | `-review.md` | Feature - Reviewer | Verdict, issues found, fixes applied |
 | `-report.md` | Test subagents | Fix or analysis report |
+
+### Graph Rebuild Hook
+
+After the final pipeline step completes (the completion report to the user), run a graph rebuild unconditionally:
+
+```
+code-review-graph build
+```
+
+Use the `Bash` tool to run this shell command. Do not ask the user for confirmation — this is automatic.
+
+**Error handling:** If the command exits with a non-zero code, log the error in the pipeline completion report under a `Graph rebuild` field but do NOT fail the pipeline or re-run any steps.
+
+**When to run:** Always — regardless of whether all tasks passed or any subagent returned an error. The rebuild happens once, after the user-facing completion report is printed.

@@ -207,3 +207,17 @@ Audit output goes to `dev/[audit-name]/`. Feature task files go to `dev/[audit-n
 | `-review.md` | Feature - Reviewer | Verdict, issues found, fixes applied |
 | `-qa.md` | Feature - QA Writer | Manual QA checklist |
 | `-qa-analysis.md` | Prod Code Review | GO/NO-GO verdict |
+
+### Graph Rebuild Hook
+
+After the final pipeline step completes (the completion report to the user), run a graph rebuild unconditionally:
+
+```
+code-review-graph build
+```
+
+Use the `Bash` tool to run this shell command. Do not ask the user for confirmation — this is automatic.
+
+**Error handling:** If the command exits with a non-zero code, log the error in the pipeline completion report under a `Graph rebuild` field but do NOT fail the pipeline or re-run any steps.
+
+**When to run:** Always — regardless of whether all tasks were approved, QA was skipped, or any subagent returned an error. The rebuild happens once, after the user-facing completion report is printed.

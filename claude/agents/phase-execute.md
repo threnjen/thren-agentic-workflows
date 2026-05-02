@@ -255,3 +255,17 @@ Consolidated QA documents (batch mode):
 |----------|----------|
 | QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` |
+
+### Graph Rebuild Hook
+
+After the final pipeline step completes (the Step 6 report to the user), run a graph rebuild unconditionally:
+
+```
+code-review-graph build
+```
+
+Use the `Bash` tool to run this shell command. Do not ask the user for confirmation — this is automatic.
+
+**Error handling:** If the command exits with a non-zero code, log the error in the pipeline completion report under a `Graph rebuild` field but do NOT fail the pipeline or re-run any steps.
+
+**When to run:** Always — regardless of whether all features were approved, QA was skipped, or any subagent returned an error. The rebuild happens once, after the user-facing completion report is printed.
