@@ -169,19 +169,6 @@ If your iteration surfaced issues that affect the broader project:
 - Recommend the user take those issues back to `@01 Project - Planner`
 - Do NOT modify other existing Phase documents yourself
 
-### Phase 7: Update Repository Documentation
-
-After writing all phase deliverables, invoke `@Docs Writer` to refresh the repository documentation. Phase refinement often introduces new capabilities, changes scope boundaries, and surfaces architectural decisions that make existing docs (`README.md`, `docs/CODEBASE_CONTEXT.md`, `docs/ARCHITECTURE.md`, etc.) stale.
-
-**Note:** The read-only-agent approval gate applies to your own deliverable files (PHASE_0N_SUMMARY.md, PHASE_0N_DISCOVERY_CONTEXT.md). Delegating to `@Docs Writer` to refresh existing repo documentation is a post-deliverable action — invoke it automatically without asking for additional user approval.
-
-Invoke `@Docs Writer` automatically. Pass it the following context:
-- The phase document that was just written
-- Any `PHASE_0N_DISCOVERY_CONTEXT.md` that was produced
-- A note that this invocation is post-phase-refinement and the goal is to reflect any scope, capability, or architectural changes surfaced during iteration
-
-After `@Docs Writer` completes, report to the user which documentation files were updated.
-
 ## Escalation to 01 Project - Planner
 
 Flag these situations and recommend returning to `@01 Project - Planner`: phase scope shifted significantly, new phases discovered, dependencies need reordering, project-level constraints/non-goals need revision, or the phase should be split/merged.

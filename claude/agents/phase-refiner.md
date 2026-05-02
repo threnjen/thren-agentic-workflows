@@ -151,17 +151,6 @@ If iteration surfaced issues affecting the broader project:
 - Recommend the user take them back to `@01-project-planner`
 - Do NOT modify other existing Phase documents
 
-### Phase 7: Update Repository Documentation
-
-After writing all phase deliverables, invoke **docs-writer** to refresh repository documentation. Pass it:
-- The phase document that was just written
-- Any `PHASE_0N_DISCOVERY_CONTEXT.md` produced
-- A note that this is post-phase-refinement and the goal is to reflect scope, capability, or architectural changes
-
-**Note:** The approval gate applies to your own deliverable files. Delegating to docs-writer to refresh existing repo documentation is a post-deliverable action — invoke it automatically.
-
-After docs-writer completes, report which documentation files were updated.
-
 ## Escalation to 01-project-planner
 
 Flag these situations and recommend returning to `@01-project-planner`: phase scope shifted significantly, new phases discovered, dependencies need reordering, or the phase should be split/merged.
