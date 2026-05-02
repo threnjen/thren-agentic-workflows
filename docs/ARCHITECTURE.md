@@ -30,15 +30,25 @@ flowchart TD
     Skills --> S2["auditor-conventions\n(3 Auditors)"]
     Skills --> S3["feature-plan-set\n(Decomposer, Plan Expander)"]
     Skills --> S4["implementation-pipeline-loop\n(Orchestrators)"]
-    Skills --> S5["unity-development\n(Implementer, Reviewer\nUnity projects)"]
+    Skills --> S5["implementation-record\n(Feature - Implementer)"]
+    Skills --> S6["unity-development\n(Implementer, Reviewer\nUnity projects)"]
+    Skills --> S7["unity-review-knowledge\n(Unity Reviewer)"]
+    Skills --> S8["debug-issue.md\n(Debugger)"]
+    Skills --> S9["explore-codebase.md\n(Explore)"]
+    Skills --> S10["refactor-safely.md\n(Refactor)"]
+    Skills --> S11["review-changes.md\n(Reviewer)"]
 
-    Instructions --> I1["dev-task-folder\n(all agents)"]
-    Instructions --> I2["orchestrator-conventions\n(3 orchestrators)"]
-    Instructions --> I3["read-only-agent\n(9 read-only agents)"]
-    Instructions --> I4["codebase-context-bootstrap\n(all agents)"]
-    Instructions --> I5["documentation-freshness-check\n(planner, refiner)"]
-    Instructions --> I6["challenge-assumptions\n(planner, refiner)"]
-    Instructions --> I7["proactive-research\n(planner, refiner, debugger)"]
+    Instructions --> I1["codebase-context-bootstrap\n(all agents)"]
+    Instructions --> I2["dev-task-folder\n(all agents)"]
+    Instructions --> I3["documentation-freshness-check\n(planner, refiner)"]
+    Instructions --> I4["challenge-assumptions\n(planner, refiner)"]
+    Instructions --> I5["orchestrator-conventions\n(3 orchestrators)"]
+    Instructions --> I6["proactive-research\n(planner, refiner, debugger)"]
+    Instructions --> I7["read-only-agent\n(9 read-only agents)"]
+    Instructions --> I8["learnings-bootstrap\n(implementer, reviewer,\ndecomposer, debugger)"]
+    Instructions --> I9["tech-stack-detection\n(implementer, reviewer)"]
+    Instructions --> I10["subagent-autonomy\n(implementer, reviewer,\nplan-expander, git-commit)"]
+    Instructions --> I11["output-verbosity-policy\n(all agents)"]
 
     NodeDir --> NodeAgents[AGENTS.md<br/>Agent guidelines]
     NodeDir --> NodeDocs[docs/]
@@ -175,6 +185,10 @@ Skills (`.github/skills/<name>/SKILL.md`) extract shared templates and formats t
 | `implementation-record` | Feature - Implementer | Template for the implementation record artifact (`[0N-task-name]-implementation.md`) produced by the Feature - Implementer |
 | `unity-development` | Feature - Implementer, Feature - Reviewer (Unity projects) | Implementation and review rules for Unity C# projects: MonoBehaviour lifecycle, UI Toolkit pitfalls, test authenticity, bootstrap verification, batch compilation gates |
 | `unity-review-knowledge` | Unity Reviewer | Unity best practices distilled from 11 official Unity ebooks (Unity 6 edition): C# style, performance/profiling, architecture/design patterns, DOTS/ECS, 2D art/rendering |
+| `debug-issue.md` | Debugger | Graph-powered debug workflow: semantic search, call-chain tracing, change detection, impact analysis |
+| `explore-codebase.md` | Explore agent, general exploration | Graph-powered navigation: architecture overview, community detection, relationship tracing, execution flow |
+| `refactor-safely.md` | Refactor pipelines | Graph-powered refactoring: dead-code detection, rename preview, impact radius, safety checks |
+| `review-changes.md` | Reviewer agents | Graph-powered structured review: change detection, risk scoring, test coverage lookup, blast radius analysis |
 
 ## Instructions
 
@@ -185,7 +199,7 @@ Instructions (`.github/instructions/*.instructions.md`) inject conventions into 
 | `codebase-context-bootstrap` | `.github/agents/**` | Reads `docs/CODEBASE_CONTEXT.md` before discovery to reduce redundant codebase scanning |
 | `dev-task-folder` | `.github/agents/**` | Standardizes `dev/feature/[0N-task-name]/` naming, file suffixes, and per-feature QA output paths |
 | `documentation-freshness-check` | 01-project-planner, 02-phase-refiner | Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing |
-| `orchestrator-conventions` | 4 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
+| `orchestrator-conventions` | 3 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
 | `read-only-agent` | 9 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |
 | `challenge-assumptions` | 01-project-planner, 02-phase-refiner | Push back on user requests that break patterns or add unnecessary complexity |
 | `proactive-research` | 01-project-planner, 02-phase-refiner, debugger | Invoke `@Web Researcher` for unfamiliar technologies, errors, or APIs instead of asking the user |

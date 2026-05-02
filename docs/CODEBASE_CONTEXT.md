@@ -8,56 +8,64 @@ Quick-reference for AI agents working on this repository.
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
 - 23 agent definitions in `.github/agents/` (12 user-facing, 11 hidden subagents)
-- 7 skills in `.github/skills/` (shared templates and patterns extracted from agents)
+- 11 skills in `.github/skills/` (7 directory-based shared templates + 4 standalone graph-tool workflow skills)
 - 11 instruction files in `.github/instructions/` (cross-cutting conventions)
-- `.github/learnings/` directory with persistent per-project learnings for agent context
-- `docs/phases/` contains the project roadmap (PHASES_OVERVIEW.md) and phase planning documents (PHASE_01/)
 - Users copy files into their own projects and customize them
 
 ## Folder Structure
 
 ```
+AGENTS.md                       # Code-review-graph MCP tools for this repo
 README.md                       # Repo overview, usage instructions
 .github/
   agents/
     README.md                   # Agent documentation, pipelines, and usage guide
-    *.agent.md                  # 23 agent definition files
+    *.agent.md                  # 23 agent definition files (12 user-facing, 11 hidden)
   skills/
     phase-document-writing/     # Phase Doc & Overview templates, quality checklist
       SKILL.md
-    auditor-conventions/        # Merged auditor skill: constraints, deliverables, file-type taxonomy, report format, severity levels
+    auditor-conventions/        # Audit constraints, deliverables, file-type taxonomy, report format
       SKILL.md
     feature-plan-set/           # Three-file plan convention, sections A–F, stage format
       SKILL.md
-    implementation-pipeline-loop/ # Standard Implement → Review → Commit → Mark Complete loop + post-loop Docs Writer step
+    implementation-pipeline-loop/ # Implement → Review → Commit → Mark Complete loop
       SKILL.md
-    implementation-record/      # Template for the implementation record artifact produced by Feature - Implementer
+    implementation-record/      # Implementation record artifact template
       SKILL.md
-    unity-development/          # Unity C# implementation and review rules: MonoBehaviour lifecycle, UI Toolkit pitfalls, test authenticity
+    unity-development/          # Unity C# implementation and review rules
       SKILL.md
-    unity-review-knowledge/     # Unity best practices from 11 official Unity ebooks (Unity 6 edition)
+    unity-review-knowledge/     # Unity best practices from 11 official ebooks
       SKILL.md
-  learnings/
-    project-learnings.md        # Project-specific lessons and recurring implementation notes
-    review-learnings.md         # Recurring review issues loaded by implementer, reviewer, decomposer, debugger
-    cross-phase-decisions.md    # Decisions that affect downstream features/phases
+    debug-issue.md              # Graph-powered debug workflow skill
+    explore-codebase.md         # Graph-powered codebase navigation skill
+    refactor-safely.md          # Graph-powered safe refactoring skill
+    review-changes.md           # Graph-powered structured code review skill
   instructions/
-    codebase-context-bootstrap.instructions.md  # Reads CODEBASE_CONTEXT.md before discovery (applies to all agents)
-    dev-task-folder.instructions.md     # dev/feature/[0N-task-name]/ and dev/research/[topic-name]/ output naming conventions, per-feature QA paths (applies to all agents)
-    documentation-freshness-check.instructions.md  # Checks for README.md and CODEBASE_CONTEXT.md, recommends @Docs Writer (applies to planner, refiner)
-    challenge-assumptions.instructions.md  # Push back on user requests that break patterns or add unnecessary complexity (applies to planner, refiner)
-    orchestrator-conventions.instructions.md  # Shared orchestrator constraints, branch creation, reporting (applies to 3 orchestrators)
-    proactive-research.instructions.md  # Invoke @Web Researcher for unfamiliar technologies/errors instead of asking the user (applies to planner, refiner, debugger)
-    read-only-agent.instructions.md     # No-modification, no code blocks, no code-level details, approval constraints (applies to 9 agents)
-    learnings-bootstrap.instructions.md  # Read .github/learnings/*.md files before starting work (applies to implementer, reviewer, decomposer, debugger)
-    tech-stack-detection.instructions.md # Detect specialized tech stacks and load matching skills (applies to implementer, reviewer)
-    subagent-autonomy.instructions.md   # Operate autonomously, no questions, sensible defaults (applies to implementer, reviewer, plan-expander, git-commit)
-    output-verbosity-policy.instructions.md # Defines soft-target concision defaults, delta-first responses, and quality-preserving exceptions (applies to all `.github/agents/**`)
+    codebase-context-bootstrap.instructions.md  # Reads CODEBASE_CONTEXT.md before discovery (all agents)
+    dev-task-folder.instructions.md     # dev/feature/ output naming conventions (all agents)
+    documentation-freshness-check.instructions.md  # Checks for README.md/CODEBASE_CONTEXT.md (planner, refiner)
+    challenge-assumptions.instructions.md  # Push back on breaking patterns (planner, refiner)
+    orchestrator-conventions.instructions.md  # Shared orchestrator constraints (3 orchestrators)
+    proactive-research.instructions.md  # @Web Researcher for unfamiliar tech (planner, refiner, debugger)
+    read-only-agent.instructions.md     # No-modification constraints (9 agents)
+    learnings-bootstrap.instructions.md  # Read .github/learnings/*.md (implementer, reviewer, decomposer, debugger)
+    tech-stack-detection.instructions.md # Detect and load matching skills (implementer, reviewer)
+    subagent-autonomy.instructions.md   # No questions, sensible defaults (implementer, reviewer, plan-expander, git-commit)
+    output-verbosity-policy.instructions.md # Soft-target concision defaults (all agents)
 docs/
   AGENT_REGRESSION_BENCHMARK_SPEC.md # Benchmark design spec for agent changes
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
-  phases/                       # Project roadmap (PHASES_OVERVIEW.md) and phase plans (PHASE_01/)
+  UNDERSTANDING_AGENTIC_ECOSYSTEM.md # Agentic AI terminology explainer
+  benchmarks/
+    B001/                       # First benchmark pack (tasks, tools, graders, runs)
+opencode/
+  agents/                       # Derived agent copies for OpenCode platform
+  SYMLINK_SETUP.md              # Symlink setup for skills/
+claude/
+  agents/                       # Derived agent copies for Claude Code platform
+  skills/                       # Symlinked to .github/skills/
+  README.md                     # Claude-specific setup
 nodejs/
   AGENTS.md                     # GitHub Copilot instructions for Node.js/TS projects
   docs/
@@ -66,6 +74,9 @@ python/
   AGENTS.md                     # GitHub Copilot instructions for Python projects
   docs/
     STYLE_GUIDE.md              # Python coding conventions (loaded on demand)
+dev/
+  feature/                      # Pipeline subagent output (plans, reviews, QA)
+  research/                     # Web researcher output
 ```
 
 ## Key Facts
@@ -88,7 +99,7 @@ python/
 
 ### Skills (.github/skills/)
 
-7 skills loaded by agents on demand. See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the mapping of skills to consuming agents.
+11 skills loaded by agents on demand (7 directory-based shared templates + 4 standalone graph-tool workflow skills). See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the full mapping.
 
 ### Instructions (.github/instructions/)
 
@@ -105,7 +116,6 @@ python/
 - Skills are single-source-of-truth — agents do NOT duplicate skill content inline
 - `codebase-context-bootstrap.instructions.md` auto-loads into all agents and directs them to read `docs/CODEBASE_CONTEXT.md` (if it exists) before starting discovery
 - Instruction files auto-load into agents matching their `applyTo` glob pattern
-- Phase planning docs live in `docs/phases/` — the first phase (PHASE_01/) and project roadmap (PHASES_OVERVIEW.md) have been created
 
 ## Conventions
 
@@ -124,7 +134,7 @@ python/
 - **Adding/removing an agent**: Update the agent file in `.github/agents/` AND update `.github/agents/README.md` to keep tables, descriptions, and pipelines current
 - **Adding a new orchestrator**: Add the orchestrator file, add its subagents (with `user-invocable: false`), and update the README agent tables
 - **Changing a shared template or format**: Edit the corresponding skill in `.github/skills/` — do NOT re-inline the content in agent files
-- **Adding a new skill**: Create `.github/skills/<name>/SKILL.md` with YAML frontmatter (`name`, `description`). Update agent files to reference it. Update ARCHITECTURE.md and this file.
+- **Adding a new skill**: Create `.github/skills/<name>/SKILL.md` (or `<name>.md` for standalone skills) with YAML frontmatter (`name`, `description`). Update agent files to reference it. Update ARCHITECTURE.md and this file.
 - **Adding a new instruction**: Create `.github/instructions/<name>.instructions.md` with `applyTo` glob. Update ARCHITECTURE.md and this file.
 - **Updating README.md**: Keep the structure tree, usage instructions, and comparison table current
 

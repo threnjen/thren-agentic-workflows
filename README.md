@@ -17,36 +17,49 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 ```
 .
 ├── README.md
+├── AGENTS.md                    # Code-review-graph MCP tools for this repo
 ├── .github/
-│   ├── agents/                # VS Code Copilot agent definitions
-│   │   ├── README.md          # Agent documentation, pipelines, and usage guide
-│   │   └── *.agent.md         # 23 agent files (12 user-facing, 11 hidden subagents)
-│   ├── skills/                # Shared templates and formats loaded by agents on demand
-│   │   ├── auditor-conventions/       # Audit constraints, report format, severity levels
-│   │   ├── feature-plan-set/          # Three-file plan convention, sections A–F
-│   │   ├── implementation-pipeline-loop/  # Implement → Review → Commit cycle
-│   │   ├── implementation-record/     # Implementation record artifact template
-│   │   ├── phase-document-writing/    # Phase doc templates and quality checklist
-│   │   ├── unity-development/         # Unity C# implementation and review rules
-│   │   └── unity-review-knowledge/    # Unity best practices from official Unity ebooks
-│   ├── instructions/          # Cross-cutting conventions injected via applyTo globs
-│   │   └── *.instructions.md  # 11 instruction files (see ARCHITECTURE.md for full list)
-│   └── learnings/             # Persistent review and implementation learnings for agents
-│       ├── project-learnings.md       # Project-specific lessons and recurring implementation notes
-│       └── review-learnings.md        # Recurring review issues and patterns
-│       └── cross-phase-decisions.md   # Decisions that affect downstream features/phases
+│   ├── agents/                  # VS Code Copilot agent definitions (master source)
+│   │   ├── README.md            # Agent documentation, pipelines, and usage guide
+│   │   └── *.agent.md           # 23 agent files (12 user-facing, 11 hidden subagents)
+│   ├── skills/                  # Templates and formats loaded by agents on demand
+│   │   ├── auditor-conventions/ # Audit constraints, report format, severity levels
+│   │   ├── debug-issue.md       # Graph-powered debug workflow skill
+│   │   ├── explore-codebase.md  # Graph-powered codebase navigation skill
+│   │   ├── feature-plan-set/    # Three-file plan convention, sections A–F
+│   │   ├── implementation-pipeline-loop/ # Implement → Review → Commit cycle
+│   │   ├── implementation-record/        # Implementation record artifact template
+│   │   ├── phase-document-writing/       # Phase doc templates and quality checklist
+│   │   ├── refactor-safely.md   # Graph-powered safe refactoring skill
+│   │   ├── review-changes.md    # Graph-powered structured code review skill
+│   │   ├── unity-development/   # Unity C# implementation and review rules
+│   │   └── unity-review-knowledge/ # Unity best practices from official ebooks
+│   └── instructions/            # Cross-cutting conventions via applyTo globs
+│       └── *.instructions.md    # 11 instruction files (see ARCHITECTURE.md for full list)
 ├── docs/
-│   ├── ARCHITECTURE.md        # Structure diagram and design decisions
-│   ├── CODEBASE_CONTEXT.md    # Agent-oriented quick-reference
-│   └── phases/            # Project roadmap (PHASES_OVERVIEW.md) and phase plans (PHASE_01/)
+│   ├── ARCHITECTURE.md          # Structure diagram and design decisions
+│   ├── CODEBASE_CONTEXT.md      # Agent-oriented quick-reference
+│   ├── UNDERSTANDING_AGENTIC_ECOSYSTEM.md # Agentic AI terminology explainer
+│   ├── AGENT_REGRESSION_BENCHMARK_SPEC.md # Benchmark design spec for agent changes
+│   └── benchmarks/              # Benchmark packs, tools, and run results
+├── opencode/
+│   ├── agents/                  # Derived agent copies for OpenCode platform
+│   └── SYMLINK_SETUP.md         # Symlink setup for skills/ and instructions/
+├── claude/
+│   ├── agents/                  # Derived agent copies for Claude Code platform
+│   ├── skills/                  # Symlinked to .github/skills/
+│   └── README.md                # Claude-specific setup notes
 ├── nodejs/
-│   ├── AGENTS.md              # Agent guidelines for Node.js/TypeScript projects
+│   ├── AGENTS.md                # Copilot instructions for Node.js/TypeScript projects
 │   └── docs/
-│       └── STYLE_GUIDE.md     # Node.js/TypeScript coding conventions
-└── python/
-    ├── AGENTS.md              # Agent guidelines for Python projects
-    └── docs/
-        └── STYLE_GUIDE.md     # Python coding conventions
+│       └── STYLE_GUIDE.md       # Node.js/TypeScript coding conventions
+├── python/
+│   ├── AGENTS.md                # Copilot instructions for Python projects
+│   └── docs/
+│       └── STYLE_GUIDE.md       # Python coding conventions
+└── dev/
+    ├── feature/                 # Pipeline subagent output (feature plans, reviews, QA)
+    └── research/                # Web researcher output
 ```
 
 ## Platform Support
@@ -167,5 +180,4 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#instructions) for the full instr
 - [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — Dense structured facts for AI agent orientation
 - [docs/AGENT_REGRESSION_BENCHMARK_SPEC.md](docs/AGENT_REGRESSION_BENCHMARK_SPEC.md) — Project-specific benchmark design for A/B testing model and agent changes
 - [docs/benchmarks/B001/README.md](docs/benchmarks/B001/README.md) — First concrete benchmark pack with 30 core task cards and run/grader templates
-- [docs/agent-model-reference.md](docs/agent-model-reference.md) — Model selection guide for each agent role
 
