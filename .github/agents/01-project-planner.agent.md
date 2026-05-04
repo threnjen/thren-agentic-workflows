@@ -118,6 +118,7 @@ When the user signals they're ready, write documents incrementally to avoid scop
 - **Later phases add polish** — optimizations, nice-to-haves, and edge cases come last
 - **Each phase should be decomposable into 2-6 features** — too few means the phase is too small; too many means it should be split
 - **Cross-repo phases stay in sync** — if a phase spans repos, each repo gets its own phase doc that cross-references the other
+- **Auto-note cross-phase discoveries** — when planning reveals an architectural decision, design constraint, risk, or deferred capability that affects a later phase, document it immediately in the relevant downstream location (project's `cross-phase-decisions.md`, the phase document's Notes section, or `DISCOVERY_CONTEXT.md`). Never ask "should I note this for later?" — the answer is always yes. A downstream agent can ignore an irrelevant note but cannot consult a note never written.
 
 ## Pipeline Next Step
 
