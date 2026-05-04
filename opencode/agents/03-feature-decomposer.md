@@ -1,6 +1,5 @@
 ---
 description: "Breaks a refined Phase document into independent features, producing a plan file per feature."
-model: anthropic/claude-sonnet-4-6
 permission:
   read: allow
   grep: allow

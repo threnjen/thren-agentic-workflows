@@ -1,6 +1,5 @@
 ---
 description: "Master orchestrator for branch-based blind benchmark runs. Baseline is always current branch; delegates execution to isolated test-runner subagents and performs final scoring."
-model: deepseek/deepseek-v4-flash
 permission:
   task: allow
   read: allow

@@ -3,7 +3,6 @@ name: Test - Writer
 description: "Bootstraps test suites from scratch — creates test files, fixtures, and configuration for untested code."
 tools: [read, edit, search, execute, execute]
 user-invocable: false
-model: GPT-5.3-Codex (copilot)
 
 ---
 

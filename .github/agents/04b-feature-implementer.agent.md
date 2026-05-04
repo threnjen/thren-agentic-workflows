@@ -2,7 +2,6 @@
 name: Feature - Implementer
 description: "Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record."
 tools: [read, edit, search, execute, todo, execute]
-model: GPT-5.3-Codex (copilot)
 
 user-invocable: false
 ---

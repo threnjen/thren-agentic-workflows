@@ -2,7 +2,6 @@
 name: Prod Code Review
 description: "Final pre-production gate — cross-validates all pipeline documents across every feature in a phase and produces a go/no-go readiness assessment."
 tools: [read, search, execute, edit, todo]
-model: Claude Sonnet 4.6 (copilot)
 
 ---
 

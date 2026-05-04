@@ -2,7 +2,6 @@
 name: 03 Feature - Decomposer
 description: "Breaks a refined Phase document into independent features, producing a plan file per feature."
 tools: [read, search, edit, fetch, execute]
-model: Claude Sonnet 4.6 (copilot)
 
 ---
 

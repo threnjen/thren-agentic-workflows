@@ -2,7 +2,6 @@
 name: Feature - Reviewer
 description: "Reviews implementation against a plan for accuracy, bugs, and completeness. Applies fixes directly and produces a review record."
 tools: [read, edit, search, execute, todo, execute]
-model: GPT-5.3-Codex (copilot)
 
 user-invocable: false
 ---
