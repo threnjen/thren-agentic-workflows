@@ -92,6 +92,10 @@ dev/feature/[0N-task-name]/
 └── [0N-task-name]-plan.md      # The plan with stages
 ```
 
+### Commit: Feature Decomposition
+
+After all feature plan files are written for the current session, derive the phase slug with `git rev-parse --abbrev-ref HEAD`, strip the `phase/` prefix, and replace any remaining `/` with `-`. If the current branch is not a `phase/*` branch, use `unknown` as the fallback slug. Then stage only the `dev/feature/` files created or modified in this session and commit them with the exact message `eval: decompose <slug>`.
+
 Each plan file must begin with an `## Execution Metadata` section immediately after the plan title, populated from the Phase 2b analysis:
 
 ```markdown

@@ -101,6 +101,10 @@ When the user signals they're ready:
 
 **Why incremental?** Writing all phases upfront leads to scope creep. By writing one phase at a time, refinements to earlier phases naturally influence later ones.
 
+### Commit: Plan Affirmation
+
+After the user confirms the planning documents are final for this session, stage only the `docs/phases/` files created or modified in this session and commit them with the exact message `eval: affirm plan`.
+
 ### Phase 5: Lifecycle Management
 
 - **Update status** in `PHASES_OVERVIEW.md` as phases progress (Planned → In Progress → Complete)

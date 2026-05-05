@@ -92,9 +92,13 @@ For each feature in the wave (in numeric prefix order), complete the full cycle 
 
 Wait for the implementer to return before proceeding.
 
+**A1. Commit checkpoint** — After the implementer returns, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by this feature. Do not stage files from other feature directories. Commit this checkpoint with the exact message `eval: implement <task>`, replacing `<task>` with the current feature directory name.
+
 **B. Review** — Invoke **04c-feature-reviewer** per Steps B–C from the `implementation-pipeline-loop` skill. Wait for it to return.
 
-**C. Commit** — Commit only the changed files for this feature (Step D from the skill). Stage and commit only files belonging to this feature's scope — do not include files from other features.
+**B1. Commit checkpoint** — After the reviewer returns, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by this feature. Do not stage files from other feature directories. Commit this checkpoint with the exact message `eval: review <task>`, replacing `<task>` with the current feature directory name.
+
+**C. Defer the phase-level checkpoints** — Do not create QA or final-review commits inside the per-feature loop. If QA generation was requested, Step 4 emits one consolidated phase QA checkpoint with the exact message `eval: qa <phase-name>` after staging only the shared QA outputs and any phase-level pipeline documents updated by that step. Step 5 emits the single phase-level final review checkpoint with the exact message `eval: final-review`.
 
 **D. Complete** — Mark the feature complete in the todo list. Begin the next feature.
 
@@ -110,17 +114,21 @@ Invoke one **04b-feature-implementer** per feature in the wave, all at the same 
 
 Wait for ALL implementers in this wave to return before proceeding to Phase B.
 
+After each implementer returns, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by that feature. Do not stage files from other feature directories. Commit each checkpoint in numeric prefix order with the exact message `eval: implement <task>`, replacing `<task>` with the current feature directory name.
+
 **Phase B — Review all features simultaneously.**
 
 Invoke one **04c-feature-reviewer** per feature in the wave, all at the same time, per Steps B–C from the `implementation-pipeline-loop` skill.
 
 Wait for ALL reviewers to return before proceeding to Phase C.
 
-**Phase C — Commit each feature's files in numeric prefix order.**
+After each reviewer returns, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by that feature. Do not stage files from other feature directories. Commit each checkpoint in numeric prefix order with the exact message `eval: review <task>`, replacing `<task>` with the current feature directory name.
+
+**Phase C — Hold the phase-level QA and final-review checkpoints for the later pipeline steps.**
 
 For each feature in the wave (in numeric prefix order):
-1. Commit only the changed files for that feature (Step D from the skill). Stage and commit only files belonging to this feature's scope.
-2. Wait for the commit to complete before committing the next feature.
+1. Do not emit any per-feature QA commit here; if QA generation was requested, Step 4 emits one consolidated phase checkpoint with the exact message `eval: qa <phase-name>` after the shared QA outputs are updated.
+2. Do not add the old Step D conventional commit here; Step 5 now emits the single phase checkpoint with the exact message `eval: final-review`.
 3. Mark the feature complete in the todo list.
 
 Because parallel-safe features have disjoint file scopes, sequential commits within the wave will not conflict.
@@ -142,6 +150,7 @@ Invoke the **04d-feature-qa-writer** subagent:
 After the subagent returns:
 - Verify the QA document exists at the determined path
 - Verify the coverage map exists at the determined path
+- Stage only the consolidated QA outputs and any phase-level pipeline documents updated by this step. Do not stage feature-local source files or files from unrelated feature directories. Commit this checkpoint once with the exact message `eval: qa <phase-name>`, replacing `<phase-name>` with the current phase name used for the QA output path. If the user selected **no** in QA Preference Selection, skip this checkpoint entirely.
 
 ### Step 5: Phase Final Review
 
@@ -170,6 +179,8 @@ Invoke the **prod-code-review** as a subagent. Build the prompt from the applica
 > "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan generation was intentionally skipped by user choice. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings, including the risk impact of skipping QA documentation.
 >
 > Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. All verdicts Approved: NO — use standard mode."
+
+After the prod-code-review subagent returns, stage only the final review artifact and any phase-level pipeline documents updated by this step, then commit them with the exact message `eval: final-review`.
 
 ### Step 6: Report to User
 
