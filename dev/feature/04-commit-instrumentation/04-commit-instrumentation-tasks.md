@@ -25,12 +25,12 @@ Plan note: the source plan does not include a Stage 0 test-bootstrap section. Th
 
 ## Stage 4: Add sub-step commits to `04 Phase - Execute`
 
-- [ ] Update `.github/agents/04-phase-execute.agent.md` so the feature loop emits checkpoints after implement, review, optional QA, and final review.
-- [ ] Use the exact messages `eval: implement <task>`, `eval: review <task>`, `eval: qa <task>`, and `eval: final-review`.
+- [ ] Update `.github/agents/04-phase-execute.agent.md` so the feature loop emits per-feature checkpoints after implement and review, while the QA and final-review checkpoints remain consolidated phase-level steps.
+- [ ] Use the exact messages `eval: implement <task>`, `eval: review <task>`, `eval: qa <phase-name>`, and `eval: final-review`.
 - [ ] Replace the former end-of-feature Step D commit with the `eval: final-review` checkpoint instead of duplicating commits.
-- [ ] Add explicit staging guidance that limits each checkpoint to the current feature directory and the source files changed by that feature.
+- [ ] Add explicit staging guidance that limits implement/review checkpoints to the current feature directory plus its source files, and limits QA/final-review checkpoints to consolidated phase-level outputs.
 - [ ] Note that the QA checkpoint is conditional and is skipped when QA generation is not requested.
-- [ ] Read back the execute-loop section and confirm all four checkpoints are present in the correct order.
+- [ ] Read back the execute-loop and later QA/final-review sections and confirm all four checkpoints are present in the correct orchestrator steps.
 
 ## Stage 5: Propagate to all copy files
 

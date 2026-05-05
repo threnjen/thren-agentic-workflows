@@ -139,7 +139,7 @@ Before writing the implementation record, verify:
 When implementation cannot proceed because of failing tests or an unresolvable issue, append a semantic failure event before suspending work or returning `Blocked`.
 
 1. Read the current git branch. If it does not start with `phase/`, skip ledger writing silently.
-2. Derive `phase-slug` by stripping `phase/` from the branch name and replacing `/` with `-`.
+2. Derive `phase-slug` by stripping `phase/` from the branch name, replacing `/` with `-`, and prefixing the result with `phase-` so it matches the post-commit hook's run directory naming.
 3. Ensure `eval/runs/<phase-slug>/` exists in the target repo with `mkdir -p`.
 4. Append one JSON object line to `eval/runs/<phase-slug>/ledger-events.jsonl` using `>>` with the full schema populated:
 

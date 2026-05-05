@@ -19,8 +19,8 @@
 - **AC1**: `01 Project - Planner` includes a commit checkpoint after the user affirms plan documents are complete, using message: `eval: affirm plan`
 - **AC2**: `02 Phase - Refiner` includes a commit checkpoint after the user affirms phase refinement is done (and the branch has been opened by Feature 3), using message: `eval: affirm phase <slug>`
 - **AC3**: `03 Feature - Decomposer` includes a commit checkpoint after all feature plan files are written, using message: `eval: decompose <slug>`
-- **AC4**: `04 Phase - Execute` adds four sub-step commit checkpoints within each feature's cycle: after implementation (`eval: implement <task>`), after review (`eval: review <task>`), after QA (`eval: qa <task>`), after final review (`eval: final-review`)
-- **AC5**: All sub-step commits in `04 Phase - Execute` scope only to the files belonging to that feature (no cross-feature staging)
+- **AC4**: `04 Phase - Execute` adds per-feature commit checkpoints after implementation (`eval: implement <task>`) and review (`eval: review <task>`), then emits the consolidated phase-level QA checkpoint (`eval: qa <phase-name>`) and the single phase-level final-review checkpoint (`eval: final-review`) in Steps 4 and 5
+- **AC5**: `04 Phase - Execute` keeps feature-local staging for the per-feature implementation/review checkpoints and uses phase-level staging only for the consolidated QA and final-review outputs
 - **AC6**: Commit message convention is defined in each agent's instructions — not left implicit
 - **AC7**: All changes propagated to all six copy files across `opencode/agents/` and `claude/agents/`
 
@@ -88,22 +88,24 @@ Replace `<slug>` with the phase slug derived from the current branch name.
 
 **`04 Phase - Execute`**
 
-Within the feature development loop, the existing pipeline has Implement → Review → (QA) → Commit steps. Add four sub-step commits at these points:
+Within the feature development loop, the existing pipeline has Implement → Review → consolidated QA → consolidated final review. Add the checkpoints at these points:
 
 ```
 A. After Implementer returns → commit: eval: implement <task>
 B. After Reviewer returns → commit: eval: review <task>
-C. After QA Writer returns (if QA was run) → commit: eval: qa <task>
-D. After Final Review is complete → commit: eval: final-review
+C. After the consolidated QA Writer step returns (if QA was run) → commit: eval: qa <phase-name>
+D. After the phase final review is complete → commit: eval: final-review
 ```
 
-For each, the commit instruction must specify: "stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by this feature — do not stage files from other feature directories."
+For A and B, the commit instruction must specify: "stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by this feature — do not stage files from other feature directories."
+
+For C and D, the commit instruction must specify phase-level staging only: shared QA outputs, the final review artifact, and any phase-level pipeline documents updated by those steps.
 
 ### Edge Cases
 
 - **`03 Feature - Decomposer` may not know the branch slug**: The slug is derived from the current git branch. The instruction should specify: run `git rev-parse --abbrev-ref HEAD`, strip `phase/`, replace `/` with `-`. If not on a phase branch, skip the commit or use `eval: decompose unknown`.
-- **`04 Phase - Execute` QA step is conditional**: If the user opted out of QA generation (asked at the start), the `eval: qa <task>` commit does not fire. The instruction must note this.
-- **`04 Phase - Execute` parallel wave**: For a parallel wave, sub-step commits happen per-feature within each feature's invocation — not after the entire wave. The orchestrator must commit after each feature's cycle returns, not batch-commit all wave results at once.
+- **`04 Phase - Execute` QA step is conditional**: If the user opted out of QA generation (asked at the start), the consolidated `eval: qa <phase-name>` commit does not fire. The instruction must note this.
+- **`04 Phase - Execute` parallel wave**: For a parallel wave, implement/review checkpoints still happen per-feature once each subagent returns. QA and final-review remain consolidated phase-level steps after all waves complete.
 - **Message slug in `01 Project - Planner`**: The planner operates at the project level, not a single phase — `eval: affirm plan` (no slug) is correct.
 
 ---
@@ -164,7 +166,7 @@ Read `.github/agents/03-feature-decomposer.agent.md`. Confirm: commit instructio
 
 ### MV4 (AC4, AC5): Execute sub-step commits
 
-Read `.github/agents/04-phase-execute.agent.md`. Confirm: four commit instructions (`implement`, `review`, `qa`, `final-review`) appear within the feature development loop. Confirm each includes a file-scoping note.
+Read `.github/agents/04-phase-execute.agent.md`. Confirm: per-feature `implement` and `review` checkpoints appear within the feature development loop, while `qa` and `final-review` are defined as consolidated phase-level checkpoints in Steps 4 and 5. Confirm the staging guidance matches each scope.
 
 ### MV5 (AC7): Propagation
 
