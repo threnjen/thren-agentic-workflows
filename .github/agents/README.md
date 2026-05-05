@@ -134,6 +134,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **02 Phase - Refiner** | Refine and deepen an individual Phase document |
 | **03 Feature - Decomposer** | Break a phase into features with structured plan files |
 | **04 Phase - Execute** | Orchestrate full phase execution — decompose, implement, review, QA |
+| **05 Eval - Grader** | Score a completed phase run from ledger files plus a rubric YAML and write a structured report |
 | **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
 | **Agent Testing Agent** | Run blind A/B/C branch benchmark execution via isolated subagents, then score and rank variants |
 | **Debugger** | Diagnose and fix frontend or backend application errors |
@@ -178,6 +179,9 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **04 Phase - Execute** (orchestrator — delegates to subagents)
 > Give it a refined Phase document. It checks for existing plans (invoking the Decomposer if missing), expands plans via the Plan Expander, then asks whether to run in **batch mode** (all features on one branch) or **per-feature mode** (one branch/PR per feature). In batch mode, it implements all features then runs consolidated QA and Final Review. In per-feature mode, it implements one feature at a time, runs QA and Final Review per feature, then tells you to merge and re-invoke for the next feature. No user interaction required after the initial mode selection.
+
+**05 Eval - Grader** (user-facing — standalone scorer)
+> Give it a rubric YAML path plus a target phase run. It reads `eval/runs/<phase-slug>/ledger-commits.jsonl` and `eval/runs/<phase-slug>/ledger-events.jsonl`, correlates semantic events onto the commit timeline by SHA association, scores every automatable rubric criterion, flags manual checks as `[NEEDS_HUMAN_REVIEW]`, and writes `score-report-<timestamp>.md` into the same run directory without pausing for user confirmation.
 
 **Audit - Code, Infra, Refactor** (orchestrator — delegates to subagents)
 > Asks which audit type to run (CODE, INFRA, or REFACTOR), delegates to the appropriate auditor subagent, and presents findings. Optionally drives automated remediation by converting audit findings into task plans and running them through the Feature - Implementer → Feature - Reviewer → Feature - QA Writer pipeline. After remediation, updates documentation via the Docs Writer.
@@ -291,6 +295,7 @@ Not everything needs a pipeline. These agents work well on their own:
 
 - **Audit - Code, Infra, Refactor** — Run anytime for a code, infrastructure, or structural health check
 - **Agent Testing Agent** — Run benchmark comparisons where baseline is current branch and candidates are branch checkouts
+- **05 Eval - Grader** — Score a completed `phase/*` run against a rubric and preserve a Markdown score report under `eval/runs/<phase-slug>/`
 - **Test - Orchestrator** — Analyze, write, or fix tests on demand
 - **Prod Code Review** — Point at any `dev/feature/[0N-task-name]/` folder for an independent readiness check
 - **Debugger** — Fix a specific frontend or backend error without a full pipeline

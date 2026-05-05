@@ -7,7 +7,7 @@ Quick-reference for AI agents working on this repository.
 - A **template repository** of `AGENTS.md`, style guide files, and VS Code Copilot agent definitions
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
-- 23 agent definitions in `.github/agents/` (12 user-facing, 11 hidden subagents)
+- 24 agent definitions in `.github/agents/` (13 user-facing, 11 hidden subagents)
 - 11 skills in `.github/skills/` (7 directory-based shared templates + 4 standalone graph-tool workflow skills)
 - 11 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
@@ -20,7 +20,7 @@ README.md                       # Repo overview, usage instructions
 .github/
   agents/
     README.md                   # Agent documentation, pipelines, and usage guide
-    *.agent.md                  # 23 agent definition files (12 user-facing, 11 hidden)
+    *.agent.md                  # 24 agent definition files (13 user-facing, 11 hidden)
   skills/
     phase-document-writing/     # Phase Doc & Overview templates, quality checklist
       SKILL.md
@@ -93,7 +93,7 @@ dev/
 ### Agent Definitions (.github/agents/)
 
 - **4 orchestrators** (user-facing): Phase - Execute, Audit - Code/Infra/Refactor, Test - Orchestrator, Agent Testing Agent
-- **8 standalone user-facing**: Planner, Refiner, Decomposer, Debugger, Docs Writer, Prod Code Review, Web Researcher, Unity Reviewer
+- **9 standalone user-facing**: Planner, Refiner, Decomposer, Eval Grader, Debugger, Docs Writer, Prod Code Review, Web Researcher, Unity Reviewer
 - **11 hidden subagents** (`user-invocable: false`): Agent Test Runner, Plan Expander, Implementer, Reviewer, QA Writer, 3 Auditors, Test Analyst/Writer/Fixer
 - See [agents/README.md](../.github/agents/README.md) for detailed descriptions and invocation patterns.
 

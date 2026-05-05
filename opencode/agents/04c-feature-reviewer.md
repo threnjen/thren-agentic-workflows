@@ -195,6 +195,37 @@ After the review is complete — and after any approved fixes have been applied 
 
 ## Update Review Learnings
 
+## Ledger Annotation for Changes Requested
+
+If your final verdict is `Changes Requested`, append a semantic failure event before returning to the orchestrator.
+
+1. Read the current git branch. If it does not start with `phase/`, skip ledger writing silently.
+2. Derive `phase-slug` by stripping `phase/` from the branch name and replacing `/` with `-`.
+3. Ensure `eval/runs/<phase-slug>/` exists in the target repo with `mkdir -p`.
+4. Append one JSON object line to `eval/runs/<phase-slug>/ledger-events.jsonl` using `>>` with the full schema populated:
+
+```json
+{
+  "task_slug": "<current-task-slug>",
+  "harness": "<run-harness>",
+  "model": "<run-model>",
+  "stage": "review",
+  "detected_by": "reviewer",
+  "severity": "medium",
+  "evidence": "Brief description of what failed or why changes are requested",
+  "first_seen_attempt": 1,
+  "resolved_attempt": null,
+  "resolved_by": null,
+  "human_intervention_required": false,
+  "regression": false,
+  "propagated_from_stage": null
+}
+```
+
+Set `task_slug` to the active feature/task slug. Read `eval/runs/<phase-slug>/run-metadata.json` first and reuse its exact `harness` and `model` values in every event row for the run. If that file is missing, use `opencode` as `harness`, capture the exact current runtime model label exposed by the session as `model`, write those two values to `run-metadata.json`, then append the event row. Use `"unknown"` only if the current session does not expose a model label at all. Choose `severity` from `low`, `medium`, `high`, or `blocking`. Do not write a row for `Approved` or `Approved with Reservations` outcomes.
+
+If a previously logged review-stage issue for the same `task_slug` is later resolved, append a new JSONL row instead of editing the original row. Keep `task_slug`, `stage`, and `detected_by` aligned with the original event, and populate `resolved_attempt` plus `resolved_by` with the actor who resolved it.
+
 After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append an entry to `.github/learnings/review-learnings.md` as a durable, reusable rule — no dates or feature-specific references. Follow the existing format: Pattern, Impact, Watch for.
 
 Also check for **decisions that affect future phases** (deferred work, documented deviations, scope gaps). If found, append them to `.github/learnings/cross-phase-decisions.md` under the appropriate section. Follow the existing format and categorization.

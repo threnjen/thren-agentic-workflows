@@ -24,6 +24,35 @@ Before diving in, classify the error by examining:
   - *Backend*: Startup failure (missing config, bad imports, port conflicts), runtime exception (unhandled errors during request processing), database-related (connection refused, query failures, migrations), dependency-related (missing packages, version conflicts), environment-related (missing env vars, wrong runtime version, permissions)
   - *Full-stack*: API contract mismatches, serialization issues, auth flow failures, CORS
 
+### Step 1a — Annotate User-Discovered Issues on Phase Branches
+
+Before investigation, fixes, or any first commit on a `phase/*` branch, append a semantic failure event for the user-discovered issue.
+
+1. Read the current git branch. If it does not start with `phase/`, skip ledger writing silently.
+2. Derive `phase-slug` by stripping `phase/` from the branch name and replacing `/` with `-`.
+3. Ensure `eval/runs/<phase-slug>/` exists in the target repo with `mkdir -p`.
+4. Append one JSON object line to `eval/runs/<phase-slug>/ledger-events.jsonl` using `>>` with the full schema populated:
+
+```json
+{
+  "task_slug": "<current-task-slug>",
+  "harness": "<run-harness>",
+  "model": "<run-model>",
+  "stage": "debug",
+  "detected_by": "user-discovered",
+  "severity": "medium",
+  "evidence": "Brief description of the issue reported by the user",
+  "first_seen_attempt": 1,
+  "resolved_attempt": null,
+  "resolved_by": null,
+  "human_intervention_required": true,
+  "regression": false,
+  "propagated_from_stage": null
+}
+```
+
+Set `task_slug` to the active feature/task slug. Read `eval/runs/<phase-slug>/run-metadata.json` first and reuse its exact `harness` and `model` values in every event row for the run. If that file is missing, use `copilot` as `harness`, capture the exact current runtime model label exposed by the session as `model`, write those two values to `run-metadata.json`, then append the event row. Use `"unknown"` only if the current session does not expose a model label at all. Choose `severity` from `low`, `medium`, `high`, or `blocking`.
+
 ### Step 2 — Diagnose
 
 - **Frontend runtime errors**: Use the browser-tools MCP to take screenshots and examine console logs. After taking screenshots, check `./screenshots/` for saved images

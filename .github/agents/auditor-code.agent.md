@@ -2,7 +2,6 @@
 name: Auditor - Code
 description: "Audits source code for quality, security, readability, DRY, type hints, and dependencies. Produces a structured findings report."
 tools: [read, search, edit, fetch, execute]
-model: GPT-5.3-Codex (copilot)
 
 user-invocable: false
 ---

@@ -3,7 +3,7 @@
 Opinionated templates and VS Code Copilot agent definitions for standardizing how [GitHub Copilot](https://docs.github.com/en/copilot) behaves in your projects. Two things in one repo:
 
 1. **`AGENTS.md` + style guide templates** (Node.js and Python) — copy into your project so Copilot follows your coding conventions, TDD workflow, and quality gates
-2. **23 VS Code Copilot agent definitions** — a full orchestrator + subagent system for planning, implementing, reviewing, auditing, testing, and documenting entire projects hands-free
+2. **24 VS Code Copilot agent definitions** — a full orchestrator + subagent system for planning, implementing, reviewing, auditing, testing, and documenting entire projects hands-free
 
 ## Why This Exists
 
@@ -21,7 +21,7 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 ├── .github/
 │   ├── agents/                  # VS Code Copilot agent definitions (master source)
 │   │   ├── README.md            # Agent documentation, pipelines, and usage guide
-│   │   └── *.agent.md           # 23 agent files (12 user-facing, 11 hidden subagents)
+│   │   └── *.agent.md           # 24 agent files (13 user-facing, 11 hidden subagents)
 │   ├── skills/                  # Templates and formats loaded by agents on demand
 │   │   ├── auditor-conventions/ # Audit constraints, report format, severity levels
 │   │   ├── debug-issue.md       # Graph-powered debug workflow skill
@@ -153,7 +153,7 @@ Detailed, language-specific coding conventions covering:
 
 ### Agent Definitions (.github/agents/)
 
-23 agent files using an **orchestrator + subagent** pattern (4 orchestrators, 8 standalone user-facing, 11 hidden subagents). Orchestrators delegate to subagents automatically; shared subagents are reused across orchestrator pipelines. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation and pipeline descriptions.
+24 agent files using an **orchestrator + subagent** pattern (4 orchestrators, 9 standalone user-facing, 11 hidden subagents). Orchestrators delegate to subagents automatically; shared subagents are reused across orchestrator pipelines. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation and pipeline descriptions.
 
 ### Skills (.github/skills/)
 

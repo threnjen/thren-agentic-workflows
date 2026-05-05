@@ -3,7 +3,6 @@ name: Audit - Code, Infra, Refactor
 description: "Orchestrates code, infrastructure, or refactor audits (audit-only: documents; with remediation: documents + code) — delegates to auditor subagents with optional automated remediation through the feature pipeline."
 tools: [agent, read, search, todo, edit, web, execute]
 agents: [Auditor - Code, Auditor - Infra, Auditor - Refactor, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Prod Code Review, Docs Writer]
-model: Claude Sonnet 4.6 (copilot)
 
 ---
 
