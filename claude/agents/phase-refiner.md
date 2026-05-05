@@ -166,14 +166,19 @@ After the user affirms the phase document is ready for implementation and the do
 	chmod +x <target-repo>/.git/hooks/post-commit
 	```
 5. Create the ledger directory for this phase run: `mkdir -p <target-repo>/eval/runs/phase-<slug>/`
-6. Update the target repo's `.gitignore` idempotently so `eval/runs/` is ignored without duplicate entries:
+6. Write the canonical run metadata file for this phase so later ledger rows can reuse the exact same harness/model pair:
+	```sh
+	printf '%s\n' '{"harness":"claude-code","model":"<current-model-label>"}' > <target-repo>/eval/runs/phase-<slug>/run-metadata.json
+	```
+	Replace `<current-model-label>` with the exact model label shown by the current Claude Code session. Keep that exact string unchanged in all later ledger rows for this run.
+7. Update the target repo's `.gitignore` idempotently so `eval/runs/` is ignored without duplicate entries:
 	```sh
 	if ! grep -qxF 'eval/runs/' <target-repo>/.gitignore 2>/dev/null; then
 		 echo 'eval/runs/' >> <target-repo>/.gitignore
 	fi
 	```
 
-7. After the branch-open steps are complete, stage the `docs/phases/` files modified in this session and the target repo `.gitignore` if Step 6 appended `eval/runs/`, then commit them with the exact message `eval: affirm phase <slug>`. Replace `<slug>` with the slug derived in Step 2.
+8. After the branch-open steps are complete, stage the `docs/phases/` files modified in this session and the target repo `.gitignore` if Step 7 appended `eval/runs/`, then commit them with the exact message `eval: affirm phase <slug>`. Replace `<slug>` with the slug derived in Step 2.
 
 Path assumption risk: the hook symlink depends on the absolute path to `github-agents-source-of-truth`. If that repo moves, reinstall it with the same one-command `ln -sfn <absolute-path-to-github-agents-source-of-truth>/eval/hooks/post-commit.sh <target-repo>/.git/hooks/post-commit` command using the new absolute path, then rerun `chmod +x <target-repo>/.git/hooks/post-commit`.
 

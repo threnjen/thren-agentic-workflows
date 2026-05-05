@@ -87,17 +87,19 @@ If a criterion has no usable automatable check, or is explicitly marked `require
 
 ### Step 2: Load Source Data
 
-Read the rubric first, then attempt to load both ledger files for the resolved phase slug.
+Read the rubric first, then attempt to load `eval/runs/<phase-slug>/run-metadata.json` and both ledger files for the resolved phase slug.
 
+- `run-metadata.json` is the canonical run identity file. When present, it supplies the expected `harness` and `model` values for the run.
 - `ledger-commits.jsonl` is the raw commit timeline. Each row includes `sha`, `branch`, `message`, `timestamp`, and changed files.
 - `ledger-events.jsonl` is the semantic event stream. Each row includes fields such as `task_slug`, `stage`, `detected_by`, `severity`, `evidence`, `human_intervention_required`, `regression`, and resolution metadata.
 
 Handle ledger edge cases explicitly:
 
+- Missing `run-metadata.json`: derive run-level harness/model from ledger rows when possible and note that the canonical run identity file is absent.
 - Missing `ledger-commits.jsonl`: note in the report that the raw commit ledger is missing, likely meaning the post-commit hook was not installed or did not run.
 - Missing `ledger-events.jsonl`: note in the report that no semantic event ledger is present.
 - Empty ledgers: valid zero-row inputs.
-- Unknown `harness` or `model` values in ledger rows: preserve and report them as-is.
+- Unknown `harness` or `model` values in ledger rows: preserve and report them as-is. If `run-metadata.json` is present, also report that the row-level metadata did not match the canonical run metadata.
 
 ### Step 3: Build the Unified Timeline
 
@@ -148,6 +150,7 @@ The report must be a self-contained Markdown artifact with these sections, in or
    - phase slug
    - target repo root
    - rubric path
+   - run metadata file presence and canonical harness/model when available
    - rubric harness/model when present
    - ledger file presence and row counts
 2. `Unified Timeline`

@@ -146,8 +146,8 @@ When implementation cannot proceed because of failing tests or an unresolvable i
 ```json
 {
 	"task_slug": "<current-task-slug>",
-	"harness": "unknown",
-	"model": "unknown",
+	"harness": "<run-harness>",
+	"model": "<run-model>",
 	"stage": "implement",
 	"detected_by": "implementer",
 	"severity": "medium",
@@ -161,7 +161,7 @@ When implementation cannot proceed because of failing tests or an unresolvable i
 }
 ```
 
-Set `task_slug` to the active feature/task slug. Use `"unknown"` for `harness` or `model` unless the current context makes them explicit. When known, set `harness` to `copilot`, `opencode`, or `claude-code`. Choose `severity` from `low`, `medium`, `high`, or `blocking`. Do not write ledger rows for routine Red-Green-Refactor iterations that are resolved within normal implementation flow.
+Set `task_slug` to the active feature/task slug. Read `eval/runs/<phase-slug>/run-metadata.json` first and reuse its exact `harness` and `model` values in every event row for the run. If that file is missing, use `claude-code` as `harness`, capture the exact current runtime model label exposed by the session as `model`, write those two values to `run-metadata.json`, then append the event row. Use `"unknown"` only if the current session does not expose a model label at all. Choose `severity` from `low`, `medium`, `high`, or `blocking`. Do not write ledger rows for routine Red-Green-Refactor iterations that are resolved within normal implementation flow.
 
 If a previously logged implementation-stage issue for the same `task_slug` is later resolved, append a new JSONL row instead of editing the original row. Keep `task_slug`, `stage`, and `detected_by` aligned with the original event, and populate `resolved_attempt` plus `resolved_by` with the actor who resolved it.
 
