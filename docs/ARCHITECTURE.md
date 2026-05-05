@@ -49,6 +49,7 @@ flowchart TD
     Instructions --> I9["tech-stack-detection\n(implementer, reviewer)"]
     Instructions --> I10["subagent-autonomy\n(implementer, reviewer,\nplan-expander, git-commit)"]
     Instructions --> I11["output-verbosity-policy\n(all agents)"]
+    Instructions --> I12["csharp-style\n(unity-reviewer, auditor-code,\nimplementer, reviewer)"]
 
     NodeDir --> NodeAgents[AGENTS.md<br/>Agent guidelines]
     NodeDir --> NodeDocs[docs/]

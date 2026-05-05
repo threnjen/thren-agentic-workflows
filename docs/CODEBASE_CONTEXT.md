@@ -9,7 +9,7 @@ Quick-reference for AI agents working on this repository.
 - Two language variants for templates: Node.js/TypeScript and Python
 - 24 agent definitions in `.github/agents/` (13 user-facing, 11 hidden subagents)
 - 11 skills in `.github/skills/` (7 directory-based shared templates + 4 standalone graph-tool workflow skills)
-- 11 instruction files in `.github/instructions/` (cross-cutting conventions)
+- 12 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
 
 ## Folder Structure
@@ -52,6 +52,7 @@ README.md                       # Repo overview, usage instructions
     tech-stack-detection.instructions.md # Detect and load matching skills (implementer, reviewer)
     subagent-autonomy.instructions.md   # No questions, sensible defaults (implementer, reviewer, plan-expander, git-commit)
     output-verbosity-policy.instructions.md # Soft-target concision defaults (all agents)
+    csharp-style.instructions.md        # C# (Google) style rules — naming, formatting, idioms (unity-reviewer, auditor-code, implementer, reviewer)
 docs/
   AGENT_REGRESSION_BENCHMARK_SPEC.md # Benchmark design spec for agent changes
   ARCHITECTURE.md               # Structure diagram and design decisions
@@ -107,7 +108,7 @@ dev/
 
 ### Instructions (.github/instructions/)
 
-11 instruction files with `applyTo` glob matching. See [ARCHITECTURE.md](ARCHITECTURE.md#instructions) for the full mapping.
+12 instruction files with `applyTo` glob matching. See [ARCHITECTURE.md](ARCHITECTURE.md#instructions) for the full mapping.
 
 ## File Relationships
 
