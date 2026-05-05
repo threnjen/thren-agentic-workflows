@@ -28,7 +28,7 @@ Before diving in, classify the error by examining:
 Before investigation, fixes, or any first commit on a `phase/*` branch, append a semantic failure event for the user-discovered issue.
 
 1. Read the current git branch. If it does not start with `phase/`, skip ledger writing silently.
-2. Derive `phase-slug` by stripping `phase/` from the branch name and replacing `/` with `-`.
+2. Derive `phase-slug` by stripping `phase/` from the branch name, replacing `/` with `-`, and prefixing the result with `phase-` so it matches the post-commit hook's run directory naming.
 3. Ensure `eval/runs/<phase-slug>/` exists in the target repo with `mkdir -p`.
 4. Append one JSON object line to `eval/runs/<phase-slug>/ledger-events.jsonl` using `>>` with the full schema populated:
 
@@ -51,6 +51,8 @@ Before investigation, fixes, or any first commit on a `phase/*` branch, append a
 ```
 
 Set `task_slug` to the active feature/task slug. Read `eval/runs/<phase-slug>/run-metadata.json` first and reuse its exact `harness` and `model` values in every event row for the run. If that file is missing, use `claude-code` as `harness`, capture the exact current runtime model label exposed by the session as `model`, write those two values to `run-metadata.json`, then append the event row. Use `"unknown"` only if the current session does not expose a model label at all. Choose `severity` from `low`, `medium`, `high`, or `blocking`.
+
+Always keep `detected_by` set to `user-discovered` for Debugger-written rows. When the originating stage of the failure is unknown, set `propagated_from_stage` to `null` instead of guessing or omitting the field. The grader or later human review can backfill stage propagation during scoring if stronger evidence appears.
 
 ### Step 2 — Diagnose
 

@@ -1,0 +1,31 @@
+# Seed rubric for the eval-infrastructure-foundation phase.
+# Copy this file when starting a new rubric and adapt the criteria to the target project.
+
+phase: phase-eval-infrastructure-foundation
+harness: copilot
+model: GPT-5.4 (copilot)
+criteria:
+  - id: R01
+    description: Canonical run metadata exists for the phase run
+    automatable: true
+    check: Confirm eval/runs/phase-eval-infrastructure-foundation/run-metadata.json exists and contains harness and model keys.
+
+  - id: R02
+    description: Checkpoint commits use the canonical eval naming convention
+    automatable: true
+    check: Confirm ledger commit messages use eval: plan-affirmed, eval: phase-affirmed, eval: features-decomposed, eval: implement <feature-slug>, eval: review <feature-slug>, eval: qa, and eval: final-review.
+
+  - id: R03
+    description: Ledger-writing agents target the hook-compatible phase-prefixed run directory
+    automatable: true
+    check: Confirm ledger-writing agent instructions derive phase-slug with a phase- prefix and write to eval/runs/<phase-slug>/ledger-events.jsonl.
+
+  - id: R04
+    description: Debugger rows default propagated_from_stage to null when origin is unknown
+    automatable: true
+    check: Confirm Debugger instructions keep detected_by set to user-discovered and set propagated_from_stage to null rather than guessing.
+
+  - id: R05
+    description: Human review confirms ambiguous failure events are attached to the right commit context
+    automatable: false
+    requires_human: true

@@ -207,7 +207,7 @@ These agents run automatically as part of orchestrator pipelines. They are prefi
 > Give it a refined Phase document. It checks for existing plans (invoking `@03-feature-decomposer` if missing), expands plans, then asks whether to run in **batch mode** or **per-feature mode**. Delegates all implementation, review, QA, and documentation to subagents. No user interaction required after initial mode selection.
 
 **`@05-eval-grader`** (user-facing — standalone scorer)
-> Give it a rubric YAML path plus a target phase run. It reads `eval/runs/<phase-slug>/ledger-commits.jsonl` and `eval/runs/<phase-slug>/ledger-events.jsonl`, correlates semantic events onto the commit timeline by SHA association, scores every automatable rubric criterion, flags manual checks as `[NEEDS_HUMAN_REVIEW]`, and writes `score-report-<timestamp>.md` into the same run directory without pausing for user confirmation.
+> Give it a rubric YAML path plus a target phase run. The rubric should follow the grader schema documented in the agent, with `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` as the seed example. The grader reads `eval/runs/<phase-slug>/ledger-commits.jsonl` and `eval/runs/<phase-slug>/ledger-events.jsonl`, correlates semantic events onto the commit timeline by SHA association, scores every automatable rubric criterion, flags manual checks as `[NEEDS_HUMAN_REVIEW]`, and writes `score-report-<timestamp>.md` into the same run directory without pausing for user confirmation.
 
 **`@audit-code-infra-refactor`** (orchestrator — delegates to subagents)
 > Asks which audit type to run (CODE, INFRA, or REFACTOR), delegates to the appropriate `@z-auditor-*` subagent, and presents findings. Optionally drives automated remediation through the feature pipeline.

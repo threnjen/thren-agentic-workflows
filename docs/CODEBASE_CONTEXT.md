@@ -66,6 +66,10 @@ claude/
   agents/                       # Derived agent copies for Claude Code platform
   skills/                       # Symlinked to .github/skills/
   README.md                     # Claude-specific setup
+eval/
+  hooks/                        # Post-commit hook template and related evaluation hooks
+  rubrics/                      # Seed grader rubrics and schema-aligned example YAML files
+  runs/                         # Evaluation run outputs and ledgers
 nodejs/
   AGENTS.md                     # GitHub Copilot instructions for Node.js/TS projects
   docs/

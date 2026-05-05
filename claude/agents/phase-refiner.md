@@ -178,7 +178,7 @@ After the user affirms the phase document is ready for implementation and the do
 	fi
 	```
 
-8. After the branch-open steps are complete, stage the `docs/phases/` files modified in this session and the target repo `.gitignore` if Step 7 appended `eval/runs/`, then commit them with the exact message `eval: affirm phase <slug>`. Replace `<slug>` with the slug derived in Step 2.
+8. After the branch-open steps are complete, stage the `docs/phases/` files modified in this session and the target repo `.gitignore` if Step 7 appended `eval/runs/`, then commit them with the exact message `eval: phase-affirmed`.
 
 Path assumption risk: the hook symlink depends on the absolute path to `github-agents-source-of-truth`. If that repo moves, reinstall it with the same one-command `ln -sfn <absolute-path-to-github-agents-source-of-truth>/eval/hooks/post-commit.sh <target-repo>/.git/hooks/post-commit` command using the new absolute path, then rerun `chmod +x <target-repo>/.git/hooks/post-commit`.
 

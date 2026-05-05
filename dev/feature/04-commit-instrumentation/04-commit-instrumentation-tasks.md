@@ -5,32 +5,32 @@ Plan note: the source plan does not include a Stage 0 test-bootstrap section. Th
 ## Stage 1: Add checkpoint to `01 Project - Planner`
 
 - [ ] Insert a `Plan Affirmation` checkpoint in `.github/agents/01-project-planner.agent.md` after the user approval/finalization section.
-- [ ] Use the exact message `eval: affirm plan` and scope the checkpoint to `docs/phases/` files created or modified in the current session.
+- [ ] Use the exact message `eval: plan-affirmed` and scope the checkpoint to `docs/phases/` files created or modified in the current session.
 - [ ] Keep the planner change additive; do not restructure unrelated instructions.
 - [ ] Read back the planner file and confirm the checkpoint appears after the plan-approval flow.
 
 ## Stage 2: Add checkpoint to `02 Phase - Refiner`
 
 - [ ] Locate the branch-open block introduced by `03-branch-lifecycle-migration` in `.github/agents/02-phase-refiner.agent.md`.
-- [ ] Append the checkpoint `eval: affirm phase <slug>` at the end of that block without duplicating branch creation or hook-install steps.
-- [ ] Document how to derive `<slug>` from the current phase branch name.
+- [ ] Append the checkpoint `eval: phase-affirmed` at the end of that block without duplicating branch creation or hook-install steps.
+- [ ] Keep the refiner checkpoint message fixed; the branch already provides the phase identity.
 - [ ] Read back the refiner file and confirm the checkpoint appears after the branch-open guidance.
 
 ## Stage 3: Add checkpoint to `03 Feature - Decomposer`
 
 - [ ] Add a `Feature Decomposition` checkpoint after the plan-writing section in `.github/agents/03-feature-decomposer.agent.md`.
-- [ ] Use the exact message `eval: decompose <slug>` and include the branch-name derivation plus fallback behavior when not on a phase branch.
+- [ ] Use the exact message `eval: features-decomposed`.
 - [ ] Keep staging scoped to the `dev/feature/` files created in the active decomposition session.
 - [ ] Read back the decomposer file and confirm the checkpoint follows the plan-writing guidance.
 
 ## Stage 4: Add sub-step commits to `04 Phase - Execute`
 
-- [ ] Update `.github/agents/04-phase-execute.agent.md` so the feature loop emits checkpoints after implement, review, optional QA, and final review.
-- [ ] Use the exact messages `eval: implement <task>`, `eval: review <task>`, `eval: qa <task>`, and `eval: final-review`.
+- [ ] Update `.github/agents/04-phase-execute.agent.md` so the feature loop emits per-feature checkpoints after implement and review, while the QA and final-review checkpoints remain consolidated phase-level steps.
+- [ ] Use the exact messages `eval: implement <feature-slug>`, `eval: review <feature-slug>`, `eval: qa`, and `eval: final-review`.
 - [ ] Replace the former end-of-feature Step D commit with the `eval: final-review` checkpoint instead of duplicating commits.
-- [ ] Add explicit staging guidance that limits each checkpoint to the current feature directory and the source files changed by that feature.
+- [ ] Add explicit staging guidance that limits implement/review checkpoints to the current feature directory plus its source files, and limits QA/final-review checkpoints to consolidated phase-level outputs.
 - [ ] Note that the QA checkpoint is conditional and is skipped when QA generation is not requested.
-- [ ] Read back the execute-loop section and confirm all four checkpoints are present in the correct order.
+- [ ] Read back the execute-loop and later QA/final-review sections and confirm all four checkpoints are present in the correct orchestrator steps.
 
 ## Stage 5: Propagate to all copy files
 
