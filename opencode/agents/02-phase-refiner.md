@@ -186,6 +186,30 @@ If your iteration surfaced issues that affect the broader project:
 - Recommend the user take those issues back to `@01-project-planner`
 - Do NOT modify other existing Phase documents yourself
 
+### Phase 7: Open Working Branch
+
+After the user affirms the phase document is ready for implementation and the document has been written:
+
+1. Confirm the target repo's absolute path (or read it from context if already provided)
+2. Derive the branch slug by stripping the `phase/` prefix from the intended branch name and replacing any remaining `/` with `-`
+3. Open or resume the working branch in the target repo:
+  - Create a new branch with `git checkout -b phase/<slug>` (or `git switch -c phase/<slug>`)
+  - If the branch already exists because the user is resuming work, use `git checkout phase/<slug>` instead of `-b`
+4. Install the eval hook with the exact commands below, using absolute paths:
+  ```sh
+  ln -sfn <absolute-path-to-github-agents-source-of-truth>/eval/hooks/post-commit.sh <target-repo>/.git/hooks/post-commit
+  chmod +x <target-repo>/.git/hooks/post-commit
+  ```
+5. Create the ledger directory for this phase run: `mkdir -p <target-repo>/eval/runs/phase-<slug>/`
+6. Update the target repo's `.gitignore` idempotently so `eval/runs/` is ignored without duplicate entries:
+  ```sh
+  if ! grep -qxF 'eval/runs/' <target-repo>/.gitignore 2>/dev/null; then
+     echo 'eval/runs/' >> <target-repo>/.gitignore
+  fi
+  ```
+
+Path assumption risk: the hook symlink depends on the absolute path to `github-agents-source-of-truth`. If that repo moves, reinstall it with the same one-command `ln -sfn <absolute-path-to-github-agents-source-of-truth>/eval/hooks/post-commit.sh <target-repo>/.git/hooks/post-commit` command using the new absolute path, then rerun `chmod +x <target-repo>/.git/hooks/post-commit`.
+
 
 ## Escalation to 01-project-planner
 

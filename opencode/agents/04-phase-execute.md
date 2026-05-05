@@ -20,7 +20,7 @@ Before starting, verify the phase document exists and read it to extract the pha
 
 ## QA Preference Selection
 
-At the beginning of the conversation, before Step 0, ask the user:
+At the beginning of the conversation, before Step 1, ask the user:
 
 > **"Do you want a QA document generated for this phase? (yes/no)"**
 
@@ -30,10 +30,6 @@ Wait for the user's response before proceeding.
 - If the user says **no**, skip Step 4 and continue to Step 5.
 
 ## Execution Pipeline
-
-### Step 0: Create Working Branch
-
-Create a branch using prefix `phase/<phase-name>`. See auto-loaded orchestrator conventions for the full procedure.
 
 ### Step 1: Obtain Feature Plans
 
