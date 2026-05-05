@@ -22,7 +22,7 @@ flowchart TD
     GH --> Instructions[instructions/]
 
     Agents --> Orchestrators["Orchestrators (4)\nPhase-Execute, Audit,\nTest, Agent Testing"]
-    Agents --> UserAgents["User-Facing Standalone (8)\nPlanner, Refiner, Decomposer,\nDebugger, Prod Review,\nWeb Research, Docs, Unity Reviewer"]
+    Agents --> UserAgents["User-Facing Standalone (9)\nPlanner, Refiner, Decomposer,\nEval Grader, Debugger,\nProd Review, Web Research,\nDocs, Unity Reviewer"]
     Agents --> Subagents["Hidden Subagents (11)\nAgent Test Runner,\nPlan Expander, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer"]
     Orchestrators -->|delegate to| Subagents
 
@@ -102,7 +102,7 @@ flowchart LR
 
 ## Agent Architecture
 
-The `.github/agents/` directory contains 23 agent definitions organized in an **orchestrator + subagent** pattern:
+The `.github/agents/` directory contains 24 agent definitions organized in an **orchestrator + subagent** pattern:
 
 %% Shows the orchestrator delegation model
 ```mermaid
@@ -142,6 +142,8 @@ flowchart TD
 ```
 
 Three orchestrators share **Feature - Implementer** and **Feature - Reviewer** as common subagents for driving automated remediation. Each orchestrator follows the same pattern: analyze/audit first, then optionally run fixes through the implementation pipeline.
+
+Standalone user-facing agents sit beside that orchestration graph: **01 Project - Planner**, **02 Phase - Refiner**, **03 Feature - Decomposer**, **05 Eval - Grader**, **Debugger**, **Docs Writer**, **Prod Code Review**, **Unity Reviewer**, and **Web Researcher**.
 
 ## Shared vs Language-Specific Content
 
