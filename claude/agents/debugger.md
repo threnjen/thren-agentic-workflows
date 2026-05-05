@@ -52,6 +52,8 @@ Before investigation, fixes, or any first commit on a `phase/*` branch, append a
 
 Set `task_slug` to the active feature/task slug. Read `eval/runs/<phase-slug>/run-metadata.json` first and reuse its exact `harness` and `model` values in every event row for the run. If that file is missing, use `claude-code` as `harness`, capture the exact current runtime model label exposed by the session as `model`, write those two values to `run-metadata.json`, then append the event row. Use `"unknown"` only if the current session does not expose a model label at all. Choose `severity` from `low`, `medium`, `high`, or `blocking`.
 
+Always keep `detected_by` set to `user-discovered` for Debugger-written rows. When the originating stage of the failure is unknown, set `propagated_from_stage` to `null` instead of guessing or omitting the field. The grader or later human review can backfill stage propagation during scoring if stronger evidence appears.
+
 ### Step 2 — Diagnose
 
 - **Frontend runtime errors**: Examine console logs and any available screenshots

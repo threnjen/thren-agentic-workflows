@@ -9,6 +9,7 @@
 | `.github/agents/05-eval-grader.agent.md` | Master GitHub Copilot agent definition for the grader workflow | Create |
 | `opencode/agents/05-eval-grader.md` | OpenCode variant of the grader agent | Create |
 | `claude/agents/05-eval-grader.md` | Claude Code variant of the grader agent | Create |
+| `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` | Seed rubric file that makes the grader schema concrete for future runs | Create |
 
 ### Read-Only Reference Files
 
@@ -31,8 +32,9 @@
 
 ## Constraints
 
-- Preserve the plan's non-goals: no rubric authoring or validation, no CI or subagent invocation, no ledger mutation, no automatic invocation flow, and no grading for non-phase branches.
+- Preserve the plan's non-goals: no bespoke per-project production rubric authoring beyond the seeded example, no CI or subagent invocation, no ledger mutation, no automatic invocation flow, and no grading for non-phase branches.
 - The grader must accept a user-provided rubric YAML path at invocation time and abort clearly when that path is not supplied.
+- The grader must make its rubric schema explicit and keep the seeded example rubric aligned with that schema.
 - The unified timeline must correlate commit and event ledgers by SHA and use that timeline to support per-feature scoring.
 - Use the literal marker `[NEEDS_HUMAN_REVIEW]` for any criterion marked `human_intervention_required: true`, `requires_human: true`, or otherwise lacking an automatable check.
 - Keep the three platform variants aligned in behavior and report format. Platform-specific filename or frontmatter differences must not change the grader workflow.
@@ -50,7 +52,8 @@
 1. Confirm the upstream ledger contracts from `04-commit-instrumentation` and `04-ledger-annotation` are stable enough to reference in the grader instructions.
 2. Write the master GitHub Copilot agent definition in `.github/agents/05-eval-grader.agent.md`.
 3. Propagate the same grader body to `opencode/agents/05-eval-grader.md` and `claude/agents/05-eval-grader.md`.
-4. Verify the three platform copies stay behaviorally aligned and that the report/output instructions match the plan.
+4. Add the seeded example rubric under `eval/rubrics/` so the schema has a concrete reference implementation.
+5. Verify the three platform copies stay behaviorally aligned and that the report/output instructions match the plan.
 
 ## Environment State
 

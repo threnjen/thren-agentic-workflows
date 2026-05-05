@@ -1,6 +1,6 @@
 ---
 name: 05 Eval - Grader
-description: "Scores a completed phase run by ingesting ledger-commits.jsonl and ledger-events.jsonl against a user-provided rubric YAML. Produces a structured score report without interactive prompts."
+description: "Scores a completed phase run by ingesting ledger-commits.jsonl and ledger-events.jsonl against a user-provided rubric YAML that follows the documented grader schema. Produces a structured score report without interactive prompts."
 tools: [read, search, edit]
 ---
 
@@ -39,7 +39,7 @@ If the phase identifier cannot be resolved, abort with:
 
 ## Rubric Expectations
 
-Expect the rubric to provide phase-level metadata plus a `criteria` list. The grader does not author or rewrite the rubric; it only consumes it.
+Expect the rubric to provide phase-level metadata plus a `criteria` list. The schema in this section is the grader's contract. The grader does not author or rewrite the rubric; it only consumes it. A seed example lives at `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` and should be treated as the reference layout when authoring new rubrics.
 
 Minimal expected shape:
 

@@ -103,7 +103,7 @@ When the user signals they're ready:
 
 ### Commit: Plan Affirmation
 
-After the user confirms the planning documents are final for this session, stage only the `docs/phases/` files created or modified in this session and commit them with the exact message `eval: affirm plan`.
+After the user confirms the planning documents are final for this session, stage only the `docs/phases/` files created or modified in this session and commit them with the exact message `eval: plan-affirmed`.
 
 ### Phase 5: Lifecycle Management
 

@@ -5,7 +5,7 @@
 - **Wave:** 5
 - **Parallel safe:** yes
 - **Depends on:** 04-commit-instrumentation, 04-ledger-annotation
-- **Key files modified:** `.github/agents/05-eval-grader.agent.md` (new), `opencode/agents/05-eval-grader.md` (new), `claude/agents/05-eval-grader.md` (new)
+- **Key files modified:** `.github/agents/05-eval-grader.agent.md` (new), `opencode/agents/05-eval-grader.md` (new), `claude/agents/05-eval-grader.md` (new), `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` (new)
 - **Sequential reason:** n/a
 
 ---
@@ -23,10 +23,11 @@
 - **AC7**: Agent correlates rows from `ledger-commits.jsonl` and `ledger-events.jsonl` by commit SHA to produce a unified timeline showing: what was committed, what events were detected, when
 - **AC8**: Score report is written to `eval/runs/<phase-slug>/score-report-<timestamp>.md` in the target repo
 - **AC9**: Score report structure includes: run metadata, per-feature summary table, failure breakdown, human intervention count, regression flags, and overall pass/fail verdict
+- **AC10**: A seed rubric example exists at `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` and matches the grader's documented schema
 
 ### Non-Goals
 
-- Does not author or validate the rubric — that is a per-project artifact the user provides
+- Does not author bespoke per-project production rubrics beyond the seeded example contract file
 - Does not invoke other agents or trigger CI — scoring is a standalone read-and-analyze operation
 - Does not modify `ledger-commits.jsonl` or `ledger-events.jsonl`
 - No automated grader invocation — user invokes manually at the end of a phase
@@ -45,6 +46,7 @@
 | AC7 | Agent body: SHA correlation step | Read file: correlation procedure described |
 | AC8 | Agent body: output step | Read file: `score-report-<timestamp>.md` path specified |
 | AC9 | Agent body: report structure section | Read file: all nine report sections defined |
+| AC10 | `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` | Read file: schema-aligned example rubric exists |
 
 ---
 
@@ -52,7 +54,7 @@
 
 ### Rubric YAML Format
 
-The agent must document the expected rubric schema. Proposed minimal format:
+The agent must document the expected rubric schema and ship a seed example rubric in the repo. Proposed minimal format:
 
 ```yaml
 phase: phase-06d
@@ -73,7 +75,7 @@ criteria:
     requires_human: true
 ```
 
-The agent reads this file, applies automatable checks where possible, and flags `requires_human: true` items as `[NEEDS_HUMAN_REVIEW]`.
+The agent reads rubric files with this shape, applies automatable checks where possible, and flags `requires_human: true` items as `[NEEDS_HUMAN_REVIEW]`. The seeded example rubric at `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` is the concrete reference layout for future rubric authors.
 
 ### Score Report Structure (AC9)
 
@@ -172,6 +174,7 @@ The grader only needs `read` (to load ledger files and rubric), `search` (to run
 - [ ] Report written to file — not only printed to stdout
 - [ ] `[NEEDS_HUMAN_REVIEW]` is a consistent literal string used as a marker
 - [ ] Rubric-not-found case handled with clear abort message
+- [ ] Seed rubric example added and matches the documented schema
 - [ ] Missing ledger file case noted in report, not a hard failure
 - [ ] All three agent copies are identical in body content (only filename differs)
 
@@ -222,6 +225,10 @@ Confirm: SHA correlation step described, output path `eval/runs/<phase-slug>/sco
 
 Read `opencode/agents/05-eval-grader.md` and `claude/agents/05-eval-grader.md`. Confirm body content is identical to the master file.
 
+### MV7 (AC10): Seed rubric exists
+
+Read `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml`. Confirm it includes the top-level `phase`, `harness`, `model`, and `criteria` fields and uses criterion entries consistent with the documented schema.
+
 ---
 
 ## Stage 1: Write master agent definition
@@ -234,4 +241,10 @@ Read `opencode/agents/05-eval-grader.md` and `claude/agents/05-eval-grader.md`. 
 
 **Goal**: Create `opencode/agents/05-eval-grader.md` and `claude/agents/05-eval-grader.md` with identical body content.
 **Success Criteria**: MV1 and MV6 pass.
+**Status**: Not Started
+
+## Stage 3: Add the seeded rubric contract
+
+**Goal**: Create `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` as the concrete example of the grader schema.
+**Success Criteria**: MV7 passes.
 **Status**: Not Started
