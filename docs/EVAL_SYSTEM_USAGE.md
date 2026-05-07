@@ -2,20 +2,6 @@
 
 This guide explains how to run the phase evaluation system end-to-end once your pipeline and ledgers are in place.
 
-## Phase 01 Standards Adopted From B001
-
-The Phase 01 workflow intentionally adopts these B001-style standards:
-
-- reproducibility via a run config file committed per evaluation run
-- deterministic artifact naming and run directory conventions
-- explicit report contract fields for easy comparison between runs
-- cleanup and retention rules so important evidence is never lost
-- rubric-writing quality anchors to reduce ambiguous criteria
-- one-variable-change discipline for fair A/B comparisons
-- explicit non-inferiority gates for promotion decisions
-
-This keeps Phase 01 lightweight while preserving compatibility with later full benchmark operations.
-
 ## What This System Scores
 
 The `05 Eval - Grader` agent scores a completed phase run by combining:
@@ -65,10 +51,14 @@ Create run directory and metadata:
 
 ```bash
 mkdir -p eval/runs/phase-<slug>
-printf '%s\n' '{"harness":"copilot","model":"<exact-current-model-label>"}' > eval/runs/phase-<slug>/run-metadata.json
+cat > eval/runs/phase-<slug>/run-config.yaml <<'EOF'
+runtime:
+  harness: copilot
+  model: <exact-current-model-label>
+EOF
 ```
 
-Keep `harness` and `model` identical throughout one run. Do not rename or restyle them between events.
+Keep `runtime.harness` and `runtime.model` identical throughout one run. Do not rename or restyle them between events.
 
 ### 4. Commit naming conventions the evaluator expects
 
@@ -173,7 +163,7 @@ Even if the Phase 01 grader outputs `PASS`/`FAIL`/`PARTIAL`, these anchors impro
 
 Inside `eval/runs/<phase-slug>/`:
 
-- `run-metadata.json`
+- `run-config.yaml`
 - `ledger-commits.jsonl`
 - `ledger-events.jsonl` (may be absent if no failures were recorded)
 
@@ -262,7 +252,7 @@ Before scoring:
 
 - Branch name starts with `phase/`
 - Hook is installed and executable
-- `run-metadata.json` exists with stable harness/model
+- `run-config.yaml` exists with stable harness/model
 - Rubric file exists and points at the same phase slug
 - Checkpoint commit messages follow canonical names
 
@@ -297,7 +287,7 @@ Additional deterministic conventions adopted from B001 style:
 
 After scoring, clean temporary scratch outputs but retain these artifacts:
 
-- `eval/runs/<phase-slug>/run-metadata.json`
+- `eval/runs/<phase-slug>/run-config.yaml`
 - `eval/runs/<phase-slug>/ledger-commits.jsonl`
 - `eval/runs/<phase-slug>/ledger-events.jsonl` (if present)
 - `eval/runs/<phase-slug>/score-report-<timestamp>.md`

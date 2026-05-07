@@ -168,7 +168,11 @@ After the user affirms the phase document is ready for implementation and the do
 5. Create the ledger directory for this phase run: `mkdir -p <target-repo>/eval/runs/phase-<slug>/`
 6. Write the canonical run metadata file for this phase so later ledger rows can reuse the exact same harness/model pair:
 	```sh
-	printf '%s\n' '{"harness":"claude-code","model":"<current-model-label>"}' > <target-repo>/eval/runs/phase-<slug>/run-metadata.json
+	cat > <target-repo>/eval/runs/phase-<slug>/run-config.yaml <<'EOF'
+	runtime:
+	  harness: claude-code
+	  model: <current-model-label>
+	EOF
 	```
 	Replace `<current-model-label>` with the exact model label shown by the current Claude Code session. Keep that exact string unchanged in all later ledger rows for this run.
 7. Update the target repo's `.gitignore` idempotently so `eval/runs/` is ignored without duplicate entries:

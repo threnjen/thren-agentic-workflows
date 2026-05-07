@@ -8,7 +8,7 @@ criteria:
   - id: R01
     description: Canonical run metadata exists for the phase run
     automatable: true
-    check: Confirm eval/runs/phase-eval-infrastructure-foundation/run-metadata.json exists and contains harness and model keys.
+    check: Confirm eval/runs/phase-eval-infrastructure-foundation/run-config.yaml exists and contains runtime.harness and runtime.model keys.
 
   - id: R02
     description: Checkpoint commits use the canonical eval naming convention

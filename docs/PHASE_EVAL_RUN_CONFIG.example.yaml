@@ -14,7 +14,7 @@ inputs:
   rubric_path: eval/rubrics/phase-06d-planning-and-implementation.yaml
   ledger_commits_path: eval/runs/phase-06d/ledger-commits.jsonl
   ledger_events_path: eval/runs/phase-06d/ledger-events.jsonl
-  run_metadata_path: eval/runs/phase-06d/run-metadata.json
+  run_config_path: eval/runs/phase-06d/run-config.yaml
 
 constraints:
   phase_branch_required: true
