@@ -1,0 +1,43 @@
+phase_eval:
+  benchmark_style: phase-01-lightweight
+  run_id: PHASE-EVAL-06d-20260506-120000
+  phase_slug: phase-06d
+  baseline_sha: <git-sha-used-as-baseline>
+  repo_root: <absolute-or-relative-target-repo-path>
+
+runtime:
+  harness: copilot
+  model: <exact-current-model-label>
+  grader_agent: 05 Eval - Grader
+
+inputs:
+  rubric_path: eval/rubrics/phase-06d-planning-and-implementation.yaml
+  ledger_commits_path: eval/runs/phase-06d/ledger-commits.jsonl
+  ledger_events_path: eval/runs/phase-06d/ledger-events.jsonl
+  run_metadata_path: eval/runs/phase-06d/run-metadata.json
+
+constraints:
+  phase_branch_required: true
+  one_variable_change_required: true
+  pin_grader_version: true
+
+execution_defaults:
+  repeats_per_task: 3
+  randomize_task_order: true
+  timeout_seconds_per_task: 900
+
+recommended_gates:
+  hard_pass_drop_fail_percent: 2.0
+  non_inferiority:
+    max_quality_drop: -0.10
+    max_hard_pass_drop_percent: -1.0
+    min_cost_per_pass_improvement_percent: 15.0
+
+output:
+  score_report_path: eval/runs/phase-06d/score-report-20260506-120000.md
+  optional_run_contract_path: eval/runs/phase-06d/run-contract.json
+
+notes:
+  - Keep harness and model values stable for all rows in this run.
+  - If comparing variants, change one variable at a time.
+  - Preserve score reports and ledgers as retained artifacts.

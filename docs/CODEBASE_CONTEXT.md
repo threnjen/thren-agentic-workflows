@@ -59,8 +59,7 @@ docs/
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
   UNDERSTANDING_AGENTIC_ECOSYSTEM.md # Agentic AI terminology explainer
-  benchmarks/
-    B001/                       # First benchmark pack (tasks, tools, graders, runs)
+  PHASE_EVAL_RUN_CONFIG.example.yaml # Reproducibility template for Phase 01 eval runs
 opencode/
   agents/                       # Derived agent copies for OpenCode platform
   SYMLINK_SETUP.md              # Symlink setup for skills/

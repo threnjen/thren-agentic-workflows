@@ -21,8 +21,6 @@ This agent should run from a minimal user command like "do this" plus 1-2 branch
 Default behavior (no extra prompting):
 
 - benchmark id: `B001`
-- manifest: `docs/benchmarks/B001/manifest.yaml`
-- tasks: `docs/benchmarks/B001/tasks/core.yaml`
 - repo root: `.`
 - baseline: always current branch/worktree (null hypothesis)
 
@@ -38,7 +36,7 @@ Only ask a follow-up question if no candidate branch names were provided.
 
 ## Required Input
 
-- Benchmark config path (default: `docs/benchmarks/B001/manifest.yaml` + `docs/benchmarks/B001/tasks/core.yaml`)
+- Benchmark specification path (default: `docs/AGENT_REGRESSION_BENCHMARK_SPEC.md`)
 - One or two candidate branches
 - Optional run id
 
@@ -51,7 +49,7 @@ If `run_id` is not provided, derive it deterministically from inputs:
 
 All artifacts must live under:
 
-- `docs/benchmarks/B001/runs/local/agentic/[run-id]/`
+- `eval/runs/agentic/[run-id]/`
 
 Required files:
 
@@ -92,7 +90,7 @@ Invoke **@agent-test-runner** once with:
 
 - variant name: `baseline-A`
 - branch mode: `current`
-- output path under `docs/benchmarks/B001/runs/local/agentic/[run-id]/baseline-results.json`
+- output path under `eval/runs/agentic/[run-id]/baseline-results.json`
 - a benchmark task list and any runner inputs
 
 Capture returned payload path and metadata.
@@ -125,7 +123,7 @@ Required outputs:
 
 Write final scoring report to:
 
-- `docs/benchmarks/B001/runs/local/agentic/[run-id]/final-score-report.json`
+- `eval/runs/agentic/[run-id]/final-score-report.json`
 
 The scoring report must include:
 
