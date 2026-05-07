@@ -42,14 +42,15 @@ flowchart TD
     Instructions --> I2["dev-task-folder\n(all agents)"]
     Instructions --> I3["documentation-freshness-check\n(planner, refiner)"]
     Instructions --> I4["challenge-assumptions\n(planner, refiner)"]
-    Instructions --> I5["orchestrator-conventions\n(3 orchestrators)"]
-    Instructions --> I6["proactive-research\n(planner, refiner, debugger)"]
-    Instructions --> I7["read-only-agent\n(9 read-only agents)"]
-    Instructions --> I8["learnings-bootstrap\n(implementer, reviewer,\ndecomposer, debugger)"]
-    Instructions --> I9["tech-stack-detection\n(implementer, reviewer)"]
-    Instructions --> I10["subagent-autonomy\n(implementer, reviewer,\nplan-expander, git-commit)"]
-    Instructions --> I11["output-verbosity-policy\n(all agents)"]
-    Instructions --> I12["csharp-style\n(unity-reviewer, auditor-code,\nimplementer, reviewer)"]
+    Instructions --> I5["graph-rebuild-hook\n(3 orchestrators)"]
+    Instructions --> I6["orchestrator-conventions\n(3 orchestrators)"]
+    Instructions --> I7["proactive-research\n(planner, refiner, debugger)"]
+    Instructions --> I8["read-only-agent\n(9 read-only agents)"]
+    Instructions --> I9["learnings-bootstrap\n(implementer, reviewer,\ndecomposer, debugger)"]
+    Instructions --> I10["tech-stack-detection\n(implementer, reviewer)"]
+    Instructions --> I11["subagent-autonomy\n(implementer, reviewer,\nplan-expander, git-commit)"]
+    Instructions --> I12["output-verbosity-policy\n(all agents)"]
+    Instructions --> I13["csharp-style\n(unity-reviewer, auditor-code,\nimplementer, reviewer)"]
 
     NodeDir --> NodeAgents[AGENTS.md<br/>Agent guidelines]
     NodeDir --> NodeDocs[docs/]
@@ -203,6 +204,7 @@ Instructions (`.github/instructions/*.instructions.md`) inject conventions into 
 | `dev-task-folder` | `.github/agents/**` | Standardizes `dev/feature/[0N-task-name]/` naming, file suffixes, and per-feature QA output paths |
 | `documentation-freshness-check` | 01-project-planner, 02-phase-refiner | Checks for `README.md` and `docs/CODEBASE_CONTEXT.md`, recommends `@Docs Writer` if missing |
 | `orchestrator-conventions` | 3 orchestrator agents | Shared constraints: progress tracking, output verification, pipeline discipline, review reject loop |
+| `graph-rebuild-hook` | 3 orchestrator agents | Triggers a deterministic code-review-graph build at the end of every orchestrator pipeline |
 | `read-only-agent` | 9 read-only agents | No codebase modification + approval-before-writing constraints (with subagent exception) |
 | `challenge-assumptions` | 01-project-planner, 02-phase-refiner | Push back on user requests that break patterns or add unnecessary complexity |
 | `proactive-research` | 01-project-planner, 02-phase-refiner, debugger | Invoke `@Web Researcher` for unfamiliar technologies, errors, or APIs instead of asking the user |
@@ -210,6 +212,7 @@ Instructions (`.github/instructions/*.instructions.md`) inject conventions into 
 | `tech-stack-detection` | implementer, reviewer | Detect specialized tech stacks and load matching skills before proceeding |
 | `subagent-autonomy` | implementer, reviewer, plan-expander, git-commit | Operate autonomously — no questions, no confirmation, sensible defaults |
 | `output-verbosity-policy` | `.github/agents/**` | Defines soft-target concision defaults, delta-first response shape, and quality-preserving exception triggers |
+| `csharp-style` | unity-reviewer, auditor-code, implementer, reviewer | C# (Google) style rules for naming, organization, formatting, and idiomatic C# |
 
 ## Platform Variants
 

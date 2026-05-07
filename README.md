@@ -35,7 +35,7 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 │   │   ├── unity-development/   # Unity C# implementation and review rules
 │   │   └── unity-review-knowledge/ # Unity best practices from official ebooks
 │   └── instructions/            # Cross-cutting conventions via applyTo globs
-│       └── *.instructions.md    # 11 instruction files (see ARCHITECTURE.md for full list)
+│       └── *.instructions.md    # 13 instruction files (see ARCHITECTURE.md for full list)
 ├── docs/
 │   ├── ARCHITECTURE.md          # Structure diagram and design decisions
 │   ├── CODEBASE_CONTEXT.md      # Agent-oriented quick-reference
