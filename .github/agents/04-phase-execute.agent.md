@@ -2,7 +2,7 @@
 name: 04 Phase - Execute
 description: "Orchestrates end-to-end execution of a refined Phase document (documents + code via subagents) — checks for existing plans, invokes Decomposer if missing, expands plans via Plan Expander, then delegates implementation, review, QA, and documentation."
 tools: [agent, read, search, todo, execute]
-agents: [03 Feature - Decomposer, Feature - Plan Expander, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Prod Code Review, Docs Writer]
+agents: [03 Feature - Decomposer, Feature - Plan Expander, Feature - Implementer, Feature - Reviewer, Unity Reviewer, Feature - QA Writer, Prod Code Review, Docs Writer]
 ---
 
 You are a **Phase Execution Orchestrator**. Your job is to take a refined Phase document and drive it to completion by delegating work to specialized subagents in sequence.
@@ -70,6 +70,10 @@ After all return:
 
 Load the `implementation-pipeline-loop` skill.
 
+Detect whether this is a Unity project before starting wave execution:
+- If a `game/Assets` directory exists at repository root, set `is-unity-project: yes`
+- Otherwise, set `is-unity-project: no`
+
 Execute waves in numeric wave order according to the execution schedule built in Step 1. Within each wave, use sequential or parallel execution based on the `parallel_safe` flags.
 
 Record each reviewer's verdict as it returns:
@@ -91,7 +95,13 @@ Wait for the implementer to return before proceeding.
 
 **A1. Commit checkpoint** — After the implementer returns, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by this feature. Do not stage files from other feature directories. Commit this checkpoint with the exact message `eval: implement <feature-slug>`, replacing `<feature-slug>` with the current feature directory name.
 
-**B. Review** — Invoke **Feature - Reviewer** per Steps B–C from the `implementation-pipeline-loop` skill. Wait for it to return.
+**B. Review**
+
+If `is-unity-project: yes`, first invoke **Unity Reviewer** for this feature as a Unity-specific review pass:
+
+> "[SUBAGENT-MODE] Review Unity-related changes for the feature at `dev/feature/[0N-task-name]/`. Focus on Unity lifecycle/wiring, rendering/performance pitfalls, UI Toolkit concerns, and project Unity conventions. Return structured findings only; do not implement fixes."
+
+Then invoke **Feature - Reviewer** per Steps B–C from the `implementation-pipeline-loop` skill. Wait for it to return.
 
 **B1. Commit checkpoint** — After the reviewer returns, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by this feature. Do not stage files from other feature directories. Commit this checkpoint with the exact message `eval: review <feature-slug>`, replacing `<feature-slug>` with the current feature directory name.
 
@@ -114,6 +124,10 @@ Wait for ALL implementers in this wave to return before proceeding to Phase B.
 After each implementer returns, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by that feature. Do not stage files from other feature directories. Commit each checkpoint in numeric prefix order with the exact message `eval: implement <feature-slug>`, replacing `<feature-slug>` with the current feature directory name.
 
 **Phase B — Review all features simultaneously.**
+
+If `is-unity-project: yes`, run a Unity review pass first:
+- Invoke one **Unity Reviewer** per feature in the wave, all at the same time, using the same feature-scoped prompt as the sequential loop.
+- Wait for ALL Unity Reviewer runs in this wave to return.
 
 Invoke one **Feature - Reviewer** per feature in the wave, all at the same time, per Steps B–C from the `implementation-pipeline-loop` skill.
 

@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "propagate: master assets (once)",
+      "type": "shell",
+      "command": "python3 scripts/propagate_master_assets.py --once",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      }
+    },
+    {
+      "label": "watch: propagate master assets",
+      "type": "shell",
+      "command": "python3 scripts/propagate_master_assets.py --watch",
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "never",
+        "panel": "dedicated",
+        "clear": false
+      },
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^Starting master asset watcher",
+          "endsPattern": "^$"
+        }
+      }
+    }
+  ]
+}

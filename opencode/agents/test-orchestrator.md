@@ -1,12 +1,13 @@
 ---
 description: "Orchestrates test operations (analysis: documents; write/fix/remediation: documents + code) — delegates analysis, writing, or fixing to test subagents with optional remediation through the feature pipeline."
-deepseek/deepseek-v4-flash
+deepseek/deepseek-v4-pro
 permission:
-  task: allow
-  read: allow
-  grep: allow
-  todowrite: allow
   bash: allow
+  glob: allow
+  grep: allow
+  read: allow
+  task: allow
+  todowrite: allow
 ---
 
 You are a **Test Orchestrator**. Your job is to run the appropriate test subagent based on what the user needs, then optionally drive remediation of findings through the feature development pipeline.
@@ -119,4 +120,4 @@ Follow the Post-Loop: Documentation Update section from the `implementation-pipe
 
 ## Pipeline Asymmetry (by design)
 
-This orchestrator omits QA Writer and prod-code-review steps. Test remediation tasks are scoped to test code, which is self-validating (tests pass or fail).
+This orchestrator omits QA Writer and Prod Code Review steps. Test remediation tasks are scoped to test code, which is self-validating (tests pass or fail).

@@ -1,13 +1,14 @@
 ---
 description: "Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record."
+deepseek/deepseek-v4-pro
 mode: subagent
-deepseek/deepseek-v4-flash
 hidden: true
 permission:
-  read: allow
-  edit: allow
-  grep: allow
   bash: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  read: allow
   todowrite: allow
 ---
 
@@ -58,7 +59,7 @@ Check `-context.md` Environment State for a recorded test runner command and bas
 
 If no test files exist or test coverage is below 50%:
 - **STOP** — Do not proceed with implementation
-- Inform the user: *"This project has insufficient test coverage to safely implement changes. I recommend invoking `@test-writer` to bootstrap a test suite before proceeding."*
+- Inform the user: *"This project has insufficient test coverage to safely implement changes. I recommend invoking `@Test - Writer` to bootstrap a test suite before proceeding."*
 - Do not continue unless the user explicitly overrides this gate
 
 **Branch: Tests exist, all pass**
@@ -149,23 +150,23 @@ When implementation cannot proceed because of failing tests or an unresolvable i
 
 ```json
 {
-  "task_slug": "<current-task-slug>",
-  "harness": "<run-harness>",
-  "model": "<run-model>",
-  "stage": "implement",
-  "detected_by": "implementer",
-  "severity": "medium",
-  "evidence": "Brief description of the failing test or blocking issue",
-  "first_seen_attempt": 1,
-  "resolved_attempt": null,
-  "resolved_by": null,
-  "human_intervention_required": false,
-  "regression": false,
-  "propagated_from_stage": null
+	"task_slug": "<current-task-slug>",
+	"harness": "<run-harness>",
+	"model": "<run-model>",
+	"stage": "implement",
+	"detected_by": "implementer",
+	"severity": "medium",
+	"evidence": "Brief description of the failing test or blocking issue",
+	"first_seen_attempt": 1,
+	"resolved_attempt": null,
+	"resolved_by": null,
+	"human_intervention_required": false,
+	"regression": false,
+	"propagated_from_stage": null
 }
 ```
 
-Set `task_slug` to the active feature/task slug. Read `eval/runs/<phase-slug>/run-config.yaml` first and reuse `runtime.harness` and `runtime.model` values in every event row for the run. If that file is missing, use `opencode` as `harness`, capture the exact current runtime model label exposed by the session as `model`, write those values under `runtime.harness` and `runtime.model` in `run-config.yaml`, then append the event row. Use `"unknown"` only if the current session does not expose a model label at all. Choose `severity` from `low`, `medium`, `high`, or `blocking`. Do not write ledger rows for routine Red-Green-Refactor iterations that are resolved within normal implementation flow.
+Set `task_slug` to the active feature/task slug. Read `eval/runs/<phase-slug>/run-config.yaml` first and reuse `runtime.harness` and `runtime.model` values in every event row for the run. If that file is missing, use `copilot` as `harness`, capture the exact current runtime model label exposed by the session as `model`, write those values under `runtime.harness` and `runtime.model` in `run-config.yaml`, then append the event row. Use `"unknown"` only if the current session does not expose a model label at all. Choose `severity` from `low`, `medium`, `high`, or `blocking`. Do not write ledger rows for routine Red-Green-Refactor iterations that are resolved within normal implementation flow.
 
 If a previously logged implementation-stage issue for the same `task_slug` is later resolved, append a new JSONL row instead of editing the original row. Keep `task_slug`, `stage`, and `detected_by` aligned with the original event, and populate `resolved_attempt` plus `resolved_by` with the actor who resolved it.
 
@@ -175,7 +176,7 @@ When implementation is complete, you produce TWO outputs:
 
 ### A. Written Artifact: `[0N-task-name]-implementation.md`
 
-This is the **primary deliverable**. Write it to `dev/feature/[0N-task-name]/` as described in Section F above. The 04c-feature-reviewer subagent consumes this file to scope its review. It must be written before the return summary.
+This is the **primary deliverable**. Write it to `dev/feature/[0N-task-name]/` as described in Section F above. The Feature - Reviewer subagent consumes this file to scope its review. It must be written before the return summary.
 
 ### B. Return Summary
 
@@ -186,3 +187,88 @@ Required fields only:
 - **Test results**: Baseline → Final pass/fail counts
 - **Deviations**: "None" or one-line description per deviation
 - **Gaps**: "None" or one-line description per gap
+
+---
+
+## Auto-Loaded Instructions
+
+### Csharp Style
+
+# C# Style Rules (Google Style Guide)
+
+## Naming
+
+| Target | Convention |
+|--------|-----------|
+| Classes, methods, enums, public fields/properties, namespaces | PascalCase |
+| Local variables, parameters | camelCase |
+| Private/protected/internal fields and properties | `_camelCase` |
+| Interfaces | `I` prefix (`IMyInterface`) |
+| Filenames, directories | PascalCase |
+
+- Acronyms are single words: `MyRpc` not `MyRPC`
+- `const`, `static`, `readonly` do not affect naming conventions
+- One core class per file; filename matches the main class
+
+## Organization
+
+**Modifier order:** `public protected internal private new abstract virtual override sealed static readonly extern unsafe volatile async`
+
+**`using` order:** Alphabetical; `System.*` imports first; declared outside any namespace.
+
+**Class member order:**
+1. Nested classes, enums, delegates, events
+2. Static, const, and readonly fields
+3. Fields and properties
+4. Constructors and finalizers
+5. Methods
+
+Within each group: Public → Internal → Protected internal → Protected → Private
+
+## Formatting
+
+- 2-space indent; no tabs; 100-column limit
+- One statement per line; one assignment per statement
+- Braces always required (even when optional)
+- No line break before opening brace; no line break between `}` and `else`
+- Space after `if`/`for`/`while`/commas; no space inside parentheses
+- Line continuations: 4-space indent
+
+## C# Rules
+
+**Constants:** Always `const` when possible; `readonly` as fallback; no magic numbers.
+
+**Collections:**
+- Inputs: most restrictive type (`IReadOnlyList<>`, `IReadOnlyCollection<>`, `IEnumerable<>`)
+- Outputs: `IList<>` when transferring ownership; most restrictive option otherwise
+- Prefer `List<>` over arrays for public members; arrays only for fixed-size or multidimensional data
+
+**Properties:** Single-line read-only → expression body (`=>`). All others → `{ get; set; }`.
+
+**Expression body:** Lambdas and properties only — not on method definitions.
+
+**Structs vs Classes:** Almost always use a class. Structs only for small value-type-like objects (e.g., `Vector3`, `Quaternion`, `Bounds`).
+
+**Lambdas:** Non-trivial (>~2 statements) or reused lambdas → named methods.
+
+**LINQ:** Single-line calls preferred; member extension methods (`list.Where(x)`) over SQL-style keywords; avoid `Container.ForEach(...)` for more than one statement.
+
+**`var`:** Use when type is obvious from context. Avoid for basic types, compiler-resolved numerics, or when the type aids readability.
+
+**Delegates:** Always call via null-conditional: `SomeDelegate?.Invoke()`.
+
+**`ref`/`out`:** Use `out` for non-input returns (placed after all other params). Use `ref` only when mutating an input is necessary — not as a performance optimization for structs.
+
+**Return types:** Prefer a named class over `Tuple<>` for complex return types.
+
+**Extension methods:** Only when source is unavailable or unfeasible to change; only for core general features; err on the side of not adding them.
+
+**Namespaces:** Max 2 levels deep; do not force file/folder layout to match namespaces.
+
+**Null/struct returns:** Prefer `bool` success + `out` struct. Nullable structs acceptable when they significantly improve readability.
+
+**Removing during iteration:** Use `list.RemoveAll(predicate)` when possible; otherwise build a replacement container.
+
+**Field initializers:** Encouraged.
+
+**Object initializers:** Fine for plain data types; avoid for classes or structs that have constructors.

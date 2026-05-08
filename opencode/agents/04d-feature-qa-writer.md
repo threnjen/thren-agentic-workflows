@@ -1,13 +1,14 @@
 ---
 description: "Writes a consolidated manual QA checklist covering integration points not verifiable by automated tests."
+deepseek/deepseek-v4-pro
 mode: subagent
-deepseek/deepseek-v4-flash
 hidden: true
 permission:
-  read: allow
-  edit: allow
-  grep: allow
   bash: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  read: allow
   todowrite: allow
 ---
 

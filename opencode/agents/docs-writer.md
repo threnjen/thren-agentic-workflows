@@ -1,11 +1,12 @@
 ---
 description: "Creates and updates repository documentation — README, ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT, and TROUBLESHOOTING."
-deepseek/deepseek-v4-flash
+deepseek/deepseek-v4-pro
 permission:
-  read: allow
-  edit: allow
-  grep: allow
   bash: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  read: allow
   todowrite: allow
 ---
 

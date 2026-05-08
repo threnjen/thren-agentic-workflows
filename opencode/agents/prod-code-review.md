@@ -2,10 +2,11 @@
 description: "Final pre-production gate — cross-validates all pipeline documents across every feature in a phase and produces a go/no-go readiness assessment."
 deepseek/deepseek-v4-pro
 permission:
-  read: allow
-  grep: allow
   bash: allow
   edit: allow
+  glob: allow
+  grep: allow
+  read: allow
   todowrite: allow
 ---
 
@@ -41,17 +42,17 @@ Before beginning, ensure ALL of the following are available. If any are missing,
 | Document | Source Agent | Expected File |
 |----------|-------------|---------------|
 | Feature plan | Feature - Decomposer | `[0N-task-name]-plan.md` |
-| Context document | 04a-feature-plan-expander | `[0N-task-name]-context.md` |
-| Task checklist | 04a-feature-plan-expander | `[0N-task-name]-tasks.md` |
-| Implementation record | 04b-feature-implementer | `[0N-task-name]-implementation.md` |
-| Review record | 04c-feature-reviewer | `[0N-task-name]-review.md` |
+| Context document | Feature - Plan Expander | `[0N-task-name]-context.md` |
+| Task checklist | Feature - Plan Expander | `[0N-task-name]-tasks.md` |
+| Implementation record | Feature - Implementer | `[0N-task-name]-implementation.md` |
+| Review record | Feature - Reviewer | `[0N-task-name]-review.md` |
 
 **Consolidated QA document** (provided by the orchestrator):
 
 | Document | Source Agent | Expected Location |
 |----------|-------------|-------------------|
-| Consolidated QA plan | 04d-feature-qa-writer | Path provided by orchestrator (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/[audit-name]/[audit-name]-qa.md`) |
-| Consolidated coverage map | 04d-feature-qa-writer | Alongside QA plan (e.g., `[phase-name]_QA_COVERAGE_MAP.md`) |
+| Consolidated QA plan | Feature - QA Writer | Path provided by orchestrator (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/[audit-name]/[audit-name]-qa.md`) |
+| Consolidated coverage map | Feature - QA Writer | Alongside QA plan (e.g., `[phase-name]_QA_COVERAGE_MAP.md`) |
 
 ## Unity Detection & Skill Loading
 
@@ -193,6 +194,25 @@ Three to five sentences covering:
 - Highest-risk areas
 - Confidence level in the QA plan's ability to catch remaining issues
 
+### Document Inventory
+
+**Per-Feature Documents** (repeat for each feature):
+
+| Document | File | Source | Present | Notes |
+|----------|------|--------|---------|-------|
+| Feature Plan | `[0N-task-name]-plan.md` | Feature - Decomposer | Yes/No | — |
+| Context | `[0N-task-name]-context.md` | Feature - Plan Expander | Yes/No | — |
+| Tasks | `[0N-task-name]-tasks.md` | Feature - Plan Expander | Yes/No | — |
+| Implementation Record | `[0N-task-name]-implementation.md` | Feature - Implementer | Yes/No | — |
+| Review Record | `[0N-task-name]-review.md` | Feature - Reviewer | Yes/No | — |
+
+**Consolidated QA Documents:**
+
+| Document | File | Source | Present | Notes |
+|----------|------|--------|---------|-------|
+| QA Plan | `[QA output path]` | Feature - QA Writer | Yes/No | — |
+| Coverage Map | `[coverage map path]` | Feature - QA Writer | Yes/No | — |
+
 ### Traceability Matrix
 
 | Feature | AC | Plan | Impl | Code | Review | In Consolidated QA | Verdict |
@@ -207,32 +227,66 @@ Three to five sentences covering:
 
 | # | Finding | Severity | Documents Involved | Evidence | Recommendation |
 |---|---------|----------|--------------------|----------|----------------|
+| 1 | AC3 missing from implementation | Blocker | Plan, Impl Record | Plan defines AC3; impl record has no entry | Implement AC3 before QA |
+| 2 | Review says "Fixed" but code unchanged | High | Review, Source | Review #1 marked Fixed; `handler.py:45` unchanged | Apply the fix or update review |
 
 #### Implementation Issues
 
 | # | Finding | Severity | File:Line | Evidence | Recommendation |
 |---|---------|----------|-----------|----------|----------------|
+| 1 | Unhandled null in user input | High | `src/handler.py:67` | No null check before `.strip()` | Add validation |
+| 2 | Debug print left in | Low | `src/utils.py:23` | `print(f"DEBUG: {val}")` | Remove before QA |
 
 #### QA Plan Issues
 
 | # | Finding | Severity | QA Item | Evidence | Recommendation |
 |---|---------|----------|---------|----------|----------------|
+| 1 | AC2 edge case not covered | Medium | — | Plan specifies timeout handling; no QA item tests it | Add timeout test case |
+| 2 | Redundant manual test | Low | "Verify input validation" | Already covered by `test_input_validation` unit tests | Remove or downgrade to spot-check |
 
 ### Risk Register
 
 | # | Risk | Likelihood | Impact | QA Detection | Recommendation |
 |---|------|-----------|--------|--------------|----------------|
+| 1 | AC3 not implemented | Certain | Blocker | No | Block QA until implemented |
+| 2 | Timeout edge case untested | Medium | High | Partial | Add explicit QA test case |
+| 3 | Debug logging in production | Low | Low | Unlikely | Remove before QA |
 
 ### Blocking Items (NO-GO only)
 
-If the verdict is NO-GO, list every blocking item and trace it to its **root cause pipeline stage**.
+If the verdict is NO-GO, list every blocking item and trace it to its **root cause pipeline stage**. For each item, determine which upstream agent produced the deficiency and recommend the specific re-entry point.
+
+#### Root Cause Routing
+
+Use this table to determine where the user should return:
 
 | Root Cause | Return To | When |
 |------------|-----------|------|
-| **Feature - Decomposer** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases | The plan itself is the problem |
-| **04b-feature-implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps |
-| **04c-feature-reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough |
-| **04d-feature-qa-writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework |
+| **Feature - Decomposer** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
+| **Feature - Implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
+| **Feature - Reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
+| **Feature - QA Writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites |
+
+#### Blocking Items List
+
+For each blocking item:
+
+1. **[Item]** — Description of the gap. **Root cause:** [which document is deficient]. **Return to:** `@[Agent Name]` with instruction: "[specific remediation action]". **Then re-run:** [which downstream pipeline steps must be repeated after the fix].
+2. ...
+
+### Conditions (GO WITH CONDITIONS only)
+
+If the verdict is GO WITH CONDITIONS, list every condition:
+
+1. **[Condition]** — What to monitor during QA, what the fallback is if it fails
+2. ...
+
+### Recommendations
+
+Ordered by priority:
+
+1. **[Action]** — What to do, who should do it, and why
+2. ...
 
 ## Write Analysis Record
 
