@@ -216,28 +216,29 @@ Instructions (`.github/instructions/*.instructions.md`) inject conventions into 
 
 ## Platform Variants
 
-This repository supports three AI coding platforms. The `.github/` directory is the **master source of truth** — `opencode/` and `claude/` are derived copies with platform-specific formatting.
+This repository tracks four platform surfaces. The `.github/` directory is the **master source of truth**. `opencode/` and `claude/` are derived checked-in copies, while `codex/` is the repository-owned authoring area for Codex documentation and future source artifacts.
 
 ### Source of Truth
 
 - **`.github/agents/*.agent.md`** — Master agent definitions. All changes originate here.
 - **`.github/instructions/*.instructions.md`** — Master instruction files. Loaded by `.github/` agents via `applyTo` YAML patterns.
 - **`.github/skills/`** — Master skill definitions. Symlinked by both `opencode/` and `claude/`.
+- **`codex/`** — Repository-owned Codex layout contract, documentation, and future source artifacts that will later map into Codex runtime locations.
 
-When modifying agent behavior: edit the `.github/` master first, then apply equivalent changes to the `opencode/` and `claude/` copies.
+When modifying shared agent behavior: edit the `.github/` master first, then apply equivalent changes to the checked-in `opencode/` and `claude/` copies. Codex work starts in `codex/` as repo-owned documentation or source material and maps later into runtime `.codex/`, `~/.codex/`, or `$HOME/.agents/skills/` locations.
 
 ### How Each Platform Loads Components
 
-| Component | `.github/` (Copilot) | `opencode/` | `claude/` |
-|-----------|---------------------|-------------|-----------|
-| **Agent files** | `.github/agents/*.agent.md` (YAML frontmatter with `tools:`, `agents:`, `model:`) | `opencode/agents/*.md` (YAML frontmatter with `permission:`, `mode:`, `hidden:`) | `claude/agents/*.md` (Markdown with `tools:` line, `z-` prefix for subagents) |
-| **Instructions** | Loaded from `.github/instructions/` via `applyTo` glob patterns in YAML frontmatter | Loaded from `.github/instructions/` via glob in `~/.config/opencode/opencode.jsonc`: `"instructions": [".github/instructions/*.instructions.md"]` | **Inlined** in each agent under `## Auto-Loaded Instructions` — not loaded from instruction files |
-| **Skills** | Loaded from `.github/skills/` on demand | Symlinked to `.github/skills/` (set up via `SYMLINK_SETUP.md`) | Symlinked to `.github/skills/` (set up via `SYMLINK_SETUP.md`) |
-| **Learnings** | `.github/learnings/` | N/A | Symlinked to `.github/learnings/` |
+| Component | `.github/` (Copilot) | `opencode/` | `claude/` | `codex/` |
+|-----------|---------------------|-------------|-----------|-----------|
+| **Agent files** | `.github/agents/*.agent.md` (YAML frontmatter with `tools:`, `agents:`, `model:`) | `opencode/agents/*.md` (YAML frontmatter with `permission:`, `mode:`, `hidden:`) | `claude/agents/*.md` (Markdown with `tools:` line, `z-` prefix for subagents) | Repository-owned docs today; future source artifacts may live under `codex/` and map to runtime TOML agents in `~/.codex/agents/` or `.codex/agents/` |
+| **Instructions** | Loaded from `.github/instructions/` via `applyTo` glob patterns in YAML frontmatter | Loaded from `.github/instructions/` via glob in `~/.config/opencode/opencode.jsonc`: `"instructions": [".github/instructions/*.instructions.md"]` | **Inlined** in each agent under `## Auto-Loaded Instructions` — not loaded from instruction files | Repository-owned guidance belongs under `codex/`; runtime installation targets Codex AGENTS files such as `~/.codex/AGENTS.md`, not a checked-in `.github/instructions/` equivalent |
+| **Skills** | Loaded from `.github/skills/` on demand | Symlinked to `.github/skills/` (set up via `SYMLINK_SETUP.md`) | Symlinked to `.github/skills/` (set up via `SYMLINK_SETUP.md`) | Future skill-copy source belongs under `codex/`; runtime Codex discovers installed skills from `$HOME/.agents/skills/` or repo-local `.agents/skills` |
+| **Learnings** | `.github/learnings/` | N/A | Symlinked to `.github/learnings/` | No separate Codex learning surface is defined in this phase |
 
 ### Key Implication
 
-**Updating `.github/instructions/` automatically affects both `.github/` AND `opencode/` agents** because opencode loads the same instruction files. Claude agents require separate inline updates to their `## Auto-Loaded Instructions` sections.
+**Codex is not a direct checked-in mirror of `.github/`.** Updating `.github/instructions/` automatically affects both `.github/` and `opencode/` agents because opencode loads the same instruction files, while Claude agents require separate inline updates to their `## Auto-Loaded Instructions` sections. Codex changes start as repository-owned material under `codex/` and are mapped later to runtime AGENTS, custom-agent, and skill locations.
 
 ### Agent File Format Differences
 

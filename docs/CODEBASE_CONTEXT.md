@@ -7,6 +7,7 @@ Quick-reference for AI agents working on this repository.
 - A **template repository** of `AGENTS.md`, style guide files, and VS Code Copilot agent definitions
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
+- Four platform surfaces are documented: `.github/` as the master source, checked-in `opencode/` and `claude/` copies, and a repository-owned `codex/` area for Codex docs and future source artifacts
 - 24 agent definitions in `.github/agents/` (13 user-facing, 11 hidden subagents)
 - 11 skills in `.github/skills/` (7 directory-based shared templates + 4 standalone graph-tool workflow skills)
 - 13 instruction files in `.github/instructions/` (cross-cutting conventions)
@@ -17,6 +18,8 @@ Quick-reference for AI agents working on this repository.
 ```
 AGENTS.md                       # Code-review-graph MCP tools for this repo
 README.md                       # Repo overview, usage instructions
+.codex/
+  config.toml                   # Existing runtime Codex config surface; not the repo-owned authoring area
 .github/
   agents/
     README.md                   # Agent documentation, pipelines, and usage guide
@@ -60,6 +63,8 @@ docs/
   CODEBASE_CONTEXT.md           # This file
   UNDERSTANDING_AGENTIC_ECOSYSTEM.md # Agentic AI terminology explainer
   PHASE_EVAL_RUN_CONFIG.example.yaml # Reproducibility template for Phase 01 eval runs
+codex/
+  README.md                     # Repository-owned Codex layout contract and landing area for future Codex docs/source artifacts
 opencode/
   agents/                       # Derived agent copies for OpenCode platform
   SYMLINK_SETUP.md              # Symlink setup for skills/
@@ -115,6 +120,7 @@ dev/
 - `nodejs/AGENTS.md` references `docs/STYLE_GUIDE.md` (relative to project root after copying)
 - `python/AGENTS.md` references `docs/STYLE_GUIDE.md` (relative to project root after copying)
 - No cross-references between `nodejs/` and `python/` — they are independent
+- `codex/README.md` defines what belongs in the repository-owned Codex surface versus runtime `.codex/`, `~/.codex/`, and `$HOME/.agents/skills/` locations
 - `.github/agents/README.md` documents all agents — keep it in sync when adding/removing agents
 - Orchestrator agent files reference their subagents by name in YAML `agents:` field
 - Agents reference skills by name in their instructions (e.g., "Load the `phase-document-writing` skill")
@@ -136,6 +142,7 @@ dev/
 - **Adding a new section to both languages**: Update both `nodejs/AGENTS.md` and `python/AGENTS.md` to keep the shared structure in sync
 - **Changing language-specific content**: Only edit the relevant language folder
 - **Adding a new language**: Create a new top-level folder (e.g., `go/`) with the same `AGENTS.md` + `docs/STYLE_GUIDE.md` structure
+- **Adding Codex documentation or source material**: Update `codex/README.md` first so the repository-owned layout stays intentional before adding new Codex files or directories
 - **Adding/removing an agent**: Update the agent file in `.github/agents/` AND update `.github/agents/README.md` to keep tables, descriptions, and pipelines current
 - **Adding a new orchestrator**: Add the orchestrator file, add its subagents (with `user-invocable: false`), and update the README agent tables
 - **Changing a shared template or format**: Edit the corresponding skill in `.github/skills/` — do NOT re-inline the content in agent files
@@ -148,6 +155,7 @@ dev/
 - Do not add runnable code, build scripts, or CI/CD configuration — this is a docs-only repo
 - Do not create a shared base file and use includes/inheritance — each AGENTS.md must be independently copyable
 - Do not add deployment or infrastructure documentation
+- Do not treat `codex/` as a runtime install location; runtime Codex config belongs under `.codex/`, `~/.codex/`, or `$HOME/.agents/skills/` depending on scope
 - Do not reference specific project names or URLs in the templates — they must be generic
 - Do not merge the style guide into AGENTS.md — the separation is intentional for context window efficiency
 - Do not set `user-invocable: true` on subagents — they are hidden by design and invoked only by orchestrators
