@@ -1,7 +1,7 @@
 ---
 name: Test - Fixer
 description: "Diagnoses and fixes broken tests — updates assertions, mocks, fixtures, and configuration. Never modifies source code."
-tools: [read, edit, search, execute, execute]
+tools: [read, edit, search, execute]
 user-invocable: false
 ---
 

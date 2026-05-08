@@ -1,7 +1,7 @@
 ---
 name: Auditor - Refactor
 description: "Audits codebase structure and architecture — module organization, coupling, cohesion, and separation of concerns. Produces a structured findings report."
-tools: [read, search, edit, fetch, execute]
+tools: [read, search, edit, fetch]
 
 user-invocable: false
 ---

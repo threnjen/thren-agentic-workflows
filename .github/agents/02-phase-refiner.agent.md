@@ -1,7 +1,7 @@
 ---
 name: 02 Phase - Refiner
 description: "Refines a single Phase document — probes edge cases, surfaces dependencies, and stress-tests scope before Feature - Decomposer. Can also draft a Phase document from scratch for standalone features."
-tools: [read, search, edit, execute, agent]
+tools: [read, search, edit, agent]
 agents: [Web Researcher, Docs Writer]
 ---
 

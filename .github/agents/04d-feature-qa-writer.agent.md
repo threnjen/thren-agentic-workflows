@@ -1,7 +1,7 @@
 ---
 name: Feature - QA Writer
 description: "Writes a consolidated manual QA checklist covering integration points not verifiable by automated tests."
-tools: [read, edit, search, execute, todo, execute]
+tools: [read, edit, search, execute, todo]
 user-invocable: false
 ---
 

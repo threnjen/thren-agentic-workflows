@@ -1,7 +1,7 @@
 ---
 name: Web Researcher
 description: "Researches technical topics across the internet — searches GitHub issues, Stack Overflow, Reddit, forums, and documentation. Produces a structured research report with full citations saved to dev/research/[topic-name]/."
-tools: [read, edit, search, execute, execute, web/fetch, web/screenshot, web/search]
+tools: [read, edit, search, execute, web/fetch, web/screenshot, web/search]
 
 color: blue
 ---
