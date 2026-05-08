@@ -44,7 +44,7 @@ You are an auditor...
 
 ## Porting Process
 
-See [.github/agents/PORTING_GUIDE.md](../../.github/agents/PORTING_GUIDE.md) for complete instructions on:
+See [claude/CLAUDE_PORTING_GUIDE.md](../CLAUDE_PORTING_GUIDE.md) for complete instructions on:
 - How to identify which instructions apply
 - Tool name mapping across platforms
 - Common mistakes to avoid
@@ -101,7 +101,7 @@ These are read-only symlinks. To update, modify the source in `.github/` directo
 ## Platform Differences
 
 For tool name mapping and frontmatter format differences, see:
-- [.github/agents/TOOL_MAPPING.md](../../.github/agents/TOOL_MAPPING.md) — Cross-platform tool reference
+- [docs/porting/TOOL_MAPPING.md](../../docs/porting/TOOL_MAPPING.md) — Cross-platform tool reference
 - [claude/INSTRUCTION_ARCHITECTURE.md](../INSTRUCTION_ARCHITECTURE.md) — Why instructions are inlined
 
 ---
@@ -118,7 +118,7 @@ For tool name mapping and frontmatter format differences, see:
 - Check that instruction content is pasted correctly
 
 **Q: Tool definitions are wrong**
-- Use [.github/agents/TOOL_MAPPING.md](../../.github/agents/TOOL_MAPPING.md) to verify correct names
+- Use [docs/porting/TOOL_MAPPING.md](../../docs/porting/TOOL_MAPPING.md) to verify correct names
 - Remember: Claude uses PascalCase (`Read`, `Bash`), not lowercase (`read`, `execute`)
 
 ---
@@ -132,4 +132,4 @@ When adding or updating agents:
 3. Sync changes to `opencode/agents/` (different format)
 4. Update this README if the process changes
 
-See [.github/agents/PORTING_GUIDE.md](../../.github/agents/PORTING_GUIDE.md) for full process.
+See [claude/CLAUDE_PORTING_GUIDE.md](../CLAUDE_PORTING_GUIDE.md) for full process.

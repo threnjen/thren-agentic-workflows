@@ -41,6 +41,9 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 │   ├── CODEBASE_CONTEXT.md      # Agent-oriented quick-reference
 │   ├── UNDERSTANDING_AGENTIC_ECOSYSTEM.md # Agentic AI terminology explainer
 │   ├── AGENT_REGRESSION_BENCHMARK_SPEC.md # Benchmark design spec for agent changes
+│   ├── porting/                 # Cross-platform porting references and index
+│   │   ├── README.md            # Porting docs index
+│   │   └── TOOL_MAPPING.md      # Cross-platform tool mapping reference
 │   └── benchmarks/              # Benchmark packs, tools, and run results
 ├── opencode/
 │   ├── agents/                  # Derived agent copies for OpenCode platform
@@ -81,6 +84,13 @@ This repository supports three AI coding platforms. The `.github/` directory is 
 Skills (`.github/skills/`) are the single source of truth for all three platforms — `opencode/` and `claude/` symlink to them.
 
 When modifying agent behavior, edit the `.github/` master first, then apply equivalent changes to `opencode/` and `claude/` copies. See `docs/ARCHITECTURE.md#platform-variants` for full details.
+
+Porting references:
+
+- `claude/CLAUDE_PORTING_GUIDE.md`
+- `opencode/OPENCODE_PORTING_GUIDE.md`
+- `codex/CODEX_PORTING_GUIDE.md`
+- `docs/porting/TOOL_MAPPING.md`
 
 ## Usage
 
