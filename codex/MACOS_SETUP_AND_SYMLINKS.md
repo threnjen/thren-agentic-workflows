@@ -51,10 +51,12 @@ readlink "$HOME/.codex/AGENTS.override.md" 2>/dev/null || true
 readlink "$HOME/.codex/agents/example-agent.toml" 2>/dev/null || true
 readlink "$HOME/.agents/skills/example-skill" 2>/dev/null || true
 
-test -e "$REPO_ROOT/codex/global-agents/AGENTS.md"
-test -e "$REPO_ROOT/codex/global-agents/AGENTS.override.md"
-test -e "$REPO_ROOT/codex/agents/example-agent.toml"
-test -e "$REPO_ROOT/codex/skills/example-skill"
+# These will fail until later Phase 02 work creates the source artifacts.
+# A non-zero exit means the source does not exist yet — do not proceed with symlinking.
+test -e "$REPO_ROOT/codex/global-agents/AGENTS.md"         || echo "not yet: codex/global-agents/AGENTS.md"
+test -e "$REPO_ROOT/codex/global-agents/AGENTS.override.md" || echo "not yet: codex/global-agents/AGENTS.override.md"
+test -e "$REPO_ROOT/codex/agents/example-agent.toml"        || echo "not yet: codex/agents/example-agent.toml"
+test -e "$REPO_ROOT/codex/skills/example-skill"             || echo "not yet: codex/skills/example-skill"
 ```
 
 If any runtime target is a real file or directory instead of a symlink, move it aside manually before relinking so the replacement is explicit and reversible.
