@@ -49,6 +49,12 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 │   ├── agents/                  # Derived agent copies for Claude Code platform
 │   ├── skills/                  # Symlinked to .github/skills/
 │   └── README.md                # Claude-specific setup notes
+├── codex/
+│   ├── README.md                # Repository-owned Codex layout contract and source area
+│   ├── CODEX_PLATFORM_REFERENCE.md  # Verified Codex platform model: discovery, agents, skills
+│   ├── CODEX_PORTING_GUIDE.md   # Porting strategy from .github/ to Codex-native formats
+│   ├── MACOS_SETUP_AND_SYMLINKS.md  # macOS install paths, symlink setup, and verified path behavior
+│   └── PILOT_SLICE_PLAN.md      # Pilot trio definition and exit criteria for full Codex parity
 ├── nodejs/
 │   ├── AGENTS.md                # Copilot instructions for Node.js/TypeScript projects
 │   └── docs/

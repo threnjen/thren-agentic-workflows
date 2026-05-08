@@ -64,7 +64,11 @@ docs/
   UNDERSTANDING_AGENTIC_ECOSYSTEM.md # Agentic AI terminology explainer
   PHASE_EVAL_RUN_CONFIG.example.yaml # Reproducibility template for Phase 01 eval runs
 codex/
-  README.md                     # Repository-owned Codex layout contract and landing area for future Codex docs/source artifacts
+  README.md                     # Repository-owned Codex layout contract and landing area for Codex docs/source artifacts
+  CODEX_PLATFORM_REFERENCE.md  # Verified Codex platform model: discovery paths, agent formats, skill structure, runtime vs repo-owned separation
+  CODEX_PORTING_GUIDE.md        # Strategy for porting .github/ agent content to Codex-native formats; includes conversion table and open questions
+  MACOS_SETUP_AND_SYMLINKS.md   # macOS install paths, symlink setup, and verified Codex path behavior
+  PILOT_SLICE_PLAN.md           # Pilot trio definition (one instruction slice, one custom agent, one skill) and exit criteria gating full Codex parity
 opencode/
   agents/                       # Derived agent copies for OpenCode platform
   SYMLINK_SETUP.md              # Symlink setup for skills/
