@@ -24,6 +24,7 @@ Claude agent files use Markdown frontmatter with:
 - `name: <kebab-case>`
 - `description: <text>`
 - `tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch, Bash, Agent` (as applicable)
+- `user-invocable: false` (required in this repository so Claude-derived agents stay hidden in the GitHub Copilot agent picker)
 
 ## Tool Mapping (GitHub to Claude)
 
@@ -40,12 +41,14 @@ Claude agent files use Markdown frontmatter with:
 1. Start from `.github/agents/*` source.
 2. Resolve applicable `.github/instructions/*.instructions.md` entries by `applyTo`.
 3. Convert tool names to Claude names.
-4. Ensure instruction intent is present in the final agent body.
-5. Keep behavior equivalent to source, excluding unsupported tool semantics.
+4. Add `user-invocable: false` to the Claude frontmatter/header area.
+5. Ensure instruction intent is present in the final agent body.
+6. Keep behavior equivalent to source, excluding unsupported tool semantics.
 
 ## Validation Checklist
 
 - Frontmatter parses correctly.
+- `user-invocable: false` is present in every Claude agent file.
 - Tool names are valid Claude names.
 - Unsupported GitHub-only tools are dropped.
 - Agent behavior remains aligned with source intent.

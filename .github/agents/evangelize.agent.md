@@ -113,6 +113,7 @@ Rules:
 
 - Keep Markdown frontmatter format.
 - Convert tools to Claude tool names per guide.
+- Always include `user-invocable: false` in the Claude header/frontmatter area.
 - Remove unsupported GitHub-only tools.
 - Ensure behavior and constraints from source + applicable instructions are present in body text.
 
