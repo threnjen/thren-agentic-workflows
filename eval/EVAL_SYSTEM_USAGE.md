@@ -229,7 +229,7 @@ When you run explicit A/B comparisons, include these fields in the score report:
 
 Create a run config file for each evaluation run by copying:
 
-- `docs/PHASE_EVAL_RUN_CONFIG.example.yaml`
+- `eval/PHASE_EVAL_RUN_CONFIG.example.yaml`
 
 Suggested naming:
 

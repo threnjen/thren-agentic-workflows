@@ -8,8 +8,8 @@ Quick-reference for AI agents working on this repository.
 - Contains **no runnable code** — only Markdown documentation
 - Two language variants for templates: Node.js/TypeScript and Python
 - Four platform surfaces are documented: `.github/` as the master source, checked-in `opencode/` and `claude/` copies, and a repository-owned `codex/` area for Codex docs and future source artifacts
-- 24 agent definitions in `.github/agents/` (13 user-facing, 11 hidden subagents)
-- 11 skills in `.github/skills/` (7 directory-based shared templates + 4 standalone graph-tool workflow skills)
+- 24 agent definitions in `.github/agents/` (14 user-facing, 10 hidden subagents)
+- 12 skills in `.github/skills/` (all directory-based, each with `SKILL.md`)
 - 13 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
 
@@ -23,7 +23,7 @@ README.md                       # Repo overview, usage instructions
 .github/
   agents/
     README.md                   # Agent documentation, pipelines, and usage guide
-    *.agent.md                  # 24 agent definition files (13 user-facing, 11 hidden)
+    *.agent.md                  # 24 agent definition files (14 user-facing, 10 hidden)
   skills/
     phase-document-writing/     # Phase Doc & Overview templates, quality checklist
       SKILL.md
@@ -35,14 +35,20 @@ README.md                       # Repo overview, usage instructions
       SKILL.md
     implementation-record/      # Implementation record artifact template
       SKILL.md
+    context7-mcp/               # Context7 documentation lookup workflow
+      SKILL.md
     unity-development/          # Unity C# implementation and review rules
       SKILL.md
     unity-review-knowledge/     # Unity best practices from 11 official ebooks
       SKILL.md
-    debug-issue.md              # Graph-powered debug workflow skill
-    explore-codebase.md         # Graph-powered codebase navigation skill
-    refactor-safely.md          # Graph-powered safe refactoring skill
-    review-changes.md           # Graph-powered structured code review skill
+    debug-issue/                # Graph-powered debug workflow skill
+      SKILL.md
+    explore-codebase/           # Graph-powered codebase navigation skill
+      SKILL.md
+    refactor-safely/            # Graph-powered safe refactoring skill
+      SKILL.md
+    review-changes/             # Graph-powered structured code review skill
+      SKILL.md
   instructions/
     codebase-context-bootstrap.instructions.md  # Reads CODEBASE_CONTEXT.md before discovery (all agents)
     dev-task-folder.instructions.md     # dev/feature/ output naming conventions (all agents)
@@ -58,11 +64,13 @@ README.md                       # Repo overview, usage instructions
     output-verbosity-policy.instructions.md # Soft-target concision defaults (all agents)
     csharp-style.instructions.md        # C# (Google) style rules — naming, formatting, idioms (unity-reviewer, auditor-code, implementer, reviewer)
 docs/
-  AGENT_REGRESSION_BENCHMARK_SPEC.md # Benchmark design spec for agent changes
   ARCHITECTURE.md               # Structure diagram and design decisions
   CODEBASE_CONTEXT.md           # This file
   UNDERSTANDING_AGENTIC_ECOSYSTEM.md # Agentic AI terminology explainer
-  PHASE_EVAL_RUN_CONFIG.example.yaml # Reproducibility template for Phase 01 eval runs
+  agentic-evaluator-plan.md     # Evaluator architecture and scoring plan
+  porting/                      # Cross-platform porting docs and tool mapping
+    README.md
+    TOOL_MAPPING.md
 codex/
   README.md                     # Repository-owned Codex layout contract and landing area for Codex docs/source artifacts
   CODEX_PLATFORM_REFERENCE.md  # Verified Codex platform model: discovery paths, agent formats, skill structure, runtime vs repo-owned separation
@@ -77,6 +85,8 @@ claude/
   skills/                       # Symlinked to .github/skills/
   README.md                     # Claude-specific setup
 eval/
+  EVAL_SYSTEM_USAGE.md          # Eval runbook and grader usage
+  PHASE_EVAL_RUN_CONFIG.example.yaml # Eval run configuration template
   hooks/                        # Post-commit hook template and related evaluation hooks
   rubrics/                      # Seed grader rubrics and schema-aligned example YAML files
   runs/                         # Evaluation run outputs and ledgers
@@ -106,14 +116,14 @@ dev/
 
 ### Agent Definitions (.github/agents/)
 
-- **4 orchestrators** (user-facing): Phase - Execute, Audit - Code/Infra/Refactor, Test - Orchestrator, Agent Testing Agent
-- **9 standalone user-facing**: Planner, Refiner, Decomposer, Eval Grader, Debugger, Docs Writer, Prod Code Review, Web Researcher, Unity Reviewer
-- **11 hidden subagents** (`user-invocable: false`): Agent Test Runner, Plan Expander, Implementer, Reviewer, QA Writer, 3 Auditors, Test Analyst/Writer/Fixer
+- **3 orchestrators** (user-facing): Phase - Execute, Audit - Code/Infra/Refactor, Test - Orchestrator
+- **11 standalone user-facing**: Planner, Refiner, Decomposer, Single Feature Agent, Eval Grader, Evangelize, Debugger, Docs Writer, Prod Code Review, Web Researcher, Unity Reviewer
+- **10 hidden subagents** (`user-invocable: false`): Plan Expander, Implementer, Reviewer, QA Writer, 3 Auditors, Test Analyst/Writer/Fixer
 - See [agents/README.md](../.github/agents/README.md) for detailed descriptions and invocation patterns.
 
 ### Skills (.github/skills/)
 
-11 skills loaded by agents on demand (7 directory-based shared templates + 4 standalone graph-tool workflow skills). See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the full mapping.
+12 skills loaded by agents on demand (all directory-based). See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the full mapping.
 
 ### Instructions (.github/instructions/)
 
@@ -150,7 +160,7 @@ dev/
 - **Adding/removing an agent**: Update the agent file in `.github/agents/` AND update `.github/agents/README.md` to keep tables, descriptions, and pipelines current
 - **Adding a new orchestrator**: Add the orchestrator file, add its subagents (with `user-invocable: false`), and update the README agent tables
 - **Changing a shared template or format**: Edit the corresponding skill in `.github/skills/` — do NOT re-inline the content in agent files
-- **Adding a new skill**: Create `.github/skills/<name>/SKILL.md` (or `<name>.md` for standalone skills) with YAML frontmatter (`name`, `description`). Update agent files to reference it. Update ARCHITECTURE.md and this file.
+- **Adding a new skill**: Create `.github/skills/<name>/SKILL.md` with YAML frontmatter (`name`, `description`). Update agent files to reference it. Update ARCHITECTURE.md and this file.
 - **Adding a new instruction**: Create `.github/instructions/<name>.instructions.md` with `applyTo` glob. Update ARCHITECTURE.md and this file.
 - **Updating README.md**: Keep the structure tree, usage instructions, and comparison table current
 

@@ -21,17 +21,18 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 ├── .github/
 │   ├── agents/                  # VS Code Copilot agent definitions (master source)
 │   │   ├── README.md            # Agent documentation, pipelines, and usage guide
-│   │   └── *.agent.md           # 24 agent files (13 user-facing, 11 hidden subagents)
+│   │   └── *.agent.md           # 24 agent files (14 user-facing, 10 hidden subagents)
 │   ├── skills/                  # Templates and formats loaded by agents on demand
 │   │   ├── auditor-conventions/ # Audit constraints, report format, severity levels
-│   │   ├── debug-issue.md       # Graph-powered debug workflow skill
-│   │   ├── explore-codebase.md  # Graph-powered codebase navigation skill
+│   │   ├── context7-mcp/        # Context7 documentation lookup workflow
+│   │   ├── debug-issue/         # Graph-powered debug workflow skill
+│   │   ├── explore-codebase/    # Graph-powered codebase navigation skill
 │   │   ├── feature-plan-set/    # Three-file plan convention, sections A–F
 │   │   ├── implementation-pipeline-loop/ # Implement → Review → Commit cycle
 │   │   ├── implementation-record/        # Implementation record artifact template
 │   │   ├── phase-document-writing/       # Phase doc templates and quality checklist
-│   │   ├── refactor-safely.md   # Graph-powered safe refactoring skill
-│   │   ├── review-changes.md    # Graph-powered structured code review skill
+│   │   ├── refactor-safely/     # Graph-powered safe refactoring skill
+│   │   ├── review-changes/      # Graph-powered structured code review skill
 │   │   ├── unity-development/   # Unity C# implementation and review rules
 │   │   └── unity-review-knowledge/ # Unity best practices from official ebooks
 │   └── instructions/            # Cross-cutting conventions via applyTo globs
@@ -40,11 +41,10 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 │   ├── ARCHITECTURE.md          # Structure diagram and design decisions
 │   ├── CODEBASE_CONTEXT.md      # Agent-oriented quick-reference
 │   ├── UNDERSTANDING_AGENTIC_ECOSYSTEM.md # Agentic AI terminology explainer
-│   ├── AGENT_REGRESSION_BENCHMARK_SPEC.md # Benchmark design spec for agent changes
+│   ├── agentic-evaluator-plan.md # Plan for evaluator architecture and scoring
 │   ├── porting/                 # Cross-platform porting references and index
 │   │   ├── README.md            # Porting docs index
 │   │   └── TOOL_MAPPING.md      # Cross-platform tool mapping reference
-│   └── benchmarks/              # Benchmark packs, tools, and run results
 ├── opencode/
 │   ├── agents/                  # Derived agent copies for OpenCode platform
 │   └── SYMLINK_SETUP.md         # Symlink setup for skills/ and instructions/
@@ -58,6 +58,12 @@ GitHub Copilot reads `AGENTS.md` files to learn coding conventions, workflow rul
 │   ├── CODEX_PORTING_GUIDE.md   # Porting strategy from .github/ to Codex-native formats
 │   ├── MACOS_SETUP_AND_SYMLINKS.md  # macOS install paths, symlink setup, and verified path behavior
 │   └── PILOT_SLICE_PLAN.md      # Pilot trio definition and exit criteria for full Codex parity
+├── eval/
+│   ├── EVAL_SYSTEM_USAGE.md      # Eval runbook and grader usage
+│   ├── PHASE_EVAL_RUN_CONFIG.example.yaml # Eval run configuration template
+│   ├── hooks/                    # Post-commit hook template and related hooks
+│   ├── rubrics/                  # Seed grader rubrics and examples
+│   └── runs/                     # Evaluation run outputs and ledgers
 ├── nodejs/
 │   ├── AGENTS.md                # Copilot instructions for Node.js/TypeScript projects
 │   └── docs/
@@ -169,7 +175,7 @@ Detailed, language-specific coding conventions covering:
 
 ### Agent Definitions (.github/agents/)
 
-24 agent files using an **orchestrator + subagent** pattern (4 orchestrators, 9 standalone user-facing, 11 hidden subagents). Orchestrators delegate to subagents automatically; shared subagents are reused across orchestrator pipelines. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation and pipeline descriptions.
+24 agent files using an **orchestrator + subagent** pattern (3 orchestrators, 11 standalone user-facing, 10 hidden subagents). Orchestrators delegate to subagents automatically; shared subagents are reused across orchestrator pipelines. See [.github/agents/README.md](.github/agents/README.md) for detailed per-agent documentation and pipeline descriptions.
 
 ### Skills (.github/skills/)
 
@@ -194,7 +200,6 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#instructions) for the full instr
 - [.github/agents/README.md](.github/agents/README.md) — Full agent documentation, pipeline diagrams, and per-agent descriptions
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Mermaid diagrams of repo structure, agent architecture, and design decisions
 - [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — Dense structured facts for AI agent orientation
-- [docs/AGENT_REGRESSION_BENCHMARK_SPEC.md](docs/AGENT_REGRESSION_BENCHMARK_SPEC.md) — Project-specific benchmark design for A/B testing model and agent changes
-- [docs/EVAL_SYSTEM_USAGE.md](docs/EVAL_SYSTEM_USAGE.md) — Practical runbook for preparing phase eval runs, authoring rubrics, and scoring with 05 Eval - Grader
-- [docs/PHASE_EVAL_RUN_CONFIG.example.yaml](docs/PHASE_EVAL_RUN_CONFIG.example.yaml) — Reproducibility template for Phase 01 style eval runs (baseline SHA, rubric, model, outputs)
+- [eval/EVAL_SYSTEM_USAGE.md](eval/EVAL_SYSTEM_USAGE.md) — Practical runbook for preparing phase eval runs, authoring rubrics, and scoring with 05 Eval - Grader
+- [eval/PHASE_EVAL_RUN_CONFIG.example.yaml](eval/PHASE_EVAL_RUN_CONFIG.example.yaml) — Reproducibility template for phase eval runs (baseline SHA, rubric, model, outputs)
 

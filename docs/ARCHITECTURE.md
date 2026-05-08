@@ -21,9 +21,9 @@ flowchart TD
     GH --> Skills[skills/]
     GH --> Instructions[instructions/]
 
-    Agents --> Orchestrators["Orchestrators (4)\nPhase-Execute, Audit,\nTest, Agent Testing"]
-    Agents --> UserAgents["User-Facing Standalone (9)\nPlanner, Refiner, Decomposer,\nEval Grader, Debugger,\nProd Review, Web Research,\nDocs, Unity Reviewer"]
-    Agents --> Subagents["Hidden Subagents (11)\nAgent Test Runner,\nPlan Expander, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer"]
+    Agents --> Orchestrators["Orchestrators (3)\nPhase-Execute, Audit,\nTest"]
+    Agents --> UserAgents["User-Facing Standalone (11)\nPlanner, Refiner, Decomposer,\nSingle Feature, Eval Grader,\nEvangelize, Debugger, Prod Review,\nWeb Research, Docs, Unity Reviewer"]
+    Agents --> Subagents["Hidden Subagents (10)\nPlan Expander, Implementer,\nReviewer, QA, Auditors,\nTest Writer/Analyst/Fixer"]
     Orchestrators -->|delegate to| Subagents
 
     Skills --> S1["phase-document-writing\n(Planner, Refiner)"]
@@ -33,10 +33,11 @@ flowchart TD
     Skills --> S5["implementation-record\n(Feature - Implementer)"]
     Skills --> S6["unity-development\n(Implementer, Reviewer\nUnity projects)"]
     Skills --> S7["unity-review-knowledge\n(Unity Reviewer)"]
-    Skills --> S8["debug-issue.md\n(Debugger)"]
-    Skills --> S9["explore-codebase.md\n(Explore)"]
-    Skills --> S10["refactor-safely.md\n(Refactor)"]
-    Skills --> S11["review-changes.md\n(Reviewer)"]
+    Skills --> S8["context7-mcp\n(Context7 doc lookup)"]
+    Skills --> S9["debug-issue\n(Debugger)"]
+    Skills --> S10["explore-codebase\n(Explore)"]
+    Skills --> S11["refactor-safely\n(Refactor)"]
+    Skills --> S12["review-changes\n(Reviewer)"]
 
     Instructions --> I1["codebase-context-bootstrap\n(all agents)"]
     Instructions --> I2["dev-task-folder\n(all agents)"]
@@ -112,7 +113,6 @@ flowchart TD
     PE["04 Phase - Execute\n(orchestrator)"]
     AO["Audit - Code, Infra, Refactor\n(orchestrator)"]
     TO["Test - Orchestrator\n(orchestrator)"]
-    AT["Agent Testing Agent\n(orchestrator)"]
 
     DW[Docs Writer]
 
@@ -139,13 +139,11 @@ flowchart TD
     TO --> FI
     TO --> FR
     TO --> DW
-
-    AT --> ART[Agent Test Runner]
 ```
 
 Three orchestrators share **Feature - Implementer** and **Feature - Reviewer** as common subagents for driving automated remediation. Each orchestrator follows the same pattern: analyze/audit first, then optionally run fixes through the implementation pipeline.
 
-Standalone user-facing agents sit beside that orchestration graph: **01 Project - Planner**, **02 Phase - Refiner**, **03 Feature - Decomposer**, **05 Eval - Grader**, **Debugger**, **Docs Writer**, **Prod Code Review**, **Unity Reviewer**, and **Web Researcher**.
+Standalone user-facing agents sit beside that orchestration graph: **01 Project - Planner**, **02 Phase - Refiner**, **03 Feature - Decomposer**, **Single Feature - Agent**, **05 Eval - Grader**, **Evangelize**, **Debugger**, **Docs Writer**, **Prod Code Review**, **Unity Reviewer**, and **Web Researcher**.
 
 ## Shared vs Language-Specific Content
 
@@ -189,10 +187,11 @@ Skills (`.github/skills/<name>/SKILL.md`) extract shared templates and formats t
 | `implementation-record` | Feature - Implementer | Template for the implementation record artifact (`[0N-task-name]-implementation.md`) produced by the Feature - Implementer |
 | `unity-development` | Feature - Implementer, Feature - Reviewer (Unity projects) | Implementation and review rules for Unity C# projects: MonoBehaviour lifecycle, UI Toolkit pitfalls, test authenticity, bootstrap verification, batch compilation gates |
 | `unity-review-knowledge` | Unity Reviewer | Unity best practices distilled from 11 official Unity ebooks (Unity 6 edition): C# style, performance/profiling, architecture/design patterns, DOTS/ECS, 2D art/rendering |
-| `debug-issue.md` | Debugger | Graph-powered debug workflow: semantic search, call-chain tracing, change detection, impact analysis |
-| `explore-codebase.md` | Explore agent, general exploration | Graph-powered navigation: architecture overview, community detection, relationship tracing, execution flow |
-| `refactor-safely.md` | Refactor pipelines | Graph-powered refactoring: dead-code detection, rename preview, impact radius, safety checks |
-| `review-changes.md` | Reviewer agents | Graph-powered structured review: change detection, risk scoring, test coverage lookup, blast radius analysis |
+| `context7-mcp` | Any agent handling library/framework/API questions | Context7 workflow for current documentation lookup (`resolve-library-id` -> `query-docs`) |
+| `debug-issue` | Debugger | Graph-powered debug workflow: semantic search, call-chain tracing, change detection, impact analysis |
+| `explore-codebase` | Explore agent, general exploration | Graph-powered navigation: architecture overview, community detection, relationship tracing, execution flow |
+| `refactor-safely` | Refactor pipelines | Graph-powered refactoring: dead-code detection, rename preview, impact radius, safety checks |
+| `review-changes` | Reviewer agents | Graph-powered structured review: change detection, risk scoring, test coverage lookup, blast radius analysis |
 
 ## Instructions
 
