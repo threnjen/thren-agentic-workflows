@@ -81,7 +81,11 @@ This is the main split-destination case in the Codex port.
 
 ### Destination Model
 
-Each `.github/agents/*.agent.md` source artifact maps to a Codex custom-agent TOML file, not to another Markdown manifest.
+Each agent definition in `.github/agents/` maps to a Codex custom-agent TOML file, not to another Markdown manifest.
+
+Agent definitions are identified by YAML frontmatter containing at minimum a `name` and `description` field. Most files use the `.agent.md` extension, but some agent definitions use a plain `.md` extension (for example, `prod-code-review.md`). Use frontmatter presence, not filename extension, as the canonical signal that a file is an agent definition to port.
+
+Documentation files in `.github/agents/` — such as `README.md`, `PORTING_GUIDE.md`, and `TOOL_MAPPING.md` — are not agent definitions. Do not create Codex custom-agent TOML files from them. If their content is useful for future Codex porting reference, carry relevant sections into `codex/` documentation rather than into agent TOML fields.
 
 The Codex-required fields called out by the platform reference are:
 
