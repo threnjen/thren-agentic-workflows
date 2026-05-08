@@ -231,7 +231,7 @@ When modifying shared agent behavior: edit the `.github/` master first, then app
 
 | Component | `.github/` (Copilot) | `opencode/` | `claude/` | `codex/` |
 |-----------|---------------------|-------------|-----------|-----------|
-| **Agent files** | `.github/agents/*.agent.md` (YAML frontmatter with `tools:`, `agents:`, `model:`) | `opencode/agents/*.md` (YAML frontmatter with `permission:`, `mode:`, `hidden:`) | `claude/agents/*.md` (Markdown with `tools:` line, `z-` prefix for subagents) | Repository-owned docs today; future source artifacts may live under `codex/` and map to runtime TOML agents in `~/.codex/agents/` or `.codex/agents/` |
+| **Agent files** | `.github/agents/*.agent.md` (YAML frontmatter with `name:`, `description:`, `tools:`, and optional `agents:` / `user-invocable:`) | `opencode/agents/*.md` (YAML frontmatter with `permission:`, `mode:`, `hidden:`) | `claude/agents/*.md` (Markdown with `tools:` line, `z-` prefix for subagents) | Repository-owned docs today; future source artifacts may live under `codex/` and map to runtime TOML agents in `~/.codex/agents/` or `.codex/agents/` |
 | **Instructions** | Loaded from `.github/instructions/` via `applyTo` glob patterns in YAML frontmatter | Loaded from `.github/instructions/` via glob in `~/.config/opencode/opencode.jsonc`: `"instructions": [".github/instructions/*.instructions.md"]` | **Inlined** in each agent under `## Auto-Loaded Instructions` — not loaded from instruction files | Repository-owned guidance belongs under `codex/`; runtime installation targets Codex AGENTS files such as `~/.codex/AGENTS.md`, not a checked-in `.github/instructions/` equivalent |
 | **Skills** | Loaded from `.github/skills/` on demand | Symlinked to `.github/skills/` (set up via `SYMLINK_SETUP.md`) | Symlinked to `.github/skills/` (set up via `SYMLINK_SETUP.md`) | Future skill-copy source belongs under `codex/`; runtime Codex discovers installed skills from `$HOME/.agents/skills/` or repo-local `.agents/skills` |
 | **Learnings** | `.github/learnings/` | N/A | Symlinked to `.github/learnings/` | No separate Codex learning surface is defined in this phase |
@@ -246,7 +246,7 @@ When modifying shared agent behavior: edit the `.github/` master first, then app
 |---------|-----------|-------------|-----------|
 | File extension | `.agent.md` | `.md` | `.md` |
 | Tools declaration | `tools: [read, search, edit, execute, agent]` | `permission: {read: allow, edit: allow, ...}` | `tools: Skill, Read, Grep, Glob, Edit, Write, Bash, Agent` |
-| Model | `model: Claude Sonnet 4.6 (copilot)` | `deepseek/deepseek-v4-pro` | N/A (model set in Claude config) |
+| Model selection | Harness-selected at runtime; not pinned in `.github/agents/*.agent.md` frontmatter | `deepseek/deepseek-v4-pro` | N/A (model set in Claude config) |
 | Subagent flag | `user-invocable: false` | `mode: subagent` + `hidden: true` | Filename prefixed with `z-` |
 | Agent references | `agents: [Web Researcher]` | N/A | Referenced by filename in workflow text |
 | Subagent naming | No prefix convention | No prefix convention | `z-` prefix (e.g., `z-feature-implementer.md`) |

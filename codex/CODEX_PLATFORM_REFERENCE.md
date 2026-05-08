@@ -91,6 +91,7 @@ Keep these roles distinct:
 |---------|----------|------------|-------------------|
 | `codex/` | Repository-owned source | Planning docs, platform references, and future source artifacts | Live installed Codex config, agents, or skills |
 | `.codex/` | Repo runtime | Repo-scoped runtime config and installed runtime assets | Long-term source-of-truth authoring |
+| `.agents/skills` | Repo runtime | Repo-scoped installed skills discovered by Codex | Repository-owned source material |
 | `~/.codex/` | User runtime | Global Codex config, global AGENTS guidance, and user custom agents | Repository-owned documentation |
 | `$HOME/.agents/skills/` | User runtime | User-scoped installed skills | Repository-owned source material |
 
@@ -104,7 +105,7 @@ Future implementation work should be able to rely on the following rules without
 2. Project-local instruction lookup walks from repository root toward the current working directory, preferring `AGENTS.override.md` over `AGENTS.md` at each level.
 3. Custom agents are TOML files loaded from `~/.codex/agents/` for user scope and `.codex/agents/` for repo scope.
 4. Skills are directory-based and load from `$HOME/.agents/skills/` for user scope and `.agents/skills` for repo scope.
-5. Repository-owned source material belongs under `codex/`; runtime installation targets belong under `.codex/`, `~/.codex/`, or `$HOME/.agents/skills/` depending on scope.
+5. Repository-owned source material belongs under `codex/`; runtime installation targets belong under `.codex/`, `.agents/skills`, `~/.codex/`, or `$HOME/.agents/skills/` depending on scope.
 
 If future upstream Codex docs or source behavior disagree with any rule above, update this reference before implementing against it.
 
