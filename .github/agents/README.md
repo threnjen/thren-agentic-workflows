@@ -137,6 +137,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **05 Eval - Grader** | Score a completed phase run from ledger files plus a rubric YAML and write a structured report |
 | **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
 | **Agent Testing Agent** | Run blind A/B/C branch benchmark execution via isolated subagents, then score and rank variants |
+| **Evangelize** | Port a source `.github/agents` definition into Claude, Codex, and OpenCode targets using platform guides |
 | **Debugger** | Diagnose and fix frontend or backend application errors |
 | **Docs Writer** | Create or update repo documentation; also invoked automatically by orchestrators after pipeline completion |
 | **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
@@ -194,6 +195,9 @@ Example one-message prompts:
 - `Do this against branch feature/prompt-optimization.`
 - `Do this against branches feature/prompt-optimization and feature/token-minimized.`
 - `Do this against branch feature/prompt-optimization with run id B001-AGENTIC-EXAMPLE-001.`
+
+**Evangelize** (automation agent — cross-platform sync)
+> Give it a source agent in `.github/agents/` and it updates or creates the corresponding generated targets in `claude/agents/`, `codex/agents/`, and `opencode/agents/`. It applies each platform's porting guide, maps tools/permissions, embeds applicable instruction intent from `.github/instructions`, preserves established filename aliases, and returns a concise per-platform sync report.
 
 **Test - Orchestrator** (orchestrator — delegates to subagents)
 > Asks which test operation to run (ANALYZE, WRITE, or FIX), delegates to the appropriate test subagent, and presents results. Optionally drives remediation of findings through the Feature - Implementer → Feature - Reviewer pipeline. After remediation, updates documentation via the Docs Writer.
@@ -295,6 +299,7 @@ Not everything needs a pipeline. These agents work well on their own:
 
 - **Audit - Code, Infra, Refactor** — Run anytime for a code, infrastructure, or structural health check
 - **Agent Testing Agent** — Run benchmark comparisons where baseline is current branch and candidates are branch checkouts
+- **Evangelize** — Synchronize one source `.github/agents` file to Claude, Codex, and OpenCode generated targets
 - **05 Eval - Grader** — Score a completed `phase/*` run against a rubric and preserve a Markdown score report under `eval/runs/<phase-slug>/`
 - **Test - Orchestrator** — Analyze, write, or fix tests on demand
 - **Prod Code Review** — Point at any `dev/feature/[0N-task-name]/` folder for an independent readiness check
