@@ -223,7 +223,7 @@ This repository tracks four platform surfaces. The `.github/` directory is the *
 - **`.github/agents/*.agent.md`** — Master agent definitions. All changes originate here.
 - **`.github/instructions/*.instructions.md`** — Master instruction files. Loaded by `.github/` agents via `applyTo` YAML patterns.
 - **`.github/skills/`** — Master skill definitions. Symlinked by both `opencode/` and `claude/`.
-- **`codex/`** — Repository-owned Codex layout contract, documentation, and future source artifacts that will later map into Codex runtime locations.
+- **`codex/`** — Repository-owned Codex layout contract, documentation, and future source artifacts that will later map into Codex runtime locations. `codex/PILOT_SLICE_PLAN.md` defines the first validation trio (one instruction slice, one custom agent, one skill) and the exit criteria that gate any broader Codex conversion work.
 
 When modifying shared agent behavior: edit the `.github/` master first, then apply equivalent changes to the checked-in `opencode/` and `claude/` copies. Codex work starts in `codex/` as repo-owned documentation or source material and maps later into runtime `.codex/`, `~/.codex/`, or `$HOME/.agents/skills/` locations.
 
