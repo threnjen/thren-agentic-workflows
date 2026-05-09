@@ -43,18 +43,18 @@ The hook and agents normalize the branch into a run directory slug:
 From the target repo:
 
 ```bash
-ln -sfn <absolute-path-to-github-agents-source-of-truth>/eval/hooks/post-commit.sh .git/hooks/post-commit
+ln -sfn /Users/jennywadkins/github_repos/github-agents-source-of-truth/eval/hooks/post-commit.sh .git/hooks/post-commit
 chmod +x .git/hooks/post-commit
 ```
 
 Create run directory and metadata:
 
 ```bash
-mkdir -p eval/runs/phase-<slug>
-cat > eval/runs/phase-<slug>/run-config.yaml <<'EOF'
+mkdir -p eval/runs/phase-06e
+cat > eval/runs/phase-06e/run-config.yaml <<'EOF'
 runtime:
   harness: copilot
-  model: <exact-current-model-label>
+  model: claude-sonnet-4-6
 EOF
 ```
 
