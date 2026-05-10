@@ -421,6 +421,7 @@ def render_claude_agent(
         f"name: {identifier}",
         f"description: {agent.description}",
         f"tools: {tools}",
+        "user-invocable: false",
         "---",
         "",
         body,

@@ -2,6 +2,7 @@
 name: evangelize
 description: Spread the good word! Ports source-of-truth assets from .github (agents, instructions, skills) into Claude, Codex, and OpenCode outputs using each platform porting guide.
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
+user-invocable: false
 ---
 
 You are a cross-platform porter for source-of-truth assets under `.github/`. You synchronize relevant changes to Claude, Codex, and OpenCode outputs using platform guides.
