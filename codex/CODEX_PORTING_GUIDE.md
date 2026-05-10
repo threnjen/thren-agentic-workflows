@@ -95,6 +95,8 @@ The Codex-required fields called out by the platform reference are:
 
 Other settings such as model selection, sandbox configuration, MCP server configuration, nicknames, and skill configuration are optional Codex fields and should only be populated when the source behavior actually needs them.
 
+Codex has no verified hide mechanism that keeps subagents out of the frontend agent picker. In this repository, any source agent with `user-invocable: false` must therefore be renamed with a `z-` prefix in the generated Codex artifact so it sorts to the bottom and clearly signals internal-only usage.
+
 ### Transformation Rules
 
 1. Translate the Markdown agent definition into TOML fields rather than copying the file body as-is.
@@ -102,7 +104,8 @@ Other settings such as model selection, sandbox configuration, MCP server config
 3. Inline or rewrite any instructions that were previously supplied by `.github/instructions/` so the resulting Codex agent remains self-contained where needed.
 4. Convert GitHub-specific tool assumptions, orchestration metadata, or unsupported behavior into Codex-native wording or drop them when no Codex equivalent exists.
 5. Serialize `developer_instructions` as TOML-safe text. Prefer multiline literal strings for markdown-heavy content so backticks, fenced code blocks, and backslashes are preserved without escape bugs. If the body cannot be represented safely as a multiline literal string, fall back to a fully escaped TOML basic string rather than hand-escaping fragments.
-6. Keep repository-owned source material in `codex/` until a later feature defines the exact generated or installed layout.
+6. For source agents with `user-invocable: false`, emit the generated Codex artifact with a `z-` prefix in both the installed filename and the TOML `name` field. This is a naming convention, not a true hide flag, and exists because Codex currently lacks a verified hidden-subagent surface in this repo.
+7. Keep repository-owned source material in `codex/` until a later feature defines the exact generated or installed layout.
 
 ### Major Non-Portable Differences From Markdown Agent Manifests
 
@@ -110,6 +113,7 @@ Other settings such as model selection, sandbox configuration, MCP server config
 |---|---|---|
 | Markdown `.agent.md` manifest | TOML custom-agent file | Requires field-based rewrite |
 | Instruction loading via `.github/instructions/` | `developer_instructions` field inside agent TOML | Relevant instructions must be embedded or rewritten |
+| `user-invocable: false` hidden subagent intent | `z-`-prefixed filename and TOML `name` | Treat as a visibility hint because no Codex hide flag is verified here |
 | GitHub-specific metadata and tool assumptions | Codex-specific optional fields and runtime behavior | Unsupported behavior must be classified explicitly |
 
 ### What Usually Ports Cleanly
@@ -117,6 +121,7 @@ Other settings such as model selection, sandbox configuration, MCP server config
 - Agent purpose and scope.
 - Stable behavioral constraints.
 - User-facing description of what the agent does.
+- The `z-` prefix convention for non-user-invocable subagents.
 
 ### What Requires Rewrite
 
@@ -135,6 +140,7 @@ Other settings such as model selection, sandbox configuration, MCP server config
 | Source pattern | Codex destination | Notes |
 |---|---|---|
 | `.github/agents/04b-feature-implementer.agent.md` role and core behavior | Custom-agent TOML fields | Convert purpose and constraints into TOML-backed content |
+| `.github/agents/*` with `user-invocable: false` | `z-*.toml` plus `name = "z-*"` | Use naming to de-emphasize internal subagents in the Codex frontend |
 | Instructions previously inherited from `.github/instructions/` | `developer_instructions` | Must be explicit in Codex; no hidden loader |
 | GitHub-only metadata with no Codex field | Non-portable | Record it as dropped or rewritten instead of silently carrying it forward |
 
@@ -221,4 +227,5 @@ Use this table before porting any source asset.
 - Do not port AGENTS-derived content into either repository's checked-in `AGENTS.md`.
 - Do not blur repository-owned source docs with runtime `.codex/` or `.agents/skills` locations.
 - Do not emit markdown-heavy `developer_instructions` into TOML multiline basic strings unless every backslash escape is valid TOML. Prefer multiline literal strings, with an escaped basic-string fallback for edge cases.
+- Do not rely on a hidden-subagent flag for Codex in this repo. Use the `z-` prefix convention for non-user-invocable agents so the generated names communicate that they are internal pipeline roles.
 - When parity is unclear, mark the behavior as requiring Codex-specific rewrite instead of implying a direct copy path.

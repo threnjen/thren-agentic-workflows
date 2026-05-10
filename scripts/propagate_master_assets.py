@@ -35,6 +35,9 @@ OPENCODE_AGENTS_DIR = REPO_ROOT / "opencode" / "agents"
 CODEX_AGENTS_DIR = REPO_ROOT / "codex" / "agents"
 
 
+GENERATED_AGENT_HEADER = "# Generated from .github/agents source-of-truth. Do not edit manually."
+
+
 OPENCODE_FILE_ALIASES = {
     "documentation-architect": "docs-writer",
     "web-research-specialist": "web-researcher",
@@ -346,7 +349,11 @@ def _opencode_filename_for(agent: SourceAgent, existing_stems: set[str]) -> str:
 
 
 def _codex_filename_for(agent: SourceAgent) -> str:
-    return f"{agent.source_slug}.toml"
+    if agent.user_invocable:
+        return f"{agent.source_slug}.toml"
+
+    stripped = _strip_numeric_prefix(agent.source_slug)
+    return f"z-{stripped}.toml"
 
 
 def _build_instruction_appendix(agent: SourceAgent, docs: List[InstructionDoc]) -> str:
@@ -423,10 +430,12 @@ def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc]) -> str:
         combined = f"{combined}\n\n{appendix.strip()}"
 
     name_value = _sanitize_slug(_strip_numeric_prefix(agent.source_slug))
+    if not agent.user_invocable and not name_value.startswith("z-"):
+        name_value = f"z-{name_value}"
     description = json.dumps(agent.description, ensure_ascii=False)
 
     lines = [
-        "# Generated from .github/agents source-of-truth. Do not edit manually.",
+        GENERATED_AGENT_HEADER,
         f'name = "{name_value}"',
         f"description = {description}",
         "developer_instructions = ",
@@ -450,6 +459,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     changed_claude = 0
     changed_opencode = 0
     changed_codex = 0
+    expected_codex_files: set[Path] = set()
 
     for agent in agents:
         docs = applicable_instructions(agent, instructions)
@@ -457,6 +467,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         claude_file = CLAUDE_AGENTS_DIR / _claude_filename_for(agent, claude_existing_stems)
         opencode_file = OPENCODE_AGENTS_DIR / _opencode_filename_for(agent, opencode_existing_stems)
         codex_file = CODEX_AGENTS_DIR / _codex_filename_for(agent)
+        expected_codex_files.add(codex_file)
 
         if _write_if_changed(claude_file, render_claude_agent(agent, docs)):
             changed_claude += 1
@@ -464,6 +475,14 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
             changed_opencode += 1
         if _write_if_changed(codex_file, render_codex_agent(agent, docs)):
             changed_codex += 1
+
+    for codex_file in CODEX_AGENTS_DIR.glob("*.toml"):
+        if codex_file in expected_codex_files:
+            continue
+        if not _read_text(codex_file).startswith(GENERATED_AGENT_HEADER):
+            continue
+        codex_file.unlink()
+        changed_codex += 1
 
     result = {
         "source_agents": len(agents),
