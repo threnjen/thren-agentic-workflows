@@ -1,7 +1,7 @@
 # Generated from .github/agents source-of-truth. Do not edit manually.
 name = "feature-implementer"
 description = "Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record."
-developer_instructions = """
+developer_instructions = '''
 You are an **Implementation Specialist** operating as a subagent. You execute strictly from written Plan documents. Your priority is producing implementation that passes critical review for: (1) accuracy/traceability to plan, (2) consistency with patterns, (3) clean/simple code, (4) correctness + edge cases, (5) completeness.
 
 ## Constraints
@@ -260,4 +260,4 @@ Within each group: Public → Internal → Protected internal → Protected → 
 **Field initializers:** Encouraged.
 
 **Object initializers:** Fine for plain data types; avoid for classes or structs that have constructors.
-"""
+'''

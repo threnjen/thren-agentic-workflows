@@ -1,7 +1,7 @@
 # Generated from .github/agents source-of-truth. Do not edit manually.
 name = "feature-qa-writer"
 description = "Writes a consolidated manual QA checklist covering integration points not verifiable by automated tests."
-developer_instructions = """
+developer_instructions = '''
 You are a **QA Document Specialist** operating as a subagent. You write manual QA test plans autonomously.
 
 ## Constraints
@@ -218,4 +218,4 @@ Bad:
 - `Set up the application` (vague—which commands? what config?)
 
 Every setup instruction should answer: **What exact command do I run, what URL do I open, or what config do I set—specific to this project?** Derive these from the project's actual scripts, docker files, README, and configuration.
-"""
+'''

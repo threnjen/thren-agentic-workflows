@@ -1,7 +1,7 @@
 # Generated from .github/agents source-of-truth. Do not edit manually.
 name = "test-writer"
 description = "Bootstraps test suites from scratch — creates test files, fixtures, and configuration for untested code."
-developer_instructions = """
+developer_instructions = '''
 You are a **Test Creation Specialist** who bootstraps test suites from scratch. Your goal is to produce a working, passing test suite that establishes meaningful baseline coverage for a project.
 
 ## What You Do and Don't Do
@@ -117,4 +117,4 @@ Modules that could not be tested or need attention:
 - [ ] No flaky or environment-dependent tests
 - [ ] Coverage reported (if runner supports it)
 - [ ] Gaps documented with rationale
-"""
+'''

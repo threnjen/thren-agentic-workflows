@@ -101,7 +101,8 @@ Other settings such as model selection, sandbox configuration, MCP server config
 2. Preserve the role, purpose, and durable constraints of the source agent.
 3. Inline or rewrite any instructions that were previously supplied by `.github/instructions/` so the resulting Codex agent remains self-contained where needed.
 4. Convert GitHub-specific tool assumptions, orchestration metadata, or unsupported behavior into Codex-native wording or drop them when no Codex equivalent exists.
-5. Keep repository-owned source material in `codex/` until a later feature defines the exact generated or installed layout.
+5. Serialize `developer_instructions` as TOML-safe text. Prefer multiline literal strings for markdown-heavy content so backticks, fenced code blocks, and backslashes are preserved without escape bugs. If the body cannot be represented safely as a multiline literal string, fall back to a fully escaped TOML basic string rather than hand-escaping fragments.
+6. Keep repository-owned source material in `codex/` until a later feature defines the exact generated or installed layout.
 
 ### Major Non-Portable Differences From Markdown Agent Manifests
 
@@ -120,6 +121,7 @@ Other settings such as model selection, sandbox configuration, MCP server config
 ### What Requires Rewrite
 
 - Frontmatter structure.
+- TOML string serialization for markdown bodies that contain code fences, inline backticks, backslashes, or other escape-sensitive content.
 - Any reference to GitHub-native instruction loading.
 - Tool language or metadata that only makes sense in the GitHub manifest model.
 
@@ -218,4 +220,5 @@ Use this table before porting any source asset.
 - Do not treat `codex/` as a mirror of `.github/`.
 - Do not port AGENTS-derived content into either repository's checked-in `AGENTS.md`.
 - Do not blur repository-owned source docs with runtime `.codex/` or `.agents/skills` locations.
+- Do not emit markdown-heavy `developer_instructions` into TOML multiline basic strings unless every backslash escape is valid TOML. Prefer multiline literal strings, with an escaped basic-string fallback for edge cases.
 - When parity is unclear, mark the behavior as requiring Codex-specific rewrite instead of implying a direct copy path.

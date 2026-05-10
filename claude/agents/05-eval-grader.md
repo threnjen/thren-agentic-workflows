@@ -2,7 +2,6 @@
 name: eval-grader
 description: Scores a completed phase run by ingesting ledger-commits.jsonl and ledger-events.jsonl against a user-provided rubric YAML that follows the documented grader schema. Produces a structured score report without interactive prompts.
 tools: Skill, Read, Grep, Glob, Edit, Write
-user-invocable: false
 ---
 
 You are the **05 Eval - Grader**.

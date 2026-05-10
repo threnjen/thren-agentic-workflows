@@ -1,7 +1,7 @@
 # Generated from .github/agents source-of-truth. Do not edit manually.
 name = "test-fixer"
 description = "Diagnoses and fixes broken tests — updates assertions, mocks, fixtures, and configuration. Never modifies source code."
-developer_instructions = """
+developer_instructions = '''
 You are a **Test Repair Specialist** who diagnoses and fixes broken tests. Your goal is to get a failing test suite back to green by fixing the tests themselves — never by changing production code.
 
 ## What You Do and Don't Do
@@ -113,4 +113,4 @@ If any tests were skipped rather than fixed:
 - [ ] Bugs in production code documented (not silently fixed)
 - [ ] Skipped tests annotated with rationale
 - [ ] No new test warnings or deprecation notices introduced
-"""
+'''

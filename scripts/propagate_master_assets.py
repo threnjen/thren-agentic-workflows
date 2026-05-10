@@ -409,8 +409,11 @@ def render_opencode_agent(agent: SourceAgent, docs: List[InstructionDoc]) -> str
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _escape_toml_multiline(value: str) -> str:
-    return value.replace('"""', '\\"\\"\\"')
+def _render_toml_string(value: str) -> List[str]:
+    if "'''" not in value:
+        return ["'''", value, "'''"]
+
+    return [json.dumps(value, ensure_ascii=False)]
 
 
 def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc]) -> str:
@@ -419,18 +422,17 @@ def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc]) -> str:
     if appendix:
         combined = f"{combined}\n\n{appendix.strip()}"
 
-    escaped = _escape_toml_multiline(combined)
     name_value = _sanitize_slug(_strip_numeric_prefix(agent.source_slug))
-    description = agent.description.replace('"', '\\"')
+    description = json.dumps(agent.description, ensure_ascii=False)
 
     lines = [
         "# Generated from .github/agents source-of-truth. Do not edit manually.",
         f'name = "{name_value}"',
-        f'description = "{description}"',
-        "developer_instructions = \"\"\"",
-        escaped,
-        "\"\"\"",
+        f"description = {description}",
+        "developer_instructions = ",
     ]
+    lines[-1] += _render_toml_string(combined)[0]
+    lines.extend(_render_toml_string(combined)[1:])
     return "\n".join(lines).rstrip() + "\n"
 
 
