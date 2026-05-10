@@ -70,14 +70,20 @@ cd claude
 ln -sfn ../.github/skills skills
 ln -sfn ../.github/learnings learnings
 
-# Link into ~/.claude
+# Link agents into ~/.claude one file at a time
 mkdir -p ~/.claude
-ln -sfn /path/to/repo/claude/agents ~/.claude/agents
+rm -f ~/.claude/agents
+mkdir -p ~/.claude/agents
+for src in /path/to/repo/claude/agents/*; do
+	ln -sfn "$src" "$HOME/.claude/agents/$(basename "$src")"
+done
+
+# Link shared directories into ~/.claude
 ln -sfn /path/to/repo/claude/skills ~/.claude/skills
 ln -sfn /path/to/repo/claude/learnings ~/.claude/learnings
 ```
 
-See [SYMLINK_SETUP.md](SYMLINK_SETUP.md) for details.
+See [../SYMLINK_SETUP.md](../SYMLINK_SETUP.md) for details.
 
 ---
 

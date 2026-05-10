@@ -6,7 +6,7 @@ Specialized agents for structured software development workflows, configured for
 
 ## Setup
 
-Before using these agents, wire the repository into your local Claude config. See [agents/SYMLINK_SETUP.md](agents/SYMLINK_SETUP.md) for full instructions. The short version:
+Before using these agents, wire the repository into your local Claude config. See [SYMLINK_SETUP.md](SYMLINK_SETUP.md) for full instructions. The short version:
 
 ```bash
 # 1. Create repo-level symlinks (from the repo root)
@@ -14,9 +14,15 @@ cd claude
 ln -sfn ../.github/skills skills
 ln -sfn ../.github/learnings learnings
 
-# 2. Link into ~/.claude so Claude Code discovers them
+# 2. Link agents into ~/.claude one file at a time
 mkdir -p ~/.claude
-ln -sfn /path/to/github-agents-source-of-truth/claude/agents ~/.claude/agents
+rm -f ~/.claude/agents
+mkdir -p ~/.claude/agents
+for src in /path/to/github-agents-source-of-truth/claude/agents/*; do
+   ln -sfn "$src" "$HOME/.claude/agents/$(basename "$src")"
+done
+
+# 3. Link shared directories into ~/.claude
 ln -sfn /path/to/github-agents-source-of-truth/claude/skills ~/.claude/skills
 ln -sfn /path/to/github-agents-source-of-truth/claude/learnings ~/.claude/learnings
 ```
@@ -332,5 +338,5 @@ Agents load **skills** (`claude/skills/<name>/SKILL.md`) for shared templates an
 Each agent file is standalone. To use these agents in a different repository:
 
 1. Copy the `claude/agents/` directory into the target repo.
-2. Wire symlinks for skills and learnings following [agents/SYMLINK_SETUP.md](agents/SYMLINK_SETUP.md).
+2. Wire symlinks for skills and learnings following [SYMLINK_SETUP.md](SYMLINK_SETUP.md).
 3. Update the `~/.claude` symlinks to point at the new location.
