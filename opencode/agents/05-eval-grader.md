@@ -8,7 +8,7 @@ permission:
   read: allow
 ---
 
-You are the **05 Eval - Grader**.
+You are the **05-eval-grader**.
 
 Your job is to score a completed phase run by reading the two ledger files produced during execution, applying a user-provided rubric YAML, and writing a Markdown score report to the target repository.
 

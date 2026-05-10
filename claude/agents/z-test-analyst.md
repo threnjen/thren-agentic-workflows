@@ -1,5 +1,5 @@
 ---
-name: test-analyst
+name: z-test-analyst
 description: Analyzes test suites for coverage gaps, redundancy, and quality. Produces a reduction plan without modifying code.
 tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch
 ---

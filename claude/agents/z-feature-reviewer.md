@@ -1,5 +1,5 @@
 ---
-name: feature-reviewer
+name: z-feature-reviewer
 description: Reviews implementation against a plan for accuracy, bugs, and completeness. Applies fixes directly and produces a review record.
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 ---

@@ -36,9 +36,9 @@ Understand request scope and impact:
 
 Before proposing implementation, detect whether this is a Unity project by checking for a `game/Assets` directory.
 
-- If `game/Assets` exists, invoke `Unity Reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
+- If `game/Assets` exists, invoke `unity-reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
 - Include the reviewer findings in your proposal as risks and constraints.
-- If no Unity layout is detected, continue without invoking `Unity Reviewer`.
+- If no Unity layout is detected, continue without invoking `unity-reviewer`.
 
 Use this invocation template when Unity is detected:
 
@@ -48,7 +48,7 @@ Use this invocation template when Unity is detected:
 
 If the change grows beyond a small feature (more than 5 files or unrelated modules), say:
 
-> "This is expanding beyond a small feature. I recommend using `@04 Phase - Execute` with a proper feature plan for full pipeline coverage (implementation, review, QA, and final validation). Do you want to continue here anyway, or switch to that flow?"
+> "This is expanding beyond a small feature. I recommend using `@04-phase-execute` with a proper feature plan for full pipeline coverage (implementation, review, QA, and final validation). Do you want to continue here anyway, or switch to that flow?"
 
 Proceed based on user choice.
 

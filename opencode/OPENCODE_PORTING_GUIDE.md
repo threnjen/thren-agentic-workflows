@@ -42,13 +42,15 @@ Agent output should include the required instruction intent in agent content so 
 2. Resolve applicable `.github/instructions/*.instructions.md` entries by `applyTo`.
 3. Convert GitHub tools to OpenCode permission keys.
 4. Preserve existing OpenCode filename aliases where established.
-5. Ensure behavioral equivalence with source intent.
+5. Rewrite source agent references in body text to OpenCode destination identifiers. Use destination filename stems, preserving established aliases such as `@web-researcher` and `docs-writer`.
+6. Ensure behavioral equivalence with source intent.
 
 ## Validation Checklist
 
 - Frontmatter parses correctly.
 - Permission keys are valid OpenCode keys.
 - Required permissions are present and minimal.
+- Agent references in workflow text point at OpenCode destination identifiers, not GitHub display names.
 - Agent behavior remains aligned with source intent.
 - Agent appears in OpenCode discovery.
 

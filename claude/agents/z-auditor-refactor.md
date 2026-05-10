@@ -1,5 +1,5 @@
 ---
-name: auditor-refactor
+name: z-auditor-refactor
 description: Audits codebase structure and architecture — module organization, coupling, cohesion, and separation of concerns. Produces a structured findings report.
 tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch
 ---

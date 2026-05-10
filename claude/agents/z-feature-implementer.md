@@ -1,5 +1,5 @@
 ---
-name: feature-implementer
+name: z-feature-implementer
 description: Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record.
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 ---
@@ -168,7 +168,7 @@ When implementation is complete, you produce TWO outputs:
 
 ### A. Written Artifact: `[0N-task-name]-implementation.md`
 
-This is the **primary deliverable**. Write it to `dev/feature/[0N-task-name]/` as described in Section F above. The @z-feature-reviewer subagent consumes this file to scope its review. It must be written before the return summary.
+This is the **primary deliverable**. Write it to `dev/feature/[0N-task-name]/` as described in Section F above. The z-feature-reviewer subagent consumes this file to scope its review. It must be written before the return summary.
 
 ### B. Return Summary
 

@@ -1,5 +1,5 @@
 ---
-name: documentation-architect
+name: docs-writer
 description: Creates and updates repository documentation — README, ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT, and TROUBLESHOOTING.
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 ---

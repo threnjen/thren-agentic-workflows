@@ -1,5 +1,5 @@
 ---
-name: feature-qa-writer
+name: z-feature-qa-writer
 description: Writes a consolidated manual QA checklist covering integration points not verifiable by automated tests.
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 ---

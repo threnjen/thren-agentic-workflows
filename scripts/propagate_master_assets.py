@@ -18,7 +18,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Tuple, Union
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -332,23 +332,27 @@ def _claude_filename_for(agent: SourceAgent, existing_stems: set[str]) -> str:
     return f"{base}.md"
 
 
-def _claude_handle_for(agent: SourceAgent, existing_stems: set[str]) -> str:
-    return f"@{Path(_claude_filename_for(agent, existing_stems)).stem}"
+def _claude_identifier_for(agent: SourceAgent, existing_stems: set[str]) -> str:
+    return Path(_claude_filename_for(agent, existing_stems)).stem
 
 
-def _build_claude_handle_map(agents: List[SourceAgent], existing_stems: set[str]) -> Dict[str, str]:
+def _build_agent_reference_map(
+    agents: List[SourceAgent],
+    identifier_for: Callable[[SourceAgent], str],
+) -> Dict[str, str]:
     return {
-        agent.name: _claude_handle_for(agent, existing_stems)
+        agent.name: identifier_for(agent)
         for agent in agents
         if agent.name
     }
 
 
-def _rewrite_claude_agent_references(text: str, handle_map: Dict[str, str]) -> str:
+def _rewrite_agent_references(text: str, reference_map: Dict[str, str], preserve_at_sign: bool) -> str:
     rewritten = text
-    for source_name, handle in sorted(handle_map.items(), key=lambda item: len(item[0]), reverse=True):
-        rewritten = rewritten.replace(f"@{source_name}", handle)
-        rewritten = rewritten.replace(source_name, handle)
+    for source_name, identifier in sorted(reference_map.items(), key=lambda item: len(item[0]), reverse=True):
+        at_replacement = f"@{identifier}" if preserve_at_sign else identifier
+        rewritten = rewritten.replace(f"@{source_name}", at_replacement)
+        rewritten = rewritten.replace(source_name, identifier)
     return rewritten
 
 
@@ -366,6 +370,17 @@ def _opencode_filename_for(agent: SourceAgent, existing_stems: set[str]) -> str:
 
     base = alias or agent.source_slug
     return f"{base}.md"
+
+
+def _opencode_identifier_for(agent: SourceAgent, existing_stems: set[str]) -> str:
+    return Path(_opencode_filename_for(agent, existing_stems)).stem
+
+
+def _codex_identifier_for(agent: SourceAgent) -> str:
+    identifier = _sanitize_slug(_strip_numeric_prefix(agent.source_slug))
+    if not agent.user_invocable and not identifier.startswith("z-"):
+        identifier = f"z-{identifier}"
+    return identifier
 
 
 def _codex_filename_for(agent: SourceAgent) -> str:
@@ -391,14 +406,19 @@ def _build_instruction_appendix(agent: SourceAgent, docs: List[InstructionDoc]) 
     return "\n".join(sections).strip() + "\n"
 
 
-def render_claude_agent(agent: SourceAgent, docs: List[InstructionDoc], handle_map: Dict[str, str]) -> str:
+def render_claude_agent(
+    agent: SourceAgent,
+    docs: List[InstructionDoc],
+    reference_map: Dict[str, str],
+    identifier: str,
+) -> str:
     tools = ", ".join(map_tools_for_claude(agent.tools))
     appendix = _build_instruction_appendix(agent, docs)
-    body = _rewrite_claude_agent_references(agent.body.strip(), handle_map)
+    body = _rewrite_agent_references(agent.body.strip(), reference_map, preserve_at_sign=True)
 
     parts = [
         "---",
-        f"name: {_sanitize_slug(_strip_numeric_prefix(agent.source_slug))}",
+        f"name: {identifier}",
         f"description: {agent.description}",
         f"tools: {tools}",
         "---",
@@ -407,14 +427,15 @@ def render_claude_agent(agent: SourceAgent, docs: List[InstructionDoc], handle_m
     ]
 
     if appendix:
-        parts.extend(["", "---", "", _rewrite_claude_agent_references(appendix.strip(), handle_map)])
+        parts.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
 
     return "\n".join(parts).rstrip() + "\n"
 
 
-def render_opencode_agent(agent: SourceAgent, docs: List[InstructionDoc]) -> str:
+def render_opencode_agent(agent: SourceAgent, docs: List[InstructionDoc], reference_map: Dict[str, str]) -> str:
     permissions = map_permissions_for_opencode(agent.tools)
     appendix = _build_instruction_appendix(agent, docs)
+    body = _rewrite_agent_references(agent.body.strip(), reference_map, preserve_at_sign=True)
 
     lines: List[str] = [
         "---",
@@ -429,10 +450,10 @@ def render_opencode_agent(agent: SourceAgent, docs: List[InstructionDoc]) -> str
     lines.append("permission:")
     for key in sorted(permissions.keys()):
         lines.append(f"  {key}: allow")
-    lines.extend(["---", "", agent.body.strip()])
+    lines.extend(["---", "", body])
 
     if appendix:
-        lines.extend(["", "---", "", appendix.strip()])
+        lines.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
 
     return "\n".join(lines).rstrip() + "\n"
 
@@ -444,15 +465,15 @@ def _render_toml_string(value: str) -> List[str]:
     return [json.dumps(value, ensure_ascii=False)]
 
 
-def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc]) -> str:
+def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc], reference_map: Dict[str, str]) -> str:
     combined = agent.body.strip()
     appendix = _build_instruction_appendix(agent, docs)
     if appendix:
         combined = f"{combined}\n\n{appendix.strip()}"
 
-    name_value = _sanitize_slug(_strip_numeric_prefix(agent.source_slug))
-    if not agent.user_invocable and not name_value.startswith("z-"):
-        name_value = f"z-{name_value}"
+    combined = _rewrite_agent_references(combined, reference_map, preserve_at_sign=False)
+
+    name_value = _codex_identifier_for(agent)
     description = json.dumps(agent.description, ensure_ascii=False)
 
     lines = [
@@ -476,7 +497,15 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
 
     claude_existing_stems = _discover_existing_stems(CLAUDE_AGENTS_DIR)
     opencode_existing_stems = _discover_existing_stems(OPENCODE_AGENTS_DIR)
-    claude_handle_map = _build_claude_handle_map(agents, claude_existing_stems)
+    claude_reference_map = _build_agent_reference_map(
+        agents,
+        lambda agent: _claude_identifier_for(agent, claude_existing_stems),
+    )
+    opencode_reference_map = _build_agent_reference_map(
+        agents,
+        lambda agent: _opencode_identifier_for(agent, opencode_existing_stems),
+    )
+    codex_reference_map = _build_agent_reference_map(agents, _codex_identifier_for)
 
     changed_claude = 0
     changed_opencode = 0
@@ -486,16 +515,20 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     for agent in agents:
         docs = applicable_instructions(agent, instructions)
 
-        claude_file = CLAUDE_AGENTS_DIR / _claude_filename_for(agent, claude_existing_stems)
+        claude_identifier = _claude_identifier_for(agent, claude_existing_stems)
+        claude_file = CLAUDE_AGENTS_DIR / f"{claude_identifier}.md"
         opencode_file = OPENCODE_AGENTS_DIR / _opencode_filename_for(agent, opencode_existing_stems)
         codex_file = CODEX_AGENTS_DIR / _codex_filename_for(agent)
         expected_codex_files.add(codex_file)
 
-        if _write_if_changed(claude_file, render_claude_agent(agent, docs, claude_handle_map)):
+        if _write_if_changed(
+            claude_file,
+            render_claude_agent(agent, docs, claude_reference_map, claude_identifier),
+        ):
             changed_claude += 1
-        if _write_if_changed(opencode_file, render_opencode_agent(agent, docs)):
+        if _write_if_changed(opencode_file, render_opencode_agent(agent, docs, opencode_reference_map)):
             changed_opencode += 1
-        if _write_if_changed(codex_file, render_codex_agent(agent, docs)):
+        if _write_if_changed(codex_file, render_codex_agent(agent, docs, codex_reference_map)):
             changed_codex += 1
 
     for codex_file in CODEX_AGENTS_DIR.glob("*.toml"):

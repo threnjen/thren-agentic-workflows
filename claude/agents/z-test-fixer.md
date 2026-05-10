@@ -1,5 +1,5 @@
 ---
-name: test-fixer
+name: z-test-fixer
 description: Diagnoses and fixes broken tests — updates assertions, mocks, fixtures, and configuration. Never modifies source code.
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 ---

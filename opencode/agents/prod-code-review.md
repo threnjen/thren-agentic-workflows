@@ -42,17 +42,17 @@ Before beginning, ensure ALL of the following are available. If any are missing,
 | Document | Source Agent | Expected File |
 |----------|-------------|---------------|
 | Feature plan | Feature - Decomposer | `[0N-task-name]-plan.md` |
-| Context document | Feature - Plan Expander | `[0N-task-name]-context.md` |
-| Task checklist | Feature - Plan Expander | `[0N-task-name]-tasks.md` |
-| Implementation record | Feature - Implementer | `[0N-task-name]-implementation.md` |
-| Review record | Feature - Reviewer | `[0N-task-name]-review.md` |
+| Context document | 04a-feature-plan-expander | `[0N-task-name]-context.md` |
+| Task checklist | 04a-feature-plan-expander | `[0N-task-name]-tasks.md` |
+| Implementation record | 04b-feature-implementer | `[0N-task-name]-implementation.md` |
+| Review record | 04c-feature-reviewer | `[0N-task-name]-review.md` |
 
 **Consolidated QA document** (provided by the orchestrator):
 
 | Document | Source Agent | Expected Location |
 |----------|-------------|-------------------|
-| Consolidated QA plan | Feature - QA Writer | Path provided by orchestrator (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/[audit-name]/[audit-name]-qa.md`) |
-| Consolidated coverage map | Feature - QA Writer | Alongside QA plan (e.g., `[phase-name]_QA_COVERAGE_MAP.md`) |
+| Consolidated QA plan | 04d-feature-qa-writer | Path provided by orchestrator (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/[audit-name]/[audit-name]-qa.md`) |
+| Consolidated coverage map | 04d-feature-qa-writer | Alongside QA plan (e.g., `[phase-name]_QA_COVERAGE_MAP.md`) |
 
 ## Unity Detection & Skill Loading
 
@@ -201,17 +201,17 @@ Three to five sentences covering:
 | Document | File | Source | Present | Notes |
 |----------|------|--------|---------|-------|
 | Feature Plan | `[0N-task-name]-plan.md` | Feature - Decomposer | Yes/No | — |
-| Context | `[0N-task-name]-context.md` | Feature - Plan Expander | Yes/No | — |
-| Tasks | `[0N-task-name]-tasks.md` | Feature - Plan Expander | Yes/No | — |
-| Implementation Record | `[0N-task-name]-implementation.md` | Feature - Implementer | Yes/No | — |
-| Review Record | `[0N-task-name]-review.md` | Feature - Reviewer | Yes/No | — |
+| Context | `[0N-task-name]-context.md` | 04a-feature-plan-expander | Yes/No | — |
+| Tasks | `[0N-task-name]-tasks.md` | 04a-feature-plan-expander | Yes/No | — |
+| Implementation Record | `[0N-task-name]-implementation.md` | 04b-feature-implementer | Yes/No | — |
+| Review Record | `[0N-task-name]-review.md` | 04c-feature-reviewer | Yes/No | — |
 
 **Consolidated QA Documents:**
 
 | Document | File | Source | Present | Notes |
 |----------|------|--------|---------|-------|
-| QA Plan | `[QA output path]` | Feature - QA Writer | Yes/No | — |
-| Coverage Map | `[coverage map path]` | Feature - QA Writer | Yes/No | — |
+| QA Plan | `[QA output path]` | 04d-feature-qa-writer | Yes/No | — |
+| Coverage Map | `[coverage map path]` | 04d-feature-qa-writer | Yes/No | — |
 
 ### Traceability Matrix
 
@@ -263,9 +263,9 @@ Use this table to determine where the user should return:
 | Root Cause | Return To | When |
 |------------|-----------|------|
 | **Feature - Decomposer** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
-| **Feature - Implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
-| **Feature - Reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
-| **Feature - QA Writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites |
+| **04b-feature-implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
+| **04c-feature-reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
+| **04d-feature-qa-writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites |
 
 #### Blocking Items List
 
@@ -302,7 +302,7 @@ After completing the full analysis, write the record to the task folder.
 # QA Readiness Analysis: [Task Name]
 
 **Date:** [date]
-**Analyst:** Prod Code Review (automated)
+**Analyst:** prod-code-review (automated)
 **Verdict:** [GO | GO WITH CONDITIONS | NO-GO]
 **Documents Analyzed:** [count]
 **Findings:** [count] ([blocker count] blockers, [high count] high, [medium count] medium, [low count] low)

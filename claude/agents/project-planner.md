@@ -108,7 +108,7 @@ After the user confirms the planning documents are final for this session, stage
 - **Update status** in `PHASES_OVERVIEW.md` as phases progress (Planned → In Progress → Complete)
 - **Archive completed phases** — do not delete phase docs; update their status to Complete
 - **Cross-reference** related repos when a project spans frontend and backend (link to counterpart phase docs)
-- When a phase includes frontend/UI changes, note that **QA manual test documents are required** (the Phase - Execute orchestrator handles this automatically via the @z-feature-qa-writer subagent)
+- When a phase includes frontend/UI changes, note that **QA manual test documents are required** (the Phase - Execute orchestrator handles this automatically via the z-feature-qa-writer subagent)
 - For pure backend phases, recommend QA docs when API contracts change, integration behavior changes, or changes affect user-visible behavior through the frontend
 
 ## Principles for Good Phase Boundaries

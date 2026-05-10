@@ -103,9 +103,10 @@ Codex has no verified hide mechanism that keeps subagents out of the frontend ag
 2. Preserve the role, purpose, and durable constraints of the source agent.
 3. Inline or rewrite any instructions that were previously supplied by `.github/instructions/` so the resulting Codex agent remains self-contained where needed.
 4. Convert GitHub-specific tool assumptions, orchestration metadata, or unsupported behavior into Codex-native wording or drop them when no Codex equivalent exists.
-5. Serialize `developer_instructions` as TOML-safe text. Prefer multiline literal strings for markdown-heavy content so backticks, fenced code blocks, and backslashes are preserved without escape bugs. If the body cannot be represented safely as a multiline literal string, fall back to a fully escaped TOML basic string rather than hand-escaping fragments.
-6. For source agents with `user-invocable: false`, emit the generated Codex artifact with a `z-` prefix in both the installed filename and the TOML `name` field. This is a naming convention, not a true hide flag, and exists because Codex currently lacks a verified hidden-subagent surface in this repo.
-7. Keep repository-owned source material in `codex/` until a later feature defines the exact generated or installed layout.
+5. Rewrite source agent references in `developer_instructions` to the generated Codex agent names. Use the Codex runtime name, not the GitHub display name, so references such as internal subagents resolve to names like `z-feature-reviewer` instead of `Feature - Reviewer`.
+6. Serialize `developer_instructions` as TOML-safe text. Prefer multiline literal strings for markdown-heavy content so backticks, fenced code blocks, and backslashes are preserved without escape bugs. If the body cannot be represented safely as a multiline literal string, fall back to a fully escaped TOML basic string rather than hand-escaping fragments.
+7. For source agents with `user-invocable: false`, emit the generated Codex artifact with a `z-` prefix in both the installed filename and the TOML `name` field. This is a naming convention, not a true hide flag, and exists because Codex currently lacks a verified hidden-subagent surface in this repo.
+8. Keep repository-owned source material in `codex/` until a later feature defines the exact generated or installed layout.
 
 ### Major Non-Portable Differences From Markdown Agent Manifests
 
@@ -126,6 +127,7 @@ Codex has no verified hide mechanism that keeps subagents out of the frontend ag
 ### What Requires Rewrite
 
 - Frontmatter structure.
+- Agent references inside the body that must point at generated Codex names rather than GitHub display names.
 - TOML string serialization for markdown bodies that contain code fences, inline backticks, backslashes, or other escape-sensitive content.
 - Any reference to GitHub-native instruction loading.
 - Tool language or metadata that only makes sense in the GitHub manifest model.
@@ -141,6 +143,7 @@ Codex has no verified hide mechanism that keeps subagents out of the frontend ag
 |---|---|---|
 | `.github/agents/04b-feature-implementer.agent.md` role and core behavior | Custom-agent TOML fields | Convert purpose and constraints into TOML-backed content |
 | `.github/agents/*` with `user-invocable: false` | `z-*.toml` plus `name = "z-*"` | Use naming to de-emphasize internal subagents in the Codex frontend |
+| GitHub display-name references such as `Feature - Reviewer` | Generated Codex runtime name such as `z-feature-reviewer` | Rewrite body text so orchestrators and subagent instructions reference actual Codex agent names |
 | Instructions previously inherited from `.github/instructions/` | `developer_instructions` | Must be explicit in Codex; no hidden loader |
 | GitHub-only metadata with no Codex field | Non-portable | Record it as dropped or rewritten instead of silently carrying it forward |
 

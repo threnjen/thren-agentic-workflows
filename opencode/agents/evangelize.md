@@ -120,6 +120,7 @@ Rules:
 - Keep Markdown frontmatter format.
 - Convert tools to Claude tool names per guide.
 - Always include `user-invocable: false` in the Claude header/frontmatter area.
+- Resolve the final Claude destination identifier from the generated filename stem and use that same identifier in frontmatter `name:`.
 - Rewrite source agent references in body text to Claude filename handles. Use `@<filename-stem>` for user-facing agents and `@z-<filename-stem>` for hidden subagents so orchestration text stays invocable after porting.
 - Remove unsupported GitHub-only tools.
 - Ensure behavior and constraints from source + applicable instructions are present in body text.
@@ -129,6 +130,7 @@ Rules:
 - Keep OpenCode frontmatter model line and `permission` keys.
 - Convert GitHub tools to OpenCode permissions per guide.
 - Preserve `mode: subagent` and `hidden: true` for hidden subagents.
+- Rewrite source agent references in body text to OpenCode destination identifiers. Use destination filename stems and preserve established aliases where they already exist.
 - Ensure behavior and constraints from source + applicable instructions are present in body text.
 
 #### Codex Target
@@ -138,6 +140,7 @@ Rules:
   - `description`
   - `developer_instructions`
 - Convert the source body into `developer_instructions` and embed applicable instruction intent.
+- Rewrite source agent references in `developer_instructions` to the generated Codex agent names, including `z-`-prefixed hidden subagents.
 - Keep content repository-owned under `codex/agents/`.
 
 ## Synchronization Quality Gates
@@ -148,10 +151,13 @@ Before finishing, verify all checks:
 2. No destination dropped critical constraints from source.
 3. Tool mapping is platform-valid.
 4. Frontmatter/TOML shape is valid and consistent with neighboring files.
-5. Claude body text rewrites agent references to Claude handles when the source used GitHub display names.
-6. Embedded instruction intent is present when required by `applyTo`.
-7. For instruction-source runs, all matched agents were processed.
-8. For skill-source runs, referenced agents were re-synced or explicitly reported as none.
+5. Claude frontmatter `name:` matches the generated Claude filename stem, including alias and `z-` prefix cases.
+6. Claude body text rewrites agent references to Claude handles when the source used GitHub display names.
+7. OpenCode body text rewrites agent references to OpenCode destination identifiers when the source used GitHub display names.
+8. Codex `developer_instructions` rewrites agent references to generated Codex agent names when the source used GitHub display names.
+9. Embedded instruction intent is present when required by `applyTo`.
+10. For instruction-source runs, all matched agents were processed.
+11. For skill-source runs, referenced agents were re-synced or explicitly reported as none.
 
 ## Drift Prevention
 
