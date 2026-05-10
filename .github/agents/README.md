@@ -90,21 +90,18 @@ Interactive — you iterate to probe edge cases, dependencies, and decomposition
 |-------|--------|--------|
 | **04 Phase - Execute** | "Execute this phase" + attach refined phase doc | All features implemented, reviewed, QA'd |
 
-**Hands-free from here.** The orchestrator asks whether you want **batch mode** (all features on one branch) or **per-feature mode** (one branch per feature), then automatically:
+**Hands-free from here.** `04 Phase - Execute` expects `03 Feature - Decomposer` to have already prepared the feature bundles and execution manifest. Once those files exist, the orchestrator automatically:
 
-1. Decomposes the phase into numbered features (via Feature - Decomposer subagent)
-2. Expands plans with context and tasks (via Feature - Plan Expander subagent)
-3. For each feature (or the next unimplemented feature in per-feature mode), runs the full cycle:
+1. Reads `dev/feature/[phase-name]-execution-manifest.md`
+2. Verifies each listed feature has `-plan.md`, `-context.md`, and `-tasks.md`
+3. Fails immediately if those prepared artifacts are missing, instead of invoking planning agents
+4. For each feature in manifest wave order, runs the full cycle:
    - **Implement** → Red-Green-Refactor TDD, writes implementation record
    - **Review** → Finds bugs, applies fixes, writes review record
-4. Runs the **QA Writer** (consolidated in batch mode, per-feature in per-feature mode)
-5. Runs the **Prod Code Review** across all features (batch) or the single feature (per-feature)
-6. Reports the verdict back to you
-7. Runs the **Docs Writer** to update any stale documentation
-
-**Batch mode:** After completion, push the branch and open a PR for final human review.
-
-**Per-feature mode:** After each feature, push the feature branch and open a PR. Once merged, re-invoke `@04 Phase - Execute` with the same phase document — it detects completed features and picks up the next one.
+5. Runs the **QA Writer**
+6. Runs the **Prod Code Review**
+7. Reports the verdict back to you
+8. Runs the **Docs Writer** to update any stale documentation
 
 ### Manual Implementation Path
 
@@ -113,14 +110,14 @@ Prefer to write your own code? Use the planning agents, then implement yourself:
 ```
 Step 1: 01 Project - Planner       → Phase documents
 Step 2: 02 Phase - Refiner          → Refined phase document
-Step 3: 03 Feature - Decomposer     → Feature plans (optional)
+Step 3: 03 Feature - Decomposer     → Feature bundles + execution manifest (optional)
 Step 4: (you write the code from the plans)
 Step 5: Prod Code Review        → Validates your code against the plans
 ```
 
 The refined Phase document from Step 2 contains detailed scope, requirements, and acceptance criteria — enough to implement directly. When you're ready for validation, run **Prod Code Review** to check your work against the plan.
 
-**Tip:** For structured feature decomposition without automated execution, use **03 Feature - Decomposer** directly — it creates numbered plan files in `dev/feature/[0N-task-name]/` that you can implement at your own pace. Or launch **04 Phase - Execute** to run the full automated pipeline (with a choice of batch or per-feature mode).
+**Tip:** For structured feature decomposition without automated execution, use **03 Feature - Decomposer** directly — it creates numbered feature bundles in `dev/feature/[0N-task-name]/` plus `dev/feature/[phase-name]-execution-manifest.md`. Or launch **04 Phase - Execute** after those artifacts exist to run the automated implementation pipeline.
 
 ---
 
@@ -132,8 +129,8 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 |-------|---------|
 | **01 Project - Planner** | Create a project roadmap broken into phases |
 | **02 Phase - Refiner** | Refine and deepen an individual Phase document |
-| **03 Feature - Decomposer** | Break a phase into features with structured plan files |
-| **04 Phase - Execute** | Orchestrate full phase execution — decompose, implement, review, QA |
+| **03 Feature - Decomposer** | Break a phase into features, prepare execution-ready bundles, and write the execution manifest |
+| **04 Phase - Execute** | Orchestrate full phase execution from a prepared manifest and feature bundles |
 | **05 Eval - Grader** | Score a completed phase run from ledger files plus a rubric YAML and write a structured report |
 | **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
 | **Single Feature - Agent** | Handle small, focused changes with a proposal + explicit permission gate before implementation |
@@ -154,7 +151,7 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Auditor - Code** | Audit orchestrator | Comprehensive code quality, security, and health audit |
 | **Auditor - Infra** | Audit orchestrator | Audit Dockerfiles, CI/CD pipelines, IaC templates, and config files |
 | **Auditor - Refactor** | Audit orchestrator | Audit codebase structure, module organization, and architecture |
-| **Feature - Plan Expander** | Phase - Execute | Generate context and tasks files from existing plan files |
+| **Feature - Plan Expander** | Feature - Decomposer | Generate context and tasks files from existing plan files |
 | **Feature - Implementer** | Phase - Execute, Audit orchestrator, Test orchestrator | Implement a feature plan using Red-Green-Refactor TDD |
 | **Feature - Reviewer** | Phase - Execute, Audit orchestrator, Test orchestrator | Review implementation, apply fixes, produce review record |
 | **Feature - QA Writer** | Phase - Execute, Audit orchestrator | Write manual QA plan for non-automatable test cases |
@@ -175,10 +172,10 @@ These agents are not visible in the picker. They run automatically as part of or
 > Give it a single Phase document from the 01 Project - Planner (or describe a standalone feature). It iterates with you to refine scope, probe edge cases, surface hidden dependencies, stress-test decomposition readiness, and walk through user flows — deepening the Phase document until it's fully ready for automated execution. It updates the Phase document in place and will not write changes until you explicitly approve.
 
 **03 Feature - Decomposer** (document-only — does not write code)
-> Give it a refined Phase document or describe a feature. It scans the codebase, decomposes the work into independent features, and writes a structured `-plan.md` file for each to `dev/feature/[0N-task-name]/` (numbered by execution order). In standalone mode, it asks for approval before writing. Also invoked automatically by 04 Phase - Execute when plans are missing.
+> Give it a refined Phase document or describe a feature. It scans the codebase, decomposes the work into independent features, writes a structured `-plan.md` file for each to `dev/feature/[0N-task-name]/`, invokes the Plan Expander to generate companion `-context.md` and `-tasks.md` files, and writes `dev/feature/[phase-name]-execution-manifest.md` as the execution schedule. In standalone mode, it asks for approval before writing.
 
 **04 Phase - Execute** (orchestrator — delegates to subagents)
-> Give it a refined Phase document. It checks for existing plans (invoking the Decomposer if missing), expands plans via the Plan Expander, then asks whether to run in **batch mode** (all features on one branch) or **per-feature mode** (one branch/PR per feature). In batch mode, it implements all features then runs consolidated QA and Final Review. In per-feature mode, it implements one feature at a time, runs QA and Final Review per feature, then tells you to merge and re-invoke for the next feature. No user interaction required after the initial mode selection.
+> Give it a refined Phase document after 03 has already prepared the feature bundles. It reads `dev/feature/[phase-name]-execution-manifest.md`, verifies each listed feature has `-plan.md`, `-context.md`, and `-tasks.md`, and fails immediately if those prepared artifacts are missing. When the bundle set is complete, it implements features by manifest wave order, then runs consolidated QA and Final Review.
 
 **05 Eval - Grader** (user-facing — standalone scorer)
 > Give it a rubric YAML path plus a target phase run. The rubric should follow the grader schema documented in the agent, with `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` as the seed example. The grader reads `eval/runs/<phase-slug>/ledger-commits.jsonl` and `eval/runs/<phase-slug>/ledger-events.jsonl`, correlates semantic events onto the commit timeline by SHA association, scores every automatable rubric criterion, flags manual checks as `[NEEDS_HUMAN_REVIEW]`, and writes `score-report-<timestamp>.md` into the same run directory without pausing for user confirmation.
@@ -212,7 +209,7 @@ These agents are not visible in the picker. They run automatically as part of or
 
 ### Hidden Subagents
 
-**Feature - Plan Expander** *(subagent of Phase - Execute)* — Reads existing `-plan.md` files and generates companion `-context.md` and `-tasks.md` files in the same `dev/feature/[0N-task-name]/` directory. Does not modify plan files.
+**Feature - Plan Expander** *(subagent of Feature - Decomposer)* — Reads existing `-plan.md` files and generates companion `-context.md` and `-tasks.md` files in the same `dev/feature/[0N-task-name]/` directory. Does not modify plan files.
 
 **Feature - Implementer** *(subagent of Phase - Execute, Audit orchestrator, Test orchestrator)* — Reads plan docs from `dev/feature/[0N-task-name]/`, scans sibling feature directories for context awareness, implements each acceptance criterion using Red-Green-Refactor TDD, and writes `[0N-task-name]-implementation.md` mapping changes to acceptance criteria. Only implements the single feature it is given.
 
