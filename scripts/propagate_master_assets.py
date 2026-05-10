@@ -332,6 +332,26 @@ def _claude_filename_for(agent: SourceAgent, existing_stems: set[str]) -> str:
     return f"{base}.md"
 
 
+def _claude_handle_for(agent: SourceAgent, existing_stems: set[str]) -> str:
+    return f"@{Path(_claude_filename_for(agent, existing_stems)).stem}"
+
+
+def _build_claude_handle_map(agents: List[SourceAgent], existing_stems: set[str]) -> Dict[str, str]:
+    return {
+        agent.name: _claude_handle_for(agent, existing_stems)
+        for agent in agents
+        if agent.name
+    }
+
+
+def _rewrite_claude_agent_references(text: str, handle_map: Dict[str, str]) -> str:
+    rewritten = text
+    for source_name, handle in sorted(handle_map.items(), key=lambda item: len(item[0]), reverse=True):
+        rewritten = rewritten.replace(f"@{source_name}", handle)
+        rewritten = rewritten.replace(source_name, handle)
+    return rewritten
+
+
 def _opencode_filename_for(agent: SourceAgent, existing_stems: set[str]) -> str:
     alias = OPENCODE_FILE_ALIASES.get(agent.source_slug)
     stripped = _strip_numeric_prefix(agent.source_slug)
@@ -371,9 +391,10 @@ def _build_instruction_appendix(agent: SourceAgent, docs: List[InstructionDoc]) 
     return "\n".join(sections).strip() + "\n"
 
 
-def render_claude_agent(agent: SourceAgent, docs: List[InstructionDoc]) -> str:
+def render_claude_agent(agent: SourceAgent, docs: List[InstructionDoc], handle_map: Dict[str, str]) -> str:
     tools = ", ".join(map_tools_for_claude(agent.tools))
     appendix = _build_instruction_appendix(agent, docs)
+    body = _rewrite_claude_agent_references(agent.body.strip(), handle_map)
 
     parts = [
         "---",
@@ -382,11 +403,11 @@ def render_claude_agent(agent: SourceAgent, docs: List[InstructionDoc]) -> str:
         f"tools: {tools}",
         "---",
         "",
-        agent.body.strip(),
+        body,
     ]
 
     if appendix:
-        parts.extend(["", "---", "", appendix.strip()])
+        parts.extend(["", "---", "", _rewrite_claude_agent_references(appendix.strip(), handle_map)])
 
     return "\n".join(parts).rstrip() + "\n"
 
@@ -455,6 +476,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
 
     claude_existing_stems = _discover_existing_stems(CLAUDE_AGENTS_DIR)
     opencode_existing_stems = _discover_existing_stems(OPENCODE_AGENTS_DIR)
+    claude_handle_map = _build_claude_handle_map(agents, claude_existing_stems)
 
     changed_claude = 0
     changed_opencode = 0
@@ -469,7 +491,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         codex_file = CODEX_AGENTS_DIR / _codex_filename_for(agent)
         expected_codex_files.add(codex_file)
 
-        if _write_if_changed(claude_file, render_claude_agent(agent, docs)):
+        if _write_if_changed(claude_file, render_claude_agent(agent, docs, claude_handle_map)):
             changed_claude += 1
         if _write_if_changed(opencode_file, render_opencode_agent(agent, docs)):
             changed_opencode += 1

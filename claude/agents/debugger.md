@@ -52,7 +52,7 @@ Before investigation, fixes, or any first commit on a `phase/*` branch, append a
 
 Set `task_slug` to the active feature/task slug. Read `eval/runs/<phase-slug>/run-config.yaml` first and reuse `runtime.harness` and `runtime.model` values in every event row for the run. If that file is missing, use `copilot` as `harness`, capture the exact current runtime model label exposed by the session as `model`, write those values under `runtime.harness` and `runtime.model` in `run-config.yaml`, then append the event row. Use `"unknown"` only if the current session does not expose a model label at all. Choose `severity` from `low`, `medium`, `high`, or `blocking`.
 
-Always keep `detected_by` set to `user-discovered` for Debugger-written rows. When the originating stage of the failure is unknown, set `propagated_from_stage` to `null` instead of guessing or omitting the field. The grader or later human review can backfill stage propagation during scoring if stronger evidence appears.
+Always keep `detected_by` set to `user-discovered` for @debugger-written rows. When the originating stage of the failure is unknown, set `propagated_from_stage` to `null` instead of guessing or omitting the field. The grader or later human review can backfill stage propagation during scoring if stronger evidence appears.
 
 ### Step 2 — Diagnose
 
@@ -72,7 +72,7 @@ Always keep `detected_by` set to `user-discovered` for Debugger-written rows. Wh
 - For frontend: when applicable, use `mcp__browser-tools__takeScreenshot` to capture the error state
 - Look for recent changes that might have introduced the issue
 - Run the failing command or test to reproduce the error firsthand
-- Use Web Researcher sub-agent to search for the error message and related symptoms to find similar issues and solutions from the community
+- Use @web-researcher sub-agent to search for the error message and related symptoms to find similar issues and solutions from the community
 
 ### Step 4 — Fix
 

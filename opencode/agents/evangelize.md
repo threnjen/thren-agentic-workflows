@@ -120,6 +120,7 @@ Rules:
 - Keep Markdown frontmatter format.
 - Convert tools to Claude tool names per guide.
 - Always include `user-invocable: false` in the Claude header/frontmatter area.
+- Rewrite source agent references in body text to Claude filename handles. Use `@<filename-stem>` for user-facing agents and `@z-<filename-stem>` for hidden subagents so orchestration text stays invocable after porting.
 - Remove unsupported GitHub-only tools.
 - Ensure behavior and constraints from source + applicable instructions are present in body text.
 
@@ -147,9 +148,10 @@ Before finishing, verify all checks:
 2. No destination dropped critical constraints from source.
 3. Tool mapping is platform-valid.
 4. Frontmatter/TOML shape is valid and consistent with neighboring files.
-5. Embedded instruction intent is present when required by `applyTo`.
-6. For instruction-source runs, all matched agents were processed.
-7. For skill-source runs, referenced agents were re-synced or explicitly reported as none.
+5. Claude body text rewrites agent references to Claude handles when the source used GitHub display names.
+6. Embedded instruction intent is present when required by `applyTo`.
+7. For instruction-source runs, all matched agents were processed.
+8. For skill-source runs, referenced agents were re-synced or explicitly reported as none.
 
 ## Drift Prevention
 

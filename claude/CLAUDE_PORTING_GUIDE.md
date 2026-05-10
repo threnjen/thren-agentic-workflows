@@ -41,15 +41,17 @@ Claude agent files use Markdown frontmatter with:
 1. Start from `.github/agents/*` source.
 2. Resolve applicable `.github/instructions/*.instructions.md` entries by `applyTo`.
 3. Convert tool names to Claude names.
-4. Add `user-invocable: false` to the Claude frontmatter/header area.
-5. Ensure instruction intent is present in the final agent body.
-6. Keep behavior equivalent to source, excluding unsupported tool semantics.
+4. Rewrite source agent references in the body to Claude handles. User-facing agents should be referenced by Claude filename handle such as `@project-planner`; hidden subagents should use their `@z-...` handle such as `@z-feature-plan-expander`.
+5. Add `user-invocable: false` to the Claude frontmatter/header area when the Claude format supports it.
+6. Ensure instruction intent is present in the final agent body.
+7. Keep behavior equivalent to source, excluding unsupported tool semantics.
 
 ## Validation Checklist
 
 - Frontmatter parses correctly.
-- `user-invocable: false` is present in every Claude agent file.
+- `user-invocable: false` is present when the Claude format supports it for the target file shape.
 - Tool names are valid Claude names.
+- Agent references in workflow text point at Claude handles, not GitHub display names.
 - Unsupported GitHub-only tools are dropped.
 - Agent behavior remains aligned with source intent.
 - Agent appears in Claude agent discovery.
