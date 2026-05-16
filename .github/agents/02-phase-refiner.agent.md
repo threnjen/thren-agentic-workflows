@@ -85,7 +85,9 @@ As you work through this phase, keep a running list of any additional context ga
 
 #### Documentation Freshness Check
 
-Run the Documentation Freshness Check (see auto-loaded instructions). Wait for the user to acknowledge before continuing to Phase 3.
+Run the Documentation Freshness Check (see auto-loaded instructions). If README.md or docs/CODEBASE_CONTEXT.md is missing and the project is not brand new, invoke `@Docs Writer` as a subagent to create the missing documentation first. Do not continue to Phase 3 until the documentation exists.
+
+If the repository is genuinely brand new with nothing substantive to report yet, note that exception and continue.
 
 Then proceed to Phase 3.
 
@@ -99,7 +101,9 @@ As you work through this phase, keep a running list of any additional context ga
 
 #### Documentation Freshness Check
 
-Run the Documentation Freshness Check (see auto-loaded instructions). Wait for the user to acknowledge before continuing.
+Run the Documentation Freshness Check (see auto-loaded instructions). If README.md or docs/CODEBASE_CONTEXT.md is missing and the project is not brand new, invoke `@Docs Writer` as a subagent to create the missing documentation first. Do not continue until the documentation exists.
+
+If the repository is genuinely brand new with nothing substantive to report yet, note that exception and continue.
 
 2. **Ask clarifying questions** — Use the Question Triage rules above. Focus on scope boundaries, user-visible behavior, and integration concerns. Don't ask about implementation details.
 3. **Draft the Phase document** — Using the Phase Document Template above, create an initial draft. Fill in as much as you can from the codebase context and the user's description. Mark areas where you need input with `[TBD]`.

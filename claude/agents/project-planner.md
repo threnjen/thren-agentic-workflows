@@ -55,7 +55,9 @@ This context will be persisted to a `DISCOVERY_CONTEXT.md` file so downstream ag
 
 #### Documentation Freshness Check
 
-Run the Documentation Freshness Check (see auto-loaded instructions). Wait for the user to acknowledge before continuing to Phase 2.
+Run the Documentation Freshness Check (see auto-loaded instructions). If README.md or docs/CODEBASE_CONTEXT.md is missing and the project is not brand new, invoke `@docs-writer` as a subagent to create the missing documentation first. Do not continue to Phase 2 until the documentation exists.
+
+If the repository is genuinely brand new with nothing substantive to report yet, note that exception and continue.
 
 ### Phase 2: Clarification (Interactive)
 

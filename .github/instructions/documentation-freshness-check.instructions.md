@@ -9,15 +9,11 @@ After discovery, check whether these critical documentation files exist:
 - `README.md` (repo root)
 - `docs/CODEBASE_CONTEXT.md`
 
-If either file is missing, present this recommendation before continuing:
+If either file is missing and the repository is not genuinely brand new, invoke `@Docs Writer` as a subagent to create the missing documentation before continuing. Do not proceed until the files exist.
 
-> **Documentation gap detected.** Missing: [list missing files].
->
-> **Recommendation:** Run `@Docs Writer` to generate the missing docs before continuing.
->
-> You may proceed without this step if the user explicitly confirms.
+If the repository is genuinely brand new with nothing substantive to report yet, note that exception and continue.
 
-Wait for the user to acknowledge before continuing. If the user chooses to proceed without running Docs Writer, continue normally.
+Do not treat this as a user-approval gate. The missing documentation is a bootstrap dependency, not an optional follow-up.
 
 ## Personality Canary
 
