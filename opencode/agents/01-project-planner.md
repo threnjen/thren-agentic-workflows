@@ -94,13 +94,31 @@ Incorporate all feedback and loop back through the roadmap as many times as need
 
 ### Phase 4: Write Documents Incrementally
 
-When the user signals they're ready, write documents incrementally to avoid scope creep and allow priorities to evolve:
+When the user signals they're ready, write documents incrementally to avoid scope creep and allow priorities to evolve.
+
+#### First-Use Output Gate (Project Bootstrap)
+
+If this is the first planner run for a project (no `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` files exist yet), the deliverables are strictly limited to:
+- `docs/phases/PHASES_OVERVIEW.md`
+- `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`
+
+Do not write `PHASE_02+` documents during the initial bootstrap run, even if the roadmap contains later phases.
+
+#### Return-Visit Gate (Subsequent Phase Authoring)
+
+Write a new `PHASE_0N_SUMMARY.md` only when the user returns after completing the prior full phase (for example, write `PHASE_02` only after `PHASE_01` has been completed and the user is back for the next iteration).
+
+Never pre-generate future phase summaries in advance.
+
+Use this procedure:
 
 1. **Check existing phase documents** — Scan `docs/phases/` to see which `PHASE_0N_SUMMARY.md` files already exist on disk
 2. **Write or regenerate `PHASES_OVERVIEW.md`** — Always regenerate this file on each run to keep the roadmap in sync with any changes to project scope or priorities
 3. **Write or update `DISCOVERY_CONTEXT.md`** — If any additional context was gathered during Discovery or Clarification (additional folders/projects, web research, user-provided docs), write it to `docs/phases/DISCOVERY_CONTEXT.md`. If the file already exists, update it with any new context from this session. Skip this step only if no additional context was gathered beyond what's in the codebase itself
-4. **Write the next unwritten phase document** — Write only the next single phase that hasn't been created yet (e.g., if `PHASE_01_SUMMARY.md` exists, write only `PHASE_02_SUMMARY.md`)
-5. **Present and prepare for refinement** — Show the newly written phase document and prepare it for handoff to `@02-phase-refiner` for refinement
+4. **On first run, write only `PHASE_01`** — If no phase summaries exist yet, write only `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`
+5. **On return runs, write only the next single phase after completion of the prior one** — If `PHASE_01` is complete and the user has returned, write only `PHASE_02`; if `PHASE_02` is complete and the user has returned, write only `PHASE_03`; and so on
+6. **Do not skip ahead** — Never write multiple new `PHASE_0N` summaries in one run
+7. **Present and prepare for refinement** — Show the newly written phase document and prepare it for handoff to `@02-phase-refiner` for refinement
 
 **Why incremental?** Writing all phases upfront leads to scope creep. By writing one phase at a time, refinements to earlier phases naturally influence later ones.
 
