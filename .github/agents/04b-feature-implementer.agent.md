@@ -133,36 +133,19 @@ Before writing the implementation record, verify:
 3. **Keep it simple** — Simplest solution that meets every requirement
 4. **Surface conflicts** — If plan conflicts with codebase, choose the safest resolution and document it
 
-## Ledger Annotation for Blocking Failures
+## Ledger Annotation for Remediation Turns and Blocking Failures
 
-When implementation cannot proceed because of failing tests or an unresolvable issue, append a semantic failure event before suspending work or returning `Blocked`.
+Follow the shared `remediation-ledger-contract` instruction before implementation work begins.
 
-1. Read the current git branch. If it does not start with `phase/`, skip ledger writing silently.
-2. Derive `phase-slug` by stripping `phase/` from the branch name, replacing `/` with `-`, and prefixing the result with `phase-` so it matches the post-commit hook's run directory naming.
-3. Ensure `eval/runs/<phase-slug>/` exists in the target repo with `mkdir -p`.
-4. Append one JSON object line to `eval/runs/<phase-slug>/ledger-events.jsonl` using `>>` with the full schema populated:
+Implementer-specific rules:
 
-```json
-{
-	"task_slug": "<current-task-slug>",
-	"harness": "<run-harness>",
-	"model": "<run-model>",
-	"stage": "implement",
-	"detected_by": "implementer",
-	"severity": "medium",
-	"evidence": "Brief description of the failing test or blocking issue",
-	"first_seen_attempt": 1,
-	"resolved_attempt": null,
-	"resolved_by": null,
-	"human_intervention_required": false,
-	"regression": false,
-	"propagated_from_stage": null
-}
-```
-
-Set `task_slug` to the active feature/task slug. Read `eval/runs/<phase-slug>/run-config.yaml` first and reuse `runtime.harness` and `runtime.model` values in every event row for the run. If that file is missing, use `copilot` as `harness`, capture the exact current runtime model label exposed by the session as `model`, write those values under `runtime.harness` and `runtime.model` in `run-config.yaml`, then append the event row. Use `"unknown"` only if the current session does not expose a model label at all. Choose `severity` from `low`, `medium`, `high`, or `blocking`. Do not write ledger rows for routine Red-Green-Refactor iterations that are resolved within normal implementation flow.
-
-If a previously logged implementation-stage issue for the same `task_slug` is later resolved, append a new JSONL row instead of editing the original row. Keep `task_slug`, `stage`, and `detected_by` aligned with the original event, and populate `resolved_attempt` plus `resolved_by` with the actor who resolved it.
+- Log a `remediation-request` row at the start of any invocation that is clearly about correcting failing tests, failing builds, runtime defects, QA findings, review feedback, or another defect-fix request. Do not wait until the task becomes `Blocked`.
+- Use `stage: "implement"`, `detected_by: "implementer"`, and default `severity: "medium"` unless the incoming evidence clearly warrants `low`, `high`, or `blocking`.
+- Use `human_intervention_required: false` for normal orchestrated remediation passes. Set it to `true` only when you need additional manual user help or a user decision to proceed.
+- Do not write ledger rows for routine Red-Green-Refactor iterations that were not triggered by an external failure report or correction request.
+- If a distinct new blocker appears during work, append a second row with `event_kind: "discovered-failure"` rather than mutating the original discovery row.
+- If a previously logged implementation-stage issue is later resolved, append a `resolution` row with `related_event_id` pointing at the original event instead of editing prior rows.
+- After every append, verify the row exists. If the write cannot be verified on a `phase/*` branch, report that explicitly instead of assuming success.
 
 ## Deliverables
 

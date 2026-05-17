@@ -89,7 +89,7 @@ Read the rubric first, then attempt to load `eval/runs/<phase-slug>/run-config.y
 
 - `run-config.yaml` is the canonical run identity file. When present, it supplies the expected `runtime.harness` and `runtime.model` values for the run.
 - `ledger-commits.jsonl` is the raw commit timeline. Each row includes `sha`, `branch`, `message`, `timestamp`, and changed files.
-- `ledger-events.jsonl` is the semantic event stream. Each row includes fields such as `task_slug`, `stage`, `detected_by`, `severity`, `evidence`, `human_intervention_required`, `regression`, and resolution metadata.
+- `ledger-events.jsonl` is the semantic event stream. Each row includes fields such as `task_slug`, `stage`, `detected_by`, `severity`, `evidence`, `human_intervention_required`, `regression`, and resolution metadata. Some runs may also include `event_kind`, `event_id`, and `related_event_id` to distinguish remediation-turn entry rows, newly discovered failures, and later resolution rows.
 
 Handle ledger edge cases explicitly:
 
@@ -97,6 +97,7 @@ Handle ledger edge cases explicitly:
 - Missing `ledger-commits.jsonl`: note in the report that the raw commit ledger is missing, likely meaning the post-commit hook was not installed or did not run.
 - Missing `ledger-events.jsonl`: note in the report that no semantic event ledger is present.
 - Empty ledgers: valid zero-row inputs.
+- Missing `event_id` or `event_kind` fields in older ledger rows: valid legacy input. Fall back to file order, `task_slug`, and stage context when correlating rows.
 - Unknown `harness` or `model` values in ledger rows: preserve and report them as-is. If `run-config.yaml` is present, also report that the row-level metadata did not match `runtime.harness` / `runtime.model`.
 
 ### Step 3: Build the Unified Timeline
@@ -106,6 +107,7 @@ Use commit SHA as the timeline anchor.
 1. Parse `ledger-commits.jsonl` in file order and build a commit timeline keyed by `sha`.
 2. Parse `ledger-events.jsonl` in file order.
 3. For each event row, attach it to the most relevant commit SHA:
+   - If the row is a resolution event and `related_event_id` points to an earlier ledger row, keep that relationship in the report even if the SHA association is inferred separately.
    - Prefer the latest commit whose message, changed files, or feature/task context aligns with the event row's `task_slug`
    - Otherwise attach it to the nearest preceding commit entry in ledger order and mark the association as inferred in the report narrative
 4. Produce a unified timeline that shows, for each commit SHA: what was committed, what events were detected, and the ledger order in which they appeared.
@@ -155,12 +157,12 @@ The report must be a self-contained Markdown artifact with these sections, in or
    - commit SHA
    - commit message
    - commit timestamp when available
-   - associated event summaries and whether the SHA attachment was inferred
+   - associated event summaries, event kind when present, and whether the SHA attachment was inferred
 3. `Per-Feature Summary`
    - Markdown table with feature/task, criteria met, criteria failed, human review required, and verdict
 4. `Failure Breakdown`
    - every failed automatable criterion with evidence
-   - every relevant ledger event with severity, detected_by, stage, and evidence
+   - every relevant ledger event with event kind when present, severity, detected_by, stage, and evidence
 5. `[NEEDS_HUMAN_REVIEW] Items`
    - every manual QA criterion from the rubric
    - every criterion lacking an automatable local check

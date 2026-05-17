@@ -30,36 +30,19 @@ Before diving in, classify the error by examining:
   - *Backend*: Startup failure (missing config, bad imports, port conflicts), runtime exception (unhandled errors during request processing), database-related (connection refused, query failures, migrations), dependency-related (missing packages, version conflicts), environment-related (missing env vars, wrong runtime version, permissions)
   - *Full-stack*: API contract mismatches, serialization issues, auth flow failures, CORS
 
-### Step 1a — Annotate User-Discovered Issues on Phase Branches
+### Step 1a — Log Remediation Turns on Phase Branches
 
-Before investigation, fixes, or any first commit on a `phase/*` branch, append a semantic failure event for the user-discovered issue.
+Follow the shared `remediation-ledger-contract` instruction before diagnosis or edits.
 
-1. Read the current git branch. If it does not start with `phase/`, skip ledger writing silently.
-2. Derive `phase-slug` by stripping `phase/` from the branch name, replacing `/` with `-`, and prefixing the result with `phase-` so it matches the post-commit hook's run directory naming.
-3. Ensure `eval/runs/<phase-slug>/` exists in the target repo with `mkdir -p`.
-4. Append one JSON object line to `eval/runs/<phase-slug>/ledger-events.jsonl` using `>>` with the full schema populated:
+debugger-specific rules:
 
-```json
-{
-  "task_slug": "<current-task-slug>",
-  "harness": "<run-harness>",
-  "model": "<run-model>",
-  "stage": "debug",
-  "detected_by": "user-discovered",
-  "severity": "medium",
-  "evidence": "Brief description of the issue reported by the user",
-  "first_seen_attempt": 1,
-  "resolved_attempt": null,
-  "resolved_by": null,
-  "human_intervention_required": true,
-  "regression": false,
-  "propagated_from_stage": null
-}
-```
-
-Set `task_slug` to the active feature/task slug. Read `eval/runs/<phase-slug>/run-config.yaml` first and reuse `runtime.harness` and `runtime.model` values in every event row for the run. If that file is missing, use `copilot` as `harness`, capture the exact current runtime model label exposed by the session as `model`, write those values under `runtime.harness` and `runtime.model` in `run-config.yaml`, then append the event row. Use `"unknown"` only if the current session does not expose a model label at all. Choose `severity` from `low`, `medium`, `high`, or `blocking`.
-
-Always keep `detected_by` set to `user-discovered` for debugger-written rows. When the originating stage of the failure is unknown, set `propagated_from_stage` to `null` instead of guessing or omitting the field. The grader or later human review can backfill stage propagation during scoring if stronger evidence appears.
+- Treat every user prompt that reports a bug, stack trace, failing test or build output, QA failure, or explicit request to fix or debug as a remediation turn.
+- Write the initial row on entry to that turn with `stage: "debug"`, `detected_by: "user-discovered"`, and `event_kind: "remediation-request"`.
+- Set `human_intervention_required: true` on that initial row because the run required a user-reported correction pass.
+- Use the user-provided failure signal as the primary `evidence` text.
+- If `task_slug` cannot be inferred, use `unscoped` instead of skipping the write.
+- If you uncover a second, distinct issue during diagnosis, append another row with `event_kind: "discovered-failure"` instead of overwriting the original request row.
+- After every append, verify that the row exists by reading back the file tail or searching for the new `event_id`. If verification fails, say so explicitly instead of assuming the ledger was updated.
 
 ### Step 2 — Diagnose
 
