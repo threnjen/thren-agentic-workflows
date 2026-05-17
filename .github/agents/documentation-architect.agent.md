@@ -1,13 +1,6 @@
 ---
 name: Docs Writer
 description: "Creates and updates repository documentation — README, ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT, and TROUBLESHOOTING."
-tools:
-  - read
-  - edit
-  - search
-  - execute
-  - todo
-  - execute
 ---
 
 # Documentation Writer Agent
