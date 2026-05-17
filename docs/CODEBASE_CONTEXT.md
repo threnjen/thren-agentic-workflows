@@ -15,7 +15,7 @@ Quick-reference for AI agents working in this repository.
 
 - 24 source agent definitions in `.github/agents/`.
 - 14 skills in `.github/skills/`.
-- 14 instructions in `.github/instructions/`.
+- 15 instructions in `.github/instructions/`.
 - 2 template packs: `nodejs/` and `python/`.
 
 ## Key Paths
@@ -30,7 +30,7 @@ HARNESS_SETUP.md                           # How to expose repo assets to Copilo
     README.md                              # Full agent catalog and pipeline docs
     *.agent.md                             # Most source agents
     prod-code-review.md                    # Plain .md agent definition; still part of source set
-  instructions/                            # 14 shared instruction files with applyTo globs
+  instructions/                            # 15 shared instruction files with applyTo globs
   skills/                                  # 14 shared skill directories with SKILL.md entrypoints
 claude/agents/                             # Generated Claude copies
 opencode/agents/                           # Generated OpenCode copies
@@ -47,7 +47,6 @@ docs/
 eval/
   EVAL_SYSTEM_USAGE.md
   EVAL_GRADER_SCORE_HISTORY.md
-  PHASE_EVAL_RUN_CONFIG.example.yaml
 nodejs/
   AGENTS.md
   docs/STYLE_GUIDE.md
@@ -104,6 +103,16 @@ scripts/
 - Do not treat `codex/` as if it were the live runtime install path.
 - Code-review-graph MCP is configured in both `.mcp.json` and `.codex/config.toml` via `uvx code-review-graph serve`.
 
+## Authoring Boundary
+
+- When the task is about agent definitions, instruction files, skill content, or agent behavior in this repo, constrain discovery and edits to:
+  - `.github/agents/`
+  - `.github/instructions/`
+  - `.github/skills/`
+- Treat `claude/`, `opencode/`, and `codex/` as downstream or platform-specific outputs for those tasks.
+- Ignore those downstream directories during normal discovery and editing unless the assigned role is `Evangelize` or the user explicitly asks for propagation debugging or output verification.
+- Make the logical change in `.github/` first; do not mirror the same change manually into generated outputs.
+
 ## File Relationships
 
 - `.github/agents/README.md` must stay in sync with the actual source agent set.
@@ -115,6 +124,7 @@ scripts/
 ## Editing Guidance
 
 - When changing shared agent behavior, edit `.github/` first and rerun propagation.
+- When the task is about agent, instruction, or skill behavior, do not widen discovery into `claude/`, `opencode/`, or `codex/` unless the task is explicitly about porting or generated-output verification.
 - When adding or removing an agent, update both `.github/agents/README.md` and the standard docs.
 - When adding a skill or instruction, update the relevant counts and documentation references.
 - When documenting commands, prefer the existing `python3 scripts/propagate_master_assets.py --once` and `--watch` entry points.
@@ -123,6 +133,7 @@ scripts/
 
 - Do not assume this repo is Markdown-only; the propagation script is part of the maintenance flow.
 - Do not edit generated Claude, OpenCode, or Codex agents first unless you are intentionally repairing generation output.
+- Do not search `claude/`, `opencode/`, or `codex/` to decide how source agent, instruction, or skill behavior should change; decide that from `.github/`.
 - Do not assume filename parity across platforms; aliases and `z-` prefixes are intentional.
 - Do not document a root `dev/` directory as if it exists in this repo.
 - Do not treat `prod-code-review.md` as non-agent content just because it lacks the `.agent.md` suffix.

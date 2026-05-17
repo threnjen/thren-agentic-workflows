@@ -16,7 +16,7 @@ Current inventory:
 
 - 24 source agent definitions under `.github/agents/`
 - 14 shared skills under `.github/skills/`
-- 14 shared instruction files under `.github/instructions/`
+- 15 shared instruction files under `.github/instructions/`
 - 2 copyable language template sets under `nodejs/` and `python/`
 
 ## Repository Structure
@@ -142,6 +142,8 @@ See [.github/agents/README.md](.github/agents/README.md) for agent-by-agent desc
 - `claude/agents/`
 - `opencode/agents/`
 - `codex/agents/`
+
+For agent, instruction, and skill changes in this repository, `.github/` is the only authoring surface. The downstream `claude/`, `opencode/`, and `codex/` directories are synchronized from there and should not be edited manually except during intentional porting work.
 
 ## Related Documentation
 

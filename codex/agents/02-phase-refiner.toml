@@ -185,15 +185,7 @@ After the user affirms the phase document is ready for implementation and the do
 	chmod +x <target-repo>/.git/hooks/post-commit
 	```
 5. Create the ledger directory for this phase run: `mkdir -p <target-repo>/eval/runs/phase-<slug>/`
-6. Write the canonical run metadata file for this phase so later ledger rows can reuse the exact same harness/model pair:
-	```sh
-	cat > <target-repo>/eval/runs/phase-<slug>/run-config.yaml <<'EOF'
-	runtime:
-	  harness: copilot
-	  model: <current-model-label>
-	EOF
-	```
-	Replace `<current-model-label>` with the exact model label shown by the current Copilot session. Keep that exact string unchanged in all later ledger rows for this run.
+6. Do not create any retained runtime-identity artifact inside `eval/runs/phase-<slug>/`. If the user wants to track harness/model outside the graded artifacts, leave that to their own comparison notes.
 7. Update the target repo's `.gitignore` idempotently so `eval/runs/` is ignored without duplicate entries:
 	```sh
 	if ! grep -qxF 'eval/runs/' <target-repo>/.gitignore 2>/dev/null; then

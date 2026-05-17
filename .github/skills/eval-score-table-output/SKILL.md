@@ -26,8 +26,8 @@ Write to this persistent markdown file in the repository root:
 
 Use this exact column order:
 
-| Timestamp | Phase | Clean Base | Golden Path | Evaluated Branch | Harness | Model | Equivalence | Maintainability | Bug Risk | Edge Cases | Turns | Initial Patch Tests | Review Quality | Footprint | Mean Time/Task | Overall Verdict | Report Path | Notes |
-|-----------|-------|------------|-------------|------------------|---------|-------|-------------|-----------------|----------|------------|-------|---------------------|----------------|-----------|----------------|-----------------|-------------|-------|
+| Timestamp | Phase | Clean Base | Golden Path | Evaluated Branch | Equivalence | Maintainability | Bug Risk | Edge Cases | Turns | Initial Patch Tests | Review Quality | Footprint | Mean Time/Task | Overall Verdict | Report Path | Notes |
+|-----------|-------|------------|-------------|------------------|-------------|-----------------|----------|------------|-------|---------------------|----------------|-----------|----------------|-----------------|-------------|-------|
 
 ## Row Rules
 

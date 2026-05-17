@@ -1,15 +1,15 @@
 # Project Learnings
 
-## Canonical Run Metadata Before Ledger Events
+## Keep Runtime Identity Out Of Retained Eval Artifacts
 
 **Problem**
-Semantic ledger rows can end up with `unknown` for `harness` and `model` when each writer tries to infer runtime identity independently.
+Retained eval artifacts can leak `harness` and `model` into ledgers or score history, which biases the grader and makes blind comparisons harder.
 
 **Root cause**
-The phase setup flow created the ledger directory but did not persist one canonical run-level metadata source that later implementer, reviewer, and debugger steps could reuse.
+The evaluation contract treated runtime identity as part of the grading evidence instead of keeping it separate from the retained artifacts.
 
 **Fix**
-Write `eval/runs/<phase-slug>/run-config.yaml` during phase branch setup, then require every ledger-event writer and the grader to read that file before appending or interpreting event rows.
+Do not write runtime identity into `ledger-events.jsonl`, score history, rubric templates, or other retained grading artifacts. If comparison bookkeeping still needs harness/model, keep it outside those artifacts.
 
 **Watch for**
-Any ledger schema that includes runtime identity fields without a phase-start step that captures those values once and reuses them across every later stage.
+Any ledger schema, run template, or report contract that reintroduces `harness`, `model`, or similar runtime identity fields into retained evaluation evidence.

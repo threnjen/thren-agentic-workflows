@@ -30,7 +30,7 @@ flowchart TD
 
     GH --> GHAgents[24 source agent definitions]
     GH --> GHSkills[14 skill directories]
-    GH --> GHInstructions[14 instruction files]
+    GH --> GHInstructions[15 instruction files]
 
     Templates --> Node[nodejs AGENTS plus STYLE_GUIDE]
     Templates --> Python[python AGENTS plus STYLE_GUIDE]
@@ -74,7 +74,7 @@ This is the primary authoring surface.
 - Most source agents use the `.agent.md` suffix.
 - `prod-code-review.md` is an intentional plain `.md` exception that is still loaded as an agent because the propagation script keys off frontmatter, not only filename suffixes.
 - `.github/skills/` contains 14 directory-based skills, each rooted at `SKILL.md`.
-- `.github/instructions/` contains 14 reusable instruction files matched by `applyTo` globs.
+- `.github/instructions/` contains 15 reusable instruction files matched by `applyTo` globs.
 
 ### Generated platform outputs
 
@@ -84,6 +84,8 @@ This is the primary authoring surface.
 - agent references are rewritten to the correct generated identifiers
 - hidden subagents gain platform-specific naming or flags
 - applicable instruction content is appended or inlined when the destination platform does not support `.github/instructions/` directly
+
+For normal agent, instruction, and skill work in this repo, discovery and edits should stay inside `.github/`. The downstream platform directories are for generated output verification or intentional porting only.
 
 The propagation script also preserves several filename aliases, including `documentation-architect` to `docs-writer` and `web-research-specialist` to `web-researcher`.
 

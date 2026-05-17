@@ -188,8 +188,6 @@ Every failure event gets one record:
 ```json
 {
   "task_slug": "feature-xyz",
-  "harness": "claude-code",
-  "model": "claude-opus-4-7",
   "stage": "implementation",
   "detected_by": "reviewer-agent",
   "severity": "blocker",
@@ -202,6 +200,8 @@ Every failure event gets one record:
   "propagated_from_stage": null
 }
 ```
+
+Keep harness/model identity outside the failure ledger so grading artifacts stay blind.
 
 The `propagated_from_stage` field is important: if an implementation failure traces back to a bad context document, that failure originated in the Plan Expander stage, not the Implementer. Without this, you'll misattribute failures.
 

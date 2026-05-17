@@ -36,14 +36,11 @@ Do not append duplicate discovery rows for the same issue within a single turn.
 
 ## Required Write Procedure
 
-1. Read `eval/runs/<phase-slug>/run-config.yaml` first.
-2. Reuse `runtime.harness` and `runtime.model` from that file for every row in the run.
-3. If `run-config.yaml` is missing, create it first using `copilot` as `runtime.harness` and the exact current runtime model label exposed by the session as `runtime.model`. Use `unknown` only if no model label is exposed at all.
-4. Set `task_slug` to the active feature or task slug. If it cannot be inferred, use `unscoped` instead of skipping the write.
-5. Generate a unique `event_id` for each appended row. A timestamp-based ID is acceptable.
-6. Append exactly one JSON object line per event.
-7. Immediately verify the append by reading back the file tail or searching for the `event_id` you just wrote.
-8. If verification fails on a `phase/*` branch, treat that as a ledger-write failure and say so in your response instead of assuming the row exists.
+1. Set `task_slug` to the active feature or task slug. If it cannot be inferred, use `unscoped` instead of skipping the write.
+2. Generate a unique `event_id` for each appended row. A timestamp-based ID is acceptable.
+3. Append exactly one JSON object line per event.
+4. Immediately verify the append by reading back the file tail or searching for the `event_id` you just wrote.
+5. If verification fails on a `phase/*` branch, treat that as a ledger-write failure and say so in your response instead of assuming the row exists.
 
 ## Event Schema
 
@@ -55,8 +52,6 @@ Use this schema for every appended row:
   "event_kind": "remediation-request",
   "related_event_id": null,
   "task_slug": "<current-task-slug-or-unscoped>",
-  "harness": "<run-harness>",
-  "model": "<run-model>",
   "stage": "<agent-stage>",
   "detected_by": "<agent-identifier>",
   "severity": "medium",
@@ -83,6 +78,7 @@ Use this schema for every appended row:
 - `resolved_attempt` and `resolved_by` stay `null` unless the row is a `resolution` event.
 - `regression` is `true` only when a previously resolved issue reappears.
 - `propagated_from_stage` stays `null` unless the upstream origin is known with confidence.
+- Do not include `harness`, `model`, or other runtime identity fields in ledger rows. Track comparison identity outside retained grading artifacts.
 
 ## Agent-Specific Overrides
 

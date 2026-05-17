@@ -56,23 +56,18 @@ ln -sfn /Users/jennywadkins/github_repos/github-agents-source-of-truth/eval/hook
 chmod +x .git/hooks/post-commit
 ```
 
-Create run directory and metadata:
+Create run directory:
 
 ```bash
 mkdir -p eval/runs/phase-06e
-cat > eval/runs/phase-06e/run-config.yaml <<'EOF'
-runtime:
-  harness: copilot
-  model: claude-sonnet-4-6
-EOF
 ```
 
-Keep `runtime.harness` and `runtime.model` identical throughout one run. Do not rename or restyle them between events.
+Do not write harness/model into ledger rows, score history, or other retained grading artifacts. If you want to track which harness/model produced each branch, keep that in your own comparison notes outside the retained eval artifacts.
 
-Recommended additional runtime flags for deterministic AC-level scoring:
+Recommended explicit evidence for deterministic AC-level scoring:
 
-- `runtime.commit_granularity: ac` or `feature`
-- `runtime.expected_commit_policy: one-commit-per-ac` or `feature-batched`
+- rubric fields such as `expected_commit_prefix`, `expected_commit_contains`, and `require_commit_evidence`
+- explicit local notes when one-commit-per-ac or other cadence expectations matter
 
 Recommended comparison metadata for branch-based grading:
 
@@ -121,8 +116,6 @@ Minimum shape:
 
 ```yaml
 phase: phase-06d
-harness: copilot
-model: GPT-5.3-Codex (copilot)
 criteria:
   - id: P01
     description: Planning phase doc contains objective, scope, dependencies, and measurable success criteria
@@ -144,8 +137,6 @@ Recommended richer shape for AC-level runs:
 
 ```yaml
 phase: phase-06e
-harness: codex
-model: gpt-5.5
 criteria:
   - id: I03A7
     description: Dormant Purpose remains 50 across repeated rare ticks for every tier
@@ -228,7 +219,6 @@ Even if the Phase 01 grader outputs `PASS`/`FAIL`/`PARTIAL`, these anchors impro
 
 Inside `eval/runs/<phase-slug>/`:
 
-- `run-config.yaml`
 - `ledger-commits.jsonl`
 - `ledger-events.jsonl` (may be absent if no failures were recorded)
 
@@ -237,7 +227,7 @@ Inside `eval/runs/<phase-slug>/`:
 - `ledger-commits.jsonl` rows come from the hook and include:
   - `sha`, `branch`, `message`, `timestamp`, `files`
 - `ledger-events.jsonl` rows come from agents and include:
-  - `task_slug`, `harness`, `model`, `stage`, `detected_by`, `severity`, `evidence`, `first_seen_attempt`, `resolved_attempt`, `resolved_by`, `human_intervention_required`, `regression`, `propagated_from_stage`
+  - `task_slug`, `stage`, `detected_by`, `severity`, `evidence`, `first_seen_attempt`, `resolved_attempt`, `resolved_by`, `human_intervention_required`, `regression`, `propagated_from_stage`
 
 Recommended enrichment for AC-level runs when event writers can provide it:
 
@@ -267,9 +257,9 @@ If a commit SHA is not yet known when the implementation record is first written
 
 No `phase/*` branch means no commit ledger capture by the hook.
 
-### Metadata consistency standard
+### Identity-separation standard
 
-For one run directory, reuse the same `harness` and `model` values in all event rows.
+Do not store `harness`, `model`, or other runtime identity fields in ledgers, score history, or other retained grading artifacts. Track comparison identity outside those artifacts.
 
 ## 4) Run the Eval Grader
 
@@ -286,7 +276,7 @@ Expected grader behavior:
 
 1. Resolve `phase-slug` and locate the evaluated branch run dir
 2. Materialize clean-base->golden and clean-base->evaluated diffs, optionally writing temporary diff artifacts
-3. Load rubric + ledgers + run metadata
+3. Load rubric + ledgers + any explicit local evidence artifacts
 4. Build a comparative patch model and a unified timeline by commit SHA
 5. Score automatable rubric criteria as `PASS` or `FAIL`
 6. Produce a comparative scorecard across patch equivalence and execution-quality metrics
@@ -331,7 +321,6 @@ For consistency across runs, ensure each score report clearly exposes these comp
 - verdict
 - phase slug
 - rubric path
-- harness and model (rubric + run metadata, when present)
 - automatable pass count and fail count
 - human-review required count
 - regression flag count
@@ -352,32 +341,17 @@ When you run explicit A/B comparisons, include these fields in the score report:
 - `p90_latency_delta`
 - `regressions_by_family`
 
-## 4.1) Reproducibility run config (adopted standard)
+## 4.1) Optional comparison notes
 
-Create a run config file for each evaluation run by copying:
+No retained run metadata artifact is required.
 
-- `eval/PHASE_EVAL_RUN_CONFIG.example.yaml`
+If you want rerun notes or comparison bookkeeping, keep them outside committed eval artifacts. Useful items to track include:
 
-Suggested naming:
-
-- `eval/runs/<phase-slug>/run-config.yaml`
-
-Use this file to pin baseline SHA, rubric path, model label, and grading inputs for reruns.
-
-For AC-level runs, also pin:
-
-- `runtime.commit_granularity`
-- `runtime.expected_commit_policy`
-
-For branch-comparison runs, also pin:
-
-- `comparison.clean_base_branch`
-- `comparison.golden_path_branch`
-- `comparison.evaluated_branch`
-- `comparison.golden_diff_artifact_path`
-- `comparison.evaluated_diff_artifact_path`
-- `manual_inputs.initial_patch_passing_tests` when the Unity Test Runner result is available
-- `output.persistent_score_history_path`
+- clean base, golden path, and evaluated branch names
+- diff artifact paths, when you materialize them ahead of grading
+- expected commit cadence notes for AC-level runs
+- `initial_patch_passing_tests` and its source when Unity Test Runner is authoritative
+- any personal mapping from branch names to harness/model combinations
 
 ### Recommended promotion gates (adopted defaults)
 
@@ -394,10 +368,9 @@ Before scoring:
 
 - Branch name starts with `phase/`
 - Hook is installed and executable
-- `run-config.yaml` exists with stable harness/model
-- `run-config.yaml` declares commit granularity when the run is AC-level
 - Clean base, golden path, and evaluated branches are all available locally
 - Rubric file exists and points at the same phase slug
+- Any explicit commit cadence expectation needed for AC-level scoring is available in the rubric or another local note
 - Checkpoint commit messages follow canonical names
 - Implementation records include AC coverage rows with planned test identifiers and evidence paths
 - Initial patch passing test count is recorded when Unity Test Runner is the source of truth for that metric
@@ -412,7 +385,7 @@ After scoring:
 ## 6) Common Mistakes to Avoid
 
 - Running on non-`phase/*` branches and expecting ledgers
-- Changing model label mid-run in metadata/events
+- Writing runtime identity into retained eval artifacts
 - Writing fuzzy rubric checks with no local evidence path
 - Treating human-review criteria as automatable
 - Using AC-level commits without the exact criterion ID in implement/review commit messages
@@ -437,11 +410,9 @@ Additional deterministic conventions adopted from B001 style:
 
 After scoring, clean temporary scratch outputs but retain these artifacts:
 
-- `eval/runs/<phase-slug>/run-config.yaml`
 - `eval/runs/<phase-slug>/ledger-commits.jsonl`
 - `eval/runs/<phase-slug>/ledger-events.jsonl` (if present)
 - `eval/runs/<phase-slug>/score-report-<timestamp>.md`
-- `eval/runs/<phase-slug>/run-config.yaml` (if used)
 - `eval/runs/<phase-slug>/run-contract.json` (if used)
 
 Never delete score reports during cleanup.

@@ -61,8 +61,6 @@ Minimal expected shape:
 
 ```yaml
 phase: 06d
-harness: copilot
-model: claude-sonnet-4-6
 criteria:
   - id: C01
     description: No model field in agent frontmatter
@@ -120,26 +118,24 @@ Read the rubric first, then use local non-interactive git diff commands to mater
 - When practical, also materialize compact diff summaries such as file lists, name-status, or numstat output.
 - If the diff output is large, it is acceptable to write temporary diff artifacts so they do not have to remain in context. Prefer `eval/runs/<phase-slug>/tmp/` or another clearly temporary local path.
 
-Then attempt to load `eval/runs/<phase-slug>/run-config.yaml` and both ledger files for the resolved phase slug.
+Then attempt to load both ledger files for the resolved phase slug and any other local artifacts explicitly referenced by the rubric or prompt.
 
-- `run-config.yaml` is the canonical run identity file. When present, it supplies the expected `runtime.harness` and `runtime.model` values for the run, and may also declare `runtime.commit_granularity` and `runtime.expected_commit_policy` for commit-cadence interpretation.
 - `ledger-commits.jsonl` is the raw commit timeline. Each row includes `sha`, `branch`, `message`, `timestamp`, and changed files. Some runs may encode feature slugs, AC refs, or criterion IDs directly in commit messages.
 - `ledger-events.jsonl` is the semantic event stream. Each row includes fields such as `task_slug`, `stage`, `detected_by`, `severity`, `evidence`, `human_intervention_required`, `regression`, and resolution metadata. Some runs may also include `event_kind`, `event_id`, and `related_event_id` to distinguish remediation-turn entry rows, newly discovered failures, and later resolution rows.
-- User-supplied manual validation inputs may be present in `run-config.yaml`, such as `manual_inputs.initial_patch_passing_tests`, when the grader needs a Unity Test Runner result that cannot be inferred from ledgers.
+- User-supplied manual validation inputs may be present in another explicit local artifact, such as a note or report that records `initial_patch_passing_tests`, when the grader needs a Unity Test Runner result that cannot be inferred from ledgers.
 
 Handle ledger edge cases explicitly:
 
 - Missing or unresolvable clean-base->golden diff: stop with a clear message, because equivalence scoring cannot proceed without the source-of-truth patch.
 - Missing or unresolvable clean-base->evaluated diff: stop with a clear message, because the evaluated patch cannot be scored without it.
 - Empty golden diff or empty evaluated diff: valid input, but note it explicitly and account for it in equivalence and footprint scoring.
-- Missing `run-config.yaml`: derive run-level harness/model from ledger rows when possible and note that the canonical run identity file is absent.
-- Missing `runtime.commit_granularity` or `runtime.expected_commit_policy` in `run-config.yaml`: valid input. Infer cadence from commit evidence when possible and note when one-commit-per-AC enforcement was inferred rather than declared.
-- Missing `manual_inputs.initial_patch_passing_tests`: valid input, but the `initial patch passing tests` metric must be reported as `[NEEDS_HUMAN_REVIEW]` unless other local evidence provides the exact count.
+- Missing explicit commit cadence metadata: valid input. Infer cadence from commit evidence when possible and note when one-commit-per-AC enforcement was inferred rather than declared.
+- Missing an exact initial-patch test count artifact: valid input, but the `initial patch passing tests` metric must be reported as `[NEEDS_HUMAN_REVIEW]` unless other local evidence provides the exact count.
 - Missing `ledger-commits.jsonl`: note in the report that the raw commit ledger is missing, likely meaning the post-commit hook was not installed or did not run.
 - Missing `ledger-events.jsonl`: note in the report that no semantic event ledger is present.
 - Empty ledgers: valid zero-row inputs.
 - Missing `event_id` or `event_kind` fields in older ledger rows: valid legacy input. Fall back to file order, `task_slug`, and stage context when correlating rows.
-- Unknown `harness` or `model` values in ledger rows: preserve and report them as-is. If `run-config.yaml` is present, also report that the row-level metadata did not match `runtime.harness` / `runtime.model`.
+- Legacy ledger rows may still contain runtime identity fields such as `harness` or `model`: ignore those fields for scoring and do not treat them as required metadata.
 - AC-level commit cadence with sparse event rows: valid input. Use commit metadata, criterion IDs, feature slugs, planned test ids, and changed-file context to build coverage even when event rows are coarse.
 
 ### Step 3: Build The Comparative Evidence Model
@@ -165,7 +161,7 @@ Use commit SHA as the timeline anchor.
 9. Detect unmatched or ambiguous evidence:
    - commits that appear to target a criterion or AC but do not map cleanly to any rubric row
    - rubric rows that require commit evidence but have no matching commit
-   - duplicate commit clusters for the same AC when the rubric or run-config convention expects one AC per commit
+   - duplicate commit clusters for the same AC when the rubric or another explicit run convention expects one AC per commit
    - evaluated diff changes that cannot be associated with a rubric row or planned AC
    - golden diff changes that the evaluated branch appears to omit
 10. Produce a unified timeline that shows, for each commit SHA: what was committed, what events were detected, the ledger order in which they appeared, and any matched criterion IDs or AC refs.
@@ -195,7 +191,7 @@ Use the source-of-truth golden path as the baseline reference implementation. As
 3. `bug_risk`: estimate the likelihood that the evaluated patch introduced latent defects relative to the golden patch and rubric intent. Report on a `1-10` scale, where `10` means lowest risk and `1` means highest risk.
 4. `edge_case_handling`: judge how completely the evaluated implementation covers obvious and documented edge cases. Report on a `1-10` scale, where `10` means it matches the golden reference on edge-case coverage.
 5. `turns`: count regressions, manual-fix cycles, or extra remediation turns visible in ledger commits or events beyond the expected implementation cadence. Report both the raw count and a `1-10` normalized score, where `10` means the fewest extra turns relative to the golden reference and expected cadence.
-6. `initial_patch_passing_tests`: report the number of tests that passed on the initial patch. Prefer `manual_inputs.initial_patch_passing_tests` from `run-config.yaml` or another explicit local artifact. Report both the raw count and a `1-10` normalized score, where `10` means it matches the golden-path expectation. If no exact local count exists, mark this dimension `[NEEDS_HUMAN_REVIEW]`.
+6. `initial_patch_passing_tests`: report the number of tests that passed on the initial patch. Prefer an explicit local artifact that records `initial_patch_passing_tests`. Report both the raw count and a `1-10` normalized score, where `10` means it matches the golden-path expectation. If no exact local count exists, mark this dimension `[NEEDS_HUMAN_REVIEW]`.
 7. `overall_review_quality`: synthesize rubric compliance, comparative patch quality, and review findings into a `1-10` score, where `10` means golden-reference quality.
 8. `footprint_risk`: derive files-touched-per-patch or files-touched-per-AC from diff and ledger evidence. Report both the raw figure and a `1-10` normalized score, where `10` means the smallest or safest footprint relative to the golden reference.
 9. `mean_time_per_task`: derive the average elapsed time per criterion, AC, or task from commit and event timestamps when enough evidence exists. Report both the raw duration and a `1-10` normalized score, where `10` means the fastest acceptable execution relative to the golden reference.
@@ -232,11 +228,10 @@ The report must be a self-contained Markdown artifact with these sections, in or
    - phase slug
    - target repo root
    - rubric path
-   - run metadata file presence and canonical harness/model when available
-   - run-config commit granularity and expected commit policy when available
-   - rubric harness/model when present
    - ledger file presence and row counts
+   - commit cadence basis when AC-level scoring depends on inferred vs explicit evidence
    - diff artifact paths when temporary files were created
+   - supplemental local evidence artifact paths when used
 2. `Comparative Diff Summary`
    - clean-base->golden diff summary
    - clean-base->evaluated diff summary
