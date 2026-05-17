@@ -17,16 +17,9 @@ Before starting, verify the phase document exists and read it to extract the pha
 
 `dev/feature/[phase-name]-execution-manifest.md`
 
-## QA Preference Selection
+## QA Behavior
 
-At the beginning of the conversation, before Step 1, ask the user:
-
-> **"Do you want a QA document generated for this phase? (yes/no)"**
-
-Wait for the user's response before proceeding.
-
-- If the user says **yes**, run Step 3 as written.
-- If the user says **no**, skip Step 3 and continue to Step 4.
+Generate QA documentation by default for every phase execution. Do not ask the user whether QA should be generated.
 
 ## Execution Pipeline
 
@@ -84,7 +77,7 @@ Then invoke **z-feature-reviewer** per Steps B–C from the `implementation-pipe
 
 **B1. Commit checkpoint** — After the reviewer returns, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by this feature. Do not stage files from other feature directories. Commit this checkpoint with the exact message `eval: review <feature-slug>`, replacing `<feature-slug>` with the current feature directory name.
 
-**C. Defer the phase-level checkpoints** — Do not create QA or final-review commits inside the per-feature loop. If QA generation was requested, Step 3 emits one consolidated phase QA checkpoint with the exact message `eval: qa` after staging only the shared QA outputs and any phase-level pipeline documents updated by that step. Step 4 emits the single phase-level final review checkpoint with the exact message `eval: final-review`.
+**C. Defer the phase-level checkpoints** — Do not create QA or final-review commits inside the per-feature loop. Step 3 emits one consolidated phase QA checkpoint with the exact message `eval: qa` after staging only the shared QA outputs and any phase-level pipeline documents updated by that step. Step 4 emits the single phase-level final review checkpoint with the exact message `eval: final-review`.
 
 **D. Complete** — Mark the feature complete in the todo list. Begin the next feature.
 
@@ -117,7 +110,7 @@ After each reviewer returns, stage only files belonging to `dev/feature/[0N-task
 **Phase C — Hold the phase-level QA and final-review checkpoints for the later pipeline steps.**
 
 For each feature in the wave (in numeric prefix order):
-1. Do not emit any per-feature QA commit here; if QA generation was requested, Step 3 emits one consolidated phase checkpoint with the exact message `eval: qa` after the shared QA outputs are updated.
+1. Do not emit any per-feature QA commit here; Step 3 emits one consolidated phase checkpoint with the exact message `eval: qa` after the shared QA outputs are updated.
 2. Do not add the old Step D conventional commit here; Step 4 now emits the single phase checkpoint with the exact message `eval: final-review`.
 3. Mark the feature complete in the todo list.
 
@@ -129,8 +122,6 @@ Produce a QA document covering the scope of the current execution.
 
 Determine QA output paths using the conventions in the auto-loaded `dev-task-folder` instruction (Consolidated QA Documents table). Check for existing QA files at those paths.
 
-Run this step only if the user selected **yes** in QA Preference Selection. If the user selected **no**, skip this step.
-
 #### Invoke QA Writer
 
 Invoke the **z-feature-qa-writer** subagent:
@@ -140,7 +131,7 @@ Invoke the **z-feature-qa-writer** subagent:
 After the subagent returns:
 - Verify the QA document exists at the determined path
 - Verify the coverage map exists at the determined path
-- Stage only the consolidated QA outputs and any phase-level pipeline documents updated by this step. Do not stage feature-local source files or files from unrelated feature directories. Commit this checkpoint once with the exact message `eval: qa`. If the user selected **no** in QA Preference Selection, skip this checkpoint entirely.
+- Stage only the consolidated QA outputs and any phase-level pipeline documents updated by this step. Do not stage feature-local source files or files from unrelated feature directories. Commit this checkpoint once with the exact message `eval: qa`.
 
 ### Step 4: Phase Final Review
 
@@ -158,18 +149,6 @@ Invoke the **prod-code-review** subagent. Build the prompt from the applicable t
 >
 > Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. All verdicts Approved: NO — use standard mode."
 
-**If QA was skipped and all verdicts Approved:**
-
-> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan generation was intentionally skipped by user choice. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings, including the risk impact of skipping QA documentation.
->
-> Review verdicts: [task-1: Approved, ...]. All verdicts Approved: YES — use fast-track mode."
-
-**If QA was skipped and any verdict was not Approved:**
-
-> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan generation was intentionally skipped by user choice. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings, including the risk impact of skipping QA documentation.
->
-> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. All verdicts Approved: NO — use standard mode."
-
 After the prod-code-review subagent returns, stage only the final review artifact and any phase-level pipeline documents updated by this step, then commit them with the exact message `eval: final-review`.
 
 ### Step 5: Report to User
@@ -177,7 +156,7 @@ After the prod-code-review subagent returns, stage only the final review artifac
 Present results using the Pipeline Completion Report format from the auto-loaded orchestrator conventions. Use these field labels:
 - Scope label: **Phase**
 - Items label: **Features completed**
-- Include the QA document path only if QA was generated
+- Include the QA document path
 
 ### Step 6: Update Documentation
 
