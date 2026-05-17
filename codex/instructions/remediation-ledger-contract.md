@@ -1,6 +1,7 @@
 ---
+name: remediation-ledger-contract
 description: "Deterministic contract for logging remediation turns and follow-up failure events to ledger-events.jsonl."
-applyTo: "**/*.cs,**/*.py,**/*.ts,**/*.js"
+applies-to: "Agents performing defect correction, debugging, or test fixing on phase/* branches"
 ---
 
 # Remediation Ledger Contract

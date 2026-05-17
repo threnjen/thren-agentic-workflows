@@ -177,7 +177,7 @@ These agents are not visible in the picker. They run automatically as part of or
 **04 Phase - Execute** (orchestrator — delegates to subagents)
 > Give it a refined Phase document after 03 has already prepared the feature bundles. It reads `dev/feature/[phase-name]-execution-manifest.md`, verifies each listed feature has `-plan.md`, `-context.md`, and `-tasks.md`, and fails immediately if those prepared artifacts are missing. When the bundle set is complete, it implements features by manifest wave order, then runs consolidated QA and Final Review.
 
-**05 Eval - Grader** (user-facing — standalone scorer)
+**Eval - Grader** (user-facing — standalone scorer)
 > Give it a rubric YAML path plus a target phase run. The rubric should follow the grader schema documented in the agent, with `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` as the seed example. The grader reads `eval/runs/<phase-slug>/ledger-commits.jsonl` and `eval/runs/<phase-slug>/ledger-events.jsonl`, correlates semantic events onto the commit timeline by SHA association, preserves remediation-turn metadata such as `event_kind` and `related_event_id` when present, scores every automatable rubric criterion, flags manual checks as `[NEEDS_HUMAN_REVIEW]`, and writes `score-report-<timestamp>.md` into the same run directory without pausing for user confirmation.
 
 **Audit - Code, Infra, Refactor** (orchestrator — delegates to subagents)
