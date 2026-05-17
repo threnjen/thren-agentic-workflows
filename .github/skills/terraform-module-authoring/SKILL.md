@@ -25,11 +25,13 @@ Do not describe a publish workflow that differs from these files.
 
 ## Module Interface Requirements
 
-Each module directory under `terraform_modules/modules/` must include:
+For new modules (or full interface refactors), include:
 
 - `README.md` with purpose, required inputs, outputs, and usage example.
 - `variables.tf` for input contract.
 - `outputs.tf` for exported values.
+
+Current repository modules include legacy layouts that may not yet contain all three files. Do not force broad interface normalization unless a migration/refactor scope is explicitly approved.
 
 Interface guidance:
 
