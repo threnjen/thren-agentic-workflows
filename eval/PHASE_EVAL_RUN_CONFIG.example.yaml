@@ -9,6 +9,8 @@ runtime:
   harness: copilot
   model: <exact-current-model-label>
   grader_agent: 05 Eval - Grader
+  commit_granularity: ac
+  expected_commit_policy: one-commit-per-ac
 
 inputs:
   rubric_path: eval/rubrics/phase-06e-planning-and-implementation.yaml
@@ -34,10 +36,13 @@ recommended_gates:
     min_cost_per_pass_improvement_percent: 15.0
 
 output:
-  score_report_path: eval/runs/phase-06e/score-report.md
+  score_report_path: eval/runs/phase-06e/score-report-<YYYYMMDD-HHMMSS>.md
   optional_run_contract_path: eval/runs/phase-06e/run-contract.json
 
 notes:
   - Keep harness and model values stable for all rows in this run.
+  - When commit_granularity is ac, include the exact criterion ID in every implement/review commit message.
+  - When expected_commit_policy is one-commit-per-ac, do not batch multiple ACs into one implement/review commit unless the rubric explicitly permits it.
+  - Implementation records should retain AC coverage rows with planned test IDs, planned test patterns, evidence paths, and commit SHAs or PENDING placeholders.
   - If comparing variants, change one variable at a time.
   - Preserve score reports and ledgers as retained artifacts.

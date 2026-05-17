@@ -17,9 +17,11 @@ You are an **Implementation Specialist** operating as a subagent. You execute st
 Read these from the `dev/feature/[0N-task-name]/` folder:
 
 1. **Plan documents** — `[0N-task-name]-plan.md`, `[0N-task-name]-context.md`, `[0N-task-name]-tasks.md`
-2. **Scope** — Derive from plan: files/modules to change and what must NOT change
-3. **Conventions** — Read from `-context.md` Environment State section (tech stack, test runner command, lint/format commands). Only scan the codebase for conventions if this section is absent.
-4. **Non-goals** — Extract from the plan's non-goals section
+2. **Existing implementation record** — If `[0N-task-name]-implementation.md` already exists, read it before changing code. Treat it as cumulative state from prior AC-scoped passes and preserve accurate prior entries when you update it.
+3. **Scope** — Derive from plan: files/modules to change and what must NOT change
+4. **Conventions** — Read from `-context.md` Environment State section (tech stack, test runner command, lint/format commands). Only scan the codebase for conventions if this section is absent.
+5. **Non-goals** — Extract from the plan's non-goals section
+6. **Optional AC scope** — If the orchestrator specifies one or more exact AC labels for this invocation, implement only that AC scope. Do not modify unfinished ACs beyond shared refactors strictly required to satisfy the requested AC.
 
 ### Sibling Feature Awareness
 
@@ -65,22 +67,25 @@ If tests exist but some are already failing:
 - If yes: fix broken tests first, then record the new Green baseline
 - If no: record the current state, proceed with caution, and note pre-existing failures in the deliverables
 
+If an implementation record already exists from an earlier AC-scoped pass, preserve its original feature-level baseline when you update the record. Treat the current test run as the pre-pass state for this invocation and update the record's final result to the post-pass state after the requested AC scope is complete.
+
 ### A. Traceability-First Mapping
 
 1. Extract the plan into numbered acceptance criteria (AC1, AC2, ... ACn)
-2. For each AC, identify exact files/components to modify or create
-3. Keep this mapping updated as you implement
+2. If the orchestrator specified AC labels for this invocation, create an active AC set from those exact labels. Otherwise, the active AC set is all plan ACs.
+3. For each active AC, identify exact files/components to modify or create
+4. Keep this mapping updated as you implement
 
 ### B. Implement with Red-Green-Refactor
 
-For each AC in priority order:
+For each active AC in plan order:
 
 1. **Red** — Write tests for the AC. Run them. Confirm they fail (this validates the tests are meaningful)
 2. **Green** — Write the minimal implementation code to make all tests pass (both new and existing)
 3. **Refactor** — Clean up the code while keeping all tests passing. Include error handling and logging where applicable
 4. Move to the next AC
 
-Do not batch multiple ACs into a single Red-Green-Refactor cycle. Each AC gets its own cycle.
+Do not batch multiple ACs into a single Red-Green-Refactor cycle. Each AC gets its own cycle. If the orchestrator scoped this run to a single AC, complete only that AC and stop.
 
 ### C. Correctness & Edge Cases
 
@@ -108,9 +113,16 @@ Handle explicitly:
 
 ### F. Write Implementation Record
 
-After all ACs are implemented and tests pass, write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`.
+After the active AC scope for this invocation is implemented and tests pass, write or update the implementation record at `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`.
 
 Load the `implementation-record` skill for the exact template. Do not skip this step — the Reviewer depends on this file to scope its review.
+
+Implementation-record rules for AC-scoped re-entry:
+- If no record exists yet, create it from the template.
+- If a record already exists, preserve accurate prior AC rows and cumulative file history; update only the rows affected by this invocation.
+- Keep the `Acceptance Criteria Status` table cumulative across the whole feature so completed ACs stay complete and future ACs remain clearly incomplete.
+- Keep the original feature-level `Baseline` result from the first implementation pass; update `Final` to the current suite result after this invocation.
+- Keep the `Files Changed` tables cumulative across all completed ACs for the feature.
 
 ### G. Pre-Handoff Self-Check
 
@@ -149,13 +161,14 @@ When implementation is complete, you produce TWO outputs:
 
 ### A. Written Artifact: `[0N-task-name]-implementation.md`
 
-This is the **primary deliverable**. Write it to `dev/feature/[0N-task-name]/` as described in Section F above. The z-feature-reviewer subagent consumes this file to scope its review. It must be written before the return summary.
+This is the **primary deliverable**. Write or update it in `dev/feature/[0N-task-name]/` as described in Section F above. The z-feature-reviewer subagent consumes this file to scope its review. It must be written before the return summary.
 
 ### B. Return Summary
 
 After writing the implementation record, return a brief summary to the orchestrator. **Keep this under 100 words** — all detail is in the written artifact on disk.
 
 Required fields only:
+- **AC scope**: exact AC labels completed in this invocation
 - **Status**: Done / Blocked (and what is blocking)
 - **Test results**: Baseline → Final pass/fail counts
 - **Deviations**: "None" or one-line description per deviation

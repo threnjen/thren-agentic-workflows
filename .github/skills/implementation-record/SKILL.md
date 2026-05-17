@@ -15,6 +15,13 @@ Write `[0N-task-name]-implementation.md` to `dev/feature/[0N-task-name]/` using 
 ## Sibling Features
 <!-- siblings and shared modules -->
 
+## AC Coverage Matrix
+
+| AC | Criterion ID | Planned Test ID | Planned Test Pattern | Status | Implementing Files | Evidence Paths | Implement Commit SHA | Review Commit SHA |
+|----|--------------|-----------------|----------------------|--------|--------------------|----------------|----------------------|-------------------|
+
+Use exact rubric or plan criterion IDs when available. If a commit SHA is not known yet, write `PENDING`.
+
 ## Acceptance Criteria Status
 
 | AC | Description | Status | Implementing Files | Notes |
@@ -49,3 +56,10 @@ Write `[0N-task-name]-implementation.md` to `dev/feature/[0N-task-name]/` using 
 - [e.g., Validation logic in `src/foo.py:45-78` — complex conditional, verify edge cases]
 - [e.g., New dependency on `rate-limiter` library — confirm it matches repo conventions]
 ```
+
+Additional requirements:
+
+- The `AC Coverage Matrix` must be filled for every planned AC, even if the current status is `Pending`.
+- `Evidence Paths` should point to concrete source, test, or artifact locations that a grader can search locally.
+- `Implement Commit SHA` and `Review Commit SHA` may start as `PENDING`, but the columns must exist so later pipeline stages can fill them in.
+- Keep the `Acceptance Criteria Status` section aligned with the coverage matrix rather than inventing a second source of truth.

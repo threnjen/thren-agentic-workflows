@@ -1,5 +1,6 @@
 # Seed rubric for the eval-infrastructure-foundation phase.
 # Copy this file when starting a new rubric and adapt the criteria to the target project.
+# This example demonstrates both simple criteria and richer AC-level evidence fields.
 
 phase: phase-eval-infrastructure-foundation
 harness: copilot
@@ -11,9 +12,11 @@ criteria:
     check: Confirm eval/runs/phase-eval-infrastructure-foundation/run-config.yaml exists and contains runtime.harness and runtime.model keys.
 
   - id: R02
-    description: Checkpoint commits use the canonical eval naming convention
+    description: Checkpoint commits use the canonical eval naming convention and include criterion IDs for AC-level runs
     automatable: true
-    check: Confirm ledger commit messages use eval: plan-affirmed, eval: phase-affirmed, eval: features-decomposed, eval: implement <feature-slug>, eval: review <feature-slug>, eval: qa, and eval: final-review.
+    expected_commit_prefix: "eval:"
+    require_commit_evidence: true
+    check: Confirm ledger commit messages use eval: plan-affirmed, eval: phase-affirmed, eval: features-decomposed, eval: implement <feature-slug> or eval: implement <feature-slug> <criterion-id>, eval: review <feature-slug> or eval: review <feature-slug> <criterion-id>, eval: qa, and eval: final-review. If run-config says commit_granularity is ac, confirm implement/review commits include exact criterion IDs.
 
   - id: R03
     description: Ledger-writing agents target the hook-compatible phase-prefixed run directory
@@ -29,3 +32,22 @@ criteria:
     description: Human review confirms ambiguous failure events are attached to the right commit context
     automatable: false
     requires_human: true
+
+  - id: I01A1
+    description: Example AC-level criterion row includes structured commit and planned-test evidence fields
+    automatable: true
+    feature_slug: 01-run-metadata-contract
+    ac_ref: I01A1
+    planned_test_id: test_ac1_run_config_contains_runtime_metadata
+    planned_test_pattern: RunConfig_ContainsRuntimeMetadata
+    expected_commit_prefix: "eval: implement 01-run-metadata-contract"
+    expected_commit_contains: "I01A1"
+    require_commit_evidence: true
+    require_test_evidence: true
+    check: Confirm the implementation artifact, planned test evidence, and at least one matching AC-level implement commit can all be associated with criterion I01A1.
+
+  - id: T01
+    description: Implementation records expose an AC coverage matrix usable by the grader
+    automatable: true
+    require_test_evidence: false
+    check: Confirm implementation records include an AC coverage matrix with AC or criterion ID, planned test identifiers or patterns, evidence paths, and commit SHA columns that can hold actual values or PENDING placeholders.

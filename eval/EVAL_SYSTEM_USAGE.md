@@ -60,6 +60,11 @@ EOF
 
 Keep `runtime.harness` and `runtime.model` identical throughout one run. Do not rename or restyle them between events.
 
+Recommended additional runtime flags for deterministic AC-level scoring:
+
+- `runtime.commit_granularity: ac` or `feature`
+- `runtime.expected_commit_policy: one-commit-per-ac` or `feature-batched`
+
 ### 4. Commit naming conventions the evaluator expects
 
 The canonical checkpoint commit messages are:
@@ -67,12 +72,12 @@ The canonical checkpoint commit messages are:
 - `eval: plan-affirmed`
 - `eval: phase-affirmed`
 - `eval: features-decomposed`
-- `eval: implement <feature-slug>`
-- `eval: review <feature-slug>`
+- `eval: implement <feature-slug>` or `eval: implement <feature-slug> <criterion-id>`
+- `eval: review <feature-slug>` or `eval: review <feature-slug> <criterion-id>`
 - `eval: qa`
 - `eval: final-review`
 
-These messages make the timeline deterministic and easy to score.
+For AC-level runs, there should be one `eval: implement` checkpoint and one `eval: review` checkpoint per acceptance criterion, using the exact rubric or criterion ID token when available, for example `I03A7`. Raw plan-local labels such as `AC1` are only safe when paired with the feature slug. These messages make the timeline deterministic and easy to score.
 
 ## 2) Prepare the Rubric (After Gold Truth Is Established)
 
@@ -113,6 +118,27 @@ criteria:
     requires_human: true
 ```
 
+Recommended richer shape for AC-level runs:
+
+```yaml
+phase: phase-06e
+harness: codex
+model: gpt-5.5
+criteria:
+  - id: I03A7
+    description: Dormant Purpose remains 50 across repeated rare ticks for every tier
+    automatable: true
+    feature_slug: 03-ambition-purpose-runtime
+    ac_ref: I03A7
+    planned_test_id: test_ac7_dormant_purpose_stays_50
+    planned_test_pattern: DormantPurpose_StaysAt50_AllTiers
+    expected_commit_prefix: "eval: implement 03-ambition-purpose-runtime"
+    expected_commit_contains: "I03A7"
+    require_commit_evidence: true
+    require_test_evidence: true
+    check: Confirm the runtime implementation, implementation record, and planned test evidence all support I03A7.
+```
+
 ### Planning Doc rubric criteria patterns
 
 Use IDs like `P01`, `P02`, `P03` and encode objective checks such as:
@@ -125,13 +151,30 @@ Use IDs like `P01`, `P02`, `P03` and encode objective checks such as:
 
 ### Implementation rubric criteria patterns
 
-Use IDs like `I01`, `I02`, `I03` and encode checks such as:
+Use IDs like `I01`, `I02`, `I03` for feature-level checks and IDs like `I03A7` for AC-level checks. Encode checks such as:
 
 - each feature folder has required artifacts
+- each AC row carries `feature_slug`, `ac_ref`, and planned test identifiers when available
 - review verdicts are acceptable per policy
 - checkpoint commits exist and follow canonical names
+- implement and review commits can be associated to the exact AC when the run uses AC-level commit cadence
 - ledger events include required schema fields
 - final review and QA outputs exist (or skipped with explicit rationale)
+
+### AC-level evidence contract (recommended)
+
+For AC-granular runs, prefer the following rubric fields whenever the information exists:
+
+- `feature_slug`
+- `ac_ref`
+- `planned_test_id`
+- `planned_test_pattern`
+- `expected_commit_prefix`
+- `expected_commit_contains`
+- `require_commit_evidence`
+- `require_test_evidence`
+
+These fields reduce heuristic matching and make grading deterministic even when ledger event rows are sparse.
 
 ### Human-review criteria
 
@@ -174,6 +217,30 @@ Inside `eval/runs/<phase-slug>/`:
 - `ledger-events.jsonl` rows come from agents and include:
   - `task_slug`, `harness`, `model`, `stage`, `detected_by`, `severity`, `evidence`, `first_seen_attempt`, `resolved_attempt`, `resolved_by`, `human_intervention_required`, `regression`, `propagated_from_stage`
 
+Recommended enrichment for AC-level runs when event writers can provide it:
+
+- `criterion_id` or `ac_ref`
+- `planned_test_id`
+- `planned_test_pattern`
+- `related_commit_sha`
+
+These fields are not mandatory for the grader to operate, but they substantially improve criterion-to-event association quality.
+
+### Implementation record coverage contract
+
+Implementation records should carry an AC coverage matrix so the grader has a deterministic fallback when commit or event evidence is incomplete. Recommended columns:
+
+- `AC`
+- `Criterion ID`
+- `Planned Test ID`
+- `Planned Test Pattern`
+- `Implementing Files`
+- `Evidence Paths`
+- `Implement Commit SHA`
+- `Review Commit SHA`
+
+If a commit SHA is not yet known when the implementation record is first written, use `PENDING` and update it later in the pipeline.
+
 ### Branch gating standard
 
 No `phase/*` branch means no commit ledger capture by the hook.
@@ -210,6 +277,8 @@ For consistency across runs, ensure each score report clearly exposes these comp
 - automatable pass count and fail count
 - human-review required count
 - regression flag count
+- AC commit coverage counts when the rubric is AC-granular
+- unmatched or ambiguous AC evidence counts when present
 
 These align with B001's decision-first reporting style while staying within Phase 01 scope.
 
@@ -237,6 +306,11 @@ Suggested naming:
 
 Use this file to pin baseline SHA, rubric path, model label, and grading inputs for reruns.
 
+For AC-level runs, also pin:
+
+- `runtime.commit_granularity`
+- `runtime.expected_commit_policy`
+
 ### Recommended promotion gates (adopted defaults)
 
 Use these defaults unless your project explicitly overrides them:
@@ -253,8 +327,10 @@ Before scoring:
 - Branch name starts with `phase/`
 - Hook is installed and executable
 - `run-config.yaml` exists with stable harness/model
+- `run-config.yaml` declares commit granularity when the run is AC-level
 - Rubric file exists and points at the same phase slug
 - Checkpoint commit messages follow canonical names
+- Implementation records include AC coverage rows with planned test identifiers and evidence paths
 
 After scoring:
 
@@ -269,6 +345,8 @@ After scoring:
 - Changing model label mid-run in metadata/events
 - Writing fuzzy rubric checks with no local evidence path
 - Treating human-review criteria as automatable
+- Using AC-level commits without the exact criterion ID in implement/review commit messages
+- Omitting planned test identifiers or AC coverage rows from implementation artifacts during AC-level runs
 - Reusing one rubric across unrelated phase slugs without edits
 
 ## 7) Suggested Naming Conventions
