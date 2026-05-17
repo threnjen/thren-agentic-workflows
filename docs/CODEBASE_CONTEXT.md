@@ -9,7 +9,7 @@ Quick-reference for AI agents working on this repository.
 - Two language variants for templates: Node.js/TypeScript and Python
 - Four platform surfaces are documented: `.github/` as the master source, checked-in `opencode/` and `claude/` copies, and a repository-owned `codex/` area for Codex docs and future source artifacts
 - 24 agent definitions in `.github/agents/` (14 user-facing, 10 hidden subagents)
-- 12 skills in `.github/skills/` (all directory-based, each with `SKILL.md`)
+- 13 skills in `.github/skills/` (all directory-based, each with `SKILL.md`)
 - 13 instruction files in `.github/instructions/` (cross-cutting conventions)
 - Users copy files into their own projects and customize them
 
@@ -49,6 +49,8 @@ README.md                       # Repo overview, usage instructions
       SKILL.md
     review-changes/             # Graph-powered structured code review skill
       SKILL.md
+    eval-score-table-output/    # Persistent additive markdown score-history output for Eval Grader
+      SKILL.md
   instructions/
     codebase-context-bootstrap.instructions.md  # Reads CODEBASE_CONTEXT.md before discovery (all agents)
     dev-task-folder.instructions.md     # dev/feature/ output naming conventions (all agents)
@@ -85,6 +87,7 @@ claude/
   skills/                       # Symlinked to .github/skills/
   README.md                     # Claude-specific setup
 eval/
+  EVAL_GRADER_SCORE_HISTORY.md  # Persistent additive markdown history of Eval Grader comparison scores
   EVAL_SYSTEM_USAGE.md          # Eval runbook and grader usage
   PHASE_EVAL_RUN_CONFIG.example.yaml # Eval run configuration template
   hooks/                        # Post-commit hook template and related evaluation hooks
@@ -123,7 +126,7 @@ dev/
 
 ### Skills (.github/skills/)
 
-12 skills loaded by agents on demand (all directory-based). See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the full mapping.
+13 skills loaded by agents on demand (all directory-based). See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the full mapping.
 
 ### Instructions (.github/instructions/)
 

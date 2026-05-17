@@ -5,6 +5,13 @@ phase_eval:
   baseline_sha: <git-sha-used-as-baseline>
   repo_root: <absolute-or-relative-target-repo-path>
 
+comparison:
+  clean_base_branch: <clean-base-branch>
+  golden_path_branch: <source-of-truth-golden-path-branch>
+  evaluated_branch: <branch-to-evaluate>
+  golden_diff_artifact_path: eval/runs/phase-06e/tmp/clean-base-to-golden.diff
+  evaluated_diff_artifact_path: eval/runs/phase-06e/tmp/clean-base-to-evaluated.diff
+
 runtime:
   harness: copilot
   model: <exact-current-model-label>
@@ -17,6 +24,10 @@ inputs:
   ledger_commits_path: eval/runs/phase-06e/ledger-commits.jsonl
   ledger_events_path: eval/runs/phase-06e/ledger-events.jsonl
   run_config_path: eval/runs/phase-06e/run-config.yaml
+
+manual_inputs:
+  initial_patch_passing_tests: <count-from-unity-test-runner>
+  initial_patch_test_source: Unity Test Runner EditMode Run All
 
 constraints:
   phase_branch_required: true
@@ -37,6 +48,7 @@ recommended_gates:
 
 output:
   score_report_path: eval/runs/phase-06e/score-report-<YYYYMMDD-HHMMSS>.md
+  persistent_score_history_path: eval/EVAL_GRADER_SCORE_HISTORY.md
   optional_run_contract_path: eval/runs/phase-06e/run-contract.json
 
 notes:
@@ -44,5 +56,9 @@ notes:
   - When commit_granularity is ac, include the exact criterion ID in every implement/review commit message.
   - When expected_commit_policy is one-commit-per-ac, do not batch multiple ACs into one implement/review commit unless the rubric explicitly permits it.
   - Implementation records should retain AC coverage rows with planned test IDs, planned test patterns, evidence paths, and commit SHAs or PENDING placeholders.
+  - The grader compares clean_base_branch->golden_path_branch against clean_base_branch->evaluated_branch.
+  - Diff artifact paths are optional but recommended when the patches are large.
+  - If initial_patch_passing_tests is omitted, that scorecard dimension should be reported as NEEDS_HUMAN_REVIEW.
+  - The persistent score history file stores normalized 1-10 scores where the golden path is treated as all 10s.
   - If comparing variants, change one variable at a time.
   - Preserve score reports and ledgers as retained artifacts.

@@ -38,6 +38,7 @@ flowchart TD
     Skills --> S10["explore-codebase\n(Explore)"]
     Skills --> S11["refactor-safely\n(Refactor)"]
     Skills --> S12["review-changes\n(Reviewer)"]
+    Skills --> S13["eval-score-table-output\n(Eval Grader)"]
 
     Instructions --> I1["codebase-context-bootstrap\n(all agents)"]
     Instructions --> I2["dev-task-folder\n(all agents)"]
@@ -192,6 +193,7 @@ Skills (`.github/skills/<name>/SKILL.md`) extract shared templates and formats t
 | `explore-codebase` | Explore agent, general exploration | Graph-powered navigation: architecture overview, community detection, relationship tracing, execution flow |
 | `refactor-safely` | Refactor pipelines | Graph-powered refactoring: dead-code detection, rename preview, impact radius, safety checks |
 | `review-changes` | Reviewer agents | Graph-powered structured review: change detection, risk scoring, test coverage lookup, blast radius analysis |
+| `eval-score-table-output` | Eval - Grader | Additive markdown table format for persistent score history with normalized `1-10` comparison axes |
 
 ## Instructions
 

@@ -1,6 +1,11 @@
 # Seed rubric for the eval-infrastructure-foundation phase.
 # Copy this file when starting a new rubric and adapt the criteria to the target project.
 # This example demonstrates both simple criteria and richer AC-level evidence fields.
+# Comparative branch scorecard metrics such as equivalence, bug risk, turns, footprint risk, and mean time/task
+# are computed by the grader from branch diffs, ledgers, and manual inputs; they do not need to be duplicated as
+# ordinary rubric criteria unless a project wants additional rubric-level gates.
+# The persistent score history file normalizes those comparative axes to a `1-10` scale where the golden path is
+# treated as the `10` baseline on every axis.
 
 phase: phase-eval-infrastructure-foundation
 harness: copilot

@@ -6,6 +6,11 @@ This guide explains how to run the phase evaluation system end-to-end once your 
 
 The `05 Eval - Grader` agent scores a completed phase run by combining:
 
+- a clean base branch
+- a source-of-truth golden path branch
+- a branch to evaluate
+- diff(clean base -> golden path)
+- diff(clean base -> branch to evaluate)
 - `eval/runs/<phase-slug>/ledger-commits.jsonl` (commit timeline, written by git hook)
 - `eval/runs/<phase-slug>/ledger-events.jsonl` (semantic failures, written by agents)
 - A rubric YAML you provide
@@ -13,6 +18,10 @@ The `05 Eval - Grader` agent scores a completed phase run by combining:
 It writes a timestamped score report to:
 
 - `eval/runs/<phase-slug>/score-report-<timestamp>.md`
+
+It also appends one additive-only comparison row to:
+
+- `eval/EVAL_GRADER_SCORE_HISTORY.md`
 
 ## 1) Prepare the Evaluation Set
 
@@ -64,6 +73,19 @@ Recommended additional runtime flags for deterministic AC-level scoring:
 
 - `runtime.commit_granularity: ac` or `feature`
 - `runtime.expected_commit_policy: one-commit-per-ac` or `feature-batched`
+
+Recommended comparison metadata for branch-based grading:
+
+- `comparison.clean_base_branch`
+- `comparison.golden_path_branch`
+- `comparison.evaluated_branch`
+- `comparison.golden_diff_artifact_path`
+- `comparison.evaluated_diff_artifact_path`
+
+Recommended manual inputs when exact local evidence cannot be inferred from ledgers:
+
+- `manual_inputs.initial_patch_passing_tests`
+- `manual_inputs.initial_patch_test_source`
 
 ### 4. Commit naming conventions the evaluator expects
 
@@ -254,17 +276,53 @@ For one run directory, reuse the same `harness` and `model` values in all event 
 Use `05 Eval - Grader` with:
 
 - rubric path
+- clean base branch
+- source-of-truth golden path branch
+- branch to evaluate
 - phase identifier (or include `phase` in rubric)
 - target repository root (optional if current workspace is target)
 
 Expected grader behavior:
 
-1. Resolve `phase-slug` and locate run dir
-2. Load rubric + ledgers + run metadata
-3. Build a unified timeline by commit SHA
-4. Score automatable criteria as `PASS` or `FAIL`
-5. Emit manual checks as `[NEEDS_HUMAN_REVIEW]`
-6. Write `score-report-<timestamp>.md` into the run dir
+1. Resolve `phase-slug` and locate the evaluated branch run dir
+2. Materialize clean-base->golden and clean-base->evaluated diffs, optionally writing temporary diff artifacts
+3. Load rubric + ledgers + run metadata
+4. Build a comparative patch model and a unified timeline by commit SHA
+5. Score automatable rubric criteria as `PASS` or `FAIL`
+6. Produce a comparative scorecard across patch equivalence and execution-quality metrics
+7. Emit manual checks as `[NEEDS_HUMAN_REVIEW]`
+8. Write `score-report-<timestamp>.md` into the run dir
+
+### Comparative scorecard dimensions
+
+The grader now produces a branch-comparison scorecard in addition to the rubric verdict. The persistent history table stores these axes on a normalized `1-10` scale where `10` is best, with the golden path treated as the `10` baseline. It scores or reports:
+
+- equivalence: how closely the evaluated patch matches the golden-path patch
+- maintainability/readability
+- bug risk
+- edge case handling
+- turns from ledger commits and activities, lower is better
+- initial patch passing tests, higher is better, usually supplied from Unity Test Runner
+- overall review quality evaluation
+- footprint risk, including files touched per patch or per AC, lower is better
+- mean time per task from ledger timestamps, lower is better
+
+### Persistent additive score history
+
+After each grading run, append exactly one new row to:
+
+- `eval/EVAL_GRADER_SCORE_HISTORY.md`
+
+This file is intentionally simple Markdown. It is a persistent historical record, not a mutable dashboard.
+
+Rules:
+
+- append only
+- never delete or rewrite prior rows
+- never reorder rows
+- use normalized `1-10` scores where `10` is best
+- use `NHR` for score cells that remained `[NEEDS_HUMAN_REVIEW]`
+- assume the golden path scores `10` on every axis
 
 ### Adopted report contract fields
 
@@ -311,6 +369,16 @@ For AC-level runs, also pin:
 - `runtime.commit_granularity`
 - `runtime.expected_commit_policy`
 
+For branch-comparison runs, also pin:
+
+- `comparison.clean_base_branch`
+- `comparison.golden_path_branch`
+- `comparison.evaluated_branch`
+- `comparison.golden_diff_artifact_path`
+- `comparison.evaluated_diff_artifact_path`
+- `manual_inputs.initial_patch_passing_tests` when the Unity Test Runner result is available
+- `output.persistent_score_history_path`
+
 ### Recommended promotion gates (adopted defaults)
 
 Use these defaults unless your project explicitly overrides them:
@@ -328,9 +396,11 @@ Before scoring:
 - Hook is installed and executable
 - `run-config.yaml` exists with stable harness/model
 - `run-config.yaml` declares commit granularity when the run is AC-level
+- Clean base, golden path, and evaluated branches are all available locally
 - Rubric file exists and points at the same phase slug
 - Checkpoint commit messages follow canonical names
 - Implementation records include AC coverage rows with planned test identifiers and evidence paths
+- Initial patch passing test count is recorded when Unity Test Runner is the source of truth for that metric
 
 After scoring:
 
@@ -347,6 +417,8 @@ After scoring:
 - Treating human-review criteria as automatable
 - Using AC-level commits without the exact criterion ID in implement/review commit messages
 - Omitting planned test identifiers or AC coverage rows from implementation artifacts during AC-level runs
+- Comparing branches without a clean base reference or without materializing both the golden and evaluated diffs
+- Assuming the Unity Test Runner initial-pass count can be reconstructed from ledgers when no local artifact or manual input was recorded
 - Reusing one rubric across unrelated phase slugs without edits
 
 ## 7) Suggested Naming Conventions
