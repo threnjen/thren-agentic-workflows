@@ -466,6 +466,35 @@ def _render_toml_string(value: str) -> List[str]:
     return [json.dumps(value, ensure_ascii=False)]
 
 
+def _inject_codex_selected_agent_instruction(agent: SourceAgent, body: str) -> str:
+    if not agent.user_invocable:
+        return body
+
+    identifier = _codex_identifier_for(agent)
+    clause = (
+        f"When the user selects you with the `@` designator, you are already acting as `{identifier}`. "
+        f"Begin work in this role immediately. Do not spend your first action invoking `{identifier}` again as a subagent. "
+        "Delegate only to distinct child agents when the workflow explicitly calls for them."
+    )
+    if clause in body:
+        return body
+
+    paragraphs = body.split("\n\n")
+    insert_after = 0
+
+    while insert_after < len(paragraphs) and paragraphs[insert_after].lstrip().startswith("#"):
+        insert_after += 1
+
+    if insert_after < len(paragraphs):
+        next_index = insert_after + 1
+        next_paragraph = paragraphs[next_index].lstrip() if next_index < len(paragraphs) else ""
+        if paragraphs[insert_after].lstrip().startswith("You are") and next_paragraph.startswith("Your "):
+            insert_after = next_index
+
+    paragraphs.insert(insert_after + 1, clause)
+    return "\n\n".join(paragraphs)
+
+
 def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc], reference_map: Dict[str, str]) -> str:
     combined = agent.body.strip()
     appendix = _build_instruction_appendix(agent, docs)
@@ -473,6 +502,7 @@ def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc], reference
         combined = f"{combined}\n\n{appendix.strip()}"
 
     combined = _rewrite_agent_references(combined, reference_map, preserve_at_sign=False)
+    combined = _inject_codex_selected_agent_instruction(agent, combined)
 
     name_value = _codex_identifier_for(agent)
     description = json.dumps(agent.description, ensure_ascii=False)
