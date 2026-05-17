@@ -287,15 +287,21 @@ Expected grader behavior:
 
 The grader now produces a branch-comparison scorecard in addition to the rubric verdict. The persistent history table stores these axes on a normalized `1-10` scale where `10` is best, with the golden path treated as the `10` baseline. It scores or reports:
 
-- equivalence: how closely the evaluated patch matches the golden-path patch
-- maintainability/readability
-- bug risk
-- edge case handling
-- turns from ledger commits and activities, lower is better
-- initial patch passing tests, higher is better, usually supplied from Unity Test Runner
-- overall review quality evaluation
-- footprint risk, including files touched per patch or per AC, lower is better
-- mean time per task from ledger timestamps, lower is better
+- Parallel metric subagents score:
+  - equivalence: how closely the evaluated patch matches the golden-path patch
+  - clarity: human readability
+  - coherence: internal consistency and style-fit with the repository
+  - robustness: edge cases, boundary conditions, and failure-path coverage
+  - bug risk
+  - scope discipline: does only what is needed for the rubric and golden-path intent
+  - footprint risk, including files touched per patch or per AC, lower is better
+- The parent grader computes directly:
+  - turns from ledger commits and activities, lower is better
+  - initial patch passing tests, higher is better, usually supplied from Unity Test Runner
+  - mean time per task from ledger timestamps, lower is better
+  - overall review quality evaluation
+
+`diff minimality` is not a separate axis. It is intentionally absorbed by `scope discipline` plus `footprint risk` to avoid double-counting change size.
 
 ### Persistent additive score history
 
@@ -313,6 +319,7 @@ Rules:
 - use normalized `1-10` scores where `10` is best
 - use `NHR` for score cells that remained `[NEEDS_HUMAN_REVIEW]`
 - assume the golden path scores `10` on every axis
+- preserve legacy schema rows and append new runs to the current schema section when the metric columns evolve
 
 ### Adopted report contract fields
 

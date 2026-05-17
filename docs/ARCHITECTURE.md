@@ -28,7 +28,7 @@ flowchart TD
     Root --> Eval[eval artifacts and runbooks]
     Root --> Scripts[scripts]
 
-    GH --> GHAgents[24 source agent definitions]
+    GH --> GHAgents[25 source agent definitions]
     GH --> GHSkills[14 skill directories]
     GH --> GHInstructions[15 instruction files]
 
@@ -70,7 +70,7 @@ The watcher task in `.vscode/tasks.json` starts automatically on folder open and
 
 This is the primary authoring surface.
 
-- `.github/agents/` contains 24 source agent definitions.
+- `.github/agents/` contains 25 source agent definitions.
 - Most source agents use the `.agent.md` suffix.
 - `prod-code-review.md` is an intentional plain `.md` exception that is still loaded as an agent because the propagation script keys off frontmatter, not only filename suffixes.
 - `.github/skills/` contains 14 directory-based skills, each rooted at `SKILL.md`.

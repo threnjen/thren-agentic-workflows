@@ -107,3 +107,15 @@ If a reviewer compares the AC literal text against the backend file and flags th
 ## Watch for
 
 Terraform `backend.tf` files that omit the `key` attribute combined with AC text that describes a parameterized key path. Verify the plan's correctness section for the explicit partial backend config decision before flagging as missing.
+
+## Pattern
+
+Scaffold placeholder comments in `outputs.tf` (e.g., "Output blocks are added in Feature N when resources are defined") are never updated when the implementing feature lands.
+
+## Impact
+
+Stale `outputs.tf` files carry misleading comments after resources are defined, and useful reference outputs (e.g., resource ARNs) are silently omitted, reducing post-apply verifiability.
+
+## Watch for
+
+`outputs.tf` files with placeholder-style comments that name a specific future feature; check whether that feature has already landed and whether any resource ARNs or IDs are worth exporting as outputs.

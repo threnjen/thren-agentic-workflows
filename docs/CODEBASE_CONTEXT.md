@@ -13,7 +13,7 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 24 source agent definitions in `.github/agents/`.
+- 25 source agent definitions in `.github/agents/`.
 - 14 skills in `.github/skills/`.
 - 15 instructions in `.github/instructions/`.
 - 2 template packs: `nodejs/` and `python/`.
@@ -86,7 +86,7 @@ scripts/
 
 - 3 orchestrators: `04 Phase - Execute`, `Audit - Code, Infra, Refactor`, `Test - Orchestrator`.
 - 11 standalone user-facing agents: planner, refiner, decomposer, eval grader, documentation architect, debugger, evangelize, single-feature agent, prod code review, unity reviewer, web research specialist.
-- 10 hidden subagents: plan expander, implementer, reviewer, QA writer, 3 auditors, test analyst, test writer, test fixer.
+- 11 hidden subagents: plan expander, implementer, reviewer, QA writer, 3 auditors, eval metric grader, test analyst, test writer, test fixer.
 
 ## Template Pack Facts
 

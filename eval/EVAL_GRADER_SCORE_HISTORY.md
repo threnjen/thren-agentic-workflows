@@ -10,3 +10,10 @@ Rules:
 
 | Timestamp | Phase | Clean Base | Golden Path | Evaluated Branch | Equivalence | Maintainability | Bug Risk | Edge Cases | Turns | Initial Patch Tests | Review Quality | Footprint | Mean Time/Task | Overall Verdict | Report Path | Notes |
 |-----------|-------|------------|-------------|------------------|-------------|-----------------|----------|------------|-------|---------------------|----------------|-----------|----------------|-----------------|-------------|-------|
+
+## Schema v2
+
+Use this section for runs graded after the metric model split between parallel metric subagents and parent-derived execution metrics. Legacy rows above remain unchanged.
+
+| Timestamp | Phase | Clean Base | Golden Path | Evaluated Branch | Equivalence | Clarity | Coherence | Robustness | Bug Risk | Scope Discipline | Footprint | Turns | Initial Patch Tests | Review Quality | Mean Time/Task | Overall Verdict | Report Path | Notes |
+|-----------|-------|------------|-------------|------------------|-------------|---------|-----------|------------|----------|------------------|-----------|-------|---------------------|----------------|----------------|-----------------|-------------|-------|

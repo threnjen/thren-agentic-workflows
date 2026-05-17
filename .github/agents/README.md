@@ -151,6 +151,7 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Auditor - Code** | Audit orchestrator | Comprehensive code quality, security, and health audit |
 | **Auditor - Infra** | Audit orchestrator | Audit Dockerfiles, CI/CD pipelines, IaC templates, and config files |
 | **Auditor - Refactor** | Audit orchestrator | Audit codebase structure, module organization, and architecture |
+| **Eval - Metric Grader** | Eval - Grader | Score one comparative metric from prepared diff and ledger evidence |
 | **Feature - Plan Expander** | Feature - Decomposer | Generate context and tasks files from existing plan files |
 | **Feature - Implementer** | Phase - Execute, Audit orchestrator, Test orchestrator | Implement a feature plan using Red-Green-Refactor TDD |
 | **Feature - Reviewer** | Phase - Execute, Audit orchestrator, Test orchestrator | Review implementation, apply fixes, produce review record |
@@ -178,7 +179,7 @@ These agents are not visible in the picker. They run automatically as part of or
 > Give it a refined Phase document after 03 has already prepared the feature bundles. It reads `dev/feature/[phase-name]-execution-manifest.md`, verifies each listed feature has `-plan.md`, `-context.md`, and `-tasks.md`, and fails immediately if those prepared artifacts are missing. When the bundle set is complete, it implements features by manifest wave order, then runs consolidated QA and Final Review.
 
 **Eval - Grader** (user-facing — standalone scorer)
-> Give it a rubric YAML path plus three branch names: clean base, source-of-truth golden path, and branch to evaluate. The rubric should follow the grader schema documented in the agent, with `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` as the seed example. The grader materializes clean-base->golden and clean-base->evaluated diffs, reads `eval/runs/<phase-slug>/ledger-commits.jsonl` and `eval/runs/<phase-slug>/ledger-events.jsonl`, correlates semantic events onto the commit timeline by SHA association, preserves remediation-turn metadata such as `event_kind` and `related_event_id` when present, supports both feature-level and AC-level commit cadence, matches planned test identifiers and test-name patterns when provided, produces both a rubric verdict and a comparative scorecard, and appends normalized `1-10` scores to the persistent additive markdown history file at `eval/EVAL_GRADER_SCORE_HISTORY.md`.
+> Give it a rubric YAML path plus three branch names: clean base, source-of-truth golden path, and branch to evaluate. The rubric should follow the grader schema documented in the agent, with `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` as the seed example. The grader materializes clean-base->golden and clean-base->evaluated diffs, reads `eval/runs/<phase-slug>/ledger-commits.jsonl` and `eval/runs/<phase-slug>/ledger-events.jsonl`, correlates semantic events onto the commit timeline by SHA association, preserves remediation-turn metadata such as `event_kind` and `related_event_id` when present, supports both feature-level and AC-level commit cadence, fans out one parallel `Eval - Metric Grader` subagent per comparative review metric, keeps exact ledger-derived metrics in the parent grader, produces both a rubric verdict and a comparative scorecard, and appends normalized `1-10` scores to the persistent additive markdown history file at `eval/EVAL_GRADER_SCORE_HISTORY.md`.
 
 **Audit - Code, Infra, Refactor** (orchestrator — delegates to subagents)
 > Asks which audit type to run (CODE, INFRA, or REFACTOR), delegates to the appropriate auditor subagent, and presents findings. Optionally drives automated remediation by converting audit findings into task plans and running them through the Feature - Implementer → Feature - Reviewer → Feature - QA Writer pipeline. After remediation, updates documentation via the Docs Writer.
@@ -222,6 +223,8 @@ These agents are not visible in the picker. They run automatically as part of or
 **Auditor - Infra** *(subagent of Audit orchestrator)* — Evaluates Dockerfiles, CI/CD pipelines, IaC templates, and config files for security, best practices, and operational risk.
 
 **Auditor - Refactor** *(subagent of Audit orchestrator)* — Evaluates codebase-level organization: module structure, dependency graphs, component decomposition, coupling, cohesion, and separation of concerns.
+
+**Eval - Metric Grader** *(subagent of Eval - Grader)* — Scores one comparative metric at a time from prepared diff artifacts, rubric context, and ledger evidence. Returns a normalized `1-10` score, evidence summary, and confidence back to the parent grader.
 
 **Test - Analyst** *(subagent of Test orchestrator)* — Classifies tests by value, flags redundancy and over-mocking, and writes a categorized inventory with a staged reduction plan.
 
