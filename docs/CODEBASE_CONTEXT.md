@@ -1,178 +1,129 @@
 # Codebase Context
 
-Quick-reference for AI agents working on this repository.
+Quick-reference for AI agents working in this repository.
 
 ## What This Repo Is
 
-- A **template repository** of `AGENTS.md`, style guide files, and VS Code Copilot agent definitions
-- Contains **no runnable code** — only Markdown documentation
-- Two language variants for templates: Node.js/TypeScript and Python
-- Four platform surfaces are documented: `.github/` as the master source, checked-in `opencode/` and `claude/` copies, and a repository-owned `codex/` area for Codex docs and future source artifacts
-- 24 agent definitions in `.github/agents/` (14 user-facing, 10 hidden subagents)
-- 13 skills in `.github/skills/` (all directory-based, each with `SKILL.md`)
-- 13 instruction files in `.github/instructions/` (cross-cutting conventions)
-- Users copy files into their own projects and customize them
+- Source-of-truth repository for multi-harness agent assets.
+- Primary authoring surface is `.github/`.
+- Derived or related platform surfaces are `claude/`, `opencode/`, `codex/`, and `.codex/`.
+- Includes copyable template packs for Node.js and Python projects.
+- Mostly Markdown plus one maintenance script: `scripts/propagate_master_assets.py`.
+- No root `package.json`, `pyproject.toml`, or automated test suite.
 
-## Folder Structure
+## Current Counts
 
-```
-AGENTS.md                       # Code-review-graph MCP tools for this repo
-README.md                       # Repo overview, usage instructions
-.codex/
-  config.toml                   # Existing runtime Codex config surface; not the repo-owned authoring area
+- 24 source agent definitions in `.github/agents/`.
+- 14 skills in `.github/skills/`.
+- 14 instructions in `.github/instructions/`.
+- 2 template packs: `nodejs/` and `python/`.
+
+## Key Paths
+
+```text
+AGENTS.md                                  # Repo-specific graph/MCP workflow guidance
+HARNESS_SETUP.md                           # How to expose repo assets to Copilot, Claude, and OpenCode
+.mcp.json                                  # Registers code-review-graph MCP with uvx
+.codex/config.toml                         # Repo-scoped Codex runtime MCP config
 .github/
   agents/
-    README.md                   # Agent documentation, pipelines, and usage guide
-    *.agent.md                  # 24 agent definition files (14 user-facing, 10 hidden)
-  skills/
-    phase-document-writing/     # Phase Doc & Overview templates, quality checklist
-      SKILL.md
-    auditor-conventions/        # Audit constraints, deliverables, file-type taxonomy, report format
-      SKILL.md
-    feature-plan-set/           # Three-file plan convention, sections A–F, stage format
-      SKILL.md
-    implementation-pipeline-loop/ # Implement → Review → Commit → Mark Complete loop
-      SKILL.md
-    implementation-record/      # Implementation record artifact template
-      SKILL.md
-    context7-mcp/               # Context7 documentation lookup workflow
-      SKILL.md
-    unity-development/          # Unity C# implementation and review rules
-      SKILL.md
-    unity-review-knowledge/     # Unity best practices from 11 official ebooks
-      SKILL.md
-    debug-issue/                # Graph-powered debug workflow skill
-      SKILL.md
-    explore-codebase/           # Graph-powered codebase navigation skill
-      SKILL.md
-    refactor-safely/            # Graph-powered safe refactoring skill
-      SKILL.md
-    review-changes/             # Graph-powered structured code review skill
-      SKILL.md
-    eval-score-table-output/    # Persistent additive markdown score-history output for Eval Grader
-      SKILL.md
-  instructions/
-    codebase-context-bootstrap.instructions.md  # Reads CODEBASE_CONTEXT.md before discovery (all agents)
-    dev-task-folder.instructions.md     # dev/feature/ output naming conventions (all agents)
-    documentation-freshness-check.instructions.md  # Checks for README.md/CODEBASE_CONTEXT.md (planner, refiner)
-    challenge-assumptions.instructions.md  # Push back on breaking patterns (planner, refiner)
-    graph-rebuild-hook.instructions.md  # Triggers graph rebuild at end of orchestrator pipelines (3 orchestrators)
-    orchestrator-conventions.instructions.md  # Shared orchestrator constraints (3 orchestrators)
-    proactive-research.instructions.md  # @Web Researcher for unfamiliar tech (planner, refiner, debugger)
-    read-only-agent.instructions.md     # No-modification constraints (9 agents)
-    learnings-bootstrap.instructions.md  # Read .github/learnings/*.md (implementer, reviewer, decomposer, debugger)
-    tech-stack-detection.instructions.md # Detect and load matching skills (implementer, reviewer)
-    subagent-autonomy.instructions.md   # No questions, sensible defaults (implementer, reviewer, plan-expander, git-commit)
-    output-verbosity-policy.instructions.md # Soft-target concision defaults (all agents)
-    csharp-style.instructions.md        # C# (Google) style rules — naming, formatting, idioms (unity-reviewer, auditor-code, implementer, reviewer)
-docs/
-  ARCHITECTURE.md               # Structure diagram and design decisions
-  CODEBASE_CONTEXT.md           # This file
-  UNDERSTANDING_AGENTIC_ECOSYSTEM.md # Agentic AI terminology explainer
-  agentic-evaluator-plan.md     # Evaluator architecture and scoring plan
-  porting/                      # Cross-platform porting docs and tool mapping
-    README.md
-    TOOL_MAPPING.md
+    README.md                              # Full agent catalog and pipeline docs
+    *.agent.md                             # Most source agents
+    prod-code-review.md                    # Plain .md agent definition; still part of source set
+  instructions/                            # 14 shared instruction files with applyTo globs
+  skills/                                  # 14 shared skill directories with SKILL.md entrypoints
+claude/agents/                             # Generated Claude copies
+opencode/agents/                           # Generated OpenCode copies
 codex/
-  README.md                     # Repository-owned Codex layout contract and landing area for Codex docs/source artifacts
-  CODEX_PLATFORM_REFERENCE.md  # Verified Codex platform model: discovery paths, agent formats, skill structure, runtime vs repo-owned separation
-  CODEX_PORTING_GUIDE.md        # Strategy for porting .github/ agent content to Codex-native formats; includes conversion table and open questions
-  MACOS_SETUP_AND_SYMLINKS.md   # macOS install paths, symlink setup, and verified Codex path behavior
-  PILOT_SLICE_PLAN.md           # Pilot trio definition (one instruction slice, one custom agent, one skill) and exit criteria gating full Codex parity
-opencode/
-  agents/                       # Derived agent copies for OpenCode platform
-  SYMLINK_SETUP.md              # Symlink setup for skills/
-claude/
-  agents/                       # Derived agent copies for Claude Code platform
-  skills/                       # Symlinked to .github/skills/
-  README.md                     # Claude-specific setup
+  agents/                                  # Generated Codex TOML agents
+  instructions/                            # Repo-owned Codex instruction source material
+  *.md                                     # Codex platform and porting docs
+docs/
+  ARCHITECTURE.md
+  CODEBASE_CONTEXT.md
+  LOCAL_DEVELOPMENT.md
+  TROUBLESHOOTING.md
+  porting/README.md
 eval/
-  EVAL_GRADER_SCORE_HISTORY.md  # Persistent additive markdown history of Eval Grader comparison scores
-  EVAL_SYSTEM_USAGE.md          # Eval runbook and grader usage
-  PHASE_EVAL_RUN_CONFIG.example.yaml # Eval run configuration template
-  hooks/                        # Post-commit hook template and related evaluation hooks
-  rubrics/                      # Seed grader rubrics and schema-aligned example YAML files
-  runs/                         # Evaluation run outputs and ledgers
+  EVAL_SYSTEM_USAGE.md
+  EVAL_GRADER_SCORE_HISTORY.md
+  PHASE_EVAL_RUN_CONFIG.example.yaml
 nodejs/
-  AGENTS.md                     # GitHub Copilot instructions for Node.js/TS projects
-  docs/
-    STYLE_GUIDE.md              # Node.js/TS coding conventions (loaded on demand)
+  AGENTS.md
+  docs/STYLE_GUIDE.md
 python/
-  AGENTS.md                     # GitHub Copilot instructions for Python projects
-  docs/
-    STYLE_GUIDE.md              # Python coding conventions (loaded on demand)
-dev/
-  feature/                      # Pipeline subagent output (plans, reviews, QA)
-  research/                     # Web researcher output
+  AGENTS.md
+  docs/STYLE_GUIDE.md
+scripts/
+  propagate_master_assets.py               # Master propagation entry point
+.vscode/tasks.json                         # One-shot and watch propagation tasks
 ```
 
-## Key Facts
+## Propagation Model
 
-### Templates (nodejs/, python/)
+- Edit `.github/agents/`, `.github/skills/`, or `.github/instructions/` first.
+- Regenerate downstream outputs with `python3 scripts/propagate_master_assets.py --once`.
+- The VS Code task `watch: propagate master assets` runs `--watch` and is configured to start on folder open.
+- Generated targets are:
+  - `claude/agents/`
+  - `opencode/agents/`
+  - `codex/agents/`
 
-- Each `AGENTS.md` contains an "Extended Guides" section pointing to `docs/STYLE_GUIDE.md`
-- The two AGENTS.md files share ~70% identical content (principles, process, testing, quality, agent ops)
-- Shared guidance is intentionally compacted into concise sections to reduce token usage while preserving critical constraints
-- Language-specific differences: dependency tooling, property-based testing library, data modeling, style preferences
-- No shared base file — each AGENTS.md is fully self-contained by design
-- Style guides are intentionally separate from AGENTS.md to save agent context window space
+## Important Script Facts
 
-### Agent Definitions (.github/agents/)
+- `load_source_agents()` reads any `.github/agents/*.md` file with `name` and `description` frontmatter.
+- Source agent detection is not limited to `.agent.md`; that is why `prod-code-review.md` still propagates.
+- The script watches three directories: `.github/agents`, `.github/skills`, and `.github/instructions`.
+- Claude and OpenCode outputs preserve existing filename aliases when present.
+- Known aliases include:
+  - `documentation-architect` -> `docs-writer`
+  - `web-research-specialist` -> `web-researcher`
+  - `audit-code-or-infra` -> `audit-code-infra-refactor`
+- Hidden agents are renamed for some targets:
+  - Claude uses `z-` filenames for non-user-invocable subagents.
+  - Codex uses `z-` in both filename and TOML `name`.
 
-- **3 orchestrators** (user-facing): Phase - Execute, Audit - Code/Infra/Refactor, Test - Orchestrator
-- **11 standalone user-facing**: Planner, Refiner, Decomposer, Single Feature Agent, Eval Grader, Evangelize, Debugger, Docs Writer, Prod Code Review, Web Researcher, Unity Reviewer
-- **10 hidden subagents** (`user-invocable: false`): Plan Expander, Implementer, Reviewer, QA Writer, 3 Auditors, Test Analyst/Writer/Fixer
-- See [agents/README.md](../.github/agents/README.md) for detailed descriptions and invocation patterns.
+## Agent Topology
 
-### Skills (.github/skills/)
+- 3 orchestrators: `04 Phase - Execute`, `Audit - Code, Infra, Refactor`, `Test - Orchestrator`.
+- 11 standalone user-facing agents: planner, refiner, decomposer, eval grader, documentation architect, debugger, evangelize, single-feature agent, prod code review, unity reviewer, web research specialist.
+- 10 hidden subagents: plan expander, implementer, reviewer, QA writer, 3 auditors, test analyst, test writer, test fixer.
 
-13 skills loaded by agents on demand (all directory-based). See [ARCHITECTURE.md](ARCHITECTURE.md#skills) for the full mapping.
+## Template Pack Facts
 
-### Instructions (.github/instructions/)
+- `nodejs/AGENTS.md` and `python/AGENTS.md` are meant to be copied into another repo's root as `AGENTS.md`.
+- Each template expects a sibling `docs/STYLE_GUIDE.md` in the destination repository.
+- The two template packs intentionally share structure but differ on ecosystem-specific tooling and style guidance.
+- Do not introduce inheritance or a shared base file for the template packs.
 
-13 instruction files with `applyTo` glob matching. See [ARCHITECTURE.md](ARCHITECTURE.md#instructions) for the full mapping.
+## Platform Surface Rules
+
+- `.github/` is the only shared source-of-truth for agents, skills, and instructions.
+- `claude/` and `opencode/` are generated outputs, not normal authoring surfaces.
+- `codex/` is a repository-owned Codex area; `.codex/` is runtime configuration.
+- Do not treat `codex/` as if it were the live runtime install path.
+- Code-review-graph MCP is configured in both `.mcp.json` and `.codex/config.toml` via `uvx code-review-graph serve`.
 
 ## File Relationships
 
-- `nodejs/AGENTS.md` references `docs/STYLE_GUIDE.md` (relative to project root after copying)
-- `python/AGENTS.md` references `docs/STYLE_GUIDE.md` (relative to project root after copying)
-- No cross-references between `nodejs/` and `python/` — they are independent
-- `codex/README.md` defines what belongs in the repository-owned Codex surface versus runtime `.codex/`, `~/.codex/`, and `$HOME/.agents/skills/` locations
-- `.github/agents/README.md` documents all agents — keep it in sync when adding/removing agents
-- Orchestrator agent files reference their subagents by name in YAML `agents:` field
-- Agents reference skills by name in their instructions (e.g., "Load the `phase-document-writing` skill")
-- Skills are single-source-of-truth — agents do NOT duplicate skill content inline
-- `codebase-context-bootstrap.instructions.md` auto-loads into all agents and directs them to read `docs/CODEBASE_CONTEXT.md` (if it exists) before starting discovery
-- Instruction files auto-load into agents matching their `applyTo` glob pattern
+- `.github/agents/README.md` must stay in sync with the actual source agent set.
+- `docs/ARCHITECTURE.md` and this file should be updated when counts, directories, or propagation rules change.
+- `HARNESS_SETUP.md` is the canonical setup reference for multi-root VS Code and non-Copilot harness linking.
+- `docs/porting/README.md` is the neutral index for porting docs.
+- `codex/README.md` defines the separation between repository-owned Codex content and runtime `.codex/` content.
 
-## Conventions
+## Editing Guidance
 
-- All files are Markdown (`.md`)
-- AGENTS.md uses H2 (`##`) for top-level sections, H3 (`###`) for subsections
-- Style guides use H2 for the language header, H3 for topics
-- Agent files use YAML frontmatter with `name`, `description`, `tools`, and optionally `agents` and `user-invocable`
-- Checklist items use `- [ ]` syntax
-- Tables use pipe-delimited Markdown format
-
-## When Editing
-
-- **Adding a new section to both languages**: Update both `nodejs/AGENTS.md` and `python/AGENTS.md` to keep the shared structure in sync
-- **Changing language-specific content**: Only edit the relevant language folder
-- **Adding a new language**: Create a new top-level folder (e.g., `go/`) with the same `AGENTS.md` + `docs/STYLE_GUIDE.md` structure
-- **Adding Codex documentation or source material**: Update `codex/README.md` first so the repository-owned layout stays intentional before adding new Codex files or directories
-- **Adding/removing an agent**: Update the agent file in `.github/agents/` AND update `.github/agents/README.md` to keep tables, descriptions, and pipelines current
-- **Adding a new orchestrator**: Add the orchestrator file, add its subagents (with `user-invocable: false`), and update the README agent tables
-- **Changing a shared template or format**: Edit the corresponding skill in `.github/skills/` — do NOT re-inline the content in agent files
-- **Adding a new skill**: Create `.github/skills/<name>/SKILL.md` with YAML frontmatter (`name`, `description`). Update agent files to reference it. Update ARCHITECTURE.md and this file.
-- **Adding a new instruction**: Create `.github/instructions/<name>.instructions.md` with `applyTo` glob. Update ARCHITECTURE.md and this file.
-- **Updating README.md**: Keep the structure tree, usage instructions, and comparison table current
+- When changing shared agent behavior, edit `.github/` first and rerun propagation.
+- When adding or removing an agent, update both `.github/agents/README.md` and the standard docs.
+- When adding a skill or instruction, update the relevant counts and documentation references.
+- When documenting commands, prefer the existing `python3 scripts/propagate_master_assets.py --once` and `--watch` entry points.
 
 ## Do Not
 
-- Do not add runnable code, build scripts, or CI/CD configuration — this is a docs-only repo
-- Do not create a shared base file and use includes/inheritance — each AGENTS.md must be independently copyable
-- Do not add deployment or infrastructure documentation
-- Do not treat `codex/` as a runtime install location; runtime Codex config belongs under `.codex/`, `~/.codex/`, or `$HOME/.agents/skills/` depending on scope
-- Do not reference specific project names or URLs in the templates — they must be generic
-- Do not merge the style guide into AGENTS.md — the separation is intentional for context window efficiency
-- Do not set `user-invocable: true` on subagents — they are hidden by design and invoked only by orchestrators
+- Do not assume this repo is Markdown-only; the propagation script is part of the maintenance flow.
+- Do not edit generated Claude, OpenCode, or Codex agents first unless you are intentionally repairing generation output.
+- Do not assume filename parity across platforms; aliases and `z-` prefixes are intentional.
+- Do not document a root `dev/` directory as if it exists in this repo.
+- Do not treat `prod-code-review.md` as non-agent content just because it lacks the `.agent.md` suffix.
+- Do not add deployment or CI/CD runbooks to the standard docs.
