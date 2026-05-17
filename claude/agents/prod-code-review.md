@@ -1,7 +1,7 @@
 ---
 name: prod-code-review
 description: Final pre-production gate — cross-validates all pipeline documents across every feature in a phase and produces a go/no-go readiness assessment.
-tools: Skill, Read, Grep, Glob, Bash, Edit, Write
+tools: Skill
 user-invocable: false
 ---
 
