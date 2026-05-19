@@ -41,12 +41,23 @@ Read `dev/feature/[0N-task-name]/[0N-task-name]-plan.md`. Extract:
 
 If the plan file does not exist at the specified path, report the missing file and skip to the next path.
 
-### Step 2: Read the Codebase
+### Step 2: Validate the Plan Against the Codebase
 
-Using the plan's traceability matrix and file references as a starting point:
+Treat the plan as a draft to validate, not only an input to expand. Using the plan's traceability matrix and file references as a starting point:
 - Verify that referenced files exist
+- Verify concrete method, class, field, element, config, test helper, and log API names when the plan references them
 - Identify any additional relevant files discovered during your codebase scan
 - Note the change type for each file (Create, Modify, Read-only reference)
+- Distinguish existing tests from proposed tests, runner-constrained tests, code-review evidence, and manual QA checks
+
+Run a `Discovery Delta` pass and record findings that contradict or refine the plan:
+- Missing referenced files or symbols
+- Better existing API names than the plan's proposed names
+- Additional required companion files, including framework templates, styles, serializers, fixtures, or test harness builders
+- Existing tests asserting exact strings, counts, schemas, serialized output, or data types
+- Framework constraints that make a planned approach brittle
+
+Write Discovery Delta findings into `-context.md`. If a finding contradicts the plan, return it as a warning to the invoking Feature - Decomposer instead of silently generating tasks from a stale assumption.
 
 ### Step 2.5: Capture Environment State
 
@@ -67,6 +78,7 @@ Write all of the above into the Environment State and Relevant Learnings section
 Write `dev/feature/[0N-task-name]/[0N-task-name]-context.md` following the Context File structure from the `feature-plan-set` skill. Include:
 
 - **Key Files** — Table of files relevant to this feature with their role and change type. Separate files being changed from read-only reference files.
+- **Discovery Delta** — Missing references, refined API names, companion files, exact assertion tests, framework constraints, and other findings that validate or contradict the plan. If none, record "No contradictions found."
 - **Architectural Decisions** — Decisions made during planning: what was chosen, why, and the rationale. Extract these from the plan's Section C (Consistency & Architecture Fit) and Section D (Clean Design).
 - **Constraints** — Hard constraints from the Phase document, codebase conventions, or the plan's non-goals that the Implementer must respect.
 - **Relationships to Sibling Plans** — If the plan references other features (shared prerequisites, implementation order), capture those relationships here.
@@ -102,3 +114,4 @@ Load the `feature-plan-set` skill for the canonical Context File and Tasks File 
 Required fields only:
 - Files generated (paths only, one per line)
 - Any issues encountered (missing plans, malformed sections)
+- Discovery Delta warnings that need Decomposer attention, or "none"

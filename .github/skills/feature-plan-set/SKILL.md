@@ -32,11 +32,11 @@ dev/feature/[0N-task-name]/
 
 - Restate requirements as **numbered, testable acceptance criteria** (AC1, AC2, ...)
 - Define explicit **non-goals** (what we are NOT doing)
-- Create traceability scaffold:
+- Create traceability scaffold. `Test / Evidence Category` must not present speculative test names as existing facts; label evidence precisely:
 
-| Acceptance Criteria | Code Areas/Modules | Planned Tests |
-|---------------------|-------------------|---------------|
-| AC1: ... | `src/module.py` | `test_ac1_*` |
+| Acceptance Criteria | Code Areas/Modules | Test / Evidence Category |
+|---------------------|-------------------|--------------------------|
+| AC1: ... | `src/module.py` | Must-have automated test; existing test to update; Unity EditMode/PlayMode constrained test; code-review evidence only; manual QA check |
 
 ### B. Correctness & Edge Cases
 
@@ -58,14 +58,20 @@ dev/feature/[0N-task-name]/
 
 ### E. Completeness: Observability, Security, Operability
 
-- **Logging/metrics/tracing** — what, where, why
+- **Observability decision** — logging/metrics/tracing to add, preserve, or intentionally avoid, with why. Observability does not imply new logging. For local simulation, save/load, hot-loop, and test-sensitive paths, "no new normal-path logs" is often the correct operability decision. Add logs only when required by the phase, an existing pattern, or a diagnosable failure mode.
 - **Security** — auth, secrets, data handling considerations
 - **Runbook** — deploy, verify, rollback, monitor
 
 ### F. Test Plan (required)
 
 - Map unit/integration tests to acceptance criteria
-- Write top 5 high-value test cases (Given/When/Then)
+- Split planned evidence into categories:
+  - Must-have automated tests
+  - Existing tests to update
+  - Tests requiring Unity Test Runner / PlayMode / EditMode or other runner constraints
+  - Code-review evidence only
+  - Manual QA checks
+- Write top 5 high-value test cases or evidence checks (Given/When/Then where applicable)
 - List test data, mocks, or fixtures needed
 
 ## Stage Format
@@ -93,11 +99,22 @@ All other stages:
 The context file captures:
 
 - Key files and modules relevant to this feature
+- **Discovery Delta** — Plan Expander findings that validate, contradict, or refine the plan, including missing references, better existing API names, companion files, exact assertion tests, and framework constraints
 - Architectural decisions made during planning (what was chosen and why)
 - Constraints from the Phase document or codebase conventions
 - Relationships to sibling plans (shared prerequisites, suggested implementation order)
 - **Environment state** — tech stack, test runner command, lint/format commands, and test baseline; pre-captured by the Plan Expander so the Implementer skips discovery
 - **Relevant learnings** — filtered excerpts from `.github/learnings/` applicable to this feature's domain
+
+### Discovery Delta section template
+
+```markdown
+## Discovery Delta
+
+| Finding | Impact | Action |
+|---------|--------|--------|
+| [No contradictions found / missing file / better API name / companion file / exact assertion / framework constraint] | [How this affects the plan] | [Update plan / add task / accepted risk / none] |
+```
 
 ### Environment State section template
 
@@ -147,9 +164,10 @@ Before delivering plan documents, verify:
 - [ ] All requirements restated as testable acceptance criteria
 - [ ] Non-goals explicitly defined
 - [ ] Traceability matrix complete (AC → code → tests)
+- [ ] Concrete symbols and file paths are verified existing, explicitly proposed, or copied exactly from the Phase document
 - [ ] Edge cases and error handling addressed
 - [ ] Existing patterns identified and followed
-- [ ] Test plan covers all acceptance criteria
+- [ ] Test plan covers all acceptance criteria using evidence categories, not unverified test names
 - [ ] Test coverage prerequisite assessed (≥ 50% or `@z-test-writer` recommended)
-- [ ] Observability and operability considered
+- [ ] Observability and operability considered; any new normal-path logs are justified
 - [ ] **Integration check**: If the phase has multiple features that must run together, an integration/bootstrap feature exists as the final numbered task with acceptance criteria verifying the combined output is launchable and observable

@@ -73,7 +73,24 @@ If the incoming work is a single cohesive feature, skip this phase and note that
 
 After the feature list is finalized (including any integration feature), perform this analysis before writing any plan files.
 
+**Step 0 — Phase-to-feature fidelity gate.** Before writing plans, create an internal traceability table:
+
+| Phase requirement | Feature | Preserved wording/API? | If changed, why? |
+|---|---|---|---|
+
+Apply these rules:
+- Do not rename APIs, fields, XML elements, file paths, or other concrete names from the Phase document unless codebase discovery proves a better existing name
+- If a requirement is intentionally moved between features, document the move in the affected plan relationship notes
+- If a Phase requirement is not implemented by any feature, mark it as deferred in the plan with rationale
+- Persist exceptions only: moved requirements, deferred requirements, renamed concrete symbols, and unverified assumptions
+
 **Step 1 — File scope mapping.** For each feature, list the source files it will create or modify based on the codebase reading and the feature's scope. Be conservative: if a file *might* be touched, include it.
+
+Include framework companion files, not only primary source files:
+- Unity UI Toolkit controller changes require scanning related `.uxml`, `.uss`, `UIDocument`, and test root builders
+- Save/load changes require scanning serializers, factories, loaders, fixtures, and legacy compatibility tests
+- XML def changes require scanning def classes, production XML, serializers, exact-count tests, and data type tests
+- For other frameworks, include adjacent templates/views/styles/configuration/test harness files that conventionally move with the primary code
 
 **Step 2 — Dependency graph.** Feature B depends on Feature A if either:
 - A's output is a runtime prerequisite for B (e.g., A creates a module that B imports or extends), **or**
@@ -87,6 +104,13 @@ Record each dependency as `[feature-B] depends_on [feature-A]`.
 - Wave N: features whose dependencies are all in Waves 1 through N-1
 
 **Step 4 — Parallel safety.** Features in the same wave are `parallel_safe: yes` if and only if their file scope sets are fully disjoint (zero shared files). If two features in the same wave share any source file, both are `parallel_safe: no` within that wave — they must run sequentially relative to each other.
+
+**Step 5 — Concrete reference verification.** Any plan that names a concrete file, method, class, XML field, USS class, UXML element, test helper, log API, config key, or other symbol must satisfy one of these:
+- Existing symbol/file verified in codebase
+- New symbol/file explicitly labeled as proposed
+- Exact name copied from the Phase document and preserved
+
+If a plan depends on behavior not confirmed in code, include an `Unverified Assumptions` section and keep the assumption narrow.
 
 ### Phase 3: Make Decisions and Write Plan Documents
 
@@ -116,7 +140,9 @@ Wait for ALL expander instances to return before proceeding.
 After all return:
 1. Verify each `dev/feature/[0N-task-name]/` directory contains `-context.md` and `-tasks.md` alongside the existing `-plan.md`
 2. If any files are missing, re-invoke the Plan Expander for the specific missing paths only
-3. Do not proceed to manifest generation until every feature bundle is complete
+3. Read each Plan Expander return for `Discovery Delta` warnings
+4. If a warning contradicts the plan (missing referenced file, better existing API name, required companion file, exact-string/count test, or brittle framework assumption), update the affected `-plan.md` or re-run the affected Expander before manifest generation
+5. Do not proceed to manifest generation until every feature bundle is complete and Discovery Delta warnings are either resolved or explicitly documented as accepted risk
 
 ### Phase 5: Write Execution Manifest
 
@@ -181,6 +207,15 @@ The stage format (including Stage 0 for test prerequisites) is defined in the `f
 ## Quality Checklist
 
 Before delivering the plan, run through the Quality Checklist in the `feature-plan-set` skill.
+
+Additionally verify:
+
+- [ ] Phase-to-feature fidelity pass completed; every Phase requirement is implemented, moved, or deferred with rationale
+- [ ] Every concrete symbol in the plan is verified existing, explicitly proposed, or copied exactly from the Phase document
+- [ ] Framework companion files are included in file scope mapping
+- [ ] Observability is treated as a decision; any new normal-path log line is justified by the Phase, an existing pattern, or a diagnosable failure mode
+- [ ] Planned test evidence distinguishes existing tests, required new tests, runner-constrained tests, code-review evidence, and manual QA checks
+- [ ] Unverified assumptions are narrow and explicitly documented
 
 ---
 
