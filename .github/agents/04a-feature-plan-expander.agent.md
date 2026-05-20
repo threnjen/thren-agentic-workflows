@@ -50,6 +50,7 @@ Run a `Discovery Delta` pass and record findings that contradict or refine the p
 - Additional required companion files, including framework templates, styles, serializers, fixtures, or test harness builders
 - Existing tests asserting exact strings, counts, schemas, serialized output, or data types
 - Framework constraints that make a planned approach brittle
+- **Test class name verification:** For every test class name referenced in the plan's traceability table or stages, check whether the class exists in the test directory. If it does not exist, prefix the name with `[proposed]` in the `-context.md` Key Files table and in any tasks you generate. Never emit an invented test class name without this marker.
 
 Write Discovery Delta findings into `-context.md`. If a finding contradicts the plan, return it as a warning to the invoking Feature - Decomposer instead of silently generating tasks from a stale assumption.
 
@@ -94,6 +95,8 @@ Format as an ordered checklist:
 - [ ] Task description derived from stage goal and acceptance criteria
 - [ ] Another task
 ```
+
+Tasks **must always be grouped under stage headers** — never emit a flat list. If the plan does not have explicit stage boundaries, infer stage groupings from the AC structure (e.g., group data/schema tasks as Stage 1, logic tasks as Stage 2, test verification tasks as Stage 3). A flat ungrouped task list is a format error.
 
 If the plan is incomplete (e.g., missing sections), generate best-effort content from what is available and note the gaps.
 

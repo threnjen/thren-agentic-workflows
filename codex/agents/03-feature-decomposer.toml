@@ -74,9 +74,10 @@ After the feature list is finalized (including any integration feature), perform
 
 Apply these rules:
 - Do not rename APIs, fields, XML elements, file paths, or other concrete names from the Phase document unless codebase discovery proves a better existing name
+- Preserve the Phase document's Key Deliverables sequence as the default feature ordering. If ordering must change (e.g., a genuine technical dependency requires an earlier feature to land first), record the change in the traceability table and require a manifest-level `Ordering note` field that names the affected features and explains why the order changed.
 - If a requirement is intentionally moved between features, document the move in the affected plan relationship notes
 - If a Phase requirement is not implemented by any feature, mark it as deferred in the plan with rationale
-- Persist exceptions only: moved requirements, deferred requirements, renamed concrete symbols, and unverified assumptions
+- Persist exceptions only: moved requirements, deferred requirements, renamed concrete symbols, reordered features, and unverified assumptions
 
 **Step 1 — File scope mapping.** For each feature, list the source files it will create or modify based on the codebase reading and the feature's scope. Be conservative: if a file *might* be touched, include it.
 
@@ -85,6 +86,8 @@ Include framework companion files, not only primary source files:
 - Save/load changes require scanning serializers, factories, loaders, fixtures, and legacy compatibility tests
 - XML def changes require scanning def classes, production XML, serializers, exact-count tests, and data type tests
 - For other frameworks, include adjacent templates/views/styles/configuration/test harness files that conventionally move with the primary code
+
+**Required output rule:** When a feature's scope includes a UI Toolkit controller, the feature's `key files modified` list in the plan and manifest **must** include the companion `.uxml`, `.uss`, and test root builder files explicitly — even if their exact changes are uncertain at planning time. Mark files whose changes are uncertain with `(verify)`. Do not omit companion files because they are not yet confirmed to change; their omission creates invisible scope.
 
 **Step 2 — Dependency graph.** Feature B depends on Feature A if either:
 - A's output is a runtime prerequisite for B (e.g., A creates a module that B imports or extends), **or**
@@ -98,6 +101,8 @@ Record each dependency as `[feature-B] depends_on [feature-A]`.
 - Wave N: features whose dependencies are all in Waves 1 through N-1
 
 **Step 4 — Parallel safety.** Features in the same wave are `parallel_safe: yes` if and only if their file scope sets are fully disjoint (zero shared files). If two features in the same wave share any source file, both are `parallel_safe: no` within that wave — they must run sequentially relative to each other.
+
+**Post-assignment cross-feature check:** After all wave assignments are complete, run a final shared-file scan: for every pair of features assigned to the same wave, compare their file scope sets. If any file appears in both, demote one or both features to a later sequential wave. This check must catch conflicts even when runtime dependency independence would otherwise allow parallelism — file conflicts are a sequencing constraint regardless of runtime semantics.
 
 **Step 5 — Concrete reference verification.** Any plan that names a concrete file, method, class, XML field, USS class, UXML element, test helper, log API, config key, or other symbol must satisfy one of these:
 - Existing symbol/file verified in codebase
@@ -114,6 +119,8 @@ For any architectural decisions that would normally require clarification, apply
 2. **Check the Phase document** — Does the phase doc specify a preference? Follow it.
 3. **Choose the safest default** — For data models, prefer immutability. For error handling, prefer fail-fast. For interfaces, prefer the narrowest contract. For security, prefer the more restrictive option.
 4. **Document the decision** — Note what you chose and why in the plan file itself, so the Implementer and Reviewer can evaluate it.
+
+**Feature naming:** Feature directory names must be noun phrases describing the deliverable. Do not use past-tense fix adjectives as leading words (e.g., use `ambition-data-generator` not `fixed-ambition-data-generator`; use `ui-integration` not `fixed-attribute-ui-integration`). Avoid leading with `fix`, `fixed`, `update`, `refactor`, or similar edit-centric terms.
 
 Create this file **for each independent plan**:
 ```
@@ -132,11 +139,10 @@ For each `dev/feature/[0N-task-name]/` path:
 Wait for ALL expander instances to return before proceeding.
 
 After all return:
-1. Verify each `dev/feature/[0N-task-name]/` directory contains `-context.md` and `-tasks.md` alongside the existing `-plan.md`
-2. If any files are missing, re-invoke the Plan Expander for the specific missing paths only
-3. Read each Plan Expander return for `Discovery Delta` warnings
-4. If a warning contradicts the plan (missing referenced file, better existing API name, required companion file, exact-string/count test, or brittle framework assumption), update the affected `-plan.md` or re-run the affected Expander before manifest generation
-5. Do not proceed to manifest generation until every feature bundle is complete and Discovery Delta warnings are either resolved or explicitly documented as accepted risk
+1. Verify each directory contains `-context.md` and `-tasks.md` alongside the existing `-plan.md`. If any files are missing, re-invoke the Plan Expander for those specific paths only.
+2. Verify each `-plan.md` contains a `## Execution Metadata` section immediately after the plan title. If any plan is missing this section, update it directly from the Phase 2b analysis — do not delegate this fix to the Plan Expander.
+3. Read each Plan Expander return for `Discovery Delta` warnings. If a warning contradicts the plan (missing referenced file, better existing API name, required companion file, exact-string/count test, or brittle framework assumption), update the affected `-plan.md` or re-run the affected Expander.
+4. Do not proceed to manifest generation until every feature bundle is complete and all Discovery Delta warnings are either resolved or explicitly documented as accepted risk.
 
 ### Phase 5: Write Execution Manifest
 
@@ -153,6 +159,15 @@ This manifest is the single source of truth for phase-execute. It must contain:
 - For each feature: wave number, `parallel_safe`, `depends_on`, `key files modified`, and `sequential reason`
 - The wave-by-wave execution schedule, labeled `parallel` or `sequential`
 - The expected bundle files for each feature directory (`-plan.md`, `-context.md`, `-tasks.md`)
+
+Use the following table schema for per-feature entries — all columns are required:
+
+| Feature | Wave | Parallel Safe | Depends On | Key Files Modified | Sequential Reason |
+|---|---|---|---|---|---|
+| `01-feature-name` | 1 | yes | none | `FileA.cs`, `FileB.cs` | n/a |
+| `02-feature-name` | 2 | no | `01-feature-name` | `FileC.cs` | shares `FileC.cs` with `03-feature-name` |
+
+If feature ordering was changed from the Phase document's Key Deliverables sequence, include a top-level `Ordering note:` field before the feature table naming the affected features and the rationale for reordering.
 
 phase-execute will read this manifest instead of rediscovering the schedule from the plan files.
 
