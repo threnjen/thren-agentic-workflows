@@ -44,6 +44,7 @@ Read the codebase to understand:
 - Related modules and how they work
 - Any documentation or specs that exist
 - Check for test files, test configuration, and test runner setup
+- Search for phase-scoped test directories (for example `Tests/Editor/Phase*/`, `tests/phase*/`, or equivalent local naming). If prior phase test directories exist, note whether a new `Phase[current]/` consolidated test file is appropriate for cross-feature or phase-level integration coverage.
 - Assess approximate coverage level (test files vs source files)
 - If no tests or coverage < 50%, flag as a prerequisite issue for the plan
 
@@ -87,9 +88,17 @@ Include framework companion files, not only primary source files:
 - Unity UI Toolkit controller changes require scanning related `.uxml`, `.uss`, `UIDocument`, and test root builders
 - Save/load changes require scanning serializers, factories, loaders, fixtures, and legacy compatibility tests
 - XML def changes require scanning def classes, production XML, serializers, exact-count tests, and data type tests
+- Multi-feature phases with prior phase-scoped test directories require considering a consolidated phase test file in the current phase directory, especially for cross-feature integration behavior
 - For other frameworks, include adjacent templates/views/styles/configuration/test harness files that conventionally move with the primary code
 
 **Required output rule:** When a feature's scope includes a UI Toolkit controller, the feature's `key files modified` list in the plan and manifest **must** include the companion `.uxml`, `.uss`, and test root builder files explicitly — even if their exact changes are uncertain at planning time. Mark files whose changes are uncertain with `(verify)`. Do not omit companion files because they are not yet confirmed to change; their omission creates invisible scope.
+
+**Verification asset mapping:** Build a phase-level verification asset list during file scope mapping. Track:
+- New test files expected in this phase, including any recommended phase-scoped consolidated test file
+- Existing test files likely to be updated by more than one feature
+- Manual QA checks that verify behavior spanning multiple features
+
+Use this list in the execution manifest's `## Verification Assets` section. Also include relevant verification assets in each affected plan's traceability table and key files list.
 
 **Step 2 — Dependency graph.** Feature B depends on Feature A if either:
 - A's output is a runtime prerequisite for B (e.g., A creates a module that B imports or extends), **or**
@@ -102,16 +111,32 @@ Record each dependency as `[feature-B] depends_on [feature-A]`.
 - Wave 2: features whose dependencies are all in Wave 1
 - Wave N: features whose dependencies are all in Waves 1 through N-1
 
-**Step 4 — Parallel safety.** Features in the same wave are `parallel_safe: yes` if and only if their file scope sets are fully disjoint (zero shared files). If two features in the same wave share any source file, both are `parallel_safe: no` within that wave — they must run sequentially relative to each other.
+**Step 4 — Parallel safety.** A feature is `parallel_safe: yes` only when both conditions are true:
+- Its file scope set is fully disjoint from every other feature in the same wave
+- It has no shared-file dependency on an upstream feature in an earlier wave
 
-**Post-assignment cross-feature check:** After all wave assignments are complete, run a final shared-file scan: for every pair of features assigned to the same wave, compare their file scope sets. If any file appears in both, demote one or both features to a later sequential wave. This check must catch conflicts even when runtime dependency independence would otherwise allow parallelism — file conflicts are a sequencing constraint regardless of runtime semantics.
+If two features in the same wave share any source file, both are `parallel_safe: no` within that wave and must run sequentially relative to each other. If feature B depends on feature A from an earlier wave and B shares any source file with A, mark B `parallel_safe: no` and set `sequential_reason` to `shares [file] with upstream [feature-A]`. This prevents the executor from interpreting a later-wave feature as having no sequencing constraints.
+
+**Post-assignment cross-feature check:** After all wave assignments are complete, run a final shared-file scan:
+- For every pair of features assigned to the same wave, compare their file scope sets. If any file appears in both, demote one or both features to a later sequential wave.
+- For every dependency pair where feature B depends on feature A in an earlier wave, compare their file scope sets. If any file appears in both, keep B in the earliest valid later wave but mark B `parallel_safe: no` with `sequential_reason: shares [file] with upstream [feature-A]`.
+
+This check must catch conflicts even when runtime dependency independence would otherwise allow parallelism — file conflicts are a sequencing constraint regardless of runtime semantics.
 
 **Step 5 — Concrete reference verification.** Any plan that names a concrete file, method, class, XML field, USS class, UXML element, test helper, log API, config key, or other symbol must satisfy one of these:
 - Existing symbol/file verified in codebase
-- New symbol/file explicitly labeled as proposed
+- New symbol/file explicitly labeled as `[PROPOSED - name TBD]` when the exact name is not codebase-verified or copied from the Phase document
 - Exact name copied from the Phase document and preserved
 
 If a plan depends on behavior not confirmed in code, include an `Unverified Assumptions` section and keep the assumption narrow.
+
+**Step 6 — Cross-feature API pre-planning.** For each integration, compatibility, migration, import/export, or backfill feature, explicitly identify which public API from upstream features it will call. Ask: "What public API from [earlier feature] will [downstream feature] call?"
+
+Apply these rules:
+- If the API already exists, name it and verify it in codebase discovery
+- If the API must be produced by an upstream feature, add it as an explicit acceptance criterion on that upstream feature and label the proposed symbol `[PROPOSED - name TBD]`
+- If the downstream feature should not call upstream logic, document why duplication or independence is intentional
+- Reflect the dependency in both features' relationship notes and in the manifest dependency graph
 
 ### Phase 3: Make Decisions and Write Plan Documents
 
@@ -161,6 +186,7 @@ This manifest is the single source of truth for 04 Phase - Execute. It must cont
 - For each feature: wave number, `parallel_safe`, `depends_on`, `key files modified`, and `sequential reason`
 - The wave-by-wave execution schedule, labeled `parallel` or `sequential`
 - The expected bundle files for each feature directory (`-plan.md`, `-context.md`, `-tasks.md`)
+- A `## Verification Assets` section listing phase-level test and manual QA assets
 
 Use the following table schema for per-feature entries — all columns are required:
 
@@ -170,6 +196,30 @@ Use the following table schema for per-feature entries — all columns are requi
 | `02-feature-name` | 2 | no | `01-feature-name` | `FileC.cs` | shares `FileC.cs` with `03-feature-name` |
 
 If feature ordering was changed from the Phase document's Key Deliverables sequence, include a top-level `Ordering note:` field before the feature table naming the affected features and the rationale for reordering.
+
+Include this final section in every manifest:
+
+```markdown
+## Verification Assets
+
+### New Test Files
+
+| Path | Associated Feature(s) | Purpose |
+|---|---|---|
+| `path/to/NewTests.cs` | `01-feature-name`, `03-feature-name` | Cross-feature integration coverage |
+
+### Existing Test Files Updated By Multiple Features
+
+| Path | Associated Feature(s) | Purpose |
+|---|---|---|
+| `path/to/ExistingTests.cs` | `02-feature-name`, `04-feature-name` | Shared regression coverage |
+
+### Manual QA Checklist
+
+- [ ] [Cross-feature behavior to verify manually]
+```
+
+If no asset exists for a subsection, write `None identified` with a brief reason.
 
 04 Phase - Execute will read this manifest instead of rediscovering the schedule from the plan files.
 
@@ -222,8 +272,13 @@ Before delivering the plan, run through the Quality Checklist in the `feature-pl
 Additionally verify:
 
 - [ ] Phase-to-feature fidelity pass completed; every Phase requirement is implemented, moved, or deferred with rationale
-- [ ] Every concrete symbol in the plan is verified existing, explicitly proposed, or copied exactly from the Phase document
+- [ ] Every concrete symbol in the plan is verified existing, copied exactly from the Phase document, or labeled `[PROPOSED - name TBD]`
+- [ ] Unverified new API names use `[PROPOSED - name TBD]`
+- [ ] Cross-feature API dependencies are planned, and any upstream API required by a downstream feature appears in upstream acceptance criteria
 - [ ] Framework companion files are included in file scope mapping
+- [ ] Phase-scoped test directory patterns were checked and any consolidated phase test file recommendation appears in the manifest verification assets
+- [ ] Manifest `parallel_safe` and `sequential_reason` values match the dependency graph and shared-file scan
+- [ ] Manifest includes `## Verification Assets` with new tests, shared updated tests, and manual QA checks
 - [ ] Observability is treated as a decision; any new normal-path log line is justified by the Phase, an existing pattern, or a diagnosable failure mode
 - [ ] Planned test evidence distinguishes existing tests, required new tests, runner-constrained tests, code-review evidence, and manual QA checks
 - [ ] Unverified assumptions are narrow and explicitly documented

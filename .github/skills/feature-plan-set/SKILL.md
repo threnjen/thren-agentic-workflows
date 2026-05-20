@@ -49,6 +49,8 @@ dev/feature/[0N-task-name]/
 - Identify existing patterns to follow (naming, structure, libraries)
 - Call out any deviations and justify them
 - Define interfaces/contracts (inputs, outputs, schemas, config)
+- For any new concrete API, file, config key, schema field, or test helper name that is not verified in the codebase and not copied exactly from the phase/request, label it `[PROPOSED - name TBD]`. Use this marker to signal that the implementer must choose the final idiomatic name and record it in implementation notes.
+- When a downstream feature depends on a new public API from a sibling feature, include that API contract in the upstream feature's acceptance criteria. Do not leave cross-feature API requirements only in relationship notes.
 
 ### D. Clean Design & Maintainability
 
@@ -102,6 +104,7 @@ The context file captures:
 - **Discovery Delta** — Plan Expander findings that validate, contradict, or refine the plan, including missing references, better existing API names, companion files, exact assertion tests, and framework constraints
 - Architectural decisions made during planning (what was chosen and why)
 - Constraints from the Phase document or codebase conventions
+- Scope boundaries that the implementer should preserve, including important files, systems, or behaviors intentionally left untouched
 - Relationships to sibling plans (shared prerequisites, suggested implementation order)
 - **Environment state** — tech stack, test runner command, lint/format commands, and test baseline; pre-captured by the Plan Expander so the Implementer skips discovery
 - **Relevant learnings** — filtered excerpts from `.github/learnings/` applicable to this feature's domain
@@ -114,6 +117,15 @@ The context file captures:
 | Finding | Impact | Action |
 |---------|--------|--------|
 | [No contradictions found / missing file / better API name / companion file / exact assertion / framework constraint] | [How this affects the plan] | [Update plan / add task / accepted risk / none] |
+```
+
+### Scope Boundaries section template
+
+```markdown
+## Scope Boundaries
+
+- [Constraint, file, subsystem, or behavior intentionally not changed]
+- [Another important non-touch area or preserved invariant]
 ```
 
 ### Environment State section template
@@ -164,7 +176,8 @@ Before delivering plan documents, verify:
 - [ ] All requirements restated as testable acceptance criteria
 - [ ] Non-goals explicitly defined
 - [ ] Traceability matrix complete (AC → code → tests)
-- [ ] Concrete symbols and file paths are verified existing, explicitly proposed, or copied exactly from the Phase document
+- [ ] Concrete symbols and file paths are verified existing, copied exactly from the Phase document, or labeled `[PROPOSED - name TBD]`
+- [ ] Cross-feature API contracts required by downstream plans appear in upstream acceptance criteria
 - [ ] Edge cases and error handling addressed
 - [ ] Existing patterns identified and followed
 - [ ] Test plan covers all acceptance criteria using evidence categories, not unverified test names

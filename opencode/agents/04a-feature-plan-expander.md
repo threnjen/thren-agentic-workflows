@@ -46,17 +46,22 @@ If the plan file does not exist at the specified path, report the missing file a
 Treat the plan as a draft to validate, not only an input to expand. Using the plan's traceability matrix and file references as a starting point:
 - Verify that referenced files exist
 - Verify concrete method, class, field, element, config, test helper, and log API names when the plan references them
+- Verify that any new concrete API, file, config key, schema field, or test helper name that is not found in the codebase and is not copied exactly from the phase/request is labeled `[PROPOSED - name TBD]`
 - Identify any additional relevant files discovered during your codebase scan
 - Note the change type for each file (Create, Modify, Read-only reference)
 - Distinguish existing tests from proposed tests, runner-constrained tests, code-review evidence, and manual QA checks
+- Search for phase-scoped test directory patterns (for example `Tests/Editor/Phase*/`, `tests/phase*/`, or equivalent local naming). If found and the plan omits a current-phase consolidated test file that would cover cross-feature behavior, record a Discovery Delta warning.
 
 Run a `Discovery Delta` pass and record findings that contradict or refine the plan:
 - Missing referenced files or symbols
 - Better existing API names than the plan's proposed names
+- Invented concrete names that lack the `[PROPOSED - name TBD]` marker
+- Missing upstream acceptance criteria for public APIs required by downstream sibling plans
 - Additional required companion files, including framework templates, styles, serializers, fixtures, or test harness builders
+- Phase-scoped test directory patterns or consolidated phase test files omitted from the plan
 - Existing tests asserting exact strings, counts, schemas, serialized output, or data types
 - Framework constraints that make a planned approach brittle
-- **Test class name verification:** For every test class name referenced in the plan's traceability table or stages, check whether the class exists in the test directory. If it does not exist, prefix the name with `[proposed]` in the `-context.md` Key Files table and in any tasks you generate. Never emit an invented test class name without this marker.
+- **Test class name verification:** For every test class name referenced in the plan's traceability table or stages, check whether the class exists in the test directory. If it does not exist and the exact name was not copied from the phase/request, prefix the name with `[PROPOSED - name TBD]` in the `-context.md` Key Files table and in any tasks you generate. Never emit an invented test class name without this marker.
 
 Write Discovery Delta findings into `-context.md`. If a finding contradicts the plan, return it as a warning to the invoking Feature - Decomposer instead of silently generating tasks from a stale assumption.
 
@@ -82,6 +87,7 @@ Write `dev/feature/[0N-task-name]/[0N-task-name]-context.md` following the Conte
 - **Discovery Delta** — Missing references, refined API names, companion files, exact assertion tests, framework constraints, and other findings that validate or contradict the plan. If none, record "No contradictions found."
 - **Architectural Decisions** — Decisions made during planning: what was chosen, why, and the rationale. Extract these from the plan's Section C (Consistency & Architecture Fit) and Section D (Clean Design).
 - **Constraints** — Hard constraints from the Phase document, codebase conventions, or the plan's non-goals that the Implementer must respect.
+- **Scope Boundaries** — Important files, systems, or behaviors the Implementer should preserve or intentionally not touch. Derive this from non-goals, invariants, and any plan language about avoided scope.
 - **Relationships to Sibling Plans** — If the plan references other features (shared prerequisites, implementation order), capture those relationships here.
 - **Suggested Implementation Order** — If the plan specifies ordering relative to sibling features, include it.
 

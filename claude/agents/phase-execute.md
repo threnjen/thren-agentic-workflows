@@ -30,9 +30,10 @@ Treat `dev/feature/[phase-name]-execution-manifest.md` as the single source of t
 1. Check whether the execution manifest exists.
 2. If the manifest does not exist, stop immediately and tell the user to run `feature-decomposer` for this phase before invoking `phase-execute`.
 3. Read the manifest and extract the ordered list of feature task names plus their wave number, `parallel_safe`, `depends_on`, `key files modified`, and `sequential reason`.
-4. For each feature listed in the manifest, verify that `dev/feature/[0N-task-name]/` exists and contains all three required files: `-plan.md`, `-context.md`, and `-tasks.md`.
-5. If any required file is missing, stop immediately and tell the user to rerun `feature-decomposer` for this phase.
-6. Create a todo list entry for each feature with status `not-started`.
+4. Extract the manifest's `## Verification Assets` section if present, including new test files, existing test files updated by multiple features, and manual QA checklist items. If the section is missing, record `verification-assets: not provided` and continue.
+5. For each feature listed in the manifest, verify that `dev/feature/[0N-task-name]/` exists and contains all three required files: `-plan.md`, `-context.md`, and `-tasks.md`.
+6. If any required file is missing, stop immediately and tell the user to rerun `feature-decomposer` for this phase.
+7. Create a todo list entry for each feature with status `not-started`.
 
 Do not invoke `feature-decomposer`.
 Do not invoke `z-feature-plan-expander`.
@@ -134,7 +135,7 @@ Determine QA output paths using the conventions in the auto-loaded `dev-task-fol
 
 Invoke the **z-feature-qa-writer** subagent:
 
-> "Write a consolidated release QA plan covering ALL features in this phase. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following feature folders: [list all dev/feature/[0N-task-name]/ paths]. Write the consolidated QA plan to `[determined QA output path]` and the coverage map to `[determined coverage map path]`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all features."
+> "Write a consolidated release QA plan covering ALL features in this phase. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following feature folders: [list all dev/feature/[0N-task-name]/ paths]. Use these manifest verification assets as a required coverage checklist: [verification-assets extracted from manifest, or `not provided`]. Write the consolidated QA plan to `[determined QA output path]` and the coverage map to `[determined coverage map path]`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all features."
 
 After the subagent returns:
 - Verify the QA document exists at the determined path
@@ -149,11 +150,15 @@ Invoke the **prod-code-review** subagent. Build the prompt from the applicable t
 
 > "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan: `[QA output path]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
 >
+> Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
+>
 > Review verdicts: [task-1: Approved, task-2: Approved, ...]. All verdicts Approved: YES — use fast-track mode."
 
 **If QA was generated and any verdict was not Approved:**
 
 > "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan: `[QA output path]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
+>
+> Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
 > Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. All verdicts Approved: NO — use standard mode."
 
