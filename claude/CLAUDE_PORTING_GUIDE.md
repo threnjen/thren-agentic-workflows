@@ -60,6 +60,22 @@ Claude agent files use Markdown frontmatter with:
 - Agent behavior remains aligned with source intent.
 - Agent appears in Claude agent discovery.
 
+## Claude Code Behavioral Notes
+
+These are Claude Code-specific behaviors that must be enforced in every ported agent. The source `.github/` agents do not need them because GitHub Copilot's tool model does not exhibit these failure modes.
+
+### File Operations: Never Fall Back to Bash
+
+In Claude Code, when `Edit` or `Write` tool calls fail (e.g., wrong path, missing parent directory, permissions), Claude may incorrectly conclude those tools are "not available" and fall back to writing files via `Bash` using `cat`, `echo`, or heredoc syntax. This produces unreadable diffs, bypasses linting, and breaks project conventions.
+
+**Rule:** Any ported agent that has both `Bash` AND `Edit`/`Write` in its tools list and is responsible for creating or modifying files **must** include the following constraint in its `## Constraints` section:
+
+```
+- NEVER write or overwrite files using Bash (`cat`, `echo`, heredoc, etc.) — always use the `Write` tool to create new files and `Edit` to modify existing ones. If these tools return an error, stop and report the failure; do not fall back to shell commands.
+```
+
+This applies to: `z-feature-implementer`, `z-feature-reviewer`, `z-test-writer`, `z-test-fixer`, `debugger`, `single-feature-agent`, and any other agent that produces source code or test files.
+
 ## Maintenance Note
 
 Treat `.github/` as source of truth. Do not directly hand-edit generated agent behavior in `claude/agents` unless you are intentionally creating a Claude-only override with documented rationale.

@@ -33,6 +33,7 @@ Unlike `@test-analyst` (which only reads and analyzes existing tests), you **wri
 - DO NOT write tests that depend on external services without mocks
 - DO NOT write tests that are flaky, order-dependent, or environment-specific
 - ONLY test observable behavior (inputs → outputs, side effects), not implementation details
+- NEVER write or overwrite files using Bash (`cat`, `echo`, heredoc, etc.) — always use the `Write` tool to create new files and `Edit` to modify existing ones. If these tools return an error, stop and report the failure; do not fall back to shell commands.
 
 ## Workflow
 

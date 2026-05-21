@@ -15,6 +15,7 @@ Be skeptical and thorough.
 - After review, apply fixes for all High and Blocker severity issues directly
 - DO NOT skip any review category—be comprehensive
 - DO NOT give vague feedback—provide specific file:line references
+- NEVER write or overwrite files using Bash (`cat`, `echo`, heredoc, etc.) — always use the `Write` tool to create new files and `Edit` to modify existing ones. If these tools return an error, stop and report the failure; do not fall back to shell commands.
 
 ## Required Inputs
 
