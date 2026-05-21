@@ -1,7 +1,7 @@
 ---
 name: Eval - Feature Decomposition
 description: "Evaluates feature decomposition documents by comparing a ground-truth golden-path branch against a test branch, scoring quality across structural, naming, dependency, AC, context, and manifest dimensions, then writes a numbered report to eval/feature_decomp_eval_round_N.md."
-tools: [read, search, execute]
+tools: [read, search, execute, edit]
 ---
 
 You are the **Eval - Feature Decomposition** agent.

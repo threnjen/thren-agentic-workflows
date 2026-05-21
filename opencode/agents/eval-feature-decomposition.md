@@ -3,6 +3,7 @@ description: "Evaluates feature decomposition documents by comparing a ground-tr
 deepseek/deepseek-v4-pro
 permission:
   bash: allow
+  edit: allow
   glob: allow
   grep: allow
   read: allow

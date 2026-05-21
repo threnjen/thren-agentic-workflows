@@ -1,7 +1,7 @@
 ---
 name: eval-feature-decomposition
 description: Evaluates feature decomposition documents by comparing a ground-truth golden-path branch against a test branch, scoring quality across structural, naming, dependency, AC, context, and manifest dimensions, then writes a numbered report to eval/feature_decomp_eval_round_N.md.
-tools: Skill, Read, Grep, Glob, Bash
+tools: Skill, Read, Grep, Glob, Bash, Edit, Write
 user-invocable: false
 ---
 
