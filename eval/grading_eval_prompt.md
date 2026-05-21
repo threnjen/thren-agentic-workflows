@@ -1,8 +1,10 @@
-run the grading eval.
-base branch is phase/06e
-golden path branch is phase/06e-goldenpath
-eval branch is phase/06e-modeltest1
+run the grading eval in `the-movies`.
+base branch is `phase/06e`
+golden path branch is `phase/06e-goldenpath`
+eval branch is `phase/06e-modeltest6-v2`
 
-write score report to `eval/runs/phase-06e/score-report-modeltest1.md`. other reports in there as well.
+there is already a golden report/diff documents in `eval/runs/phase-06e/tmp` so do not repeat discovery on `phase/06e-goldenpath`. 
 
-there is already a golden report/diff documents in `eval/runs/phase-06e/tmp` so do not repeat this. The golden branch is the same as the ones used to produce those docs.
+write score report to `eval/runs/phase-06e/score-report-modeltest6-v2.md`. other reports in there as well.
+
+focus only on the `game`directory diffs. that directory is all that matters for comparison.
