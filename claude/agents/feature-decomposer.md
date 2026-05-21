@@ -127,6 +127,8 @@ This check must catch conflicts even when runtime dependency independence would 
 - New symbol/file explicitly labeled as `[PROPOSED - name TBD]` when the exact name is not codebase-verified or copied from the Phase document
 - Exact name copied from the Phase document and preserved
 
+Planned test method names follow the same rule. If a test method already exists, cite its exact verified name. If the method is new, either label it `[PROPOSED - name TBD]` or describe the test scenario without presenting a method name as established fact.
+
 If a plan depends on behavior not confirmed in code, include an `Unverified Assumptions` section and keep the assumption narrow.
 
 **Step 6 — Cross-feature API pre-planning.** For each integration, compatibility, migration, import/export, or backfill feature, explicitly identify which public API from upstream features it will call. Ask: "What public API from [earlier feature] will [downstream feature] call?"
@@ -134,6 +136,7 @@ If a plan depends on behavior not confirmed in code, include an `Unverified Assu
 Apply these rules:
 - If the API already exists, name it and verify it in codebase discovery
 - If the API must be produced by an upstream feature, add it as an explicit acceptance criterion on that upstream feature and label the proposed symbol `[PROPOSED - name TBD]`
+- For compatibility, import/export, migration, or backfill features, also ask: "What upstream generation, normalization, or validation API should this downstream feature reuse?" Add the reusable API contract to the upstream acceptance criteria when reuse is expected.
 - If the downstream feature should not call upstream logic, document why duplication or independence is intentional
 - Reflect the dependency in both features' relationship notes and in the manifest dependency graph
 
@@ -222,6 +225,27 @@ If no asset exists for a subsection, write `None identified` with a brief reason
 
 phase-execute will read this manifest instead of rediscovering the schedule from the plan files.
 
+### Mandatory Manifest Validation Gate
+
+Before staging, committing, or returning a final response, verify the execution manifest exists at the exact required path:
+
+```text
+dev/feature/[phase-name]-execution-manifest.md
+```
+
+This is a hard gate. If the file is missing, create it before continuing. Do not treat per-feature plan files, context files, tasks files, or a differently named summary file as a substitute.
+
+Then verify the manifest contains all required Phase 5 elements:
+
+- Phase document path
+- Ordered list of feature task names created
+- Per-feature table with `Feature`, `Wave`, `Parallel Safe`, `Depends On`, `Key Files Modified`, and `Sequential Reason`
+- Wave-by-wave execution schedule labeled `parallel` or `sequential`
+- Expected bundle files for each feature directory
+- `## Verification Assets`
+
+If any required element is missing, update the manifest before continuing. The final response must include the exact manifest path.
+
 ### Commit: Feature Decomposition
 
 After all feature bundle files and the execution manifest are written for the current session, stage only the `dev/feature/` files created or modified in this session and commit them with the exact message `eval: features-decomposed`.
@@ -273,11 +297,13 @@ Additionally verify:
 - [ ] Phase-to-feature fidelity pass completed; every Phase requirement is implemented, moved, or deferred with rationale
 - [ ] Every concrete symbol in the plan is verified existing, copied exactly from the Phase document, or labeled `[PROPOSED - name TBD]`
 - [ ] Unverified new API names use `[PROPOSED - name TBD]`
+- [ ] Planned test method names are verified existing, explicitly proposed, or replaced with scenario descriptions
 - [ ] Cross-feature API dependencies are planned, and any upstream API required by a downstream feature appears in upstream acceptance criteria
 - [ ] Framework companion files are included in file scope mapping
 - [ ] Phase-scoped test directory patterns were checked and any consolidated phase test file recommendation appears in the manifest verification assets
 - [ ] Manifest `parallel_safe` and `sequential_reason` values match the dependency graph and shared-file scan
 - [ ] Manifest includes `## Verification Assets` with new tests, shared updated tests, and manual QA checks
+- [ ] Manifest exists at exactly `dev/feature/[phase-name]-execution-manifest.md`; no differently named manifest or summary file is being substituted
 - [ ] Observability is treated as a decision; any new normal-path log line is justified by the Phase, an existing pattern, or a diagnosable failure mode
 - [ ] Planned test evidence distinguishes existing tests, required new tests, runner-constrained tests, code-review evidence, and manual QA checks
 - [ ] Unverified assumptions are narrow and explicitly documented

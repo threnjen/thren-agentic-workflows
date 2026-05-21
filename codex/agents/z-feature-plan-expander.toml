@@ -38,6 +38,7 @@ Treat the plan as a draft to validate, not only an input to expand. Using the pl
 - Verify that referenced files exist
 - Verify concrete method, class, field, element, config, test helper, and log API names when the plan references them
 - Verify that any new concrete API, file, config key, schema field, or test helper name that is not found in the codebase and is not copied exactly from the phase/request is labeled `[PROPOSED - name TBD]`
+- Verify that planned test method names are either existing codebase methods, copied exactly from the phase/request, labeled `[PROPOSED - name TBD]`, or expressed as scenario descriptions rather than exact method names
 - Identify any additional relevant files discovered during your codebase scan
 - Note the change type for each file (Create, Modify, Read-only reference)
 - Distinguish existing tests from proposed tests, runner-constrained tests, code-review evidence, and manual QA checks
@@ -47,6 +48,7 @@ Run a `Discovery Delta` pass and record findings that contradict or refine the p
 - Missing referenced files or symbols
 - Better existing API names than the plan's proposed names
 - Invented concrete names that lack the `[PROPOSED - name TBD]` marker
+- Planned test method names presented as exact facts without verification or `[PROPOSED - name TBD]`
 - Missing upstream acceptance criteria for public APIs required by downstream sibling plans
 - Additional required companion files, including framework templates, styles, serializers, fixtures, or test harness builders
 - Phase-scoped test directory patterns or consolidated phase test files omitted from the plan

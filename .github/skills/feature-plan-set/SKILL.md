@@ -7,6 +7,8 @@ description: "Write feature plan documents for implementation. Use when: decompo
 
 The three-file plan convention: `-plan.md` is produced by the Feature - Decomposer; `-context.md` and `-tasks.md` are produced by the 04a-feature-plan-expander. All three files are consumed by 04b-feature-implementer, 04c-feature-reviewer, 04d-feature-qa-writer, and orchestrators.
 
+When decomposing a phase, the Feature - Decomposer must also produce the phase-level execution manifest at `dev/feature/[phase-name]-execution-manifest.md`. This manifest is not part of any single feature bundle; it is the schedule and dependency contract consumed by Phase - Execute.
+
 ## File Structure
 
 Each independent work item gets three files:
@@ -18,12 +20,20 @@ dev/feature/[0N-task-name]/
 └── [0N-task-name]-tasks.md      # Checklist of work items
 ```
 
+Each decomposed phase also gets one manifest:
+
+```
+dev/feature/[phase-name]-execution-manifest.md
+```
+
+The manifest must list the phase document path, ordered feature task names, wave schedule, dependencies, parallel safety, key files modified, sequential reasons, expected bundle files, and verification assets.
+
 **Naming**: `[0N-task-name]` is a zero-padded two-digit prefix followed by a short, descriptive, kebab-case identifier (e.g., `01-auth-login`, `02-rate-limiter`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order.
 
 **Numbering rules**:
 - Start numbering at `01`
-- Features that can be executed in parallel share the same number
-- Features with prerequisites must have a higher number than their dependencies
+- Features that can be executed in parallel may share the same wave number in execution metadata, but each feature directory still gets a unique sequential `0N-` prefix
+- Features with prerequisites must have a higher directory prefix and a higher wave number than their dependencies
 - If only one feature exists, still use the `01-` prefix for consistency
 
 ## Plan Template (`-plan.md`)
@@ -51,6 +61,7 @@ dev/feature/[0N-task-name]/
 - Define interfaces/contracts (inputs, outputs, schemas, config)
 - For any new concrete API, file, config key, schema field, or test helper name that is not verified in the codebase and not copied exactly from the phase/request, label it `[PROPOSED - name TBD]`. Use this marker to signal that the implementer must choose the final idiomatic name and record it in implementation notes.
 - When a downstream feature depends on a new public API from a sibling feature, include that API contract in the upstream feature's acceptance criteria. Do not leave cross-feature API requirements only in relationship notes.
+- For compatibility, import/export, migration, or backfill features, identify the upstream generation, normalization, or validation API the downstream feature should reuse. If that API is new, include it in the upstream feature's acceptance criteria.
 
 ### D. Clean Design & Maintainability
 
@@ -75,6 +86,7 @@ dev/feature/[0N-task-name]/
   - Manual QA checks
 - Write top 5 high-value test cases or evidence checks (Given/When/Then where applicable)
 - List test data, mocks, or fixtures needed
+- When listing planned test method names, either confirm the method exists in the codebase, label it `[PROPOSED - name TBD]`, or omit the method name and describe the scenario. Do not present new test method names as existing facts.
 
 ## Stage Format
 
@@ -167,6 +179,7 @@ An ordered checklist of concrete work items derived from the plan:
 - If items share prerequisites, note the dependency in each context file but keep plans separate
 - Only combine items when tightly coupled (implementing one without the other leaves the codebase broken)
 - Assign numeric prefixes based on dependency order: prerequisites get lower numbers, dependents get higher numbers
+- Sequential dependency chains must be represented as separate waves. Do not rely on "sequential within one wave" for features where B depends on A; the wave depth should match the dependency depth.
 - **Integration feature rule**: When a phase produces multiple features that must work together at runtime (e.g., a data system, a renderer, and a UI that all need to be wired into a running application), the **final numbered feature** must be an integration/bootstrap task. This feature initializes and connects the other features into a runnable application entry point (e.g., a scene bootstrap script, an app startup module, a main entry point). Its acceptance criteria must include: the application launches and all features operate together, and a human or automated smoke test can verify the combined output. Without this, individual features may pass review in isolation but never actually run together.
 
 ## Quality Checklist
@@ -178,9 +191,11 @@ Before delivering plan documents, verify:
 - [ ] Traceability matrix complete (AC → code → tests)
 - [ ] Concrete symbols and file paths are verified existing, copied exactly from the Phase document, or labeled `[PROPOSED - name TBD]`
 - [ ] Cross-feature API contracts required by downstream plans appear in upstream acceptance criteria
+- [ ] Planned test method names are verified existing, explicitly proposed, or replaced with scenario descriptions
 - [ ] Edge cases and error handling addressed
 - [ ] Existing patterns identified and followed
 - [ ] Test plan covers all acceptance criteria using evidence categories, not unverified test names
 - [ ] Test coverage prerequisite assessed (≥ 50% or `@z-test-writer` recommended)
 - [ ] Observability and operability considered; any new normal-path logs are justified
 - [ ] **Integration check**: If the phase has multiple features that must run together, an integration/bootstrap feature exists as the final numbered task with acceptance criteria verifying the combined output is launchable and observable
+- [ ] **Manifest check**: For phase decomposition, `dev/feature/[phase-name]-execution-manifest.md` exists and includes the ordered feature list, wave schedule, dependency graph, expected bundle files, and `## Verification Assets`

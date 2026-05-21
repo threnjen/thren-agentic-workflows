@@ -24,7 +24,7 @@ dev/feature/[phase-name]-execution-manifest.md
 
 The manifest must list the phase document path, ordered feature task names, wave schedule, dependencies, parallel safety, key files modified, sequential reasons, expected bundle files, and verification assets.
 
-**Naming**: `[0N-task-name]` is a zero-padded two-digit prefix followed by a short, descriptive, kebab-case identifier (e.g., `01-auth-login`, `02-rate-limiter`, `03-test-bootstrap`). Prefer the shortest noun phrase that uniquely identifies the deliverable within the phase. Do not add category qualifiers such as `data-`, `logic-`, `rules-`, or domain adjectives unless two sibling features would otherwise be ambiguous. The numeric prefix indicates recommended execution order.
+**Naming**: `[0N-task-name]` is a zero-padded two-digit prefix followed by a short, descriptive, kebab-case identifier (e.g., `01-auth-login`, `02-rate-limiter`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order.
 
 **Numbering rules**:
 - Start numbering at `01`
