@@ -127,6 +127,8 @@ After the active AC scope for this invocation is implemented and tests pass, wri
 
 Load the `implementation-record` skill for the exact template. Do not skip this step — the Reviewer depends on this file to scope its review.
 
+Also update `dev/feature/[0N-task-name]/[0N-task-name]-tasks.md` so tasks completed by the active AC scope are checked off. Preserve incomplete tasks as `[ ]`; do not mark unrelated or future-AC tasks complete.
+
 Implementation-record rules for AC-scoped re-entry:
 - If no record exists yet, create it from the template.
 - If a record already exists, preserve accurate prior AC rows and cumulative file history; update only the rows affected by this invocation.

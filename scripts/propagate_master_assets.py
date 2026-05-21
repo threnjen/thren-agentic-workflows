@@ -33,9 +33,18 @@ WATCH_DIRS = [
 CLAUDE_AGENTS_DIR = REPO_ROOT / "claude" / "agents"
 OPENCODE_AGENTS_DIR = REPO_ROOT / "opencode" / "agents"
 CODEX_AGENTS_DIR = REPO_ROOT / "codex" / "agents"
+GITHUB_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
+CODEX_SKILLS_DIR = REPO_ROOT / "codex" / "skills"
 
 
 GENERATED_AGENT_HEADER = "# Generated from .github/agents source-of-truth. Do not edit manually."
+GENERATED_SKILL_HEADER = "<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->\n"
+
+# Agents that live exclusively in .github/agents and must never be propagated
+# to any platform output directory.
+PROPAGATION_EXCLUDE: set[str] = {
+    "evangelize",
+}
 
 
 OPENCODE_FILE_ALIASES = {
@@ -203,6 +212,9 @@ def load_source_agents() -> List[SourceAgent]:
 
         rel_path = path.relative_to(REPO_ROOT).as_posix()
         source_slug = _extract_source_slug(path)
+
+        if source_slug in PROPAGATION_EXCLUDE:
+            continue
 
         name = str(fm.get("name", "")).strip().strip('"').strip("'")
         description = str(fm.get("description", "")).strip().strip('"').strip("'")
@@ -570,11 +582,59 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         codex_file.unlink()
         changed_codex += 1
 
+    # Propagate skills: .github/skills/<name>/SKILL.md -> codex/skills/<name>/SKILL.md
+    CODEX_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
+    changed_skills = 0
+    expected_skill_dirs: set[Path] = set()
+
+    for source_skill_dir in sorted(GITHUB_SKILLS_DIR.iterdir()):
+        if not source_skill_dir.is_dir():
+            continue
+        skill_name = source_skill_dir.name
+        dest_skill_dir = CODEX_SKILLS_DIR / skill_name
+        expected_skill_dirs.add(dest_skill_dir)
+
+        # Transform SKILL.md: strip frontmatter, prepend generated header
+        source_skill_md = source_skill_dir / "SKILL.md"
+        if source_skill_md.exists():
+            _, body = _parse_frontmatter(_read_text(source_skill_md))
+            dest_content = GENERATED_SKILL_HEADER + body.lstrip("\n")
+            if _write_if_changed(dest_skill_dir / "SKILL.md", dest_content):
+                changed_skills += 1
+
+        # Copy any additional files in the skill dir verbatim
+        for source_file in sorted(source_skill_dir.rglob("*")):
+            if not source_file.is_file():
+                continue
+            if source_file.name == "SKILL.md":
+                continue
+            rel = source_file.relative_to(source_skill_dir)
+            dest_file = dest_skill_dir / rel
+            if _write_if_changed(dest_file, _read_text(source_file)):
+                changed_skills += 1
+
+    # Clean up orphaned generated codex skill dirs
+    if CODEX_SKILLS_DIR.exists():
+        for dest_dir in sorted(CODEX_SKILLS_DIR.iterdir()):
+            if not dest_dir.is_dir() or dest_dir in expected_skill_dirs:
+                continue
+            skill_md = dest_dir / "SKILL.md"
+            if skill_md.exists() and _read_text(skill_md).startswith(GENERATED_SKILL_HEADER):
+                for f in dest_dir.rglob("*"):
+                    if f.is_file():
+                        f.unlink()
+                for d in sorted(dest_dir.rglob("*"), reverse=True):
+                    if d.is_dir():
+                        d.rmdir()
+                dest_dir.rmdir()
+                changed_skills += 1
+
     result = {
         "source_agents": len(agents),
         "claude_changed": changed_claude,
         "opencode_changed": changed_opencode,
         "codex_changed": changed_codex,
+        "skills_changed": changed_skills,
     }
 
     if verbose:

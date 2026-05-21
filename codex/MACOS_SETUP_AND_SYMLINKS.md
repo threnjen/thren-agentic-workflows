@@ -2,7 +2,7 @@
 
 This guide documents the macOS runtime targets that Codex uses and shows how to point those runtime locations back to repository-owned source artifacts under `codex/`.
 
-This feature is documentation-only. It does not create any live files in a user home directory, and the repository-owned source examples below are future-facing placeholders until later Phase 02 work lands the corresponding artifacts.
+Custom agents and skills are now available under `codex/agents/` and `codex/skills/` respectively. The symlink commands below are ready to run.
 
 ## Global AGENTS Policy
 
@@ -16,10 +16,11 @@ Keep the authoring surface and the runtime surfaces separate:
 
 | Surface | Role |
 |---------|------|
-| `codex/` | Repository-owned authoring area for Codex docs and future source artifacts |
+| `codex/` | Repository-owned authoring area for Codex docs and source artifacts |
 | `.codex/` | Repo-scoped runtime config or installed runtime assets |
-| `~/.codex/` | User-scoped runtime config, global AGENTS guidance, and custom agents |
-| `$HOME/.agents/skills/` | User-scoped installed Codex skills |
+| `~/.codex/` | User-scoped runtime config, global AGENTS guidance, custom agents, and skills |
+| `~/.codex/agents/` | User-scoped installed custom-agent TOML files |
+| `~/.codex/skills/` | User-scoped installed skill directories (already exists as a real directory on macOS) |
 
 The symlink direction in this guide always flows from a runtime destination back to a repository-owned source path under `codex/`.
 
@@ -32,10 +33,8 @@ These are the macOS locations that matter for this setup flow.
 | `~/.codex/config.toml` | User | Global Codex config | Not linked in this feature |
 | `~/.codex/AGENTS.md` | User | Global Codex guidance when no home override exists | `$REPO_ROOT/codex/global-agents/AGENTS.md` |
 | `~/.codex/AGENTS.override.md` | User | Higher-precedence global Codex guidance | `$REPO_ROOT/codex/global-agents/AGENTS.override.md` |
-| `~/.codex/agents/example-agent.toml` | User | Installed custom-agent TOML file | `$REPO_ROOT/codex/agents/example-agent.toml` |
-| `$HOME/.agents/skills/example-skill` | User | Installed skill directory | `$REPO_ROOT/codex/skills/example-skill` |
-
-The source examples are intentionally placeholders. Replace them with the real repository-owned Codex artifact paths once those files or directories exist.
+| `~/.codex/agents/<agent-name>.toml` | User | Installed custom-agent TOML file | `$REPO_ROOT/codex/agents/<agent-name>.toml` |
+| `~/.codex/skills/<skill-name>` | User | Installed skill directory (symlink inside real `~/.codex/skills/` dir) | `$REPO_ROOT/codex/skills/<skill-name>` |
 
 ## Preflight Checks
 
@@ -45,18 +44,14 @@ Before replacing anything under `~/.codex/` or `$HOME/.agents/skills/`, inspect 
 REPO_ROOT=/absolute/path/to/github-agents-source-of-truth
 
 ls -ld "$HOME/.codex" "$HOME/.codex/agents" "$HOME/.agents" "$HOME/.agents/skills" 2>/dev/null || true
-ls -l "$HOME/.codex/AGENTS.md" "$HOME/.codex/AGENTS.override.md" "$HOME/.codex/agents/example-agent.toml" "$HOME/.agents/skills/example-skill" 2>/dev/null || true
+ls -l "$HOME/.codex/AGENTS.md" "$HOME/.codex/AGENTS.override.md" 2>/dev/null || true
+ls -l "$HOME/.codex/agents/" "$HOME/.agents/skills/" 2>/dev/null || true
 readlink "$HOME/.codex/AGENTS.md" 2>/dev/null || true
 readlink "$HOME/.codex/AGENTS.override.md" 2>/dev/null || true
-readlink "$HOME/.codex/agents/example-agent.toml" 2>/dev/null || true
-readlink "$HOME/.agents/skills/example-skill" 2>/dev/null || true
 
-# These will fail until later Phase 02 work creates the source artifacts.
-# A non-zero exit means the source does not exist yet — do not proceed with symlinking.
-test -e "$REPO_ROOT/codex/global-agents/AGENTS.md"         || echo "not yet: codex/global-agents/AGENTS.md"
-test -e "$REPO_ROOT/codex/global-agents/AGENTS.override.md" || echo "not yet: codex/global-agents/AGENTS.override.md"
-test -e "$REPO_ROOT/codex/agents/example-agent.toml"        || echo "not yet: codex/agents/example-agent.toml"
-test -e "$REPO_ROOT/codex/skills/example-skill"             || echo "not yet: codex/skills/example-skill"
+# Verify skill sources exist before symlinking
+test -d "$REPO_ROOT/codex/skills" && echo "codex/skills ready" || echo "not yet: codex/skills"
+test -d "$REPO_ROOT/codex/agents" && echo "codex/agents ready" || echo "not yet: codex/agents"
 ```
 
 If any runtime target is a real file or directory instead of a symlink, move it aside manually before relinking so the replacement is explicit and reversible.
@@ -65,30 +60,30 @@ If any runtime target is a real file or directory instead of a symlink, move it 
 
 Create parent directories first so the later symlink commands work on a clean macOS machine.
 
+Note: `~/.codex/skills/` already exists on macOS as a real directory managed by Codex. Do not replace it with a symlink — add per-skill symlinks inside it instead.
+
 ```sh
-mkdir -p "$HOME/.codex"
 mkdir -p "$HOME/.codex/agents"
-mkdir -p "$HOME/.agents/skills"
 ```
 
 ## Idempotent Symlink Examples
 
-The following examples use `ln -sfn` so rerunning the command updates an existing symlink target without creating duplicate links. Replace the placeholder source paths with the real repository-owned Codex artifact paths before using them.
+The following commands use `ln -sfn` so rerunning them updates existing symlink targets without creating duplicate links.
 
 ```sh
 REPO_ROOT=/absolute/path/to/github-agents-source-of-truth
 
-ln -sfn "$REPO_ROOT/codex/global-agents/AGENTS.md" \
-  "$HOME/.codex/AGENTS.md"
+# Link each custom agent TOML individually
+for toml in "$REPO_ROOT"/codex/agents/*.toml; do
+  ln -sfn "$toml" "$HOME/.codex/agents/$(basename "$toml")"
+done
 
-ln -sfn "$REPO_ROOT/codex/global-agents/AGENTS.override.md" \
-  "$HOME/.codex/AGENTS.override.md"
-
-ln -sfn "$REPO_ROOT/codex/agents/example-agent.toml" \
-  "$HOME/.codex/agents/example-agent.toml"
-
-ln -sfn "$REPO_ROOT/codex/skills/example-skill" \
-  "$HOME/.agents/skills/example-skill"
+# Link each skill directory individually inside the existing ~/.codex/skills/ directory
+# Do NOT replace ~/.codex/skills itself — it is a real directory managed by Codex
+for skill_dir in "$REPO_ROOT"/codex/skills/*/; do
+  skill_name=$(basename "$skill_dir")
+  ln -sfn "$skill_dir" "$HOME/.codex/skills/$skill_name"
+done
 ```
 
 These commands are idempotent only when the destination is absent or already a symlink. If the destination is a regular file or directory, inspect it first and replace it deliberately rather than relying on `ln -sfn` to decide for you.
@@ -98,35 +93,40 @@ These commands are idempotent only when the destination is absent or already a s
 If a destination already exists as a non-symlink, back it up first.
 
 ```sh
-mv "$HOME/.codex/AGENTS.md" "$HOME/.codex/AGENTS.md.backup"
-mv "$HOME/.codex/AGENTS.override.md" "$HOME/.codex/AGENTS.override.md.backup"
-mv "$HOME/.codex/agents/example-agent.toml" "$HOME/.codex/agents/example-agent.toml.backup"
-mv "$HOME/.agents/skills/example-skill" "$HOME/.agents/skills/example-skill.backup"
+# Back up individual agent TOMLs if they exist as real files
+for toml in "$REPO_ROOT"/codex/agents/*.toml; do
+  dest="$HOME/.codex/agents/$(basename "$toml")"
+  [ -e "$dest" ] && ! [ -L "$dest" ] && mv "$dest" "$dest.backup"
+done
+
+# Back up individual skill dirs if they exist as real directories
+for skill_dir in "$REPO_ROOT"/codex/skills/*/; do
+  skill_name=$(basename "$skill_dir")
+  dest="$HOME/.codex/skills/$skill_name"
+  [ -e "$dest" ] && ! [ -L "$dest" ] && mv "$dest" "$dest.backup"
+done
 ```
 
-If you want to undo the symlinked setup later, remove the symlink and either restore the backup or create a new link to a different repository-owned source path.
+If you want to undo the symlinked setup later, remove the symlinks.
 
 ```sh
-rm "$HOME/.codex/AGENTS.md"
-rm "$HOME/.codex/AGENTS.override.md"
-rm "$HOME/.codex/agents/example-agent.toml"
-rm "$HOME/.agents/skills/example-skill"
+for toml in "$REPO_ROOT"/codex/agents/*.toml; do
+  rm -f "$HOME/.codex/agents/$(basename "$toml")"
+done
+
+for skill_dir in "$REPO_ROOT"/codex/skills/*/; do
+  rm -f "$HOME/.codex/skills/$(basename "$skill_dir")"
+done
 ```
 
-After any relink or rollback step, verify the target again.
+After any relink or rollback step, verify the targets.
 
 ```sh
-ls -l "$HOME/.codex/AGENTS.md" "$HOME/.codex/AGENTS.override.md" "$HOME/.codex/agents/example-agent.toml" "$HOME/.agents/skills/example-skill"
-readlink "$HOME/.codex/AGENTS.md"
-readlink "$HOME/.codex/AGENTS.override.md"
-readlink "$HOME/.codex/agents/example-agent.toml"
-readlink "$HOME/.agents/skills/example-skill"
+ls -la "$HOME/.codex/agents/"
+ls -la "$HOME/.agents/skills/"
 ```
 
 ## What This Guide Does Not Do
 
-- It does not create the future repository-owned Codex artifacts under `codex/`.
 - It does not install anything automatically into `~/.codex/` or `$HOME/.agents/skills/`.
 - It does not treat `codex/` as a runtime mirror of either repository's checked-in `AGENTS.md` files.
-
-Use this guide as the installation contract once later Phase 02 work creates the actual repository-owned Codex sources that these runtime symlinks should target.

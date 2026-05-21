@@ -34,14 +34,17 @@ OpenCode agent files use frontmatter with:
 ## Instruction Handling
 
 OpenCode does not use GitHub `applyTo` resolution natively.
-Agent output should include the required instruction intent in agent content so behavior remains aligned with source constraints.
+Agent output should include the required instruction intent in agent content so behavior remains aligned with source constraints. Append inlined instruction content under a `## Auto-Loaded Instructions` section header at the end of the agent body.
 
 ## Conversion Checklist
 
 1. Start from `.github/agents/*` source.
 2. Resolve applicable `.github/instructions/*.instructions.md` entries by `applyTo`.
 3. Convert GitHub tools to OpenCode permission keys.
-4. Preserve existing OpenCode filename aliases where established.
+4. Apply established filename aliases. The canonical alias list is:
+   - `documentation-architect` → `docs-writer`
+   - `web-research-specialist` → `web-researcher`
+   - `audit-code-or-infra` → `audit-code-infra-refactor`
 5. Rewrite source agent references in body text to OpenCode destination identifiers. Use destination filename stems, preserving established aliases such as `@web-researcher` and `docs-writer`.
 6. Ensure behavioral equivalence with source intent.
 

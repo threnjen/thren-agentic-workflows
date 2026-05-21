@@ -95,6 +95,8 @@ The Codex-required fields called out by the platform reference are:
 
 Other settings such as model selection, sandbox configuration, MCP server configuration, nicknames, and skill configuration are optional Codex fields and should only be populated when the source behavior actually needs them.
 
+The TOML `name` field must be a kebab-case slug derived from the source agent filename stem, with any leading numeric phase prefix removed. For example, `01-project-planner.agent.md` produces `name = "project-planner"`, not `name = "01-project-planner"`.
+
 Codex has no verified hide mechanism that keeps subagents out of the frontend agent picker. In this repository, any source agent with `user-invocable: false` must therefore be renamed with a `z-` prefix in the generated Codex artifact so it sorts to the bottom and clearly signals internal-only usage.
 
 When a user selects a Codex custom agent with the `@` designator, that selected agent is already the active role. Ported `developer_instructions` for user-invocable agents must therefore tell the agent to begin work as that role immediately, not to call the same role again as a subagent on first action.
@@ -103,7 +105,7 @@ When a user selects a Codex custom agent with the `@` designator, that selected 
 
 1. Translate the Markdown agent definition into TOML fields rather than copying the file body as-is.
 2. Preserve the role, purpose, and durable constraints of the source agent.
-3. Inline or rewrite any instructions that were previously supplied by `.github/instructions/` so the resulting Codex agent remains self-contained where needed.
+3. Inline or rewrite any instructions that were previously supplied by `.github/instructions/` so the resulting Codex agent remains self-contained where needed. Append inlined instruction content under a `## Auto-Loaded Instructions` section header at the end of `developer_instructions`.
 4. For every user-invocable Codex agent, add explicit `developer_instructions` that the agent should execute as the selected role immediately when invoked with `@`. Do not let a user-selected agent spend its first action spawning the same role as a subagent.
 5. Reserve subagent delegation for genuinely distinct child roles. When delegation is still needed, target another generated Codex agent name, typically an internal `z-*` agent, rather than the currently selected agent's own role.
 6. Convert GitHub-specific tool assumptions, orchestration metadata, or unsupported behavior into Codex-native wording or drop them when no Codex equivalent exists.
