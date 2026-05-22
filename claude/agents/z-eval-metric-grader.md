@@ -1,7 +1,7 @@
 ---
 name: z-eval-metric-grader
 description: Scores one comparative Eval Grader metric from prepared diff and ledger evidence. Returns a normalized 1-10 score plus concise supporting evidence.
-tools: Skill, Read, Grep, Glob
+tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
 

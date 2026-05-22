@@ -30,8 +30,8 @@ The file may contain both a legacy schema table and the current schema table. Ne
 
 Use this exact current-schema column order:
 
-| Timestamp | Phase | Harness/Model | Evaluated Branch | Equivalence | Clarity | Coherence | Robustness | Bug Risk | Scope Discipline | Footprint | Turns | Initial Patch Tests | Review Quality | Mean Time/Task | Overall Verdict | Report Path | Notes |
-|-----------|-------|---------------|------------------|-------------|---------|-----------|------------|----------|------------------|-----------|-------|---------------------|----------------|----------------|-----------------|-------------|-------|
+| Timestamp | Phase | Harness/Model | Evaluated Branch | Overall Verdict | Equivalence | Clarity | Coherence | Robustness | Bug Risk | Scope Discipline | Footprint | Turns | Initial Patch Tests | Review Quality | Mean Time/Task | Report Path | Notes |
+|-----------|-------|---------------|------------------|-----------------|-------------|---------|-----------|------------|----------|------------------|-----------|-------|---------------------|----------------|----------------|-------------|-------|
 
 ## Row Rules
 

@@ -1,7 +1,7 @@
 ---
 name: Eval - Metric Grader
 description: "Scores one comparative Eval Grader metric from prepared diff and ledger evidence. Returns a normalized 1-10 score plus concise supporting evidence."
-tools: [read, search]
+tools: [read, search, edit, execute]
 
 user-invocable: false
 ---
