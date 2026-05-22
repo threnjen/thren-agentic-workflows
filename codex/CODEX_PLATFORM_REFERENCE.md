@@ -47,6 +47,14 @@ Verified model:
 - Required fields are `name`, `description`, and `developer_instructions`.
 - Optional fields include model selection, sandbox settings, MCP server configuration, nicknames, and skill configuration.
 
+### Agent Invocation
+
+Codex does **not** use the `@agent-name` designator syntax. That convention belongs to GitHub Copilot Chat and does not work in Codex CLI.
+
+In Codex, agents are selected via natural language. Codex matches the user's prompt against the `name` and `description` fields of loaded agent files and delegates accordingly. The `/agent` slash command is for navigating between already-running agent threads, not for spawning a new one.
+
+Implication for `developer_instructions`: do not instruct users to invoke the agent with `@`. Instead, tell the agent to begin work in its role when addressed by name or role.
+
 Authoring rule for this repo: keep the source material for future custom agents under `codex/` until a later feature defines the exact repository-owned layout. Do not place draft source documents directly into `.codex/agents/` unless the goal is runtime installation.
 
 ## Skills
@@ -60,6 +68,30 @@ Verified model:
 - Repo-scoped skills are discovered from `.agents/skills` between the repository root and the current working directory.
 - User-scoped skills are discovered from `$HOME/.agents/skills/`.
 - Codex supports symlinked skill folders.
+
+### SKILL.md Format
+
+Every `SKILL.md` must begin with YAML frontmatter delimited by `---`. Codex rejects any skill file that does not start with this block.
+
+Required fields:
+
+| Field | Constraints |
+|-------|-------------|
+| `name` | 1–64 chars, lowercase + digits + hyphens only, **must match the parent directory name** |
+| `description` | 1–1024 chars. Describes what the skill does and when to trigger it. |
+
+Minimal valid example:
+
+```markdown
+---
+name: my-skill
+description: "What this skill does and when to use it."
+---
+
+Skill instructions here...
+```
+
+The generated comment from the propagation script (`<!-- Generated from ... -->`) must appear **after** the closing `---`, not before it.
 
 The macOS-relevant user install destination is `$HOME/.agents/skills/`. This feature does not define a runtime `.codex/skills` location because the discovery context did not verify one.
 
@@ -111,7 +143,7 @@ If future upstream Codex docs or source behavior disagree with any rule above, u
 
 ## Provenance And Revalidation
 
-Last verified: 2026-05-07.
+Last verified: 2026-05-21.
 
 This document was authored from the repository's Phase 02 discovery record and repository context:
 

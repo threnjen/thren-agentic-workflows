@@ -1,3 +1,7 @@
+---
+name: Review Changes
+description: "Perform a structured code review using change detection and impact"
+---
 <!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
 ## Review Changes
 

@@ -484,8 +484,9 @@ def _inject_codex_selected_agent_instruction(agent: SourceAgent, body: str) -> s
 
     identifier = _codex_identifier_for(agent)
     clause = (
-        f"When the user selects you with the `@` designator, you are already acting as `{identifier}`. "
-        f"Begin work in this role immediately. Do not spend your first action invoking `{identifier}` again as a subagent. "
+        f"You are the `{identifier}` agent. When the user addresses you by name or role, "
+        "begin work in this role immediately. "
+        f"Do not spend your first action invoking `{identifier}` again as a subagent. "
         "Delegate only to distinct child agents when the workflow explicitly calls for them."
     )
     if clause in body:
@@ -594,11 +595,19 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         dest_skill_dir = CODEX_SKILLS_DIR / skill_name
         expected_skill_dirs.add(dest_skill_dir)
 
-        # Transform SKILL.md: strip frontmatter, prepend generated header
+        # Transform SKILL.md: preserve YAML frontmatter required by Codex (name + description)
+        # then append the generated-file comment after the closing ---.
         source_skill_md = source_skill_dir / "SKILL.md"
         if source_skill_md.exists():
-            _, body = _parse_frontmatter(_read_text(source_skill_md))
-            dest_content = GENERATED_SKILL_HEADER + body.lstrip("\n")
+            fm, body = _parse_frontmatter(_read_text(source_skill_md))
+            name = str(fm.get("name", skill_name)).strip().strip('"').strip("'")
+            description = str(fm.get("description", "")).strip().strip('"').strip("'")
+            desc_yaml = json.dumps(description, ensure_ascii=False)
+            dest_content = (
+                f"---\nname: {name}\ndescription: {desc_yaml}\n---\n"
+                + GENERATED_SKILL_HEADER
+                + body.lstrip("\n")
+            )
             if _write_if_changed(dest_skill_dir / "SKILL.md", dest_content):
                 changed_skills += 1
 
