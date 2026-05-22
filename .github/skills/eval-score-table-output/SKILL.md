@@ -9,9 +9,9 @@ Use this skill after the Eval Grader finishes writing its detailed score report.
 
 ## Target File
 
-Write to this persistent markdown file in the repository root:
+Write to this persistent markdown file in the **target evaluated project repository** (not the source-of-truth repo):
 
-- `eval/EVAL_GRADER_SCORE_HISTORY.md`
+- `eval/scoring/EVAL_GRADER_SCORE_HISTORY.md`
 
 ## Contract
 

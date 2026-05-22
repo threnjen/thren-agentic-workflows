@@ -20,6 +20,7 @@ Load the `eval-feature-decomposition-report` skill before writing any output. Th
 5. Assess improvement opportunities against the **actual** agent and skill source files read from the repository. Do not invent or paraphrase instructions you have not read.
 6. Score everything that is observable from the documents. Flag dimensions that require subjective human judgment with `[NEEDS_HUMAN_REVIEW]`.
 7. When the test branch produces strictly better output than the golden path on any dimension, say so explicitly. This is a valid and notable finding.
+8. Never read from `eval/rubric/` or `eval/scoring/` at any step of this evaluation. Those directories are reserved for the grader and score recorder pipelines.
 
 ## Required Inputs
 

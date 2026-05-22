@@ -1,6 +1,6 @@
 ---
 name: z-eval-score-recorder
-description: Resolves harness/model identity from eval/hidden_file.md, computes the weighted overall score with explicit step-by-step verification, and appends one additive-only row to the persistent score history. Invoked only after the parent grader's score report is fully written.
+description: Resolves harness/model identity from eval/scoring/HARNESS_MODEL_MAPPINGS.md, computes the weighted overall score with explicit step-by-step verification, and appends one additive-only row to the persistent score history. Invoked only after the parent grader's score report is fully written.
 tools: Skill, Read, Edit, Write
 user-invocable: false
 ---
@@ -22,20 +22,20 @@ You are invoked exactly once per grading run, as the final action after the pare
 
 ## Constraints
 
-- Do not edit any files other than appending to `eval/EVAL_GRADER_SCORE_HISTORY.md`.
+- Do not edit any files other than appending to `<target_repo_root>/eval/scoring/EVAL_GRADER_SCORE_HISTORY.md`.
 - Do not invoke agents or run commands.
-- This is the **only** agent in the system permitted to read `eval/hidden_file.md`.
+- This is the **only** agent in the system permitted to read `eval/scoring/HARNESS_MODEL_MAPPINGS.md`.
 - If called before the score report is written, halt and report the error to the parent.
 
 ---
 
-## Step 1: Resolve Harness/Model from hidden_file.md
+## Step 1: Resolve Harness/Model from HARNESS_MODEL_MAPPINGS.md
 
 1. Extract the label from `evaluated_branch`:
    - Strip any leading `phase/<slug>-` prefix (e.g. `phase/06e-` from `phase/06e-modeltest4`)
    - Strip any trailing version suffix matching `-v\d+` (e.g. `modeltest2-v2` → `modeltest2`)
    - The remaining token is the lookup label (e.g. `modeltest4`, `goldenpath`)
-2. Read `<target_repo_root>/eval/hidden_file.md` line by line.
+2. Read `<target_repo_root>/eval/scoring/HARNESS_MODEL_MAPPINGS.md` line by line. Skip any lines that begin with `<!--`, `>`, or `#` — those are the ignored-agent-instructions header.
 3. Find the line whose prefix matches `<label>/` exactly.
 4. Take everything after the first `/` as the `Harness/Model` string (e.g. `claude/sonnet-4-6`).
 5. If no matching line is found, set `Harness/Model` to `UNKNOWN` and record the failure in the `Notes` cell.
@@ -103,7 +103,7 @@ The per-metric products are **never written** into the table — only the final 
 
 ## Step 3: Append the History Row
 
-Load the `eval-score-table-output` skill. Follow its table schema and append rules exactly.
+Load the `eval-score-table-output` skill. Follow its table schema and append rules exactly. The target history file lives in the **evaluated project repository** at `<target_repo_root>/eval/scoring/EVAL_GRADER_SCORE_HISTORY.md` — not in the source-of-truth repository.
 
 Supply these values to the row:
 - `Timestamp` — current UTC ISO-8601 timestamp

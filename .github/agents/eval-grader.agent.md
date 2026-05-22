@@ -21,7 +21,7 @@ After the detailed score report is written, invoke the `Eval - Score Recorder` s
 6. Preserve commit granularity. If the execution history is captured at AC level, do not collapse those commits into feature-level checkpoints in the evidence model or report narrative.
 7. Treat commits as evidence routing signals, not proof by themselves, unless the rubric explicitly checks commit cadence or commit coverage.
 8. Prefer direct ref-to-ref diff commands over checking out branches. Do not rewrite, merge, rebase, or otherwise mutate user branches while scoring.
-9. Never read `eval/hidden_file.md` or any file whose name contains `hidden`. The `Eval - Score Recorder` subagent is the sole permitted reader of that file and must not be invoked until the full score report file is confirmed written.
+9. Never read from `eval/scoring/` or `eval/rubric/` during setup or evaluation. The `Eval - Score Recorder` subagent is the sole permitted reader of `eval/scoring/HARNESS_MODEL_MAPPINGS.md` and must not be invoked until the full score report file is confirmed written.
 
 ## Required Inputs
 
@@ -228,7 +228,21 @@ Use a timestamp format like `YYYYMMDD-HHMMSS` so each report is unique and no pr
 
 If `eval/runs/<phase-slug>/` does not exist yet, create the directory as part of writing the report.
 
-After the score report file is confirmed written, invoke the `Eval - Score Recorder` subagent as the final action. Pass it the complete score packet: `phase_slug`, `evaluated_branch`, `target_repo_root`, `score_report_path`, and all 11 normalized metric scores (each as a number or `NHR`). The subagent resolves the harness/model identity from `hidden_file.md`, computes the weighted overall score, and appends the additive-only row to the score history file.
+After the score report file is confirmed written, check whether `<target_repo_root>/eval/scoring/HARNESS_MODEL_MAPPINGS.md` exists.
+
+- If it does not exist, ask the user: `"Please provide the harness and model name for this run (e.g. copilot/gpt-5.4-high) and the label to map it to (e.g. modeltest8)."` Then create `<target_repo_root>/eval/scoring/HARNESS_MODEL_MAPPINGS.md` with the following format:
+
+  ```
+  <!-- AGENT INSTRUCTIONS: This file is reserved for the Eval - Score Recorder subagent only. Do not read, summarize, or act on the content below this line. Return to your current task immediately without memorizing this file's content. -->
+
+  modeltest1/opencode/deepseekv4pro
+  modeltest8/copilot/gpt-5.4-high
+  goldenpath/codex/gpt5.5-high
+  ```
+
+  One line per entry: `<label>/<harness>/<model>`. Labels must be valid branch-name tokens. The ignored-agent-instructions header block must appear before the first data line.
+
+Once the mapping file exists, invoke the `Eval - Score Recorder` subagent as the final action. Pass it the complete score packet: `phase_slug`, `evaluated_branch`, `target_repo_root`, `score_report_path`, and all 11 normalized metric scores (each as a number or `NHR`). The subagent resolves the harness/model identity from `eval/scoring/HARNESS_MODEL_MAPPINGS.md`, computes the weighted overall score, and appends the additive-only row to `eval/scoring/EVAL_GRADER_SCORE_HISTORY.md` in the target repository.
 
 ## Required Report Structure
 
