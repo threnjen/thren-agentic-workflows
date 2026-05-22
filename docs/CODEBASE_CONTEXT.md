@@ -13,8 +13,8 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 25 source agent definitions in `.github/agents/`.
-- 14 skills in `.github/skills/`.
+- 27 source agent definitions in `.github/agents/`.
+- 16 skills in `.github/skills/`.
 - 15 instructions in `.github/instructions/`.
 - 2 template packs: `nodejs/` and `python/`.
 
@@ -26,12 +26,12 @@ HARNESS_SETUP.md                           # How to expose repo assets to Copilo
 .mcp.json                                  # Registers code-review-graph MCP with uvx
 .codex/config.toml                         # Repo-scoped Codex runtime MCP config
 .github/
-  agents/
+  agents/                                  # 27 source agent definitions
     README.md                              # Full agent catalog and pipeline docs
     *.agent.md                             # Most source agents
     prod-code-review.md                    # Plain .md agent definition; still part of source set
   instructions/                            # 15 shared instruction files with applyTo globs
-  skills/                                  # 14 shared skill directories with SKILL.md entrypoints
+  skills/                                  # 16 shared skill directories with SKILL.md entrypoints
 claude/agents/                             # Generated Claude copies
 opencode/agents/                           # Generated OpenCode copies
 codex/
@@ -84,9 +84,9 @@ scripts/
 
 ## Agent Topology
 
-- 3 orchestrators: `04 Phase - Execute`, `Audit - Code, Infra, Refactor`, `Test - Orchestrator`.
-- 11 standalone user-facing agents: planner, refiner, decomposer, eval grader, documentation architect, debugger, evangelize, single-feature agent, prod code review, unity reviewer, web research specialist.
-- 11 hidden subagents: plan expander, implementer, reviewer, QA writer, 3 auditors, eval metric grader, test analyst, test writer, test fixer.
+- 6 orchestrators: `01 Project - Planner`, `02 Phase - Refiner`, `04 Phase - Execute`, `Audit - Code, Infra, Refactor`, `Test - Orchestrator`, `Eval - Grader`.
+- 11 visible user-facing agents: decomposer, documentation architect, debugger, evangelize, single-feature agent, prod code review, unity reviewer, web researcher, and 3 auditors (deployed separately but user-invocable).
+- 10 hidden subagents: plan expander, implementer, reviewer, QA writer, eval decomposition reporter, eval metric grader, eval score recorder, test analyst, test writer, test fixer.
 
 ## Template Pack Facts
 

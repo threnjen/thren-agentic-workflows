@@ -28,8 +28,8 @@ flowchart TD
     Root --> Eval[eval artifacts and runbooks]
     Root --> Scripts[scripts]
 
-    GH --> GHAgents[25 source agent definitions]
-    GH --> GHSkills[14 skill directories]
+    GH --> GHAgents[27 source agent definitions]
+    GH --> GHSkills[16 skill directories]
     GH --> GHInstructions[15 instruction files]
 
     Templates --> Node[nodejs AGENTS plus STYLE_GUIDE]
@@ -70,10 +70,10 @@ The watcher task in `.vscode/tasks.json` starts automatically on folder open and
 
 This is the primary authoring surface.
 
-- `.github/agents/` contains 25 source agent definitions.
+- `.github/agents/` contains 27 source agent definitions.
 - Most source agents use the `.agent.md` suffix.
 - `prod-code-review.md` is an intentional plain `.md` exception that is still loaded as an agent because the propagation script keys off frontmatter, not only filename suffixes.
-- `.github/skills/` contains 14 directory-based skills, each rooted at `SKILL.md`.
+- `.github/skills/` contains 16 directory-based skills, each rooted at `SKILL.md`.
 - `.github/instructions/` contains 15 reusable instruction files matched by `applyTo` globs.
 
 ### Generated platform outputs
@@ -117,60 +117,73 @@ The two variants intentionally share structure while diverging on ecosystem-spec
 
 ## Agent System Shape
 
-The source agent system uses an orchestrator-plus-subagent pattern.
+The source agent system uses an orchestrator-plus-subagent pattern, with integrated evaluation and quality assurance stages.
 
-%% Shows the high-level source agent relationships.
+%% Shows the high-level source agent relationships, including planning, execution, eval, and support agents.
 ```mermaid
 flowchart TD
-    PhaseExecute[04 Phase - Execute]
-    Audit[Audit - Code, Infra, Refactor]
-    Test[Test - Orchestrator]
-
     Planner[01 Project - Planner]
     Refiner[02 Phase - Refiner]
     Decomposer[03 Feature - Decomposer]
-    DocsWriter[Documentation Architect]
-    Debugger[Debugger]
-    Evangelize[Evangelize]
-    Eval[05 Eval - Grader]
-    Single[Single Feature - Agent]
-    Unity[Unity Reviewer]
-    Web[Web Research Specialist]
-    Prod[Prod Code Review]
+    PhaseExecute[04 Phase - Execute]
+    Audit[Audit - Code, Infra, Refactor]
+    Test[Test - Orchestrator]
+    ProdReview[Prod Code Review]
+    EvalGrader[Eval - Grader]
 
+    PlanExpander[04a Feature - Plan Expander]
     Implementer[04b Feature - Implementer]
     Reviewer[04c Feature - Reviewer]
     QA[04d Feature - QA Writer]
-    PlanExpander[04a Feature - Plan Expander]
+    
     AuditorCode[Auditor - Code]
     AuditorInfra[Auditor - Infra]
     AuditorRefactor[Auditor - Refactor]
+    
     TestAnalyst[Test - Analyst]
     TestWriter[Test - Writer]
     TestFixer[Test - Fixer]
+    
+    EvalDecomp[Eval - Feature Decomposition]
+    EvalMetric[Eval - Metric Grader]
+    EvalScore[Eval - Score Recorder]
+    
+    Support[Support Agents]
+    DocsWriter[Documentation Architect]
+    Debugger[Debugger]
+    Evangelize[Evangelize]
+    Single[Single Feature - Agent]
+    Unity[Unity Reviewer]
+    Web[Web Researcher]
 
-    PhaseExecute --> Decomposer
+    Planner --> Refiner
+    Refiner --> Decomposer
+    Decomposer --> PhaseExecute
+    
     PhaseExecute --> PlanExpander
     PhaseExecute --> Implementer
     PhaseExecute --> Reviewer
     PhaseExecute --> QA
-    PhaseExecute --> Prod
     PhaseExecute --> DocsWriter
-
+    
     Audit --> AuditorCode
     Audit --> AuditorInfra
     Audit --> AuditorRefactor
-    Audit --> Implementer
-    Audit --> Reviewer
-    Audit --> QA
-    Audit --> DocsWriter
-
+    
     Test --> TestAnalyst
     Test --> TestWriter
     Test --> TestFixer
-    Test --> Implementer
-    Test --> Reviewer
-    Test --> DocsWriter
+    
+    EvalGrader --> EvalDecomp
+    EvalGrader --> EvalMetric
+    EvalGrader --> EvalScore
+    
+    Support --> Unity
+    Support --> Web
+    Support --> Debugger
+    Support --> Evangelize
+    Support --> Single
+    Support --> ProdReview
 ```
 
 ## External Dependencies And Integrations
