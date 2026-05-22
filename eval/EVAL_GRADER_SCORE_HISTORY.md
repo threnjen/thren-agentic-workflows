@@ -8,11 +8,6 @@ Rules:
 - Append rows only. Do not delete, rewrite, reorder, or deduplicate prior entries.
 - Use `NHR` for any axis that remained `[NEEDS_HUMAN_REVIEW]`.
 
-| Timestamp | Phase | Clean Base | Golden Path | Evaluated Branch | Equivalence | Maintainability | Bug Risk | Edge Cases | Turns | Initial Patch Tests | Review Quality | Footprint | Mean Time/Task | Overall Verdict | Report Path | Notes |
-|-----------|-------|------------|-------------|------------------|-------------|-----------------|----------|------------|-------|---------------------|----------------|-----------|----------------|-----------------|-------------|-------|
-
-## Schema v2
-
 Use this section for runs graded after the metric model split between parallel metric subagents and parent-derived execution metrics. Legacy rows above remain unchanged.
 
 | Timestamp | Phase | Clean Base | Golden Path | Evaluated Branch | Equivalence | Clarity | Coherence | Robustness | Bug Risk | Scope Discipline | Footprint | Turns | Initial Patch Tests | Review Quality | Mean Time/Task | Overall Verdict | Report Path | Notes |
@@ -29,5 +24,5 @@ Use this section for runs graded after the metric model split between parallel m
 | 2026-05-21T22:00:00Z | phase-06e | phase/06e | phase/06e-goldenpath | phase/06e-modeltest4-v2 | 5 | 7 | 6 | 7 | 5 | 5 | 4 | 8 | NHR | 6 | NHR | FAIL | the-movies/eval/runs/phase-06e/score-report-modeltest4-v2.md |...|
 | 2026-05-21T16:15:00Z | phase-06e | phase/06e | phase/06e-goldenpath | phase/06e-modeltest6-v2 | 6 | 6 | 6 | 5 | 5 | 7 | 7 | 7 | NHR | 6 | 9 | PARTIAL | the-movies/eval/runs/phase-06e/score-report-modeltest6-v2.md |...|
 | 2026-05-21T18:29:53Z | phase-06e | phase/06e | phase/06e-goldenpath | phase/06e-modeltest8 | 6 | 6 | 5 | 8 | 6 | 3 | 3 | 4 | NHR | 4 | NHR | FAIL | the-movies/eval/runs/phase-06e/score-report-modeltest8-v2.md |...|
-| 2026-05-22T15:15:54Z | phase-06e | phase/06e | phase/06e-goldenpath | phase/06e-modeltest9 | 4 | 5 | 4 | 5 | 4 | 3 | 4 | 6 | NHR | 4 | NHR | FAIL | the-movies/eval/runs/phase-06e/score-report-modeltest9-v2.md | |
+| 2026-05-22T15:15:54Z | phase-06e | phase/06e | phase/06e-goldenpath | phase/06e-modeltest9 | 4 | 5 | 4 | 5 | 4 | 3 | 4 | 6 | NHR | 4 | NHR | FAIL | the-movies/eval/runs/phase-06e/score-report-modeltest9-v2.md |...|
 
