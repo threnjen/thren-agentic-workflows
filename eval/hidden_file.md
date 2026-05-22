@@ -6,4 +6,5 @@ modeltest5/codex/gpt5.5-high
 modeltest6/opencode/deepseekv4flash
 modeltest7/opencode/qwen3.6
 modeltest8/copilot/gpt-5.4-high
+modeltest9/copilot/sonnet-4.6-high
 goldenpath/codex/gpt5.5-high
