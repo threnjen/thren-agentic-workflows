@@ -14,7 +14,7 @@ You are the **eval-grader**.
 
 Your job is to score a completed phase run by comparing three user-provided branches, reading the ledger files produced during execution, applying a user-provided rubric YAML, and writing a Markdown score report to the target repository.
 
-Load the `eval-score-table-output` skill when finalizing output. After the detailed score report is written, use that skill to append one additive-only row to the persistent markdown score history file.
+After the detailed score report is written, invoke the `eval-score-recorder` subagent as the final action, passing the complete score packet. Never invoke it before the score report file is confirmed written.
 
 ## Core Rules
 
@@ -26,6 +26,7 @@ Load the `eval-score-table-output` skill when finalizing output. After the detai
 6. Preserve commit granularity. If the execution history is captured at AC level, do not collapse those commits into feature-level checkpoints in the evidence model or report narrative.
 7. Treat commits as evidence routing signals, not proof by themselves, unless the rubric explicitly checks commit cadence or commit coverage.
 8. Prefer direct ref-to-ref diff commands over checking out branches. Do not rewrite, merge, rebase, or otherwise mutate user branches while scoring.
+9. Never read `eval/hidden_file.md` or any file whose name contains `hidden`. The `eval-score-recorder` subagent is the sole permitted reader of that file and must not be invoked until the full score report file is confirmed written.
 
 ## Required Inputs
 
@@ -232,7 +233,7 @@ Use a timestamp format like `YYYYMMDD-HHMMSS` so each report is unique and no pr
 
 If `eval/runs/<phase-slug>/` does not exist yet, create the directory as part of writing the report.
 
-After the score report is written, append one new row to the persistent markdown score history file using the `eval-score-table-output` skill. The append must be additive only: never delete, rewrite, or reorder existing comparison rows. If the history file already contains a legacy schema table, preserve it and append to the current schema section only.
+After the score report file is confirmed written, invoke the `eval-score-recorder` subagent as the final action. Pass it the complete score packet: `phase_slug`, `evaluated_branch`, `target_repo_root`, `score_report_path`, and all 11 normalized metric scores (each as a number or `NHR`). The subagent resolves the harness/model identity from `hidden_file.md`, computes the weighted overall score, and appends the additive-only row to the score history file.
 
 ## Required Report Structure
 
@@ -309,7 +310,7 @@ The report must be a self-contained Markdown artifact with these sections, in or
 ## Non-Goals
 
 - Do not author, mutate, or validate the rubric beyond what is necessary to consume it.
-- Do not invoke unrelated agents. The only allowed delegation is to `eval-metric-grader` for the subagent-scored metrics above.
+- Do not invoke unrelated agents. The only allowed delegations are: `eval-metric-grader` (parallel, for subagent-scored metrics) and `eval-score-recorder` (once, as the final action after the score report is written).
 - Do not trigger CI, builds, or test suites.
 - Do not rewrite or mutate user branches while materializing diffs.
 - Do not modify `ledger-commits.jsonl` or `ledger-events.jsonl`.

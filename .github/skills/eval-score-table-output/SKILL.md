@@ -30,8 +30,8 @@ The file may contain both a legacy schema table and the current schema table. Ne
 
 Use this exact current-schema column order:
 
-| Timestamp | Phase | Clean Base | Golden Path | Evaluated Branch | Equivalence | Clarity | Coherence | Robustness | Bug Risk | Scope Discipline | Footprint | Turns | Initial Patch Tests | Review Quality | Mean Time/Task | Overall Verdict | Report Path | Notes |
-|-----------|-------|------------|-------------|------------------|-------------|---------|-----------|------------|----------|------------------|-----------|-------|---------------------|----------------|----------------|-----------------|-------------|-------|
+| Timestamp | Phase | Harness/Model | Evaluated Branch | Equivalence | Clarity | Coherence | Robustness | Bug Risk | Scope Discipline | Footprint | Turns | Initial Patch Tests | Review Quality | Mean Time/Task | Overall Verdict | Report Path | Notes |
+|-----------|-------|---------------|------------------|-------------|---------|-----------|------------|----------|------------------|-----------|-------|---------------------|----------------|----------------|-----------------|-------------|-------|
 
 ## Row Rules
 
@@ -40,7 +40,8 @@ Use this exact current-schema column order:
 - `Bug Risk` is inverted for readability: `10` means lowest risk.
 - `Turns`, `Footprint`, and `Mean Time/Task` are also normalized so `10` means the best outcome.
 - `Footprint` captures diff-surface risk. Do not create a separate `Diff Minimality` column; that concern is intentionally folded into `Scope Discipline` plus `Footprint`.
-- `Overall Verdict` should use the grader's final `PASS`, `FAIL`, or `PARTIAL` verdict.
+- `Harness/Model` is provided by the caller (already resolved from `eval/hidden_file.md` by the `Eval - Score Recorder` subagent). Do not look it up here.
+- `Overall Verdict` should contain the pre-computed weighted average score on a `1-10` scale (e.g. `6.4`), or `NHR` if all metrics were NHR. The caller provides this value; do not recompute it here.
 - `Report Path` should point to the timestamped detailed score report.
 - `Notes` should be compact and may include raw backing values such as `turns_raw=3`, `initial_tests_raw=128`, `files_per_ac=2.1`, or `mean_time_raw=00:18:30`.
 
