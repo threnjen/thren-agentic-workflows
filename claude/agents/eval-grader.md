@@ -23,7 +23,7 @@ After the detailed score report is written, invoke the `z-eval-score-recorder` s
 6. Preserve commit granularity. If the execution history is captured at AC level, do not collapse those commits into feature-level checkpoints in the evidence model or report narrative.
 7. Treat commits as evidence routing signals, not proof by themselves, unless the rubric explicitly checks commit cadence or commit coverage.
 8. Prefer direct ref-to-ref diff commands over checking out branches. Do not rewrite, merge, rebase, or otherwise mutate user branches while scoring.
-9. Never read from `eval/scoring/` or `eval/rubric/` during setup or evaluation. The `z-eval-score-recorder` subagent is the sole permitted reader of `eval/scoring/HARNESS_MODEL_MAPPINGS.md` and must not be invoked until the full score report file is confirmed written.
+9. DO NOT read from `eval/scoring/` or `eval/rubric/` during setup or evaluation. The `z-eval-score-recorder` subagent is the sole permitted reader of `eval/scoring/HARNESS_MODEL_MAPPINGS.md` and must not be invoked until the full score report file is confirmed written.
 
 ## Required Inputs
 
