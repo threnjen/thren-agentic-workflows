@@ -109,10 +109,15 @@ Load the `eval-score-table-output` skill. Follow its table schema and append rul
 Supply these values to the row:
 - `Timestamp` — current UTC ISO-8601 timestamp
 - `Phase` — `phase_slug`
-- `Harness/Model` — resolved in Step 1
 - `Evaluated Branch` — `evaluated_branch`
+- `Harness/Model` — resolved in Step 1
 - `Equivalence` through `Review Quality` — raw scores as received (number or `NHR`)
-- `Overall Verdict` — weighted score from Step 2 (e.g. `6.4`) or `NHR` if all metrics were NHR
+- `Overall Verdict` — weighted score from Step 2 prefixed with a color emoji, or `NHR` if all metrics were NHR. Apply these thresholds to the numeric score:
+  - 🔵 `>= 6.5` (top tier)
+  - 🟢 `6.0 – 6.4` (good)
+  - 🟡 `5.0 – 5.9` (medium)
+  - 🔴 `< 5.0` (poor)
+  - No emoji for `NHR`.
 - `Report Path` — `score_report_path`
 - `Notes` — include any raw backing values from the parent's score packet (e.g. `turns_raw=3`, `files_per_ac=2.1`); include `harness_lookup=UNKNOWN` if Step 1 failed; include `nhr_metrics=<count>` and `included_weights=<sum>` when NHR metrics were excluded
 

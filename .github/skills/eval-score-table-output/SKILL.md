@@ -30,8 +30,8 @@ The file may contain both a legacy schema table and the current schema table. Ne
 
 Use this exact current-schema column order:
 
-| Timestamp | Phase | Harness/Model | Evaluated Branch | Overall Verdict | Equivalence | Clarity | Coherence | Robustness | Bug Risk | Scope Discipline | Footprint | Turns | Review Quality | Report Path | Notes |
-|-----------|-------|---------------|------------------|-----------------|-------------|---------|-----------|------------|----------|------------------|-----------|-------|----------------|-------------|-------|
+| Timestamp | Phase | Evaluated Branch | Harness/Model | Overall Verdict | Equivalence | Clarity | Coherence | Robustness | Bug Risk | Scope Discipline | Footprint | Turns | Review Quality | Report Path | Notes |
+|-----------|-------|------------------|---------------|-----------------|-------------|---------|-----------|------------|----------|------------------|-----------|-------|----------------|-------------|-------|
 
 ## Row Rules
 
@@ -41,7 +41,12 @@ Use this exact current-schema column order:
 - `Turns` and `Footprint` are also normalized so `10` means the best outcome.
 - `Footprint` captures diff-surface risk. Do not create a separate `Diff Minimality` column; that concern is intentionally folded into `Scope Discipline` plus `Footprint`.
 - `Harness/Model` is provided by the caller (already resolved from `eval/hidden_file.md` by the `Eval - Score Recorder` subagent). Do not look it up here.
-- `Overall Verdict` should contain the pre-computed weighted average score on a `1-10` scale (e.g. `6.4`), or `NHR` if all metrics were NHR. The caller provides this value; do not recompute it here.
+- `Overall Verdict` should contain a color emoji prefix followed by the pre-computed weighted average score on a `1-10` scale, or `NHR` if all metrics were NHR. The caller provides the numeric value; apply the emoji prefix according to these thresholds:
+  - 🔵 `>= 6.5` (top tier)
+  - 🟢 `6.0 – 6.4` (good)
+  - 🟡 `5.0 – 5.9` (medium)
+  - 🔴 `< 5.0` (poor)
+  - No emoji for `NHR`.
 - `Report Path` should point to the timestamped detailed score report.
 - `Notes` should be compact and may include raw backing values such as `turns_raw=3`, `files_per_ac=2.1`.
 
