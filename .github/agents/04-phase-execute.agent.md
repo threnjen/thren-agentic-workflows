@@ -49,8 +49,6 @@ Detect whether this is a Unity project before starting wave execution:
 
 Execute waves in numeric wave order according to the execution schedule from the manifest. Within each wave, use sequential or parallel execution based on the `parallel_safe` flags.
 
-Before starting implementation for a feature, read `dev/feature/[0N-task-name]/[0N-task-name]-plan.md` and extract the ordered acceptance criteria list exactly as labeled (`AC1`, `AC2`, ...). Use those labels as the implementation checkpoint sequence. Do not renumber, merge, or infer new AC labels.
-
 Record each reviewer's verdict as it returns:
 - `[0N-task-name]`: Approved | Approved with Reservations | Changes Requested
 
@@ -62,17 +60,15 @@ After ALL waves complete, determine: are all recorded verdicts Approved or Appro
 
 For each feature in the wave (in numeric prefix order), complete the full cycle before starting the next:
 
-**A. Implement** — Work through the feature one AC at a time, in plan order.
+**A. Implement** — Invoke **Feature - Implementer** once for the full feature:
 
-For each acceptance criterion `[ac-label]` in the feature's ordered AC list, invoke **Feature - Implementer**:
+> "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Return a summary of what was implemented and test results."
 
-> "[SUBAGENT-MODE] Implement only `[ac-label]` from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, limit work to that single acceptance criterion, use Red-Green-Refactor TDD for `[ac-label]`, and write or update the cumulative implementation record at `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md` while preserving prior AC status entries. Return a summary of what was implemented for `[ac-label]` and test results."
+Wait for the implementer to return.
 
-Wait for the implementer to return before moving to the next AC.
+**A1. Commit checkpoint** — After the implementer returns, stage only the files modified during this feature's implementation: any source/test files changed plus all pipeline documents in `dev/feature/[0N-task-name]/`, especially `[0N-task-name]-implementation.md`. Do not stage files from other feature directories. Commit this checkpoint with the exact message `eval: implement <feature-slug>`, replacing `<feature-slug>` with the current feature directory name.
 
-**A1. Commit checkpoint** — After each AC-scoped implementer run returns, stage only the files modified during that AC pass: any source/test files changed for `[ac-label]` plus any pipeline documents updated in `dev/feature/[0N-task-name]/`, especially `[0N-task-name]-implementation.md`. Do not stage files from other feature directories or untouched AC work. Commit this checkpoint with the exact message `eval: implement <feature-slug> <ac-label>`, replacing `<feature-slug>` with the current feature directory name and `<ac-label>` with the exact AC label from the plan.
-
-**B. Review** — Only after all AC-level implementation checkpoints for the feature are complete, run one full-feature review.
+**B. Review** — Only after the implementer returns, run one full-feature review.
 
 If `is-unity-project: yes`, first invoke **Unity Reviewer** for this feature as a Unity-specific review pass:
 
@@ -90,21 +86,17 @@ Then invoke **Feature - Reviewer** per Steps B–C from the `implementation-pipe
 
 #### Parallel wave — all features in the wave are `parallel_safe: yes`
 
-**Phase A — Implement all features simultaneously, one AC round at a time.**
+**Phase A — Implement all features simultaneously.**
 
-For each feature in the wave, read its plan and extract the ordered AC list exactly as labeled.
+Invoke one **Feature - Implementer** per feature in the wave, all at the same time:
 
-Process the wave in repeated AC rounds. In each round, invoke one **Feature - Implementer** per feature that still has an unimplemented next AC, all at the same time:
+> "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Return a summary of what was implemented and test results."
 
-> "[SUBAGENT-MODE] Implement only `[ac-label]` from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, limit work to that single acceptance criterion, use Red-Green-Refactor TDD for `[ac-label]`, and write or update the cumulative implementation record at `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md` while preserving prior AC status entries. Return a summary of what was implemented for `[ac-label]` and test results."
+Wait for ALL implementers to return before proceeding.
 
-Wait for ALL implementers in the current round to return before starting the next round.
+After all implementers return, stage and commit each feature in numeric prefix order. For each feature, stage only the files modified during its implementation: any source/test files changed plus all pipeline documents in `dev/feature/[0N-task-name]/`, especially `[0N-task-name]-implementation.md`. Do not stage files from other feature directories. Commit each checkpoint with the exact message `eval: implement <feature-slug>`, replacing `<feature-slug>` with the current feature directory name.
 
-After each implementer returns, stage only the files modified during that AC pass: any source/test files changed for that feature's current `[ac-label]` plus any pipeline documents updated in `dev/feature/[0N-task-name]/`, especially `[0N-task-name]-implementation.md`. Do not stage files from other feature directories or untouched AC work. Commit each checkpoint in numeric prefix order with the exact message `eval: implement <feature-slug> <ac-label>`, replacing `<feature-slug>` with the current feature directory name and `<ac-label>` with the exact AC label from the plan.
-
-Repeat rounds until every feature in the wave has completed all AC-level implementation checkpoints.
-
-**Phase B — Review all features simultaneously after their AC-level implementation checkpoints are complete.**
+**Phase B — Review all features simultaneously after implementation is complete.**
 
 If `is-unity-project: yes`, run a Unity review pass first:
 - Invoke one **Unity Reviewer** per feature in the wave, all at the same time, using the same feature-scoped prompt as the sequential loop.
