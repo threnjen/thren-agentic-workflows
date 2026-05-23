@@ -64,9 +64,29 @@ ls /Users/jennywadkins/github_repos/github-agents-source-of-truth/claude/agents 
 
 If links are correct, Claude should discover all agents/skills/learnings from this repository automatically.
 
+## 4) Settings & Hooks Symlink
+
+Claude's settings (including propagated notification hooks) live in `.claude/settings.json` in this repo. Link the user-scoped config at `~/.claude/settings.json` back to the repository copy so the propagation script's output takes effect immediately.
+
+```bash
+# Backup any existing file first
+[ -e ~/.claude/settings.json ] && ! [ -L ~/.claude/settings.json ] && mv ~/.claude/settings.json ~/.claude/settings.json.backup
+
+ln -sfn /Users/jennywadkins/github_repos/github-agents-source-of-truth/.claude/settings.json ~/.claude/settings.json
+```
+
+Verify:
+```bash
+readlink ~/.claude/settings.json
+# Expected: /Users/jennywadkins/github_repos/github-agents-source-of-truth/.claude/settings.json
+```
+
+**How hooks flow:** `.github/hooks/*.json` → `propagate_master_assets.py` → `.claude/settings.json` (with `$source` provenance keys) → `~/.claude/settings.json` via this symlink. Propagated entries have `"$source": "<hook-name>"` so the script can safely replace them on reruns without disturbing manually-managed hooks.
+
 ## Notes
 
 - `~/.claude/agents` should be a real directory, not a symlink.
 - `ln -sfn` force-updates each individual agent symlink in place.
 - The `rm -f ~/.claude/agents` step is safe only when `~/.claude/agents` is currently a symlink. If it is a real directory on your machine, inspect and back it up before replacing it.
 - Keep `.github/` as source-of-truth for skills and learnings; `claude/` consumes via symlink.
+- `~/.claude/settings.json` should be a symlink to `.claude/settings.json` in this repo, not a standalone file.

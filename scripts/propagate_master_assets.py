@@ -28,6 +28,7 @@ WATCH_DIRS = [
     REPO_ROOT / ".github" / "agents",
     REPO_ROOT / ".github" / "skills",
     REPO_ROOT / ".github" / "instructions",
+    REPO_ROOT / ".github" / "hooks",
 ]
 
 CLAUDE_AGENTS_DIR = REPO_ROOT / "claude" / "agents"
@@ -35,10 +36,29 @@ OPENCODE_AGENTS_DIR = REPO_ROOT / "opencode" / "agents"
 CODEX_AGENTS_DIR = REPO_ROOT / "codex" / "agents"
 GITHUB_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
 CODEX_SKILLS_DIR = REPO_ROOT / "codex" / "skills"
+GITHUB_HOOKS_DIR = REPO_ROOT / ".github" / "hooks"
+CLAUDE_SETTINGS_FILE = REPO_ROOT / ".claude" / "settings.json"
+CODEX_HOOKS_FILE = REPO_ROOT / ".codex" / "hooks.json"
+OPENCODE_PLUGINS_DIR = REPO_ROOT / ".opencode" / "plugins"
 
 
 GENERATED_AGENT_HEADER = "# Generated from .github/agents source-of-truth. Do not edit manually."
 GENERATED_SKILL_HEADER = "<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->\n"
+GENERATED_OPENCODE_PLUGIN_HEADER = "// Generated from .github/hooks source-of-truth. Do not edit manually.\n"
+HOOK_SOURCE_KEY = "$source"
+
+# Default translation from VS Code Copilot hook events → target tool events.
+# Keys are VS Code event names. Values map tool name → list of target event names.
+# Overridden per-file via $meta.<VsCodeEvent>.<tool> in the hook JSON.
+HOOK_EVENT_MAP: Dict[str, Dict[str, List[str]]] = {
+    "Stop":             {"claude": ["Stop", "Notification"], "codex": ["Stop"],          "opencode": ["session.idle"]},
+    "SessionStart":     {"claude": ["SessionStart"],          "codex": ["SessionStart"],  "opencode": ["session.created"]},
+    "PreToolUse":       {"claude": ["PreToolUse"],            "codex": ["PreToolUse"],    "opencode": ["tool.execute.before"]},
+    "PostToolUse":      {"claude": ["PostToolUse"],           "codex": ["PostToolUse"],   "opencode": ["tool.execute.after"]},
+    "UserPromptSubmit": {"claude": ["UserPromptSubmit"],      "codex": ["UserPromptSubmit"], "opencode": []},
+    "SubagentStop":     {"claude": ["SubagentStop"],          "codex": ["SubagentStop"],  "opencode": []},
+    "PreCompact":       {"claude": ["PreCompact"],            "codex": ["PreCompact"],    "opencode": []},
+}
 
 # Agents that live exclusively in .github/agents and must never be propagated
 # to any platform output directory.
@@ -561,6 +581,154 @@ def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc], reference
     return "\n".join(lines).rstrip() + "\n"
 
 
+def _to_pascal_case(name: str) -> str:
+    """Convert a dash/underscore-separated name to PascalCase for JS identifiers."""
+    return "".join(word.title() for word in name.replace("-", "_").split("_"))
+
+
+def _resolve_hook_events(vscode_event: str, meta: Dict, tool: str) -> List[str]:
+    """Return target events for a tool, using $meta overrides when present."""
+    event_meta = meta.get(vscode_event, {})
+    if tool in event_meta:
+        return event_meta[tool]
+    return HOOK_EVENT_MAP.get(vscode_event, {}).get(tool, [])
+
+
+def _resolve_hook_command(entry: Dict, meta: Dict, tool: str) -> str:
+    """Return the command for a tool, with $meta.commands override support."""
+    commands_override = meta.get("commands", {})
+    if tool in commands_override:
+        return commands_override[tool]
+    return entry.get("osx") or entry.get("command", "")
+
+
+def _strip_propagated_hooks(settings: Dict) -> None:
+    """Remove all hook entries tagged with HOOK_SOURCE_KEY from settings in-place."""
+    for event_key in list(settings.get("hooks", {}).keys()):
+        settings["hooks"][event_key] = [
+            e for e in settings["hooks"][event_key]
+            if HOOK_SOURCE_KEY not in e
+        ]
+        if not settings["hooks"][event_key]:
+            del settings["hooks"][event_key]
+
+
+def _render_opencode_plugin(name: str, event_commands: List[Tuple[str, str]]) -> str:
+    """Render an OpenCode JS plugin file from (event, command) pairs."""
+    fn_name = _to_pascal_case(name)
+    handler_lines: List[str] = []
+    for i, (event, command) in enumerate(event_commands):
+        escaped = command.replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
+        comma = "," if i < len(event_commands) - 1 else ""
+        handler_lines.append(f'    "{event}": async (_input, _output) => {{')
+        handler_lines.append(f"      await $`{escaped}`")
+        handler_lines.append(f"    }}{comma}")
+    handlers = "\n".join(handler_lines)
+    return (
+        GENERATED_OPENCODE_PLUGIN_HEADER
+        + f"export const {fn_name} = async ({{ $ }}) => {{\n"
+        + f"  return {{\n"
+        + f"{handlers}\n"
+        + f"  }}\n"
+        + f"}}\n"
+    )
+
+
+def _update_nested_settings_file(
+    settings_file: Path,
+    source_hooks: List[Dict],
+    tool: str,
+) -> bool:
+    """Rebuild Claude/Codex-style nested settings, preserving untagged entries."""
+    if settings_file.exists():
+        settings: Dict = json.loads(settings_file.read_text(encoding="utf-8"))
+    else:
+        settings = {}
+    settings.setdefault("hooks", {})
+    _strip_propagated_hooks(settings)
+    for source in source_hooks:
+        for vscode_event, entries in source["hooks_by_event"].items():
+            target_events = _resolve_hook_events(vscode_event, source["meta"], tool)
+            for target_event in target_events:
+                settings["hooks"].setdefault(target_event, [])
+                for entry in entries:
+                    command = _resolve_hook_command(entry, source["meta"], tool)
+                    timeout = entry.get("timeout")
+                    inner: Dict = {"type": "command", "command": command}
+                    if timeout is not None:
+                        inner["timeout"] = timeout
+                    settings["hooks"][target_event].append({
+                        "matcher": "",
+                        HOOK_SOURCE_KEY: source["name"],
+                        "hooks": [inner],
+                    })
+    return _write_if_changed(settings_file, json.dumps(settings, indent=2) + "\n")
+
+
+def propagate_hooks_once(verbose: bool = False) -> Dict[str, int]:
+    """Propagate .github/hooks/*.json -> Claude settings, Codex hooks, OpenCode plugins."""
+    if not GITHUB_HOOKS_DIR.exists():
+        return {"hooks_source": 0, "claude_changed": 0, "codex_changed": 0, "opencode_changed": 0}
+
+    source_hooks: List[Dict] = []
+    for hook_file in sorted(GITHUB_HOOKS_DIR.glob("*.json")):
+        try:
+            data = json.loads(hook_file.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        source_hooks.append({
+            "name": hook_file.stem,
+            "hooks_by_event": data.get("hooks", {}),
+            "meta": data.get("$meta", {}),
+        })
+
+    claude_changed = _update_nested_settings_file(CLAUDE_SETTINGS_FILE, source_hooks, "claude")
+    codex_changed = _update_nested_settings_file(CODEX_HOOKS_FILE, source_hooks, "codex")
+
+    OPENCODE_PLUGINS_DIR.mkdir(parents=True, exist_ok=True)
+    opencode_changed = 0
+    expected_plugins: set[Path] = set()
+
+    for source in source_hooks:
+        event_commands: List[Tuple[str, str]] = []
+        for vscode_event, entries in source["hooks_by_event"].items():
+            target_events = _resolve_hook_events(vscode_event, source["meta"], "opencode")
+            for target_event in target_events:
+                for entry in entries:
+                    command = _resolve_hook_command(entry, source["meta"], "opencode")
+                    event_commands.append((target_event, command))
+        if not event_commands:
+            continue
+        plugin_file = OPENCODE_PLUGINS_DIR / f"{source['name']}.js"
+        expected_plugins.add(plugin_file)
+        if _write_if_changed(plugin_file, _render_opencode_plugin(source["name"], event_commands)):
+            opencode_changed += 1
+
+    if OPENCODE_PLUGINS_DIR.exists():
+        for plugin_file in OPENCODE_PLUGINS_DIR.glob("*.js"):
+            if plugin_file in expected_plugins:
+                continue
+            content = plugin_file.read_text(encoding="utf-8")
+            if content.startswith(GENERATED_OPENCODE_PLUGIN_HEADER):
+                plugin_file.unlink()
+                opencode_changed += 1
+
+    if verbose:
+        print(json.dumps({
+            "hooks_source": len(source_hooks),
+            "claude_changed": int(claude_changed),
+            "codex_changed": int(codex_changed),
+            "opencode_changed": opencode_changed,
+        }, indent=2))
+
+    return {
+        "hooks_source": len(source_hooks),
+        "claude_changed": int(claude_changed),
+        "codex_changed": int(codex_changed),
+        "opencode_changed": opencode_changed,
+    }
+
+
 def propagate_once(verbose: bool = True) -> Dict[str, int]:
     agents = load_source_agents()
     instructions = load_instruction_docs()
@@ -668,11 +836,14 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
                 dest_dir.rmdir()
                 changed_skills += 1
 
+    hooks_result = propagate_hooks_once(verbose=False)
+
     result = {
         "source_agents": len(agents),
-        "claude_changed": changed_claude,
-        "opencode_changed": changed_opencode,
-        "codex_changed": changed_codex,
+        "hooks_source": hooks_result["hooks_source"],
+        "claude_changed": changed_claude + hooks_result["claude_changed"],
+        "opencode_changed": changed_opencode + hooks_result["opencode_changed"],
+        "codex_changed": changed_codex + hooks_result["codex_changed"],
         "skills_changed": changed_skills,
     }
 
@@ -719,7 +890,7 @@ def _compute_changes(
 
 
 def watch_loop(interval_seconds: float = 1.0) -> None:
-    print("Starting master asset watcher for .github/{agents,skills,instructions} ...")
+    print("Starting master asset watcher for .github/{agents,skills,instructions,hooks} ...")
     propagate_once(verbose=True)
 
     last_state = _collect_file_state(WATCH_DIRS)
