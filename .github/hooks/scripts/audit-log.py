@@ -23,20 +23,20 @@ def truncate(obj, max_len=200):
     return s if len(s) <= max_len else s[:max_len] + '…'
 
 
-# Extract a useful exit/status code if present
-exit_code = (
-    tool_resp.get('exit_code') or
-    tool_resp.get('exitCode') or
-    tool_resp.get('status')
-)
+# # Extract a useful exit/status code if present
+# exit_code = (
+#     tool_resp.get('exit_code') or
+#     tool_resp.get('exitCode') or
+#     tool_resp.get('status')
+# )
 
 entry = {
     'ts':            datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
     'tool':          tool_name,
     'input_summary': truncate(tool_input),
 }
-if exit_code is not None:
-    entry['exit_code'] = exit_code
+# if exit_code is not None:
+#     entry['exit_code'] = exit_code
 
 with open(LOG_FILE, 'a') as f:
     f.write(json.dumps(entry) + '\n')
