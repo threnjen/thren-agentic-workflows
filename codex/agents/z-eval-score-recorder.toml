@@ -48,14 +48,14 @@ These weights are the canonical definition for this eval system. They sum to `10
 | Metric              | Table Column Order | Weight |
 |---------------------|--------------------|--------|
 | Equivalence         | 1                  | 20     |
-| Clarity             | 2                  | 8      |
+| Clarity             | 2                  | 10     |
 | Coherence           | 3                  | 10     |
-| Robustness          | 4                  | 12     |
+| Robustness          | 4                  | 15     |
 | Bug Risk            | 5                  | 15     |
-| Scope Discipline    | 6                  | 10     |
+| Scope Discipline    | 6                  | 12     |
 | Footprint           | 7                  | 3      |
 | Turns               | 8                  | 5      |
-| Review Quality      | 9                  | 7      |
+| Review Quality      | 9                  | 10     |
 
 ### Computation Procedure
 
