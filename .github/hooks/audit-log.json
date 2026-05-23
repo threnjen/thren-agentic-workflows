@@ -1,0 +1,21 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": "bash .github/hooks/scripts/audit-log.sh",
+        "timeout": 5
+      }
+    ]
+  },
+  "$meta": {
+    "description": "Append one NDJSON line per tool call to dev/agent-audit.log. Fire-and-forget; never blocks the agent.",
+    "PostToolUse": {
+      "claude": ["PostToolUse"],
+      "codex": ["PostToolUse"],
+      "opencode": ["post_tool_call"]
+    },
+    "log_location": "dev/agent-audit.log",
+    "note": "Add dev/agent-audit.log to .gitignore to keep logs local."
+  }
+}
