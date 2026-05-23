@@ -123,7 +123,7 @@ Then attempt to load both ledger files for the resolved phase slug and any other
 
 - `ledger-commits.jsonl` is the raw commit timeline. Each row includes `sha`, `branch`, `message`, `timestamp`, and changed files. Some runs may encode feature slugs, AC refs, or criterion IDs directly in commit messages.
 - `ledger-events.jsonl` is the semantic event stream. Each row includes fields such as `task_slug`, `stage`, `detected_by`, `severity`, `evidence`, `human_intervention_required`, `regression`, and resolution metadata. Some runs may also include `event_kind`, `event_id`, and `related_event_id` to distinguish remediation-turn entry rows, newly discovered failures, and later resolution rows.
-- User-supplied manual validation inputs may be present in another explicit local artifact, such as a note or report that records `initial_patch_passing_tests`, when the grader needs a Unity Test Runner result that cannot be inferred from ledgers.
+- User-supplied manual validation inputs may be present in another explicit local artifact, such as a note or report that records test results, when the grader needs evidence that cannot be inferred from ledgers.
 
 Handle ledger edge cases explicitly:
 
