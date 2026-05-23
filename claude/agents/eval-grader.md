@@ -133,7 +133,6 @@ Handle ledger edge cases explicitly:
 - Missing or unresolvable clean-base->evaluated diff: stop with a clear message, because the evaluated patch cannot be scored without it.
 - Empty golden diff or empty evaluated diff: valid input, but note it explicitly and account for it in equivalence and footprint scoring.
 - Missing explicit commit cadence metadata: valid input. Infer cadence from commit evidence when possible and note when one-commit-per-AC enforcement was inferred rather than declared.
-- Missing an exact initial-patch test count artifact: valid input, but the `initial patch passing tests` metric must be reported as `[NEEDS_HUMAN_REVIEW]` unless other local evidence provides the exact count.
 - Missing `ledger-commits.jsonl`: note in the report that the raw commit ledger is missing, likely meaning the post-commit hook was not installed or did not run.
 - Missing `ledger-events.jsonl`: note in the report that no semantic event ledger is present.
 - Empty ledgers: valid zero-row inputs.
@@ -169,7 +168,7 @@ Use commit SHA as the timeline anchor.
    - golden diff changes that the evaluated branch appears to omit
 10. Produce a unified timeline that shows, for each commit SHA: what was committed, what events were detected, the ledger order in which they appeared, and any matched criterion IDs or AC refs.
 11. Build metric evidence packets for each subagent-scored dimension. Each packet should contain the metric name, branch identifiers, relevant diff artifact paths, the specific patch or ledger evidence for that metric, any raw footprint measurements already derived, and concise rubric context.
-12. Build a parent-only metrics packet for `turns`, `initial_patch_passing_tests`, `mean_time_per_task`, and `overall_review_quality`.
+12. Build a parent-only metrics packet for `turns` and `overall_review_quality`.
 
 The comparative patch model, unified timeline, and metric packets are the evidence base for rubric scoring, subagent metric scoring, derived execution metrics, regression reporting, and human-intervention counts.
 
@@ -206,9 +205,7 @@ Subagent-scored comparative dimensions:
 Then compute these parent-only dimensions directly in the main grader. These metrics must **not** be delegated to subagents because they rely on global ledger aggregation, exact artifact counts, or parent-level synthesis across all other evidence:
 
 8. `turns`: count regressions, manual-fix cycles, or extra remediation turns visible in ledger commits or events beyond the expected implementation cadence. Report both the raw count and a `1-10` normalized score, where `10` means the fewest extra turns relative to the golden reference and expected cadence.
-9. `initial_patch_passing_tests`: report the number of tests that passed on the initial patch. Prefer an explicit local artifact that records `initial_patch_passing_tests`. Report both the raw count and a `1-10` normalized score, where `10` means it matches the golden-path expectation. If no exact local count exists, mark this dimension `[NEEDS_HUMAN_REVIEW]`.
-10. `mean_time_per_task`: derive the average elapsed time per criterion, AC, or task from commit and event timestamps when enough evidence exists. Report both the raw duration and a `1-10` normalized score, where `10` means the fastest acceptable execution relative to the golden reference.
-11. `overall_review_quality`: synthesize rubric compliance, all metric-subagent results, and review findings into a `1-10` score, where `10` means golden-reference quality. Because this is a synthesis score, it must remain parent-only.
+9. `overall_review_quality`: synthesize rubric compliance, all metric-subagent results, and review findings into a `1-10` score, where `10` means golden-reference quality. Because this is a synthesis score, it must remain parent-only.
 
 Do not add a separate `diff_minimality` score. Treat it as already covered by the combination of `scope_discipline` and `footprint_risk`; scoring it separately would double-count change size.
 
@@ -244,7 +241,7 @@ After the score report file is confirmed written, check whether `<target_repo_ro
 
   One line per entry: `<label>/<harness>/<model>`. Labels must be valid branch-name tokens. The ignored-agent-instructions header block must appear before the first data line.
 
-Once the mapping file exists, invoke the `z-eval-score-recorder` subagent as the final action. Pass it the complete score packet: `phase_slug`, `evaluated_branch`, `target_repo_root`, `score_report_path`, and all 11 normalized metric scores (each as a number or `NHR`). The subagent resolves the harness/model identity from `eval/scoring/HARNESS_MODEL_MAPPINGS.md`, computes the weighted overall score, and appends the additive-only row to `eval/scoring/EVAL_GRADER_SCORE_HISTORY.md` in the target repository.
+Once the mapping file exists, invoke the `z-eval-score-recorder` subagent as the final action. Pass it the complete score packet: `phase_slug`, `evaluated_branch`, `target_repo_root`, `score_report_path`, and all 9 normalized metric scores (each as a number or `NHR`). The subagent resolves the harness/model identity from `eval/scoring/HARNESS_MODEL_MAPPINGS.md`, computes the weighted overall score, and appends the additive-only row to `eval/scoring/EVAL_GRADER_SCORE_HISTORY.md` in the target repository.
 
 ## Required Report Structure
 
@@ -290,7 +287,7 @@ The report must be a self-contained Markdown artifact with these sections, in or
 7. `[NEEDS_HUMAN_REVIEW] Items`
    - every manual QA criterion from the rubric
    - every criterion lacking an automatable local check
-   - any comparative dimension that lacks exact local evidence, including `initial_patch_passing_tests` when the Unity Test Runner count was not supplied
+   - any comparative dimension that lacks exact local evidence
 8. `Human Intervention Count`
    - count of rubric items needing human review
    - count of ledger rows where `human_intervention_required` is `true`
@@ -314,7 +311,7 @@ The report must be a self-contained Markdown artifact with these sections, in or
 - Return the report path in the final response.
 - Return the persistent score history markdown path in the final response.
 - Mention missing ledgers or unresolved human-review items in the response summary.
-- Mention missing diff artifacts, missing branch resolution, or absent initial-patch test counts in the response summary when relevant.
+- Mention missing diff artifacts or missing branch resolution in the response summary when relevant.
 - Mention missing AC-level commit coverage or unmatched AC commits in the response summary when relevant.
 - Do not pause for confirmation between reading inputs, scoring criteria, and writing the report.
 

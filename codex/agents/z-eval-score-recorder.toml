@@ -12,10 +12,10 @@ You are invoked exactly once per grading run, as the final action after the pare
 - `evaluated_branch` — full branch name (e.g. `phase/06e-modeltest4`)
 - `target_repo_root` — absolute path to the target repository
 - `score_report_path` — path to the written score report file
-- `scores` — all 11 normalized metric scores, each a number `1-10` or `NHR`:
+- `scores` — all 9 normalized metric scores, each a number `1-10` or `NHR`:
   - `equivalence`, `clarity`, `coherence`, `robustness`, `bug_risk`
-  - `scope_discipline`, `footprint`, `turns`, `initial_patch_tests`
-  - `review_quality`, `mean_time_per_task`
+  - `scope_discipline`, `footprint`, `turns`
+  - `review_quality`
 
 ## Constraints
 
@@ -55,9 +55,7 @@ These weights are the canonical definition for this eval system. They sum to `10
 | Scope Discipline    | 6                  | 10     |
 | Footprint           | 7                  | 3      |
 | Turns               | 8                  | 5      |
-| Initial Patch Tests | 9                  | 8      |
-| Review Quality      | 10                 | 7      |
-| Mean Time/Task      | 11                 | 2      |
+| Review Quality      | 9                  | 7      |
 
 ### Computation Procedure
 
@@ -65,7 +63,7 @@ Work through these steps explicitly in your scratchpad before writing anything:
 
 **Pass 1 — List each metric:**
 
-For each of the 11 metrics in table column order, write:
+For each of the 9 metrics in table column order, write:
 ```
 <metric>: score=<value>, weight=<weight>, product=<weight × value>   [or SKIP if NHR]
 ```
@@ -91,7 +89,7 @@ Confirm the result matches Pass 3.
 If there is a discrepancy, resolve it and state the corrected value.
 
 **Edge cases:**
-- If all 11 metrics are `NHR`, write `NHR` in the `Overall Verdict` cell.
+- If all 9 metrics are `NHR`, write `NHR` in the `Overall Verdict` cell.
 - Scores of `NHR` are excluded from both numerator and denominator. Do not substitute `0` for `NHR`.
 
 The per-metric products are **never written** into the table — only the final rounded `overall` value goes in `Overall Verdict`.
@@ -107,7 +105,7 @@ Supply these values to the row:
 - `Phase` — `phase_slug`
 - `Harness/Model` — resolved in Step 1
 - `Evaluated Branch` — `evaluated_branch`
-- `Equivalence` through `Mean Time/Task` — raw scores as received (number or `NHR`)
+- `Equivalence` through `Review Quality` — raw scores as received (number or `NHR`)
 - `Overall Verdict` — weighted score from Step 2 (e.g. `6.4`) or `NHR` if all metrics were NHR
 - `Report Path` — `score_report_path`
 - `Notes` — include any raw backing values from the parent's score packet (e.g. `turns_raw=3`, `files_per_ac=2.1`); include `harness_lookup=UNKNOWN` if Step 1 failed; include `nhr_metrics=<count>` and `included_weights=<sum>` when NHR metrics were excluded
