@@ -418,6 +418,35 @@ def _build_instruction_appendix(agent: SourceAgent, docs: List[InstructionDoc]) 
     return "\n".join(sections).strip() + "\n"
 
 
+def _inject_claude_selected_agent_instruction(agent: SourceAgent, body: str, identifier: str) -> str:
+    if not agent.user_invocable:
+        return body
+
+    clause = (
+        f"When the user addresses you by name or role, "
+        "begin work in this role immediately. "
+        f"Do not spend your first action invoking `{identifier}` as a subagent. "
+        "Delegate only to distinct child agents when the workflow explicitly calls for them."
+    )
+    if clause in body:
+        return body
+
+    paragraphs = body.split("\n\n")
+    insert_after = 0
+
+    while insert_after < len(paragraphs) and paragraphs[insert_after].lstrip().startswith("#"):
+        insert_after += 1
+
+    if insert_after < len(paragraphs):
+        next_index = insert_after + 1
+        next_paragraph = paragraphs[next_index].lstrip() if next_index < len(paragraphs) else ""
+        if paragraphs[insert_after].lstrip().startswith("You are") and next_paragraph.startswith("Your "):
+            insert_after = next_index
+
+    paragraphs.insert(insert_after + 1, clause)
+    return "\n\n".join(paragraphs)
+
+
 def render_claude_agent(
     agent: SourceAgent,
     docs: List[InstructionDoc],
@@ -427,6 +456,7 @@ def render_claude_agent(
     tools = ", ".join(map_tools_for_claude(agent.tools))
     appendix = _build_instruction_appendix(agent, docs)
     body = _rewrite_agent_references(agent.body.strip(), reference_map, preserve_at_sign=True)
+    body = _inject_claude_selected_agent_instruction(agent, body, identifier)
 
     parts = [
         "---",

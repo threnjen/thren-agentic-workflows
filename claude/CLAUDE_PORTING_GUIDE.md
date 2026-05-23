@@ -48,6 +48,13 @@ Claude agent files use Markdown frontmatter with:
 8. Append inlined instruction content under a `## Auto-Loaded Instructions` section header at the end of the agent body.
 9. Ensure instruction intent is present in the final agent body.
 10. Keep behavior equivalent to source, excluding unsupported tool semantics.
+11. For every user-invocable agent (filename does **not** start with `z-`), insert the following paragraph immediately after the opening identity statement (the first "You are..." sentence or block), before any workflow or constraint content:
+
+```
+When the user addresses you by name or role, begin work in this role immediately. Do not spend your first action invoking `<name>` as a subagent. Delegate only to distinct child agents when the workflow explicitly calls for them.
+```
+
+Replace `<name>` with the agent's `name:` frontmatter value. Do **not** add this paragraph to `z-` prefixed agents — those are intentionally spawned as subagents by orchestrators.
 
 ## Validation Checklist
 
@@ -59,10 +66,26 @@ Claude agent files use Markdown frontmatter with:
 - Unsupported GitHub-only tools are dropped.
 - Agent behavior remains aligned with source intent.
 - Agent appears in Claude agent discovery.
+- Non-`z-` agents include the assume-as-role paragraph after their opening identity statement.
+- `z-` prefixed agents do **not** include the assume-as-role paragraph.
 
 ## Claude Code Behavioral Notes
 
 These are Claude Code-specific behaviors that must be enforced in every ported agent. The source `.github/` agents do not need them because GitHub Copilot's tool model does not exhibit these failure modes.
+
+### User-Invocable Agents: Assume the Role, Do Not Spawn It
+
+When a user addresses a Claude agent by name (e.g., `@phase-execute`), that agent is already the active role. Claude Code's `@agent-name` syntax loads the agent's prompt inline — the agent should begin work immediately, not spawn itself again as a subagent on first action.
+
+**Rule:** Every ported agent whose filename does **not** start with `z-` must include the following paragraph immediately after its opening identity statement:
+
+```
+When the user addresses you by name or role, begin work in this role immediately. Do not spend your first action invoking `<name>` as a subagent. Delegate only to distinct child agents when the workflow explicitly calls for them.
+```
+
+Replace `<name>` with the agent's `name:` frontmatter value.
+
+`z-` prefixed agents are excluded — they are internal subagents intentionally spawned by orchestrators and should not receive this instruction.
 
 ### File Operations: Never Fall Back to Bash
 
