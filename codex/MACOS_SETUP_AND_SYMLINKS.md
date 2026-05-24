@@ -154,7 +154,7 @@ ls -la "$HOME/.agents/skills/"
 Codex lifecycle hooks (Stop, PostToolUse, SessionStart, etc.) are authored in `.github/hooks/*.json` and propagated automatically by `propagate_master_assets.py` into `.codex/hooks.json`. Link `~/.codex/hooks.json` to the repo copy so changes take effect immediately.
 
 ```sh
-REPO_ROOT=/Users/jennywadkins/github_repos/github-agents-source-of-truth
+REPO_ROOT="$HOME/github_repos/github-agents-source-of-truth"
 
 # Backup any existing real file
 [ -e "$HOME/.codex/hooks.json" ] && ! [ -L "$HOME/.codex/hooks.json" ] && mv "$HOME/.codex/hooks.json" "$HOME/.codex/hooks.json.backup"
@@ -165,7 +165,7 @@ ln -sfn "$REPO_ROOT/.codex/hooks.json" "$HOME/.codex/hooks.json"
 Verify:
 ```sh
 readlink ~/.codex/hooks.json
-# Expected: /Users/jennywadkins/github_repos/github-agents-source-of-truth/.codex/hooks.json
+# Expected: /Users/<your-username>/github_repos/github-agents-source-of-truth/.codex/hooks.json
 ```
 
 **How hooks flow:** `.github/hooks/*.json` → `propagate_master_assets.py` → `.codex/hooks.json` (entries tagged `"$source": "<hook-name>"`) → `~/.codex/hooks.json` via this symlink. Manually-added entries without a `$source` key are preserved across propagation runs.

@@ -41,12 +41,14 @@ mkdir -p ~/.claude
 rm -f ~/.claude/agents
 mkdir -p ~/.claude/agents
 
-for src in /Users/jennywadkins/github_repos/github-agents-source-of-truth/claude/agents/*; do
+REPO_ROOT="$HOME/github_repos/github-agents-source-of-truth"
+
+for src in "$REPO_ROOT/claude/agents"/*; do
 	ln -sfn "$src" "$HOME/.claude/agents/$(basename "$src")"
 done
 
-ln -sfn /Users/jennywadkins/github_repos/github-agents-source-of-truth/claude/skills ~/.claude/skills
-ln -sfn /Users/jennywadkins/github_repos/github-agents-source-of-truth/claude/learnings ~/.claude/learnings
+ln -sfn "$REPO_ROOT/claude/skills" ~/.claude/skills
+ln -sfn "$REPO_ROOT/claude/learnings" ~/.claude/learnings
 ```
 
 Verify:
@@ -59,7 +61,7 @@ find -H ~/.claude/agents -maxdepth 1 -mindepth 1 -exec ls -ld {} \;
 ## 3) Quick Health Check
 
 ```bash
-ls /Users/jennywadkins/github_repos/github-agents-source-of-truth/claude/agents | wc -l
+ls "$HOME/github_repos/github-agents-source-of-truth/claude/agents" | wc -l
 ```
 
 If links are correct, Claude should discover all agents/skills/learnings from this repository automatically.
@@ -72,13 +74,13 @@ Claude's settings (including propagated notification hooks) live in `.claude/set
 # Backup any existing file first
 [ -e ~/.claude/settings.json ] && ! [ -L ~/.claude/settings.json ] && mv ~/.claude/settings.json ~/.claude/settings.json.backup
 
-ln -sfn /Users/jennywadkins/github_repos/github-agents-source-of-truth/.claude/settings.json ~/.claude/settings.json
+ln -sfn "$HOME/github_repos/github-agents-source-of-truth/.claude/settings.json" ~/.claude/settings.json
 ```
 
 Verify:
 ```bash
 readlink ~/.claude/settings.json
-# Expected: /Users/jennywadkins/github_repos/github-agents-source-of-truth/.claude/settings.json
+# Expected: /Users/<your-username>/github_repos/github-agents-source-of-truth/.claude/settings.json
 ```
 
 **How hooks flow:** `.github/hooks/*.json` → `propagate_master_assets.py` → `.claude/settings.json` (with `$source` provenance keys) → `~/.claude/settings.json` via this symlink. Propagated entries have `"$source": "<hook-name>"` so the script can safely replace them on reruns without disturbing manually-managed hooks.
