@@ -21,3 +21,18 @@
 **Fix**: Verify `~/.codex/agents/` has a valid symlink for every agent TOML in `codex/agents/`. Check with `ls -la ~/.codex/agents/` and look for `->` targets that don't exist.
 
 **Watch For**: The `[SUBAGENT-MODE]` prefix convention in `developer_instructions` is the correct invocation pattern. If syntax looks right but spawning fails, the issue is almost always the agent not being loaded (missing symlink), not the invocation language.
+
+## If Feature Decomposer Says "z-feature-plan-expander tool is not exposed in this session"
+
+**Problem**: The `feature-decomposer` agent outputs a message like "The z-feature-plan-expander tool is not exposed in this session, so I'm going to do that expansion directly instead." The expansion still happens inline but the subagent is never spawned.
+
+**Root Cause**: Codex `agents.max_depth` defaults to `1`. The pipeline runs as `phase-execute` (depth 0) → `feature-decomposer` (depth 1) → `z-feature-plan-expander` (would be depth 2). Depth 2 is blocked by the default max_depth of 1, so the model detects the spawn tool is unavailable and falls back to doing the expansion inline.
+
+**Fix**: Add `[agents] max_depth = 2` to `~/.codex/config.toml`. This allows the one additional nesting level needed for the feature pipeline. If running feature-decomposer directly (not via phase-execute), depth would only reach 1 and the default would work; the issue only manifests when running through an orchestrator.
+
+```toml
+[agents]
+max_depth = 2
+```
+
+**Watch For**: Increasing max_depth beyond 2 risks runaway fan-out from broad delegation instructions. `max_depth = 2` is the minimum needed for this pipeline (orchestrator → decomposer → expander) and is the recommended setting.
