@@ -194,6 +194,95 @@ New-Item -ItemType SymbolicLink -Path "$Project\.opencode\skills" -Target "$REPO
 
 ---
 
+## Context7 MCP (Recommended for All Harnesses)
+
+Several skills in this repo — including `context7-mcp` — rely on the **Context7 MCP server** to fetch up-to-date library documentation at runtime. Without it, agents that invoke `resolve-library-id` or `query-docs` will have no tools to call.
+
+Context7 pulls version-specific docs and code examples straight from the source into your agent's context, eliminating hallucinated APIs and outdated code examples.
+
+> **Full docs and client-specific setup:** https://github.com/upstash/context7  
+> **Manual install guide (30+ clients):** https://context7.com/docs/resources/all-clients  
+> **Free API key (higher rate limits):** https://context7.com/dashboard
+
+### Quickest Install (any harness)
+
+```bash
+npx ctx7 setup
+```
+
+This authenticates via OAuth, generates an API key, and installs Context7 for the detected agent environment. Use `--cursor`, `--claude`, or `--opencode` to target a specific tool. This handles VS Code, Claude Code, Cursor, and OpenCode in one step.
+
+To remove: `npx ctx7 remove`
+
+### Manual Install — GitHub Copilot (VS Code)
+
+Create or update `.vscode/mcp.json` in your project (or the repo root):
+
+```json
+{
+  "servers": {
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    }
+  }
+}
+```
+
+With an API key for higher rate limits:
+
+```json
+{
+  "servers": {
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_CONTEXT7_API_KEY"
+      }
+    }
+  }
+}
+```
+
+### Manual Install — Claude Code
+
+Add to `~/.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "env": {
+        "CONTEXT7_API_KEY": "YOUR_CONTEXT7_API_KEY"
+      }
+    }
+  }
+}
+```
+
+### Manual Install — OpenCode
+
+Add to `~/.config/opencode/config.json` (or your project's `.opencode/config.json`):
+
+```json
+{
+  "mcp": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "environment": {
+        "CONTEXT7_API_KEY": "YOUR_CONTEXT7_API_KEY"
+      }
+    }
+  }
+}
+```
+
+---
+
 ## Keeping Everything Updated
 
 Because the symlinks point directly into this repo, all three harnesses see changes immediately after a `git pull` — no re-linking required.
