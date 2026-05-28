@@ -1,6 +1,6 @@
 ---
 name: phase-document-writing
-description: "Write or update Phase documents and Phases Overview files. Use when: creating phase summaries, writing project roadmaps, drafting PHASE_0N_SUMMARY.md files, producing PHASES_OVERVIEW.md, or any task that outputs planning documents in the docs/phases/ directory."
+description: "Write or update Phase documents and Phases Overview files. Use when: creating phase summaries, writing project roadmaps, drafting PHASE_0N_SUMMARY.md files, producing PROJECT_ROADMAP.md, or any task that outputs planning documents in the docs/phases/ directory."
 ---
 
 # Phase Document Writing
@@ -67,7 +67,7 @@ areas that need careful separation of concerns, integration points between featu
 
 ## Phases Overview Template
 
-`docs/phases/PHASES_OVERVIEW.md` provides the roadmap at a glance:
+`docs/phases/PROJECT_ROADMAP.md` provides the roadmap at a glance:
 
 ```markdown
 # Project Roadmap: [Project Name]

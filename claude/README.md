@@ -201,7 +201,7 @@ These agents run automatically as part of orchestrator pipelines. They are prefi
 ### User-Facing Agents
 
 **`@01-project-planner`** (document-only — does not write code)
-> Give it a project scope or high-level goal. It iterates with you to produce a phased roadmap (`docs/phases/PHASES_OVERVIEW.md` and individual `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` files). It will not create any files until you explicitly approve.
+> Give it a project scope or high-level goal. It iterates with you to produce a phased roadmap (`docs/phases/PROJECT_ROADMAP.md` and individual `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` files). It will not create any files until you explicitly approve.
 
 **`@02-phase-refiner`** (document-only — does not write code)
 > Give it a single Phase document. It iterates with you to refine scope, probe edge cases, surface hidden dependencies, stress-test decomposition readiness, and walk through user flows. It will not write changes until you explicitly approve.
