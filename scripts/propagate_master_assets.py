@@ -558,6 +558,47 @@ def _inject_codex_selected_agent_instruction(agent: SourceAgent, body: str) -> s
     return "\n\n".join(paragraphs)
 
 
+def _rewrite_codex_invocation_language(body: str) -> str:
+    """Rewrite GitHub Copilot 'Invoke **AgentName**' syntax to Codex natural language.
+
+    Codex uses natural language spawning ("Spawn a X subagent") rather than
+    imperative tool-call-style invocation ("Invoke **X**"). The latter causes
+    the model to report the named agent invocation as missing tooling.
+    """
+    # "Invoke **X**" / "Invoke the **X**" / "Invoke one **X**" → "Spawn a **X** subagent"
+    body = re.sub(
+        r"\bInvoke\b\s+(?:the\s+|one\s+)?(\*\*[^*]+\*\*)(\s+subagent)?",
+        lambda m: f"Spawn a {m.group(1)} subagent",
+        body,
+    )
+    # "invoke **X**" / "invoke the **X**" / "invoke one **X**" → "spawn a **X** subagent"
+    body = re.sub(
+        r"\binvoke\b\s+(?:the\s+|one\s+)?(\*\*[^*]+\*\*)(\s+subagent)?",
+        lambda m: f"spawn a {m.group(1)} subagent",
+        body,
+    )
+    return body
+
+
+def _inject_codex_todo_override(agent: SourceAgent, body: str) -> str:
+    """Append a Codex compatibility note when the source agent uses the todo tool.
+
+    Codex has no native todo tool. Without this note the model will attempt to
+    call a non-existent tool and report it as missing tooling.
+    """
+    if "todo" not in agent.tools:
+        return body
+
+    note = (
+        "\n\n## Codex Compatibility Notes\n\n"
+        "**No todo tool**: Codex has no native todo tool. Disregard any instructions "
+        "that reference creating or updating todo list entries. Track task progress "
+        "inline in your response or, for multi-step pipelines, in a state file at "
+        "`dev/pipeline-state.md`."
+    )
+    return body + note
+
+
 def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc], reference_map: Dict[str, str]) -> str:
     combined = agent.body.strip()
     appendix = _build_instruction_appendix(agent, docs)
@@ -565,7 +606,9 @@ def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc], reference
         combined = f"{combined}\n\n{appendix.strip()}"
 
     combined = _rewrite_agent_references(combined, reference_map, preserve_at_sign=False)
+    combined = _rewrite_codex_invocation_language(combined)
     combined = _inject_codex_selected_agent_instruction(agent, combined)
+    combined = _inject_codex_todo_override(agent, combined)
 
     name_value = _codex_identifier_for(agent)
     description = json.dumps(agent.description, ensure_ascii=False)

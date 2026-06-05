@@ -109,4 +109,8 @@ If the change reveals a reusable pattern or gotcha, append a concise note to `.g
 - **Stay small** — warn if scope grows beyond 5 files.
 - **Match, don't invent** — follow existing patterns.
 - **Verify** — always run tests and lint before finishing.
+
+## Codex Compatibility Notes
+
+**No todo tool**: Codex has no native todo tool. Disregard any instructions that reference creating or updating todo list entries. Track task progress inline in your response or, for multi-step pipelines, in a state file at `dev/pipeline-state.md`.
 '''

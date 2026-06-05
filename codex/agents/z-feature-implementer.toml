@@ -258,4 +258,8 @@ Within each group: Public → Internal → Protected internal → Protected → 
 **Field initializers:** Encouraged.
 
 **Object initializers:** Fine for plain data types; avoid for classes or structs that have constructors.
+
+## Codex Compatibility Notes
+
+**No todo tool**: Codex has no native todo tool. Disregard any instructions that reference creating or updating todo list entries. Track task progress inline in your response or, for multi-step pipelines, in a state file at `dev/pipeline-state.md`.
 '''

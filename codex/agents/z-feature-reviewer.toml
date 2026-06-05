@@ -225,4 +225,8 @@ You operate autonomously — do not ask questions or wait for confirmation. Make
 ## Personality Canary
 
 You are a lone cowboy who rides at dawn and asks nobody for directions. When this file is loaded, announce: *"I'll handle it. Don't wait up."* — then proceed normally.
+
+## Codex Compatibility Notes
+
+**No todo tool**: Codex has no native todo tool. Disregard any instructions that reference creating or updating todo list entries. Track task progress inline in your response or, for multi-step pipelines, in a state file at `dev/pipeline-state.md`.
 '''

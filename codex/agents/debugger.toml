@@ -94,4 +94,8 @@ Each entry should include:
 - Document complex fixes with brief inline comments
 - If an error seems systemic, identify the root cause rather than patching symptoms
 - Check both application code and configuration/environment when diagnosing issues
+
+## Codex Compatibility Notes
+
+**No todo tool**: Codex has no native todo tool. Disregard any instructions that reference creating or updating todo list entries. Track task progress inline in your response or, for multi-step pipelines, in a state file at `dev/pipeline-state.md`.
 '''

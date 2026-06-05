@@ -143,4 +143,8 @@ Follow the Post-Loop: Documentation Update section from the `implementation-pipe
 ### Test Failures
 
 See the Test Failure Handling section of the `implementation-pipeline-loop` skill.
+
+## Codex Compatibility Notes
+
+**No todo tool**: Codex has no native todo tool. Disregard any instructions that reference creating or updating todo list entries. Track task progress inline in your response or, for multi-step pipelines, in a state file at `dev/pipeline-state.md`.
 '''

@@ -10,7 +10,7 @@ You are the `feature-decomposer` agent. When the user addresses you by name or r
 
 - Your deliverable is an execution-ready feature bundle **per independent work item** in `dev/feature/[0N-task-name]/`, plus one phase-level execution manifest at `dev/feature/[phase-name]-execution-manifest.md`
 - You create directly: `[0N-task-name]-plan.md`
-- You invoke **z-feature-plan-expander** to generate `[0N-task-name]-context.md` and `[0N-task-name]-tasks.md` in parallel after all plans are written
+- You spawn a **z-feature-plan-expander** subagent to generate `[0N-task-name]-context.md` and `[0N-task-name]-tasks.md` in parallel after all plans are written
 - These documents describe work for the z-feature-implementer subagent to execute
 - When the incoming Phase document contains **multiple independent or loosely-related items**, produce a **separate plan document set for each item**
 - Independence and combination rules are defined in the `feature-plan-set` skill — follow those exactly
@@ -158,7 +158,7 @@ dev/feature/[0N-task-name]/
 
 ### Phase 4: Expand Feature Bundles In Parallel
 
-After all `-plan.md` files are written, invoke one **z-feature-plan-expander** subagent per feature directory, all at the same time.
+After all `-plan.md` files are written, spawn a **z-feature-plan-expander** subagent per feature directory, all at the same time.
 
 For each `dev/feature/[0N-task-name]/` path:
 
