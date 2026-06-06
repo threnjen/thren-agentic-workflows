@@ -1,3 +1,5 @@
+# Python AGENTS.md
+
 ## Environment
 
 - `pyproject.toml` at root is the source of truth. Build backend: `hatchling`.
@@ -138,7 +140,3 @@ After 3 failed attempts: document what failed, research 2–3 alternatives, ques
 - Simple answers in 1–3 sentences; expand only when correctness or safety requires it.
 - Prefer `rg` for text/file search. Never guess URLs.
 
-## Extended Guides
-
-Load when applicable:
-- *Style Guide* → `standards/python/python_style_guide.md` — when writing new modules or unfamiliar with project conventions
