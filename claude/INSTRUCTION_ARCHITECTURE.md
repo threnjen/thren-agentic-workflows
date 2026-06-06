@@ -47,7 +47,7 @@ Claude Code does **NOT** have a native instruction-file loading system comparabl
 
 2. **Custom MCP Server:** Create an MCP (Model Context Protocol) server that:
    - Exposes instruction file content as a custom tool
-   - Claude agents invoke this tool to dynamically load instructions
+   - Claude agents spawn this tool to dynamically load instructions
    - Eliminates inlining and keeps source-of-truth in `.github/instructions/`
 
 3. **Anthropic API Enhancement:** Request native instruction-file support from Anthropic (comparable to GitHub's `applyTo:` system)

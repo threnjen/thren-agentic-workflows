@@ -100,13 +100,13 @@ Examples of events that can trigger hooks: a file is saved, a pull request is op
 
 When the hook fires, it can pass relevant context to an agent and let it take action. This is how you build workflows that run autonomously rather than requiring a human to type a prompt each time.
 
-**Why it matters:** Hooks are what turn a collection of agents into a pipeline. Without hooks, you have a set of useful tools you invoke manually. With hooks, you have a system that responds to your work as it happens.
+**Why it matters:** Hooks are what turn a collection of agents into a pipeline. Without hooks, you have a set of useful tools you spawn manually. With hooks, you have a system that responds to your work as it happens.
 
 **Example:** A post-commit hook triggers the Code Auditor Agent with the diff. The agent checks for security issues and posts a comment to the PR automatically — no one had to ask it to.
 
 ---
 
-### Tools (capabilities the model can invoke)
+### Tools (capabilities the model can spawn)
 
 Tools are specific capabilities that the harness exposes to the model, allowing it to take actions beyond just generating text. When a model has access to tools, it can decide during its reasoning process to call one — and the harness will execute that call and return the result.
 

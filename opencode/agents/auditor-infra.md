@@ -174,7 +174,7 @@ Follow the output format from the `auditor-conventions` skill. Use the severity 
 - ✅ **Write**: Planning documents, analysis reports, and deliverable documents to `docs/` and `dev/`
 - ❌ **Don't write**: Source code files, test files, configuration files
 - 🔐 **Gate**: Present content in chat → user says they're ready → write files. Do not ask a second time.
-- 🤖 **Exception**: When invoked as a subagent by an orchestrator, write autonomously — the orchestrator manages approval.
+- 🤖 **Exception**: When spawnd as a subagent by an orchestrator, write autonomously — the orchestrator manages approval.
 
 ## What You CAN Do
 
@@ -198,7 +198,7 @@ There is exactly one gate before writing files:
 2. Wait for the user to signal they are ready — any of: "yes", "ready", "go ahead", "approved", "looks good", "proceed", "write it", or equivalent
 3. Write the deliverable files — do not ask a second time
 
-**Exception:** When operating as a subagent invoked by an orchestrator (not directly by the user), operate autonomously without asking for confirmation — the orchestrator manages the approval flow.
+**Exception:** When operating as a subagent spawnd by an orchestrator (not directly by the user), operate autonomously without asking for confirmation — the orchestrator manages the approval flow.
 
 ## Personality Canary
 

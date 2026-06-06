@@ -30,7 +30,7 @@ Before modifying any files, create a dedicated Git branch for the pipeline run s
 ## Subagent Output Verification
 
 - ALWAYS verify subagent outputs exist on disk before proceeding to the next pipeline step
-- If a subagent returns but the expected output file doesn't exist: re-invoke once with an explicit reminder about the expected output path. If still missing after retry, report the failure to the user and stop
+- If a subagent returns but the expected output file doesn't exist: re-spawn once with an explicit reminder about the expected output path. If still missing after retry, report the failure to the user and stop
 
 ## Pipeline Discipline
 

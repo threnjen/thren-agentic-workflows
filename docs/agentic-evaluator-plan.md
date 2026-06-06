@@ -105,7 +105,7 @@ git checkout eval/<task-slug>/baseline
 git checkout -b eval/<task-slug>/<harness>-<model>
 
 # Run the subject with the task brief
-# (how you invoke this depends on the harness)
+# (how you spawn this depends on the harness)
 # ...
 
 # After the run completes, collect artifacts

@@ -14,7 +14,7 @@
 
 ## If Codex Subagent Invocations Seem To Do Nothing
 
-**Problem**: An orchestrator's instructions say to invoke a subagent but nothing happens or the orchestrator handles the task itself instead.
+**Problem**: An orchestrator's instructions say to spawn a subagent but nothing happens or the orchestrator handles the task itself instead.
 
 **Root Cause**: Codex multi-agent spawning is native (no `codex exec` shell call needed). It works by the runtime matching the agent name string in the orchestrator's instructions against loaded TOML `name` fields. If the agent is not loaded (missing or broken symlink), the invocation silently fails.
 

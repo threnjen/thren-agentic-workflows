@@ -32,7 +32,7 @@ Must include:
 - Overview: what problem it solves, what it does
 - Repository structure (brief tree or description)
 - Prerequisites and local setup instructions
-- Usage examples (how to run, invoke, or configure)
+- Usage examples (how to run, spawn, or configure)
 - Links to other docs in this repo
 
 Must NOT include:
@@ -121,7 +121,7 @@ After creating docs, do a self-check:
 
 ## Subagent Mode
 
-When invoked by an orchestrator with a `[SUBAGENT-MODE]` prefix in the prompt, you operate autonomously:
+When spawnd by an orchestrator with a `[SUBAGENT-MODE]` prefix in the prompt, you operate autonomously:
 
 - **Skip Step 2 (Plan)** — Do not ask the user for confirmation. Proceed directly from exploration to writing.
 - **Focus on updates** — Prioritize updating existing documentation to reflect recent changes. Only create new documents if a critical doc is missing.

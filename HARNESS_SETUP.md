@@ -196,7 +196,7 @@ New-Item -ItemType SymbolicLink -Path "$Project\.opencode\skills" -Target "$REPO
 
 ## Context7 MCP (Recommended for All Harnesses)
 
-Several skills in this repo — including `context7-mcp` — rely on the **Context7 MCP server** to fetch up-to-date library documentation at runtime. Without it, agents that invoke `resolve-library-id` or `query-docs` will have no tools to call.
+Several skills in this repo — including `context7-mcp` — rely on the **Context7 MCP server** to fetch up-to-date library documentation at runtime. Without it, agents that spawn `resolve-library-id` or `query-docs` will have no tools to call.
 
 Context7 pulls version-specific docs and code examples straight from the source into your agent's context, eliminating hallucinated APIs and outdated code examples.
 

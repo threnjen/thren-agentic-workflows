@@ -64,7 +64,7 @@ The agent does not embed deep dependencies on specific `.github/instructions/` f
 
 **Why high-signal**
 
-The Feature Decomposer is a central step in the GitHub agent pipeline. A successful Codex port confirms that the TOML custom-agent model can represent a real workflow agent with meaningful content — not just a trivial name and description placeholder. It exercises the full TOML conversion path: dropping GitHub-only frontmatter, populating required `developer_instructions` from the Markdown body, and confirming that Codex can load and invoke the resulting agent.
+The Feature Decomposer is a central step in the GitHub agent pipeline. A successful Codex port confirms that the TOML custom-agent model can represent a real workflow agent with meaningful content — not just a trivial name and description placeholder. It exercises the full TOML conversion path: dropping GitHub-only frontmatter, populating required `developer_instructions` from the Markdown body, and confirming that Codex can load and spawn the resulting agent.
 
 **Phase 02 alignment**
 
@@ -258,7 +258,7 @@ Each `readlink` must return the absolute path inside `$REPO_ROOT/codex/`. A blan
 
 1. Start a new Codex session.
 2. Observe that the session starts with the canary announcement: *"Loaded. Stop."* This confirms that `~/.codex/AGENTS.md` was loaded from the repository-owned source artifact and that the output-verbosity-policy content is active.
-3. Invoke the `Feature Decomposer` custom agent by name.
+3. spawn the `Feature Decomposer` custom agent by name.
 4. Give it a minimal Phase document as input and verify that it produces a feature plan file in `dev/feature/[0N-task-name]/` format with the expected plan, context, and tasks files.
 5. Verify that the `feature-plan-set` skill is accessible from within the Codex session. The agent's `developer_instructions` reference this skill by name, and the Codex session should resolve it from `$HOME/.agents/skills/feature-plan-set` without a "not found" error.
 
@@ -288,7 +288,7 @@ A new Codex session starts with the canary announcement (*"Loaded. Stop."*), con
 
 ### EC3: Custom Agent Invocable
 
-The `Feature Decomposer` Codex custom agent can be invoked by name and produces output in the expected `dev/feature/[0N-task-name]/` format given a minimal Phase document as input.
+The `Feature Decomposer` Codex custom agent can be spawnd by name and produces output in the expected `dev/feature/[0N-task-name]/` format given a minimal Phase document as input.
 
 ### EC4: Skill Accessible
 

@@ -54,19 +54,19 @@ Based on the user's choice, determine the output directory name. Use the format 
 
 #### If CODE audit:
 
-Invoke the **Auditor - Code** subagent:
+spawn the **Auditor - Code** subagent:
 
 > "Perform a comprehensive code audit of [scope]. [If unity_context=true: This appears to be a Unity project. Before auditing, load both the `unity-development` and `unity-review-knowledge` skills, then apply their relevant rules while auditing.] Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
 
 #### If INFRA audit:
 
-Invoke the **Auditor - Infra** subagent:
+spawn the **Auditor - Infra** subagent:
 
 > "Perform a comprehensive infrastructure audit of [scope]. [If unity_context=true: This appears to be a Unity project. Before auditing, load both the `unity-development` and `unity-review-knowledge` skills, then apply their relevant rules while auditing.] Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
 
 #### If REFACTOR audit:
 
-Invoke the **Auditor - Refactor** subagent:
+spawn the **Auditor - Refactor** subagent:
 
 > "Perform a comprehensive structural and architectural audit of [scope]. [If unity_context=true: This appears to be a Unity project. Before auditing, load both the `unity-development` and `unity-review-knowledge` skills, then apply their relevant rules while auditing.] Analyze module organization, import/dependency graphs, component decomposition, coupling and cohesion, separation of concerns, and restructuring opportunities. Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
 
@@ -111,7 +111,7 @@ Load the `implementation-pipeline-loop` skill and execute Steps A through D for 
 
 After ALL tasks are implemented and reviewed, produce a single consolidated QA document covering the entire audit remediation.
 
-Invoke the **Feature - QA Writer** subagent:
+spawn the **Feature - QA Writer** subagent:
 
 > "Write a consolidated release QA plan covering ALL tasks in this audit remediation. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following task folders: [list all dev/[audit-name]/[task-name]/ paths]. Write the consolidated QA plan to `dev/[audit-name]/[audit-name]-qa.md` and the coverage map to `dev/[audit-name]/[audit-name]-coverage-map-qa.md`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all tasks."
 
@@ -121,7 +121,7 @@ After the subagent returns:
 
 ### Phase 9: Final Review
 
-Invoke the **Prod Code Review** subagent:
+spawn the **Prod Code Review** subagent:
 
 > "Perform the final pre-production readiness analysis for the audit remediation. The following task folders contain all pipeline documents: [list all dev/[audit-name]/[task-name]/ paths]. The consolidated QA plan is at `dev/[audit-name]/[audit-name]-qa.md`. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `dev/[audit-name]/[audit-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
 

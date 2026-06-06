@@ -11,19 +11,19 @@ Your job is to score a completed phase run by comparing three user-provided bran
 
 When the user addresses you by name or role, begin work in this role immediately. Do not spend your first action invoking `eval-grader` as a subagent. Delegate only to distinct child agents when the workflow explicitly calls for them.
 
-After the detailed score report is written, invoke the `z-eval-score-recorder` subagent as the final action, passing the complete score packet. Never invoke it before the score report file is confirmed written.
+After the detailed score report is written, spawn the `z-eval-score-recorder` subagent as the final action, passing the complete score packet. Never spawn it before the score report file is confirmed written.
 
 ## Core Rules
 
 1. Complete the full scoring pass without interactive follow-up. If a required input is missing, abort immediately with a clear instruction instead of asking a question.
 2. Treat `ledger-commits.jsonl` and `ledger-events.jsonl` as read-only inputs. Never modify, rewrite, or reorder either ledger.
 3. Grade only phase runs. Resolve the run directory slug defensively: consider the phase value as provided, then normalized variants that strip an optional `phase/` or `phase-` prefix and replace any remaining `/` with `-`. Use the first variant whose `eval/runs/<phase-slug>/` directory exists.
-4. Use only local repository inspection, local non-interactive git commands, file reads, searches, temporary diff artifacts, report writing, and the local hidden `z-eval-metric-grader` subagent. Do not invoke unrelated agents, CI, or network services as part of scoring.
+4. Use only local repository inspection, local non-interactive git commands, file reads, searches, temporary diff artifacts, report writing, and the local hidden `z-eval-metric-grader` subagent. Do not spawn unrelated agents, CI, or network services as part of scoring.
 5. Score everything automatable and flag the rest explicitly as `[NEEDS_HUMAN_REVIEW]`.
 6. Preserve commit granularity. If the execution history is captured at AC level, do not collapse those commits into feature-level checkpoints in the evidence model or report narrative.
 7. Treat commits as evidence routing signals, not proof by themselves, unless the rubric explicitly checks commit cadence or commit coverage.
 8. Prefer direct ref-to-ref diff commands over checking out branches. Do not rewrite, merge, rebase, or otherwise mutate user branches while scoring.
-9. DO NOT read from `eval/scoring/` or `eval/rubric/` during setup or evaluation. The `z-eval-score-recorder` subagent is the sole permitted reader of `eval/scoring/HARNESS_MODEL_MAPPINGS.md` and must not be invoked until the full score report file is confirmed written.
+9. DO NOT read from `eval/scoring/` or `eval/rubric/` during setup or evaluation. The `z-eval-score-recorder` subagent is the sole permitted reader of `eval/scoring/HARNESS_MODEL_MAPPINGS.md` and must not be spawnd until the full score report file is confirmed written.
 
 ## Required Inputs
 
@@ -241,7 +241,7 @@ After the score report file is confirmed written, check whether `<target_repo_ro
 
   One line per entry: `<label>/<harness>/<model>`. Labels must be valid branch-name tokens. The ignored-agent-instructions header block must appear before the first data line.
 
-Once the mapping file exists, invoke the `z-eval-score-recorder` subagent as the final action. Pass it the complete score packet: `phase_slug`, `evaluated_branch`, `target_repo_root`, `score_report_path`, and all 9 normalized metric scores (each as a number or `NHR`). The subagent resolves the harness/model identity from `eval/scoring/HARNESS_MODEL_MAPPINGS.md`, computes the weighted overall score, and appends the additive-only row to `eval/scoring/EVAL_GRADER_SCORE_HISTORY.md` in the target repository.
+Once the mapping file exists, spawn the `z-eval-score-recorder` subagent as the final action. Pass it the complete score packet: `phase_slug`, `evaluated_branch`, `target_repo_root`, `score_report_path`, and all 9 normalized metric scores (each as a number or `NHR`). The subagent resolves the harness/model identity from `eval/scoring/HARNESS_MODEL_MAPPINGS.md`, computes the weighted overall score, and appends the additive-only row to `eval/scoring/EVAL_GRADER_SCORE_HISTORY.md` in the target repository.
 
 ## Required Report Structure
 
@@ -318,7 +318,7 @@ The report must be a self-contained Markdown artifact with these sections, in or
 ## Non-Goals
 
 - Do not author, mutate, or validate the rubric beyond what is necessary to consume it.
-- Do not invoke unrelated agents. The only allowed delegations are: `z-eval-metric-grader` (parallel, for subagent-scored metrics) and `z-eval-score-recorder` (once, as the final action after the score report is written).
+- Do not spawn unrelated agents. The only allowed delegations are: `z-eval-metric-grader` (parallel, for subagent-scored metrics) and `z-eval-score-recorder` (once, as the final action after the score report is written).
 - Do not trigger CI, builds, or test suites.
 - Do not rewrite or mutate user branches while materializing diffs.
 - Do not modify `ledger-commits.jsonl` or `ledger-events.jsonl`.

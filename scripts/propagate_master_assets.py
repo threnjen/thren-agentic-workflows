@@ -559,21 +559,21 @@ def _inject_codex_selected_agent_instruction(agent: SourceAgent, body: str) -> s
 
 
 def _rewrite_codex_invocation_language(body: str) -> str:
-    """Rewrite GitHub Copilot 'Invoke **AgentName**' syntax to Codex natural language.
+    """Rewrite GitHub Copilot 'spawn **AgentName**' syntax to Codex natural language.
 
     Codex uses natural language spawning ("Spawn a X subagent") rather than
-    imperative tool-call-style invocation ("Invoke **X**"). The latter causes
+    imperative tool-call-style invocation ("spawn **X**"). The latter causes
     the model to report the named agent invocation as missing tooling.
     """
-    # "Invoke **X**" / "Invoke the **X**" / "Invoke one **X**" → "Spawn a **X** subagent"
+    # "spawn **X**" / "spawn the **X**" / "spawn one **X**" → "Spawn a **X** subagent"
     body = re.sub(
-        r"\bInvoke\b\s+(?:the\s+|one\s+)?(\*\*[^*]+\*\*)(\s+subagent)?",
+        r"\bspawn\b\s+(?:the\s+|one\s+)?(\*\*[^*]+\*\*)(\s+subagent)?",
         lambda m: f"Spawn a {m.group(1)} subagent",
         body,
     )
-    # "invoke **X**" / "invoke the **X**" / "invoke one **X**" → "spawn a **X** subagent"
+    # "spawn **X**" / "spawn the **X**" / "spawn one **X**" → "spawn a **X** subagent"
     body = re.sub(
-        r"\binvoke\b\s+(?:the\s+|one\s+)?(\*\*[^*]+\*\*)(\s+subagent)?",
+        r"\bspawn\b\s+(?:the\s+|one\s+)?(\*\*[^*]+\*\*)(\s+subagent)?",
         lambda m: f"spawn a {m.group(1)} subagent",
         body,
     )

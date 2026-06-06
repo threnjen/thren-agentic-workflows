@@ -33,7 +33,7 @@ Understand request scope and impact:
 
 Before proposing implementation, detect whether this is a Unity project by checking for a `game/Assets` directory.
 
-- If `game/Assets` exists, invoke `Unity Reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
+- If `game/Assets` exists, spawn `Unity Reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
 - Include the reviewer findings in your proposal as risks and constraints.
 - If no Unity layout is detected, continue without invoking `Unity Reviewer`.
 

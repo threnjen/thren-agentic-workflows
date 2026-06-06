@@ -241,7 +241,7 @@ Within each group: Public → Internal → Protected internal → Protected → 
 
 **`var`:** Use when type is obvious from context. Avoid for basic types, compiler-resolved numerics, or when the type aids readability.
 
-**Delegates:** Always call via null-conditional: `SomeDelegate?.Invoke()`.
+**Delegates:** Always call via null-conditional: `SomeDelegate?.spawn()`.
 
 **`ref`/`out`:** Use `out` for non-input returns (placed after all other params). Use `ref` only when mutating an input is necessary — not as a performance optimization for structs.
 

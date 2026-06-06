@@ -40,8 +40,8 @@ Treat `dev/feature/[phase-name]-execution-manifest.md` as the single source of t
 6. If any required file is missing, stop immediately and tell the user to rerun `03-feature-decomposer` for this phase.
 7. Create a todo list entry for each feature with status `not-started`.
 
-Do not invoke `03-feature-decomposer`.
-Do not invoke `04a-feature-plan-expander`.
+Do not spawn `03-feature-decomposer`.
+Do not spawn `04a-feature-plan-expander`.
 Do not rebuild the schedule by rereading plan files or `## Execution Metadata`.
 
 ### Step 2: Feature Development Loop
@@ -65,7 +65,7 @@ After ALL waves complete, determine: are all recorded verdicts Approved or Appro
 
 For each feature in the wave (in numeric prefix order), complete the full cycle before starting the next:
 
-**A. Implement** — Invoke **04b-feature-implementer** once for the full feature:
+**A. Implement** — spawn **04b-feature-implementer** once for the full feature:
 
 > "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Return a summary of what was implemented and test results."
 
@@ -75,11 +75,11 @@ Wait for the implementer to return.
 
 **B. Review** — Only after the implementer returns, run one full-feature review.
 
-If `is-unity-project: yes`, first invoke **unity-reviewer** for this feature as a Unity-specific review pass:
+If `is-unity-project: yes`, first spawn **unity-reviewer** for this feature as a Unity-specific review pass:
 
 > "[SUBAGENT-MODE] Review Unity-related changes for the feature at `dev/feature/[0N-task-name]/`. Focus on Unity lifecycle/wiring, rendering/performance pitfalls, UI Toolkit concerns, and project Unity conventions. Return structured findings only; do not implement fixes."
 
-Then invoke **04c-feature-reviewer** per Steps B–C from the `implementation-pipeline-loop` skill. Wait for it to return.
+Then spawn **04c-feature-reviewer** per Steps B–C from the `implementation-pipeline-loop` skill. Wait for it to return.
 
 **B1. Commit checkpoint** — After the reviewer returns, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by this feature. Do not stage files from other feature directories. Commit this checkpoint with the exact message `eval: review <feature-slug>`, replacing `<feature-slug>` with the current feature directory name.
 
@@ -93,7 +93,7 @@ Then invoke **04c-feature-reviewer** per Steps B–C from the `implementation-pi
 
 **Phase A — Implement all features simultaneously.**
 
-Invoke one **04b-feature-implementer** per feature in the wave, all at the same time:
+spawn one **04b-feature-implementer** per feature in the wave, all at the same time:
 
 > "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Return a summary of what was implemented and test results."
 
@@ -104,10 +104,10 @@ After all implementers return, stage and commit each feature in numeric prefix o
 **Phase B — Review all features simultaneously after implementation is complete.**
 
 If `is-unity-project: yes`, run a Unity review pass first:
-- Invoke one **unity-reviewer** per feature in the wave, all at the same time, using the same feature-scoped prompt as the sequential loop.
+- spawn one **unity-reviewer** per feature in the wave, all at the same time, using the same feature-scoped prompt as the sequential loop.
 - Wait for ALL unity-reviewer runs in this wave to return.
 
-Invoke one **04c-feature-reviewer** per feature in the wave, all at the same time, per Steps B–C from the `implementation-pipeline-loop` skill.
+spawn one **04c-feature-reviewer** per feature in the wave, all at the same time, per Steps B–C from the `implementation-pipeline-loop` skill.
 
 Wait for ALL reviewers to return before proceeding to Phase C.
 
@@ -128,9 +128,9 @@ Produce a QA document covering the scope of the current execution.
 
 Determine QA output paths using the conventions in the auto-loaded `dev-task-folder` instruction (Consolidated QA Documents table). Check for existing QA files at those paths.
 
-#### Invoke QA Writer
+#### spawn QA Writer
 
-Invoke the **04d-feature-qa-writer** subagent:
+spawn the **04d-feature-qa-writer** subagent:
 
 > "Write a consolidated release QA plan covering ALL features in this phase. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following feature folders: [list all dev/feature/[0N-task-name]/ paths]. Use these manifest verification assets as a required coverage checklist: [verification-assets extracted from manifest, or `not provided`]. Write the consolidated QA plan to `[determined QA output path]` and the coverage map to `[determined coverage map path]`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all features."
 
@@ -141,7 +141,7 @@ After the subagent returns:
 
 ### Step 4: Phase Final Review
 
-Invoke the **prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected in Step 2 Phase B.
+spawn the **prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected in Step 2 Phase B.
 
 **If QA was generated and all verdicts Approved:**
 
@@ -239,7 +239,7 @@ Before modifying any files, create a dedicated Git branch for the pipeline run s
 ## Subagent Output Verification
 
 - ALWAYS verify subagent outputs exist on disk before proceeding to the next pipeline step
-- If a subagent returns but the expected output file doesn't exist: re-invoke once with an explicit reminder about the expected output path. If still missing after retry, report the failure to the user and stop
+- If a subagent returns but the expected output file doesn't exist: re-spawn once with an explicit reminder about the expected output path. If still missing after retry, report the failure to the user and stop
 
 ## Pipeline Discipline
 

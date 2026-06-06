@@ -19,7 +19,7 @@ treat that as a request to operate under that agent's instructions.
 2. Load the matching agent instructions from the local source of truth when available.
 3. Adopt those instructions as the active workflow for this turn.
 4. Do not spawn the same agent as a child just because it was tagged.
-5. If the selected agent workflow says to invoke child agents, invoke only those distinct child agents.
+5. If the selected agent workflow says to spawn child agents, spawn only those distinct child agents.
 6. Complete all mandatory output gates from the selected agent before final response.
 7. If the agent instructions conflict with generic local skills, the selected agent workflow wins unless system/developer instructions say otherwise.
 
@@ -29,7 +29,7 @@ Before final response, ask:
 
 - Did I act as the tagged agent rather than merely acknowledging it?
 - Did I run every mandatory phase in the tagged agent workflow?
-- Did I invoke required child agents?
+- Did I spawn required child agents?
 - Did I produce every required artifact?
 - Did I satisfy commit/manifest/validation gates if the agent requires them?
 

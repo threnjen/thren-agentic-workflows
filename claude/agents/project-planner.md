@@ -43,7 +43,7 @@ Read the codebase, any existing documentation, and any external links or specs t
 - What already exists (code, tests, docs, config)
 - The tech stack, patterns, and conventions in use
 - Any existing planning documents, ADRs, or specs
-- External resources the user shares (product specs, API docs, design docs, reference implementations) — invoke `@web-researcher` to review external URLs and gather context from the internet
+- External resources the user shares (product specs, API docs, design docs, reference implementations) — spawn `@web-researcher` to review external URLs and gather context from the internet
 - The current state of the project (greenfield vs. existing)
 
 #### Track Additional Context
@@ -57,7 +57,7 @@ This context will be persisted to a `DISCOVERY_CONTEXT.md` file so downstream ag
 
 #### Documentation Freshness Check
 
-Run the Documentation Freshness Check (see auto-loaded instructions). If README.md or docs/CODEBASE_CONTEXT.md is missing and the project is not brand new, invoke `@docs-writer` as a subagent to create the missing documentation first. Do not continue to Phase 2 until the documentation exists.
+Run the Documentation Freshness Check (see auto-loaded instructions). If README.md or docs/CODEBASE_CONTEXT.md is missing and the project is not brand new, spawn `@docs-writer` as a subagent to create the missing documentation first. Do not continue to Phase 2 until the documentation exists.
 
 If the repository is genuinely brand new with nothing substantive to report yet, note that exception and continue.
 
@@ -77,7 +77,7 @@ Ask the user targeted questions to build a complete picture. Focus on:
 
 Batch related questions when possible rather than asking one at a time. Multiple rounds of clarification are expected and encouraged — follow-up questions based on the user's answers are better than guessing, and challenging assumptions is a core part of this process.
 
-If the user provides external URLs, **invoke `@web-researcher`** to review them during this phase and inform the roadmap. Also proactively invoke `@web-researcher` when researching unfamiliar domains, technologies, or third-party services would strengthen the roadmap.
+If the user provides external URLs, **spawn `@web-researcher`** to review them during this phase and inform the roadmap. Also proactively spawn `@web-researcher` when researching unfamiliar domains, technologies, or third-party services would strengthen the roadmap.
 
 ### Phase 3: Present Roadmap (Iterate Until Ready)
 
@@ -149,7 +149,7 @@ After the user confirms the planning documents are final for this session, stage
 
 After writing each phase document, tell the user:
 
-> **"Phase document written to `docs/phases/`. To refine this phase, use `/compact` to reduce context, then invoke `@phase-refiner` in this same chat. We recommend attaching the Phase document (e.g., `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`) and any `DISCOVERY_CONTEXT.md` so the refiner has full context. Once you've completed executing phase 1, return here to write the next phase."**
+> **"Phase document written to `docs/phases/`. To refine this phase, use `/compact` to reduce context, then spawn `@phase-refiner` in this same chat. We recommend attaching the Phase document (e.g., `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`) and any `DISCOVERY_CONTEXT.md` so the refiner has full context. Once you've completed executing phase 1, return here to write the next phase."**
 
 When the user returns after completing a phase, detect the next unwritten `PHASE_0N_SUMMARY.md` and continue writing incrementally.
 

@@ -53,7 +53,7 @@ Codex does **not** use the `@agent-name` designator syntax. That convention belo
 
 In Codex, agents are selected via natural language. Codex matches the user's prompt against the `name` and `description` fields of loaded agent files and delegates accordingly. The `/agent` slash command is for navigating between already-running agent threads, not for spawning a new one.
 
-Implication for `developer_instructions`: do not instruct users to invoke the agent with `@`. Instead, tell the agent to begin work in its role when addressed by name or role.
+Implication for `developer_instructions`: do not instruct users to spawn the agent with `@`. Instead, tell the agent to begin work in its role when addressed by name or role.
 
 Authoring rule for this repo: keep the source material for future custom agents under `codex/` until a later feature defines the exact repository-owned layout. Do not place draft source documents directly into `.codex/agents/` unless the goal is runtime installation.
 

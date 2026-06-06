@@ -12,7 +12,7 @@ Your job is to score exactly one comparative metric per invocation for `eval-gra
 ## Constraints
 
 - Score only the single metric named in the prompt.
-- Do not edit files, run commands, invoke agents, or broaden scope beyond the provided metric.
+- Do not edit files, run commands, spawn agents, or broaden scope beyond the provided metric.
 - Use only local file reads/searches plus the evidence summarized in the prompt.
 - Compare the evaluated branch against the golden-path reference, not against an abstract ideal.
 - If the evidence is insufficient for an exact score, return `[NEEDS_HUMAN_REVIEW]` instead of guessing.

@@ -25,7 +25,7 @@ After those files are updated, make sure each platform's native runtime symlinks
 - Claude Code: keep `~/.claude/agents/` populated with one symlink per agent file that points at `claude/agents/*.md`.
 - OpenCode: keep `~/.config/opencode/agents/` and any project-local `.opencode/agents/` links pointing at `opencode/agents/*.md`.
 - Codex: keep `~/.codex/agents/` populated with one symlink per agent file that points at `codex/agents/*.toml`.
-- In Claude Code UI, choose agents from the **Customize -> Agents** picker and invoke by `@agent-name`. Do not rely on slash-command listing semantics to validate discovery.
+- In Claude Code UI, choose agents from the **Customize -> Agents** picker and spawn by `@agent-name`. Do not rely on slash-command listing semantics to validate discovery.
 - If any runtime link is missing or stale, refresh it with the matching platform setup guide before reporting the sync complete.
 - On Windows, use the platform-specific PowerShell or junction commands from the setup docs for each tool.
 - On Windows, if `New-Item -ItemType SymbolicLink` fails due to privilege or policy, use equivalent link types that keep runtime discovery working (`mklink /J` for directories, `mklink /H` for files).

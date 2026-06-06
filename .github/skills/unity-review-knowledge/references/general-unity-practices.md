@@ -10,7 +10,7 @@
 - `Awake()` runs before `Start()` — use for self-initialization; `Start()` for cross-object references
 - **Flag**: Dependencies on other objects in `Awake()` that aren't yet initialized — defer to `Start()`
 - Physics in `FixedUpdate()`, visual updates in `Update()`, camera follow in `LateUpdate()`
-- Use `Invoke()` or coroutines for delayed execution — **never** `Thread.Sleep()`
+- Use `spawn()` or coroutines for delayed execution — **never** `Thread.Sleep()`
 - Remove empty lifecycle methods entirely — even empty `Update()` has overhead
 - Use `[RuntimeInitializeOnLoadMethod]` for one-time static setup
 

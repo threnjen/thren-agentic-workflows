@@ -27,7 +27,7 @@ Present your findings in chat first, then write the deliverables.
 
 ## Scope Determination
 
-When invoked, determine scope with the user:
+When spawnd, determine scope with the user:
 - **Full codebase** — All in-scope files (default if unspecified)
 - **Specific files/directories** — As specified by the user
 - **Single file or module** — Deep audit of one area

@@ -37,7 +37,7 @@ ln -sfn /path/to/github-agents-source-of-truth/claude/learnings ~/.claude/learni
 claude
 ```
 
-### 2. Invoke an agent by name
+### 2. spawn an agent by name
 
 Use `@agent-name` in the conversation to route your request to a specific agent:
 
@@ -95,7 +95,7 @@ The core development workflow. **You interact with steps 1–3. Everything else 
 │  │  @z-feature-qa-writer   → QA for this feature │               │
 │  │  @prod-code-review      → GO / NO-GO verdict │                │
 │  └──────────────────────────────────────────────┘                │
-│  → "Merge this PR, then re-invoke for next feature"              │
+│  → "Merge this PR, then re-spawn for next feature"              │
 │                                                                   │
 │  @docs-writer  → Update stale documentation                   │
 │                                                                   │
@@ -139,7 +139,7 @@ Interactive — you iterate to probe edge cases, dependencies, and decomposition
 
 **Batch mode:** After completion, push the branch and open a PR for final human review.
 
-**Per-feature mode:** After each feature, push the feature branch and open a PR. Once merged, re-invoke `@04-phase-execute` with the same phase document — it detects completed features and picks up the next one.
+**Per-feature mode:** After each feature, push the feature branch and open a PR. Once merged, re-spawn `@04-phase-execute` with the same phase document — it detects completed features and picks up the next one.
 
 ### Manual Implementation Path
 
@@ -170,7 +170,7 @@ Step 5: @prod-code-review      → Validates your code against the plans
 | **eval-grader** | `@eval-grader` | Score a completed phase run from ledger files plus a rubric YAML and write a structured report |
 | **audit-code-infra-refactor** | `@audit-code-infra-refactor` | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
 | **debugger** | `@debugger` | Diagnose and fix frontend or backend application errors |
-| **docs-writer** | `@docs-writer` | Create or update repo documentation; also invoked automatically by orchestrators |
+| **docs-writer** | `@docs-writer` | Create or update repo documentation; also spawnd automatically by orchestrators |
 | **prod-code-review** | `@prod-code-review` | Final pre-production readiness gate (also usable standalone) |
 | **test-orchestrator** | `@test-orchestrator` | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
 | **unity-reviewer** | `@unity-reviewer` | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
@@ -178,9 +178,9 @@ Step 5: @prod-code-review      → Validates your code against the plans
 
 ### Subagents (`z-` prefix)
 
-These agents run automatically as part of orchestrator pipelines. They are prefixed with `z-` to sort them to the bottom of the `/agents` list and signal they should not be invoked directly.
+These agents run automatically as part of orchestrator pipelines. They are prefixed with `z-` to sort them to the bottom of the `/agents` list and signal they should not be spawnd directly.
 
-| Agent name | Invoked By | Purpose |
+| Agent name | spawnd By | Purpose |
 |-----------|-----------|---------|
 | **z-auditor-code** | `@audit-code-infra-refactor` | Comprehensive code quality, security, and health audit |
 | **z-auditor-infra** | `@audit-code-infra-refactor` | Audit Dockerfiles, CI/CD pipelines, IaC templates, and config files |
@@ -207,7 +207,7 @@ These agents run automatically as part of orchestrator pipelines. They are prefi
 > Give it a single Phase document. It iterates with you to refine scope, probe edge cases, surface hidden dependencies, stress-test decomposition readiness, and walk through user flows. It will not write changes until you explicitly approve.
 
 **`@03-feature-decomposer`** (document-only — does not write code)
-> Give it a refined Phase document or describe a feature. It scans the codebase, decomposes the work into independent features, and writes a structured `-plan.md` file for each to `dev/feature/[0N-task-name]/`. Also invoked automatically by `@04-phase-execute` when plans are missing.
+> Give it a refined Phase document or describe a feature. It scans the codebase, decomposes the work into independent features, and writes a structured `-plan.md` file for each to `dev/feature/[0N-task-name]/`. Also spawnd automatically by `@04-phase-execute` when plans are missing.
 
 **`@04-phase-execute`** (orchestrator — delegates to subagents)
 > Give it a refined Phase document. It checks for existing plans (invoking `@03-feature-decomposer` if missing), expands plans, then asks whether to run in **batch mode** or **per-feature mode**. Delegates all implementation, review, QA, and documentation to subagents. No user interaction required after initial mode selection.
@@ -231,7 +231,7 @@ These agents run automatically as part of orchestrator pipelines. They are prefi
 > Give it a problem or topic. Searches across GitHub issues, Stack Overflow, Reddit, forums, and docs. Produces two deliverable documents saved to `dev/research/[topic-name]/`: a full structured findings report and an executive summary. Every factual claim traces back to a numbered citation.
 
 **`@docs-writer`** (reads codebase, writes documentation)
-> Give it a repo to document. Produces or updates README, ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT, and TROUBLESHOOTING documents. Also invoked automatically at the end of orchestrator pipelines.
+> Give it a repo to document. Produces or updates README, ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT, and TROUBLESHOOTING documents. Also spawnd automatically at the end of orchestrator pipelines.
 
 **`@unity-reviewer`** (read-only — does not modify code)
 > Give it Unity C# source files or a directory to review. Loads Unity-specific skills (MonoBehaviour lifecycle, UI Toolkit pitfalls, performance rules, design patterns, style guide compliance) and produces structured review findings.

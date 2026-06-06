@@ -9,7 +9,7 @@ After discovery, check whether these critical documentation files exist:
 - `README.md` (repo root)
 - `docs/CODEBASE_CONTEXT.md`
 
-If either file is missing and the repository is not genuinely brand new, invoke `@Docs Writer` as a subagent to create the missing documentation before continuing. Do not proceed until the files exist.
+If either file is missing and the repository is not genuinely brand new, spawn `@Docs Writer` as a subagent to create the missing documentation before continuing. Do not proceed until the files exist.
 
 If the repository is genuinely brand new with nothing substantive to report yet, note that exception and continue.
 

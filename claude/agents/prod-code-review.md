@@ -307,7 +307,7 @@ After completing the full analysis, write the record to the task folder.
 
 ## Pipeline Integration
 
-After writing the analysis record, return the verdict and a structured summary. When invoked as a subagent by the Phase - Execute orchestrator, return:
+After writing the analysis record, return the verdict and a structured summary. When spawnd as a subagent by the Phase - Execute orchestrator, return:
 
 1. **Verdict**: GO / GO WITH CONDITIONS / NO-GO
 2. **Executive summary**: 3-5 sentences
@@ -315,7 +315,7 @@ After writing the analysis record, return the verdict and a structured summary. 
 4. **Blocking items** (if NO-GO): list with root cause routing
 5. **Conditions** (if GO WITH CONDITIONS): list
 
-When invoked standalone by the user, provide the full next-step guidance:
+When spawnd standalone by the user, provide the full next-step guidance:
 
 **If GO:**
 

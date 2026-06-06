@@ -39,7 +39,7 @@ Based on the user's choice, determine the output directory name. Use the format 
 
 #### If ANALYZE:
 
-Invoke the **Test - Analyst** subagent:
+spawn the **Test - Analyst** subagent:
 
 > "Perform a comprehensive test suite analysis of [scope]. Categorize all tests by value, identify redundancies and gaps, produce a staged reduction plan, and write the planning documents to `dev/feature/[0N-task-name]/`. Return the complete analysis summary including high-value tests, questionable tests, likely redundant tests, and consolidation candidates."
 
@@ -49,7 +49,7 @@ After the subagent returns:
 
 #### If WRITE:
 
-Invoke the **Test - Writer** subagent:
+spawn the **Test - Writer** subagent:
 
 > "Bootstrap a test suite for [scope]. Discover the project structure, assess what needs tests, create test files with meaningful baseline coverage, verify all tests pass, and return a summary of test files created, test count, and coverage. Write a test suite summary to `dev/feature/[0N-task-name]/[0N-task-name]-summary.md`."
 
@@ -59,7 +59,7 @@ After the subagent returns:
 
 #### If FIX:
 
-Invoke the **Test - Fixer** subagent:
+spawn the **Test - Fixer** subagent:
 
 > "Diagnose and fix the failing tests in [scope]. Reproduce failures, classify root causes, apply targeted fixes to test code only (never modify source code), verify all tests pass, and return a structured fix summary. Write the fix report to `dev/feature/[0N-task-name]/[0N-task-name]-report.md`."
 

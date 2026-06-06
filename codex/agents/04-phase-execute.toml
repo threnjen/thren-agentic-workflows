@@ -34,8 +34,8 @@ Treat `dev/feature/[phase-name]-execution-manifest.md` as the single source of t
 6. If any required file is missing, stop immediately and tell the user to rerun `feature-decomposer` for this phase.
 7. Create a todo list entry for each feature with status `not-started`.
 
-Do not invoke `feature-decomposer`.
-Do not invoke `z-feature-plan-expander`.
+Do not spawn `feature-decomposer`.
+Do not spawn `z-feature-plan-expander`.
 Do not rebuild the schedule by rereading plan files or `## Execution Metadata`.
 
 ### Step 2: Feature Development Loop
@@ -69,11 +69,11 @@ Wait for the implementer to return.
 
 **B. Review** — Only after the implementer returns, run one full-feature review.
 
-If `is-unity-project: yes`, first spawn a **unity-reviewer** subagent for this feature as a Unity-specific review pass:
+If `is-unity-project: yes`, first Spawn a **unity-reviewer** subagent for this feature as a Unity-specific review pass:
 
 > "[SUBAGENT-MODE] Review Unity-related changes for the feature at `dev/feature/[0N-task-name]/`. Focus on Unity lifecycle/wiring, rendering/performance pitfalls, UI Toolkit concerns, and project Unity conventions. Return structured findings only; do not implement fixes."
 
-Then spawn a **z-feature-reviewer** subagent per Steps B–C from the `implementation-pipeline-loop` skill. Wait for it to return.
+Then Spawn a **z-feature-reviewer** subagent per Steps B–C from the `implementation-pipeline-loop` skill. Wait for it to return.
 
 **B1. Commit checkpoint** — After the reviewer returns, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by this feature. Do not stage files from other feature directories. Commit this checkpoint with the exact message `eval: review <feature-slug>`, replacing `<feature-slug>` with the current feature directory name.
 
@@ -122,7 +122,7 @@ Produce a QA document covering the scope of the current execution.
 
 Determine QA output paths using the conventions in the auto-loaded `dev-task-folder` instruction (Consolidated QA Documents table). Check for existing QA files at those paths.
 
-#### Invoke QA Writer
+#### spawn QA Writer
 
 Spawn a **z-feature-qa-writer** subagent:
 
@@ -231,7 +231,7 @@ Before modifying any files, create a dedicated Git branch for the pipeline run s
 ## Subagent Output Verification
 
 - ALWAYS verify subagent outputs exist on disk before proceeding to the next pipeline step
-- If a subagent returns but the expected output file doesn't exist: re-invoke once with an explicit reminder about the expected output path. If still missing after retry, report the failure to the user and stop
+- If a subagent returns but the expected output file doesn't exist: re-spawn once with an explicit reminder about the expected output path. If still missing after retry, report the failure to the user and stop
 
 ## Pipeline Discipline
 
