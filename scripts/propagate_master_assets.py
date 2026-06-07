@@ -62,9 +62,7 @@ HOOK_EVENT_MAP: Dict[str, Dict[str, List[str]]] = {
 
 # Agents that live exclusively in .github/agents and must never be propagated
 # to any platform output directory.
-PROPAGATION_EXCLUDE: set[str] = {
-    "evangelize",
-}
+PROPAGATION_EXCLUDE: set[str] = set()
 
 
 OPENCODE_FILE_ALIASES = {

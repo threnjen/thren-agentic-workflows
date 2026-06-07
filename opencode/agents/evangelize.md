@@ -1,6 +1,6 @@
 ---
 description: "Spread the good word! Ports source-of-truth assets from .github (agents, instructions, skills) into Claude, Codex, and OpenCode outputs using each platform porting guide."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 permission:
   bash: allow
   edit: allow

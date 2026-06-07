@@ -9,7 +9,7 @@ This document defines how tools are represented across GitHub Copilot source man
 | `read` | `Read` | `permission.read` | Describe in `developer_instructions` | Read files and folders |
 | `search` | `Grep`, `Glob` | `permission.grep`, `permission.glob` | Describe in `developer_instructions` | Search files |
 | `edit` | `Edit`, `Write` | `permission.edit` | Describe in `developer_instructions` | Modify/create files |
-| `fetch` | `WebFetch` | `permission.web_fetch` | Describe in `developer_instructions` | Fetch web content |
+| `fetch` | `WebFetch` | `permission.webfetch` | Describe in `developer_instructions` | Fetch web content |
 | `execute` | `Bash` | `permission.bash` | Describe in `developer_instructions` | Execute shell commands |
 | `agent` | `Agent` | `permission.task` | Describe in `developer_instructions` | spawn subagents |
 | `todo` | No equivalent | `permission.todowrite` | Describe in `developer_instructions` | Manage todo/progress lists |
