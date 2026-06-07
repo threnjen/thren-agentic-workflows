@@ -1,6 +1,6 @@
 ---
 description: "Scores one comparative Eval Grader metric from prepared diff and ledger evidence. Returns a normalized 1-10 score plus concise supporting evidence."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:

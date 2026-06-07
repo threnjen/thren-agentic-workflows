@@ -1,6 +1,6 @@
 ---
 description: "Handles small, focused code changes with one clear concern. Investigates, proposes, waits for explicit approval, then implements and verifies."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 permission:
   bash: allow
   edit: allow
@@ -37,9 +37,10 @@ Understand request scope and impact:
 
 ### Unity Detection and Review Gate
 
-Before proposing implementation, detect whether this is a Unity project by checking for a `game/Assets` directory.
+Before proposing implementation, detect whether this is a Unity project: a `game/Assets` directory, OR both `Assets/` and `ProjectSettings/` directories at the repository root (the standard Unity layout).
 
-- If `game/Assets` exists, spawn `unity-reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
+- If a Unity project is detected, **load the `unity-development` skill** before planning or writing code, so Unity authoring rules (runtime wiring, lifecycle, serialized-asset generation) apply during implementation — not only at review.
+- If a Unity project is detected, spawn `unity-reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
 - Include the reviewer findings in your proposal as risks and constraints.
 - If no Unity layout is detected, continue without invoking `unity-reviewer`.
 

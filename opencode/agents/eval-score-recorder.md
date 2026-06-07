@@ -1,6 +1,6 @@
 ---
 description: "Resolves harness/model identity from eval/scoring/HARNESS_MODEL_MAPPINGS.md, computes the weighted overall score with explicit step-by-step verification, and appends one additive-only row to the persistent score history. spawnd only after the parent grader's score report is fully written."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:

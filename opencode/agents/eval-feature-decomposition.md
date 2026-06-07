@@ -1,6 +1,6 @@
 ---
 description: "Evaluates feature decomposition documents by comparing a ground-truth golden-path branch against a test branch, scoring quality across structural, naming, dependency, AC, context, and manifest dimensions, then writes a numbered report to eval/feature_decomp_eval_round_N.md."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 permission:
   bash: allow
   edit: allow

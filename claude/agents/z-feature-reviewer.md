@@ -15,6 +15,7 @@ Be skeptical and thorough.
 - After review, apply fixes for all High and Blocker severity issues directly
 - DO NOT skip any review category—be comprehensive
 - DO NOT give vague feedback—provide specific file:line references
+- Distinguish what you VERIFIED from what you only inferred by reading. A clean compile, a passing test, or "the code looks correctly wired" does NOT prove an acceptance criterion that requires execution, runtime, or visual confirmation. Never mark such an AC met or "verified" from static review — report it as **unverified, requiring [the specific check]** (e.g., a runtime/integration/manual/visual step). Static reading confirms that references exist, not that they resolve or that behavior was observed.
 
 ## Required Inputs
 
@@ -37,6 +38,7 @@ Complete ALL of these:
   - **Missing** — Not implemented at all
   - **Partial** — Partially implemented
   - **Divergent** — Implemented differently than specified
+  - **Unverified** — Implemented, but the AC requires execution/runtime/visual confirmation that was not performed in this review. Do not report it as met; state the specific check needed.
 
 ### 2. Correctness & Bugs
 

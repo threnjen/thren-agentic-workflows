@@ -1,6 +1,6 @@
 ---
 description: "Reads feature plan files and generates companion context and tasks files."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:

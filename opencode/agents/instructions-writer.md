@@ -1,6 +1,6 @@
 ---
 description: "Creates scoped AI coding instruction files for a repository by discovering domains, identifying non-obvious rules, and drafting structured .instructions.md files following the AI Instruction File Framework."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:

@@ -17,16 +17,16 @@ For cross-platform tool names, see `docs/porting/TOOL_MAPPING.md`.
 OpenCode agent files use frontmatter with:
 
 - `description: "..."`
-- model line (for example: `deepseek/deepseek-v4-pro`)
+- `model: ...` (for example: `model: deepseek/deepseek-v4-pro`)
 - optional `mode: subagent` and `hidden: true`
-- `permission:` object
+- optional `permission:` object (omit if no permissions are derived)
 
 ## Tool Mapping (GitHub to OpenCode)
 
 - `read` -> `permission.read: allow`
 - `search` -> `permission.grep: allow`, `permission.glob: allow`
 - `edit` -> `permission.edit: allow`
-- `fetch` -> `permission.web_fetch: allow`
+- `fetch` -> `permission.webfetch: allow`
 - `execute` -> `permission.bash: allow`
 - `agent` -> `permission.task: allow`
 - `todo` -> `permission.todowrite: allow`

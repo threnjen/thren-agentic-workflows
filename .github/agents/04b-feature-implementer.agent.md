@@ -40,6 +40,10 @@ Before starting implementation, scan `dev/feature/` for all numbered feature dir
 
 ## Implementation Workflow
 
+### Pre-Implementation: Load Stack Conventions
+
+Before establishing the test baseline, detect the project's tech stack and load the matching implementation skill, so stack-specific authoring rules apply while you write code — not only when it is reviewed afterward. For example, if the repository is a Unity project (a `game/Assets` directory, or both `Assets/` and `ProjectSettings/` at the repository root), load the `unity-development` skill. Re-check whatever you load here in the Pre-Handoff Self-Check (step G5).
+
 ### Pre-Implementation: Test Baseline
 
 Before any code changes, establish the test baseline. This is a mandatory gate.

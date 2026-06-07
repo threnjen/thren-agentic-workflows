@@ -29,6 +29,8 @@ If compilation fails, include one finding per unique compiler error using this c
 
 Then continue the category review for source-level issues unless the user asked for compile-only validation.
 
+**Serialized-asset validation (conditional).** If the change adds or modifies serialized Unity assets (`.prefab`, `.unity`, `.mat`, `.asset`, `.meta`), a batch import IS warranted here as an asset-integrity gate — the exception to the "no batchmode" guidance above. Run the documented batch compile/import (`-batchmode … -quit`) and scan the import log for **asset** errors — "missing script", broken prefab/scene import, shader/material errors — not just C# compiler errors. Capture each as a finding. A clean import does not prove references resolve or that anything renders, so always also run the static Serialized Asset Integrity audit (Phase 3) for these changes.
+
 ### Phase 3: Review Categories
 
 Evaluate code against these categories, loading the relevant reference as needed:
@@ -43,6 +45,7 @@ Evaluate code against these categories, loading the relevant reference as needed
 | **Test Authenticity** | `unity-development` skill |
 | **2D Art & Rendering** | `unity-review-knowledge/references/2d-art-and-rendering.md` |
 | **DOTS/ECS** | `unity-review-knowledge/references/dots-and-ecs.md` |
+| **Serialized Asset Integrity** | `unity-development` skill ("Serialized Assets" + "Invalid-asset red flags") — mandatory when the diff touches `.prefab`/`.unity`/`.mat`/`.asset`/`.meta` |
 | **Compilation** | Repository compile gate output |
 
 ## Constraints
@@ -51,6 +54,7 @@ Evaluate code against these categories, loading the relevant reference as needed
 - DO NOT suggest changes without citing the specific rule or guideline being violated
 - DO NOT flag subjective style preferences — only flag violations of the documented conventions
 - ONLY produce review findings; do not implement fixes
+- When reviewing serialized assets or runtime/visual behavior, state what each method actually proves. A clean compile/import confirms the project loads — NOT that serialized references resolve or that anything renders. Report runtime/visual acceptance criteria as **unverified — requires Editor Play mode**; never mark them passing from static review or compile alone. Do not record "serialized refs wired" as verification of an AC: confirm each referenced GUID resolves, and even then note rendering is unconfirmed without Play mode.
 
 ## Review Process
 

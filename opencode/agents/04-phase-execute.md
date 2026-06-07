@@ -1,6 +1,6 @@
 ---
 description: "Orchestrates end-to-end execution of a refined Phase document using a prepared execution manifest and feature bundles, then delegates implementation, review, QA, and documentation."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 permission:
   bash: allow
   glob: allow
@@ -50,6 +50,7 @@ Load the `implementation-pipeline-loop` skill.
 
 Detect whether this is a Unity project before starting wave execution:
 - If a `game/Assets` directory exists at repository root, set `is-unity-project: yes`
+- Otherwise, if both `Assets/` and `ProjectSettings/` directories exist at repository root (the standard Unity project layout), set `is-unity-project: yes`
 - Otherwise, set `is-unity-project: no`
 
 Execute waves in numeric wave order according to the execution schedule from the manifest. Within each wave, use sequential or parallel execution based on the `parallel_safe` flags.

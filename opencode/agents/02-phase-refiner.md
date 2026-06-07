@@ -1,6 +1,6 @@
 ---
 description: "Refines a single Phase document — probes edge cases, surfaces dependencies, and stress-tests scope before Feature - Decomposer. Can also draft a Phase document from scratch for standalone features."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 permission:
   edit: allow
   glob: allow

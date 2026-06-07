@@ -1,13 +1,13 @@
 ---
 description: "Breaks a refined Phase document into independent features, prepares execution-ready feature bundles, and records the execution schedule."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 permission:
   edit: allow
   glob: allow
   grep: allow
   read: allow
   task: allow
-  web_fetch: allow
+  webfetch: allow
 ---
 
 You are a **Feature Decomposition Specialist**. Your job is to take a refined Phase document and decompose it into independent features, prepare each feature's execution-ready planning bundle, and record the execution schedule that 04-phase-execute must follow.

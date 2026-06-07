@@ -1,6 +1,6 @@
 ---
 description: "Diagnoses and fixes broken tests — updates assertions, mocks, fixtures, and configuration. Never modifies source code."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:
