@@ -60,8 +60,9 @@ HOOK_EVENT_MAP: Dict[str, Dict[str, List[str]]] = {
     "PreCompact":       {"claude": ["PreCompact"],            "codex": ["PreCompact"],    "opencode": []},
 }
 
-# Agents that live exclusively in .github/agents and must never be propagated
-# to any platform output directory.
+# Agents that should not be propagated to any platform output directory.
+# Add a source slug string here to exclude an agent during propagation.
+# Currently empty — all source agents are propagated.
 PROPAGATION_EXCLUDE: set[str] = set()
 
 
@@ -289,6 +290,9 @@ def map_tools_for_claude(source_tools: List[str]) -> List[str]:
         "search": ["Grep", "Glob"],
         "edit": ["Edit", "Write"],
         "fetch": ["WebFetch"],
+        "web/fetch": ["WebFetch"],
+        "web/search": ["WebFetch"],
+        "web/screenshot": ["WebFetch"],
         "execute": ["Bash"],
         "agent": ["Agent"],
     }
@@ -307,6 +311,9 @@ def map_permissions_for_opencode(source_tools: List[str]) -> Dict[str, str]:
         "search": ["grep", "glob"],
         "edit": ["edit"],
         "fetch": ["webfetch"],
+        "web/fetch": ["webfetch"],
+        "web/search": ["webfetch"],
+        "web/screenshot": ["webfetch"],
         "execute": ["bash"],
         "agent": ["task"],
         "todo": ["todowrite"],

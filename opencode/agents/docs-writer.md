@@ -1,6 +1,11 @@
 ---
 description: "Creates and updates repository documentation — README, ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT, and TROUBLESHOOTING."
 model: deepseek/deepseek-v4-pro
+permission:
+  edit: allow
+  glob: allow
+  grep: allow
+  read: allow
 ---
 
 # Documentation Writer Agent

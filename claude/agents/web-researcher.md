@@ -1,7 +1,7 @@
 ---
 name: web-researcher
 description: Researches technical topics across the internet — searches GitHub issues, Stack Overflow, Reddit, forums, and documentation. Produces a structured research report with full citations saved to dev/research/[topic-name]/.
-tools: Skill, Read, Edit, Write, Grep, Glob, Bash
+tools: Skill, Read, Edit, Write, Grep, Glob, Bash, WebFetch
 user-invocable: false
 ---
 
