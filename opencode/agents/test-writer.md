@@ -1,6 +1,6 @@
 ---
 description: "Bootstraps test suites from scratch — creates test files, fixtures, and configuration for untested code."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:

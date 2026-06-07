@@ -1,6 +1,6 @@
 ---
 description: "Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:
@@ -45,6 +45,10 @@ Before starting implementation, scan `dev/feature/` for all numbered feature dir
 **You only implement the single feature directory you were given.** Do not modify files solely for the benefit of sibling features.
 
 ## Implementation Workflow
+
+### Pre-Implementation: Load Stack Conventions
+
+Before establishing the test baseline, detect the project's tech stack and load the matching implementation skill, so stack-specific authoring rules apply while you write code — not only when it is reviewed afterward. For example, if the repository is a Unity project (a `game/Assets` directory, or both `Assets/` and `ProjectSettings/` at the repository root), load the `unity-development` skill. Re-check whatever you load here in the Pre-Handoff Self-Check (step G5).
 
 ### Pre-Implementation: Test Baseline
 

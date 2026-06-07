@@ -1,6 +1,6 @@
 ---
 description: "Scores a completed phase run by comparing clean-base->golden and clean-base->evaluated branch diffs, ingesting ledger-commits.jsonl and ledger-events.jsonl against a user-provided rubric YAML, and producing a structured comparative score report without interactive prompts. Supports feature-level and AC-level commit cadence plus planned test-pattern evidence."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 permission:
   bash: allow
   edit: allow

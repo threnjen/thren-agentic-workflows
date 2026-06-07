@@ -1,6 +1,6 @@
 ---
 description: "Evaluates whether changes to AI coding instruction files are improvements or regressions using blind A/B testing, rule classification, 3-run stability scoring, and rule quality analysis. Reads BEFORE automatically from git history."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:

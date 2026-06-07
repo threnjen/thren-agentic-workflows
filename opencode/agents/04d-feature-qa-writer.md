@@ -1,6 +1,6 @@
 ---
 description: "Writes a consolidated manual QA checklist covering integration points not verifiable by automated tests."
-deepseek/deepseek-v4-pro
+model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:

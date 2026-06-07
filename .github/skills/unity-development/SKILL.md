@@ -161,6 +161,30 @@ Batch renderers that only rebuild on add/remove won't reflect per-entity state c
 - A `LoadManager` that replaces references without notifying subsystems produces stale-reference bugs that are invisible until the player loads a save
 - Verify: does every subsystem that holds a Grid/Map reference get updated after load?
 
+## Serialized Assets: Generate via Unity, Never Hand-Author
+
+Unity's serialized assets — `.prefab`, `.unity` scenes, `.mat`, `.asset` (including SRP pipeline/renderer assets), and `.meta` files — are produced by the Unity Editor's serializer. The Editor is the sole authority for GUIDs, fileIDs, class ids, required-component dependencies, and version-correct format. An agent hand-writing these files is impersonating that serializer **blind**: no access to the real GUID database, no enforcement of component dependencies, no way to validate the output. This is the single most common source of "compiles green, tests pass, but nothing renders / NRE every frame" failures.
+
+**Rule: do not hand-author serialized Unity assets from scratch.** Build them by running the Unity Editor API in batch mode (an `Editor/` script Unity executes), so Unity generates the asset, its GUIDs, and its `.meta`:
+
+- Prefabs → construct the GameObject with `new GameObject(...)` + `AddComponent<T>()`, then `PrefabUtility.SaveAsPrefabAsset`.
+- Scenes → `EditorSceneManager.NewScene`/`OpenScene`, build contents, `EditorSceneManager.SaveScene`.
+- Materials / ScriptableObjects / SRP assets → `new Material(Shader.Find(...))` / `ScriptableObject.CreateInstance<T>()` (or the type's `Create()` helper) + `AssetDatabase.CreateAsset`.
+- Sprites/textures → import a real source file; never invent a texture/sprite `.meta` GUID.
+
+Run via `-batchmode -executeMethod <Type>.<Method> -quit`, then confirm the assets imported without errors.
+
+**Boundary:** a *surgical edit* to an existing, Unity-generated asset (changing a serialized value in a file the Editor already produced) is acceptable. *Authoring a whole asset as raw YAML* is the anti-pattern. The risk is highest in unattended pipeline runs where no human Play-tests each step.
+
+### Invalid-asset red flags (when producing OR reviewing any serialized asset)
+
+- A `MonoBehaviour.m_Script` GUID of `0000000000000000f000000000000000` (builtin-extra — valid only for builtin fonts/textures/materials, **never** a script), or any `m_Script`/asset GUID with no matching `.cs.meta` or package meta → silent "missing script" → `null` at runtime.
+- A class-id tag that doesn't match the component body: `SpriteRenderer` is `!u!212` (not `!u!23` = MeshRenderer); UI elements need `RectTransform` (`!u!224`), not `Transform` (`!u!4`).
+- **(uGUI / legacy UI only)** A UI `Graphic` (`Image`/`Text`) missing its required `CanvasRenderer` (`!u!222`) and `RectTransform`; a `Canvas` missing a `RectTransform`. (UI Toolkit projects use `UIDocument`/`PanelSettings` instead — not applicable.)
+- An asset reference (`m_Sprite`, `m_Materials`, `m_Font`, renderer/pipeline) whose GUID no existing `.meta` defines → dangling reference → renders nothing, no error.
+- **(URP only)** A render-pipeline chain that doesn't fully resolve: `QualitySettings`/`GraphicsSettings` → URP pipeline `.asset` → renderer `.asset` must all exist. A missing link silently disables sprite/line rendering with no console error. (Built-in Render Pipeline projects have no such chain.)
+- A serialized field reported as "wired" whose target component's script GUID does not resolve — a present fileID is **not** proof the reference resolves.
+
 ## Pre-Handoff Checklist (Unity-Specific)
 
 Before writing the implementation record, verify these in addition to the universal self-check:
@@ -171,3 +195,4 @@ Before writing the implementation record, verify these in addition to the univer
 4. **TickerType match** — If a new `ThingComp` overrides `CompTickRare` or `CompTickLong`, does the parent Thing's Def set the matching `tickerType`?
 5. **PlacedSize vs def.size** — Any code computing building footprints uses `Building.PlacedSize` (the actual placed/rotated size), NOT `def.size` (blueprint size).
 6. **Input method** — New keyboard/mouse handling uses the project's established input pattern (check cross-phase-decisions for migration status).
+7. **Serialized assets generated, not hand-written** — Any new/changed `.prefab`/`.unity`/`.mat`/`.asset` was produced via the Unity Editor API (batch-mode `Editor/` script), not hand-authored YAML. No fabricated GUIDs, no `0000…f000` `m_Script` references, no missing required components or dangling asset references. See "Serialized Assets: Generate via Unity, Never Hand-Author".

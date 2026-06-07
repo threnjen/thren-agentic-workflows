@@ -308,7 +308,7 @@ def map_permissions_for_opencode(source_tools: List[str]) -> Dict[str, str]:
         "read": ["read"],
         "search": ["grep", "glob"],
         "edit": ["edit"],
-        "fetch": ["web_fetch"],
+        "fetch": ["webfetch"],
         "execute": ["bash"],
         "agent": ["task"],
         "todo": ["todowrite"],
@@ -503,16 +503,17 @@ def render_opencode_agent(agent: SourceAgent, docs: List[InstructionDoc], refere
     lines: List[str] = [
         "---",
         f"description: \"{agent.description}\"",
-        "deepseek/deepseek-v4-pro",
+        "model: deepseek/deepseek-v4-pro",
     ]
 
     if not agent.user_invocable:
         lines.append("mode: subagent")
         lines.append("hidden: true")
 
-    lines.append("permission:")
-    for key in sorted(permissions.keys()):
-        lines.append(f"  {key}: allow")
+    if permissions:
+        lines.append("permission:")
+        for key in sorted(permissions.keys()):
+            lines.append(f"  {key}: allow")
     lines.extend(["---", "", body])
 
     if appendix:
