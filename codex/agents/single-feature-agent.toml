@@ -30,7 +30,7 @@ Understand request scope and impact:
 
 ### Unity Detection and Review Gate
 
-Before proposing implementation, detect whether this is a Unity project: a `game/Assets` directory, OR both `Assets/` and `ProjectSettings/` directories at the repository root (the standard Unity layout).
+Before proposing implementation, detect whether this is a Unity project: a `Assets` directory, OR both `Assets/` and `ProjectSettings/` directories at the repository root (the standard Unity layout).
 
 - If a Unity project is detected, **load the `unity-development` skill** before planning or writing code, so Unity authoring rules (runtime wiring, lifecycle, serialized-asset generation) apply during implementation — not only at review.
 - If a Unity project is detected, spawn `unity-reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
