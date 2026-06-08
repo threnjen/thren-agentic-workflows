@@ -18,7 +18,7 @@ Before starting discovery, detect whether the target repository is a Unity proje
 
 Use these indicators:
 - `.github/copilot-instructions.md` identifies the project as Unity
-- Repository contains both `Assets/` and `ProjectSettings/`
+- Repository contains both `Assets/` and `ProjectSettings/`, or a `game/Assets` directory
 - Repository contains Unity assembly definition files (`*.asmdef`)
 
 If any indicator matches, load BOTH skills immediately before proceeding:

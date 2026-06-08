@@ -49,8 +49,8 @@ Do not rebuild the schedule by rereading plan files or `## Execution Metadata`.
 Load the `implementation-pipeline-loop` skill.
 
 Detect whether this is a Unity project before starting wave execution:
-- If a `Assets` directory exists at repository root, set `is-unity-project: yes`
-- Otherwise, if both `Assets/` and `ProjectSettings/` directories exist at repository root (the standard Unity project layout), set `is-unity-project: yes`
+- If a `game/Assets` directory exists at repository root (nested/monorepo Unity layout), set `is-unity-project: yes`
+- Otherwise, if both `Assets/` and `ProjectSettings/` directories exist at repository root (the standard root Unity layout), set `is-unity-project: yes`
 - Otherwise, set `is-unity-project: no`
 
 Execute waves in numeric wave order according to the execution schedule from the manifest. Within each wave, use sequential or parallel execution based on the `parallel_safe` flags.
