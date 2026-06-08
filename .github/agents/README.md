@@ -140,6 +140,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
 | **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
 | **Unity Reviewer** | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
+| **Visual Verifier** | Produce deterministic runtime screenshots and assess them against a phase's visual acceptance criteria (does it actually render?) |
 | **Web Researcher** | Research a topic and produce a structured findings report and executive summary saved to `dev/research/[topic-name]/` |
 
 ### Hidden Subagents
@@ -207,6 +208,9 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Unity Reviewer** (read-only — does not modify code)
 > Give it Unity C# source files or a directory to review. Loads Unity-specific skills (MonoBehaviour lifecycle, UI Toolkit pitfalls, performance rules, design patterns, style guide compliance) and produces structured review findings. Does not modify code — review output only.
+
+**Visual Verifier** (runs capture, reads frames, writes a report — does not modify source)
+> Give it a phase's visual acceptance criteria and a capture config path. It runs the repository's documented deterministic screenshot capture, reads the produced frames as images, and judges each visual AC against what is actually on screen — returning Pass / Fail / Unverified with per-AC evidence. Catches the defect class that compiles, passes unit tests, and passes static review while rendering nothing usable. Honesty-bound: never certifies a visual AC without viewing the frame, and reports Unverified (not a fake pass) if it cannot ingest the images. Also spawnd automatically by Phase - Execute on Unity phases that have visual ACs and a capture config.
 
 ### Hidden Subagents
 
@@ -296,6 +300,7 @@ Not everything needs a pipeline. These agents work well on their own:
 - **Prod Code Review** — Point at any `dev/feature/[0N-task-name]/` folder for an independent readiness check
 - **Debugger** — Fix a specific frontend or backend error without a full pipeline
 - **Unity Reviewer** — Review Unity C# code for architecture, performance, and pitfalls
+- **Visual Verifier** — Screenshot a rendering phase and judge it against its visual acceptance criteria
 - **Web Researcher** — Research a technical question or debug a tricky issue
 - **Docs Writer** — Update documentation after any significant change
 
