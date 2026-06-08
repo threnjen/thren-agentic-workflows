@@ -17,8 +17,7 @@ and write a verdict report.
 
 ## Inputs (from the spawning orchestrator)
 
-- The **phase name** and its **visual acceptance criteria**, quoted from the phase document.
-- The **capture config path** (e.g. `Assets/VisualVerification/capture-config.json`, or the
+- The **capture config path** (e.g. `Assets/VisualVerification/capture-config.json`, `game/Assets/VisualVerification/capture-config.json`, or the
   path named by `LUMEN_VV_CONFIG`).
 
 If the visual ACs were not provided, read the phase document yourself and extract them. If
