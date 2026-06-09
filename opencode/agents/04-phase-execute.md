@@ -140,7 +140,10 @@ When all three hold, spawn the **visual-verifier** subagent:
 
 After the subagent returns:
 - Record the verdict as `visual-verification: Pass | Fail | Unverified`.
-- If the verdict is `Fail` or `Unverified`, set `all-approved: no` so Step 5 (Prod Review) runs in standard (not fast-track) mode. A blank or missing frame is a `Fail`, not an `Unverified`.
+- **On `Fail`, remediate once** — the same bounded retry the review loop uses for "Changes Requested". Re-spawn the 04b-feature-implementer responsible for the rendering with the visual-verifier's per-AC findings and the rendered frames, then re-run the visual-verifier on the same config. Retry **at most once**. If still `Fail` after the retry, record the final verdict and proceed — the blocker is escalated to Step 5, not silently dropped. Use this implementer prompt:
+  > "[SUBAGENT-MODE] The visual verification gate failed for phase [phase-name]. Failing visual acceptance criteria, and what the rendered frames actually show: [paste the visual-verifier's per-AC findings]. Rendered frames: [artifact paths]. Fix the rendering so these acceptance criteria are met. Do NOT edit the capture config or the visual ACs to force a pass — fix what is on screen. Return what you changed."
+  - Do not retry `Unverified` (the capture could not run, or the images were not assessable — a setup/tooling problem, not a rendering one). Record it and proceed.
+- If the final verdict is `Fail` or `Unverified`, set `all-approved: no` so Step 5 (Prod Review) runs in standard (not fast-track) mode and flags it as a blocker. A blank or missing frame is a `Fail`, not an `Unverified`.
 - Do NOT emit a separate `eval:` commit for this step. Stage the report file with the Step 5 final-review checkpoint. The generated screenshots and manifest are build artifacts — do not commit them.
 
 ### Step 4: QA

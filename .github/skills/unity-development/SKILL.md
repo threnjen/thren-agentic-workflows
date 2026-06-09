@@ -185,6 +185,31 @@ Run via `-batchmode -executeMethod <Type>.<Method> -quit`, then confirm the asse
 - **(URP only)** A render-pipeline chain that doesn't fully resolve: `QualitySettings`/`GraphicsSettings` → URP pipeline `.asset` → renderer `.asset` must all exist. A missing link silently disables sprite/line rendering with no console error. (Built-in Render Pipeline projects have no such chain.)
 - A serialized field reported as "wired" whose target component's script GUID does not resolve — a present fileID is **not** proof the reference resolves.
 
+## Visual Verification Wiring
+
+For a View feature whose phase has visual acceptance criteria, set up its visual test the same
+way you set up unit tests for logic — it is part of "done," not an afterthought. The capture
+mechanism is config-driven (a generic PlayMode capture package, e.g.
+`com.threnjen.visual-verification`), so "writing the visual test" means wiring the project to run
+it, not authoring per-feature test code:
+
+1. **Ensure the capture package is a dependency.** If the project documents a visual-verification
+   capture package (in `Packages/manifest.json`, `CLAUDE.md`, or setup docs), confirm it is present
+   in `Packages/manifest.json` and listed under `testables`. Do not invent a package URL — if none
+   is documented and none is present, record the gap in the implementation record rather than
+   guessing.
+2. **Create or update the capture config.** Ensure `Assets/VisualVerification/capture-config.json`
+   (root layout) or `game/Assets/VisualVerification/capture-config.json` (nested layout) exists,
+   with an entry for the scene this feature renders: the scene name, capture frames that show the
+   feature's behavior (e.g. an early frame and a later frame), and resolution. Reuse the existing
+   config if the scene is already covered.
+3. **Confirm the scene is loadable.** The capture loads the scene by name, so it must be in Build
+   Settings and have a `MainCamera`-tagged camera.
+
+Record in the implementation record which scene the config covers and which visual ACs the captured
+frames are meant to demonstrate, so the Visual Verifier (and the orchestrator's visual gate) have a
+clear target.
+
 ## Pre-Handoff Checklist (Unity-Specific)
 
 Before writing the implementation record, verify these in addition to the universal self-check:
@@ -196,3 +221,4 @@ Before writing the implementation record, verify these in addition to the univer
 5. **PlacedSize vs def.size** — Any code computing building footprints uses `Building.PlacedSize` (the actual placed/rotated size), NOT `def.size` (blueprint size).
 6. **Input method** — New keyboard/mouse handling uses the project's established input pattern (check cross-phase-decisions for migration status).
 7. **Serialized assets generated, not hand-written** — Any new/changed `.prefab`/`.unity`/`.mat`/`.asset` was produced via the Unity Editor API (batch-mode `Editor/` script), not hand-authored YAML. No fabricated GUIDs, no `0000…f000` `m_Script` references, no missing required components or dangling asset references. See "Serialized Assets: Generate via Unity, Never Hand-Author".
+8. **Visual test wired** — For a View feature with visual ACs, is the capture config present for this scene and the capture package a dependency listed under `testables`? Is the scene in Build Settings with a `MainCamera`? See "Visual Verification Wiring".
