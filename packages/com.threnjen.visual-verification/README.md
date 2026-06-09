@@ -12,6 +12,20 @@ rendering nothing usable (invisible/miscolored output, broken scene wiring, a bl
 The only proof is a rendered frame, looked at. This produces that frame reproducibly and
 headlessly.
 
+## Quick start
+
+1. **Install** — add the dependency + `testables` to `Packages/manifest.json` (see below).
+2. **Configure** — get a `capture-config.json` into `Assets/VisualVerification/`. Either
+   **Tools → Visual Verification → Create Config For Active Scene** (fills in the open scene),
+   or import the **Capture config template** sample (Package Manager → this package → Samples),
+   then set your scene name.
+3. **Preconditions** — the scene is in Build Settings, has a `MainCamera`, and drives its
+   simulation from `Time.deltaTime` (not wall-clock). See [Requirements](#requirements--notes).
+4. **Run** — the `-runTests -testPlatform PlayMode` command below. PNGs + `manifest.json`
+   land in `outputDir`.
+5. **Judge** — look at the frames, or let the Visual Verifier agent assess them against the
+   phase's visual ACs.
+
 ## Install
 
 Add to the consuming project's `Packages/manifest.json`:
@@ -20,7 +34,7 @@ Add to the consuming project's `Packages/manifest.json`:
 {
   "dependencies": {
     "com.threnjen.visual-verification":
-      "https://github.com/threnjen/github-agents-source-of-truth.git?path=/packages/com.threnjen.visual-verification#visual-verification/v0.1.0"
+      "https://github.com/threnjen/github-agents-source-of-truth.git?path=/packages/com.threnjen.visual-verification#visual-verification/v0.2.0"
   },
   "testables": [ "com.threnjen.visual-verification" ]
 }
@@ -31,20 +45,26 @@ entry point) in the project's test run.
 
 ## Configure
 
-Create `Assets/VisualVerification/capture-config.json` (or point the
-`VISUAL_VERIFICATION_CONFIG` environment variable at any path):
+Get a `capture-config.json` into `Assets/VisualVerification/`. Fastest paths:
+
+- **Editor menu:** *Tools → Visual Verification → Create Config For Active Scene* — writes the
+  file pre-filled with the currently open scene's name.
+- **Sample:** *Package Manager → Visual Verification → Samples → Capture config template →
+  Import*, then move it to `Assets/VisualVerification/capture-config.json` and set the scene.
+
+Or point the `VISUAL_VERIFICATION_CONFIG` environment variable at any path. The schema:
 
 ```jsonc
 {
   "outputDir": "dev/screenshots",
   "scenes": [
     {
-      "scene": "CombatSandbox",        // must be in Build Settings
+      "scene": "YourScene",            // must be in Build Settings
       "captureDeltaTime": 0.0166667,   // fixed dt per frame; default 1/60
       "captureFrames": [0, 60, 120],   // frame indices to grab; default [120]
       "width": 960,                    // default 960
       "height": 720,                   // default 720
-      "namePrefix": "combat"           // default: scene name
+      "namePrefix": "frame"            // default: scene name
     }
   ]
 }
@@ -73,8 +93,8 @@ If the project has other PlayMode tests, target just this one with
   "generatedAtUtc": "2026-06-07T12:00:00Z",
   "config": "<resolved config path>",
   "shots": [
-    { "scene": "CombatSandbox", "frame": 0,   "path": "dev/screenshots/combat-frame0.png",   "width": 960, "height": 720 },
-    { "scene": "CombatSandbox", "frame": 120, "path": "dev/screenshots/combat-frame120.png", "width": 960, "height": 720 }
+    { "scene": "YourScene", "frame": 0,   "path": "dev/screenshots/frame-frame0.png",   "width": 960, "height": 720 },
+    { "scene": "YourScene", "frame": 120, "path": "dev/screenshots/frame-frame120.png", "width": 960, "height": 720 }
   ]
 }
 ```

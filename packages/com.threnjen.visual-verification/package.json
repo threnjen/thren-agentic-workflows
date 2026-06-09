@@ -1,9 +1,10 @@
 {
   "name": "com.threnjen.visual-verification",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "Visual Verification",
   "description": "Deterministic PlayMode screenshot capture for visual acceptance testing. Loads a scene, steps a fixed number of frames under a fixed delta time, and writes PNGs plus a manifest so a reviewer (human or agent) can verify on-screen acceptance criteria. Engine-side capture only; judgement lives outside the package.",
   "unity": "6000.0",
+  "license": "GPL-3.0-or-later",
   "keywords": [
     "testing",
     "screenshot",
@@ -13,5 +14,12 @@
   ],
   "author": {
     "name": "threnjen"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Capture config template",
+      "description": "A ready-to-edit capture-config.json. Import it, then move it to Assets/VisualVerification/capture-config.json and set your scene name.",
+      "path": "Samples~/CaptureConfigTemplate"
+    }
+  ]
 }

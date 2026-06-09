@@ -41,6 +41,12 @@ namespace Threnjen.VisualVerification {
 
       Time.captureDeltaTime = dt;
       try {
+        if (!Application.CanStreamedLevelBeLoaded(cfg.scene)) {
+          throw new System.InvalidOperationException(
+            $"Scene '{cfg.scene}' is not in Build Settings, so it cannot be loaded by name. " +
+            "Add it via File > Build Settings, or fix the scene name in capture-config.json.");
+        }
+
         SceneManager.LoadScene(cfg.scene);
         yield return null; // scene load + Start() wiring (spawns units, etc.)
 
@@ -54,6 +60,10 @@ namespace Threnjen.VisualVerification {
         cam.targetTexture = rt;          // render into rt every frame for the whole run
         var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
 
+        byte[] firstPng = null;
+        bool allFramesIdentical = true;
+        int captured = 0;
+
         for (int frame = 0; frame <= maxFrame; frame++) {
           yield return null;             // one sim step + URP renders this frame into rt
           if (!wanted.Contains(frame)) continue;
@@ -64,8 +74,9 @@ namespace Threnjen.VisualVerification {
           tex.Apply();
           RenderTexture.active = prevActive;
 
+          byte[] png = tex.EncodeToPNG();
           string fileName = $"{prefix}-frame{frame}.png";
-          File.WriteAllBytes(Path.Combine(outputDirAbs, fileName), tex.EncodeToPNG());
+          File.WriteAllBytes(Path.Combine(outputDirAbs, fileName), png);
           shots.Add(new Shot {
             scene = cfg.scene,
             frame = frame,
@@ -73,6 +84,21 @@ namespace Threnjen.VisualVerification {
             width = w,
             height = h
           });
+
+          if (captured == 0) firstPng = png;
+          else if (allFramesIdentical && !BytesEqual(firstPng, png)) allFramesIdentical = false;
+          captured++;
+        }
+
+        // Determinism smell test: if every captured frame is byte-identical, either the scene
+        // is static or its simulation isn't advancing under capture (often a wall-clock-driven
+        // sim that Time.captureDeltaTime can't control). Warn rather than fail — a deliberately
+        // static scene is legitimate.
+        if (captured > 1 && allFramesIdentical) {
+          Debug.LogWarning(
+            $"[Visual Verification] All {captured} captured frames of scene '{cfg.scene}' are " +
+            "pixel-identical. The scene may be static, or its simulation isn't advancing under " +
+            "capture — verify the sim is driven by Time.deltaTime, not wall-clock.");
         }
 
         cam.targetTexture = null;
@@ -82,6 +108,14 @@ namespace Threnjen.VisualVerification {
       } finally {
         Time.captureDeltaTime = 0f;
       }
+    }
+
+    static bool BytesEqual(byte[] a, byte[] b) {
+      if (a == null || b == null || a.Length != b.Length) return false;
+      for (int i = 0; i < a.Length; i++) {
+        if (a[i] != b[i]) return false;
+      }
+      return true;
     }
   }
 }
