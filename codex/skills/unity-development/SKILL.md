@@ -193,11 +193,18 @@ mechanism is config-driven (a generic PlayMode capture package, e.g.
 `com.threnjen.visual-verification`), so "writing the visual test" means wiring the project to run
 it, not authoring per-feature test code:
 
-1. **Ensure the capture package is a dependency.** If the project documents a visual-verification
-   capture package (in `Packages/manifest.json`, `CLAUDE.md`, or setup docs), confirm it is present
-   in `Packages/manifest.json` and listed under `testables`. Do not invent a package URL — if none
-   is documented and none is present, record the gap in the implementation record rather than
-   guessing.
+1. **Ensure the capture package is a dependency — default to the bundled companion.** This agent
+   pack ships with a companion capture package; wire it by default so a fresh repo needs no manual
+   setup. Unless the project documents an override, add this to `Packages/manifest.json` (and list
+   it under `testables`) if absent:
+   ```jsonc
+   "com.threnjen.visual-verification":
+     "https://github.com/threnjen/github-agents-source-of-truth.git?path=/packages/com.threnjen.visual-verification#visual-verification/v0.2.0"
+   ```
+   If the project documents a different capture package (a fork, or a newer tag), use that instead.
+   This is the single source for the default — bump the pinned `visual-verification/vX.Y.Z` tag here
+   when the companion package releases. (The default resolves only if the companion repo is reachable
+   from the consuming machine; for private forks, document the override.)
 2. **Create or update the capture config.** Ensure `Assets/VisualVerification/capture-config.json`
    (root layout) or `game/Assets/VisualVerification/capture-config.json` (nested layout) exists,
    with an entry for the scene this feature renders: the scene name, capture frames that show the

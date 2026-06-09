@@ -47,8 +47,14 @@ The capture run is project-specific; do not hardcode it. Discover the documented
      you get exit 0 and zero tests (a false green). `-runTests` is what runs the tests; the run
      ends on its own.
    If the documented command violates either, flag it rather than silently rewriting it.
-3. If no command is documented, report that as a blocking gap and return `Unverified —
-   capture command not documented`. Do not invent a command path.
+3. If no command is documented, **derive the standard one** rather than giving up (the capture
+   package is the pack's bundled companion, so the invocation is known). Read the Unity version
+   from `ProjectSettings/ProjectVersion.txt` and use the conventional editor path for this machine
+   (Unity Hub layout, e.g. on Windows `…/Hub/Editor/<version>/Editor/Unity.exe`), then run:
+   `-batchmode -runTests -testPlatform PlayMode -projectPath . -testResults <results.xml> -logFile <log>`
+   (graphics on, no `-quit`). Only if the Unity editor for that version genuinely cannot be located
+   on this machine, return `Unverified — Unity editor not found`, stating the version and the paths
+   you checked. Never fabricate a result.
 
 ## Step 2 — Run the capture
 
