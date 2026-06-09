@@ -128,7 +128,7 @@ passes unit tests, and passes static review, yet renders nothing usable. Run it 
 of the following hold; otherwise skip it and record the stated reason:
 
 - `is-unity-project: yes` (from Step 2). If `no`, record `visual-verification: not a Unity project` and skip.
-- A visual-verification capture config exists at `Assets/VisualVerification/capture-config.json`, or at the path named by the `LUMEN_VV_CONFIG` environment variable. The presence of this config is the repository's opt-in. If absent, record `visual-verification: not configured` and skip.
+- A visual-verification capture config exists under the detected Unity project's `Assets/` — `Assets/VisualVerification/capture-config.json` for a root layout, or `game/Assets/VisualVerification/capture-config.json` for a nested/monorepo layout — or at the path named by the `VISUAL_VERIFICATION_CONFIG` environment variable. The presence of this config is the repository's opt-in. If absent, record `visual-verification: not configured` and skip.
 - The phase has visual/rendering acceptance criteria in its phase document (e.g. on-screen colors, layout, bars, bounds, sprites). If the phase has none, record `visual-verification: no visual ACs` and skip.
 
 When all three hold, spawn the **visual-verifier** subagent:
@@ -155,7 +155,7 @@ spawn the **z-feature-qa-writer** subagent:
 After the subagent returns:
 - Verify the QA document exists at the determined path
 - Verify the coverage map exists at the determined path
-- Stage only the consolidated QA outputs and any phase-level pipeline documents updated by this step. Do not stage feature-local source files or files from unrelated feature directories. Commit this checkpoint once with the exact message `eval: qa`.
+- Stage only the consolidated QA outputs and any phase-level pipeline documents updated by this step. Do not stage feature-local source files or files from unrelated feature directories. Do not stage the Step 3 visual-verification report (`docs/phases/[phase-name]/[phase-name]-visual-verification.md`) here — it belongs to the Step 5 final-review checkpoint. Commit this checkpoint once with the exact message `eval: qa`.
 
 ### Step 5: Phase Final Review
 

@@ -24,8 +24,10 @@ and write a verdict report.
 ## Inputs (from the spawning orchestrator)
 
 - The **phase name** and its **visual acceptance criteria**, quoted from the phase document.
-- The **capture config path** (e.g. `Assets/VisualVerification/capture-config.json`, or the
-  path named by `LUMEN_VV_CONFIG`).
+- The **capture config path** — under the Unity project's `Assets/`
+  (`Assets/VisualVerification/capture-config.json` for a root layout, or
+  `game/Assets/VisualVerification/capture-config.json` for a nested/monorepo layout), or the
+  path named by the `VISUAL_VERIFICATION_CONFIG` environment variable.
 
 If the visual ACs were not provided, read the phase document yourself and extract them. If
 there are genuinely no visual ACs, stop and return `Unverified — no visual acceptance criteria`.
@@ -36,9 +38,15 @@ The capture run is project-specific; do not hardcode it. Discover the documented
 
 1. Read the capture config to learn the scene(s), capture frames, resolution, and `outputDir`.
 2. Find the repository's documented visual-verification / PlayMode capture command — check
-   `CLAUDE.md`, `.github/copilot-instructions.md`, `README.md`, and project docs. For Unity it
-   is a single `-runTests -testPlatform PlayMode` invocation (batchmode, **graphics on** — no
-   `-nographics`, no `-quit`).
+   `CLAUDE.md`, `.github/copilot-instructions.md`, `README.md`, and project docs, and prefer
+   that command as written. For Unity it is a `-runTests -testPlatform PlayMode` invocation.
+   Apply two correctness checks to whatever you find, because both failures make the run
+   produce *no* test evidence while still exiting 0:
+   - It must run with **graphics on** (no `-nographics`) — otherwise nothing renders to capture.
+   - It must **not** pair `-quit` with `-runTests` — Unity then quits before the tests run, so
+     you get exit 0 and zero tests (a false green). `-runTests` is what runs the tests; the run
+     ends on its own.
+   If the documented command violates either, flag it rather than silently rewriting it.
 3. If no command is documented, report that as a blocking gap and return `Unverified —
    capture command not documented`. Do not invent a command path.
 
