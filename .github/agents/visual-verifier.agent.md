@@ -90,8 +90,11 @@ Read the produced PNG(s) as images. For **each** visual AC, look at the frame(s)
   captured, element off-frame, ambiguous). Say why, and suggest a capture-config change
   (e.g. add a capture frame, widen resolution) rather than guessing.
 
-When multiple frames were captured (start / mid / late), use the progression as evidence —
-units spawning, closing, clashing is far stronger than a single frame.
+When multiple frames were captured, examine **every** frame, not just the first and last, and
+judge motion/animation ACs from the full set. Two frames can coincide by accident — a 90°
+rotation of a symmetric object looks identical to 0° — so never conclude "no change / not
+animating" from endpoints alone; find the frame that reveals the behavior. Use the progression
+(units spawning, closing, clashing; an object rotating; a bar filling) as the strongest evidence.
 
 ### Honesty rules (non-negotiable)
 
