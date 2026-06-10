@@ -52,6 +52,7 @@ Reference specific files/modules so the Feature - Decomposer knows where to look
 
 - [ ] [Testable outcome 1]
 - [ ] [Testable outcome 2]
+- [ ] [For phases that render UI: state each visual criterion as a discrete, on-screen-observable check — e.g. "the two teams render in distinct colors", "a health bar sits above each unit", "the play area is bounded by a visible border" — one per line, so a reviewer or the Visual Verifier can judge each against a rendered frame]
 
 ## QA Considerations
 
@@ -99,6 +100,7 @@ Before presenting or writing any Phase document, verify:
 - [ ] Each phase is self-contained and independently valuable
 - [ ] Scope boundaries are explicit (in-scope AND out-of-scope per phase)
 - [ ] Success criteria are testable
+- [ ] For phases that render UI, success criteria include discrete, visually-checkable on-screen statements (color, layout, element presence) — not just "looks correct"
 - [ ] Technical context references specific files, modules, or patterns
 - [ ] "Notes for Feature - Decomposer" section provides decomposition guidance
 - [ ] Non-goals are defined at both project and phase level

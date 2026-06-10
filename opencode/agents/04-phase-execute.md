@@ -49,8 +49,8 @@ Do not rebuild the schedule by rereading plan files or `## Execution Metadata`.
 Load the `implementation-pipeline-loop` skill.
 
 Detect whether this is a Unity project before starting wave execution:
-- If a `Assets` directory exists at repository root, set `is-unity-project: yes`
-- Otherwise, if both `Assets/` and `ProjectSettings/` directories exist at repository root (the standard Unity project layout), set `is-unity-project: yes`
+- If a `game/Assets` directory exists at repository root (nested/monorepo Unity layout), set `is-unity-project: yes`
+- Otherwise, if both `Assets/` and `ProjectSettings/` directories exist at repository root (the standard root Unity layout), set `is-unity-project: yes`
 - Otherwise, set `is-unity-project: no`
 
 Execute waves in numeric wave order according to the execution schedule from the manifest. Within each wave, use sequential or parallel execution based on the `parallel_safe` flags.
@@ -58,7 +58,7 @@ Execute waves in numeric wave order according to the execution schedule from the
 Record each reviewer's verdict as it returns:
 - `[0N-task-name]`: Approved | Approved with Reservations | Changes Requested
 
-After ALL waves complete, determine: are all recorded verdicts Approved or Approved with Reservations? Store as `all-approved: yes/no` — it controls Prod Review mode in Step 4.
+After ALL waves complete, determine: are all recorded verdicts Approved or Approved with Reservations? Store as `all-approved: yes/no` — it controls Prod Review mode in Step 5. (The visual verification verdict from Step 3, if that step runs, also feeds `all-approved`.)
 
 ---
 
@@ -84,7 +84,7 @@ Then spawn **04c-feature-reviewer** per Steps B–C from the `implementation-pip
 
 **B1. Commit checkpoint** — After the reviewer returns, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by this feature. Do not stage files from other feature directories. Commit this checkpoint with the exact message `eval: review <feature-slug>`, replacing `<feature-slug>` with the current feature directory name.
 
-**C. Defer the phase-level checkpoints** — Do not create QA or final-review commits inside the per-feature loop. Step 3 emits one consolidated phase QA checkpoint with the exact message `eval: qa` after staging only the shared QA outputs and any phase-level pipeline documents updated by that step. Step 4 emits the single phase-level final review checkpoint with the exact message `eval: final-review`.
+**C. Defer the phase-level checkpoints** — Do not create QA or final-review commits inside the per-feature loop. Step 4 emits one consolidated phase QA checkpoint with the exact message `eval: qa` after staging only the shared QA outputs and any phase-level pipeline documents updated by that step. Step 5 emits the single phase-level final review checkpoint with the exact message `eval: final-review`.
 
 **D. Complete** — Mark the feature complete in the todo list. Begin the next feature.
 
@@ -117,13 +117,36 @@ After each reviewer returns, stage only files belonging to `dev/feature/[0N-task
 **Phase C — Hold the phase-level QA and final-review checkpoints for the later pipeline steps.**
 
 For each feature in the wave (in numeric prefix order):
-1. Do not emit any per-feature QA commit here; Step 3 emits one consolidated phase checkpoint with the exact message `eval: qa` after the shared QA outputs are updated.
-2. Do not add the old Step D conventional commit here; Step 4 now emits the single phase checkpoint with the exact message `eval: final-review`.
+1. Do not emit any per-feature QA commit here; Step 4 emits one consolidated phase checkpoint with the exact message `eval: qa` after the shared QA outputs are updated.
+2. Do not add the old Step D conventional commit here; Step 5 now emits the single phase checkpoint with the exact message `eval: final-review`.
 3. Mark the feature complete in the todo list.
 
 Because parallel-safe features have disjoint file scopes, sequential commits within the wave will not conflict.
 
-### Step 3: QA
+### Step 3: Visual Verification Gate (conditional)
+
+This step produces runtime visual evidence for phases that render something — the class of
+defect (invisible/miscolored output, broken scene wiring, blank frames) that compiles clean,
+passes unit tests, and passes static review, yet renders nothing usable. Run it only when ALL
+of the following hold; otherwise skip it and record the stated reason:
+
+- `is-unity-project: yes` (from Step 2). If `no`, record `visual-verification: not a Unity project` and skip.
+- A visual-verification capture config exists under the detected Unity project's `Assets/` (`Assets/VisualVerification/capture-config.json`, or `game/Assets/VisualVerification/capture-config.json` for a nested layout), or at the path named by the `VISUAL_VERIFICATION_CONFIG` environment variable. **If it is absent, bootstrap it rather than skipping** — the pack and its capture package are bundled, so a Unity View phase with visual ACs should not silently opt out. The implementer normally wires this while building the view (see the `unity-development` skill → Visual Verification Wiring); if it did not, perform the minimal wiring yourself before running the gate: ensure the companion capture package is in `Packages/manifest.json` + `testables` (default URL/tag from the `unity-development` skill), and write a `capture-config.json` whose scene entry is the scene this phase renders (from the phase document / implementation records), with an early and a later capture frame. Only if the scene under test genuinely cannot be determined, record `visual-verification: not configured` and skip.
+- The phase has visual/rendering acceptance criteria in its phase document (e.g. on-screen colors, layout, bars, bounds, sprites). If the phase has none, record `visual-verification: no visual ACs` and skip.
+
+When all three hold, spawn the **visual-verifier** subagent:
+
+> "[SUBAGENT-MODE] Run the visual verification gate for phase [phase-name]. Visual acceptance criteria from the phase document: [list each visual AC verbatim]. Capture config path: [resolved path]. Produce the deterministic screenshots via the repository's documented visual-verification run, then assess each visual AC against the rendered frames. Write the report to `docs/phases/[phase-name]/[phase-name]-visual-verification.md` and return a verdict (`Pass` | `Fail` | `Unverified`) with per-AC results and the artifact paths."
+
+After the subagent returns:
+- Record the verdict as `visual-verification: Pass | Fail | Unverified`.
+- **On `Fail`, remediate once** — the same bounded retry the review loop uses for "Changes Requested". Re-spawn the 04b-feature-implementer responsible for the rendering with the visual-verifier's per-AC findings and the rendered frames, then re-run the visual-verifier on the same config. Retry **at most once**. If still `Fail` after the retry, record the final verdict and proceed — the blocker is escalated to Step 5, not silently dropped. Use this implementer prompt:
+  > "[SUBAGENT-MODE] The visual verification gate failed for phase [phase-name]. Failing visual acceptance criteria, and what the rendered frames actually show: [paste the visual-verifier's per-AC findings]. Rendered frames: [artifact paths]. Fix the rendering so these acceptance criteria are met. Do NOT edit the capture config or the visual ACs to force a pass — fix what is on screen. Return what you changed."
+  - Do not retry `Unverified` (the capture could not run, or the images were not assessable — a setup/tooling problem, not a rendering one). Record it and proceed.
+- If the final verdict is `Fail` or `Unverified`, set `all-approved: no` so Step 5 (Prod Review) runs in standard (not fast-track) mode and flags it as a blocker. A blank or missing frame is a `Fail`, not an `Unverified`.
+- Do NOT emit a separate `eval:` commit for this step. Stage the report file with the Step 5 final-review checkpoint. The generated screenshots and manifest are build artifacts — do not commit them.
+
+### Step 4: QA
 
 Produce a QA document covering the scope of the current execution.
 
@@ -138,11 +161,11 @@ spawn the **04d-feature-qa-writer** subagent:
 After the subagent returns:
 - Verify the QA document exists at the determined path
 - Verify the coverage map exists at the determined path
-- Stage only the consolidated QA outputs and any phase-level pipeline documents updated by this step. Do not stage feature-local source files or files from unrelated feature directories. Commit this checkpoint once with the exact message `eval: qa`.
+- Stage only the consolidated QA outputs and any phase-level pipeline documents updated by this step. Do not stage feature-local source files or files from unrelated feature directories. Do not stage the Step 3 visual-verification report (`docs/phases/[phase-name]/[phase-name]-visual-verification.md`) here — it belongs to the Step 5 final-review checkpoint. Commit this checkpoint once with the exact message `eval: qa`.
 
-### Step 4: Phase Final Review
+### Step 5: Phase Final Review
 
-spawn the **prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected in Step 2 Phase B.
+spawn the **prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected in Step 2 Phase B, plus the `visual-verification` verdict from Step 3 (or its skip reason) as runtime evidence.
 
 **If QA was generated and all verdicts Approved:**
 
@@ -150,7 +173,7 @@ spawn the **prod-code-review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Approved, ...]. All verdicts Approved: YES — use fast-track mode."
+> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Visual verification: [Pass | skip reason]. All verdicts Approved: YES — use fast-track mode."
 
 **If QA was generated and any verdict was not Approved:**
 
@@ -158,18 +181,18 @@ spawn the **prod-code-review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. All verdicts Approved: NO — use standard mode."
+> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Visual verification: [Pass | Fail | Unverified | skip reason]. All verdicts Approved: NO — use standard mode."
 
 After the prod-code-review subagent returns, stage only the final review artifact and any phase-level pipeline documents updated by this step, then commit them with the exact message `eval: final-review`.
 
-### Step 5: Report to User
+### Step 6: Report to User
 
 Present results using the Pipeline Completion Report format from the auto-loaded orchestrator conventions. Use these field labels:
 - Scope label: **Phase**
 - Items label: **Features completed**
 - Include the QA document path
 
-### Step 6: Update Documentation
+### Step 7: Update Documentation
 
 Follow the Post-Loop: Documentation Update section from the `implementation-pipeline-loop` skill. Use this prompt:
 
@@ -183,7 +206,7 @@ See the Test Failure Handling section of the `implementation-pipeline-loop` skil
 
 ### Documentation Drift
 
-The docs-writer subagent (Step 6) runs a full sweep of all documentation it manages and updates anything that is stale. This is a best-effort step — if the docs-writer reports no changes needed, that is expected.
+The docs-writer subagent (Step 7) runs a full sweep of all documentation it manages and updates anything that is stale. This is a best-effort step — if the docs-writer reports no changes needed, that is expected.
 
 ---
 

@@ -23,7 +23,7 @@ Before asking audit type, detect whether the target repository is a Unity projec
 
 Use these indicators:
 - `.github/copilot-instructions.md` identifies the project as Unity
-- Repository contains both `Assets/` and `ProjectSettings/`
+- Repository contains both `Assets/` and `ProjectSettings/`, or a `game/Assets` directory
 - Repository contains Unity assembly definition files (`*.asmdef`)
 
 Set `unity_context = true` if any indicator matches; otherwise `false`.

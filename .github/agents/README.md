@@ -136,17 +136,18 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **Single Feature - Agent** | Handle small, focused changes with a proposal + explicit permission gate before implementation |
 | **Evangelize** | Port changed source-of-truth assets (agents, instructions, skills) into Claude, Codex, and OpenCode outputs using platform guides |
 | **Debugger** | Diagnose and fix frontend or backend application errors |
-| **Docs Writer** | Create or update repo documentation; also spawnd automatically by orchestrators after pipeline completion |
+| **Docs Writer** | Create or update repo documentation; also spawned automatically by orchestrators after pipeline completion |
 | **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
 | **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
 | **Unity Reviewer** | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
+| **Visual Verifier** | Produce deterministic runtime screenshots and assess them against a phase's visual acceptance criteria (does it actually render?) |
 | **Web Researcher** | Research a topic and produce a structured findings report and executive summary saved to `dev/research/[topic-name]/` |
 
 ### Hidden Subagents
 
 These agents are not visible in the picker. They run automatically as part of orchestrator pipelines with `user-invocable: false`.
 
-| Agent | spawnd By | Purpose |
+| Agent | spawned By | Purpose |
 |-------|------------|---------|
 | **Auditor - Code** | Audit orchestrator | Comprehensive code quality, security, and health audit |
 | **Auditor - Infra** | Audit orchestrator | Audit Dockerfiles, CI/CD pipelines, IaC templates, and config files |
@@ -197,16 +198,19 @@ These agents are not visible in the picker. They run automatically as part of or
 > Give it an error message or description — frontend or backend. Triages the issue, classifies it (build-time, runtime, database, dependency, etc.), logs a remediation-turn ledger row on `phase/*` branches before diagnosis when you bring it a bug report or failing output, investigates, and applies minimal targeted fixes. Handles both frontend (TypeScript, React, build tools) and backend (Node.js, Python, databases, auth) errors.
 
 **Prod Code Review** (document-only — does not modify code)
-> Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Can be spawnd standalone or automatically by the orchestrator.
+> Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Can be spawned standalone or automatically by the orchestrator.
 
 **Web Researcher** (read-only — uses fetch and web search)
 > Give it a problem or topic. Searches across GitHub issues, Stack Overflow, Reddit, forums, and docs. Produces two deliverable documents saved to `dev/research/[topic-name]/`: a full structured findings report (`[topic-name]-report.md`) with inline numbered citations and a References table, and an executive summary (`[topic-name]-summary.md`) with priority recommendations and key reference links. Every factual claim traces back to a numbered citation. Sources older than 2 years are flagged with ⚠️.
 
 **Docs Writer** (reads codebase, writes documentation)
-> Give it a repo to document. Produces or updates README, ARCHITECTURE, CODEBASE_CONTEXT, and TROUBLESHOOTING documents. Also spawnd automatically at the end of orchestrator pipelines to update stale documentation after code changes.
+> Give it a repo to document. Produces or updates README, ARCHITECTURE, CODEBASE_CONTEXT, and TROUBLESHOOTING documents. Also spawned automatically at the end of orchestrator pipelines to update stale documentation after code changes.
 
 **Unity Reviewer** (read-only — does not modify code)
 > Give it Unity C# source files or a directory to review. Loads Unity-specific skills (MonoBehaviour lifecycle, UI Toolkit pitfalls, performance rules, design patterns, style guide compliance) and produces structured review findings. Does not modify code — review output only.
+
+**Visual Verifier** (runs capture, reads frames, writes a report — does not modify source)
+> Give it a phase's visual acceptance criteria and a capture config path. It runs the repository's documented deterministic screenshot capture, reads the produced frames as images, and judges each visual AC against what is actually on screen — returning Pass / Fail / Unverified with per-AC evidence. Catches the defect class that compiles, passes unit tests, and passes static review while rendering nothing usable. Honesty-bound: never certifies a visual AC without viewing the frame, and reports Unverified (not a fake pass) if it cannot ingest the images. Also spawned automatically by Phase - Execute on Unity phases that have visual ACs and a capture config.
 
 ### Hidden Subagents
 
@@ -296,6 +300,7 @@ Not everything needs a pipeline. These agents work well on their own:
 - **Prod Code Review** — Point at any `dev/feature/[0N-task-name]/` folder for an independent readiness check
 - **Debugger** — Fix a specific frontend or backend error without a full pipeline
 - **Unity Reviewer** — Review Unity C# code for architecture, performance, and pitfalls
+- **Visual Verifier** — Screenshot a rendering phase and judge it against its visual acceptance criteria
 - **Web Researcher** — Research a technical question or debug a tricky issue
 - **Docs Writer** — Update documentation after any significant change
 
@@ -385,8 +390,8 @@ For the project pipeline, copy all files including the hidden subagents. For sta
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each agent file works standalone — just copy the `.md` file into any project's `.github/agents/` directory.
 - **Three orchestrators**: **04 Phase - Execute**, **Audit - Code, Infra, Refactor**, and **Test - Orchestrator** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
-- **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by all three orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawnd by all three orchestrators at the end of the pipeline to update stale documentation (it remains user-invocable for standalone use as well).
-- **Dual-use agents**: **03 Feature - Decomposer** is user-facing for standalone plan creation and also spawnd by **04 Phase - Execute** when plans are missing. **Docs Writer** is user-facing and also spawnd by all three orchestrators.
+- **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by all three orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned by all three orchestrators at the end of the pipeline to update stale documentation (it remains user-invocable for standalone use as well).
+- **Dual-use agents**: **03 Feature - Decomposer** is user-facing for standalone plan creation and also spawned by **04 Phase - Execute** when plans are missing. **Docs Writer** is user-facing and also spawned by all three orchestrators.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
 - **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, and **Test - Analyst** do not modify code. They analyze and report only.
 - **Approval-gated agents**: **01 Project - Planner**, **02 Phase - Refiner**, and **03 Feature - Decomposer** always present findings and ask for explicit approval before creating files. They also check for missing critical documentation (`README.md`, `docs/CODEBASE_CONTEXT.md`) and recommend running the **Docs Writer** before continuing. The **Audit** and **Test** orchestrators ask before proceeding to the remediation phase.
