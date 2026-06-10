@@ -3,6 +3,14 @@
 All notable changes to `com.threnjen.visual-verification` are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.1]
+
+### Fixed
+- Declare `com.unity.test-framework` as a package dependency so consumers get it
+  transitively. A bare Unity project (created without a Hub template) does not include the
+  Test Framework, so `testables` had nothing to run; adding the package now pulls it in.
+  Surfaced by a fresh-repo smoke test.
+
 ## [0.2.0]
 
 ### Added
