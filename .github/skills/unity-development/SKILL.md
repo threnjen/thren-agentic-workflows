@@ -199,7 +199,7 @@ it, not authoring per-feature test code:
    it under `testables`) if absent:
    ```jsonc
    "com.threnjen.visual-verification":
-     "https://github.com/threnjen/github-agents-source-of-truth.git?path=/packages/com.threnjen.visual-verification#visual-verification/v0.2.0"
+     "https://github.com/threnjen/github-agents-source-of-truth.git?path=/packages/com.threnjen.visual-verification#visual-verification/v0.2.1"
    ```
    If the project documents a different capture package (a fork, or a newer tag), use that instead.
    This is the single source for the default — bump the pinned `visual-verification/vX.Y.Z` tag here
