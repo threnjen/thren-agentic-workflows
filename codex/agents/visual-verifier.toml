@@ -41,14 +41,30 @@ The capture run is project-specific; do not hardcode it. Discover the documented
      you get exit 0 and zero tests (a false green). `-runTests` is what runs the tests; the run
      ends on its own.
    If the documented command violates either, flag it rather than silently rewriting it.
-3. If no command is documented, **derive the standard one** rather than giving up (the capture
-   package is the pack's bundled companion, so the invocation is known). Read the Unity version
-   from `ProjectSettings/ProjectVersion.txt` and use the conventional editor path for this machine
-   (Unity Hub layout, e.g. on Windows `…/Hub/Editor/<version>/Editor/Unity.exe`), then run:
-   `-batchmode -runTests -testPlatform PlayMode -projectPath . -testResults <results.xml> -logFile <log>`
-   (graphics on, no `-quit`). Only if the Unity editor for that version genuinely cannot be located
-   on this machine, return `Unverified — Unity editor not found`, stating the version and the paths
-   you checked. Never fabricate a result.
+3. If no command is documented, **locate the Unity editor and build the standard invocation**
+   rather than giving up (the capture package is the pack's bundled companion, so the invocation
+   shape is known). Resolve the editor path in this order, stopping at the first hit:
+   1. The `VISUAL_VERIFICATION_UNITY` environment variable (a machine-wide editor path), if set.
+   2. A machine-local override file `dev/visual-verification.local.json` containing
+      `{ "unityEditorPath": "…" }`, if present.
+   3. Derive from the project's Unity version in `ProjectSettings/ProjectVersion.txt` plus the Unity
+      Hub layout — both the default location (`…/Hub/Editor/<version>/Editor/Unity.exe`) **and** any
+      custom editor-install location Hub records in its own config (`%APPDATA%/UnityHub/` on Windows,
+      `~/Library/Application Support/UnityHub/` on macOS, `~/.config/UnityHub/` on Linux). This covers
+      the common case of an editor relocated to another drive.
+
+   With the resolved editor, run `-batchmode -runTests -testPlatform PlayMode -projectPath .
+   -testResults <results.xml> -logFile <log>` (graphics on, no `-quit`).
+
+   **If none of 1–3 resolves but the repo is clearly a Unity project** (`Assets/` + `ProjectSettings/`,
+   or `game/Assets/`): do not fail quietly — **flag it and get the path from the user.** Report:
+   "This is a Unity project but no Unity editor / Hub install was found (checked: [paths]). What is
+   the full path to the Unity `<version>` editor?" (In non-interactive subagent mode, return that as
+   a blocking request rather than guessing.) When the user supplies the path, **save it once** to
+   `dev/visual-verification.local.json` and ensure that file is listed in `.gitignore` — the path is
+   machine-specific and must never be committed — then proceed. Subsequent runs read it from step 2
+   without asking. Only return `Unverified — Unity editor not found` if no path can be obtained.
+   Never fabricate a result.
 
 ## Step 2 — Run the capture
 
