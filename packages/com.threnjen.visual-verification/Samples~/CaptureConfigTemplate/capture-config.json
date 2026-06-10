@@ -1,0 +1,13 @@
+{
+  "outputDir": "dev/screenshots",
+  "scenes": [
+    {
+      "scene": "REPLACE_WITH_YOUR_SCENE_NAME",
+      "captureDeltaTime": 0.0166667,
+      "captureFrames": [0, 60, 120],
+      "width": 960,
+      "height": 720,
+      "namePrefix": "frame"
+    }
+  ]
+}

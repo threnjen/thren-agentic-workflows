@@ -61,6 +61,8 @@ Current inventory:
 ├── python/                           # Copyable Python template set
 │   ├── AGENTS.md
 │   └── docs/STYLE_GUIDE.md
+├── packages/                         # Distributable packages consumed by other repos
+│   └── com.threnjen.visual-verification/  # Unity UPM package: deterministic screenshot capture (paired with the Visual Verifier agent)
 ├── scripts/
 │   └── propagate_master_assets.py    # Regenerates claude/, opencode/, and codex/agents/
 └── .vscode/tasks.json                # One-shot and watch tasks for propagation
