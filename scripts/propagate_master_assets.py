@@ -32,6 +32,7 @@ WATCH_DIRS = [
 ]
 
 CLAUDE_AGENTS_DIR = REPO_ROOT / "claude" / "agents"
+CLAUDE_COMMANDS_DIR = REPO_ROOT / "claude" / "commands"
 OPENCODE_AGENTS_DIR = REPO_ROOT / "opencode" / "agents"
 CODEX_AGENTS_DIR = REPO_ROOT / "codex" / "agents"
 GITHUB_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
@@ -443,16 +444,8 @@ def _build_instruction_appendix(agent: SourceAgent, docs: List[InstructionDoc]) 
     return "\n".join(sections).strip() + "\n"
 
 
-def _inject_claude_selected_agent_instruction(agent: SourceAgent, body: str, identifier: str) -> str:
-    if not agent.user_invocable:
-        return body
-
-    clause = (
-        f"When the user addresses you by name or role, "
-        "begin work in this role immediately. "
-        f"Do not spend your first action invoking `{identifier}` as a subagent. "
-        "Delegate only to distinct child agents when the workflow explicitly calls for them."
-    )
+def _insert_clause_after_intro(body: str, clause: str) -> str:
+    """Insert a clause just after the agent's intro heading/persona line."""
     if clause in body:
         return body
 
@@ -470,6 +463,30 @@ def _inject_claude_selected_agent_instruction(agent: SourceAgent, body: str, ide
 
     paragraphs.insert(insert_after + 1, clause)
     return "\n\n".join(paragraphs)
+
+
+def _inject_claude_selected_agent_instruction(agent: SourceAgent, body: str, identifier: str) -> str:
+    if not agent.user_invocable:
+        return body
+
+    clause = (
+        f"When the user addresses you by name or role, "
+        "begin work in this role immediately. "
+        f"Do not spend your first action invoking `{identifier}` as a subagent. "
+        "Delegate only to distinct child agents when the workflow explicitly calls for them."
+    )
+    return _insert_clause_after_intro(body, clause)
+
+
+def _inject_claude_command_instruction(agent: SourceAgent, identifier: str, body: str) -> str:
+    """Adoption clause for slash-command output: the main persona becomes this role inline."""
+    clause = (
+        f"You are now operating as **{agent.name}** directly in this conversation. "
+        "Adopt this role and carry out the work yourself in the current session — "
+        f"do not spawn `{identifier}` (or any copy of this role) as a subagent to do it. "
+        "Delegate only to distinct child agents when this workflow explicitly calls for them."
+    )
+    return _insert_clause_after_intro(body, clause)
 
 
 def render_claude_agent(
@@ -498,6 +515,48 @@ def render_claude_agent(
         parts.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
 
     return "\n".join(parts).rstrip() + "\n"
+
+
+def render_claude_command(
+    agent: SourceAgent,
+    docs: List[InstructionDoc],
+    reference_map: Dict[str, str],
+    identifier: str,
+) -> str:
+    """Render a Claude slash command so the main persona adopts this role inline.
+
+    Child-agent references still resolve to subagent identifiers, so an orchestrator
+    command can `Task`-spawn its workers from within the main conversation.
+    """
+    appendix = _build_instruction_appendix(agent, docs)
+    body = _rewrite_agent_references(agent.body.strip(), reference_map, preserve_at_sign=True)
+    body = _inject_claude_command_instruction(agent, identifier, body)
+
+    parts = [
+        "---",
+        f"description: {agent.description}",
+        "---",
+        "",
+        body,
+    ]
+
+    if appendix:
+        parts.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
+
+    return "\n".join(parts).rstrip() + "\n"
+
+
+def _referenced_agent_names(agents: List[SourceAgent]) -> set[str]:
+    """Source agent names that appear as a child in any agent's `agents:` list.
+
+    Used to decide which user-invocable agents must ALSO keep a spawnable subagent
+    file (dual-use), derived from the source of truth rather than a hard-coded list.
+    """
+    referenced: set[str] = set()
+    for agent in agents:
+        for child in agent.subagents:
+            referenced.add(child)
+    return referenced
 
 
 def render_opencode_agent(agent: SourceAgent, docs: List[InstructionDoc], reference_map: Dict[str, str]) -> str:
@@ -783,9 +842,11 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     instructions = load_instruction_docs()
 
     CLAUDE_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
+    CLAUDE_COMMANDS_DIR.mkdir(parents=True, exist_ok=True)
     OPENCODE_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
     CODEX_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
 
+    referenced_names = _referenced_agent_names(agents)
     claude_existing_stems = _discover_existing_stems(CLAUDE_AGENTS_DIR)
     opencode_existing_stems = _discover_existing_stems(OPENCODE_AGENTS_DIR)
     claude_reference_map = _build_agent_reference_map(
@@ -812,11 +873,33 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         codex_file = CODEX_AGENTS_DIR / _codex_filename_for(agent)
         expected_codex_files.add(codex_file)
 
-        if _write_if_changed(
-            claude_file,
-            render_claude_agent(agent, docs, claude_reference_map, claude_identifier),
-        ):
+        # Claude emission rule (Claude target only):
+        #   user-invocable: false        -> subagent file only
+        #   user-invocable: true         -> slash command
+        #     + subagent file IFF spawned as a child by some orchestrator (dual-use),
+        #       so orchestrator commands can still `Task`-spawn it.
+        is_dual_use = agent.user_invocable and agent.name in referenced_names
+        emit_claude_agent = (not agent.user_invocable) or is_dual_use
+
+        if emit_claude_agent:
+            if _write_if_changed(
+                claude_file,
+                render_claude_agent(agent, docs, claude_reference_map, claude_identifier),
+            ):
+                changed_claude += 1
+        elif claude_file.exists():
+            # Reclassified to command-only: remove the now-stale generated subagent file.
+            claude_file.unlink()
             changed_claude += 1
+
+        if agent.user_invocable:
+            command_file = CLAUDE_COMMANDS_DIR / f"{claude_identifier}.md"
+            if _write_if_changed(
+                command_file,
+                render_claude_command(agent, docs, claude_reference_map, claude_identifier),
+            ):
+                changed_claude += 1
+
         if _write_if_changed(opencode_file, render_opencode_agent(agent, docs, opencode_reference_map)):
             changed_opencode += 1
         if _write_if_changed(codex_file, render_codex_agent(agent, docs, codex_reference_map)):

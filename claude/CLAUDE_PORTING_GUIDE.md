@@ -5,12 +5,36 @@ This document describes how to port agent definitions from the GitHub master sou
 ## Scope
 
 - Source: `.github/agents/*.agent.md` and `.github/agents/*.md` agent definitions
-- Destination: `claude/agents/*.md`
+- Destinations: `claude/agents/*.md` (subagents) and `claude/commands/*.md` (slash commands)
 - This guide is Claude-only by design.
 
 For OpenCode, see `opencode/OPENCODE_PORTING_GUIDE.md`.
 For Codex, see `codex/CODEX_PORTING_GUIDE.md`.
 For cross-platform tool names, see `docs/porting/TOOL_MAPPING.md`.
+
+## Emission Model (which file(s) each agent produces)
+
+Claude cannot make its main loop *become* a subagent — a subagent is only ever
+reached by spawning it into an isolated context. So a "primary" persona that
+should be adopted inline must be ported as a **slash command**, not a subagent.
+The source-of-truth flag `user-invocable:` (default `true`) drives the split:
+
+| Source `user-invocable` | Referenced as a child agent? | Emits |
+|---|---|---|
+| `false` | (n/a) | **Subagent only** → `claude/agents/z-<id>.md` |
+| `true` | no | **Slash command only** → `claude/commands/<id>.md` |
+| `true` | yes (dual-use) | **Both** → `claude/commands/<id>.md` **and** `claude/agents/<id>.md` |
+
+- "Referenced as a child agent" means the source `name:` appears in some other
+  agent's `agents:` frontmatter list. This is derived from the source of truth —
+  never hard-coded. Add a new reference and the agent automatically becomes
+  dual-use on the next propagation.
+- Dual-use exists so an orchestrator command can still `Task`-spawn the worker
+  (e.g. `phase-execute` spawns `visual-verifier`) while the same role is also
+  directly invocable as `/visual-verifier`.
+- When an agent is reclassified to command-only, delete any stale
+  `claude/agents/<id>.md` it previously generated. Never delete hand-authored
+  Claude-only agents (e.g. `single-feature.md`) or `README.md`.
 
 ## Golden Rule
 
@@ -19,12 +43,18 @@ Instruction content must be present in the generated agent body.
 
 ## Frontmatter Expectations
 
-Claude agent files use Markdown frontmatter with:
+**Subagent files** (`claude/agents/*.md`) use Markdown frontmatter with:
 
 - `name: <kebab-case>`
 - `description: <text>`
 - `tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch, Bash, Agent` (`Skill` is always included; other tools are included as applicable)
-- `user-invocable: false` (required in this repository so Claude-derived agents stay hidden in the GitHub Copilot agent picker)
+- `user-invocable: false` (required in this repository so Claude-derived subagents stay hidden in the GitHub Copilot agent picker)
+
+**Slash command files** (`claude/commands/*.md`) use minimal frontmatter:
+
+- `description: <text>`
+- No `tools:` line — a command runs in the main conversation and inherits the live session's tools (that is the whole point: the persona is adopted inline).
+- No `name:` line — the command's invocation name is its filename stem (`/<id>`).
 
 ## Tool Mapping (GitHub to Claude)
 
@@ -38,54 +68,58 @@ Claude agent files use Markdown frontmatter with:
 
 ## Conversion Checklist
 
-1. Start from `.github/agents/*` source.
+1. Start from `.github/agents/*` source. Read its `user-invocable:` flag (default `true`) and determine whether its `name:` is referenced in any other agent's `agents:` list. Use the [Emission Model](#emission-model-which-files-each-agent-produces) table to decide which file(s) to produce.
 2. Resolve applicable `.github/instructions/*.instructions.md` entries by `applyTo`.
-3. Convert tool names to Claude names.
-4. Resolve the final Claude destination identifier from the generated filename stem, including any aliasing or `z-` prefixing for hidden subagents.
-5. Rewrite source agent references in the body to Claude handles. User-facing agents should be referenced by Claude filename handle such as `@project-planner`; hidden subagents should use their `@z-...` handle such as `@z-feature-plan-expander`.
-6. Set frontmatter `name:` to that same final destination identifier rather than to the raw source slug.
-7. Add `user-invocable: false` to every Claude agent frontmatter/header block without exception.
-8. Append inlined instruction content under a `## Auto-Loaded Instructions` section header at the end of the agent body.
-9. Ensure instruction intent is present in the final agent body.
-10. Keep behavior equivalent to source, excluding unsupported tool semantics.
-11. For every user-invocable agent (filename does **not** start with `z-`), insert the following paragraph immediately after the opening identity statement (the first "You are..." sentence or block), before any workflow or constraint content:
-
-```
-When the user addresses you by name or role, begin work in this role immediately. Do not spend your first action invoking `<name>` as a subagent. Delegate only to distinct child agents when the workflow explicitly calls for them.
-```
-
-Replace `<name>` with the agent's `name:` frontmatter value. Do **not** add this paragraph to `z-` prefixed agents — those are intentionally spawned as subagents by orchestrators.
+3. Convert tool names to Claude names (subagent files only — commands carry no `tools:` line).
+4. Resolve the final Claude destination identifier from the generated filename stem, including any aliasing or `z-` prefixing for hidden subagents. The slash command uses the same stem (without any `z-` prefix, since only user-invocable agents become commands).
+5. Rewrite source agent references in the body to Claude handles. Worker subagents use their `@z-...` handle such as `@z-feature-plan-expander`; dual-use agents use their bare handle such as `@visual-verifier`. References always resolve to the **subagent** file so orchestrators can spawn them.
+6. **Subagent file:** set frontmatter `name:` to the final destination identifier and add `user-invocable: false`. **Command file:** emit only `description:` frontmatter (no `name:`, no `tools:`, no `user-invocable:`).
+7. Append inlined instruction content under a `## Auto-Loaded Instructions` section header at the end of the body (both file types).
+8. Ensure instruction intent is present in the final body. Keep behavior equivalent to source, excluding unsupported tool semantics.
+9. Insert the correct adoption paragraph after the opening identity statement (the first "You are..." block), before any workflow or constraint content:
+   - **Slash command** (the inline persona): use the command adoption clause —
+     ```
+     You are now operating as **<name>** directly in this conversation. Adopt this role and carry out the work yourself in the current session — do not spawn `<id>` (or any copy of this role) as a subagent to do it. Delegate only to distinct child agents when this workflow explicitly calls for them.
+     ```
+     Replace `<name>` with the source `name:` value and `<id>` with the command stem.
+   - **Dual-use subagent file** (`user-invocable: true` agent that is also spawned): keep the legacy subagent clause —
+     ```
+     When the user addresses you by name or role, begin work in this role immediately. Do not spend your first action invoking `<id>` as a subagent. Delegate only to distinct child agents when the workflow explicitly calls for them.
+     ```
+   - **Worker subagent** (`z-` prefixed, `user-invocable: false`): add **no** adoption paragraph.
 
 ## Validation Checklist
 
-- Frontmatter parses correctly.
-- Frontmatter `name:` matches the generated Claude filename stem, including alias and `z-` prefix cases.
-- `user-invocable: false` is present in every Claude agent frontmatter/header block.
-- Tool names are valid Claude names.
-- Agent references in workflow text point at Claude handles, not GitHub display names.
+- Each source agent emitted the correct file(s) per the Emission Model table (subagent-only / command-only / both).
+- Frontmatter parses correctly for both file types.
+- Subagent files: `name:` matches the filename stem (including alias and `z-` cases) and `user-invocable: false` is present.
+- Command files: only `description:` frontmatter; no `name:`, `tools:`, or `user-invocable:` lines.
+- Tool names in subagent files are valid Claude names; commands carry no tools list.
+- Agent references in workflow text point at Claude subagent handles, not GitHub display names.
 - Unsupported GitHub-only tools are dropped.
-- Agent behavior remains aligned with source intent.
-- Agent appears in Claude agent discovery.
-- Non-`z-` agents include the assume-as-role paragraph after their opening identity statement.
-- `z-` prefixed agents do **not** include the assume-as-role paragraph.
+- Behavior remains aligned with source intent.
+- Command files include the command adoption clause; dual-use subagent files include the legacy subagent clause; `z-` workers include neither.
+- No stale `claude/agents/*.md` remains for an agent reclassified to command-only; hand-authored agents and `README.md` are untouched.
 
 ## Claude Code Behavioral Notes
 
 These are Claude Code-specific behaviors that must be enforced in every ported agent. The source `.github/` agents do not need them because GitHub Copilot's tool model does not exhibit these failure modes.
 
-### User-Invocable Agents: Assume the Role, Do Not Spawn It
+### User-Invocable Personas Are Slash Commands, Not Subagents
 
-When a user addresses a Claude agent by name (e.g., `@phase-execute`), that agent is already the active role. Claude Code's `@agent-name` syntax loads the agent's prompt inline — the agent should begin work immediately, not spawn itself again as a subagent on first action.
+A Claude subagent can only be reached by spawning it into an isolated context —
+the main loop cannot "become" it. Prompt text inside a subagent file telling it
+to "begin work immediately, don't spawn yourself" cannot change that, because the
+file is only loaded *by spawning*. This is why user-invocable personas are ported
+as **slash commands** (`claude/commands/*.md`): a command body is injected into
+the current conversation, so the main persona adopts the role inline.
 
-**Rule:** Every ported agent whose filename does **not** start with `z-` must include the following paragraph immediately after its opening identity statement:
-
-```
-When the user addresses you by name or role, begin work in this role immediately. Do not spend your first action invoking `<name>` as a subagent. Delegate only to distinct child agents when the workflow explicitly calls for them.
-```
-
-Replace `<name>` with the agent's `name:` frontmatter value.
-
-`z-` prefixed agents are excluded — they are internal subagents intentionally spawned by orchestrators and should not receive this instruction.
+**Rule:** Every `user-invocable: true` source agent emits a `claude/commands/<id>.md`
+slash command whose body carries the command adoption clause (see Conversion
+Checklist step 9). If that agent is also spawned as a child by an orchestrator
+(dual-use), it *additionally* emits a `claude/agents/<id>.md` subagent file that
+keeps the legacy subagent clause. `z-` workers (`user-invocable: false`) emit a
+subagent file only and receive no adoption clause.
 
 ### File Operations: Never Fall Back to Bash
 
