@@ -46,7 +46,9 @@ With your project already open in VS Code:
 
 ## Claude Code
 
-Claude Code reads agents from `~/.claude/agents/`, skills from `~/.claude/skills/`, and learnings from `~/.claude/learnings/`. Symlinking this repo's directories there makes them available in every Claude Code session.
+Claude Code reads agents from `~/.claude/agents/`, slash commands from `~/.claude/commands/`, skills from `~/.claude/skills/`, and learnings from `~/.claude/learnings/`. Symlinking this repo's directories there makes them available in every Claude Code session.
+
+Commands matter because user-invocable personas are ported as slash commands, not subagents (see `claude/CLAUDE_PORTING_GUIDE.md`) — without the `commands` symlink, `/debugger`, `/phase-execute`, etc. will not appear.
 
 ### Mac / Linux
 
@@ -56,6 +58,7 @@ REPO="/absolute/path/to/github-agents-source-of-truth"
 mkdir -p ~/.claude
 
 ln -sfn "$REPO/claude/agents"    ~/.claude/agents
+ln -sfn "$REPO/claude/commands"  ~/.claude/commands
 ln -sfn "$REPO/claude/skills"    ~/.claude/skills
 ln -sfn "$REPO/claude/learnings" ~/.claude/learnings
 ```
@@ -63,10 +66,12 @@ ln -sfn "$REPO/claude/learnings" ~/.claude/learnings
 Verify:
 
 ```bash
-ls -la ~/.claude/agents ~/.claude/skills ~/.claude/learnings
+ls -la ~/.claude/agents ~/.claude/commands ~/.claude/skills ~/.claude/learnings
 ```
 
 Expected output: each shows as a symlink pointing into this repo.
+
+> **Note:** Slash commands are loaded at Claude Code startup. After creating the `commands` symlink (or adding new command files), restart your Claude Code session for them to appear.
 
 ### Windows (PowerShell — run as Administrator or with Developer Mode enabled)
 
@@ -79,6 +84,7 @@ $Claude = "$env:USERPROFILE\.claude"
 New-Item -ItemType Directory -Force -Path $Claude
 
 New-Item -ItemType SymbolicLink -Path "$Claude\agents"    -Target "$REPO\claude\agents"
+New-Item -ItemType SymbolicLink -Path "$Claude\commands"  -Target "$REPO\claude\commands"
 New-Item -ItemType SymbolicLink -Path "$Claude\skills"    -Target "$REPO\claude\skills"
 New-Item -ItemType SymbolicLink -Path "$Claude\learnings" -Target "$REPO\claude\learnings"
 ```
@@ -86,7 +92,7 @@ New-Item -ItemType SymbolicLink -Path "$Claude\learnings" -Target "$REPO\claude\
 Verify:
 
 ```powershell
-Get-Item "$env:USERPROFILE\.claude\agents", "$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.claude\learnings" | Select-Object Name, LinkType, Target
+Get-Item "$env:USERPROFILE\.claude\agents", "$env:USERPROFILE\.claude\commands", "$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.claude\learnings" | Select-Object Name, LinkType, Target
 ```
 
 #### Windows note: in-repo symlinks
