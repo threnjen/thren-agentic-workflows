@@ -35,6 +35,7 @@ CLAUDE_AGENTS_DIR = REPO_ROOT / "claude" / "agents"
 CLAUDE_COMMANDS_DIR = REPO_ROOT / "claude" / "commands"
 OPENCODE_AGENTS_DIR = REPO_ROOT / "opencode" / "agents"
 CODEX_AGENTS_DIR = REPO_ROOT / "codex" / "agents"
+CODEX_PROFILES_DIR = REPO_ROOT / "codex" / "profiles"
 GITHUB_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
 CODEX_SKILLS_DIR = REPO_ROOT / "codex" / "skills"
 GITHUB_HOOKS_DIR = REPO_ROOT / ".github" / "hooks"
@@ -689,6 +690,44 @@ def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc], reference
     return "\n".join(lines).rstrip() + "\n"
 
 
+def _inject_codex_profile_instruction(agent: SourceAgent, body: str) -> str:
+    """Adoption clause for profile output: the session adopts this role inline."""
+    identifier = _codex_identifier_for(agent)
+    clause = (
+        f"You are now operating as **{agent.name}** directly in this session. "
+        "Adopt this role and carry out the work yourself — "
+        f"do not spawn `{identifier}` as a subagent to handle this. "
+        "Delegate only to distinct child agents when this workflow explicitly calls for them."
+    )
+    return _insert_clause_after_intro(body, clause)
+
+
+def render_codex_profile(agent: SourceAgent, docs: List[InstructionDoc], reference_map: Dict[str, str]) -> str:
+    """Render a Codex profile TOML for direct invocation with `codex --profile <name>`.
+
+    Profile TOMLs set developer_instructions as a config-layer key so the session
+    adopts the agent role from the first turn. Use alongside the custom agent TOML
+    (which handles subagent spawning) — both files are generated for user-invocable agents.
+    """
+    combined = agent.body.strip()
+    appendix = _build_instruction_appendix(agent, docs)
+    if appendix:
+        combined = f"{combined}\n\n{appendix.strip()}"
+
+    combined = _rewrite_agent_references(combined, reference_map, preserve_at_sign=False)
+    combined = _rewrite_codex_invocation_language(combined)
+    combined = _inject_codex_profile_instruction(agent, combined)
+    combined = _inject_codex_todo_override(agent, combined)
+
+    lines = [
+        GENERATED_AGENT_HEADER,
+        "developer_instructions = ",
+    ]
+    lines[-1] += _render_toml_string(combined)[0]
+    lines.extend(_render_toml_string(combined)[1:])
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def _to_pascal_case(name: str) -> str:
     """Convert a dash/underscore-separated name to PascalCase for JS identifiers."""
     return "".join(word.title() for word in name.replace("-", "_").split("_"))
@@ -845,6 +884,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     CLAUDE_COMMANDS_DIR.mkdir(parents=True, exist_ok=True)
     OPENCODE_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
     CODEX_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
+    CODEX_PROFILES_DIR.mkdir(parents=True, exist_ok=True)
 
     referenced_names = _referenced_agent_names(agents)
     claude_existing_stems = _discover_existing_stems(CLAUDE_AGENTS_DIR)
@@ -862,7 +902,9 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     changed_claude = 0
     changed_opencode = 0
     changed_codex = 0
+    changed_codex_profiles = 0
     expected_codex_files: set[Path] = set()
+    expected_codex_profile_files: set[Path] = set()
 
     for agent in agents:
         docs = applicable_instructions(agent, instructions)
@@ -905,6 +947,12 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         if _write_if_changed(codex_file, render_codex_agent(agent, docs, codex_reference_map)):
             changed_codex += 1
 
+        if agent.user_invocable:
+            codex_profile_file = CODEX_PROFILES_DIR / f"{_codex_identifier_for(agent)}.config.toml"
+            expected_codex_profile_files.add(codex_profile_file)
+            if _write_if_changed(codex_profile_file, render_codex_profile(agent, docs, codex_reference_map)):
+                changed_codex_profiles += 1
+
     for codex_file in CODEX_AGENTS_DIR.glob("*.toml"):
         if codex_file in expected_codex_files:
             continue
@@ -912,6 +960,14 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
             continue
         codex_file.unlink()
         changed_codex += 1
+
+    for profile_file in CODEX_PROFILES_DIR.glob("*.config.toml"):
+        if profile_file in expected_codex_profile_files:
+            continue
+        if not _read_text(profile_file).startswith(GENERATED_AGENT_HEADER):
+            continue
+        profile_file.unlink()
+        changed_codex_profiles += 1
 
     # Propagate skills: .github/skills/<name>/SKILL.md -> codex/skills/<name>/SKILL.md
     CODEX_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
@@ -976,6 +1032,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         "claude_changed": changed_claude + hooks_result["claude_changed"],
         "opencode_changed": changed_opencode + hooks_result["opencode_changed"],
         "codex_changed": changed_codex + hooks_result["codex_changed"],
+        "codex_profiles_changed": changed_codex_profiles,
         "skills_changed": changed_skills,
     }
 

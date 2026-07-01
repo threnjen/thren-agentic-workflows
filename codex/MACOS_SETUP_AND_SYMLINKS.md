@@ -170,6 +170,54 @@ readlink ~/.codex/hooks.json
 
 **How hooks flow:** `.github/hooks/*.json` → `propagate_master_assets.py` → `.codex/hooks.json` (entries tagged `"$source": "<hook-name>"`) → `~/.codex/hooks.json` via this symlink. Manually-added entries without a `$source` key are preserved across propagation runs.
 
+## Profiles Symlink (Direct Agent Invocation)
+
+Profiles are the Codex equivalent of Claude slash commands. Each `codex/profiles/<name>.config.toml` sets `developer_instructions` as a config-layer key. When you start Codex with `codex --profile <name>` (or `codex -p <name>`), the session adopts that agent role from the first turn.
+
+Shell tab-completion on profile names means you no longer need to look up agent names — just type `codex -p ` and tab.
+
+The propagation script generates one profile per user-invocable agent in `codex/profiles/`. Profile files install directly into `~/.codex/` (not a subdirectory).
+
+```sh
+REPO_ROOT=/absolute/path/to/github-agents-source-of-truth
+
+# Backup any existing real profile config files
+for toml in "$REPO_ROOT"/codex/profiles/*.config.toml; do
+  dest="$HOME/.codex/$(basename "$toml")"
+  [ -e "$dest" ] && ! [ -L "$dest" ] && mv "$dest" "$dest.backup"
+done
+
+# Link each profile TOML directly into ~/.codex/
+for toml in "$REPO_ROOT"/codex/profiles/*.config.toml; do
+  ln -sfn "$toml" "$HOME/.codex/$(basename "$toml")"
+done
+```
+
+Verify:
+```sh
+ls -la "$HOME/.codex/"*.config.toml 2>/dev/null
+```
+
+Usage:
+```sh
+# Start a session as a specific agent
+codex --profile single-feature-agent
+codex --profile phase-execute
+codex --profile debugger
+
+# Combined with a prompt
+codex -p single-feature-agent "fix the pagination bug in UserList.tsx"
+```
+
+To undo:
+```sh
+for toml in "$REPO_ROOT"/codex/profiles/*.config.toml; do
+  rm -f "$HOME/.codex/$(basename "$toml")"
+done
+```
+
+**Relationship to custom agent TOMLs**: both files are generated for every user-invocable agent. The agent TOML (`codex/agents/`) is for subagent spawning within a session. The profile TOML (`codex/profiles/`) is for adopting the role as the session itself at startup.
+
 ## What This Guide Does Not Do
 
 - It does not install anything automatically into `~/.codex/` or `$HOME/.agents/skills/`.
