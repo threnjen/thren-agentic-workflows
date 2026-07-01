@@ -141,7 +141,7 @@ If a fix would require significant rearchitecting (> 50 lines or crosses multipl
 
 ## Write Review Record
 
-After the review is complete — and after any approved fixes have been applied — write a structured review record to the task's output directory. This file captures the final state of the review for traceability and downstream use.
+After the review is complete — and after any fixes have been applied — write a structured review record to the task's output directory. This file captures the final state of the review for traceability and downstream use.
 
 1. **Determine the output path**: Use the same `dev/feature/[0N-task-name]/` directory as the plan and implementation documents. If those were provided as attachments, match the `[0N-task-name]` from their path. If no task directory exists, create one using a slug of the task or PR description.
 2. **Write `[0N-task-name]-review.md`** using the exact template below.
