@@ -40,6 +40,7 @@ Read the codebase to understand:
 - Related modules and how they work
 - Any documentation or specs that exist
 - Check for test files, test configuration, and test runner setup
+- For refactors, rewires, or behavior-changing work, treat impacted tests as first-class deliverables. Inventory likely existing tests to update or replace, plus any new tests required, and include them in the feature plan and execution manifest rather than leaving them as a deferred follow-up.
 - Search for phase-scoped test directories (for example `Tests/Editor/Phase*/`, `tests/phase*/`, or equivalent local naming). If prior phase test directories exist, note whether a new `Phase[current]/` consolidated test file is appropriate for cross-feature or phase-level integration coverage.
 - Assess approximate coverage level (test files vs source files)
 - If no tests or coverage < 50%, flag as a prerequisite issue for the plan

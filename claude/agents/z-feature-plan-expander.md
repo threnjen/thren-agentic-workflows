@@ -42,6 +42,7 @@ Treat the plan as a draft to validate, not only an input to expand. Using the pl
 - Verify concrete method, class, field, element, config, test helper, and log API names when the plan references them
 - Verify that any new concrete API, file, config key, schema field, or test helper name that is not found in the codebase and is not copied exactly from the phase/request is labeled `[PROPOSED - name TBD]`
 - Verify that planned test method names are either existing codebase methods, copied exactly from the phase/request, labeled `[PROPOSED - name TBD]`, or expressed as scenario descriptions rather than exact method names
+- For refactors, rewires, or behavior-changing work, verify that the plan identifies which existing tests are likely to break or need updates and which new tests are required; if the plan omits that analysis, record a Discovery Delta warning.
 - Identify any additional relevant files discovered during your codebase scan
 - Note the change type for each file (Create, Modify, Read-only reference)
 - Distinguish existing tests from proposed tests, runner-constrained tests, code-review evidence, and manual QA checks

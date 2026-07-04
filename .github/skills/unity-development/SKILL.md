@@ -148,6 +148,13 @@ This bug has recurred multiple times. It is the single most common UI Toolkit mi
 - Never add an early `return` that gates all downstream functionality on an optional dependency
 - If the current approach works, make improvements additive, not replacements
 
+## Refactor / Rewire Test Preservation Rules
+
+- Before planning a refactor, runtime rewire, API change, or behavior change, inventory the affected Unity tests and harnesses (`Assets/Tests/EditMode`, `Assets/Tests/PlayMode`, any phase-scoped or editor tests, and UI Toolkit test root builders). Plan them as part of the work, not as a deferred cleanup.
+- If the change alters a public API, bootstrap path, serialized asset layout, scene wiring, prefab, event contract, or lifecycle behavior, assume related tests will need updates and include those files in the plan's scope and verification assets.
+- When a Unity test becomes obsolete because production behavior changed, update or retire it in the same feature and document the reason. Leave no orphaned or silently broken tests behind.
+- For controller, UI Toolkit, or scene-wiring changes, include the corresponding test assembly and test root builder files in the planned scope and explicitly note whether each needs test updates.
+
 ## Test Authenticity Rules
 
 ### Don't Mock Framework Types with Simplified Stand-ins

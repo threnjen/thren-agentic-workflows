@@ -48,6 +48,8 @@ The manifest must list the phase document path, ordered feature task names, wave
 |---------------------|-------------------|--------------------------|
 | AC1: ... | `src/module.py` | Must-have automated test; existing test to update; Unity EditMode/PlayMode constrained test; code-review evidence only; manual QA check |
 
+For refactors, rewires, or behavior-changing work, explicitly note which existing tests are likely to break or need updates and which new tests are required. Treat test maintenance as part of the scope, not a deferred follow-up.
+
 ### B. Correctness & Edge Cases
 
 - List key workflows and failure modes
@@ -85,6 +87,7 @@ The manifest must list the phase document path, ordered feature task names, wave
   - Code-review evidence only
   - Manual QA checks
 - Write top 5 high-value test cases or evidence checks (Given/When/Then where applicable)
+- For refactors, rewires, or API changes, include a dedicated note on impacted existing tests, new tests required, and any Unity EditMode/PlayMode or manual QA coverage still needed.
 - List test data, mocks, or fixtures needed
 - When listing planned test method names, either confirm the method exists in the codebase, label it `[PROPOSED - name TBD]`, or omit the method name and describe the scenario. Do not present new test method names as existing facts.
 
@@ -196,6 +199,7 @@ Before delivering plan documents, verify:
 - [ ] Existing patterns identified and followed
 - [ ] Test plan covers all acceptance criteria using evidence categories, not unverified test names
 - [ ] Test coverage prerequisite assessed (≥ 50% or `@z-test-writer` recommended)
+- [ ] Refactor/rewire changes include an explicit test-impact plan and maintenance tasks for affected tests
 - [ ] Observability and operability considered; any new normal-path logs are justified
 - [ ] **Integration check**: If the phase has multiple features that must run together, an integration/bootstrap feature exists as the final numbered task with acceptance criteria verifying the combined output is launchable and observable
 - [ ] **Manifest check**: For phase decomposition, `dev/feature/[phase-name]-execution-manifest.md` exists and includes the ordered feature list, wave schedule, dependency graph, expected bundle files, and `## Verification Assets`
