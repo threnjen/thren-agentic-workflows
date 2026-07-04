@@ -15,6 +15,64 @@ Load this skill when any of these indicators are present:
 - The repo contains `Assets/`, `ProjectSettings/`, and `*.asmdef` files
 - The plan or phase document references Unity, MonoBehaviour, or Unity-specific systems
 
+## Preflight (read these files before writing any code)
+
+Before writing any Unity-specific code, read the following project files and document each finding in the implementation record's summary. These are not advisory — skipping one means writing code against assumptions that may be wrong.
+
+### 1. Input handling mode
+**Read:** `ProjectSettings/ProjectSettings.asset` — search for `activeInputHandler:`.
+
+| Value | Meaning | What to use |
+|-------|---------|-------------|
+| `0` | Legacy input | `Input.GetMouseButtonDown`, `Input.mousePosition`, etc. |
+| `1` | New Input System | `Mouse.current.leftButton.wasPressedThisFrame`, etc. |
+| `2` | Both | Prefer new Input System API; legacy calls still work |
+
+**Record in implementation record:** `activeInputHandler: <value> — using <which API>`.
+
+### 2. Assembly reference graph
+**Read:** the `.asmdef` file for every assembly you will create or modify. (For the View layer: `Assets/Scripts/View/Combat/View.asmdef`. For Controllers: `Assets/Scripts/Controllers/Controllers.asmdef`. For Tests: `Assets/Tests/EditMode/Tests.EditMode.asmdef`.)
+
+For each new `using` directive you add to any `.cs` file, confirm the assembly named after `using` appears in that `.asmdef`'s `"references"` array or is a known implicit dependency (e.g., `System`, `System.Collections.Generic`, `UnityEngine` when `noEngineReferences` is `false`).
+
+**Record in implementation record:** every new assembly reference added and why.
+
+### 3. Scene wiring (MonoBehaviours only)
+**Read:** the relevant `.unity` scene file (e.g., `Assets/Scenes/CombatSandbox.unity`).
+
+If your feature creates a new `MonoBehaviour`, one of these must be true:
+- The component is attached to a GameObject in the scene (visible in the scene YAML under the component's `m_Script` GUID).
+- An existing MonoBehaviour calls `AddComponent<T>()` to create it at runtime (find the call site).
+- It is instantiated from a prefab (find the prefab and confirm the component is on it).
+
+If none of these are true, the component is **dead code** — it will never be instantiated, never receive `Awake`/`Start`/`Update`, and every method on it is unreachable.
+
+**Record in implementation record:** "`[ComponentName]` is attached to `[GameObject]` via [scene / AddComponent at X / prefab at Y]."
+
+### 4. Render pipeline
+**Read:** `Project Settings > Graphics` (or `Assets/` for the active pipeline asset) or search for `ScriptableRendererFeature`/`UniversalRenderPipelineAsset` in the project.
+
+If your feature creates any renderable object at runtime (`new GameObject(..., typeof(LineRenderer))`, `new GameObject(..., typeof(SpriteRenderer))`, `new GameObject(..., typeof(MeshRenderer))`), confirm the material you assign (or the default Unity assigns) is compatible with the active pipeline:
+- **Built-in RP:** default materials work.
+- **URP:** the built-in `Default-Line` material does not work. Either instantiate a URP-compatible material (e.g., `new Material(Shader.Find("Universal Render Pipeline/Lit"))`) or share one from an existing renderer in the scene (e.g., `boundsRenderer.sharedMaterial`).
+
+**Record in implementation record:** "Active pipeline: [URP/BiRP/HDRP]. Runtime renderers: [list] — material sourced from [explicit assignment / shared from X]."
+
+### 5. Preflight findings go in the implementation record
+At the top of the implementation record's Summary section, add a **Preflight** block:
+
+```
+## Preflight
+- activeInputHandler: 1 (using new Input System API)
+- View.asmdef references: Model, Controllers, Unity.InputSystem (added)
+- CombatInputView auto-added via AddComponent in CombatSceneView.Initialize
+- Pipeline: URP. LineRenderer material shared from boundsRenderer.sharedMaterial
+```
+
+This block is not a formality — it tells the reviewer exactly which project-configuration decisions were made and verified, so they don't have to re-derive them.
+
+---
+
 ## Runtime Wiring Rules
 
 Every feature must be reachable at runtime. Unity does not auto-discover or auto-wire pure C# classes.
@@ -145,15 +203,16 @@ Batch renderers that only rebuild on add/remove won't reflect per-entity state c
 
 ## Assembly Definition Conventions
 
-- Reference assemblies by GUID in `.asmdef` files when possible (more robust to renames)
-- `TheMovies.Core.Data` must have zero direct Unity assembly references (pure C# data layer)
+- The **Preflight (#2)** has already verified that every new `using` directive maps to an explicit `.asmdef` reference — do not skip it.
+- Reference assemblies by GUID in `.asmdef` files when possible (more robust to renames).
+- `TheMovies.Core.Data` must have zero direct Unity assembly references (pure C# data layer).
 - Verify the dependency DAG: Data ← Simulation ← Rendering, Data ← UI, etc. No circular references.
 
 ## Input System
 
-- Check `ProjectSettings.asset` for `activeInputHandler` setting: `0` = Legacy, `1` = New Input System, `2` = Both
-- If using "Both" mode, prefer migrating to Input System actions over adding more legacy `Input.GetKeyDown()` calls
-- Legacy input calls accumulate tech debt — each new `Input.GetKeyDown()` is one more thing to migrate later
+- The **Preflight (#1)** has already determined `activeInputHandler` — read the Preflight block in the implementation record.
+- If using "Both" mode, prefer migrating to Input System actions over adding more legacy `Input.GetKeyDown()` calls.
+- Legacy input calls accumulate tech debt — each new `Input.GetKeyDown()` is one more thing to migrate later.
 
 ## Save/Load Considerations
 
@@ -228,13 +287,12 @@ clear target.
 
 ## Pre-Handoff Checklist (Unity-Specific)
 
-Before writing the implementation record, verify these in addition to the universal self-check:
+Before writing the implementation record, confirm each of these. Items 1–4 are covered by the Preflight section above — this checklist is a final verification pass, not a substitute.
 
-1. **Bootstrap updated** — If the feature adds a new system, is it initialized in the bootstrap script in the correct order?
-2. **Assembly references correct** — If new files were added, do they live in the right assembly and reference only permitted assemblies?
+1. **Preflight complete** — Re-read the `## Preflight` block in your implementation record. Does it cover all four checks (input, assemblies, scene wiring, pipeline)? If any are missing, go back and do them before proceeding.
+2. **Bootstrap updated** — If the feature adds a new system, is it initialized in the bootstrap script in the correct order?
 3. **Def wiring** — If new CompProperties or Def fields were added, does `DefLoader`/`DefSerializer` know how to deserialize them? Is the naming convention followed (`CompX` → `CompProperties_X`)?
 4. **TickerType match** — If a new `ThingComp` overrides `CompTickRare` or `CompTickLong`, does the parent Thing's Def set the matching `tickerType`?
 5. **PlacedSize vs def.size** — Any code computing building footprints uses `Building.PlacedSize` (the actual placed/rotated size), NOT `def.size` (blueprint size).
-6. **Input method** — New keyboard/mouse handling uses the project's established input pattern (check cross-phase-decisions for migration status).
-7. **Serialized assets generated, not hand-written** — Any new/changed `.prefab`/`.unity`/`.mat`/`.asset` was produced via the Unity Editor API (batch-mode `Editor/` script), not hand-authored YAML. No fabricated GUIDs, no `0000…f000` `m_Script` references, no missing required components or dangling asset references. See "Serialized Assets: Generate via Unity, Never Hand-Author".
-8. **Visual test wired** — For a View feature with visual ACs, is the capture config present for this scene and the capture package a dependency listed under `testables`? Is the scene in Build Settings with a `MainCamera`? See "Visual Verification Wiring".
+6. **Serialized assets generated, not hand-written** — Any new/changed `.prefab`/`.unity`/`.mat`/`.asset` was produced via the Unity Editor API (batch-mode `Editor/` script), not hand-authored YAML. No fabricated GUIDs, no `0000…f000` `m_Script` references, no missing required components or dangling asset references. See "Serialized Assets: Generate via Unity, Never Hand-Author".
+7. **Visual test wired** — For a View feature with visual ACs, is the capture config present for this scene and the capture package a dependency listed under `testables`? Is the scene in Build Settings with a `MainCamera`? See "Visual Verification Wiring".
