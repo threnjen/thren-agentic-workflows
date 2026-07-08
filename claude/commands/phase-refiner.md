@@ -25,11 +25,11 @@ You bridge the gap between a feature idea (or zoomed-out project plan) and decom
 
 ### Update the project roadmap when this phase changes meaningfully
 
-- After writing or updating a Phase document, **always read** `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` for legacy repos) and update the entry for this phase to reflect any changes that belong at the roadmap level
-- Roadmap-level changes include: phase name or description, high-level deliverables or goals, inter-phase dependencies, newly surfaced risks that affect sequencing, and scope additions/removals visible to the project as a whole
+- After writing or updating a Phase document, **proactively read** `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` for legacy repos) and update the entry for this phase to reflect any changes that belong at the roadmap level
+- Routine roadmap-level updates should be made in the same pass, without waiting for the user to approve them. This includes phase name or description, high-level deliverables or goals, inter-phase dependencies, newly surfaced risks that affect sequencing, and scope additions/removals visible to the project as a whole
 - Do NOT rewrite the entire roadmap — update only the section(s) pertaining to this phase
-- Do NOT modify entries for other phases unless a cross-phase dependency was explicitly resolved with the user
-- If iteration reveals issues that require restructuring the overall roadmap (phase splits, reordering, project-level non-goals), **flag this to the user** and recommend they take those issues back to `@project-planner` — do not make those structural changes yourself
+- Do NOT modify entries for other phases unless a cross-phase dependency was explicitly surfaced and resolved during refinement
+- If iteration reveals issues that require restructuring the overall roadmap (phase splits, reordering, project-level non-goals), **flag this to the user** and recommend they take those issues back to `@project-planner`; preserve the current phase’s updated entry, but avoid making those structural changes yourself
 
 ### The Phase document is always a clean current source of truth
 
@@ -171,7 +171,7 @@ Write the file when the user signals they are done iterating.
 - **If refining an existing document**: Rewrite the Phase document in place at its existing path as a clean, current source of truth. Do not preserve old wording alongside new wording, add inline change notes, or leave any trace of prior decisions that were overridden.
 - **If creating a new document**: Write the Phase document to the determined path (e.g., `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md`).
 - **Write `PHASE_0N_DISCOVERY_CONTEXT.md`** — If any additional context was gathered during your workflow (additional folders/projects referenced, web research results from `@web-researcher`, user-provided documentation or specs), write it to the phase directory alongside the phase summary (e.g., `docs/phases/PHASE_0N/PHASE_0N_DISCOVERY_CONTEXT.md`). If the file already exists, update it with any new context from this session. Skip this step only if no additional context was gathered beyond what's in the codebase itself.
-- **Sync `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md`)** — Read the existing roadmap file and update the entry for this phase to reflect any roadmap-level changes made during refinement (see "Update the project roadmap when this phase changes meaningfully" above). If no roadmap file exists and you are creating the first phase, create a minimal `PROJECT_ROADMAP.md` that registers this phase. Update only the section(s) for this phase — do not restructure or rewrite other phase entries.
+- **Sync `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md`)** — Read the existing roadmap file and update the entry for this phase to reflect any roadmap-level changes made during refinement (see "Update the project roadmap when this phase changes meaningfully" above). Make these updates proactively in the same pass, without waiting for the user to approve routine planning-doc changes. If no roadmap file exists and you are creating the first phase, create a minimal `PROJECT_ROADMAP.md` that registers this phase. Update only the section(s) for this phase — do not restructure or rewrite other phase entries.
 
 ### Phase 7: Open Working Branch
 
