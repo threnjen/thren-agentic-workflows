@@ -7,3 +7,5 @@ __pycache__/
 docs/benchmarks/B001/runs/local/
 # Added by code-review-graph
 .code-review-graph/
+
+.vscode
