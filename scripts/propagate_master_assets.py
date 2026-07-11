@@ -14,6 +14,7 @@ import argparse
 import fnmatch
 import json
 import re
+import shutil
 import sys
 import time
 from dataclasses import dataclass
@@ -110,8 +111,31 @@ def _read_text(path: Path) -> str:
 
 def _write_if_changed(path: Path, content: str) -> bool:
     path.parent.mkdir(parents=True, exist_ok=True)
-    if path.exists() and _read_text(path) == content:
+
+    if path.is_symlink():
+        try:
+            path.unlink()
+        except OSError:
+            pass
+    elif path.exists() and path.is_file():
+        try:
+            if _read_text(path) == content:
+                return False
+        except OSError:
+            pass
+        try:
+            path.unlink()
+        except OSError:
+            pass
+    elif path.exists() and path.is_dir():
+        try:
+            shutil.rmtree(path)
+        except OSError:
+            pass
+
+    if path.exists() and path.is_dir():
         return False
+
     path.write_text(content, encoding="utf-8")
     return True
 
