@@ -87,7 +87,7 @@ This is the primary authoring surface.
 
 For normal agent, instruction, and skill work in this repo, discovery and edits should stay inside `.github/`. The downstream platform directories are for generated output verification or intentional porting only.
 
-The propagation script also preserves several filename aliases, including `documentation-architect` to `docs-writer` and `web-research-specialist` to `web-researcher`.
+The propagation script also preserves several filename aliases, including `docs-writer` to `docs-writer` and `web-research-specialist` to `web-researcher`.
 
 ### `codex/` versus `.codex/`
 

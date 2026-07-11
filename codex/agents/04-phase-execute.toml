@@ -213,7 +213,7 @@ See the Test Failure Handling section of the `implementation-pipeline-loop` skil
 
 ### Documentation Drift
 
-The documentation-architect subagent (Step 7) runs a full sweep of all documentation it manages and updates anything that is stale. This is a best-effort step — if the documentation-architect reports no changes needed, that is expected.
+The docs-writer subagent (Step 7) runs a full sweep of all documentation it manages and updates anything that is stale. This is a best-effort step — if the docs-writer reports no changes needed, that is expected.
 
 ## Auto-Loaded Instructions
 

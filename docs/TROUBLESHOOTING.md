@@ -44,7 +44,7 @@ The propagation script intentionally rewrites some names for target platforms. I
 
 - Check the alias rules in `scripts/propagate_master_assets.py` before assuming a file is missing.
 - Expect these built-in aliases:
-  - `documentation-architect` -> `docs-writer`
+  - `docs-writer` -> `docs-writer`
   - `web-research-specialist` -> `web-researcher`
   - `audit-code-or-infra` -> `audit-code-infra-refactor`
 - Expect non-user-invocable agents to become `z-*` files in Claude and Codex outputs.

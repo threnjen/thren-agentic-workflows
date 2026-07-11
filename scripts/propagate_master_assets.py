@@ -69,13 +69,13 @@ PROPAGATION_EXCLUDE: set[str] = set()
 
 
 OPENCODE_FILE_ALIASES = {
-    "documentation-architect": "docs-writer",
+    "docs-writer": "docs-writer",
     "web-research-specialist": "web-researcher",
     "audit-code-or-infra": "audit-code-infra-refactor",
 }
 
 CLAUDE_FILE_ALIASES = {
-    "documentation-architect": "docs-writer",
+    "docs-writer": "docs-writer",
     "web-research-specialist": "web-researcher",
     "audit-code-or-infra": "audit-code-infra-refactor",
 }

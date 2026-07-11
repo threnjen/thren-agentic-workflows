@@ -42,7 +42,7 @@ Agent output should include the required instruction intent in agent content so 
 2. Resolve applicable `.github/instructions/*.instructions.md` entries by `applyTo`.
 3. Convert GitHub tools to OpenCode permission keys.
 4. Apply established filename aliases. The canonical alias list is:
-   - `documentation-architect` → `docs-writer`
+   - `docs-writer` → `docs-writer`
    - `web-research-specialist` → `web-researcher`
    - `audit-code-or-infra` → `audit-code-infra-refactor`
 5. Rewrite source agent references in body text to OpenCode destination identifiers. Use destination filename stems, preserving established aliases such as `@web-researcher` and `docs-writer`.

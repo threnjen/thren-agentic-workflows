@@ -75,7 +75,7 @@ scripts/
 - The script watches three directories: `.github/agents`, `.github/skills`, and `.github/instructions`.
 - Claude and OpenCode outputs preserve existing filename aliases when present.
 - Known aliases include:
-  - `documentation-architect` -> `docs-writer`
+  - `docs-writer` -> `docs-writer`
   - `web-research-specialist` -> `web-researcher`
   - `audit-code-or-infra` -> `audit-code-infra-refactor`
 - Hidden agents are renamed for some targets:
