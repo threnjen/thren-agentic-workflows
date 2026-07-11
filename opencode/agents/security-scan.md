@@ -1,8 +1,6 @@
 ---
 description: "Performs a full-codebase security scan for a phase, covering application code, dependencies, secrets, infrastructure, CI/CD, and configuration. Writes a phase-level security report with evidence, risk classification, and coverage limitations."
 model: deepseek/deepseek-v4-pro
-mode: subagent
-hidden: true
 permission:
   bash: allow
   edit: allow
