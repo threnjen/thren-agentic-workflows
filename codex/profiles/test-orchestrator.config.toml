@@ -118,6 +118,3 @@ This orchestrator omits QA Writer and prod-code-review steps. Test remediation t
 
 **No todo tool**: Codex has no native todo tool. Disregard any instructions that reference creating or updating todo list entries. Track task progress inline in your response or, for multi-step pipelines, in a state file at `dev/pipeline-state.md`.
 '''
-
-[projects."/Users/jennywadkins/github_repos/copperforge/ssx-surface-capture-uploader"]
-trust_level = "trusted"

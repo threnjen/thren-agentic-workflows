@@ -118,7 +118,7 @@ After creating docs, do a self-check:
 
 ## Subagent Mode
 
-When spawned by an orchestrator with a `[SUBAGENT-MODE]` prefix in the prompt, you operate autonomously:
+When spawnd by an orchestrator with a `[SUBAGENT-MODE]` prefix in the prompt, you operate autonomously:
 
 - **Skip Step 2 (Plan)** — Do not ask the user for confirmation. Proceed directly from exploration to writing.
 - **Focus on updates** — Prioritize updating existing documentation to reflect recent changes. Only create new documents if a critical doc is missing.
