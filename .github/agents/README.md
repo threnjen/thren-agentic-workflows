@@ -51,6 +51,7 @@ The core development workflow. **You interact with steps 1–3. Everything else 
 │  │  Loop back for next feature                  │                │
 │  └──────────────────────────────────────────────┘                │
 │  Feature - QA Writer    → Consolidated QA plan                │
+│  Security Scan          → Full-codebase security report       │
 │  Prod Code Review       → GO / NO-GO verdict                  │
 │                                                                   │
 │  PER-FEATURE MODE (one feature, one branch, one PR):             │
@@ -99,9 +100,10 @@ Interactive — you iterate to probe edge cases, dependencies, and decomposition
    - **Implement** → Red-Green-Refactor TDD, writes implementation record
    - **Review** → Finds bugs, applies fixes, writes review record
 5. Runs the **QA Writer**
-6. Runs the **Prod Code Review**
-7. Reports the verdict back to you
-8. Runs the **Docs Writer** to update any stale documentation
+6. Runs the **Security Scan** across the full codebase
+7. Runs the **Prod Code Review** with the security report
+8. Reports the verdict back to you
+9. Runs the **Docs Writer** to update any stale documentation
 
 ### Manual Implementation Path
 
@@ -157,6 +159,7 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Feature - Implementer** | Phase - Execute, Audit orchestrator, Test orchestrator | Implement a feature plan using Red-Green-Refactor TDD |
 | **Feature - Reviewer** | Phase - Execute, Audit orchestrator, Test orchestrator | Review implementation, apply fixes, produce review record |
 | **Feature - QA Writer** | Phase - Execute, Audit orchestrator | Write manual QA plan for non-automatable test cases |
+| **Security Scan** | Phase - Execute | Perform a full-codebase security assessment and write a phase-level security report |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
 | **Test - Writer** | Test orchestrator | Bootstrap a test suite from scratch for untested code |
@@ -221,6 +224,8 @@ These agents are not visible in the picker. They run automatically as part of or
 **Feature - Reviewer** *(subagent of Phase - Execute, Audit orchestrator, Test orchestrator)* — Reads plan and implementation docs, reviews all changed code, applies fixes for High/Blocker issues directly, and writes `[0N-task-name]-review.md` with verdict and remaining concerns.
 
 **Feature - QA Writer** *(subagent of Phase - Execute, Audit orchestrator)* — In batch mode: reads all pipeline docs from every feature in a phase and writes a single consolidated QA plan. In per-feature mode: reads pipeline docs from a single feature and writes QA plan and coverage map to that feature's directory.
+
+**Security Scan** *(subagent of Phase - Execute)* — Performs an evidence-based security assessment across all tracked, security-relevant repository artifacts. Writes a phase-level report that covers secrets, dependencies, application attack surface, authentication, data protection, runtime safety, infrastructure, CI/CD, observability, and cross-cutting security patterns. It redacts sensitive values and distinguishes phase regressions from pre-existing release risks.
 
 **Auditor - Code** *(subagent of Audit orchestrator)* — Audits every source file for cleanup, bugs, security, type hints, readability, DRY, and consistency. Produces a structured report.
 

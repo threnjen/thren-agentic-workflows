@@ -157,7 +157,20 @@ After the subagent returns:
 - Verify the coverage map exists at the determined path
 - Stage only the consolidated QA outputs and any phase-level pipeline documents updated by this step. Do not stage feature-local source files or files from unrelated feature directories. Do not stage the Step 3 visual-verification report (`docs/phases/[phase-name]/[phase-name]-visual-verification.md`) here — it belongs to the Step 5 final-review checkpoint. Commit this checkpoint once with the exact message `eval: qa`.
 
-### Step 5: Phase Final Review
+### Step 5: z-security-scan
+
+spawn the **z-security-scan** subagent:
+
+> "[SUBAGENT-MODE] Perform a full-codebase security scan for phase [phase-name]. Scan the entire tracked repository, not only phase changes. Phase summary: `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan: `[QA output path]`. Execution manifest: `dev/feature/[phase-name]-execution-manifest.md`. Write the report to `docs/phases/[phase-name]/[phase-name]-security-scan.md`. Distinguish findings introduced or worsened by this phase from pre-existing release risks. Do not modify source code or reveal secret values. Return the report path, verdict, severity totals, Critical/High findings, phase relationship, and unavailable checks."
+
+After the z-security-scan subagent returns:
+- Verify `docs/phases/[phase-name]/[phase-name]-security-scan.md` exists.
+- Record the verdict as `security-scan: Pass | Pass with Conditions | Blocked`.
+- If the verdict is `Blocked`, set `all-approved: no` so Step 6 (Prod Review) runs in standard mode.
+- Do not automatically remediate security findings. The scan is a full-codebase release-risk assessment, so prod-code-review determines the final GO / GO WITH CONDITIONS / NO-GO decision.
+- Do NOT emit a separate `eval:` commit for this step. Stage the report with the Step 6 final-review checkpoint.
+
+### Step 6: Phase Final Review
 
 spawn the **prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected in Step 2 Phase B, plus the `visual-verification` verdict from Step 3 (or its skip reason) as runtime evidence.
 
@@ -167,7 +180,7 @@ spawn the **prod-code-review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Visual verification: [Pass | skip reason]. All verdicts Approved: YES — use fast-track mode."
+> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Visual verification: [Pass | skip reason]. Security scan: `[security report path]` ([Pass | Pass with Conditions]). All verdicts Approved: YES — use fast-track mode."
 
 **If QA was generated and any verdict was not Approved:**
 
@@ -175,18 +188,18 @@ spawn the **prod-code-review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Visual verification: [Pass | Fail | Unverified | skip reason]. All verdicts Approved: NO — use standard mode."
+> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Visual verification: [Pass | Fail | Unverified | skip reason]. Security scan: `[security report path]` ([Pass | Pass with Conditions | Blocked]). All verdicts Approved: NO — use standard mode."
 
-After the prod-code-review subagent returns, stage only the final review artifact and any phase-level pipeline documents updated by this step, then commit them with the exact message `eval: final-review`.
+After the prod-code-review subagent returns, stage only the final review artifact, the security scan report, and any phase-level pipeline documents updated by this step, then commit them with the exact message `eval: final-review`.
 
-### Step 6: Report to User
+### Step 7: Report to User
 
 Present results using the Pipeline Completion Report format from the auto-loaded orchestrator conventions. Use these field labels:
 - Scope label: **Phase**
 - Items label: **Features completed**
-- Include the QA document path
+- Include the QA document path and security scan report path
 
-### Step 7: Update Documentation
+### Step 8: Update Documentation
 
 Follow the Post-Loop: Documentation Update section from the `implementation-pipeline-loop` skill. Use this prompt:
 

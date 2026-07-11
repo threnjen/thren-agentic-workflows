@@ -13,7 +13,7 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 27 source agent definitions in `.github/agents/`.
+- 32 source agent definitions in `.github/agents/`.
 - 16 skills in `.github/skills/`.
 - 15 instructions in `.github/instructions/`.
 - 2 template packs: `nodejs/` and `python/`.
@@ -28,7 +28,7 @@ HARNESS_SETUP.md                           # How to expose repo assets to Copilo
 .github/
   agents/                                  # 27 source agent definitions
     README.md                              # Full agent catalog and pipeline docs
-    *.agent.md                             # Most source agents
+    *.agent.md                             # Most source agents (32 total definitions)
     prod-code-review.md                    # Plain .md agent definition; still part of source set
   instructions/                            # 15 shared instruction files with applyTo globs
   skills/                                  # 16 shared skill directories with SKILL.md entrypoints
@@ -86,7 +86,7 @@ scripts/
 
 - 6 orchestrators: `01 Project - Planner`, `02 Phase - Refiner`, `04 Phase - Execute`, `Audit - Code, Infra, Refactor`, `Test - Orchestrator`, `Eval - Grader`.
 - 11 visible user-facing agents: decomposer, documentation architect, debugger, evangelize, single-feature agent, prod code review, unity reviewer, web researcher, and 3 auditors (deployed separately but user-invocable).
-- 10 hidden subagents: plan expander, implementer, reviewer, QA writer, eval decomposition reporter, eval metric grader, eval score recorder, test analyst, test writer, test fixer.
+- 15 hidden subagents, including plan expander, implementer, reviewer, QA writer, security scan, evaluator helpers, auditors, and test helpers.
 
 ## Template Pack Facts
 
