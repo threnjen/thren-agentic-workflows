@@ -900,6 +900,110 @@ def propagate_hooks_once(verbose: bool = False) -> Dict[str, int]:
     }
 
 
+def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
+    repo_root = repo_root or REPO_ROOT
+    github_skills_dir = repo_root / ".github" / "skills"
+    claude_skills_dir = repo_root / "claude" / "skills"
+    opencode_skills_dir = repo_root / "opencode" / "skills"
+    codex_skills_dir = repo_root / "codex" / "skills"
+
+    if not github_skills_dir.exists():
+        return {"claude_changed": 0, "opencode_changed": 0, "codex_changed": 0, "skills_changed": 0}
+
+    if claude_skills_dir.exists() and claude_skills_dir.is_symlink():
+        claude_ready = False
+    else:
+        claude_skills_dir.mkdir(parents=True, exist_ok=True)
+        claude_ready = True
+
+    opencode_skills_dir.mkdir(parents=True, exist_ok=True)
+    codex_skills_dir.mkdir(parents=True, exist_ok=True)
+
+    changed_claude = 0
+    changed_opencode = 0
+    changed_codex = 0
+    expected_codex_dirs: set[Path] = set()
+
+    for source_skill_dir in sorted(github_skills_dir.iterdir()):
+        if not source_skill_dir.is_dir():
+            continue
+
+        skill_name = source_skill_dir.name
+        source_skill_md = source_skill_dir / "SKILL.md"
+
+        if claude_ready:
+            dest_claude_dir = claude_skills_dir / skill_name
+            dest_claude_dir.mkdir(parents=True, exist_ok=True)
+            if source_skill_md.exists():
+                if _write_if_changed(dest_claude_dir / "SKILL.md", _read_text(source_skill_md)):
+                    changed_claude += 1
+            for source_file in sorted(source_skill_dir.rglob("*")):
+                if not source_file.is_file() or source_file.name == "SKILL.md":
+                    continue
+                rel = source_file.relative_to(source_skill_dir)
+                dest_file = dest_claude_dir / rel
+                if _write_if_changed(dest_file, _read_text(source_file)):
+                    changed_claude += 1
+
+        dest_opencode_dir = opencode_skills_dir / skill_name
+        dest_opencode_dir.mkdir(parents=True, exist_ok=True)
+        if source_skill_md.exists():
+            if _write_if_changed(dest_opencode_dir / "SKILL.md", _read_text(source_skill_md)):
+                changed_opencode += 1
+        for source_file in sorted(source_skill_dir.rglob("*")):
+            if not source_file.is_file() or source_file.name == "SKILL.md":
+                continue
+            rel = source_file.relative_to(source_skill_dir)
+            dest_file = dest_opencode_dir / rel
+            if _write_if_changed(dest_file, _read_text(source_file)):
+                changed_opencode += 1
+
+        dest_codex_dir = codex_skills_dir / skill_name
+        expected_codex_dirs.add(dest_codex_dir)
+        dest_codex_dir.mkdir(parents=True, exist_ok=True)
+        if source_skill_md.exists():
+            fm, body = _parse_frontmatter(_read_text(source_skill_md))
+            name = str(fm.get("name", skill_name)).strip().strip('"').strip("'")
+            description = str(fm.get("description", "")).strip().strip('"').strip("'")
+            desc_yaml = json.dumps(description, ensure_ascii=False)
+            dest_content = (
+                f"---\nname: {name}\ndescription: {desc_yaml}\n---\n"
+                + GENERATED_SKILL_HEADER
+                + body.lstrip("\n")
+            )
+            if _write_if_changed(dest_codex_dir / "SKILL.md", dest_content):
+                changed_codex += 1
+        for source_file in sorted(source_skill_dir.rglob("*")):
+            if not source_file.is_file() or source_file.name == "SKILL.md":
+                continue
+            rel = source_file.relative_to(source_skill_dir)
+            dest_file = dest_codex_dir / rel
+            if _write_if_changed(dest_file, _read_text(source_file)):
+                changed_codex += 1
+
+    if codex_skills_dir.exists():
+        for dest_dir in sorted(codex_skills_dir.iterdir()):
+            if not dest_dir.is_dir() or dest_dir in expected_codex_dirs:
+                continue
+            skill_md = dest_dir / "SKILL.md"
+            if skill_md.exists() and _read_text(skill_md).startswith(GENERATED_SKILL_HEADER):
+                for f in dest_dir.rglob("*"):
+                    if f.is_file():
+                        f.unlink()
+                for d in sorted(dest_dir.rglob("*"), reverse=True):
+                    if d.is_dir():
+                        d.rmdir()
+                dest_dir.rmdir()
+                changed_codex += 1
+
+    return {
+        "claude_changed": changed_claude,
+        "opencode_changed": changed_opencode,
+        "codex_changed": changed_codex,
+        "skills_changed": changed_claude + changed_opencode + changed_codex,
+    }
+
+
 def propagate_once(verbose: bool = True) -> Dict[str, int]:
     agents = load_source_agents()
     instructions = load_instruction_docs()
@@ -993,69 +1097,17 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         profile_file.unlink()
         changed_codex_profiles += 1
 
-    # Propagate skills: .github/skills/<name>/SKILL.md -> codex/skills/<name>/SKILL.md
-    CODEX_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
-    changed_skills = 0
-    expected_skill_dirs: set[Path] = set()
-
-    for source_skill_dir in sorted(GITHUB_SKILLS_DIR.iterdir()):
-        if not source_skill_dir.is_dir():
-            continue
-        skill_name = source_skill_dir.name
-        dest_skill_dir = CODEX_SKILLS_DIR / skill_name
-        expected_skill_dirs.add(dest_skill_dir)
-
-        # Transform SKILL.md: preserve YAML frontmatter required by Codex (name + description)
-        # then append the generated-file comment after the closing ---.
-        source_skill_md = source_skill_dir / "SKILL.md"
-        if source_skill_md.exists():
-            fm, body = _parse_frontmatter(_read_text(source_skill_md))
-            name = str(fm.get("name", skill_name)).strip().strip('"').strip("'")
-            description = str(fm.get("description", "")).strip().strip('"').strip("'")
-            desc_yaml = json.dumps(description, ensure_ascii=False)
-            dest_content = (
-                f"---\nname: {name}\ndescription: {desc_yaml}\n---\n"
-                + GENERATED_SKILL_HEADER
-                + body.lstrip("\n")
-            )
-            if _write_if_changed(dest_skill_dir / "SKILL.md", dest_content):
-                changed_skills += 1
-
-        # Copy any additional files in the skill dir verbatim
-        for source_file in sorted(source_skill_dir.rglob("*")):
-            if not source_file.is_file():
-                continue
-            if source_file.name == "SKILL.md":
-                continue
-            rel = source_file.relative_to(source_skill_dir)
-            dest_file = dest_skill_dir / rel
-            if _write_if_changed(dest_file, _read_text(source_file)):
-                changed_skills += 1
-
-    # Clean up orphaned generated codex skill dirs
-    if CODEX_SKILLS_DIR.exists():
-        for dest_dir in sorted(CODEX_SKILLS_DIR.iterdir()):
-            if not dest_dir.is_dir() or dest_dir in expected_skill_dirs:
-                continue
-            skill_md = dest_dir / "SKILL.md"
-            if skill_md.exists() and _read_text(skill_md).startswith(GENERATED_SKILL_HEADER):
-                for f in dest_dir.rglob("*"):
-                    if f.is_file():
-                        f.unlink()
-                for d in sorted(dest_dir.rglob("*"), reverse=True):
-                    if d.is_dir():
-                        d.rmdir()
-                dest_dir.rmdir()
-                changed_skills += 1
+    skill_result = propagate_skills_once()
+    changed_skills = skill_result["skills_changed"]
 
     hooks_result = propagate_hooks_once(verbose=False)
 
     result = {
         "source_agents": len(agents),
         "hooks_source": hooks_result["hooks_source"],
-        "claude_changed": changed_claude + hooks_result["claude_changed"],
-        "opencode_changed": changed_opencode + hooks_result["opencode_changed"],
-        "codex_changed": changed_codex + hooks_result["codex_changed"],
+        "claude_changed": changed_claude + hooks_result["claude_changed"] + skill_result["claude_changed"],
+        "opencode_changed": changed_opencode + hooks_result["opencode_changed"] + skill_result["opencode_changed"],
+        "codex_changed": changed_codex + hooks_result["codex_changed"] + skill_result["codex_changed"],
         "codex_profiles_changed": changed_codex_profiles,
         "skills_changed": changed_skills,
     }

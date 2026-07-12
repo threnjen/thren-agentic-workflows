@@ -19,6 +19,10 @@ Each `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` must include:
 **Estimated complexity**: Small | Medium | Large
 **Cross-references**: [Links to counterpart docs in related repos, if applicable]
 
+## What's New
+
+[Brief summary of changes or new features introduced in this phase. Keep this section user-focused and use natural language to explain in practical impact terms, not technical terms. Include any relevant context for why these changes matter to the end user.]
+
 ## Objective
 
 [1-2 sentences: what this phase accomplishes and why it matters]
