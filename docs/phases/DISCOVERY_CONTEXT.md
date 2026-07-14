@@ -29,6 +29,36 @@ Nine repos cloned by the user into `/Users/jennywadkins/github_repos/claude_skil
 - **Phase 04 (skill enforcement)**: claude-code-infrastructure-showcase — `skill-rules.json` (globs/keywords → required skills, enforcement levels block/suggest/warn) + UserPromptSubmit suggestion-injection hook + PreToolUse guard blocking edits until required skills are activated + PostToolUse tracker clearing pending enforcement. Node/tsx + sqlite implementation, single-project — we rebuild in Python for this repo's 16+ skills and multi-harness propagation.
 - **Hook-event reference**: shanraisshan `claude-code-hooks` — the most complete public catalog of all 30 Claude Code hook events and which fire in agent contexts; consult when choosing attachment points.
 
+## Phase 05 Design Notes: Phase Final Review (recorded 2026-07-14, ahead of PHASE_05 summary authoring)
+
+User-directed addition: a new agentic flow named **"Phase Final Review"** (user renamed from "Large Phase Evaluation") for large phases divided into subphases `PHASE_0Na`–`PHASE_0NX`. User wants ALL identified evaluation modules included, liberal use of hidden subagents to keep context clean, skills wherever they make sense, and design consistency with the existing `.github/agents` house style (numbered orchestrator + lettered subagents, e.g. `04-phase-execute` + `04a`–`04d`; shared-convention skills like `auditor-conventions`; report-template skills like `implementation-record`).
+
+**Core design rules:**
+- Orchestrator (`05-phase-final-review.agent.md`) never reads code, diffs, or full subphase docs — only structured reports subagents write to `dev/phase-final-review/PHASE_0N/`; each subagent returns a ≤10-line summary.
+- Must recommend/require a state-of-the-art model; warn at startup if not on one. Deep-judgment subagents (AC regression, seam analysis, synthesis) inherit top tier; mechanical sweeps (artifact/dependency) run on a cheap tier.
+- Preflight: auto-suggest the pre-phase baseline commit (last commit before subphase a's first feature commit, from ledger/commit conventions), user confirms; discover subphases from `docs/phases/PHASE_0N*/`; inventory pipeline artifacts (implementation records, QA docs, security reports) and fail loudly on missing artifacts before evaluating.
+
+**Subagent roster (05a–05l):**
+- `05a-baseline-worktree` — check out the confirmed baseline commit in a git worktree; return path. (Candidate reusable skill: `worktree-baseline`; eval-grader could reuse.)
+- `05b-change-narrator` — whole-phase change narrative baseline→HEAD, per-subphase attribution, multi-subphase churn hotspots; chunks diffs internally, may spawn per-directory readers.
+- `05c-qa-consolidator` — master QA doc: merge all subphase QA docs, dedupe, drop superseded checks, re-order into a single efficient walkthrough. Reads QA docs only.
+- `05d-security-rollup` — union + dedupe of all subphase security findings; delegate a live re-scan of final code (existing `security-scan` agent) against the full list; classify fixed / persisting / reintroduced.
+- `05e-ac-regression` — re-verify EVERY subphase's acceptance criteria against the FINAL codebase (later subphases may have broken earlier ACs); one hidden verifier per subphase.
+- `05f-seam-analyzer` — integration seams between subphases: interface mismatches, duplicated logic, orphaned scaffolding; built on code-review-graph tools (get_impact_radius, get_bridge_nodes).
+- `05g-artifact-sweeper` — debug statements, TODOs/FIXMEs, temp feature flags, commented-out/dead code introduced since baseline (refactor_tool dead-code detection scoped to phase diff). Mechanical.
+- `05h-test-health` — coverage delta baseline→now, cross-subphase test redundancy, flake candidates; delegates to existing `test-analyst`.
+- `05i-learnings-harvester` — mine review records/fix commits/QA failures for recurring mistakes; draft `.github/learnings/` and instruction-file updates feeding the instructions-writer/evaluator loop.
+- `05j-consistency-auditor` — convention drift across subphases (naming, error handling, patterns) with recommended canonical forms.
+- `05k-dependency-auditor` — new dependencies across the phase: licenses, vulnerabilities, competing/duplicate libs. Mechanical.
+- `05l-readiness-synthesizer` — reads all reports (never code); produces the go/no-go readiness report with severity-ordered blocking list. Extends `prod-code-review` conventions one level up rather than duplicating them.
+
+**Skills to create:**
+- `phase-final-review-conventions` — shared constraints for all 05x evaluators (report locations/naming, severity levels, ≤10-line return-summary contract, read-only worktree etiquette, model-tier notes). Mirrors `auditor-conventions`.
+- `phase-final-review-report` — output templates: master QA doc, security rollup, AC-regression matrix, readiness report. Mirrors `implementation-record`/`eval-feature-decomposition-report`.
+- `worktree-baseline` — reusable "check out commit X in a worktree, hand back path" skill.
+
+Per the incremental-authoring gate, `PHASE_05_SUMMARY.md` is written only when the user returns for it after completing prior phases; these notes are the authoritative design capture until then.
+
 ## Key Technical Facts Established
 
 - PreToolUse hooks execute regardless of permission mode; a hook exiting 2 (or emitting a deny decision) blocks the tool call even under `--dangerously-skip-permissions`. This is the only reliable enforcement layer for goal 2.

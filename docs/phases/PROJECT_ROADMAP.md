@@ -1,8 +1,8 @@
-# Project Roadmap: Security & Determinism Hooks
+# Project Roadmap: Security & Determinism Hooks + Phase Final Review
 
 ## Vision
 
-A propagated, source-of-truth hook system (Python stdlib, under `.github/hooks/`) that hardens every project against prompt injection and file/secret manipulation — even under bypass permissions — and converts agent-judgment steps in the existing pipeline (formatting, completion claims, skill activation) into deterministic, testable gates. All hooks are original implementations that improve on patterns surveyed in `docs/inspiration/`, never direct copies.
+A propagated, source-of-truth hook system (Python stdlib, under `.github/hooks/`) that hardens every project against prompt injection and file/secret manipulation — even under bypass permissions — and converts agent-judgment steps in the existing pipeline (formatting, completion claims, skill activation) into deterministic, testable gates. All hooks are original implementations that improve on patterns surveyed in `docs/inspiration/`, never direct copies. The project also adds **Phase Final Review** — a new `05-` orchestrator agent family that evaluates an entire large phase (subphases `PHASE_0Na`–`PHASE_0NX`) end-to-end after implementation.
 
 ## Phases
 
@@ -12,6 +12,7 @@ A propagated, source-of-truth hook system (Python stdlib, under `.github/hooks/`
 | 02 | Prompt-Injection Defense | Planned | Phase 01 | Medium | PostToolUse scanner over tool outputs with an original, severity-tiered pattern corpus; hard-block on high-confidence matches, warn on the rest; fixture-driven pattern test suite |
 | 03 | Format-on-Save + Completion Gates | Planned | Phase 01 | Medium | Project-aware formatter dispatch on edit, plus Stop-time verification gates that block unverified "done" claims using this repo's pipeline artifacts as evidence |
 | 04 | Skill Enforcement / Auto-Activation | Planned | Phase 01 (framework), informed by 01–03 tuning | Large | Rules file mapping globs/keywords → required skills; UserPromptSubmit suggestion injection + PreToolUse guard with block/suggest/warn enforcement levels, propagated multi-harness |
+| 05 | Phase Final Review agent family | Planned | None (independent of hooks phases; uses existing pipeline assets) | Large | New `05-phase-final-review` orchestrator + `05a`–`05l` evaluator subagents + 3 skills: baseline worktree diffing, whole-phase change narrative, master QA/security rollups, AC regression, seam analysis, artifact/test/consistency/dependency audits, learnings harvest, and a go/no-go readiness synthesis — designed for state-of-the-art models with strict context discipline. Full design in DISCOVERY_CONTEXT.md |
 
 ## Constraints & Non-Goals
 
