@@ -13,6 +13,7 @@ from typing import Any, NamedTuple
 
 _TOOL_NAME_KEYS = ("tool_name", "name", "toolName")
 _TOOL_INPUT_KEYS = ("tool_input", "input", "toolInput")
+_TOOL_OUTPUT_KEYS = ("tool_output", "tool_response", "toolOutput", "toolResponse")
 HOOK_RUNTIME_BUDGET_MS = 50
 _CONTEXT_KEYS = (
     "hook_event_name",
@@ -24,6 +25,8 @@ _CONTEXT_KEYS = (
     "cwd",
     "permission_mode",
     "permissionMode",
+    "turn_id",
+    "turnId",
 )
 
 
@@ -41,6 +44,10 @@ class HookEvent(NamedTuple):
     tool_name: str
     tool_input: Mapping[str, Any]
     context: Mapping[str, Any]
+    tool_output: Any = None
+    tool_output_truncated: bool = False
+    agent_id: str | None = None
+    agent_type: str | None = None
 
 
 class Decision(NamedTuple):
@@ -48,6 +55,15 @@ class Decision(NamedTuple):
 
     action: str
     reason: str
+
+
+class PostToolResult(NamedTuple):
+    """Structured PostToolUse suppression, warning, or allow result."""
+
+    action: str
+    reason: str
+    additional_context: str
+    updated_tool_output: Any = None
 
 
 class ConfigSnapshot(NamedTuple):
@@ -107,7 +123,33 @@ def parse_payload(source: Any) -> HookEvent:
         raise PayloadError("hook payload is missing a tool input object")
 
     context = {key: payload[key] for key in _CONTEXT_KEYS if key in payload}
-    return HookEvent(tool_name.strip(), dict(tool_input), context)
+    event_name = context.get("hook_event_name", context.get("hookEventName"))
+    if event_name != "PostToolUse":
+        return HookEvent(tool_name.strip(), dict(tool_input), context)
+
+    tool_output = _first_present(payload, _TOOL_OUTPUT_KEYS)
+    if not any(key in payload for key in _TOOL_OUTPUT_KEYS):
+        raise PayloadError("PostToolUse payload is missing tool output")
+    truncated = payload.get("tool_output_truncated", False)
+    if not isinstance(truncated, bool):
+        raise PayloadError("PostToolUse truncation flag is invalid")
+    agent_id = payload.get("agent_id")
+    agent_type = payload.get("agent_type")
+    if agent_id is not None and (not isinstance(agent_id, str) or not agent_id.strip()):
+        raise PayloadError("PostToolUse agent identifier is invalid")
+    if agent_type is not None and (
+        not isinstance(agent_type, str) or not agent_type.strip()
+    ):
+        raise PayloadError("PostToolUse agent type is invalid")
+    return HookEvent(
+        tool_name.strip(),
+        dict(tool_input),
+        context,
+        deepcopy(tool_output),
+        truncated,
+        agent_id.strip() if agent_id is not None else None,
+        agent_type.strip() if agent_type is not None else None,
+    )
 
 
 def make_decision(action: str, reason: str) -> Decision:
@@ -143,6 +185,95 @@ def emit_decision(
             "permissionDecisionReason": decision.reason,
         }
     }
+    output_stream.write(json.dumps(payload, separators=(",", ":")) + "\n")
+    return 0
+
+
+def make_post_tool_result(
+    action: str,
+    *,
+    reason: str = "",
+    additional_context: str = "",
+    updated_tool_output: Any = None,
+) -> PostToolResult:
+    """Create a validated PostToolUse allow, block, or warning result."""
+
+    if action not in {"allow", "block", "warn"}:
+        raise ValueError("post-tool action must be allow, block, or warn")
+    if not isinstance(reason, str) or not isinstance(additional_context, str):
+        raise ValueError("post-tool messages must be text")
+    reason = reason.strip()
+    additional_context = additional_context.strip()
+    if action == "block" and (not reason or additional_context):
+        raise ValueError("post-tool block requires only a reason")
+    if action == "warn" and (
+        reason or not additional_context or updated_tool_output is not None
+    ):
+        raise ValueError("post-tool warning requires only additional context")
+    if action == "allow" and (
+        reason or additional_context or updated_tool_output is not None
+    ):
+        raise ValueError("post-tool allow cannot include messages")
+    if action == "block" and updated_tool_output is None:
+        updated_tool_output = reason
+    return PostToolResult(action, reason, additional_context, deepcopy(updated_tool_output))
+
+
+def redact_tool_output(
+    output: Any, replacement: str, *, tool_name: str = ""
+) -> Any:
+    """Preserve a tool result's container shape while removing dynamic text."""
+
+    if tool_name.startswith("mcp__"):
+        return {"content": [{"type": "text", "text": replacement}]}
+    if isinstance(output, Mapping):
+        return {
+            key: redact_tool_output(value, replacement) for key, value in output.items()
+        }
+    if isinstance(output, (list, tuple)):
+        return [redact_tool_output(value, replacement) for value in output]
+    if isinstance(output, (str, bytes)):
+        return replacement
+    return output
+
+
+def emit_post_tool_result(
+    result: PostToolResult,
+    *,
+    output_stream=None,
+    runner: str = "claude",
+    tool_name: str = "",
+) -> int:
+    """Emit one validated PostToolUse result without replacing allowed output."""
+
+    result = make_post_tool_result(
+        result.action,
+        reason=result.reason,
+        additional_context=result.additional_context,
+        updated_tool_output=result.updated_tool_output,
+    )
+    output_stream = output_stream or sys.stdout
+    if result.action == "block":
+        payload = {"decision": "block", "reason": result.reason}
+        if runner != "codex":
+            replacement_key = (
+                "updatedMCPToolOutput"
+                if tool_name.startswith("mcp__")
+                else "updatedToolOutput"
+            )
+            payload["hookSpecificOutput"] = {
+                "hookEventName": "PostToolUse",
+                replacement_key: result.updated_tool_output,
+            }
+    elif result.action == "warn":
+        payload = {
+            "hookSpecificOutput": {
+                "hookEventName": "PostToolUse",
+                "additionalContext": result.additional_context,
+            }
+        }
+    else:
+        payload = {}
     output_stream.write(json.dumps(payload, separators=(",", ":")) + "\n")
     return 0
 
@@ -255,6 +386,71 @@ def security_guard(
 
     try:
         return emit_decision(decision, output_stream=output_stream)
+    except Exception:
+        try:
+            error_stream.write("guard error\n")
+        except Exception:
+            pass
+        return 2
+
+
+def post_tool_security_guard(
+    handler,
+    *,
+    input_stream=None,
+    output_stream=None,
+    error_stream=None,
+    config_loader=None,
+) -> int:
+    """Run a PostToolUse security hook with redacted fail-closed handling."""
+
+    input_stream = sys.stdin if input_stream is None else input_stream
+    output_stream = sys.stdout if output_stream is None else output_stream
+    error_stream = sys.stderr if error_stream is None else error_stream
+    runner = "claude"
+    event = None
+    try:
+        event = parse_payload(input_stream)
+        runner = "codex" if any(
+            key in event.context for key in ("turn_id", "turnId")
+        ) else "claude"
+        event_name = event.context.get(
+            "hook_event_name", event.context.get("hookEventName")
+        )
+        if event_name != "PostToolUse":
+            raise PayloadError("hook payload is not a PostToolUse event")
+        config = config_loader() if config_loader is not None else ConfigSnapshot({}, True)
+        if not config.guard_enabled:
+            result = make_post_tool_result("allow")
+        else:
+            result = handler(event, config)
+        if not isinstance(result, PostToolResult):
+            raise TypeError("PostToolUse handler must return a PostToolResult")
+        result = make_post_tool_result(
+            result.action,
+            reason=result.reason,
+            additional_context=result.additional_context,
+            updated_tool_output=result.updated_tool_output,
+        )
+    except Exception:
+        replacement = (
+            redact_tool_output(
+                event.tool_output, "guard error", tool_name=event.tool_name
+            )
+            if event is not None
+            else "guard error"
+        )
+        result = make_post_tool_result(
+            "block", reason="guard error", updated_tool_output=replacement
+        )
+
+    try:
+        return emit_post_tool_result(
+            result,
+            output_stream=output_stream,
+            runner=runner,
+            tool_name=event.tool_name if event is not None else "",
+        )
     except Exception:
         try:
             error_stream.write("guard error\n")

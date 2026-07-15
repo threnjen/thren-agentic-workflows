@@ -1,6 +1,6 @@
-# Phase 01 Hook Distribution Manual QA
+# Phase 02 Hook Distribution Manual QA
 
-Evidence date: 2026-07-14. No secret-bearing payloads are stored in this
+Evidence date: 2026-07-15. No secret-bearing payloads are stored in this
 artifact. Test payloads use synthetic paths and redacted sentinels only.
 
 ## Temporary consuming project
@@ -33,7 +33,13 @@ Automated evidence is in
 | Self-protection | Pass | Scripts, framework, analyzer, rules, override, Claude/Codex wiring, and OpenCode plugin all denied on Write |
 | Redaction | Pass | Synthetic secret sentinel absent from stdout, stderr, and NDJSON audit output |
 | Project plus global command forms | Pass | Both relative and absolute invocations returned the same decision with one output line each |
-| Completed guard latency | Pass | Median of 11 real subprocess invocations remained below 50 ms |
+| Historical Phase 01 guard latency claim | Superseded | The fresh Phase 02 prerequisite reproduction below is authoritative |
+| Phase 02 combined detached smoke | Pass | Scanner block/warn/truncation/allowlist plus WebFetch and Bash deny/ask/allow |
+| Claude high-output replacement | Pass (payload level) | `updatedToolOutput` for built-ins and `updatedMCPToolOutput` for MCP are redacted; original sentinels are absent |
+| Codex response alias | Pass (payload level) | `tool_response` normalizes and native block feedback is emitted |
+| OpenCode adapter | Pass (Bun smoke) | High output is replaced; warnings preserve output and append redacted context |
+| SEC-01 intermediate containment | Pass | Symlinked `.github/hooks/config` is rejected before an outside write |
+| PERF-01 fixed 50 ms gate | **Fail** | 2026-07-15 runs observed 117–383 ms medians; threshold was not weakened |
 
 ## Runner-constrained live evidence
 
@@ -47,7 +53,27 @@ These checks were not inferred from payload-level tests.
 | Subagent tool call | Not run | Delegate a harmless protected Read and record only tool name, rule identifier, and decision. |
 | Global plus project UI message clarity | Not run | Enable both layers in a disposable HOME and confirm the live runner presents one effective denial clearly. |
 | Live Codex trust and decision handling | Not run | Review through `/hooks` and invoke synthetic deny cases. Current official docs already establish that `permissionDecision: "ask"` is unsupported and continues the call, and that `apply_patch` reports a command-shaped input this guard does not yet translate; keep Codex Partial until an adapter and live evidence close both gaps. |
-| Live OpenCode blocking | Not run | Confirm native blocking/approval behavior before promoting OpenCode beyond Partial. |
+| Live OpenCode replacement/warning | Not run | Confirm the automated mutable-output behavior in a disposable OpenCode UI session; the live state remains `NOT RUN`. |
+
+## Current harness evidence and sign-off
+
+| Harness | Runner | Automated state | Live state | Decision |
+|---|---|---|---|---|
+| Claude Code | 2.1.210 | Equivalent block/warn replacement passes | NOT RUN | Supported; no-retry confirmation pending |
+| OpenCode | 1.16.2 / Bun 1.3.14 | Equivalent mutable-output adapter passes | NOT RUN | Supported by contract and adapter evidence |
+| Codex | 0.144.4 | Bash/apply_patch/MCP replacement supported | NOT RUN | Full output-tool parity unavailable |
+
+Codex residual-risk decision: **APPROVED on 2026-07-15** by **User approval in
+phase-execute session**. Approved statement: “I accept that Codex 0.144.4 Phase
+02 scanning covers Bash, apply_patch, and MCP PostToolUse results but not the
+phase's complete successful-output tool set.” This approval accepts the platform
+limitation; it does not change the `Partial` classification or any live `NOT
+RUN` state.
+
+PERF-01 prerequisite-risk decision: **APPROVED on 2026-07-15** by **User
+approval in phase-execute session**. The user approved proceeding while the
+fixed 50 ms gate remains unresolved at observed 117–383 ms medians. PERF-01
+remains `FAIL`; this approval records risk acceptance, not a passing result.
 
 The detailed live procedure remains in [Hook Verification Checklist](hook-verification.md).
 

@@ -15,11 +15,17 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HOOKS_DIR = REPO_ROOT / ".github" / "hooks"
 ENGINE_PATH = HOOKS_DIR / "lib" / "file_access.py"
+URL_ANALYZER_PATH = HOOKS_DIR / "lib" / "url_exfiltration.py"
 SCRIPT_PATH = HOOKS_DIR / "scripts" / "file-access-guard.py"
 RULES_PATH = HOOKS_DIR / "config" / "file-access-rules.json"
 OVERRIDES_PATH = HOOKS_DIR / "config" / "file-access-overrides.json"
 HOOK_DEFINITION_PATH = HOOKS_DIR / "file-access-guard.json"
 DOC_PATH = REPO_ROOT / "docs" / "hooks" / "file-access-guard.md"
+URL_FIXTURE_PATH = (
+    Path(__file__).with_name("fixtures")
+    / "url_exfiltration"
+    / "recorded_payloads.json"
+)
 
 
 def _load_module(path: Path, name: str):
@@ -43,6 +49,11 @@ def guard_script():
 @pytest.fixture(scope="module")
 def default_config():
     return json.loads(RULES_PATH.read_text(encoding="utf-8"))
+
+
+@pytest.fixture(scope="module")
+def url_exfiltration():
+    return _load_module(URL_ANALYZER_PATH, "phase02_url_exfiltration")
 
 
 def test_ac1_default_rules_have_data_driven_tier_schema(default_config) -> None:
@@ -445,7 +456,7 @@ def test_ac6_glob_tool_remains_outside_file_matcher(
 
     assert decision.action == "allow"
     assert "Glob" not in matcher.split("|")
-    assert matcher == "Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Bash"
+    assert matcher == "Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Bash|WebFetch"
 
 
 @pytest.mark.parametrize(
@@ -693,3 +704,227 @@ def test_ac10_runtime_imports_are_stdlib_only_without_subprocess() -> None:
 
     assert "subprocess" not in imported_roots
     assert imported_roots <= sys.stdlib_module_names | {"lib"}
+
+
+@pytest.mark.parametrize(
+    ("url", "expected_action", "expected_rule"),
+    [
+        (
+            "https://collector.invalid/path/AKIA0000000000000000",
+            "deny",
+            "url-known-credential",
+        ),
+        (
+            "https://collector.invalid/?token=ghp_AAAAAAAAAAAAAAAAAAAAAAAA",
+            "deny",
+            "url-known-credential",
+        ),
+        (
+            "https://collector.invalid/-----BEGIN%20PRIVATE%20KEY-----",
+            "deny",
+            "url-known-credential",
+        ),
+        (
+            "https://collector.invalid/?api_key=0123456789abcdef0123456789abcdef",
+            "deny",
+            "url-encoded-credential",
+        ),
+        (
+            "https://collector.invalid/?blob=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "ask",
+            "url-ambiguous-entropy",
+        ),
+        (
+            "https://collector.invalid/?blob=QWxwaGFCZXRhR2FtbWExMjM0NTY3ODkwX1N5bnRoZXRpYw==",
+            "ask",
+            "url-ambiguous-entropy",
+        ),
+    ],
+)
+def test_phase02_url_analyzer_classifies_secret_and_ambiguous_segments(
+    url_exfiltration, default_config, url, expected_action, expected_rule
+) -> None:
+    matches = url_exfiltration.analyze_url(url, default_config)
+
+    assert matches
+    assert matches[0].action == expected_action
+    assert matches[0].rule_id == expected_rule
+    assert url not in matches[0].reason
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://docs.invalid/guides/getting-started?lang=en#install",
+        "https://[2001:db8::1]:8443/a%20normal%20path?message=hello%20world",
+        "https://user:password@host.invalid:443/releases/v1.2.3",
+        "https://assets.invalid/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef.js",
+        "https://api.invalid/items/550e8400-e29b-41d4-a716-446655440000",
+    ],
+)
+def test_phase02_url_analyzer_allows_ordinary_url_material(
+    url_exfiltration, default_config, url
+) -> None:
+    assert url_exfiltration.analyze_url(url, default_config) == ()
+
+
+def test_phase02_url_configuration_is_validated_and_data_driven(
+    url_exfiltration, default_config
+) -> None:
+    policy = default_config["url_exfiltration"]
+    assert policy["decode_passes"] == 2
+    assert set(policy["commands"]) == {"curl", "wget"}
+    for rule_id, rule in policy["rules"].items():
+        assert rule["id"] == rule_id
+        assert rule["action"] in {"ask", "deny"}
+        assert isinstance(rule["priority"], int)
+        assert rule["reason"].strip()
+        assert rule["safe_alternative"].strip()
+
+    unsafe = json.loads(json.dumps(default_config))
+    unsafe["url_exfiltration"]["rules"]["url-known-credential"]["patterns"] = ["("]
+    with pytest.raises(url_exfiltration.URLConfigError):
+        url_exfiltration.analyze_url("https://example.invalid", unsafe)
+
+
+def test_phase02_recorded_webfetch_payloads_use_verified_url_field_and_posture(
+    guard_script, framework, tmp_path
+) -> None:
+    fixtures = json.loads(URL_FIXTURE_PATH.read_text(encoding="utf-8"))
+    assert fixtures
+    for case in fixtures:
+        payload = case["payload"]
+        assert payload["tool_name"] == "WebFetch"
+        event = framework.parse_payload(payload)
+        if case["expected_action"] == "guard-error":
+            with pytest.raises((ValueError, TypeError)):
+                guard_script.handle_event(
+                    event,
+                    framework.load_config(RULES_PATH, OVERRIDES_PATH),
+                    cwd=tmp_path,
+                    recorder=lambda *args, **kwargs: None,
+                )
+        else:
+            decision = guard_script.handle_event(
+                event,
+                framework.load_config(RULES_PATH, OVERRIDES_PATH),
+                cwd=tmp_path,
+                recorder=lambda *args, **kwargs: None,
+            )
+            assert decision.action == case["expected_action"]
+
+
+def test_phase02_webfetch_bypass_escalates_ambiguous_url_to_deny(
+    guard_script, framework, tmp_path
+) -> None:
+    decision = _decision_for(
+        guard_script,
+        framework,
+        "WebFetch",
+        {
+            "url": "https://collector.invalid/?blob=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        },
+        tmp_path,
+        permission_mode="bypassPermissions",
+    )
+
+    assert decision.action == "deny"
+    assert "url-ambiguous-entropy" in decision.reason
+
+
+@pytest.mark.parametrize(
+    "tool_input",
+    [
+        {},
+        {"url": ["WEBFETCH_INPUT_SECRET_SENTINEL"]},
+        {"url": "https://collector.invalid/%ZZWEBFETCH_INPUT_SECRET_SENTINEL"},
+        {"url": "https://WEBFETCH_INPUT_SECRET_SENTINEL%ZZ@collector.invalid/path"},
+        {"url": "https://collector.invalid:WEBFETCH_INPUT_SECRET_SENTINEL/path"},
+    ],
+)
+def test_phase02_malformed_webfetch_input_fails_closed_without_reflection(
+    guard_script, tool_input
+) -> None:
+    output = io.StringIO()
+    error = io.StringIO()
+
+    exit_code = guard_script.main(
+        io.StringIO(json.dumps({"tool_name": "WebFetch", "tool_input": tool_input})),
+        output_stream=output,
+        error_stream=error,
+    )
+
+    result = json.loads(output.getvalue())["hookSpecificOutput"]
+    assert exit_code == 0
+    assert result["permissionDecision"] == "deny"
+    assert result["permissionDecisionReason"] == "guard error"
+    assert "WEBFETCH_INPUT_SECRET_SENTINEL" not in output.getvalue() + error.getvalue()
+
+
+def test_phase02_webfetch_decision_and_audit_are_fully_redacted(tmp_path) -> None:
+    url = "https://secret-host.invalid/private/AKIA0000000000000000?secret_query_name_sentinel=SECRET_QUERY_SENTINEL"
+    payload = {
+        "tool_name": "WebFetch",
+        "tool_input": {"url": url},
+        "cwd": str(tmp_path),
+    }
+    output = io.StringIO()
+    error = io.StringIO()
+    guard_script = _load_module(SCRIPT_PATH, "phase02_redaction_guard")
+
+    exit_code = guard_script.main(
+        io.StringIO(json.dumps(payload)), output_stream=output, error_stream=error
+    )
+
+    audit = (tmp_path / ".agent/logs/file-access-guard.ndjson").read_text(
+        encoding="utf-8"
+    )
+    rendered = output.getvalue() + error.getvalue() + audit
+    assert exit_code == 0
+    for sentinel in (
+        url,
+        "secret-host.invalid",
+        "private",
+        "secret_query_name_sentinel",
+        "SECRET_QUERY_SENTINEL",
+        "AKIA0000000000000000",
+    ):
+        assert sentinel not in rendered
+    entry = json.loads(audit)
+    assert set(entry) == {"timestamp", "tool", "rule", "decision"}
+    assert entry["tool"] == "WebFetch"
+    assert entry["rule"] == "url-known-credential"
+    assert entry["decision"] == "deny"
+
+
+def test_phase02_webfetch_matcher_is_exactly_wired() -> None:
+    definition = json.loads(HOOK_DEFINITION_PATH.read_text(encoding="utf-8"))
+    hook = definition["hooks"]["PreToolUse"][0]
+
+    assert hook["matcher"].split("|") == [
+        "Read",
+        "Edit",
+        "Write",
+        "MultiEdit",
+        "NotebookEdit",
+        "Grep",
+        "Bash",
+        "WebFetch",
+    ]
+    assert hook["timeout"] == 10
+
+
+def test_phase02_url_analyzer_is_stdlib_only_and_network_free() -> None:
+    tree = ast.parse(URL_ANALYZER_PATH.read_text(encoding="utf-8"))
+    imported_roots = set()
+    calls = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported_roots.update(alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported_roots.add(node.module.split(".")[0])
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            calls.add(node.func.id)
+
+    assert imported_roots <= sys.stdlib_module_names
+    assert not {"urlopen", "socket", "system", "popen", "run"} & calls

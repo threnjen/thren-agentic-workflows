@@ -7,6 +7,7 @@ from collections.abc import Mapping
 from typing import Any, NamedTuple
 
 from .file_access import evaluate_path, normalize_path
+from .url_exfiltration import analyze_url
 
 
 class BashConfigError(ValueError):
@@ -279,6 +280,61 @@ def _candidate_paths(
     )
 
 
+def _url_candidates(
+    tokens: tuple[str, ...], config: Mapping[str, Any]
+) -> tuple[str, ...]:
+    policy = config.get("url_exfiltration")
+    if not isinstance(policy, Mapping):
+        raise BashConfigError("URL exfiltration configuration is missing")
+    configured = policy.get("commands")
+    if not isinstance(configured, Mapping) or not configured:
+        raise BashConfigError("URL command configuration is missing")
+    commands = {}
+    for command, raw in configured.items():
+        if not isinstance(command, str) or not command.strip() or not isinstance(raw, Mapping):
+            raise BashConfigError("invalid URL command configuration")
+        body_options = _configured_names(raw.get("body_options"), "URL body options")
+        if not body_options or not all(
+            option.startswith("-") for option in body_options
+        ):
+            raise BashConfigError("invalid URL body-option configuration")
+        commands[command.casefold()] = body_options
+    if set(commands) != {"curl", "wget"}:
+        raise BashConfigError("URL command coverage is incomplete")
+
+    candidates = []
+    for index, token in enumerate(tokens):
+        command_name = os.path.basename(token).casefold()
+        if command_name not in commands:
+            continue
+        body_options = commands[command_name]
+        skip_next = False
+        for operand in tokens[index + 1 :]:
+            if operand in _SEPARATORS:
+                break
+            if skip_next:
+                skip_next = False
+                continue
+            if operand in _REDIRECTIONS or operand == "<<":
+                skip_next = True
+                continue
+            option, separator, _ = operand.partition("=")
+            folded_option = option.casefold()
+            if folded_option in body_options:
+                skip_next = not separator
+                continue
+            folded_operand = operand.casefold()
+            if any(
+                len(body_option) == 2
+                and folded_operand.startswith(body_option)
+                for body_option in body_options
+            ):
+                continue
+            if folded_operand.startswith(("http://", "https://")):
+                candidates.append(operand)
+    return tuple(dict.fromkeys(candidates))
+
+
 def _inside_approved_roots(
     command: str,
     analysis: Mapping[str, Any],
@@ -370,6 +426,16 @@ def analyze_command(
                         rule.safe_alternative,
                     )
                 )
+    for candidate in _url_candidates(tokens, config):
+        for match in analyze_url(candidate, config, bypass=bypass):
+            matches.append(
+                BashMatch(
+                    match.rule_id,
+                    match.action,
+                    match.reason,
+                    match.safe_alternative,
+                )
+            )
     return tuple(matches)
 
 
