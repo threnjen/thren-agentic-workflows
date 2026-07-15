@@ -1,7 +1,7 @@
 ---
 name: 05c QA Consolidator
 description: "Merges subphase QA documents into one phase-level master QA walkthrough."
-tools: [read, search, edit, execute]
+tools: [read, search, edit]
 user-invocable: false
 ---
 

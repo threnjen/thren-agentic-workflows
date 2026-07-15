@@ -1,7 +1,7 @@
 ---
 name: 05d Security Rollup
 description: "Unifies subphase security findings, delegates the final scan, and classifies the final-state findings."
-tools: [agent, read, search, edit, execute]
+tools: [agent, read, search, edit]
 agents: [Security Scan]
 user-invocable: false
 ---
@@ -68,7 +68,10 @@ If `Security Scan` is unavailable, errors, times out, or returns no readable
 report, record the delegated check as NOT RUN with the concrete reason and
 required follow-up in Checks Not Run. When the orchestrator provides the run
 status file, append the corresponding not-run record there; otherwise keep the
-record in the rollup. Mark the rollup incomplete and do not claim a clean GO.
+record in the rollup. A delegated failure is an incomplete-coverage failure:
+set the evaluator/run verdict to `NO-GO` (or the orchestrator's equivalent
+below-GO ceiling) alongside the `NOT RUN` record; a `not-run` result must never
+be treated as GO. Mark the rollup incomplete and do not claim a clean GO.
 
 Return only the canonical report path (and evaluator-specific path when one
 was requested), a concise status, and the classification outcome or failure

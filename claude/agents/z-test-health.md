@@ -1,7 +1,7 @@
 ---
 name: z-test-health
 description: Delegates test-health analysis and adapts the result into a phase-level coverage and quality report.
-tools: Skill, Agent, Read, Grep, Glob, Edit, Write, Bash
+tools: Skill, Agent, Read, Grep, Glob, Edit, Write
 user-invocable: false
 ---
 

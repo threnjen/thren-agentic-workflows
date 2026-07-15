@@ -83,6 +83,61 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertTrue((repo_root / "opencode" / "skills" / "demo-skill" / "SKILL.md").exists())
             self.assertTrue((repo_root / "codex" / "skills" / "demo-skill" / "SKILL.md").exists())
 
+    def test_delegating_evaluators_match_all_generated_harness_outputs(self) -> None:
+        agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
+        instructions = mod.load_instruction_docs()
+        expected_slugs = (
+            "05c-qa-consolidator",
+            "05d-security-rollup",
+            "05h-test-health",
+        )
+
+        claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
+        opencode_stems = mod._discover_existing_stems(mod.OPENCODE_AGENTS_DIR)
+        claude_references = mod._build_agent_reference_map(
+            list(agents.values()),
+            lambda agent: mod._claude_identifier_for(agent, claude_stems),
+        )
+        opencode_references = mod._build_agent_reference_map(
+            list(agents.values()),
+            lambda agent: mod._opencode_identifier_for(agent, opencode_stems),
+        )
+        codex_references = mod._build_agent_reference_map(
+            list(agents.values()), mod._codex_identifier_for
+        )
+
+        for slug in expected_slugs:
+            with self.subTest(slug=slug):
+                agent = agents[slug]
+                self.assertNotIn("execute", agent.tools)
+                if slug == "05d-security-rollup":
+                    self.assertIn("NO-GO", agent.body)
+                    self.assertIn("NOT RUN", agent.body)
+                docs = mod.applicable_instructions(agent, instructions)
+
+                claude_identifier = mod._claude_identifier_for(agent, claude_stems)
+                claude_path = mod.CLAUDE_AGENTS_DIR / f"{claude_identifier}.md"
+                self.assertEqual(
+                    mod.render_claude_agent(
+                        agent, docs, claude_references, claude_identifier
+                    ),
+                    claude_path.read_text(encoding="utf-8"),
+                )
+
+                opencode_path = mod.OPENCODE_AGENTS_DIR / mod._opencode_filename_for(
+                    agent, opencode_stems
+                )
+                self.assertEqual(
+                    mod.render_opencode_agent(agent, docs, opencode_references),
+                    opencode_path.read_text(encoding="utf-8"),
+                )
+
+                codex_path = mod.CODEX_AGENTS_DIR / mod._codex_filename_for(agent)
+                self.assertEqual(
+                    mod.render_codex_agent(agent, docs, codex_references),
+                    codex_path.read_text(encoding="utf-8"),
+                )
+
     def test_phase_final_review_agent_is_present_in_all_harness_outputs(self) -> None:
         expected_markers = {
             ".github/agents/05-phase-final-review.agent.md": "name: 05 Phase - Final Review",

@@ -1,7 +1,7 @@
 ---
 name: z-qa-consolidator
 description: Merges subphase QA documents into one phase-level master QA walkthrough.
-tools: Skill, Read, Grep, Glob, Edit, Write, Bash
+tools: Skill, Read, Grep, Glob, Edit, Write
 user-invocable: false
 ---
 

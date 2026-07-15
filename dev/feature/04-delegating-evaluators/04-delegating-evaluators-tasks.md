@@ -12,7 +12,7 @@
 - [x] Instruct it to read subphase QA docs only (never code), merge into one master QA doc using the master-QA template from `phase-final-review-report`: dedupe, drop superseded checks, re-order into a single efficient walkthrough.
 - [x] Add edge-case rules: missing subphase QA doc → report the gap in the master doc rather than failing; conflicting checks between subphases → keep the later subphase's version and flag the conflict, never silently pick one.
 - [x] Load `phase-final-review-conventions`: report location/naming under `dev/phase-final-review/PHASE_0N/`, ≤10-line return summary, partial-failure semantics (AC4 for 05c).
-- [ ] Manual QA check 1 (AC6): dry-run 05c via the orchestrator against the fixture's two pseudo-subphase QA docs; verify each unique check appears exactly once, ordered as one walkthrough, superseded checks dropped, conflicts flagged.
+- [x] Manual QA check 1 (AC6): dry-run 05c via the orchestrator against the fixture's two pseudo-subphase QA docs; verify each unique check appears exactly once, ordered as one walkthrough, superseded checks dropped, conflicts flagged. Canonical `master-qa.md` contains 31 deduplicated checks, three recorded supersessions, and both conflicts.
 
 ## Stage 2: 05d Security Rollup (AC2, AC5)
 
@@ -32,7 +32,7 @@
 - [x] Add edge-case rule: no coverage tooling configured in the target repo → report coverage delta as not-measurable, still deliver redundancy/flake analysis.
 - [x] Add partial-failure rule: `test-analyst` unavailable → not-run record with reason; verdict ceiling drops below GO (AC4 for 05h).
 - [x] AC5 self-check: no test-analysis procedure of its own — only delegation, merge, and classification rules.
-- [ ] Manual QA check 3 (AC6): dry-run 05h via the orchestrator against the fixture; verify the report contains a coverage-delta section (or explicit not-measurable statement) plus redundancy/flake sections sourced from `test-analyst`.
+- [x] Manual QA check 3 (AC6): dry-run 05h via the orchestrator against the fixture; verify the report contains a coverage-delta section (or explicit not-measurable statement) plus redundancy/flake sections sourced from `test-analyst`. The report records not-measurable numeric coverage and delegated redundancy/flake sections.
 - [x] Manual QA check 4: with `test-analyst` made unavailable, verify 05h records not-run with reason and the verdict ceiling drops below GO.
 
 ## Stage 4: Propagation (AC7)

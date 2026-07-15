@@ -1,7 +1,7 @@
 ---
 name: 05h Test Health
 description: "Delegates test-health analysis and adapts the result into a phase-level coverage and quality report."
-tools: [agent, read, search, edit, execute]
+tools: [agent, read, search, edit]
 agents: [Test - Analyst]
 user-invocable: false
 ---
