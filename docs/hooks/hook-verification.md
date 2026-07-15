@@ -49,6 +49,9 @@ not establish how a particular live runner treats a decision.
 | Payload-level exit code 2 fallback | PASS | `test_denial_can_use_exit_code_two_fallback` |
 | Security malformed/exception path | PASS | `test_security_guard_fails_closed_with_redacted_denial` |
 | Observability malformed/exception path | PASS | `test_observability_guard_fails_open_without_output` and audit-path tests |
+| Bash protected-file `deny` | PASS | `test_ac8_guard_entrypoint_emits_one_strongest_decision` payload-level evidence |
+| Bash `ask` in bypass-permissions mode | NOT RUN | Requires an explicitly isolated live Claude Code session; do not infer runner behavior |
+| Bash decision redaction inspection | PASS | Bash analyzer malformed-input and exfiltration redaction tests |
 | Live `deny` in bypass-permissions mode | NOT RUN | Requires an explicitly isolated live Claude Code session |
 | Live `ask` in bypass-permissions mode | NOT RUN | Requires an explicitly isolated live Claude Code session |
 | Live exit code 2 fallback | NOT RUN | Requires an explicitly isolated live Claude Code session |

@@ -1,5 +1,114 @@
 {
   "audit_log": ".agent/logs/file-access-guard.ndjson",
+  "bash_analysis": {
+    "path_commands": {
+      "read": ["cat", "less", "head", "grep", "rg", "base64", "xxd"],
+      "read_write": ["cp", "mv"]
+    },
+    "symlink_commands": ["ln"],
+    "symlink_options": ["-s", "--symbolic"],
+    "xargs_commands": ["xargs"],
+    "destructive_path_commands": ["rm", "chmod", "truncate", "shred", "wipefs"],
+    "approved_destructive_roots": [".agent/scratchpad", ".agent/tmp"],
+    "exfiltration_options": {
+      "curl": ["-d", "--data", "--data-binary", "--data-urlencode"],
+      "wget": ["--post-file"]
+    }
+  },
+  "bash_rules": {
+    "environment-printenv": {
+      "id": "environment-printenv", "action": "ask", "reason": "Environment output may disclose sensitive values", "matcher": "regex", "pattern": "\\bprintenv\\b", "priority": 30, "safe_alternative": "Request only a known non-secret value"
+    },
+    "environment-bare-env": {
+      "id": "environment-bare-env", "action": "ask", "reason": "Listing the process environment may disclose sensitive values", "matcher": "regex", "pattern": "(?:^|[;&|])\\s*env\\s*(?:$|[;&|])", "priority": 30, "safe_alternative": "Pass explicit non-secret variables to a command"
+    },
+    "environment-bare-set": {
+      "id": "environment-bare-set", "action": "ask", "reason": "Listing shell variables may disclose sensitive values", "matcher": "regex", "pattern": "(?:^|[;&|])\\s*set\\s*(?:$|[;&|])", "priority": 30, "safe_alternative": "Inspect one known non-secret variable"
+    },
+    "environment-bare-export": {
+      "id": "environment-bare-export", "action": "ask", "reason": "Listing exported variables may disclose sensitive values", "matcher": "regex", "pattern": "(?:^|[;&|])\\s*export\\s*(?:$|[;&|])", "priority": 30, "safe_alternative": "Export a named non-secret value explicitly"
+    },
+    "environment-variable-echo": {
+      "id": "environment-variable-echo", "action": "ask", "reason": "Printing an environment variable may disclose a sensitive value", "matcher": "regex", "pattern": "\\becho\\b[^;&|]*\\$[A-Za-z_][A-Za-z0-9_]*", "priority": 30, "safe_alternative": "Avoid printing environment values or use a redacted placeholder"
+    },
+    "destructive-rm-rf": {
+      "id": "destructive-rm-rf", "action": "ask", "reason": "Recursive forced deletion requires confirmation", "matcher": "fixed_string", "pattern": "rm -rf", "priority": 40, "safe_alternative": "Review the target and use a narrower deletion", "allow_in_approved_roots": true
+    },
+    "destructive-rm-fr": {
+      "id": "destructive-rm-fr", "action": "ask", "reason": "Recursive forced deletion requires confirmation", "matcher": "fixed_string", "pattern": "rm -fr", "priority": 40, "safe_alternative": "Review the target and use a narrower deletion", "allow_in_approved_roots": true
+    },
+    "destructive-git-push-force": {
+      "id": "destructive-git-push-force", "action": "ask", "reason": "Force pushing can overwrite shared history", "matcher": "fixed_string", "pattern": "git push --force", "priority": 40, "safe_alternative": "Use a normal push or force-with-lease after review"
+    },
+    "destructive-git-push-f": {
+      "id": "destructive-git-push-f", "action": "ask", "reason": "Force pushing can overwrite shared history", "matcher": "fixed_string", "pattern": "git push -f", "priority": 40, "safe_alternative": "Use a normal push or force-with-lease after review"
+    },
+    "destructive-git-reset-hard": {
+      "id": "destructive-git-reset-hard", "action": "ask", "reason": "Hard reset can discard work", "matcher": "fixed_string", "pattern": "git reset --hard", "priority": 40, "safe_alternative": "Inspect changes and preserve work before resetting"
+    },
+    "destructive-git-clean-f": {
+      "id": "destructive-git-clean-f", "action": "ask", "reason": "Git clean can delete untracked work", "matcher": "fixed_string", "pattern": "git clean -f", "priority": 40, "safe_alternative": "Run git clean with dry-run first"
+    },
+    "destructive-git-clean-fd": {
+      "id": "destructive-git-clean-fd", "action": "ask", "reason": "Git clean can delete untracked directories", "matcher": "fixed_string", "pattern": "git clean -fd", "priority": 41, "safe_alternative": "Run git clean with dry-run first"
+    },
+    "destructive-chmod-recursive": {
+      "id": "destructive-chmod-recursive", "action": "ask", "reason": "Recursive world-writable permissions are unsafe", "matcher": "fixed_string", "pattern": "chmod -R 777", "priority": 40, "safe_alternative": "Apply the least privilege needed to a narrow target"
+    },
+    "destructive-dd-input": {
+      "id": "destructive-dd-input", "action": "ask", "reason": "Raw device copying can overwrite data", "matcher": "fixed_string", "pattern": "dd if=", "priority": 40, "safe_alternative": "Verify input and output devices before proceeding"
+    },
+    "destructive-mkfs": {
+      "id": "destructive-mkfs", "action": "ask", "reason": "Filesystem creation destroys existing data", "matcher": "fixed_string", "pattern": "mkfs", "priority": 40, "safe_alternative": "Use a disposable image after verifying the target"
+    },
+    "destructive-device-redirection": {
+      "id": "destructive-device-redirection", "action": "ask", "reason": "Direct device redirection can destroy data", "matcher": "fixed_string", "pattern": "> /dev/", "priority": 40, "safe_alternative": "Write to a reviewed disposable file instead"
+    },
+    "destructive-truncate": {
+      "id": "destructive-truncate", "action": "ask", "reason": "Truncation irreversibly removes file content", "matcher": "fixed_string", "pattern": "truncate", "priority": 40, "safe_alternative": "Back up and review the target first"
+    },
+    "destructive-shred": {
+      "id": "destructive-shred", "action": "ask", "reason": "Secure deletion is irreversible", "matcher": "fixed_string", "pattern": "shred", "priority": 40, "safe_alternative": "Verify the target and retain required backups"
+    },
+    "destructive-wipefs": {
+      "id": "destructive-wipefs", "action": "ask", "reason": "Filesystem signature removal is destructive", "matcher": "fixed_string", "pattern": "wipefs", "priority": 40, "safe_alternative": "Inspect the device and use a disposable image"
+    },
+    "destructive-drop-table": {
+      "id": "destructive-drop-table", "action": "ask", "reason": "Dropping a table destroys stored data", "matcher": "fixed_string", "pattern": "DROP TABLE", "priority": 40, "safe_alternative": "Use a migration with a reviewed backup and rollback"
+    },
+    "destructive-drop-database": {
+      "id": "destructive-drop-database", "action": "ask", "reason": "Dropping a database destroys stored data", "matcher": "fixed_string", "pattern": "DROP DATABASE", "priority": 40, "safe_alternative": "Use a disposable database or reviewed migration"
+    }
+  },
+  "legacy_bash_parity": {
+    "legacy-rm-rf": {"source_pattern":"rm -rf","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-rm-fr": {"source_pattern":"rm -fr","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-git-push-force": {"source_pattern":"git push --force","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-git-push-f": {"source_pattern":"git push -f","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-git-reset-hard": {"source_pattern":"git reset --hard","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-git-clean-f": {"source_pattern":"git clean -f","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-git-clean-fd": {"source_pattern":"git clean -fd","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-chmod-recursive": {"source_pattern":"chmod -R 777","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-dd-input": {"source_pattern":"dd if=","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-mkfs": {"source_pattern":"mkfs","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-device-redirection": {"source_pattern":"> /dev/","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-truncate": {"source_pattern":"truncate","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-shred": {"source_pattern":"shred","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-wipefs": {"source_pattern":"wipefs","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-drop-table": {"source_pattern":"DROP TABLE","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-drop-database": {"source_pattern":"DROP DATABASE","classification":"reproduced","rationale":"Destructive commands remain confirmation-tier"},
+    "legacy-printenv": {"source_pattern":"\\bprintenv\\b","classification":"phase-retiered","rationale":"Environment disclosure is ambiguous and requires confirmation rather than unconditional denial"},
+    "legacy-bare-env": {"source_pattern":"(?:^|[;&|])\\s*env\\s*(?:$|[;&|])","classification":"phase-retiered","rationale":"Environment disclosure is ambiguous and requires confirmation rather than unconditional denial"},
+    "legacy-bare-set": {"source_pattern":"(?:^|[;&|])\\s*set\\s*(?:$|[;&|])","classification":"phase-retiered","rationale":"Environment disclosure is ambiguous and requires confirmation rather than unconditional denial"},
+    "legacy-bare-export": {"source_pattern":"(?:^|[;&|])\\s*export\\s*(?:$|[;&|])","classification":"phase-retiered","rationale":"Environment disclosure is ambiguous and requires confirmation rather than unconditional denial"},
+    "legacy-env-echo": {"source_pattern":"echo\\s+[\"']?\\$[A-Z_]{3,}","classification":"phase-retiered","rationale":"Variable output is ambiguous, including PATH, and requires confirmation"},
+    "legacy-cat-env": {"source_pattern":"\\bcat\\b.*\\.env","classification":"reproduced","rationale":"Literal protected paths are denied by the shared path evaluator"},
+    "legacy-curl-env": {"source_pattern":"\\bcurl\\b.*@\\.env","classification":"phase-retiered","rationale":"Only configured file-upload options are classified; protected upload paths remain denied"},
+    "legacy-curl-data-short": {"source_pattern":"\\bcurl\\b.*-d\\s+@\\S","classification":"phase-retiered","rationale":"Protected upload paths are denied while ordinary upload paths are not overblocked"},
+    "legacy-curl-data-long": {"source_pattern":"\\bcurl\\b.*--data[-\\s]+@\\S","classification":"phase-retiered","rationale":"Protected upload paths are denied while ordinary upload paths are not overblocked"},
+    "legacy-wget-post-file": {"source_pattern":"\\bwget\\b.*--post-file","classification":"phase-retiered","rationale":"Protected upload paths are denied while ordinary upload paths are not overblocked"},
+    "legacy-base64-env": {"source_pattern":"\\bbase64\\b.*\\.env","classification":"reproduced","rationale":"Encoding a protected path remains deny-tier through shared path evaluation"}
+  },
   "rules": {
     "env-template-sample": {
       "id": "env-template-sample", "action": "allow", "reason": "Approved environment template", "matcher": "basename", "pattern": ".env.sample", "priority": 100

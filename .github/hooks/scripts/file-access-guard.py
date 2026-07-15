@@ -11,6 +11,7 @@ if str(HOOKS_DIR) not in sys.path:
     sys.path.insert(0, str(HOOKS_DIR))
 
 from lib import load_config, make_decision, record_event, security_guard
+from lib.bash_analyzer import analyze_command
 from lib.file_access import evaluate_path, load_rules
 
 
@@ -66,9 +67,10 @@ def _is_bypass(event) -> bool:
 
 
 def _guidance(match) -> str:
+    target = f" {match.normalized_path}" if match.normalized_path else ""
     return (
-        f"Rule {match.rule_id} matched {match.normalized_path}. "
-        f"{match.reason}. Safe alternative: {match.safe_alternative}"
+        f"Rule {match.rule_id} matched{target}. {match.reason}. "
+        f"Safe alternative: {match.safe_alternative}"
     )
 
 
@@ -83,28 +85,43 @@ def handle_event(
 ):
     """Adapt a normalized hook event and return one framework decision."""
 
-    candidates = _candidate_paths(event)
-    if not candidates:
-        return make_decision("allow", "tool is outside file-access matching")
-
     rules = load_rules(config.data)
     root = _event_cwd(event, cwd)
-    matches = [
-        match
-        for candidate in candidates
-        if (
-            match := evaluate_path(
-                candidate,
+    if event.tool_name == "Bash":
+        command = event.tool_input.get("command")
+        if not isinstance(command, str) or not command.strip():
+            raise ValueError("guarded Bash tool is missing its command")
+        matches = list(
+            analyze_command(
+                command,
+                config.data,
                 rules,
                 cwd=root,
                 home=home,
                 case_sensitive=case_sensitive,
                 bypass=_is_bypass(event),
-                access="write" if event.tool_name in _WRITE_TOOLS else "read",
             )
         )
-        is not None
-    ]
+    else:
+        candidates = _candidate_paths(event)
+        if not candidates:
+            return make_decision("allow", "tool is outside file-access matching")
+        matches = [
+            match
+            for candidate in candidates
+            if (
+                match := evaluate_path(
+                    candidate,
+                    rules,
+                    cwd=root,
+                    home=home,
+                    case_sensitive=case_sensitive,
+                    bypass=_is_bypass(event),
+                    access="write" if event.tool_name in _WRITE_TOOLS else "read",
+                )
+            )
+            is not None
+        ]
     if not matches:
         return make_decision("allow", "no matching file-access rule")
     selected = max(matches, key=lambda match: _ACTION_STRENGTH[match.action])
@@ -122,7 +139,7 @@ def handle_event(
         event,
         rule=selected.rule_id,
         decision=selected.action,
-        offending_path=selected.normalized_path,
+        offending_path=selected.normalized_path or None,
     )
     return make_decision(selected.action, _guidance(selected))
 
