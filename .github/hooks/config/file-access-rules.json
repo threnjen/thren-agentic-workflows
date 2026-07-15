@@ -1,0 +1,110 @@
+{
+  "audit_log": ".agent/logs/file-access-guard.ndjson",
+  "rules": {
+    "env-template-sample": {
+      "id": "env-template-sample", "action": "allow", "reason": "Approved environment template", "matcher": "basename", "pattern": ".env.sample", "priority": 100
+    },
+    "env-template-example": {
+      "id": "env-template-example", "action": "allow", "reason": "Approved environment template", "matcher": "basename", "pattern": ".env.example", "priority": 100
+    },
+    "environment-file": {
+      "id": "environment-file", "action": "deny", "reason": "Environment files may contain secrets", "matcher": "basename_glob", "pattern": ".env*", "priority": 50, "safe_alternative": "Use an explicitly sanitized .env.sample or .env.example file", "escalate_in_bypass": "deny"
+    },
+    "credential-private-key": {
+      "id": "credential-private-key", "action": "deny", "reason": "Private keys and credential bundles are protected", "matcher": "basename_glob", "pattern": "*.key", "priority": 50, "safe_alternative": "Use a public key or a redacted credential fixture", "escalate_in_bypass": "deny"
+    },
+    "credential-pem": {
+      "id": "credential-pem", "action": "deny", "reason": "Private keys and credential bundles are protected", "matcher": "basename_glob", "pattern": "*.pem", "priority": 50, "safe_alternative": "Use a public certificate fixture without private material", "escalate_in_bypass": "deny"
+    },
+    "credential-pkcs12": {
+      "id": "credential-pkcs12", "action": "deny", "reason": "Private keys and credential bundles are protected", "matcher": "basename_glob", "pattern": "*.p12", "priority": 50, "safe_alternative": "Use a redacted credential fixture", "escalate_in_bypass": "deny"
+    },
+    "credential-pfx": {
+      "id": "credential-pfx", "action": "deny", "reason": "Private keys and credential bundles are protected", "matcher": "basename_glob", "pattern": "*.pfx", "priority": 50, "safe_alternative": "Use a redacted credential fixture", "escalate_in_bypass": "deny"
+    },
+    "credential-json": {
+      "id": "credential-json", "action": "deny", "reason": "Credential files are protected", "matcher": "basename_glob", "pattern": "*credentials*.json", "priority": 50, "safe_alternative": "Use a redacted credential fixture", "escalate_in_bypass": "deny"
+    },
+    "secret-json": {
+      "id": "secret-json", "action": "deny", "reason": "Secret files are protected", "matcher": "basename", "pattern": "secrets.json", "priority": 50, "safe_alternative": "Use a redacted secret fixture", "escalate_in_bypass": "deny"
+    },
+    "service-account-json": {
+      "id": "service-account-json", "action": "deny", "reason": "Service-account credentials are protected", "matcher": "basename", "pattern": "service-account.json", "priority": 50, "safe_alternative": "Use a redacted service-account fixture", "escalate_in_bypass": "deny"
+    },
+    "auth-json": {
+      "id": "auth-json", "action": "deny", "reason": "Authentication credentials are protected", "matcher": "basename", "pattern": "auth.json", "priority": 50, "safe_alternative": "Use a redacted authentication fixture", "escalate_in_bypass": "deny"
+    },
+    "token-json": {
+      "id": "token-json", "action": "deny", "reason": "Authentication tokens are protected", "matcher": "basename", "pattern": "token.json", "priority": 50, "safe_alternative": "Use a redacted token fixture", "escalate_in_bypass": "deny"
+    },
+    "netrc-credentials": {
+      "id": "netrc-credentials", "action": "deny", "reason": "Network login credentials are protected", "matcher": "basename", "pattern": ".netrc", "priority": 50, "safe_alternative": "Use a redacted network-authentication fixture", "escalate_in_bypass": "deny"
+    },
+    "npm-credentials": {
+      "id": "npm-credentials", "action": "deny", "reason": "Package-registry credentials are protected", "matcher": "basename", "pattern": ".npmrc", "priority": 50, "safe_alternative": "Use a registry configuration without authentication tokens", "escalate_in_bypass": "deny"
+    },
+    "pypi-credentials": {
+      "id": "pypi-credentials", "action": "deny", "reason": "Package-registry credentials are protected", "matcher": "basename", "pattern": ".pypirc", "priority": 50, "safe_alternative": "Use a registry configuration without authentication tokens", "escalate_in_bypass": "deny"
+    },
+    "ssh-rsa": {
+      "id": "ssh-rsa", "action": "deny", "reason": "SSH private keys are protected", "matcher": "basename", "pattern": "id_rsa", "priority": 60, "safe_alternative": "Use the corresponding public key file when appropriate", "escalate_in_bypass": "deny"
+    },
+    "ssh-ed25519": {
+      "id": "ssh-ed25519", "action": "deny", "reason": "SSH private keys are protected", "matcher": "basename", "pattern": "id_ed25519", "priority": 60, "safe_alternative": "Use the corresponding public key file when appropriate", "escalate_in_bypass": "deny"
+    },
+    "ssh-ecdsa": {
+      "id": "ssh-ecdsa", "action": "deny", "reason": "SSH private keys are protected", "matcher": "basename", "pattern": "id_ecdsa", "priority": 60, "safe_alternative": "Use the corresponding public key file when appropriate", "escalate_in_bypass": "deny"
+    },
+    "ssh-dsa": {
+      "id": "ssh-dsa", "action": "deny", "reason": "SSH private keys are protected", "matcher": "basename", "pattern": "id_dsa", "priority": 60, "safe_alternative": "Use the corresponding public key file when appropriate", "escalate_in_bypass": "deny"
+    },
+    "ssh-directory": {
+      "id": "ssh-directory", "action": "deny", "reason": "SSH configuration and keys are protected", "matcher": "path_glob", "pattern": "**/.ssh/**", "priority": 55, "safe_alternative": "Use a disposable SSH fixture outside the protected directory", "escalate_in_bypass": "deny"
+    },
+    "aws-directory": {
+      "id": "aws-directory", "action": "deny", "reason": "AWS credentials and configuration are protected", "matcher": "path_glob", "pattern": "**/.aws/**", "priority": 55, "safe_alternative": "Use a redacted AWS fixture", "escalate_in_bypass": "deny"
+    },
+    "kube-directory": {
+      "id": "kube-directory", "action": "deny", "reason": "Kubernetes credentials and configuration are protected", "matcher": "path_glob", "pattern": "**/.kube/**", "priority": 55, "safe_alternative": "Use a redacted kubeconfig fixture", "escalate_in_bypass": "deny"
+    },
+    "kubeconfig-file": {
+      "id": "kubeconfig-file", "action": "deny", "reason": "Kubernetes credentials and configuration are protected", "matcher": "basename_glob", "pattern": "*kubeconfig", "priority": 55, "safe_alternative": "Use a redacted kubeconfig fixture", "escalate_in_bypass": "deny"
+    },
+    "gnupg-directory": {
+      "id": "gnupg-directory", "action": "deny", "reason": "GnuPG key material is protected", "matcher": "path_glob", "pattern": "**/.gnupg/**", "priority": 55, "safe_alternative": "Use a public-key-only fixture", "escalate_in_bypass": "deny"
+    },
+    "lock-file": {
+      "id": "lock-file", "action": "ask", "reason": "Lock files should change only through their package manager", "matcher": "basename_glob", "pattern": "*.lock", "priority": 20, "safe_alternative": "Run the appropriate package-manager operation", "escalate_in_bypass": "deny"
+    },
+    "lock-file-json": {
+      "id": "lock-file-json", "action": "ask", "reason": "Lock files should change only through their package manager", "matcher": "basename_glob", "pattern": "*-lock.json", "priority": 20, "safe_alternative": "Run the appropriate package-manager operation", "escalate_in_bypass": "deny"
+    },
+    "lock-file-pnpm": {
+      "id": "lock-file-pnpm", "action": "ask", "reason": "Lock files should change only through their package manager", "matcher": "basename", "pattern": "pnpm-lock.yaml", "priority": 20, "safe_alternative": "Run the appropriate package-manager operation", "escalate_in_bypass": "deny"
+    },
+    "production-config": {
+      "id": "production-config", "action": "deny", "reason": "Production configuration is protected", "matcher": "path_suffix", "pattern": "config/production.json", "priority": 50, "safe_alternative": "Use a development configuration or sanitized fixture", "escalate_in_bypass": "deny"
+    },
+    "production-config-variant": {
+      "id": "production-config-variant", "action": "deny", "reason": "Production configuration is protected", "matcher": "path_glob", "pattern": "**/config/*.production.*", "priority": 50, "safe_alternative": "Use a development configuration or sanitized fixture", "escalate_in_bypass": "deny"
+    },
+    "production-secrets": {
+      "id": "production-secrets", "action": "deny", "reason": "Production secret configuration is protected", "matcher": "path_suffix", "pattern": "config/secrets", "priority": 50, "safe_alternative": "Use a sanitized fixture", "escalate_in_bypass": "deny"
+    },
+    "self-hook-assets": {
+      "id": "self-hook-assets", "action": "deny", "reason": "Hook runtime and rule assets are self-protected", "matcher": "path_glob", "pattern": "**/.github/hooks/**", "priority": 90, "safe_alternative": "Request a human-reviewed hook policy change", "escalate_in_bypass": "deny", "access": "write"
+    },
+    "self-claude-settings": {
+      "id": "self-claude-settings", "action": "deny", "reason": "Claude hook wiring is self-protected", "matcher": "path_suffix", "pattern": ".claude/settings.json", "priority": 90, "safe_alternative": "Request a human-reviewed hook wiring change", "escalate_in_bypass": "deny", "access": "write"
+    },
+    "self-claude-local-settings": {
+      "id": "self-claude-local-settings", "action": "deny", "reason": "Local Claude hook wiring is self-protected", "matcher": "path_suffix", "pattern": ".claude/settings.local.json", "priority": 90, "safe_alternative": "Request a human-reviewed hook wiring change", "escalate_in_bypass": "deny", "access": "write"
+    },
+    "self-codex-hooks": {
+      "id": "self-codex-hooks", "action": "deny", "reason": "Codex hook wiring is self-protected", "matcher": "path_suffix", "pattern": ".codex/hooks.json", "priority": 90, "safe_alternative": "Request a human-reviewed hook wiring change", "escalate_in_bypass": "deny", "access": "write"
+    },
+    "self-opencode-plugins": {
+      "id": "self-opencode-plugins", "action": "deny", "reason": "Generated OpenCode hook plugins are self-protected", "matcher": "path_glob", "pattern": "**/.opencode/plugins/**", "priority": 90, "safe_alternative": "Change the source hook and regenerate through the supported workflow", "escalate_in_bypass": "deny", "access": "write"
+    }
+  }
+}
