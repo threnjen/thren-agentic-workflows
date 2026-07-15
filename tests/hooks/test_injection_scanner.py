@@ -110,6 +110,7 @@ def test_ac3_rule_schema_is_data_driven_and_immutable(scanner) -> None:
         {"pattern": ""},
         {"priority": True},
         {"matcher": "regex", "pattern": "(a+)+$"},
+        {"matcher": "regex", "pattern": "(a|aa)+$"},
     ],
 )
 def test_ac3_invalid_or_unsafe_rules_fail_without_reflecting_content(
@@ -243,6 +244,20 @@ def test_ac7_symlink_cannot_broaden_allowlist(scanner, tmp_path) -> None:
 
     assert scanner.is_allowlisted_source(
         "docs/inspiration/source.md", repo, {"source_allowlist": ["docs/inspiration"]}
+    ) is False
+
+
+def test_ac7_traversed_path_does_not_qualify_for_allowlist(scanner, tmp_path) -> None:
+    repo = tmp_path / "repo"
+    source = repo / "docs" / "inspiration" / "source.md"
+    source.parent.mkdir(parents=True)
+    (source.parent / "nested").mkdir()
+    source.write_text("fixture", encoding="utf-8")
+
+    assert scanner.is_allowlisted_source(
+        "docs/inspiration/nested/../source.md",
+        repo,
+        {"source_allowlist": ["docs/inspiration"]},
     ) is False
 
 

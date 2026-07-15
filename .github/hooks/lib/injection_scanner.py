@@ -95,6 +95,7 @@ def _validate_regex(pattern: str) -> None:
         r"\\[1-9]",
         r"\(\?([=!]|<[=!])",
         r"\([^)]*[+*{][^)]*\)[+*{]",
+        r"\([^()]*(?:\|[^()]*)+\)(?:[+*]|\{\d+(?:,\d*)?\})",
         r"(?:\+\+|\*\*|\+\*|\*\+|\}\+|\}\*)",
     )
     if any(re.search(check, pattern) for check in unsafe):
@@ -313,6 +314,8 @@ def is_allowlisted_source(
     try:
         root = Path(repo_root).resolve(strict=True)
         candidate_path = Path(source_path)
+        if ".." in candidate_path.parts:
+            return False
         if not candidate_path.is_absolute():
             candidate_path = root / candidate_path
         candidate = candidate_path.resolve(strict=True)
