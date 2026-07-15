@@ -2,6 +2,7 @@
 
 import fnmatch
 import os
+import re
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, NamedTuple
@@ -158,39 +159,63 @@ def normalize_path(
     return normalized
 
 
-def _glob_sample(pattern: str, star_value: str) -> str:
-    sample = []
+def _glob_samples(pattern: str, replacements: tuple[str, ...]) -> set[str] | None:
+    samples = {""}
     index = 0
     while index < len(pattern):
         character = pattern[index]
         if character == "*":
-            sample.append(star_value)
+            while index + 1 < len(pattern) and pattern[index + 1] == "*":
+                index += 1
+            if len(samples) * len(replacements) > 512:
+                return None
+            samples = {
+                prefix + replacement
+                for prefix in samples
+                for replacement in replacements
+            }
         elif character == "?":
-            sample.append("x")
+            samples = {prefix + "x" for prefix in samples}
         elif character == "[":
             closing = pattern.find("]", index + 1)
             if closing == -1:
-                sample.append(character)
+                samples = {prefix + character for prefix in samples}
             else:
                 choices = pattern[index + 1 : closing].lstrip("!^")
-                sample.append(choices[0] if choices else "x")
+                replacement = choices[0] if choices else "x"
+                samples = {prefix + replacement for prefix in samples}
                 index = closing
         else:
-            sample.append(character)
+            samples = {prefix + character for prefix in samples}
         index += 1
-    return "".join(sample)
+    return samples
 
 
 def _glob_patterns_overlap(first: str, second: str) -> bool:
-    samples = {
-        _glob_sample(first, ""),
-        _glob_sample(first, "x"),
-        _glob_sample(second, ""),
-        _glob_sample(second, "x"),
-    }
+    literal_chunks = tuple(
+        sorted({"", "x", *re.findall(r"[A-Za-z0-9_-]+", first + " " + second)})
+    )
+    first_samples = _glob_samples(first, literal_chunks)
+    second_samples = _glob_samples(second, literal_chunks)
+    if first_samples is None or second_samples is None:
+        return True
+    samples = first_samples | second_samples
     return any(
         fnmatch.fnmatchcase(sample, first) and fnmatch.fnmatchcase(sample, second)
         for sample in samples
+    )
+
+
+def _path_suffix_pattern_overlaps(candidate: str, suffix: str) -> bool:
+    candidate_parts = tuple(part for part in candidate.split("/") if part)
+    suffix_parts = tuple(part for part in suffix.split("/") if part)
+    if len(candidate_parts) < len(suffix_parts):
+        return False
+    return all(
+        _glob_patterns_overlap(candidate_part, suffix_part)
+        for candidate_part, suffix_part in zip(
+            candidate_parts[-len(suffix_parts) :], suffix_parts
+        )
     )
 
 
@@ -201,6 +226,7 @@ def _matches(
         return False
     pattern = rule.pattern if case_sensitive else rule.pattern.casefold()
     basename = normalized_path.rsplit("/", 1)[-1]
+    candidate_has_glob = any(marker in normalized_path for marker in _GLOB_MARKERS)
     if rule.matcher == "basename":
         if any(marker in basename for marker in _GLOB_MARKERS):
             return _glob_patterns_overlap(basename, pattern)
@@ -209,10 +235,18 @@ def _matches(
         return _glob_patterns_overlap(basename, pattern)
     if rule.matcher == "path_suffix":
         suffix = pattern.lstrip("/")
+        if candidate_has_glob:
+            return _path_suffix_pattern_overlaps(normalized_path, suffix)
         return normalized_path == suffix or normalized_path.endswith(f"/{suffix}")
-    return fnmatch.fnmatchcase(normalized_path, pattern) or fnmatch.fnmatchcase(
-        normalized_path, f"*/{pattern.lstrip('/')}"
-    )
+    patterns = (pattern, f"**/{pattern.lstrip('/')}")
+    for path_pattern in patterns:
+        if fnmatch.fnmatchcase(normalized_path, path_pattern):
+            return True
+        if path_pattern.endswith("/**") and fnmatch.fnmatchcase(
+            normalized_path, path_pattern[:-3]
+        ):
+            return True
+    return False
 
 
 def evaluate_path(

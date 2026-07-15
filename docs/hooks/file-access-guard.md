@@ -15,9 +15,12 @@ Rules may set `access` to `read` or `write`; self-protection uses `write` so
 agents can inspect hook policy but cannot modify or deregister it.
 
 Supported matchers are `basename`, `basename_glob`, `path_suffix`, and
-`path_glob`. At the highest matching priority, `deny` wins over `ask`, which
-wins over `allow`. The explicit `.env.sample` and `.env.example` allow rules
-therefore remain narrow exceptions to the broader environment-file denial.
+`path_glob`. Concrete paths select the highest matching priority, breaking ties
+in favor of `deny`, then `ask`, then `allow`. Wildcard Grep scopes are matched
+conservatively against every protected path they can include; the strongest
+overlapping action wins before priority. The explicit `.env.sample` and
+`.env.example` allow rules therefore remain narrow exceptions for exact paths,
+without allowing a broader wildcard scope that could also include `.env`.
 
 Project owners may add or refine rules in
 `.github/hooks/config/file-access-overrides.json`. The shared framework merges

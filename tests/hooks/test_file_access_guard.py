@@ -372,6 +372,50 @@ def test_ac6_grep_without_protected_explicit_scope_is_allowed(
     assert decision.action == "allow"
 
 
+@pytest.mark.parametrize("protected_directory", [".ssh", ".aws", ".kube", ".gnupg"])
+def test_ac6_grep_exact_protected_directory_scope_is_denied(
+    guard_script, framework, tmp_path, protected_directory
+) -> None:
+    decision = _decision_for(
+        guard_script,
+        framework,
+        "Grep",
+        {"pattern": "needle", "path": protected_directory},
+        tmp_path,
+    )
+
+    assert decision.action == "deny"
+
+
+@pytest.mark.parametrize("protected_glob", ["prod*.*", "config/prod*.json"])
+def test_ac6_grep_overlapping_protected_glob_is_denied(
+    guard_script, framework, tmp_path, protected_glob
+) -> None:
+    decision = _decision_for(
+        guard_script,
+        framework,
+        "Grep",
+        {"pattern": "needle", "glob": protected_glob},
+        tmp_path,
+    )
+
+    assert decision.action == "deny"
+
+
+def test_ac6_ordinary_source_glob_remains_allowed(
+    guard_script, framework, tmp_path
+) -> None:
+    decision = _decision_for(
+        guard_script,
+        framework,
+        "Grep",
+        {"pattern": "needle", "path": "src", "glob": "**/*.py"},
+        tmp_path,
+    )
+
+    assert decision.action == "allow"
+
+
 def test_ac6_malformed_guarded_grep_input_fails_closed(guard_script) -> None:
     output = io.StringIO()
 

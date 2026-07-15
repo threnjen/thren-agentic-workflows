@@ -143,3 +143,15 @@ An interpreter startup or shell-pipeline failure can return non-zero before appl
 ## Watch for
 
 Audit wrappers using `set -e` or `pipefail` without an explicit non-blocking fallback, and tests that invoke only the Python or Node entrypoint rather than the actual shell wrapper.
+
+## Pattern
+
+Security matchers that compare one glob pattern with another must vary wildcard replacements independently and treat the protected directory root as part of a recursive directory rule.
+
+## Impact
+
+Single-sample glob heuristics can miss overlapping scopes such as a broad filename pattern that includes a protected extension, while a recursive rule like `protected/**` can accidentally allow the `protected` directory itself. Either gap lets scoped search or file operations reach protected targets.
+
+## Watch for
+
+Glob-overlap helpers that substitute the same value for every `*`, recursive path rules tested only with descendant files, and missing controls proving ordinary source globs remain allowed.
