@@ -167,6 +167,8 @@ These agents are not visible in the picker. They run automatically as part of or
 | **05f Seam Analyzer** | 05 Phase - Final Review | Analyze cross-subphase interface mismatches, duplicated logic, and orphaned scaffolding |
 | **Security Scan** | Phase - Execute | Perform a full-codebase security assessment and write a phase-level security report |
 | **05h Test Health** | 05 Phase - Final Review | Delegate coverage, redundancy, and flake analysis into a phase health report |
+| **05i Learnings Harvester** | 05 Phase - Final Review | Mine review evidence and draft learnings and instruction-update proposals |
+| **05l Readiness Synthesizer** | 05 Phase - Final Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
 | **Test - Writer** | Test orchestrator | Bootstrap a test suite from scratch for untested code |
