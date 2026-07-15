@@ -83,6 +83,21 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertTrue((repo_root / "opencode" / "skills" / "demo-skill" / "SKILL.md").exists())
             self.assertTrue((repo_root / "codex" / "skills" / "demo-skill" / "SKILL.md").exists())
 
+    def test_phase_final_review_agent_is_present_in_all_harness_outputs(self) -> None:
+        expected_markers = {
+            ".github/agents/05-phase-final-review.agent.md": "name: 05 Phase - Final Review",
+            "claude/commands/phase-final-review.md": "Phase Final Review Orchestrator",
+            "opencode/agents/05-phase-final-review.md": "Phase Final Review Orchestrator",
+            "codex/agents/05-phase-final-review.toml": 'name = "phase-final-review"',
+            "codex/profiles/phase-final-review.config.toml": "Phase Final Review Orchestrator",
+        }
+
+        for relative_path, marker in expected_markers.items():
+            with self.subTest(path=relative_path):
+                output = REPO_ROOT / relative_path
+                self.assertTrue(output.is_file(), relative_path)
+                self.assertIn(marker, output.read_text(encoding="utf-8"))
+
     def test_hook_propagation_copies_runtime_unit_and_writes_stable_version(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             tmp_root = Path(tmp_dir)

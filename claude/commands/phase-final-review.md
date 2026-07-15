@@ -64,18 +64,20 @@ Use this invocation shape for every evaluator:
 > path/status/outcome or failure reason.`
 
 The orchestrator passes evaluator status to `05l-readiness-synthesizer` without
-copying report contents. For every failed, hung, or unavailable evaluator,
-append one JSON object to the current run's `evaluator-status.jsonl`:
+copying report contents. For every failed, hung, unavailable, or invalid-report
+evaluator, append exactly one JSON object to the current run's
+`evaluator-status.jsonl`. The `status` value must be exactly `not-run` when no
+report was written, or `incomplete` when a partial report was written:
 
 ```json
-{"evaluator":"<name>","check":"<check>","status":"not-run|incomplete","reason":"<concrete reason>","report":null}
+{"evaluator":"<name>","check":"<check>","status":"not-run","reason":"<concrete reason>","report":null}
 ```
 
-Use the actual report path instead of `null` only when an incomplete report was
-written. Pass the complete set of these records to 05l and require the
-readiness report's `Checks Not Run` section to name every evaluator, check, and
-reason. A failure never aborts the run, and a missing report never becomes a
-passing result.
+Use the actual report path and `status: incomplete` only when an incomplete
+report was written. Pass the complete set of these records to 05l and require
+the readiness report's `Checks Not Run` section to name every evaluator, check,
+and reason. A failure never aborts the run, and a missing report never becomes
+a passing result.
 
 ## Preflight
 
@@ -102,6 +104,10 @@ Prefer a valid ledger run associated with the current phase and branch:
    parent commit; that parent is the suggested pre-phase baseline.
 4. State `baseline source: ledger` and show the first feature commit and the
    suggested parent SHA in the preflight output.
+
+Use only a ledger run whose phase and current-branch association are explicit.
+If more than one valid run remains, list the candidate run paths and require
+the user to choose one; never rely on filesystem glob order.
 
 If no valid ledger is available, use the first-class fallback:
 
@@ -180,15 +186,26 @@ evaluator name, check, timeout reason, and report path `null`, then continue
 with the remaining evaluators. Do not wait indefinitely and do not convert a
 hung evaluator into success.
 
+Before invoking 05l, validate every evaluator result that claims success using
+metadata only: its report path must be a readable, regular, non-empty file
+under the current run's report root. Treat a missing, unreadable, empty, or
+unidentifiable report as `incomplete`, append its evaluator-status record, and
+exclude it from the passing report paths.
+
 After all available evaluator results and all `evaluator-status.jsonl` records
 are collected, invoke `05l-readiness-synthesizer` with the report paths and the
-failure records. The synthesizer must write the canonical readiness report and
-its required `Checks Not Run` section under the current phase report root.
+failure records using the top tier and the same bounded wait. The synthesizer
+must write a readable, non-empty canonical readiness report with its required
+`Checks Not Run` section under the current phase report root. If 05l times out,
+fails, or produces an invalid report, append its `not-run` or `incomplete`
+record, return `NO-GO` with an explicit no-report outcome, and do not write back
+an unverified verdict.
 
-The orchestrator never reports GO while any required check is missing or
-incomplete. With no blockers found but incomplete coverage, the highest allowed
-outcome is **no blockers found, coverage incomplete** (below GO). A failed
-evaluator is not repaired by a later evaluator's success.
+Before accepting the 05l verdict, independently inspect the complete
+evaluator-status set. Any `not-run` or `incomplete` record makes `GO` invalid;
+the canonical verdict for missing or incomplete required coverage is `NO-GO`
+with the coverage reason. A failed evaluator is not repaired by a later
+evaluator's success.
 
 ## Re-invocation and Report Retention
 
@@ -216,13 +233,16 @@ update only:
 2. the target phase summary's existing status line in
    `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md`.
 
-Replace only the status value with the reported `GO`, `GO WITH CONDITIONS`, or
-`NO-GO` verdict and preserve every other line and document structure. If
-either file has zero or multiple uniquely matching status lines, do not guess
+Before editing either file, resolve exactly one uniquely matching target status
+line in both files. If either file has zero or multiple matches, do not guess
 or restructure it: record the write-back as not run with the exact ambiguity
-and leave that file unchanged. A missing or incomplete evaluator still produces
-a below-GO verdict and must be reflected in both status lines when write-back
-is otherwise unambiguous.
+and leave both files unchanged. Replace only the status value with the reported
+`GO`, `GO WITH CONDITIONS`, or `NO-GO` verdict and preserve every other line and
+document structure. If the second write or post-write verification fails,
+restore the first file and leave both files unchanged. A missing or incomplete
+evaluator still produces `NO-GO` with its coverage reason and must be reflected
+in both status lines when write-back is otherwise unambiguous.
 
-Return only the readiness report path, verdict, and the concise outcome or
-write-back failure summary, within the 10-line return contract.
+Return only the readiness report path (or an explicit no-report marker), verdict,
+and the concise outcome or write-back failure summary, within the 10-line return
+contract.
