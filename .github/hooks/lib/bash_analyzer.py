@@ -294,7 +294,13 @@ def _url_candidates(
         if not isinstance(command, str) or not command.strip() or not isinstance(raw, Mapping):
             raise BashConfigError("invalid URL command configuration")
         body_options = _configured_names(raw.get("body_options"), "URL body options")
+        if not body_options or not all(
+            option.startswith("-") for option in body_options
+        ):
+            raise BashConfigError("invalid URL body-option configuration")
         commands[command.casefold()] = body_options
+    if set(commands) != {"curl", "wget"}:
+        raise BashConfigError("URL command coverage is incomplete")
 
     candidates = []
     for index, token in enumerate(tokens):
@@ -304,23 +310,27 @@ def _url_candidates(
         body_options = commands[command_name]
         skip_next = False
         for operand in tokens[index + 1 :]:
-            if operand in _SEPARATORS or operand in _REDIRECTIONS or operand == "<<":
+            if operand in _SEPARATORS:
                 break
             if skip_next:
                 skip_next = False
+                continue
+            if operand in _REDIRECTIONS or operand == "<<":
+                skip_next = True
                 continue
             option, separator, _ = operand.partition("=")
             folded_option = option.casefold()
             if folded_option in body_options:
                 skip_next = not separator
                 continue
+            folded_operand = operand.casefold()
             if any(
                 len(body_option) == 2
-                and operand.casefold().startswith(body_option)
+                and folded_operand.startswith(body_option)
                 for body_option in body_options
             ):
                 continue
-            if operand.casefold().startswith(("http://", "https://")):
+            if folded_operand.startswith(("http://", "https://")):
                 candidates.append(operand)
     return tuple(dict.fromkeys(candidates))
 

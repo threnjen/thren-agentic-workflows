@@ -218,11 +218,16 @@ def _url_parts(
 ) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:
     if not isinstance(url, str) or not url.strip():
         raise ValueError("guarded URL is missing")
-    if len(url) > policy.max_url_length or "\x00" in url:
+    if (
+        len(url) > policy.max_url_length
+        or any(ord(character) < 0x21 or ord(character) == 0x7F for character in url)
+        or _MALFORMED_ESCAPE.search(url)
+    ):
         raise ValueError("guarded URL is invalid")
     try:
         parsed = urlsplit(url)
         hostname = parsed.hostname
+        _ = parsed.port
     except ValueError as error:
         raise ValueError("guarded URL is malformed") from error
     if parsed.scheme.casefold() not in {"http", "https"} or not hostname:

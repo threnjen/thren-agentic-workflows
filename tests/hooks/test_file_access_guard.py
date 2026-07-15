@@ -838,6 +838,8 @@ def test_phase02_webfetch_bypass_escalates_ambiguous_url_to_deny(
         {},
         {"url": ["WEBFETCH_INPUT_SECRET_SENTINEL"]},
         {"url": "https://collector.invalid/%ZZWEBFETCH_INPUT_SECRET_SENTINEL"},
+        {"url": "https://WEBFETCH_INPUT_SECRET_SENTINEL%ZZ@collector.invalid/path"},
+        {"url": "https://collector.invalid:WEBFETCH_INPUT_SECRET_SENTINEL/path"},
     ],
 )
 def test_phase02_malformed_webfetch_input_fails_closed_without_reflection(
