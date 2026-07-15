@@ -160,8 +160,11 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Feature - Implementer** | Phase - Execute, Audit orchestrator, Test orchestrator | Implement a feature plan using Red-Green-Refactor TDD |
 | **Feature - Reviewer** | Phase - Execute, Audit orchestrator, Test orchestrator | Review implementation, apply fixes, produce review record |
 | **Feature - QA Writer** | Phase - Execute, Audit orchestrator | Write manual QA plan for non-automatable test cases |
+| **05b Change Narrator** | 05 Phase - Final Review | Build the whole-phase baseline-to-HEAD narrative and identify cross-subphase churn hotspots |
 | **05c QA Consolidator** | 05 Phase - Final Review | Merge subphase QA documents into one master QA walkthrough |
 | **05d Security Rollup** | 05 Phase - Final Review | Merge security findings, delegate the final scan, and classify final-state findings |
+| **05e AC Regression** | 05 Phase - Final Review | Re-verify every subphase acceptance criterion against the final codebase |
+| **05f Seam Analyzer** | 05 Phase - Final Review | Analyze cross-subphase interface mismatches, duplicated logic, and orphaned scaffolding |
 | **Security Scan** | Phase - Execute | Perform a full-codebase security assessment and write a phase-level security report |
 | **05h Test Health** | 05 Phase - Final Review | Delegate coverage, redundancy, and flake analysis into a phase health report |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
