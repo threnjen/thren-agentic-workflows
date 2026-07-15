@@ -521,7 +521,15 @@ def test_ac10_hook_registration_is_post_tool_use_only() -> None:
     definition = json.loads(HOOK_DEFINITION_PATH.read_text(encoding="utf-8"))
     assert set(definition["hooks"]) == {"PostToolUse"}
     matcher = definition["hooks"]["PostToolUse"][0]["matcher"]
-    for tool in ("Read", "Bash", "Grep", "WebFetch", "WebSearch", "Task"):
+    for tool in (
+        "Read",
+        "Bash",
+        "Grep",
+        "WebFetch",
+        "WebSearch",
+        "Task",
+        "apply_patch",
+    ):
         assert tool in matcher
     assert "mcp__" in matcher
 

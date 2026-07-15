@@ -78,8 +78,9 @@ echo "Phase 02 scanner assets and generated wiring are present."
 | Live subagent tool call | NOT RUN | Requires an explicitly isolated live Claude Code session |
 | Live OpenCode replacement/warning | NOT RUN | Bun adapter smoke passes; run OpenCode 1.16.2 in a disposable checkout |
 | Live Codex Bash/MCP PostToolUse | NOT RUN | Codex 0.144.4 contract is supported; full phase tool coverage is unavailable |
-| Codex full-parity sign-off | PENDING | Explicit acceptance is required; see `manual-qa.md` |
+| Codex full-parity sign-off | APPROVED | User approval in phase-execute session on 2026-07-15; Partial classification remains |
 | PERF-01 fixed 50 ms budget | FAIL | Reproduced at 117–383 ms medians on 2026-07-15 |
+| PERF-01 unresolved-risk acceptance | APPROVED | User approval in phase-execute session on 2026-07-15; failure remains unresolved |
 
 Do not convert a `NOT RUN` row to `PASS` without attaching the observed command,
 runner version, timestamp, and redacted outcome.

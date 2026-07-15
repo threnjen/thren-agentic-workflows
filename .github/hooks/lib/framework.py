@@ -219,8 +219,30 @@ def make_post_tool_result(
     return PostToolResult(action, reason, additional_context, deepcopy(updated_tool_output))
 
 
+def redact_tool_output(
+    output: Any, replacement: str, *, tool_name: str = ""
+) -> Any:
+    """Preserve a tool result's container shape while removing dynamic text."""
+
+    if tool_name.startswith("mcp__"):
+        return {"content": [{"type": "text", "text": replacement}]}
+    if isinstance(output, Mapping):
+        return {
+            key: redact_tool_output(value, replacement) for key, value in output.items()
+        }
+    if isinstance(output, (list, tuple)):
+        return [redact_tool_output(value, replacement) for value in output]
+    if isinstance(output, (str, bytes)):
+        return replacement
+    return output
+
+
 def emit_post_tool_result(
-    result: PostToolResult, *, output_stream=None, runner: str = "claude"
+    result: PostToolResult,
+    *,
+    output_stream=None,
+    runner: str = "claude",
+    tool_name: str = "",
 ) -> int:
     """Emit one validated PostToolUse result without replacing allowed output."""
 
@@ -234,9 +256,14 @@ def emit_post_tool_result(
     if result.action == "block":
         payload = {"decision": "block", "reason": result.reason}
         if runner != "codex":
+            replacement_key = (
+                "updatedMCPToolOutput"
+                if tool_name.startswith("mcp__")
+                else "updatedToolOutput"
+            )
             payload["hookSpecificOutput"] = {
                 "hookEventName": "PostToolUse",
-                "updatedToolOutput": result.updated_tool_output,
+                replacement_key: result.updated_tool_output,
             }
     elif result.action == "warn":
         payload = {
@@ -381,6 +408,7 @@ def post_tool_security_guard(
     output_stream = sys.stdout if output_stream is None else output_stream
     error_stream = sys.stderr if error_stream is None else error_stream
     runner = "claude"
+    event = None
     try:
         event = parse_payload(input_stream)
         runner = "codex" if any(
@@ -405,11 +433,23 @@ def post_tool_security_guard(
             updated_tool_output=result.updated_tool_output,
         )
     except Exception:
-        result = make_post_tool_result("block", reason="guard error")
+        replacement = (
+            redact_tool_output(
+                event.tool_output, "guard error", tool_name=event.tool_name
+            )
+            if event is not None
+            else "guard error"
+        )
+        result = make_post_tool_result(
+            "block", reason="guard error", updated_tool_output=replacement
+        )
 
     try:
         return emit_post_tool_result(
-            result, output_stream=output_stream, runner=runner
+            result,
+            output_stream=output_stream,
+            runner=runner,
+            tool_name=event.tool_name if event is not None else "",
         )
     except Exception:
         try:

@@ -8,9 +8,10 @@ use `updatedToolOutput` for actual model-visible replacement, Codex
 `tool_response` payloads are normalized without overstating unsupported tool
 coverage, and the generated OpenCode plugin passes real block/warn mutation
 evidence under Bun. Propagation now rejects symlinked intermediate hook
-directories. Codex full parity still requires explicit user risk acceptance,
-live harness QA is not run, and the inherited fixed 50 ms latency gate remains
-red.
+directories. The user explicitly accepted the Codex coverage limitation and
+proceeding with unresolved PERF-01 in the phase-execute session on 2026-07-15.
+Live harness QA is still not run, and the inherited fixed 50 ms latency gate
+remains red.
 
 ## Sibling Features
 
@@ -26,7 +27,7 @@ red.
 | AC | Criterion ID | Planned Test ID | Planned Test Pattern | Status | Implementing Files | Evidence Paths | Implement Commit SHA | Review Commit SHA |
 |----|--------------|-----------------|----------------------|--------|--------------------|----------------|----------------------|-------------------|
 | AC1 | Time-boxed contract investigation | Harness version/contract evidence | Record runner, date, payload, mutation/replacement semantics | Complete | `docs/hooks/prompt-injection-defense.md`, `docs/hooks/manual-qa.md` | `docs/hooks/prompt-injection-defense.md#current-harness-contract-evidence` | PENDING | PENDING |
-| AC2 | Exhaustive harness outcome | Exact support matrix and sign-off state | Claude/OpenCode supported; Codex limitation has explicit pending decision | Pending user sign-off | `docs/hooks/installation.md`, `docs/hooks/manual-qa.md` | `docs/hooks/manual-qa.md#current-harness-evidence-and-sign-off` | PENDING | PENDING |
+| AC2 | Exhaustive harness outcome | Exact support matrix and sign-off state | Claude/OpenCode supported; Codex limitation has explicit session approval | Complete — limitation approved | `docs/hooks/installation.md`, `docs/hooks/manual-qa.md` | `docs/hooks/manual-qa.md#current-harness-evidence-and-sign-off` | PENDING | PENDING |
 | AC3 | Equivalent enforcement where supported | Framework aliases, Claude replacement, Bun adapter smoke | Block replacement, warn preservation/context, redacted fail closed | Complete with Codex coverage limitation | `.github/hooks/lib/framework.py`, `.github/hooks/scripts/injection-scanner.py`, `scripts/propagate_master_assets.py` | `tests/hooks/test_hook_framework.py`, `tests/hooks/test_injection_scanner.py`, `tests/test_propagate_master_assets.py::PropagateMasterAssetsTests::test_phase02_opencode_adapter_replaces_blocked_output_and_appends_warning` | PENDING | PENDING |
 | AC4 | Complete artifact propagation | Complete asset and stable marker test | Detached consumer contains scanner/corpus/allowlist/URL guard/wiring | Complete | `scripts/propagate_master_assets.py`, generated outputs | `tests/test_propagate_master_assets.py::PropagateMasterAssetsTests::test_phase02_generated_wiring_is_complete_and_idempotent` | PENDING | PENDING |
 | AC5 | Generated wiring integrity | Preservation, cleanup, target, idempotence tests | Untagged entries survive; owned entries regenerate; second run byte-stable | Complete | `scripts/propagate_master_assets.py`, `.claude/settings.json`, `.codex/hooks.json`, `.opencode/plugins/injection-scanner.js` | `tests/test_propagate_master_assets.py` | PENDING | PENDING |
@@ -34,14 +35,14 @@ red.
 | AC7 | Combined integration smoke | One propagated scanner/exfiltration flow | High block, warn, truncation, allowlist, WebFetch and curl/wget outcomes | Complete | `tests/hooks/test_hook_distribution_integration.py` | `tests/hooks/test_hook_distribution_integration.py::test_phase02_combined_propagated_scanner_and_exfiltration_smoke` | PENDING | PENDING |
 | AC8 | Redaction, latency, retry evidence | Sentinel assertions, fixed latency gates, live checklist | Redaction passes; PERF-01 and live no-retry remain open | Partial — blocker retained | Runtime, integration tests, manual QA | `docs/hooks/manual-qa.md`, `tests/hooks/test_hook_distribution_integration.py::test_ac9_propagated_guard_median_latency_is_below_50_ms` | PENDING | PENDING |
 | AC9 | Operations and honest support docs | Documentation assertions | Install/verify/recovery/rollback/limits/support classifications present | Complete with live reservations | `docs/hooks/installation.md`, `docs/hooks/hook-verification.md`, `docs/hooks/manual-qa.md`, `docs/hooks/prompt-injection-defense.md`, `tests/hooks/README.md` | `tests/hooks/test_hook_distribution_integration.py::test_phase02_support_and_operations_guide_is_honest_and_complete` | PENDING | PENDING |
-| AC10 | Phase prerequisite gate | Nested symlink regression and fixed latency reproduction | SEC-01 passes; PERF-01 fails without threshold change | Partial — prerequisite risk open | `scripts/propagate_master_assets.py`, propagation/integration tests | `tests/test_propagate_master_assets.py::PropagateMasterAssetsTests::test_hook_asset_copy_rejects_symlinked_intermediate_directory`, `docs/hooks/manual-qa.md` | PENDING | PENDING |
+| AC10 | Phase prerequisite gate | Nested symlink regression and fixed latency reproduction | SEC-01 passes; unresolved PERF-01 explicitly accepted without threshold change | Complete with accepted prerequisite risk | `scripts/propagate_master_assets.py`, propagation/integration tests | `tests/test_propagate_master_assets.py::PropagateMasterAssetsTests::test_hook_asset_copy_rejects_symlinked_intermediate_directory`, `docs/hooks/manual-qa.md` | PENDING | PENDING |
 
 ## Acceptance Criteria Status
 
 | AC | Description | Status | Implementing Files | Notes |
 |----|-------------|--------|--------------------|-------|
 | AC1 | Time-boxed contract investigation | Complete | Harness evidence docs | Versions: Claude 2.1.210, Codex 0.144.4, OpenCode 1.16.2, Bun 1.3.14; captured 2026-07-15. |
-| AC2 | Exhaustive harness outcome | Pending user sign-off | Support/sign-off docs | Codex cannot expose the phase's full tool set; no acceptance was inferred. |
+| AC2 | Exhaustive harness outcome | Complete — limitation approved | Support/sign-off docs | User approval in phase-execute session accepted the Codex 0.144.4 residual risk on 2026-07-15. |
 | AC3 | Equivalent enforcement where supported | Complete with limitation | Framework, scanner, propagator | Claude and OpenCode automated parity pass. Codex supports Bash/apply_patch/MCP only. |
 | AC4 | Complete artifact propagation | Complete | Propagator and generated files | Full runtime tree and command targets are verified detached. |
 | AC5 | Generated wiring integrity | Complete | Propagator/generated wiring | Untagged ownership and byte idempotence pass. |
@@ -49,7 +50,7 @@ red.
 | AC7 | Combined integration smoke | Complete | Distribution integration test | All required scanner and URL guard outcomes pass in one consumer. |
 | AC8 | Redaction, latency, and retry evidence | Partial | Tests/manual QA | Sentinels are absent; live retry QA is NOT RUN; fixed latency gate fails. |
 | AC9 | Operations and honest support docs | Complete with reservations | Hook docs and README | Live rows remain explicitly NOT RUN; Cursor/Copilot remain Not supported. |
-| AC10 | Phase prerequisite gate | Partial | Propagation/integration evidence | SEC-01 intermediate containment passes. PERF-01 is still open. |
+| AC10 | Phase prerequisite gate | Complete with accepted prerequisite risk | Propagation/integration evidence | SEC-01 passes. PERF-01 is still failed/open, and User approval in phase-execute session accepted proceeding on 2026-07-15. |
 
 ## Files Changed
 
@@ -103,13 +104,16 @@ red.
 
 ## Gaps
 
-- **Explicit user sign-off required:** accept or reject Codex residual risk for
-  missing Read/Grep/WebFetch/WebSearch/Task PostToolUse coverage. Exact statement
-  and fields are in `docs/hooks/manual-qa.md`; status is PENDING.
+- Codex missing Read/Grep/WebFetch/WebSearch/Task PostToolUse coverage was
+  explicitly accepted on 2026-07-15 by **User approval in phase-execute
+  session**. This closes the decision requirement without changing Codex's
+  Partial classification.
 - Disposable live Claude block/warn/no-retry/Task/MCP/kill-switch QA is NOT RUN.
 - Disposable live Codex and OpenCode behavior is NOT RUN. OpenCode has passing
   Bun adapter evidence; Codex has contract/source evidence for its subset.
 - Phase 01 PERF-01 remains open: fixed 50 ms gate reproduced at 117–383 ms.
+  **User approval in phase-execute session** accepted proceeding with this
+  unresolved risk on 2026-07-15; the result remains failed.
 - SEC-01 disposition: resolved for the planned intermediate hook destination
   case; symlinked `.github/hooks/config` is rejected before external mutation.
 
@@ -121,5 +125,5 @@ red.
   verify dynamic string values cannot survive a blocked structured output.
 - `scripts/propagate_master_assets.py` — verify the Bun adapter forwards no
   policy and nested path validation precedes every copied/retired asset write.
-- `docs/hooks/manual-qa.md` — ensure Codex sign-off remains pending and no live
-  or latency result is promoted to pass.
+- `docs/hooks/manual-qa.md` — verify both session approvals are recorded without
+  promoting any live or latency result to pass.

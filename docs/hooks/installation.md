@@ -11,7 +11,7 @@ wiring. No virtual environment or package installation is required at runtime.
 | Harness | Status | What is supported in this phase |
 |---|---|---|
 | Claude Code | Fully supported | `PreToolUse` URL/file protection and `PostToolUse` scanning are generated. High matches use `updatedToolOutput`; warnings use redacted `additionalContext`. Live UI/no-retry evidence remains `NOT RUN`. |
-| Codex | Partial — sign-off required | Codex 0.144.4 supports PostToolUse replacement for Bash, `apply_patch`, and MCP results, and the scanner accepts `tool_response`. It lacks equivalent Read/Grep/WebFetch/WebSearch/Task coverage. Explicit residual-risk sign-off is pending. |
+| Codex | Partial — residual risk approved | Codex 0.144.4 supports PostToolUse replacement for Bash, `apply_patch`, and MCP results, and the scanner accepts `tool_response`. It lacks equivalent Read/Grep/WebFetch/WebSearch/Task coverage. The user explicitly accepted this limitation in the phase-execute session on 2026-07-15. |
 | OpenCode | Fully supported (automated) | The generated `tool.execute.after` plugin passes mutable output to the shared scanner, replaces high-tier output, appends warnings, and fails closed. Bun adapter smoke passes; live OpenCode remains `NOT RUN`. |
 | Cursor | Not supported | Cursor has its own hooks system, but this phase emits no Cursor adapter and does not translate Cursor event or decision schemas. |
 | GitHub Copilot | Not supported | Copilot CLI and cloud agent support `.github/hooks/*.json`, but this phase does not claim that the consolidated Claude-oriented decision adapter satisfies the current Copilot event/output contract. Treat `.github/hooks/` as this repository's source metadata, not verified Copilot enforcement. |
@@ -21,6 +21,11 @@ Primary references: [Claude Code hooks](https://code.claude.com/docs/en/hooks-gu
 [OpenCode plugins](https://opencode.ai/docs/plugins/),
 [Cursor hooks](https://cursor.com/docs/hooks), and
 [GitHub Copilot hooks reference](https://docs.github.com/en/copilot/reference/hooks-reference).
+
+The recorded approver for the Codex limitation and unresolved PERF-01 release
+risk is **User approval in phase-execute session** (2026-07-15). PERF-01 remains
+failed at the fixed 50 ms gate; approval permits proceeding and does not convert
+that result to pass.
 
 ## Per-project installation
 

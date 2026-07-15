@@ -2,7 +2,7 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "Read|Bash|Grep|WebFetch|WebSearch|Task|mcp__.*",
+        "matcher": "Read|Bash|Grep|WebFetch|WebSearch|Task|apply_patch|mcp__.*",
         "type": "command",
         "command": "python3 .github/hooks/scripts/injection-scanner.py",
         "timeout": 10

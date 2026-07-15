@@ -23,7 +23,7 @@
         ]
       },
       {
-        "matcher": "Read|Bash|Grep|WebFetch|WebSearch|Task|mcp__.*",
+        "matcher": "Read|Bash|Grep|WebFetch|WebSearch|Task|apply_patch|mcp__.*",
         "$source": "injection-scanner",
         "hooks": [
           {

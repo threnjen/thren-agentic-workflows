@@ -2,10 +2,22 @@
 export const InjectionScanner = async ({ directory }) => {
   return {
     "tool.execute.after": async (input, output) => {
+      const toolAliases = {
+        shell: "Bash", bash: "Bash", read: "Read", grep: "Grep",
+        fetch: "WebFetch", webfetch: "WebFetch",
+        search: "WebSearch", websearch: "WebSearch", task: "Task",
+        patch: "apply_patch"
+      }
+      const toolName = toolAliases[input.tool] ?? input.tool
+      const toolInput = input.args && typeof input.args === "object" && !Array.isArray(input.args)
+        ? { ...input.args } : {}
+      if (toolName === "Read" && typeof toolInput.filePath === "string" && toolInput.file_path === undefined) {
+        toolInput.file_path = toolInput.filePath
+      }
       const payload = {
         hook_event_name: "PostToolUse",
-        tool_name: input.tool,
-        tool_input: input.args ?? {},
+        tool_name: toolName,
+        tool_input: toolInput,
         tool_output: output.output,
         tool_output_truncated: false,
         session_id: input.sessionID

@@ -15,6 +15,7 @@ from .framework import (
     observability_guard,
     parse_payload,
     post_tool_security_guard,
+    redact_tool_output,
     record_event,
     security_guard,
 )
@@ -33,6 +34,7 @@ __all__ = (
     "load_config",
     "security_guard",
     "post_tool_security_guard",
+    "redact_tool_output",
     "observability_guard",
     "record_event",
     "InjectionConfigError",

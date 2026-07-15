@@ -34,6 +34,7 @@ PUBLIC_API = (
     "load_config",
     "security_guard",
     "post_tool_security_guard",
+    "redact_tool_output",
     "observability_guard",
     "record_event",
 )
@@ -518,6 +519,97 @@ def test_claude_post_tool_block_replaces_original_output(framework) -> None:
     assert emitted["hookSpecificOutput"]["updatedToolOutput"] == {
         "stdout": "redacted block reason",
         "stderr": "",
+    }
+    assert sentinel not in output.getvalue()
+
+
+def test_claude_mcp_post_tool_block_uses_mcp_replacement_field(framework) -> None:
+    sentinel = "CLAUDE_MCP_BLOCKED_OUTPUT_SENTINEL"
+    output = io.StringIO()
+
+    exit_code = framework.post_tool_security_guard(
+        lambda event, config: framework.make_post_tool_result(
+            "block",
+            reason="redacted block reason",
+            updated_tool_output={
+                "content": [{"type": "text", "text": "redacted block reason"}]
+            },
+        ),
+        input_stream=io.StringIO(
+            json.dumps(
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "mcp__fixture__read",
+                    "tool_input": {},
+                    "tool_response": {
+                        "content": [{"type": "text", "text": sentinel}]
+                    },
+                }
+            )
+        ),
+        output_stream=output,
+    )
+
+    emitted = json.loads(output.getvalue())
+    hook_output = emitted["hookSpecificOutput"]
+    assert exit_code == 0
+    assert "updatedToolOutput" not in hook_output
+    assert hook_output["updatedMCPToolOutput"] == {
+        "content": [{"type": "text", "text": "redacted block reason"}]
+    }
+    assert sentinel not in output.getvalue()
+
+
+def test_mcp_redaction_discards_dynamic_structured_content_keys(framework) -> None:
+    sentinel = "MCP_DYNAMIC_KEY_SENTINEL"
+
+    redacted = framework.redact_tool_output(
+        {
+            "content": [{"type": "text", "text": sentinel}],
+            "structuredContent": {sentinel: sentinel},
+        },
+        "redacted block reason",
+        tool_name="mcp__fixture__read",
+    )
+
+    assert redacted == {
+        "content": [{"type": "text", "text": "redacted block reason"}]
+    }
+    assert sentinel not in json.dumps(redacted)
+
+
+def test_claude_post_tool_failure_replaces_structured_output_shape(framework) -> None:
+    sentinel = "CLAUDE_FAILURE_OUTPUT_SENTINEL"
+    output = io.StringIO()
+
+    exit_code = framework.post_tool_security_guard(
+        lambda event, config: framework.make_post_tool_result("allow"),
+        input_stream=io.StringIO(
+            json.dumps(
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "Bash",
+                    "tool_input": {"command": "printf fixture"},
+                    "tool_response": {
+                        "stdout": sentinel,
+                        "stderr": "",
+                        "interrupted": False,
+                        "isImage": False,
+                    },
+                }
+            )
+        ),
+        output_stream=output,
+        config_loader=lambda: (_ for _ in ()).throw(RuntimeError(sentinel)),
+    )
+
+    emitted = json.loads(output.getvalue())
+    assert exit_code == 0
+    assert emitted["hookSpecificOutput"]["updatedToolOutput"] == {
+        "stdout": "guard error",
+        "stderr": "guard error",
+        "interrupted": False,
+        "isImage": False,
     }
     assert sentinel not in output.getvalue()
 

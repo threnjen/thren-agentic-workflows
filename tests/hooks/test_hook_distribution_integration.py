@@ -220,7 +220,8 @@ def test_ac7_installation_guide_classifies_all_five_harnesses() -> None:
         "apply_patch",
         "MCP",
         "Read/Grep/WebFetch/WebSearch/Task",
-        "sign-off",
+        "residual risk approved",
+        "User approval in phase-execute session",
     ):
         assert codex_limitation in guide
     for topic in (
@@ -263,7 +264,8 @@ def test_phase02_support_and_operations_guide_is_honest_and_complete() -> None:
         "tool.execute.after",
         "tool_response",
         "NOT RUN",
-        "sign-off PENDING",
+        "residual risk APPROVED 2026-07-15",
+        "User approval in phase-execute session",
         "50 ms",
         "117 to 383 ms",
         "Recovery and rollback",

@@ -25,9 +25,9 @@ OpenCode 1.16.2, and Bun 1.3.14.
 
 | Harness | Contract and result | Classification |
 |---|---|---|
-| Claude Code | PostToolUse `updatedToolOutput` replaces the result; `additionalContext` warns. Payload-level replacement tests pass. | Fully supported; live UI/no-retry QA NOT RUN |
+| Claude Code | PostToolUse `updatedToolOutput` replaces built-in results, `updatedMCPToolOutput` replaces MCP results, and `additionalContext` warns. Payload-level replacement tests pass. | Fully supported; live UI/no-retry QA NOT RUN |
 | OpenCode | `tool.execute.after` exposes mutable `output.output`. The Bun adapter passes replacement, warning, redaction, and fail-closed checks. | Fully supported by automated contract evidence; live QA NOT RUN |
-| Codex | PostToolUse accepts `tool_response` and native block feedback replaces Bash/apply_patch/MCP results. Current handlers do not provide equivalent Read/Grep/WebFetch/WebSearch/Task coverage. | Partial platform limitation; explicit user sign-off PENDING |
+| Codex | PostToolUse accepts `tool_response` and native block feedback replaces Bash/apply_patch/MCP results. Current handlers do not provide equivalent Read/Grep/WebFetch/WebSearch/Task coverage. | Partial platform limitation; residual risk APPROVED 2026-07-15 |
 | Cursor | No adapter is emitted. | Not supported |
 | GitHub Copilot | Source metadata is not claimed as a verified Copilot adapter. | Not supported |
 
@@ -48,7 +48,9 @@ OpenCode plugin types at `anomalyco/opencode`'s `packages/plugin/src/index.ts`.
 
 The fixed Phase 01 50 ms subprocess budget is still a release prerequisite.
 Feature 07 reproduced failures from 117 to 383 ms median and did not weaken the
-threshold. SEC-01 intermediate-directory containment is reproduced green.
+threshold. **User approval in phase-execute session** explicitly accepted
+proceeding with this unresolved PERF-01 risk on 2026-07-15; the gate remains
+failed. SEC-01 intermediate-directory containment is reproduced green.
 
 ## Known boundaries
 
@@ -58,8 +60,9 @@ threshold. SEC-01 intermediate-directory containment is reproduced green.
 - A pattern divided across the runner's truncation boundary cannot be detected.
 - Bash URL analysis handles literal curl/wget operands, not arbitrary shell
   expansion or embedded interpreters.
-- Codex full tool parity is unavailable and requires the explicit residual-risk
-  decision recorded in `manual-qa.md`.
+- Codex full tool parity is unavailable. **User approval in phase-execute
+  session** accepted this residual risk on 2026-07-15; the platform remains
+  Partial and live checks remain NOT RUN.
 
 ## Recovery and rollback
 

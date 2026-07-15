@@ -805,10 +805,22 @@ def _render_opencode_plugin(name: str, event_commands: List[Tuple[str, str]]) ->
                 + "export const InjectionScanner = async ({ directory }) => {\n"
                 + "  return {\n"
                 + '    "tool.execute.after": async (input, output) => {\n'
+                + "      const toolAliases = {\n"
+                + '        shell: "Bash", bash: "Bash", read: "Read", grep: "Grep",\n'
+                + '        fetch: "WebFetch", webfetch: "WebFetch",\n'
+                + '        search: "WebSearch", websearch: "WebSearch", task: "Task",\n'
+                + '        patch: "apply_patch"\n'
+                + "      }\n"
+                + "      const toolName = toolAliases[input.tool] ?? input.tool\n"
+                + "      const toolInput = input.args && typeof input.args === \"object\" && !Array.isArray(input.args)\n"
+                + "        ? { ...input.args } : {}\n"
+                + "      if (toolName === \"Read\" && typeof toolInput.filePath === \"string\" && toolInput.file_path === undefined) {\n"
+                + "        toolInput.file_path = toolInput.filePath\n"
+                + "      }\n"
                 + "      const payload = {\n"
                 + '        hook_event_name: "PostToolUse",\n'
-                + "        tool_name: input.tool,\n"
-                + "        tool_input: input.args ?? {},\n"
+                + "        tool_name: toolName,\n"
+                + "        tool_input: toolInput,\n"
                 + "        tool_output: output.output,\n"
                 + "        tool_output_truncated: false,\n"
                 + "        session_id: input.sessionID\n"
@@ -1046,6 +1058,7 @@ def propagate_hooks_once(
         opencode_plugins_dir,
     ):
         _validate_output_directory(repo_root, output_directory)
+        _validate_nested_output_directory(repo_root, output_directory)
     if not github_hooks_dir.exists():
         return {
             "hooks_source": 0,

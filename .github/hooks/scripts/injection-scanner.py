@@ -10,7 +10,13 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(HOOKS_DIR) not in sys.path:
     sys.path.insert(0, str(HOOKS_DIR))
 
-from lib import ConfigSnapshot, load_config, make_post_tool_result, post_tool_security_guard
+from lib import (
+    ConfigSnapshot,
+    load_config,
+    make_post_tool_result,
+    post_tool_security_guard,
+    redact_tool_output,
+)
 from lib.injection_scanner import (
     is_allowlisted_source,
     load_injection_rules,
@@ -64,18 +70,6 @@ def _notice_context(notices: tuple[str, ...], *, truncated: bool) -> str:
     return " ".join(messages)
 
 
-def _redacted_output(output, replacement: str):
-    """Preserve built-in output shape while removing every dynamic string value."""
-
-    if isinstance(output, dict):
-        return {key: _redacted_output(value, replacement) for key, value in output.items()}
-    if isinstance(output, (list, tuple)):
-        return [_redacted_output(value, replacement) for value in output]
-    if isinstance(output, str) or isinstance(output, bytes):
-        return replacement
-    return output
-
-
 def handle_event(event, config, *, repo_root=REPO_ROOT):
     """Return one redacted PostToolUse result for a normalized event."""
 
@@ -102,7 +96,9 @@ def handle_event(event, config, *, repo_root=REPO_ROOT):
         return make_post_tool_result(
             "block",
             reason=reason,
-            updated_tool_output=_redacted_output(event.tool_output, reason),
+            updated_tool_output=redact_tool_output(
+                event.tool_output, reason, tool_name=event.tool_name
+            ),
         )
 
     contexts = []
