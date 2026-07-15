@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import hashlib
 import json
 import re
+import shlex
 import shutil
 import sys
 import time
@@ -49,6 +51,13 @@ GENERATED_AGENT_HEADER = "# Generated from .github/agents source-of-truth. Do no
 GENERATED_SKILL_HEADER = "<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->\n"
 GENERATED_OPENCODE_PLUGIN_HEADER = "// Generated from .github/hooks source-of-truth. Do not edit manually.\n"
 HOOK_SOURCE_KEY = "$source"
+RETIRED_HOOK_ASSETS = (
+    "bash-safety.json",
+    "protect-files.json",
+    "scripts/bash-safety.sh",
+    "scripts/protect-files.sh",
+    "scripts/protect-files.py",
+)
 
 # Default translation from VS Code Copilot hook events → target tool events.
 # Keys are VS Code event names. Values map tool name → list of target event names.
@@ -809,6 +818,7 @@ def _update_nested_settings_file(
     settings_file: Path,
     source_hooks: List[Dict],
     tool: str,
+    command_transform: Callable[[str], str] | None = None,
 ) -> bool:
     """Rebuild Claude/Codex-style nested settings, preserving untagged entries."""
     if settings_file.exists():
@@ -824,25 +834,139 @@ def _update_nested_settings_file(
                 settings["hooks"].setdefault(target_event, [])
                 for entry in entries:
                     command = _resolve_hook_command(entry, source["meta"], tool)
+                    if command_transform is not None:
+                        command = command_transform(command)
                     timeout = entry.get("timeout")
                     inner: Dict = {"type": "command", "command": command}
                     if timeout is not None:
                         inner["timeout"] = timeout
                     settings["hooks"][target_event].append({
-                        "matcher": "",
+                        "matcher": entry.get("matcher", ""),
                         HOOK_SOURCE_KEY: source["name"],
                         "hooks": [inner],
                     })
     return _write_if_changed(settings_file, json.dumps(settings, indent=2) + "\n")
 
 
-def propagate_hooks_once(verbose: bool = False) -> Dict[str, int]:
-    """Propagate .github/hooks/*.json -> Claude settings, Codex hooks, OpenCode plugins."""
-    if not GITHUB_HOOKS_DIR.exists():
-        return {"hooks_source": 0, "claude_changed": 0, "codex_changed": 0, "opencode_changed": 0}
+def _hook_asset_files(hooks_dir: Path) -> List[Path]:
+    return [
+        path
+        for path in sorted(hooks_dir.rglob("*"))
+        if path.is_file()
+        and path.name != ".distribution-version"
+        and "__pycache__" not in path.parts
+        and path.suffix != ".pyc"
+    ]
+
+
+def _hook_distribution_version(hooks_dir: Path) -> str:
+    digest = hashlib.sha256()
+    for path in _hook_asset_files(hooks_dir):
+        digest.update(path.relative_to(hooks_dir).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return f"phase-01-sha256:{digest.hexdigest()}\n"
+
+
+def _copy_hook_assets(source_dir: Path, target_dir: Path) -> int:
+    changed = 0
+    same_tree = source_dir.resolve() == target_dir.resolve()
+    for source_path in _hook_asset_files(source_dir):
+        target_path = target_dir / source_path.relative_to(source_dir)
+        if same_tree:
+            continue
+        content = source_path.read_bytes()
+        if target_path.is_symlink():
+            target_path.unlink()
+        if target_path.exists() and target_path.read_bytes() == content:
+            continue
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        target_path.write_bytes(content)
+        changed += 1
+    return changed
+
+
+def _remove_retired_hook_assets(source_dir: Path, target_dir: Path) -> int:
+    removed = 0
+    for relative_path in RETIRED_HOOK_ASSETS:
+        if (source_dir / relative_path).exists():
+            continue
+        target_path = target_dir / relative_path
+        if target_path.is_file() or target_path.is_symlink():
+            target_path.unlink()
+            removed += 1
+    return removed
+
+
+def _validate_hook_commands(source_hooks: List[Dict], source_root: Path) -> None:
+    for source in source_hooks:
+        for entries in source["hooks_by_event"].values():
+            for entry in entries:
+                for tool in ("claude", "codex", "opencode"):
+                    command = _resolve_hook_command(entry, source["meta"], tool)
+                    try:
+                        command_parts = shlex.split(command)
+                    except ValueError as exc:
+                        raise ValueError(
+                            f"invalid generated hook command for {source['name']}: {exc}"
+                        ) from exc
+                    for part in command_parts:
+                        if not part.startswith(".github/hooks/"):
+                            continue
+                        if not (source_root / part).is_file():
+                            raise FileNotFoundError(
+                                "generated hook command references missing asset: "
+                                f"{part}"
+                            )
+
+
+def propagate_hooks_once(
+    verbose: bool = False,
+    repo_root: Path | None = None,
+    source_root: Path | None = None,
+    *,
+    copy_assets: bool = True,
+    command_transform: Callable[[str], str] | None = None,
+) -> Dict[str, int]:
+    """Propagate source hooks and their runtime assets into one repository root."""
+    repo_root = repo_root or REPO_ROOT
+    source_root = source_root or REPO_ROOT
+    github_hooks_dir = source_root / ".github" / "hooks"
+    target_hooks_dir = repo_root / ".github" / "hooks"
+    claude_settings_file = repo_root / ".claude" / "settings.json"
+    codex_hooks_file = repo_root / ".codex" / "hooks.json"
+    opencode_plugins_dir = repo_root / ".opencode" / "plugins"
+    if not github_hooks_dir.exists():
+        return {
+            "hooks_source": 0,
+            "assets_changed": 0,
+            "retired_assets_removed": 0,
+            "version_changed": 0,
+            "claude_changed": 0,
+            "codex_changed": 0,
+            "opencode_changed": 0,
+        }
+
+    assets_changed = (
+        _copy_hook_assets(github_hooks_dir, target_hooks_dir) if copy_assets else 0
+    )
+    retired_assets_removed = (
+        _remove_retired_hook_assets(github_hooks_dir, target_hooks_dir)
+        if copy_assets
+        else 0
+    )
+    version_path = (
+        target_hooks_dir / ".distribution-version"
+        if copy_assets
+        else repo_root / ".hook-distribution-version"
+    )
+    version_changed = _write_if_changed(
+        version_path, _hook_distribution_version(github_hooks_dir)
+    )
 
     source_hooks: List[Dict] = []
-    for hook_file in sorted(GITHUB_HOOKS_DIR.glob("*.json")):
+    for hook_file in sorted(github_hooks_dir.glob("*.json")):
         try:
             data = json.loads(hook_file.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
@@ -852,11 +976,16 @@ def propagate_hooks_once(verbose: bool = False) -> Dict[str, int]:
             "hooks_by_event": data.get("hooks", {}),
             "meta": data.get("$meta", {}),
         })
+    _validate_hook_commands(source_hooks, source_root)
 
-    claude_changed = _update_nested_settings_file(CLAUDE_SETTINGS_FILE, source_hooks, "claude")
-    codex_changed = _update_nested_settings_file(CODEX_HOOKS_FILE, source_hooks, "codex")
+    claude_changed = _update_nested_settings_file(
+        claude_settings_file, source_hooks, "claude", command_transform
+    )
+    codex_changed = _update_nested_settings_file(
+        codex_hooks_file, source_hooks, "codex", command_transform
+    )
 
-    OPENCODE_PLUGINS_DIR.mkdir(parents=True, exist_ok=True)
+    opencode_plugins_dir.mkdir(parents=True, exist_ok=True)
     opencode_changed = 0
     expected_plugins: set[Path] = set()
 
@@ -867,16 +996,18 @@ def propagate_hooks_once(verbose: bool = False) -> Dict[str, int]:
             for target_event in target_events:
                 for entry in entries:
                     command = _resolve_hook_command(entry, source["meta"], "opencode")
+                    if command_transform is not None:
+                        command = command_transform(command)
                     event_commands.append((target_event, command))
         if not event_commands:
             continue
-        plugin_file = OPENCODE_PLUGINS_DIR / f"{source['name']}.js"
+        plugin_file = opencode_plugins_dir / f"{source['name']}.js"
         expected_plugins.add(plugin_file)
         if _write_if_changed(plugin_file, _render_opencode_plugin(source["name"], event_commands)):
             opencode_changed += 1
 
-    if OPENCODE_PLUGINS_DIR.exists():
-        for plugin_file in OPENCODE_PLUGINS_DIR.glob("*.js"):
+    if opencode_plugins_dir.exists():
+        for plugin_file in opencode_plugins_dir.glob("*.js"):
             if plugin_file in expected_plugins:
                 continue
             content = plugin_file.read_text(encoding="utf-8")
@@ -887,6 +1018,9 @@ def propagate_hooks_once(verbose: bool = False) -> Dict[str, int]:
     if verbose:
         print(json.dumps({
             "hooks_source": len(source_hooks),
+            "assets_changed": assets_changed,
+            "retired_assets_removed": retired_assets_removed,
+            "version_changed": int(version_changed),
             "claude_changed": int(claude_changed),
             "codex_changed": int(codex_changed),
             "opencode_changed": opencode_changed,
@@ -894,10 +1028,36 @@ def propagate_hooks_once(verbose: bool = False) -> Dict[str, int]:
 
     return {
         "hooks_source": len(source_hooks),
+        "assets_changed": assets_changed,
+        "retired_assets_removed": retired_assets_removed,
+        "version_changed": int(version_changed),
         "claude_changed": int(claude_changed),
         "codex_changed": int(codex_changed),
         "opencode_changed": opencode_changed,
     }
+
+
+def _absolute_hook_command(command: str, source_root: Path) -> str:
+    parts = shlex.split(command)
+    replaced = [
+        str(source_root / part) if part.startswith(".github/hooks/") else part
+        for part in parts
+    ]
+    return shlex.join(replaced)
+
+
+def generate_global_hooks(
+    output_root: Path, source_root: Path | None = None, verbose: bool = False
+) -> Dict[str, int]:
+    """Generate local-only user-scope hook wiring with absolute source paths."""
+    source_root = (source_root or REPO_ROOT).resolve()
+    return propagate_hooks_once(
+        verbose=verbose,
+        repo_root=output_root,
+        source_root=source_root,
+        copy_assets=False,
+        command_transform=lambda command: _absolute_hook_command(command, source_root),
+    )
 
 
 def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
@@ -1105,6 +1265,9 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     result = {
         "source_agents": len(agents),
         "hooks_source": hooks_result["hooks_source"],
+        "hook_assets_changed": hooks_result["assets_changed"],
+        "retired_hook_assets_removed": hooks_result["retired_assets_removed"],
+        "hook_version_changed": hooks_result["version_changed"],
         "claude_changed": changed_claude + hooks_result["claude_changed"] + skill_result["claude_changed"],
         "opencode_changed": changed_opencode + hooks_result["opencode_changed"] + skill_result["opencode_changed"],
         "codex_changed": changed_codex + hooks_result["codex_changed"] + skill_result["codex_changed"],
@@ -1195,9 +1358,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Propagate .github master assets to target platforms.")
     parser.add_argument("--once", action="store_true", help="Run one propagation pass and exit.")
     parser.add_argument("--watch", action="store_true", help="Watch .github source folders and propagate on changes.")
+    parser.add_argument(
+        "--global-output",
+        type=Path,
+        help="Generate local user-scope hook wiring with absolute source paths.",
+    )
     args = parser.parse_args()
 
-    if not args.once and not args.watch:
+    if args.global_output is not None:
+        generate_global_hooks(args.global_output, verbose=True)
+
+    if not args.once and not args.watch and args.global_output is None:
         args.once = True
 
     if args.once:
