@@ -35,6 +35,19 @@ by the shared file-access engine. The following boundaries are intentional.
 - **Safer alternative:** Search an explicit source directory that excludes
   secret-bearing locations, or use the Grep tool with a narrow verified path.
 
+## LIMIT-DYNAMIC-URLS
+
+- **Example:** `curl "$TARGET_URL"`
+- **Risk:** A URL assembled through variables, substitutions, aliases, or
+  runtime program state can contain secret material that is not visible in the
+  literal command text.
+- **Boundary:** The analyzer checks only literal `http://` and `https://`
+  operands for configured `curl` and `wget` commands. It does not expand shell
+  state, execute commands, resolve DNS, follow redirects, or inspect request
+  bodies. Malformed literal URL and percent-escape forms fail closed.
+- **Safer alternative:** Pass an explicit reviewed `.invalid` URL without
+  credentials, or use WebFetch so its literal `url` field is checked directly.
+
 ## Additional syntax boundary
 
 Dynamic glob results, process substitution, aliases, functions, sourced shell

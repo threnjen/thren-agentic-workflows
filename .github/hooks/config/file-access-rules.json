@@ -15,6 +15,64 @@
       "wget": ["--post-file"]
     }
   },
+  "url_exfiltration": {
+    "max_url_length": 8192,
+    "max_segments": 64,
+    "max_segment_length": 4096,
+    "decode_passes": 2,
+    "commands": {
+      "curl": {
+        "body_options": ["-d", "--data", "--data-ascii", "--data-binary", "--data-raw", "--data-urlencode", "--json"]
+      },
+      "wget": {
+        "body_options": ["--post-data", "--body-data"]
+      }
+    },
+    "rules": {
+      "url-known-credential": {
+        "id": "url-known-credential",
+        "action": "deny",
+        "reason": "The URL contains a known credential format",
+        "matcher": "regex",
+        "patterns": [
+          "AKIA[0-9A-Z]{16}",
+          "(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{20,})",
+          "-----BEGIN(?: [A-Z0-9]+)? PRIVATE KEY-----"
+        ],
+        "priority": 90,
+        "safe_alternative": "Remove credentials and use an approved secret-injection mechanism",
+        "escalate_in_bypass": "deny"
+      },
+      "url-encoded-credential": {
+        "id": "url-encoded-credential",
+        "action": "deny",
+        "reason": "A credential-named URL parameter contains an encoded secret shape",
+        "matcher": "encoded_query",
+        "query_names": ["api_key", "apikey", "access_key", "secret", "token", "credential", "password", "private_key"],
+        "shapes": [
+          {"alphabet": "hex", "min_length": 32},
+          {"alphabet": "base64", "min_length": 32}
+        ],
+        "priority": 80,
+        "safe_alternative": "Remove credentials and use an approved secret-injection mechanism",
+        "escalate_in_bypass": "deny"
+      },
+      "url-ambiguous-entropy": {
+        "id": "url-ambiguous-entropy",
+        "action": "ask",
+        "reason": "The URL contains an ambiguous high-entropy value",
+        "matcher": "entropy",
+        "min_length": 32,
+        "max_length": 512,
+        "min_entropy": 3.5,
+        "min_character_classes": 3,
+        "hex_query_min_length": 48,
+        "priority": 60,
+        "safe_alternative": "Confirm the value is synthetic or remove it before sending",
+        "escalate_in_bypass": "deny"
+      }
+    }
+  },
   "bash_rules": {
     "environment-printenv": {
       "id": "environment-printenv", "action": "ask", "reason": "Environment output may disclose sensitive values", "matcher": "regex", "pattern": "\\bprintenv\\b", "priority": 30, "safe_alternative": "Request only a known non-secret value"

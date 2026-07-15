@@ -13,6 +13,7 @@ if str(HOOKS_DIR) not in sys.path:
 from lib import load_config, make_decision, record_event, security_guard
 from lib.bash_analyzer import analyze_command
 from lib.file_access import evaluate_path, load_rules
+from lib.url_exfiltration import analyze_url
 
 
 DEFAULT_RULES_PATH = HOOKS_DIR / "config" / "file-access-rules.json"
@@ -67,10 +68,54 @@ def _is_bypass(event) -> bool:
 
 
 def _guidance(match) -> str:
-    target = f" {match.normalized_path}" if match.normalized_path else ""
+    normalized_path = getattr(match, "normalized_path", None)
+    target = f" {normalized_path}" if normalized_path else ""
     return (
         f"Rule {match.rule_id} matched{target}. {match.reason}. "
         f"Safe alternative: {match.safe_alternative}"
+    )
+
+
+def _configured_priority(config, rule_id: str) -> int:
+    configured_groups = [config.get("rules"), config.get("bash_rules")]
+    url_policy = config.get("url_exfiltration")
+    configured_groups.append(
+        url_policy.get("rules") if isinstance(url_policy, Mapping) else None
+    )
+    matches = []
+    for group in configured_groups:
+        if not isinstance(group, Mapping) or rule_id not in group:
+            continue
+        rule = group[rule_id]
+        if not isinstance(rule, Mapping) or rule.get("id") != rule_id:
+            raise ValueError("matched rule configuration is invalid")
+        priority = rule.get("priority")
+        if not isinstance(priority, int) or isinstance(priority, bool):
+            raise ValueError("matched rule priority is invalid")
+        matches.append(priority)
+    if len(matches) != 1:
+        raise ValueError("matched rule identifier is not unique")
+    return matches[0]
+
+
+def _selection_key(match, config) -> tuple[int, int, str]:
+    if (
+        not isinstance(match.rule_id, str)
+        or not match.rule_id
+        or match.action not in _ACTION_STRENGTH
+        or not isinstance(match.reason, str)
+        or not match.reason.strip()
+        or not isinstance(match.safe_alternative, str)
+        or (match.action != "allow" and not match.safe_alternative.strip())
+    ):
+        raise ValueError("analyzer match is invalid")
+    normalized_path = getattr(match, "normalized_path", None)
+    if normalized_path is not None and not isinstance(normalized_path, str):
+        raise ValueError("analyzer match path is invalid")
+    return (
+        _ACTION_STRENGTH[match.action],
+        _configured_priority(config, match.rule_id),
+        match.rule_id,
     )
 
 
@@ -102,6 +147,11 @@ def handle_event(
                 bypass=_is_bypass(event),
             )
         )
+    elif event.tool_name == "WebFetch":
+        url = event.tool_input.get("url")
+        if not isinstance(url, str) or not url.strip():
+            raise ValueError("guarded WebFetch tool is missing its URL")
+        matches = list(analyze_url(url, config.data, bypass=_is_bypass(event)))
     else:
         candidates = _candidate_paths(event)
         if not candidates:
@@ -124,7 +174,7 @@ def handle_event(
         ]
     if not matches:
         return make_decision("allow", "no matching file-access rule")
-    selected = max(matches, key=lambda match: _ACTION_STRENGTH[match.action])
+    selected = max(matches, key=lambda match: _selection_key(match, config.data))
     if selected.action == "allow":
         return make_decision("allow", f"Rule {selected.rule_id} allows this path")
 
@@ -139,7 +189,7 @@ def handle_event(
         event,
         rule=selected.rule_id,
         decision=selected.action,
-        offending_path=selected.normalized_path or None,
+        offending_path=getattr(selected, "normalized_path", None) or None,
     )
     return make_decision(selected.action, _guidance(selected))
 
