@@ -155,3 +155,15 @@ Single-sample glob heuristics can miss overlapping scopes such as a broad filena
 ## Watch for
 
 Glob-overlap helpers that substitute the same value for every `*`, recursive path rules tested only with descendant files, and missing controls proving ordinary source globs remain allowed.
+
+## Pattern
+
+When removing an exact encoded suffix from parsed shell tokens, use exact suffix removal rather than `rstrip` with the suffix characters.
+
+## Impact
+
+`rstrip("\\n")` removes any trailing backslash or letter `n`, corrupting ordinary filenames such as `auth.json` before security policy evaluation and creating deterministic bypasses.
+
+## Watch for
+
+`rstrip` or `lstrip` calls whose argument is intended as a whole delimiter, especially escaped newline markers, extensions, or protocol sentinels; cover nearby filenames ending in each delimiter character.

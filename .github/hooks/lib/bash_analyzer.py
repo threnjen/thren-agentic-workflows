@@ -165,8 +165,22 @@ def _operands(tokens: tuple[str, ...], start: int) -> tuple[str, ...]:
             break
         if token.startswith("-") or "=" in token and not token.startswith(("./", "../")):
             continue
-        values.append(token.rstrip("\\n"))
+        values.append(token.removesuffix("\\n"))
     return tuple(value for value in values if value)
+
+
+def _has_option(tokens: tuple[str, ...], start: int, options: frozenset[str]) -> bool:
+    for token in tokens[start:]:
+        if token in _SEPARATORS:
+            break
+        folded = token.casefold()
+        if folded in options:
+            return True
+        if folded.startswith("-") and not folded.startswith("--"):
+            flags = folded[1:]
+            if any(len(option) == 2 and option[1] in flags for option in options):
+                return True
+    return False
 
 
 def _candidate_paths(
@@ -200,13 +214,11 @@ def _candidate_paths(
                 candidates.extend((operand, "write") for operand in operands[1:])
         elif command_name in symlink_commands:
             operands = _operands(tokens, index + 1)
-            if any(
-                token.casefold() in symlink_options for token in tokens[index + 1 :]
-            ) and operands:
+            if _has_option(tokens, index + 1, symlink_options) and operands:
                 candidates.append((operands[0], "read"))
         elif command_name in xargs_commands:
             for candidate in tokens[:index]:
-                candidate = candidate.rstrip("\\n")
+                candidate = candidate.removesuffix("\\n")
                 if (
                     candidate
                     and candidate not in _SEPARATORS
@@ -232,7 +244,25 @@ def _candidate_paths(
                         position += 1
                     else:
                         upload = ""
-                    if upload.startswith("@"):
+                else:
+                    short_option = next(
+                        (
+                            configured
+                            for configured in options
+                            if len(configured) == 2
+                            and configured.startswith("-")
+                            and token.casefold().startswith(configured)
+                        ),
+                        None,
+                    )
+                    upload = token[len(short_option) :] if short_option else ""
+                if upload:
+                    if command_name == "curl":
+                        if not upload.startswith("@"):
+                            position += 1
+                            continue
+                        upload = upload[1:]
+                    elif upload.startswith("@"):
                         upload = upload[1:]
                     if upload and upload != "-":
                         candidates.append((upload, "read"))

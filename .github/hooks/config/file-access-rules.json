@@ -37,6 +37,9 @@
     "destructive-rm-fr": {
       "id": "destructive-rm-fr", "action": "ask", "reason": "Recursive forced deletion requires confirmation", "matcher": "fixed_string", "pattern": "rm -fr", "priority": 40, "safe_alternative": "Review the target and use a narrower deletion", "allow_in_approved_roots": true
     },
+    "destructive-rm-recursive-force-variants": {
+      "id": "destructive-rm-recursive-force-variants", "action": "ask", "reason": "Recursive forced deletion requires confirmation", "matcher": "regex", "pattern": "(?i)(?:^|[;&|()])\\s*(?:\\S*/)?rm\\s+(?=[^;&|\\n]*(?<!\\S)(?:-[A-Za-z]*r[A-Za-z]*|--recursive)(?=\\s|$))(?=[^;&|\\n]*(?<!\\S)(?:-[A-Za-z]*f[A-Za-z]*|--force)(?=\\s|$))", "priority": 42, "safe_alternative": "Review the target and use a narrower deletion", "allow_in_approved_roots": true
+    },
     "destructive-git-push-force": {
       "id": "destructive-git-push-force", "action": "ask", "reason": "Force pushing can overwrite shared history", "matcher": "fixed_string", "pattern": "git push --force", "priority": 40, "safe_alternative": "Use a normal push or force-with-lease after review"
     },
@@ -63,6 +66,9 @@
     },
     "destructive-device-redirection": {
       "id": "destructive-device-redirection", "action": "ask", "reason": "Direct device redirection can destroy data", "matcher": "fixed_string", "pattern": "> /dev/", "priority": 40, "safe_alternative": "Write to a reviewed disposable file instead"
+    },
+    "destructive-device-redirection-compact": {
+      "id": "destructive-device-redirection-compact", "action": "ask", "reason": "Direct device redirection can destroy data", "matcher": "regex", "pattern": "(?i)(?:^|[^>])>{1,2}\\s*/dev/", "priority": 41, "safe_alternative": "Write to a reviewed disposable file instead"
     },
     "destructive-truncate": {
       "id": "destructive-truncate", "action": "ask", "reason": "Truncation irreversibly removes file content", "matcher": "fixed_string", "pattern": "truncate", "priority": 40, "safe_alternative": "Back up and review the target first"
