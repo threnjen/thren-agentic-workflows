@@ -136,6 +136,82 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                     repo_root=tmp_root / "consumer", source_root=source_root
                 )
 
+    def test_hook_propagation_rejects_runtime_command_path_escape(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_root = self._make_hook_source(tmp_root / "source")
+            outside_asset = source_root / ".github" / "outside.py"
+            outside_asset.write_text("# not part of the hook runtime\n", encoding="utf-8")
+            hook_file = source_root / ".github" / "hooks" / "file-access-guard.json"
+            hook_data = json.loads(hook_file.read_text(encoding="utf-8"))
+            hook_data["hooks"]["PreToolUse"][0]["command"] = (
+                "python3 .github/hooks/../../outside.py"
+            )
+            hook_file.write_text(json.dumps(hook_data), encoding="utf-8")
+
+            with self.assertRaisesRegex(
+                ValueError, "generated hook command escapes .github/hooks"
+            ):
+                mod.propagate_hooks_once(
+                    repo_root=tmp_root / "consumer", source_root=source_root
+                )
+
+    def test_hook_propagation_validates_nested_and_dot_prefixed_command_tokens(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_root = self._make_hook_source(tmp_root / "source")
+            hook_file = source_root / ".github" / "hooks" / "file-access-guard.json"
+            hook_data = json.loads(hook_file.read_text(encoding="utf-8"))
+
+            for command in (
+                "python3 ./.github/hooks/scripts/missing.py",
+                "bash -lc 'python3 .github/hooks/scripts/missing.py'",
+            ):
+                hook_data["hooks"]["PreToolUse"][0]["command"] = command
+                hook_file.write_text(json.dumps(hook_data), encoding="utf-8")
+                with self.assertRaisesRegex(
+                    FileNotFoundError,
+                    "generated hook command references missing asset",
+                ):
+                    mod.propagate_hooks_once(
+                        repo_root=tmp_root / "consumer", source_root=source_root
+                    )
+
+    def test_hook_propagation_rejects_source_asset_outside_runtime_root(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_root = self._make_hook_source(tmp_root / "source")
+            outside_asset = tmp_root / "outside.py"
+            outside_asset.write_text("# must not be propagated\n", encoding="utf-8")
+            (source_root / ".github" / "hooks" / "lib" / "outside.py").symlink_to(
+                outside_asset
+            )
+
+            with self.assertRaisesRegex(
+                ValueError, "hook source asset resolves outside .github/hooks"
+            ):
+                mod.propagate_hooks_once(
+                    repo_root=tmp_root / "consumer", source_root=source_root
+                )
+
+    def test_hook_propagation_rejects_output_directory_outside_target_root(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_root = self._make_hook_source(tmp_root / "source")
+            consumer_root = tmp_root / "consumer"
+            outside = tmp_root / "outside"
+            outside.mkdir()
+            (consumer_root / ".github").mkdir(parents=True)
+            (consumer_root / ".github" / "hooks").symlink_to(outside)
+
+            with self.assertRaisesRegex(
+                ValueError, "generated output directory resolves outside target root"
+            ):
+                mod.propagate_hooks_once(
+                    repo_root=consumer_root, source_root=source_root
+                )
+            self.assertEqual(list(outside.iterdir()), [])
+
     def test_propagated_guard_runs_from_detached_consumer_without_dependencies(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             consumer_root = Path(tmp_dir) / "consumer"
@@ -202,8 +278,29 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             output_root = tmp_root / "global-output"
             claude_dir = home / ".claude"
             claude_dir.mkdir(parents=True)
-            original = '{"user_setting": true}\n'
-            (claude_dir / "settings.json").write_text(original, encoding="utf-8")
+            codex_dir = home / ".codex"
+            codex_dir.mkdir(parents=True)
+            plugin_dir = home / ".config" / "opencode" / "plugins"
+            plugin_dir.mkdir(parents=True)
+            original_claude = '{"user_setting": true}\n'
+            original_codex = '{"user_hook": true}\n'
+            original_plugin = "// user-owned file-access guard\n"
+            (claude_dir / "settings.json").write_text(
+                original_claude, encoding="utf-8"
+            )
+            (codex_dir / "hooks.json").write_text(
+                original_codex, encoding="utf-8"
+            )
+            (plugin_dir / "file-access-guard.js").write_text(
+                original_plugin, encoding="utf-8"
+            )
+            (plugin_dir / "user-owned.js").write_text(
+                "// user-owned plugin\n", encoding="utf-8"
+            )
+            (plugin_dir / "stale-generated.js").write_text(
+                mod.GENERATED_OPENCODE_PLUGIN_HEADER + "export const Stale = {}\n",
+                encoding="utf-8",
+            )
             env = {
                 "HOME": str(home),
                 "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
@@ -228,13 +325,25 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertEqual(first.returncode, 0, first.stderr)
             self.assertEqual(second.returncode, 0, second.stderr)
             installed = claude_dir / "settings.json"
-            self.assertTrue(installed.is_file())
-            self.assertFalse(installed.is_symlink())
-            self.assertEqual(
-                (claude_dir / "settings.json.backup").read_text(encoding="utf-8"),
-                original,
-            )
+            codex_installed = codex_dir / "hooks.json"
+            plugin_installed = plugin_dir / "file-access-guard.js"
+            for target in (installed, codex_installed, plugin_installed):
+                self.assertTrue(target.is_file())
+                self.assertFalse(target.is_symlink())
+            expected_backups = {
+                claude_dir / "settings.json.backup": original_claude,
+                codex_dir / "hooks.json.backup": original_codex,
+                plugin_dir / "file-access-guard.js.backup": original_plugin,
+            }
+            for backup, expected in expected_backups.items():
+                self.assertEqual(backup.read_text(encoding="utf-8"), expected)
             self.assertIn(str(REPO_ROOT), installed.read_text(encoding="utf-8"))
+            self.assertIn(
+                str(REPO_ROOT), codex_installed.read_text(encoding="utf-8")
+            )
+            self.assertIn(str(REPO_ROOT), plugin_installed.read_text(encoding="utf-8"))
+            self.assertTrue((plugin_dir / "user-owned.js").is_file())
+            self.assertFalse((plugin_dir / "stale-generated.js").exists())
 
     def test_hook_regeneration_preserves_user_wiring_and_cleans_owned_stale_output(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:

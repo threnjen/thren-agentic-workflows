@@ -11,7 +11,7 @@ runtime.
 | Harness | Status | What is supported in this phase |
 |---|---|---|
 | Claude Code | Fully supported | Project and user-scope `PreToolUse` wiring, structured allow/ask/deny decisions, bypass-resistant deny policy, and the complete self-contained runtime. Claude documents project hooks in `.claude/settings.json`, user hooks in `~/.claude/settings.json`, and most-restrictive decision merging. |
-| Codex | Partial | Project and user `hooks.json` files are generated at documented Codex config layers. The command contract is subprocess-tested, but live Codex decision handling and trust review were not exercised in this implementation run. Do not treat it as verified enforcement until the live checklist passes. |
+| Codex | Partial | Project and user `hooks.json` files are generated at documented Codex config layers, and the structured `deny` shape matches the current hook contract. Codex currently parses but does not support `permissionDecision: "ask"`; it reports that hook result as failed and continues the tool call. Its `apply_patch` input also uses a command field rather than the file-tool paths this guard evaluates. Live trust review and runner behavior were not exercised, so do not treat this output as complete enforcement. |
 | OpenCode | Partial | Project and global plugins are generated in OpenCode's documented plugin directories and use `tool.execute.before`. The current adapter launches the guard, but a live OpenCode blocking result was not verified and the adapter does not yet translate every structured decision into native OpenCode permission behavior. |
 | Cursor | Not supported | Cursor has its own hooks system, but this phase emits no Cursor adapter and does not translate Cursor event or decision schemas. |
 | GitHub Copilot | Not supported | Copilot CLI and cloud agent support `.github/hooks/*.json`, but this phase does not claim that the consolidated Claude-oriented decision adapter satisfies the current Copilot event/output contract. Treat `.github/hooks/` as this repository's source metadata, not verified Copilot enforcement. |
@@ -50,7 +50,10 @@ printf '%s\n' '{"tool_name":"Read","tool_input":{"file_path":".env"}}' \
 
 The final command must return one structured `deny` decision without printing
 the file contents or the input body. Claude Code users can also run `/hooks` to
-confirm the `PreToolUse` registration.
+confirm the `PreToolUse` registration. Codex users must launch from the
+repository root for this phase's relative project command; current Codex docs
+note that hook commands otherwise run with the session working directory and
+recommend git-root-based command resolution for subdirectory launches.
 
 ## Generated global installation
 

@@ -46,7 +46,7 @@ These checks were not inferred from payload-level tests.
 | `bypassPermissions` ask | Not run | Exercise a harmless ask-tier command separately; do not equate ask with deny. |
 | Subagent tool call | Not run | Delegate a harmless protected Read and record only tool name, rule identifier, and decision. |
 | Global plus project UI message clarity | Not run | Enable both layers in a disposable HOME and confirm the live runner presents one effective denial clearly. |
-| Live Codex trust and decision handling | Not run | Review through `/hooks`, invoke the synthetic cases, and record the result before promoting Codex beyond Partial. |
+| Live Codex trust and decision handling | Not run | Review through `/hooks` and invoke synthetic deny cases. Current official docs already establish that `permissionDecision: "ask"` is unsupported and continues the call, and that `apply_patch` reports a command-shaped input this guard does not yet translate; keep Codex Partial until an adapter and live evidence close both gaps. |
 | Live OpenCode blocking | Not run | Confirm native blocking/approval behavior before promoting OpenCode beyond Partial. |
 
 The detailed live procedure remains in [Hook Verification Checklist](hook-verification.md).

@@ -190,6 +190,13 @@ def test_ac7_installation_guide_classifies_all_five_harnesses() -> None:
         assert harness in guide
     for classification in ("Fully supported", "Partial", "Not supported"):
         assert classification in guide
+    for codex_limitation in (
+        'permissionDecision: "ask"',
+        "continues the tool call",
+        "apply_patch",
+        "repository root",
+    ):
+        assert codex_limitation in guide
     for topic in (
         "Per-project installation",
         "Generated global installation",

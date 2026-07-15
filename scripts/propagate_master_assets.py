@@ -849,14 +849,24 @@ def _update_nested_settings_file(
 
 
 def _hook_asset_files(hooks_dir: Path) -> List[Path]:
-    return [
-        path
-        for path in sorted(hooks_dir.rglob("*"))
-        if path.is_file()
-        and path.name != ".distribution-version"
-        and "__pycache__" not in path.parts
-        and path.suffix != ".pyc"
-    ]
+    hooks_root = hooks_dir.resolve()
+    assets: List[Path] = []
+    for path in sorted(hooks_dir.rglob("*")):
+        if (
+            not path.is_file()
+            or path.name == ".distribution-version"
+            or "__pycache__" in path.parts
+            or path.suffix == ".pyc"
+        ):
+            continue
+        try:
+            path.resolve().relative_to(hooks_root)
+        except ValueError as exc:
+            raise ValueError(
+                f"hook source asset resolves outside .github/hooks: {path}"
+            ) from exc
+        assets.append(path)
+    return assets
 
 
 def _hook_distribution_version(hooks_dir: Path) -> str:
@@ -900,6 +910,7 @@ def _remove_retired_hook_assets(source_dir: Path, target_dir: Path) -> int:
 
 
 def _validate_hook_commands(source_hooks: List[Dict], source_root: Path) -> None:
+    hooks_root = (source_root / ".github" / "hooks").resolve()
     for source in source_hooks:
         for entries in source["hooks_by_event"].values():
             for entry in entries:
@@ -911,14 +922,41 @@ def _validate_hook_commands(source_hooks: List[Dict], source_root: Path) -> None
                         raise ValueError(
                             f"invalid generated hook command for {source['name']}: {exc}"
                         ) from exc
+                    candidate_parts = list(command_parts)
                     for part in command_parts:
-                        if not part.startswith(".github/hooks/"):
+                        if any(character.isspace() for character in part):
+                            candidate_parts.extend(shlex.split(part))
+                    for part in candidate_parts:
+                        normalized = part.removeprefix("./")
+                        if not normalized.startswith(".github/hooks/"):
                             continue
-                        if not (source_root / part).is_file():
+                        candidate = (source_root / normalized).resolve()
+                        try:
+                            candidate.relative_to(hooks_root)
+                        except ValueError as exc:
+                            raise ValueError(
+                                "generated hook command escapes .github/hooks: "
+                                f"{part}"
+                            ) from exc
+                        if not candidate.is_file():
                             raise FileNotFoundError(
                                 "generated hook command references missing asset: "
                                 f"{part}"
                             )
+
+
+def _validate_output_directory(repo_root: Path, directory: Path) -> None:
+    """Reject generated-output directories that resolve outside the target root."""
+    resolved_root = repo_root.resolve()
+    resolved_directory = directory.resolve()
+    try:
+        resolved_directory.relative_to(resolved_root)
+    except ValueError as exc:
+        raise ValueError(
+            f"generated output directory resolves outside target root: {directory}"
+        ) from exc
+    if directory.is_symlink():
+        raise ValueError(f"generated output directory must not be a symlink: {directory}")
 
 
 def propagate_hooks_once(
@@ -937,6 +975,13 @@ def propagate_hooks_once(
     claude_settings_file = repo_root / ".claude" / "settings.json"
     codex_hooks_file = repo_root / ".codex" / "hooks.json"
     opencode_plugins_dir = repo_root / ".opencode" / "plugins"
+    for output_directory in (
+        target_hooks_dir,
+        claude_settings_file.parent,
+        codex_hooks_file.parent,
+        opencode_plugins_dir,
+    ):
+        _validate_output_directory(repo_root, output_directory)
     if not github_hooks_dir.exists():
         return {
             "hooks_source": 0,

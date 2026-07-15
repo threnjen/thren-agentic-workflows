@@ -167,3 +167,15 @@ When removing an exact encoded suffix from parsed shell tokens, use exact suffix
 ## Watch for
 
 `rstrip` or `lstrip` calls whose argument is intended as a whole delimiter, especially escaped newline markers, extensions, or protocol sentinels; cover nearby filenames ending in each delimiter character.
+
+## Pattern
+
+Artifact propagators must validate resolved source assets and resolved destination directories against their declared roots before reading or writing; replacing only a symlinked leaf file is not sufficient.
+
+## Impact
+
+A symlinked parent directory can redirect generated files outside the consumer root, while a normalized `../` command token or source symlink can reference content the deployable unit never copied. Both cases break isolation and can overwrite or disclose unrelated files.
+
+## Watch for
+
+Copy loops that call `target.write_*` beneath unchecked parent directories, validators that test path prefixes before normalization, source walks that follow symlinks without a resolved-root check, and tests that cover only leaf symlink replacement.
