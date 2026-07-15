@@ -35,30 +35,6 @@
         ]
       }
     ],
-    "PreToolUse": [
-      {
-        "matcher": "",
-        "$source": "bash-safety",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .github/hooks/scripts/bash-safety.sh",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "",
-        "$source": "protect-files",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .github/hooks/scripts/protect-files.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "matcher": "",
@@ -79,6 +55,19 @@
           {
             "type": "command",
             "command": "osascript -e 'display notification \"Claude is done\" with title \"Claude Code\"'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Bash",
+        "$source": "file-access-guard",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .github/hooks/scripts/file-access-guard.py",
+            "timeout": 10
           }
         ]
       }
