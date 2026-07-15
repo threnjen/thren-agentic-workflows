@@ -1,44 +1,33 @@
-import sys, json, datetime, os
+"""Fail-open PostToolUse audit entrypoint."""
+
+import sys
+from pathlib import Path
+
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+HOOKS_DIR = SCRIPT_DIR.parent
+REPO_ROOT = HOOKS_DIR.parents[1]
+LOG_FILE = REPO_ROOT / "dev" / "agent-audit.log"
 
 try:
-    data = json.load(sys.stdin)
+    sys.path.insert(0, str(HOOKS_DIR))
+    from lib.framework import observability_guard, record_event
 except Exception:
-    sys.exit(0)  # malformed input — skip silently
-
-tool_name  = data.get('tool_name',  data.get('toolName',  'unknown'))
-tool_input = data.get('tool_input', data.get('toolInput', {}))
-tool_resp  = data.get('tool_response', data.get('toolResponse', {}))
-
-# Resolve log path relative to repo root (this script lives in .github/hooks/scripts/)
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT  = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..', '..'))
-LOG_FILE   = os.path.join(REPO_ROOT, 'dev', 'agent-audit.log')
-
-os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    observability_guard = None
+    record_event = None
 
 
-def truncate(obj, max_len=200):
-    """Serialise obj to JSON and truncate if too long."""
-    s = json.dumps(obj)
-    return s if len(s) <= max_len else s[:max_len] + '…'
+def main(input_stream=None, *, log_file=LOG_FILE) -> int:
+    """Record allowlisted metadata and consume every observability failure."""
+
+    if observability_guard is None or record_event is None:
+        return 0
+
+    def audit(event, _config) -> None:
+        record_event(log_file, event, rule="audit-log", decision="observed")
+
+    return observability_guard(audit, input_stream=input_stream)
 
 
-# # Extract a useful exit/status code if present
-# exit_code = (
-#     tool_resp.get('exit_code') or
-#     tool_resp.get('exitCode') or
-#     tool_resp.get('status')
-# )
-
-entry = {
-    'ts':            datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-    'tool':          tool_name,
-    'input_summary': truncate(tool_input),
-}
-# if exit_code is not None:
-#     entry['exit_code'] = exit_code
-
-with open(LOG_FILE, 'a') as f:
-    f.write(json.dumps(entry) + '\n')
-
-sys.exit(0)
+if __name__ == "__main__":
+    raise SystemExit(main())
