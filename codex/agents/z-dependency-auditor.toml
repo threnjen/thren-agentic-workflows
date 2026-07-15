@@ -28,8 +28,11 @@ changed by the phase. For every new dependency, inventory:
 2. License evidence from local manifest, lock, package metadata, or supplied
    artifact; if it cannot be established, mark the license check not run.
 3. Vulnerability evidence from supplied security reports or an already available
-   read-only audit command; if no evidence is available, mark the vulnerability
-   check not run rather than claiming no vulnerabilities.
+   read-only audit command run in an explicitly offline/local-data mode; if no
+   evidence is available, mark the vulnerability check not run rather than
+   claiming no vulnerabilities. Do not invoke a command unless its offline
+   behavior is known; a command that may fetch or update vulnerability data, or
+   contact the network, is unavailable for this audit.
 4. Competing or duplicate libraries, including normalized-name collisions across
    manifests and overlapping packages serving the same role.
 

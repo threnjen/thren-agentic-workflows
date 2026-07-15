@@ -40,9 +40,13 @@ whole-repository cleanup.
 For dead-code detection, invoke the code-review-graph `refactor_tool` with
 `mode="dead_code"` against the current source tree. The tool is repo-wide, so
 explicitly filter its results to files in the phase-touched baseline-to-HEAD
-diff; where line information is available, retain only code introduced by the
-phase. If the graph server or `refactor_tool` is unavailable, record that check
-as **NOT RUN** with the concrete error and do not silently treat it as clean.
+diff. Report a result as phase-introduced only when its path and line or range
+can be mapped to an added-line range in that diff. If line/range attribution is
+missing or cannot be verified, record the dead-code check as **NOT RUN** with a
+concrete reason and follow-up; never treat all dead code in a touched file as
+introduced. If the graph server or `refactor_tool` is unavailable, record that
+check as **NOT RUN** with the concrete error and do not silently treat it as
+clean.
 
 ## Failure and Empty-Diff Semantics
 
