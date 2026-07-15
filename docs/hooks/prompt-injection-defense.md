@@ -5,7 +5,25 @@ runtime before the next model turn. The clean-room rule corpus lives in
 `.github/hooks/config/injection-patterns.json`; normalization, bounded decoding,
 strongest-match selection, and allowlisting live in the shared scanner module.
 
-## Enforcement
+## Release status
+
+**NO-GO:** Phase 02 is implemented but is not approved for release or promotion
+to manual sign-off. The final security and production reviews found three
+introduced High-severity bypasses:
+
+- **P2-SEC-01:** attacker-controlled structured mapping keys can survive the
+  nominal block replacement.
+- **P2-SEC-02:** content beyond the scan-byte cap or encoded-candidate limit can
+  remain model-visible without being assessed.
+- **P2-SEC-03:** mutable directory-wide source allowlists can bypass scanning.
+
+The accepted Codex coverage limitation and PERF-01 latency risk do not cover
+these findings. Live Claude Code, Codex, and OpenCode QA remains `NOT RUN`. See
+`../phases/PHASE_02/PHASE_02-qa-analysis.md` and
+`../phases/PHASE_02/PHASE_02-security-scan.md` for authoritative evidence and
+the required re-entry sequence.
+
+## Intended and automated enforcement
 
 - High-tier rules replace model-visible output with a redacted category/rule
   explanation and no-retry/manual-inspection guidance.
@@ -17,6 +35,10 @@ strongest-match selection, and allowlisting live in the shared scanner module.
 - Allowlisting is restricted to repository-owned, existing, non-symlinked paths
   under fixed approved roots. Runtime, corpus, allowlist, wiring, and generated
   plugins are protected from agent writes.
+
+These bullets describe the intended behavior and passing automated contract
+coverage, not a release guarantee. P2-SEC-01 through P2-SEC-03 identify cases
+where the current implementation does not uphold that behavior.
 
 ## Current harness contract evidence
 

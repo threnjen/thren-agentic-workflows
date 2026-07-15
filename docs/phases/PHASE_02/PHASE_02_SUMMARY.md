@@ -1,13 +1,13 @@
 # Phase 2: Prompt-Injection Defense
 
-**Status**: Planned
+**Status**: Implemented — release blocked (NO-GO)
 **Depends on**: Phase 01 (hook framework, config layering, propagation stage)
 **Estimated complexity**: Large (upgraded from Medium — full multi-harness parity added during refinement)
 **Cross-references**: `docs/phases/DISCOVERY_CONTEXT.md`, `docs/phases/PHASE_02/PHASE_02_DISCOVERY_CONTEXT.md`, `docs/inspiration/claude-hooks.md`, `.github/learnings/cross-phase-decisions.md`
 
 ## What's New
 
-Every piece of content an agent reads — files, web pages, command output, search results, subagent reports, MCP tool responses — is now scanned for hidden instructions before the agent acts on it. High-confidence injection attempts never reach the model at all: the content is suppressed and replaced with a structured explanation of what was caught and why. Lower-confidence matches pass through with a warning attached so the agent proceeds with suspicion rather than obedience. The same phase closes the outbound half of the threat: web requests that would smuggle secret-shaped data out in a URL are stopped before they are sent. Protection applies identically across Claude Code, Codex, and OpenCode.
+Phase 02 implemented a successful-output injection scanner, a clean-room severity-tiered pattern corpus and benchmark, WebFetch/curl URL-payload checks, and generated Claude Code, Codex, and OpenCode wiring. Automated contract evidence is strongest for Claude Code and OpenCode; Codex covers only Bash, `apply_patch`, and MCP PostToolUse results and remains Partial under an explicitly accepted residual risk. The implementation is not release-ready: final production review returned NO-GO because P2-SEC-01, P2-SEC-02, and P2-SEC-03 can leave high-tier content model-visible or bypass scanning.
 
 ## Objective
 
@@ -23,7 +23,15 @@ These were verified against current Claude Code hooks documentation and anchor t
 - The payload includes `tool_output` plus a `tool_output_truncated` flag for oversized outputs.
 - PostToolUse does **not** fire for failed tool calls (a separate PostToolUseFailure event exists) — stderr from failed commands is a documented coverage boundary (see Risks).
 
-Equivalent semantics on Codex and OpenCode are **not yet verified** — that verification is the first deliverable of the parity work.
+The implementation investigation found automated replacement support for OpenCode and only partial successful-output coverage for Codex. The Codex limitation was explicitly accepted on 2026-07-15 without changing its Partial classification. Live Claude Code, Codex, and OpenCode harness QA remains `NOT RUN`.
+
+## Execution Outcome
+
+- All four feature bundles were implemented and reviewed: `05-injection-scanner`, `05-webfetch-exfiltration-guard`, `06-injection-pattern-corpus`, and `07-multi-harness-integration`.
+- Final production verdict: **NO-GO**. P2-SEC-01 preserves attacker-controlled structured keys during block redaction; P2-SEC-02 permits deterministic bypass beyond scan and encoded-candidate limits; P2-SEC-03 trusts mutable directory-wide allowlists.
+- Codex successful-output coverage remains **Partial**. User approval accepted this known residual gap but did not supply missing coverage or passing live evidence.
+- PERF-01 remains **FAIL** at the unchanged 50 ms gate, with observed medians of 117–383 ms. User approval accepted the risk but did not convert the result to pass.
+- Live/manual harness QA remains **NOT RUN**. See `PHASE_02-qa-analysis.md`, `PHASE_02-security-scan.md`, `PHASE_02_QA.md`, and `PHASE_02_QA_COVERAGE_MAP.md` for the authoritative release evidence and re-entry sequence.
 
 ## Scope
 

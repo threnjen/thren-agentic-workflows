@@ -39,9 +39,9 @@ The negative fixtures are scanned directly through `scan_output`; the source-pat
 ## Evidence and Interpretation
 
 - Automated: schema validation, exact category inventory, bidirectional rule/fixture coverage, positive and negative replay, strongest-match selection, tier response behavior, broken-expectation exit status, cwd-independent invocation, and representative large-output timing.
-- Runner-constrained: one harmless high-tier block and one medium/low warning in each propagated harness remain `NOT RUN`; Feature 07 owns this evidence.
+- Runner-constrained: one harmless high-tier block and one medium/low warning in each propagated harness remain `NOT RUN` after Feature 07 implementation.
 - Review: confirm clean-room provenance, bounded regexes, synthetic fixture content, fixed redacted reasons, and absence of allowlist masking.
-- Manual: inspect the count summary and exercise one harmless block and one warning in a disposable session after Feature 07 propagation.
+- Manual: inspect the count summary and exercise one harmless block and one warning in a disposable propagated session; this evidence has not yet been recorded.
 
 ## Failure and Redaction Guarantees
 

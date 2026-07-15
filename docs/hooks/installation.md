@@ -6,13 +6,20 @@ Bash analyzer, path evaluator, URL exfiltration analyzer, PostToolUse injection
 scanner, clean-room pattern corpus, protected allowlists/overrides, and platform
 wiring. No virtual environment or package installation is required at runtime.
 
+> **Release blocked:** Phase 02's final verdict is **NO-GO**. Do not treat this
+> installation guide as production approval. P2-SEC-01 through P2-SEC-03 are
+> introduced High-severity scanner bypasses; Codex remains Partial, PERF-01
+> remains failed under accepted risk, and live harness QA remains `NOT RUN`.
+> See `../phases/PHASE_02/PHASE_02-qa-analysis.md` and
+> `../phases/PHASE_02/PHASE_02-security-scan.md` before any deployment decision.
+
 ## Support matrix
 
 | Harness | Status | What is supported in this phase |
 |---|---|---|
-| Claude Code | Fully supported | `PreToolUse` URL/file protection and `PostToolUse` scanning are generated. High matches use `updatedToolOutput`; warnings use redacted `additionalContext`. Live UI/no-retry evidence remains `NOT RUN`. |
-| Codex | Partial — residual risk approved | Codex 0.144.4 supports PostToolUse replacement for Bash, `apply_patch`, and MCP results, and the scanner accepts `tool_response`. It lacks equivalent Read/Grep/WebFetch/WebSearch/Task coverage. The user explicitly accepted this limitation in the phase-execute session on 2026-07-15. |
-| OpenCode | Fully supported (automated) | The generated `tool.execute.after` plugin passes mutable output to the shared scanner, replaces high-tier output, appends warnings, and fails closed. Bun adapter smoke passes; live OpenCode remains `NOT RUN`. |
+| Claude Code | Contract supported; release blocked | `PreToolUse` URL/file protection and `PostToolUse` scanning are generated. High matches use `updatedToolOutput`; warnings use redacted `additionalContext`. P2-SEC-01 through P2-SEC-03 remain open, and live UI/no-retry evidence remains `NOT RUN`. |
+| Codex | Partial; release blocked — residual risk approved | Codex 0.144.4 supports PostToolUse replacement for Bash, `apply_patch`, and MCP results, and the scanner accepts `tool_response`. It lacks equivalent Read/Grep/WebFetch/WebSearch/Task coverage. The user explicitly accepted this limitation in the phase-execute session on 2026-07-15; that approval does not cover P2-SEC-01 through P2-SEC-03. |
+| OpenCode | Automated contract supported; release blocked | The generated `tool.execute.after` plugin passes mutable output to the shared scanner, replaces high-tier output, appends warnings, and fails closed. Bun adapter smoke passes; P2-SEC-01 through P2-SEC-03 remain open, and live OpenCode remains `NOT RUN`. |
 | Cursor | Not supported | Cursor has its own hooks system, but this phase emits no Cursor adapter and does not translate Cursor event or decision schemas. |
 | GitHub Copilot | Not supported | Copilot CLI and cloud agent support `.github/hooks/*.json`, but this phase does not claim that the consolidated Claude-oriented decision adapter satisfies the current Copilot event/output contract. Treat `.github/hooks/` as this repository's source metadata, not verified Copilot enforcement. |
 
