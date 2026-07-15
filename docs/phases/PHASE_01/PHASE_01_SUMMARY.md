@@ -1,29 +1,59 @@
 # Phase 1: Hook Foundation + File-Access Guard
 
-**Status**: Planned
+**Status**: In Progress — implementation complete; release blocked pending Feature 04 remediation
 **Depends on**: None
 **Estimated complexity**: Large
-**Cross-references**: `docs/phases/DISCOVERY_CONTEXT.md`, `docs/inspiration/README.md`
+**Cross-references**: `docs/phases/DISCOVERY_CONTEXT.md`, `docs/phases/PHASE_01/PHASE_01-qa-analysis.md`, `docs/hooks/installation.md`, `docs/inspiration/README.md`
 
 ## What's New
 
-After this phase, every project that consumes this repo's assets gets a safety layer that cannot be bypassed: agents can no longer read, grep, or edit `.env` files and other secret-bearing files, cannot touch explicitly protected files (lock files, production configs, the hook system itself), and cannot sneak around those rules through shell commands — even when the session runs with bypass permissions. Destructive-but-sometimes-legitimate commands (recursive deletes, force pushes) pause for your confirmation instead of hard-failing. When something is blocked, the agent is told exactly why and what to do instead, so work continues smoothly rather than failing mysteriously.
+Phase 01 now provides a Python-standard-library hook framework, a config-driven file-access guard, bounded Bash-command analysis, project and generated-global distribution, and installation guidance. Automated tests verify structured decisions for protected paths, Grep, supported shell evasions, destructive-command confirmation, fail-closed guard errors, redacted logs, configuration, and legacy-rule parity. Known Bash-analysis limits remain documented rather than being presented as general shell sandboxing.
 
-Protection travels with each project: anyone who clones a consuming repo gets working hooks with no setup, and a friend who adopts this source-of-truth repo can protect their own projects with one propagation command. On your own machine, an optional setup step extends the same protection to every repo, even ones you haven't propagated to yet. This phase also builds the shared plumbing (config, testing, propagation) that every later hook phase reuses.
+The implementation can propagate a self-contained runtime into consuming projects and can generate machine-local absolute-path wiring. That distribution is **not release-ready**: final QA reproduced an intermediate-directory symlink escape in propagation and found that the required propagated-hook latency gate is unstable. Claude Code is the only fully supported harness classification; Codex and OpenCode are partial, while Cursor and GitHub Copilot are not supported by this phase.
 
 ## Objective
 
 Establish the Python-stdlib hook framework under `.github/hooks/` (with propagation to platform outputs) and ship its first consumer: a tiered-enforcement PreToolUse guard covering secrets, protected files, indirect access via bash, and destructive commands — closing the highest-stakes safety gap (goals 2 and 5).
 
+## Implementation and Release Status
+
+All four planned features have implementation and review records. The phase remains In Progress because production review is **NO-GO** until both Feature 04 blockers are fixed and re-reviewed.
+
+| Feature | Implementation state | Release assessment |
+|---|---|---|
+| 01 — Hook framework | Implemented; deterministic framework tests pass | Live bypass, subagent, and recovery evidence remains pending |
+| 02 — File-access guard | Implemented; path, Grep, config, and self-protection behavior is covered automatically | Live harness verification remains pending |
+| 03 — Bash-command analyzer | Implemented; the 27 legacy behaviors and the documented bounded-analysis contract are covered | Published dynamic-variable, interpreter, and recursive-scan limitations require explicit risk acceptance or later hardening |
+| 04 — Hook distribution integration | Implemented, including project/global emission, legacy retirement, installation docs, and temporary-consumer tests | **Blocked** by propagation containment and unstable latency evidence |
+
+Release-blocking findings from the final QA analysis:
+
+- **SEC-01 / F04 AC1 — destination containment**: propagation can write outside a consuming-project root through a symlinked intermediate destination directory. Every generated/copy/remove path needs canonical containment and adversarial regression coverage.
+- **PERF-01 / F04 AC9 — latency stability**: the required propagated-hook median of less than 50 ms failed in the full suite and a focused rerun before later passes. The implementation needs reliable margin and repeatable evidence without weakening the threshold.
+
+Manual QA starts only after both blockers are remediated and the feature review, security scan, QA evidence, and production review are refreshed.
+
+### Harness Support Classification
+
+These classifications describe implemented capability, not release approval:
+
+| Harness | Classification | Phase 01 boundary |
+|---|---|---|
+| Claude Code | Fully supported | Project and generated user-scope `PreToolUse` wiring with structured allow/ask/deny decisions; final live QA is still pending |
+| Codex | Partial | Project/user wiring is generated, but `ask`, runner behavior, and `apply_patch` path extraction do not provide complete equivalent enforcement |
+| OpenCode | Partial | Project/global plugins launch the guard, but native decision translation and live blocking behavior are not complete |
+| Cursor | Not supported | No Cursor adapter or event/decision translation is emitted |
+| GitHub Copilot | Not supported | This phase does not verify the Claude-oriented adapter against Copilot's event/output contract |
+
 ## Deployment Model (decided during refinement)
 
-Hybrid, with per-project as the tested contract:
+Hybrid, with per-project propagation as the primary implemented contract:
 
-- **Per-project propagation (primary, committed, shareable)**: `propagate_master_assets.py` emits hook scripts, rule config, and settings wiring into consuming projects using machine-agnostic relative paths. Protection is versioned with the project and travels with any clone — zero setup for someone cloning a consuming repo.
-- **Generated user-global wiring (secondary, local-only)**: a setup script generates user-scope hook wiring with absolute paths into this repo, covering every project on the local machine including unpropagated ones. Generated output is machine-specific and never committed (gitignored). Documented, but not a first-class test target.
-- **Double-fire tolerance**: when both layers are active the guard runs twice per tool call; it must be functionally idempotent and should suppress duplicate deny messaging where practical.
+- **Per-project propagation (primary, committed, shareable)**: `propagate_master_assets.py` emits hook scripts, rule config, a distribution marker, and Claude/Codex/OpenCode wiring into consuming projects using machine-agnostic relative paths. Functional detached-consumer tests pass, but the SEC-01 nested-symlink escape blocks release.
+- **Generated user-global wiring (secondary, local-only)**: `scripts/setup-hook-symlinks.sh` now generates user-scope wiring with absolute paths into this repo. Generated output is machine-specific and gitignored. Claude is fully supported; Codex and OpenCode remain partial.
+- **Double-fire tolerance**: automated evaluation is stateless and functionally identical when both layers run. Live dual-layer verification remains pending, and duplicate redacted audit rows can occur.
 
-The existing `setup-hook-symlinks.sh` user-global symlink flow is superseded by the generated-global step (today its relative `bash .github/hooks/...` commands only resolve when the cwd is this repo, so it silently provides no protection elsewhere — this phase fixes that).
+The former user-global symlink flow has been superseded by generated regular files with absolute commands. Installation, recovery, upgrade, and rollback procedures are documented in `docs/hooks/installation.md`.
 
 ## Enforcement Posture (decided during refinement)
 
@@ -32,7 +62,7 @@ Tiered, declared per-rule in config (never hardcoded in the engine):
 - **`deny` (hard block, holds in bypass-permissions mode)**: secrets and protected-file access (read/grep/edit/write and bash-mediated equivalents); high-confidence exfiltration commands (`curl -d @<file>`, `wget --post-file`, `base64` of a protected file); tampering with the hook system's own files.
 - **`ask` (pause for user confirmation)**: destructive-but-sometimes-legitimate commands (`rm -rf`, `git push --force`, `git reset --hard`, etc. — preserving current `bash-safety.sh` ergonomics); ambiguous env-var exposure (`echo $SOME_VAR`, bare `env`/`set`/`export`), which the current guard hard-denies and which false-positives on innocent commands like `echo $PATH`.
 
-Note: `ask` may not prompt in bypass-permissions mode; only `deny` is guaranteed to hold there. This split is deliberate — secrets get the guarantee, workflow-ergonomic rules get the prompt. **Bypass-mode posture for `ask`-tier rules**: they remain `ask` (running in bypass mode is the user accepting destructive-command risk), but config supports a per-rule `escalate_in_bypass: deny` flag so specific rules can be hardened without a policy rewrite. The observed bypass-mode behavior of `ask` must be verified and documented, not assumed.
+Note: the automated contract makes `deny` the bypass-resistant tier, while `ask` may not prompt in bypass-permissions mode. This split is deliberate — secrets receive the stronger decision and workflow-ergonomic rules request confirmation. Config supports a per-rule `escalate_in_bypass: deny` flag so specific rules can be hardened without a policy rewrite. Live `deny`, `ask`, bypass-mode, and subagent behavior is still awaiting the manual QA plan and must not be inferred from payload tests alone.
 
 ## Scope
 
@@ -51,8 +81,8 @@ Note: `ask` may not prompt in bypass-permissions mode; only `deny` is guaranteed
   - Structured messages: why it was blocked or held, which rule fired, and a suggested alternative (e.g., "read `.env.sample` instead").
 - **Dangerous-command rules**: recursive-delete and similar destructive patterns, absorbing the current `bash-safety.sh` responsibilities at `ask` tier; scratchpad/temp-dir destructive operations remain allowed.
 - **Consolidation**: fold existing `bash-safety.sh` and `protect-files.sh`/`protect-files.py` behavior into the new guard; retire the legacy scripts from settings wiring after regression fixtures reproduce every current block.
-- **Propagation extension**: the hooks stage of `propagate_master_assets.py` **already exists** (emits `.claude/settings.json` wiring, `.codex/hooks.json`, and OpenCode plugins from `.github/hooks/*.json`, with `$source` tags, event mapping, and tests). This phase extends it: emit the new guard's scripts + rule config into consuming projects (per-project model), add the generated-global setup step with gitignore handling, and remove legacy-hook emission.
-- **User-facing installation guide**: a document for someone who clones this repo, walking them through installing the hooks into each harness — Claude Code, OpenCode, Codex, Cursor, and GitHub Copilot — with per-harness support status stated honestly (fully supported / partial / not supported and why). Propagation *emission* remains scoped to Claude/Codex/OpenCode; for Cursor and Copilot the guide documents what is achievable with each platform's current hook/extension mechanisms (current support must be verified during implementation — research required; if a harness has no PreToolUse-equivalent, the guide says so plainly rather than implying protection).
+- **Propagation extension**: the existing hooks stage of `propagate_master_assets.py` now emits the guard entrypoint, libraries, config, distribution marker, and Claude/Codex/OpenCode wiring; the generated-global installer produces gitignored absolute-path wiring; legacy guard emission has been retired. The release blocker is destination containment for symlinked intermediate directories, not missing functional emission.
+- **User-facing installation guide**: `docs/hooks/installation.md` covers Claude Code, OpenCode, Codex, Cursor, and GitHub Copilot. It classifies Claude as Fully supported, Codex/OpenCode as Partial, and Cursor/Copilot as Not supported, with limitations and verification steps. Propagation emission remains scoped to Claude/Codex/OpenCode.
 
 ### Out of Scope
 
@@ -77,12 +107,12 @@ Note: `ask` may not prompt in bypass-permissions mode; only `deny` is guaranteed
 
 ## Technical Context
 
-- Existing hook definitions: `.github/hooks/{bash-safety,protect-files,audit-log,done-notify}.json` with scripts in `.github/hooks/scripts/`; wired into `.claude/settings.json` with `$source` tags. **`protect-files.sh` is already a thin wrapper over `protect-files.py`** (stdlib Python, ~120 lines: file patterns, path substrings, 11 bash regexes including env-dump and curl/wget exfil rules). This phase upgrades and externalizes that logic to config; it is not a bash→Python port.
-- **Propagation already handles hooks**: `scripts/propagate_master_assets.py` contains a working hooks stage (`HOOK_EVENT_MAP`, `$source` stripping/regeneration, Codex + OpenCode emission) with coverage in `tests/test_propagate_master_assets.py`. Deliverable 4 extends this stage; do not rebuild it.
-- Current gap: `setup-hook-symlinks.sh` symlinks `~/.claude/settings.json` to this repo's settings file, but hook commands use relative paths — user-global protection currently only functions when the cwd is this repo.
-- Repo conventions: Python tooling exists (`python/` template set, pytest patterns in `tests/`); hooks must be runnable via `python3` with no venv/pip step.
-- Hook payload/decision contract: PreToolUse hooks receive JSON on stdin (tool name + tool_input) and can respond via exit code 2 (stderr shown to Claude) or structured JSON output with a permission decision (`allow`/`ask`/`deny`) + reason. The framework should support both, preferring structured JSON.
-- Critical behaviors to verify early (premise-class assumptions — spike/test these first): PreToolUse `deny` fires and blocks in bypass-permissions mode; what `ask` does in bypass mode; and that PreToolUse hooks fire for **subagent** tool calls, not just the main loop (this repo's pipeline is heavily subagent-driven — a guard the subagents skip protects almost nothing here).
+- Current hook definitions are `.github/hooks/{file-access-guard,audit-log,done-notify}.json`, backed by `.github/hooks/scripts/file-access-guard.py`, `.github/hooks/lib/`, and config under `.github/hooks/config/`. Legacy `bash-safety` and `protect-files` definitions/scripts have been retired after their behaviors were reproduced or deliberately re-tiered.
+- `scripts/propagate_master_assets.py` emits the self-contained guard runtime, distribution marker, Claude/Codex/OpenCode wiring, and retirement cleanup. Functional tests cover detached consumers and final-file/root symlinks; intermediate-directory containment is the known release blocker.
+- `scripts/setup-hook-symlinks.sh` is compatibility-named but now installs generated regular files with absolute hook commands rather than symlinking repository settings.
+- Hook runtime code is Python standard library and runs via `python3` without a project virtual environment or runtime package installation. Pytest is used for development and acceptance evidence.
+- The framework accepts observed hook-payload aliases, emits structured allow/ask/deny decisions, and preserves an exit-2 compatibility path. Security-hook exceptions fail closed; observability failures fail open.
+- Premise-class live checks remain open for bypass-mode deny/ask behavior, subagent hook execution, dual-layer behavior, and per-harness presentation. The consolidated manual QA plan owns those checks after remediation.
 - Design references (requirements only, not code): `docs/inspiration/claudekit.md` (file-guard concept, bash parsing), `docs/inspiration/claude-workflow-v2.md` (protect-files/security-check), `docs/inspiration/claude-code-hooks-mastery.md` (.env block), `docs/inspiration/buildwithclaude.md`.
 
 ## Dependencies & Risks
@@ -91,42 +121,43 @@ Note: `ask` may not prompt in bypass-permissions mode; only `deny` is guaranteed
 - **Risk**: bash-command parsing is inherently incomplete (shell grammar is undecidable in general). *Mitigation*: layered approach — exact-match fast paths, conservative pattern rules, and a default-deny option for commands that reference protected paths in any token; document known-undetectable classes explicitly; one fixture per covered evasion vector so the covered/uncovered boundary is testable, not aspirational.
 - **Risk**: false positives blocking legitimate work (e.g., editing `uv.lock` intentionally, `echo $PATH`). *Mitigation*: tiered `ask` for ambiguous rules; per-rule reasons + human-only project override file; tune rules during a soak period on this repo before propagating.
 - **Risk**: fail-closed guard bricking sessions if the hook itself has a bug. *Mitigation*: documented human-only kill switch; framework-level exception tests; guard logic kept thin over the tested framework.
+- **Release blocker**: propagation currently follows a symlinked intermediate destination directory and can write outside the declared consumer root. *Required mitigation*: canonical containment immediately before every write/removal, rejection of symlink ancestors, and adversarial regressions across runtime and generated-output subtrees.
 - **Risk**: per-project propagation drift — projects on stale rule sets after a rule fix. *Mitigation*: propagated artifacts carry a version marker; re-propagation is one command; the generated-global layer covers your own machine regardless.
-- **Risk**: hook latency on every tool call. *Mitigation*: stdlib-only, no subprocess spawning in the hot path, mtime-cached config, budget <50ms per invocation, measured in tests.
+- **Release blocker**: propagated invocation latency does not yet demonstrate stable margin below the fixed 50-ms median requirement. *Required mitigation*: profile the subprocess path, reduce overhead or establish a representative repeatable benchmark, and rerun the full and focused gates repeatedly without raising the threshold.
 - **Risk**: consolidation regressions when retiring `bash-safety.sh`/`protect-files.py`. *Mitigation*: port their existing rules into the new config first, with regression fixtures reproducing their current blocks (including the env-dump and exfil rules), before removing legacy wiring.
-- **Risk**: propagation wiring differs per harness (Claude settings.json vs Codex hooks.json vs OpenCode plugins). *Mitigation*: the existing propagation stage already abstracts this; treat Claude as the primary target; Codex/OpenCode propagation is best-effort and clearly marked.
+- **Risk**: propagation wiring differs per harness (Claude settings.json vs Codex hooks.json vs OpenCode plugins). *Mitigation*: preserve the implemented support classifications—Claude Full, Codex/OpenCode Partial, Cursor/Copilot Not supported—and do not infer equivalent enforcement from artifact emission.
 
 ## Success Criteria
 
-- [ ] A Read/Edit/Write/MultiEdit/NotebookEdit of `.env` in a consuming project is denied with a structured reason; `.env.sample` and `.env.example` are allowed.
-- [ ] A Grep call targeting a protected file is denied; Grep over ordinary source files is unaffected.
-- [ ] Tool-path normalization fixtures pass: a Read/Edit through a symlink to a protected file, `~`-prefixed and `../`-traversal path forms, and case variants each resolve to the protected target and are denied.
-- [ ] `cat .env`, `grep KEY .env` / `rg KEY .env`, `cp .env /tmp/x`, `base64 .env`, `ln -s .env <name>`, output redirection onto a protected file, command-substitution variants, quote-splitting (`cat '.e''nv'`), variable indirection (`F=.env; cat $F`), glob evasion (`cat .en?`), interpreter escapes (`python3 -c "open('.env')"`), `~`/`../` path forms, and uppercase variants (`cat .ENV`) are each covered by a fixture — denied where covered, listed in the documented-limitations section where not (recursive directory scans like `grep -r` over a parent directory are an expected documented limitation).
-- [ ] Deny behavior is verified to hold in bypass-permissions mode (manual checklist documented, plus automated payload-level tests); `ask` behavior in bypass mode is verified and documented.
-- [ ] A destructive command (e.g., recursive delete of a non-temp path, force push) triggers `ask`; the same command against the scratchpad/temp dirs is allowed; `echo $PATH` triggers `ask`, not `deny`.
-- [ ] A file named `id_generator.py` is readable; `id_rsa` and any file under `.ssh/` are denied.
-- [ ] In a consuming project, an agent Edit/Write against the propagated hook scripts, rule config, the hook wiring files (`.claude/settings.json` and local/Codex/OpenCode equivalents), or the project override file is denied.
-- [ ] An induced exception inside the guard results in a deny ("guard error"), not a silent allow; the documented kill switch (override-file flag only — no env-var activation path) restores normal operation.
-- [ ] PreToolUse guard behavior is verified for subagent tool calls, not just the main session loop.
-- [ ] Deny/audit logs contain rule names and paths only — no tool_input bodies or file contents appear in any log fixture.
-- [ ] A user-facing installation guide walks a fresh cloner through installing the hooks into Claude Code, OpenCode, Codex, Cursor, and GitHub Copilot, with per-harness support status stated explicitly (fully supported / partial / not supported and why), and its Claude Code path is verified by following the steps verbatim in a clean checkout.
-- [ ] All rules live in config files with a `reason` and `action` per rule; no rule content is hardcoded in Python beyond the engine.
-- [ ] Every existing block behavior of `bash-safety.sh` and `protect-files.py` (file patterns, path substrings, env-dump rules, exfil rules) is reproduced or explicitly re-tiered to `ask` (regression fixtures), and the legacy scripts are retired from settings wiring.
-- [ ] `propagate_master_assets.py` emits the guard's scripts + config into a consuming project such that a fresh clone of that project has working hooks with no manual steps; the generated-global setup step produces absolute-path user-scope wiring that is gitignored.
-- [ ] With both deployment layers active, a blocked call produces one clear deny outcome (no conflicting or confusing duplicate behavior).
-- [ ] Hook unit tests pass via pytest with recorded payload fixtures; median hook latency <50ms in the benchmark test.
+- [x] Automated payload tests deny Read/Edit/Write/MultiEdit/NotebookEdit access to `.env` while allowing `.env.sample` and `.env.example`.
+- [x] Automated tests deny Grep calls targeting protected files without affecting ordinary source searches.
+- [x] Tool-path normalization fixtures cover symlinks, `~`, `../`, and case variants for protected targets.
+- [x] Supported Bash-access/evasion vectors have fixtures, while unsupported dynamic expansion, interpreter-mediated access, and recursive parent scans are explicit in `docs/hooks/bash-command-limitations.md`.
+- [ ] Live bypass-permissions behavior for `deny` and `ask` is verified and documented. **Manual QA pending.**
+- [x] Destructive non-temp commands and ambiguous env exposure use `ask`; configured scratch/temp operations remain allowed.
+- [x] `id_generator.py` is readable while exact private-key names and paths under `.ssh/` are denied.
+- [ ] A live consuming-project session verifies self-protection for propagated runtime, config, wiring, and override files. **Automated coverage passes; manual QA pending.**
+- [ ] Human recovery verifies that an induced guard error denies and the protected override-file kill switch restores operation. **Automated behavior passes; manual workflow pending.**
+- [ ] PreToolUse guard behavior is verified for subagent tool calls. **Manual QA pending.**
+- [ ] Live deny/audit output confirms no tool-input bodies or file contents leak. **Automated redaction tests pass; manual QA pending.**
+- [ ] A fresh-clone installation run verifies the documented Claude Code path. The five-harness guide and support classifications are complete; **manual QA pending**.
+- [x] Security and command rules are config-driven with a reason and action; Python contains engine behavior rather than duplicated policy lists.
+- [x] The 16 legacy bash-safety strings and 11 protect-files regex behaviors are reproduced or deliberately re-tiered, and legacy wiring/scripts are retired.
+- [ ] Project propagation and generated-global wiring are release-safe. Functional emission passes, but **SEC-01 destination containment blocks this criterion**.
+- [ ] Dual project/global behavior produces a clear outcome in a live session. **Manual QA pending; duplicate redacted audit rows are an accepted documented possibility.**
+- [ ] All required tests and performance gates pass reliably. Functional and coverage suites pass, but **PERF-01 unstable propagated latency blocks this criterion**.
 
 ## QA Considerations
 
 - No frontend/UI changes; no manual QA docs required for UI.
-- Manual QA needed for the bypass-permissions verification (cannot be fully automated: requires a live Claude Code session in bypass mode attempting protected operations) — a short manual checklist should be produced, covering both `deny` and `ask` tiers.
-- Manual QA needed for the hybrid double-fire scenario (global + per-project layers both active in one session).
-- Integration behavior changes: existing bash hooks are replaced; ambiguous env-var rules move from hard-deny to `ask` (behavior change, intentional); stderr/deny messages change (better). Note in changelog.
-- Test impact: new pytest suite under `tests/` for the hook framework and guard; `tests/test_propagate_master_assets.py` will need extension for the new propagation behavior; existing tests should otherwise be unaffected.
+- `docs/phases/PHASE_01/PHASE_01_QA.md` contains the live bypass, subagent, presentation, generated-global, double-fire, recovery, rollback, and limitation checks. Execute them only after the two Feature 04 blockers close.
+- Integration behavior changed intentionally: legacy Bash hooks are consolidated, ambiguous env-var rules move from hard-deny to `ask`, and decisions provide structured rule/recovery guidance.
+- Automated evidence includes the hook pytest suite, propagation tests, standard-library compatibility, compilation, JSON parsing, shell syntax, coverage, and patch hygiene. Final QA found 251 passing tests and one latency failure in the full suite; later focused passes did not establish stable release evidence.
+- Security residuals and harness limitations must remain explicit: bounded Bash analysis is not a shell sandbox, Codex/OpenCode are Partial, Cursor/Copilot are Not supported, and live Claude premise checks remain open.
 
 ## Notes for Feature - Decomposer
 
-Suggested feature boundaries (4 features, ordered):
+The following four ordered feature boundaries were implemented:
 
 1. **Hook framework + payload fixtures** — the shared lib: config layering + caching, allow/ask/deny decision output, per-hook failure posture (fail-closed contract + override-file kill switch), redacted logging, pytest harness with payload fixtures for every tool in the matcher (including Grep and NotebookEdit), and spike tests confirming the premise-class behaviors: deny-in-bypass-mode, ask-in-bypass-mode (documented), and hooks firing for subagent tool calls. Everything else depends on this; keep it free of any rule content.
 2. **File-access guard (path-based)** — the rule engine + secrets/protected-file rules for Read/Edit/Write/MultiEdit/NotebookEdit/Grep, path normalization before matching (realpath/symlink resolution, `~`, `../`, case), per-rule `action` tiering with `escalate_in_bypass` support, structured messages, self-protection rules (scripts, config, wiring files, override file), human-only project-override mechanism. Depends on 1.
