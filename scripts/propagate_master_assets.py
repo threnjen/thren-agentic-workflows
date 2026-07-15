@@ -32,6 +32,7 @@ WATCH_DIRS = [
     REPO_ROOT / ".github" / "skills",
     REPO_ROOT / ".github" / "instructions",
     REPO_ROOT / ".github" / "hooks",
+    REPO_ROOT / ".github" / "learnings",
 ]
 
 CLAUDE_AGENTS_DIR = REPO_ROOT / "claude" / "agents"
@@ -1115,12 +1116,7 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
     if not github_skills_dir.exists():
         return {"claude_changed": 0, "opencode_changed": 0, "codex_changed": 0, "skills_changed": 0}
 
-    if claude_skills_dir.exists() and claude_skills_dir.is_symlink():
-        claude_ready = False
-    else:
-        claude_skills_dir.mkdir(parents=True, exist_ok=True)
-        claude_ready = True
-
+    claude_skills_dir.mkdir(parents=True, exist_ok=True)
     opencode_skills_dir.mkdir(parents=True, exist_ok=True)
     codex_skills_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1136,19 +1132,18 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
         skill_name = source_skill_dir.name
         source_skill_md = source_skill_dir / "SKILL.md"
 
-        if claude_ready:
-            dest_claude_dir = claude_skills_dir / skill_name
-            dest_claude_dir.mkdir(parents=True, exist_ok=True)
-            if source_skill_md.exists():
-                if _write_if_changed(dest_claude_dir / "SKILL.md", _read_text(source_skill_md)):
-                    changed_claude += 1
-            for source_file in sorted(source_skill_dir.rglob("*")):
-                if not source_file.is_file() or source_file.name == "SKILL.md":
-                    continue
-                rel = source_file.relative_to(source_skill_dir)
-                dest_file = dest_claude_dir / rel
-                if _write_if_changed(dest_file, _read_text(source_file)):
-                    changed_claude += 1
+        dest_claude_dir = claude_skills_dir / skill_name
+        dest_claude_dir.mkdir(parents=True, exist_ok=True)
+        if source_skill_md.exists():
+            if _write_if_changed(dest_claude_dir / "SKILL.md", _read_text(source_skill_md)):
+                changed_claude += 1
+        for source_file in sorted(source_skill_dir.rglob("*")):
+            if not source_file.is_file() or source_file.name == "SKILL.md":
+                continue
+            rel = source_file.relative_to(source_skill_dir)
+            dest_file = dest_claude_dir / rel
+            if _write_if_changed(dest_file, _read_text(source_file)):
+                changed_claude += 1
 
         dest_opencode_dir = opencode_skills_dir / skill_name
         dest_opencode_dir.mkdir(parents=True, exist_ok=True)
@@ -1207,6 +1202,24 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
         "codex_changed": changed_codex,
         "skills_changed": changed_claude + changed_opencode + changed_codex,
     }
+
+
+def propagate_learnings_once(repo_root: Path | None = None) -> Dict[str, int]:
+    repo_root = repo_root or REPO_ROOT
+    github_learnings_dir = repo_root / ".github" / "learnings"
+    claude_learnings_dir = repo_root / "claude" / "learnings"
+
+    if not github_learnings_dir.exists():
+        return {"claude_changed": 0, "learnings_changed": 0}
+
+    claude_learnings_dir.mkdir(parents=True, exist_ok=True)
+
+    changed_claude = 0
+    for source_file in sorted(github_learnings_dir.glob("*.md")):
+        if _write_if_changed(claude_learnings_dir / source_file.name, _read_text(source_file)):
+            changed_claude += 1
+
+    return {"claude_changed": changed_claude, "learnings_changed": changed_claude}
 
 
 def propagate_once(verbose: bool = True) -> Dict[str, int]:
@@ -1305,6 +1318,8 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     skill_result = propagate_skills_once()
     changed_skills = skill_result["skills_changed"]
 
+    learnings_result = propagate_learnings_once()
+
     hooks_result = propagate_hooks_once(verbose=False)
 
     result = {
@@ -1313,11 +1328,12 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         "hook_assets_changed": hooks_result["assets_changed"],
         "retired_hook_assets_removed": hooks_result["retired_assets_removed"],
         "hook_version_changed": hooks_result["version_changed"],
-        "claude_changed": changed_claude + hooks_result["claude_changed"] + skill_result["claude_changed"],
+        "claude_changed": changed_claude + hooks_result["claude_changed"] + skill_result["claude_changed"] + learnings_result["claude_changed"],
         "opencode_changed": changed_opencode + hooks_result["opencode_changed"] + skill_result["opencode_changed"],
         "codex_changed": changed_codex + hooks_result["codex_changed"] + skill_result["codex_changed"],
         "codex_profiles_changed": changed_codex_profiles,
         "skills_changed": changed_skills,
+        "learnings_changed": learnings_result["learnings_changed"],
     }
 
     if verbose:

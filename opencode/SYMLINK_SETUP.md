@@ -7,7 +7,8 @@ This document explains how to wire the `opencode/` directory in this repo into O
 ```
 github-agents-source-of-truth/
 ├── opencode/
-│   └── agents/          ← converted OpenCode agent files (source of truth)
+│   ├── agents/          ← converted OpenCode agent files (source of truth)
+│   └── skills/          ← propagated skill copies (generated from .github/skills/)
 ├── .github/
 │   └── skills/          ← skills directory (source of truth)
 └── opencode/
@@ -26,8 +27,9 @@ REPO="$HOME/github_repos/github-agents-source-of-truth"
 # Agents: point global opencode config at this repo's opencode/agents/
 ln -sfn "$REPO/opencode/agents" "$HOME/.config/opencode/agents"
 
-# Skills: point global opencode config at this repo's .github/skills/
-ln -sfn "$REPO/.github/skills" "$HOME/.config/opencode/skills"
+# Skills: point global opencode config at this repo's opencode/skills/
+# (propagated hard copies generated from .github/skills/ — never link .github/skills directly)
+ln -sfn "$REPO/opencode/skills" "$HOME/.config/opencode/skills"
 ```
 
 This makes all agents and skills available in every OpenCode session globally.
@@ -46,7 +48,7 @@ mkdir -p "$PROJECT/.opencode"
 ln -sfn "$REPO/opencode/agents" "$PROJECT/.opencode/agents"
 
 # Skills
-ln -sfn "$REPO/.github/skills" "$PROJECT/.opencode/skills"
+ln -sfn "$REPO/opencode/skills" "$PROJECT/.opencode/skills"
 ```
 
 ## Verifying the Setup
@@ -59,7 +61,7 @@ ls -la ~/.config/opencode/agents/
 ls -la ~/.config/opencode/skills/
 ```
 
-You should see the agent `.md` files from `opencode/agents/` and skill directories from `.github/skills/`.
+You should see the agent `.md` files from `opencode/agents/` and skill directories from `opencode/skills/`.
 
 ## Plugins Symlinks (Notification Hooks)
 
@@ -88,7 +90,7 @@ ls -la ~/.config/opencode/plugins/
 
 ## Keeping Agents Updated
 
-Because the symlinks point directly into this repo, any updates to `opencode/agents/` or `.github/skills/` are immediately available to OpenCode — no re-linking needed. Just `git pull` in this repo.
+Because the symlinks point directly into this repo, any updates to `opencode/agents/` or `opencode/skills/` are immediately available to OpenCode — no re-linking needed. Just `git pull` in this repo (and run `scripts/propagate_master_assets.py` after editing `.github/skills/` sources so the `opencode/skills/` copies regenerate).
 
 ## Agent Source of Truth
 

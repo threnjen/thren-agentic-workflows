@@ -1,6 +1,6 @@
 # Inspiration Repo Inventory
 
-Crawl of the nine repos cloned into `/Users/jennywadkins/github_repos/claude_skills`, done 2026-07-14 to bootstrap planning for (a) onboarding more security/safety hooks and (b) enhancing the agentic flow in this project. One detail file per repo in this directory.
+Crawl of the ten repos cloned into `/Users/jennywadkins/github_repos/claude_skills`, done 2026-07-14 to bootstrap planning for (a) onboarding more security/safety hooks and (b) enhancing the agentic flow in this project. One detail file per repo in this directory.
 
 ## At a glance
 
@@ -15,6 +15,7 @@ Crawl of the nine repos cloned into `/Users/jennywadkins/github_repos/claude_ski
 | [claude-code-hooks-mastery](claude-code-hooks-mastery.md) | Hook lifecycle teaching kit | 4 | 0 | 13 (uv python) | Teaching/reference | Cherry-pick (`pre_tool_use.py`, meta-agent) |
 | [claude-code-hooks](claude-code-hooks.md) | All-30-hook-events sound demo | 3 | 0 | 30 (1 py script) | Specialized novelty; best hook-event catalog | Reference only |
 | [ui-ux-pro-max-skill](ui-ux-pro-max-skill.md) | UI/UX design-intelligence skill | 0 | 7 | 0 | Highly specialized (design) | Install via its CLI if you do UI work |
+| [ponytail](ponytail.md) | "Lazy senior dev" anti-over-engineering skill, shipped to ~20 harnesses | 0 | 6 | 6 (Node) | Behavioral skill; best-in-class multi-harness distribution | **Cherry-pick distribution patterns**; optional personal install |
 
 ## Read-across for this project's two goals
 
@@ -39,6 +40,7 @@ This repo already has a deep planner→refiner→decomposer→executor pipeline.
 - **gstack's plan-review panel** (CEO/eng/design/DX sequential reviews, `autoplan`) and ship pipeline (`ship` → `land-and-deploy` → `canary`) — comparable philosophy to this repo's pipeline; good for gap analysis.
 - **buildwithclaude `gsd` and `uc-taskmanager`** — alternative spec-driven pipelines to compare against phase-refiner/feature-decomposer.
 - **claude-code-hooks (sound repo)** — reference catalog of all 30 hook events, useful when deciding which events to attach new hooks to.
+- **ponytail's distribution architecture** — one source-of-truth `skills/` + `AGENTS.md`, generated per-platform adapters with staleness-failing tests, honest per-harness support tiers (plugin vs instruction-only), SubagentStart injection with a matcher env var, Windows command variants, and uninstall that cleans external state. The strongest reference for this repo's propagation layer and Phase 01's multi-harness install guide; its SubagentStart hook is direct evidence for the "hooks must cover subagents" premise spike.
 
 ## Cross-cutting cautions
 

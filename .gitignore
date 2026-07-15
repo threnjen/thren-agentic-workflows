@@ -13,3 +13,4 @@ docs/benchmarks/B001/runs/local/
 
 .vscode
 eval/runs/
+file-access-guard.ndjson

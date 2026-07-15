@@ -34,4 +34,4 @@ A propagated, source-of-truth hook system (Python stdlib, under `.github/hooks/`
 
 ## Research Base
 
-Nine surveyed repos are inventoried in `docs/inspiration/` (one file per repo + README comparison). Key design references per phase are cross-referenced in each phase summary and in `DISCOVERY_CONTEXT.md`.
+Ten surveyed repos are inventoried in `docs/inspiration/` (one file per repo + README comparison). Key design references per phase are cross-referenced in each phase summary and in `DISCOVERY_CONTEXT.md`.
