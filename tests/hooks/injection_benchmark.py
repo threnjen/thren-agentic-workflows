@@ -67,6 +67,7 @@ def run_benchmark(
     positives = _read_json(positive_path) + _read_json(markdown_path)
     negatives = _read_json(negative_path)
     categories = {rule.category for rule in rules}
+    severities = {rule.severity for rule in rules}
     configured_ids = {rule.rule_id for rule in rules}
     evidenced_ids = {case.get("expected_rule") for case in positives}
 
@@ -131,6 +132,11 @@ def run_benchmark(
 
     inventory_valid = (
         categories == set(REQUIRED_CATEGORIES)
+        and severities == {"high", "medium", "low"}
+        and all(
+            rule.response_action == ("block" if rule.severity == "high" else "warn")
+            for rule in rules
+        )
         and configured_ids == evidenced_ids
         and bool(positives)
         and bool(negatives)

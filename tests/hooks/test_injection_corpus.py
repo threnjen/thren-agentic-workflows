@@ -182,6 +182,8 @@ def test_ac7_each_rule_obeys_configured_response_contract(
     snapshot = framework.ConfigSnapshot({**config, "source_allowlist": []}, True)
 
     for rule in rules:
+        expected_action = "block" if rule.severity == "high" else "warn"
+        assert rule.response_action == expected_action
         raw = first_case[rule.rule_id]["text"]
         event = framework.parse_payload({
             "hook_event_name": "PostToolUse",
@@ -248,6 +250,36 @@ def test_ac6_benchmark_returns_nonzero_for_broken_expectation(tmp_path) -> None:
     assert summary["passed"] is False
     assert summary["totals"]["misses"] >= 1
     assert broken[0]["text"] not in result.stdout
+
+
+def test_ac7_benchmark_rejects_response_tier_drift(
+    benchmark, config, positives, tmp_path
+) -> None:
+    candidate = json.loads(json.dumps(config))
+    changed_rules = {
+        rule_id
+        for rule_id, rule in candidate["rules"].items()
+        if rule["severity"] == "high"
+    }
+    for rule_id in changed_rules:
+        candidate["rules"][rule_id]["response_action"] = "warn"
+    changed_positives = json.loads(json.dumps(positives))
+    for case in changed_positives:
+        if case["expected_rule"] in changed_rules:
+            case["response_action"] = "warn"
+
+    config_path = tmp_path / "tier-drift-config.json"
+    positive_path = tmp_path / "tier-drift-positive.json"
+    config_path.write_text(json.dumps(candidate), encoding="utf-8")
+    positive_path.write_text(json.dumps(changed_positives), encoding="utf-8")
+
+    summary = benchmark.run_benchmark(
+        config_path=config_path,
+        positive_path=positive_path,
+    )
+
+    assert summary["passed"] is False
+    assert summary["inventory_valid"] is False
 
 
 @pytest.mark.parametrize(
