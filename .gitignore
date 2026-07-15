@@ -4,6 +4,7 @@
 .generated-global-hooks/
 dev/*
 !dev/phase-final-review/
+dev/phase-final-review/*
 !dev/phase-final-review/fixtures/
 !dev/phase-final-review/fixtures/**
 __pycache__/

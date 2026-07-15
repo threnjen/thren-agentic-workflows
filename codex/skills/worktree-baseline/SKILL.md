@@ -30,13 +30,13 @@ path before invoking `git worktree add`.
    repository:
 
    ```sh
-   git -C <REPOSITORY_ROOT> rev-parse --show-toplevel
+   git -C "<REPOSITORY_ROOT>" rev-parse --show-toplevel
    ```
 
 2. Verify the baseline commit locally before creating anything:
 
    ```sh
-   git -C <REPOSITORY_ROOT> rev-parse --verify <BASELINE_COMMIT>^{commit}
+   git -C "<REPOSITORY_ROOT>" rev-parse --verify "<BASELINE_COMMIT>^{commit}"
    ```
 
    If this command fails, stop with:
@@ -44,20 +44,29 @@ path before invoking `git worktree add`.
    provide a locally resolvable commit before retrying.` No network fetch is
    implied by this procedure.
 
-3. Inspect `git -C <REPOSITORY_ROOT> worktree list --porcelain` and the target
+3. Inspect `git -C "<REPOSITORY_ROOT>" worktree list --porcelain` and the target
    path before writing. Apply the deterministic target-path policy below.
 
-4. Create or reuse the detached worktree:
+4. Apply the target-path decision before running `git worktree add`:
 
    ```sh
-   git -C <REPOSITORY_ROOT> worktree add --detach <TARGET_PATH> <BASELINE_COMMIT>
+   # New target: create only its missing parent, then register the worktree.
+   mkdir -p "$(dirname "<TARGET_PATH>")"
+   git -C "<REPOSITORY_ROOT>" worktree add --detach "<TARGET_PATH>" "<BASELINE_COMMIT>"
    ```
+
+   Skip `git worktree add` for `reused_existing_worktree`. For a clean
+   same-repository target at another commit, first run
+   `git -C "<REPOSITORY_ROOT>" worktree remove "<TARGET_PATH>"`, then run
+   the create command above and mark the new worktree
+   `created_by_this_invocation`. Dirty or unrelated targets stop before any
+   removal or creation.
 
 5. Verify the returned worktree before handing it to the caller:
 
    ```sh
-   git -C <TARGET_PATH> rev-parse --verify HEAD
-   git -C <TARGET_PATH> status --porcelain
+   git -C "<TARGET_PATH>" rev-parse --verify HEAD
+   git -C "<TARGET_PATH>" status --porcelain
    ```
 
    The resolved `HEAD` must equal the verified baseline commit and the status
@@ -103,7 +112,7 @@ Track whether this invocation created or recreated the worktree.
 - For `created_by_this_invocation`, remove it after the caller finishes:
 
   ```sh
-  git -C <REPOSITORY_ROOT> worktree remove <TARGET_PATH>
+   git -C "<REPOSITORY_ROOT>" worktree remove "<TARGET_PATH>"
   ```
 
 - For `reused_existing_worktree`, do not remove it automatically; its owner may
