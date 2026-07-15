@@ -13,6 +13,7 @@ from typing import Any, NamedTuple
 
 _TOOL_NAME_KEYS = ("tool_name", "name", "toolName")
 _TOOL_INPUT_KEYS = ("tool_input", "input", "toolInput")
+_TOOL_OUTPUT_KEYS = ("tool_output", "tool_response", "toolOutput", "toolResponse")
 HOOK_RUNTIME_BUDGET_MS = 50
 _CONTEXT_KEYS = (
     "hook_event_name",
@@ -24,6 +25,8 @@ _CONTEXT_KEYS = (
     "cwd",
     "permission_mode",
     "permissionMode",
+    "turn_id",
+    "turnId",
 )
 
 
@@ -60,6 +63,7 @@ class PostToolResult(NamedTuple):
     action: str
     reason: str
     additional_context: str
+    updated_tool_output: Any = None
 
 
 class ConfigSnapshot(NamedTuple):
@@ -123,9 +127,10 @@ def parse_payload(source: Any) -> HookEvent:
     if event_name != "PostToolUse":
         return HookEvent(tool_name.strip(), dict(tool_input), context)
 
-    if "tool_output" not in payload:
+    tool_output = _first_present(payload, _TOOL_OUTPUT_KEYS)
+    if not any(key in payload for key in _TOOL_OUTPUT_KEYS):
         raise PayloadError("PostToolUse payload is missing tool output")
-    truncated = payload.get("tool_output_truncated")
+    truncated = payload.get("tool_output_truncated", False)
     if not isinstance(truncated, bool):
         raise PayloadError("PostToolUse truncation flag is invalid")
     agent_id = payload.get("agent_id")
@@ -140,7 +145,7 @@ def parse_payload(source: Any) -> HookEvent:
         tool_name.strip(),
         dict(tool_input),
         context,
-        deepcopy(payload["tool_output"]),
+        deepcopy(tool_output),
         truncated,
         agent_id.strip() if agent_id is not None else None,
         agent_type.strip() if agent_type is not None else None,
@@ -189,6 +194,7 @@ def make_post_tool_result(
     *,
     reason: str = "",
     additional_context: str = "",
+    updated_tool_output: Any = None,
 ) -> PostToolResult:
     """Create a validated PostToolUse allow, block, or warning result."""
 
@@ -200,24 +206,38 @@ def make_post_tool_result(
     additional_context = additional_context.strip()
     if action == "block" and (not reason or additional_context):
         raise ValueError("post-tool block requires only a reason")
-    if action == "warn" and (reason or not additional_context):
+    if action == "warn" and (
+        reason or not additional_context or updated_tool_output is not None
+    ):
         raise ValueError("post-tool warning requires only additional context")
-    if action == "allow" and (reason or additional_context):
+    if action == "allow" and (
+        reason or additional_context or updated_tool_output is not None
+    ):
         raise ValueError("post-tool allow cannot include messages")
-    return PostToolResult(action, reason, additional_context)
+    if action == "block" and updated_tool_output is None:
+        updated_tool_output = reason
+    return PostToolResult(action, reason, additional_context, deepcopy(updated_tool_output))
 
 
-def emit_post_tool_result(result: PostToolResult, *, output_stream=None) -> int:
+def emit_post_tool_result(
+    result: PostToolResult, *, output_stream=None, runner: str = "claude"
+) -> int:
     """Emit one validated PostToolUse result without replacing allowed output."""
 
     result = make_post_tool_result(
         result.action,
         reason=result.reason,
         additional_context=result.additional_context,
+        updated_tool_output=result.updated_tool_output,
     )
     output_stream = output_stream or sys.stdout
     if result.action == "block":
         payload = {"decision": "block", "reason": result.reason}
+        if runner != "codex":
+            payload["hookSpecificOutput"] = {
+                "hookEventName": "PostToolUse",
+                "updatedToolOutput": result.updated_tool_output,
+            }
     elif result.action == "warn":
         payload = {
             "hookSpecificOutput": {
@@ -360,8 +380,12 @@ def post_tool_security_guard(
     input_stream = sys.stdin if input_stream is None else input_stream
     output_stream = sys.stdout if output_stream is None else output_stream
     error_stream = sys.stderr if error_stream is None else error_stream
+    runner = "claude"
     try:
         event = parse_payload(input_stream)
+        runner = "codex" if any(
+            key in event.context for key in ("turn_id", "turnId")
+        ) else "claude"
         event_name = event.context.get(
             "hook_event_name", event.context.get("hookEventName")
         )
@@ -378,12 +402,15 @@ def post_tool_security_guard(
             result.action,
             reason=result.reason,
             additional_context=result.additional_context,
+            updated_tool_output=result.updated_tool_output,
         )
     except Exception:
         result = make_post_tool_result("block", reason="guard error")
 
     try:
-        return emit_post_tool_result(result, output_stream=output_stream)
+        return emit_post_tool_result(
+            result, output_stream=output_stream, runner=runner
+        )
     except Exception:
         try:
             error_stream.write("guard error\n")

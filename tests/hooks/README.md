@@ -11,7 +11,7 @@ python3 -m venv .venv
 ```
 
 Run the complete pytest suite, the hook-framework coverage gate, and the
-pre-existing unittest baseline:
+stdlib compatibility baseline:
 
 ```bash
 .venv/bin/python -m pytest tests/
@@ -22,7 +22,8 @@ pre-existing unittest baseline:
 python3 -m unittest discover -s tests -v
 ```
 
-Stage 0 was recorded with Python 3.12.6. Before the framework implementation
-exists, the hook contract suite is expected to fail with a message identifying
-the missing `.github/hooks/lib/framework.py`; this is the red test baseline for
-Stage 1. The two pre-existing unittest tests must remain green throughout.
+Stage 0 was recorded with Python 3.12.6. The historical pre-framework red state
+and two-test unittest baseline are no longer current. Phase 02 retained a fresh
+14-test stdlib compatibility baseline before Feature 07 and adds propagation
+cases thereafter; use current collection/results rather than the historical
+count as the release gate.

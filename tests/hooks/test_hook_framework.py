@@ -230,6 +230,10 @@ def test_post_tool_block_suppresses_output_with_redacted_reason(framework) -> No
     assert json.loads(output.getvalue()) == {
         "decision": "block",
         "reason": "redacted fixture reason",
+        "hookSpecificOutput": {
+            "hookEventName": "PostToolUse",
+            "updatedToolOutput": "redacted fixture reason",
+        },
     }
 
 
@@ -282,6 +286,10 @@ def test_post_tool_security_guard_fails_closed_without_reflecting_failure(
     assert json.loads(output.getvalue()) == {
         "decision": "block",
         "reason": "guard error",
+        "hookSpecificOutput": {
+            "hookEventName": "PostToolUse",
+            "updatedToolOutput": "guard error",
+        },
     }
     assert sentinel not in output.getvalue()
 
@@ -459,6 +467,88 @@ def test_security_guard_fails_closed_for_invalid_direct_decision(framework) -> N
     assert exit_code == 0
     assert result["permissionDecision"] == "deny"
     assert result["permissionDecisionReason"] == "guard error"
+
+
+def test_post_tool_payload_accepts_codex_response_alias_without_truncation_flag(
+    framework,
+) -> None:
+    sentinel = "CODEX_TOOL_RESPONSE_SENTINEL"
+
+    event = framework.parse_payload(
+        {
+            "hook_event_name": "PostToolUse",
+            "turn_id": "turn-1",
+            "tool_name": "Bash",
+            "tool_input": {"command": "printf fixture"},
+            "tool_response": {"output": sentinel},
+        }
+    )
+
+    assert event.tool_output == {"output": sentinel}
+    assert event.tool_output_truncated is False
+
+
+def test_claude_post_tool_block_replaces_original_output(framework) -> None:
+    sentinel = "CLAUDE_BLOCKED_OUTPUT_SENTINEL"
+    output = io.StringIO()
+
+    exit_code = framework.post_tool_security_guard(
+        lambda event, config: framework.make_post_tool_result(
+            "block",
+            reason="redacted block reason",
+            updated_tool_output={"stdout": "redacted block reason", "stderr": ""},
+        ),
+        input_stream=io.StringIO(
+            json.dumps(
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "Bash",
+                    "tool_input": {"command": "printf fixture"},
+                    "tool_output": {"stdout": sentinel, "stderr": ""},
+                    "tool_output_truncated": False,
+                }
+            )
+        ),
+        output_stream=output,
+    )
+
+    emitted = json.loads(output.getvalue())
+    assert exit_code == 0
+    assert emitted["decision"] == "block"
+    assert emitted["hookSpecificOutput"]["updatedToolOutput"] == {
+        "stdout": "redacted block reason",
+        "stderr": "",
+    }
+    assert sentinel not in output.getvalue()
+
+
+def test_codex_post_tool_block_uses_native_feedback_replacement_without_claude_field(
+    framework,
+) -> None:
+    output = io.StringIO()
+
+    framework.post_tool_security_guard(
+        lambda event, config: framework.make_post_tool_result(
+            "block",
+            reason="redacted block reason",
+            updated_tool_output={"output": "redacted block reason"},
+        ),
+        input_stream=io.StringIO(
+            json.dumps(
+                {
+                    "hook_event_name": "PostToolUse",
+                    "turn_id": "turn-1",
+                    "tool_name": "Bash",
+                    "tool_input": {"command": "printf fixture"},
+                    "tool_response": {"output": "CODEX_SENTINEL"},
+                }
+            )
+        ),
+        output_stream=output,
+    )
+
+    emitted = json.loads(output.getvalue())
+    assert emitted == {"decision": "block", "reason": "redacted block reason"}
 
 
 @pytest.mark.parametrize("failure_stage", ["payload", "config", "handler"])

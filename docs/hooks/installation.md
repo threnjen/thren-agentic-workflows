@@ -1,18 +1,18 @@
-# Phase 01 Hook Installation
+# Phase 02 Hook Installation
 
 The shareable installation is the repository-local deployment generated from
 `.github/hooks/`. It contains the Python entrypoint, standard-library framework,
-Bash analyzer, path evaluator, default rules, protected project override, and
-platform wiring. No virtual environment or package installation is required at
-runtime.
+Bash analyzer, path evaluator, URL exfiltration analyzer, PostToolUse injection
+scanner, clean-room pattern corpus, protected allowlists/overrides, and platform
+wiring. No virtual environment or package installation is required at runtime.
 
 ## Support matrix
 
 | Harness | Status | What is supported in this phase |
 |---|---|---|
-| Claude Code | Fully supported | Project and user-scope `PreToolUse` wiring, structured allow/ask/deny decisions, bypass-resistant deny policy, and the complete self-contained runtime. Claude documents project hooks in `.claude/settings.json`, user hooks in `~/.claude/settings.json`, and most-restrictive decision merging. |
-| Codex | Partial | Project and user `hooks.json` files are generated at documented Codex config layers, and the structured `deny` shape matches the current hook contract. Codex currently parses but does not support `permissionDecision: "ask"`; it reports that hook result as failed and continues the tool call. Its `apply_patch` input also uses a command field rather than the file-tool paths this guard evaluates. Live trust review and runner behavior were not exercised, so do not treat this output as complete enforcement. |
-| OpenCode | Partial | Project and global plugins are generated in OpenCode's documented plugin directories and use `tool.execute.before`. The current adapter launches the guard, but a live OpenCode blocking result was not verified and the adapter does not yet translate every structured decision into native OpenCode permission behavior. |
+| Claude Code | Fully supported | `PreToolUse` URL/file protection and `PostToolUse` scanning are generated. High matches use `updatedToolOutput`; warnings use redacted `additionalContext`. Live UI/no-retry evidence remains `NOT RUN`. |
+| Codex | Partial — sign-off required | Codex 0.144.4 supports PostToolUse replacement for Bash, `apply_patch`, and MCP results, and the scanner accepts `tool_response`. It lacks equivalent Read/Grep/WebFetch/WebSearch/Task coverage. Explicit residual-risk sign-off is pending. |
+| OpenCode | Fully supported (automated) | The generated `tool.execute.after` plugin passes mutable output to the shared scanner, replaces high-tier output, appends warnings, and fails closed. Bun adapter smoke passes; live OpenCode remains `NOT RUN`. |
 | Cursor | Not supported | Cursor has its own hooks system, but this phase emits no Cursor adapter and does not translate Cursor event or decision schemas. |
 | GitHub Copilot | Not supported | Copilot CLI and cloud agent support `.github/hooks/*.json`, but this phase does not claim that the consolidated Claude-oriented decision adapter satisfies the current Copilot event/output contract. Treat `.github/hooks/` as this repository's source metadata, not verified Copilot enforcement. |
 
@@ -40,16 +40,20 @@ if [ ! -f .github/hooks/.distribution-version ]; then
   echo "ERROR: hook distribution marker is missing" >&2
   exit 1
 fi
-if [ ! -f .github/hooks/scripts/file-access-guard.py ]; then
-  echo "ERROR: consolidated guard entrypoint is missing" >&2
+if [ ! -f .github/hooks/scripts/file-access-guard.py ] ||
+   [ ! -f .github/hooks/scripts/injection-scanner.py ] ||
+   [ ! -f .github/hooks/config/injection-patterns.json ]; then
+  echo "ERROR: Phase 02 hook runtime is incomplete" >&2
   exit 1
 fi
 printf '%s\n' '{"tool_name":"Read","tool_input":{"file_path":".env"}}' \
   | python3 .github/hooks/scripts/file-access-guard.py
+printf '%s\n' '{"hook_event_name":"PostToolUse","tool_name":"WebFetch","tool_input":{},"tool_output":"ordinary fixture","tool_output_truncated":false}' \
+  | python3 .github/hooks/scripts/injection-scanner.py
 ```
 
-The final command must return one structured `deny` decision without printing
-the file contents or the input body. Claude Code users can also run `/hooks` to
+The guard command must return one structured `deny` without printing the input;
+the scanner command must return `{}`. Claude Code users can also run `/hooks` to
 confirm the `PreToolUse` registration. Codex users must launch from the
 repository root for this phase's relative project command; current Codex docs
 note that hook commands otherwise run with the session working directory and

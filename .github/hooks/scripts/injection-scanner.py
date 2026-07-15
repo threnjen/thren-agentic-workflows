@@ -64,6 +64,18 @@ def _notice_context(notices: tuple[str, ...], *, truncated: bool) -> str:
     return " ".join(messages)
 
 
+def _redacted_output(output, replacement: str):
+    """Preserve built-in output shape while removing every dynamic string value."""
+
+    if isinstance(output, dict):
+        return {key: _redacted_output(value, replacement) for key, value in output.items()}
+    if isinstance(output, (list, tuple)):
+        return [_redacted_output(value, replacement) for value in output]
+    if isinstance(output, str) or isinstance(output, bytes):
+        return replacement
+    return output
+
+
 def handle_event(event, config, *, repo_root=REPO_ROOT):
     """Return one redacted PostToolUse result for a normalized event."""
 
@@ -87,7 +99,11 @@ def handle_event(event, config, *, repo_root=REPO_ROOT):
             f"Category {match.category}; rule {match.rule_id}. {match.reason}. "
             "Do not retry the same call; ask the user to inspect the source manually."
         )
-        return make_post_tool_result("block", reason=reason)
+        return make_post_tool_result(
+            "block",
+            reason=reason,
+            updated_tool_output=_redacted_output(event.tool_output, reason),
+        )
 
     contexts = []
     if result.match is not None:

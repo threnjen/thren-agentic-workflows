@@ -796,6 +796,46 @@ def _strip_propagated_hooks(settings: Dict) -> None:
 
 def _render_opencode_plugin(name: str, event_commands: List[Tuple[str, str]]) -> str:
     """Render an OpenCode JS plugin file from (event, command) pairs."""
+    if name == "injection-scanner" and len(event_commands) == 1:
+        event, command = event_commands[0]
+        if event == "tool.execute.after":
+            command_parts = json.dumps(shlex.split(command))
+            return (
+                GENERATED_OPENCODE_PLUGIN_HEADER
+                + "export const InjectionScanner = async ({ directory }) => {\n"
+                + "  return {\n"
+                + '    "tool.execute.after": async (input, output) => {\n'
+                + "      const payload = {\n"
+                + '        hook_event_name: "PostToolUse",\n'
+                + "        tool_name: input.tool,\n"
+                + "        tool_input: input.args ?? {},\n"
+                + "        tool_output: output.output,\n"
+                + "        tool_output_truncated: false,\n"
+                + "        session_id: input.sessionID\n"
+                + "      }\n"
+                + f"      const proc = Bun.spawnSync({command_parts}, {{\n"
+                + "        cwd: directory,\n"
+                + "        stdin: new TextEncoder().encode(JSON.stringify(payload)),\n"
+                + "        stdout: \"pipe\", stderr: \"pipe\"\n"
+                + "      })\n"
+                + "      const stdout = new TextDecoder().decode(proc.stdout)\n"
+                + "      let result\n"
+                + "      try { result = JSON.parse(stdout) } catch { result = null }\n"
+                + "      const context = result?.hookSpecificOutput?.additionalContext\n"
+                + "      const isBlock = result?.decision === \"block\" && typeof result.reason === \"string\"\n"
+                + "      const isWarn = result?.decision === undefined && typeof context === \"string\" && context.length > 0\n"
+                + "      const isAllow = result && Object.keys(result).length === 0\n"
+                + "      if (proc.exitCode !== 0 || (!isBlock && !isWarn && !isAllow)) {\n"
+                + '        output.output = "Injection scanner blocked tool output. guard error"\n'
+                + "      } else if (isBlock) {\n"
+                + "        output.output = result.reason\n"
+                + "      } else if (isWarn) {\n"
+                + "        output.output += `\\n\\n${context}`\n"
+                + "      }\n"
+                + "    }\n"
+                + "  }\n"
+                + "}\n"
+            )
     fn_name = _to_pascal_case(name)
     handler_lines: List[str] = []
     for i, (event, command) in enumerate(event_commands):
@@ -888,6 +928,7 @@ def _copy_hook_assets(source_dir: Path, target_dir: Path) -> int:
         if same_tree:
             continue
         content = source_path.read_bytes()
+        _validate_nested_output_directory(target_dir, target_path.parent)
         if target_path.is_symlink():
             target_path.unlink()
         if target_path.exists() and target_path.read_bytes() == content:
@@ -904,6 +945,7 @@ def _remove_retired_hook_assets(source_dir: Path, target_dir: Path) -> int:
         if (source_dir / relative_path).exists():
             continue
         target_path = target_dir / relative_path
+        _validate_nested_output_directory(target_dir, target_path.parent)
         if target_path.is_file() or target_path.is_symlink():
             target_path.unlink()
             removed += 1
@@ -958,6 +1000,27 @@ def _validate_output_directory(repo_root: Path, directory: Path) -> None:
         ) from exc
     if directory.is_symlink():
         raise ValueError(f"generated output directory must not be a symlink: {directory}")
+
+
+def _validate_nested_output_directory(root: Path, directory: Path) -> None:
+    """Reject symlinked or escaping intermediate directories under an output root."""
+
+    relative = directory.relative_to(root)
+    resolved_root = root.resolve()
+    current = root
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError(
+                f"generated output directory must not be a symlink: {current}"
+            )
+        if current.exists():
+            try:
+                current.resolve().relative_to(resolved_root)
+            except ValueError as exc:
+                raise ValueError(
+                    f"generated output directory resolves outside target root: {current}"
+                ) from exc
 
 
 def propagate_hooks_once(

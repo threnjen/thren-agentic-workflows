@@ -1,7 +1,7 @@
 # Hook Verification Checklist
 
 This checklist separates deterministic framework evidence from checks that need
-a live Claude Code session. Run live checks only in a disposable checkout with
+a live harness session. Run live checks only in a disposable checkout with
 no credentials, secrets, network access, or writable paths outside the checkout.
 
 ## Automated checks
@@ -10,12 +10,32 @@ Run:
 
 ```bash
 .venv/bin/python -m pytest tests/hooks/
+.venv/bin/python -m pytest tests/test_propagate_master_assets.py \
+  tests/hooks/test_hook_distribution_integration.py
 ```
 
 The suite verifies structured `deny` and `ask` decisions, the exit code 2
 blocking fallback, security fail-closed behavior, observability fail-open
-behavior, payload aliases, and content redaction. These payload-level checks do
-not establish how a particular live runner treats a decision.
+behavior, payload aliases, and content redaction. They also verify complete
+propagation, nested destination containment, Claude replacement, Codex payload
+aliases, and the generated OpenCode adapter under Bun. These checks do not
+establish how a particular live runner presents a decision.
+
+Verify emitted targets non-silently:
+
+```bash
+for path in \
+  .github/hooks/scripts/injection-scanner.py \
+  .github/hooks/lib/injection_scanner.py \
+  .github/hooks/config/injection-patterns.json \
+  .github/hooks/config/injection-allowlist.json \
+  .opencode/plugins/injection-scanner.js; do
+  test -f "$path" || { echo "ERROR: missing $path" >&2; exit 1; }
+done
+grep -Fq '"$source": "injection-scanner"' .claude/settings.json || exit 1
+grep -Fq '"$source": "injection-scanner"' .codex/hooks.json || exit 1
+echo "Phase 02 scanner assets and generated wiring are present."
+```
 
 ## Live bypass-permissions checklist
 
@@ -56,7 +76,10 @@ not establish how a particular live runner treats a decision.
 | Live `ask` in bypass-permissions mode | NOT RUN | Requires an explicitly isolated live Claude Code session |
 | Live exit code 2 fallback | NOT RUN | Requires an explicitly isolated live Claude Code session |
 | Live subagent tool call | NOT RUN | Requires an explicitly isolated live Claude Code session |
+| Live OpenCode replacement/warning | NOT RUN | Bun adapter smoke passes; run OpenCode 1.16.2 in a disposable checkout |
+| Live Codex Bash/MCP PostToolUse | NOT RUN | Codex 0.144.4 contract is supported; full phase tool coverage is unavailable |
+| Codex full-parity sign-off | PENDING | Explicit acceptance is required; see `manual-qa.md` |
+| PERF-01 fixed 50 ms budget | FAIL | Reproduced at 117–383 ms medians on 2026-07-15 |
 
 Do not convert a `NOT RUN` row to `PASS` without attaching the observed command,
-runner version, timestamp, and redacted outcome. Feature 04's integration pass
-must repeat these checks against the propagated hook wiring.
+runner version, timestamp, and redacted outcome.

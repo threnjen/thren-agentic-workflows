@@ -310,6 +310,39 @@ def test_ac5_high_block_is_redacted_and_instructs_no_retry(
     assert "Do not retry" in result.reason
     assert "inspect the source manually" in result.reason
     assert sentinel not in result.reason
+    assert result.updated_tool_output == result.reason
+
+
+def test_ac5_structured_high_block_preserves_builtin_shape_without_raw_values(
+    scanner, scanner_script, framework, tmp_path
+) -> None:
+    sentinel = "fixture directive"
+    raw = {
+        "stdout": sentinel,
+        "stderr": f"nested {sentinel}",
+        "interrupted": False,
+        "isImage": False,
+    }
+    config = framework.ConfigSnapshot(
+        {
+            "rules": {
+                "fixture-high": _rule(
+                    "fixture-high", sentinel, severity="high", response_action="block"
+                )
+            },
+            "source_allowlist": [],
+        },
+        True,
+    )
+    event = framework.parse_payload(_event_payload("Bash", raw))
+
+    result = scanner_script.handle_event(event, config, repo_root=tmp_path)
+
+    assert result.action == "block"
+    assert set(result.updated_tool_output) == set(raw)
+    assert result.updated_tool_output["interrupted"] is False
+    assert result.updated_tool_output["isImage"] is False
+    assert sentinel not in json.dumps(result.updated_tool_output)
 
 
 @pytest.mark.parametrize("severity", ["medium", "low"])
@@ -417,7 +450,14 @@ def test_ac9_entrypoint_failure_and_project_override_postures(
         config_loader=lambda: framework.ConfigSnapshot({}, False),
     )
 
-    assert json.loads(failed.getvalue()) == {"decision": "block", "reason": "guard error"}
+    assert json.loads(failed.getvalue()) == {
+        "decision": "block",
+        "reason": "guard error",
+        "hookSpecificOutput": {
+            "hookEventName": "PostToolUse",
+            "updatedToolOutput": "guard error",
+        },
+    }
     assert json.loads(disabled.getvalue()) == {}
 
 
@@ -442,7 +482,14 @@ def test_ac9_scanner_processing_failure_is_redacted(
         config_loader=lambda: config,
     )
 
-    assert json.loads(output.getvalue()) == {"decision": "block", "reason": "guard error"}
+    assert json.loads(output.getvalue()) == {
+        "decision": "block",
+        "reason": "guard error",
+        "hookSpecificOutput": {
+            "hookEventName": "PostToolUse",
+            "updatedToolOutput": "guard error",
+        },
+    }
     assert sentinel not in output.getvalue()
 
 

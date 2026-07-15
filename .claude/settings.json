@@ -21,6 +21,17 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Read|Bash|Grep|WebFetch|WebSearch|Task|mcp__.*",
+        "$source": "injection-scanner",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .github/hooks/scripts/injection-scanner.py",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -61,7 +72,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "",
+        "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Bash|WebFetch",
         "$source": "file-access-guard",
         "hooks": [
           {
