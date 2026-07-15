@@ -87,8 +87,11 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
         instructions = mod.load_instruction_docs()
         expected_slugs = (
+            "05b-change-narrator",
             "05c-qa-consolidator",
             "05d-security-rollup",
+            "05e-ac-regression",
+            "05f-seam-analyzer",
             "05h-test-health",
         )
 

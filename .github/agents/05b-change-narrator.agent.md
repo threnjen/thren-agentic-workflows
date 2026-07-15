@@ -1,7 +1,7 @@
 ---
 name: 05b Change Narrator
 description: "Builds a whole-phase baseline-to-HEAD change narrative with subphase attribution and churn hotspots."
-tools: [agent, read, search, edit, execute]
+tools: [agent, read, search, edit]
 user-invocable: false
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: 05f Seam Analyzer
 description: "Analyzes integration seams between subphases using code-review-graph impact and bridge analysis."
-tools: [read, search, edit, execute]
+tools: [read, search, edit]
 user-invocable: false
 ---
 

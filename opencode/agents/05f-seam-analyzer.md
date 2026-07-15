@@ -4,7 +4,6 @@ model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:
-  bash: allow
   edit: allow
   glob: allow
   grep: allow

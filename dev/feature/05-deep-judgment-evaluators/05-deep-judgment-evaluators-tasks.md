@@ -42,6 +42,6 @@
 ## Stage 4: Propagation and Verification (AC5 remainder, AC6)
 
 - [x] Run `scripts/propagate_master_assets.py`; confirm all three agents appear in every harness output (Claude, Codex, OpenCode)
-- [x] Run `uv run pytest tests/test_propagate_master_assets.py -q`; confirm it passes (full-suite baseline: 382 passed, 2 pre-existing unrelated failures)
+- [x] Run `uv run pytest tests/test_propagate_master_assets.py -q`; confirm it passes (full-suite baseline: 388 passed, 2 pre-existing unrelated failures)
 - [ ] Manual QA check 4: confirm each evaluator's dry-run return summary is ≤10 lines with full detail on disk under `dev/phase-final-review/`
 - [x] Check agent inventory surfaces (`.github/agents/README.md`, `docs/CODEBASE_CONTEXT.md`, top-level README) for 05x listings established by features 01–04; update the same surfaces for 05b/05e/05f if a pattern exists (per review-learnings)

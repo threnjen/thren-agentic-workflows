@@ -1,7 +1,7 @@
 ---
 name: z-change-narrator
 description: Builds a whole-phase baseline-to-HEAD change narrative with subphase attribution and churn hotspots.
-tools: Skill, Agent, Read, Grep, Glob, Edit, Write, Bash
+tools: Skill, Agent, Read, Grep, Glob, Edit, Write
 user-invocable: false
 ---
 

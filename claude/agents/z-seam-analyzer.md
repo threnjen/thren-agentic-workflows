@@ -1,7 +1,7 @@
 ---
 name: z-seam-analyzer
 description: Analyzes integration seams between subphases using code-review-graph impact and bridge analysis.
-tools: Skill, Read, Grep, Glob, Edit, Write, Bash
+tools: Skill, Read, Grep, Glob, Edit, Write
 user-invocable: false
 ---
 

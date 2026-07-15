@@ -4,7 +4,6 @@ model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:
-  bash: allow
   edit: allow
   glob: allow
   grep: allow
@@ -63,9 +62,11 @@ regression result.
    to run an automated test suite.
 3. Require each hidden verifier to enumerate its complete AC list in its own
    report before recording any status, verify each row by inspection and
-   existing evidence, and write its report under
-   `dev/phase-final-review/PHASE_0N/05e-verifiers/`. Its return contract is
-   identical to this evaluator's: report path, status, and at most 10 lines.
+   existing evidence, and write its report to
+   `dev/phase-final-review/PHASE_0N/05e-verifiers/<subphase-slug>-verifier.md`;
+   derive the filename from the assigned subphase so every verifier has a
+   unique artifact. Its return contract is identical to this evaluator's:
+   report path, status, and at most 10 lines.
 4. Validate that every expected AC has exactly one verifier row before roll-up.
    A missing, duplicate, unreadable, or partial verifier report is an
    incomplete check; list the affected ACs in Checks Not Run and never infer a
