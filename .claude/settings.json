@@ -61,7 +61,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Bash",
+        "matcher": "",
         "$source": "file-access-guard",
         "hooks": [
           {
