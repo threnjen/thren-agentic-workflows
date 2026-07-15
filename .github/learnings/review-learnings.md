@@ -119,3 +119,27 @@ Stale `outputs.tf` files carry misleading comments after resources are defined, 
 ## Watch for
 
 `outputs.tf` files with placeholder-style comments that name a specific future feature; check whether that feature has already landed and whether any resource ARNs or IDs are worth exporting as outputs.
+
+## Pattern
+
+When a public value type can be constructed directly as well as through a validating factory, validate it again at every security-sensitive emission or execution boundary.
+
+## Impact
+
+Callers can bypass factory validation by invoking the value constructor directly, allowing invalid actions to reach an external runner and potentially turn a fail-closed path into an ambiguous or non-blocking result.
+
+## Watch for
+
+Exported `NamedTuple`, dataclass, or plain-object decision types paired with a validating factory, followed by emitters or guards that check only the instance type.
+
+## Pattern
+
+Fail-open observability requirements must cover the executable wrapper as well as exceptions handled inside the implementation language.
+
+## Impact
+
+An interpreter startup or shell-pipeline failure can return non-zero before application-level exception handling runs, causing an audit-only hook to block its caller.
+
+## Watch for
+
+Audit wrappers using `set -e` or `pipefail` without an explicit non-blocking fallback, and tests that invoke only the Python or Node entrypoint rather than the actual shell wrapper.

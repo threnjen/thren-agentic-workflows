@@ -16,6 +16,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AUDIT_SCRIPT_PATH = REPO_ROOT / ".github" / "hooks" / "scripts" / "audit-log.py"
+AUDIT_WRAPPER_PATH = REPO_ROOT / ".github" / "hooks" / "scripts" / "audit-log.sh"
 VERIFICATION_DOC_PATH = REPO_ROOT / "docs" / "hooks" / "hook-verification.md"
 
 PUBLIC_API = (
@@ -140,6 +141,14 @@ def test_denial_can_use_exit_code_two_fallback(framework) -> None:
     assert exit_code == 2
     assert output.getvalue() == ""
     assert error_output.getvalue() == "guard unavailable\n"
+
+
+def test_decision_emitter_rejects_invalid_direct_decision(framework) -> None:
+    with pytest.raises(ValueError, match="decision action"):
+        framework.emit_decision(
+            framework.Decision("permit", "invalid action"),
+            output_stream=io.StringIO(),
+        )
 
 
 def _write_json(path, payload) -> None:
@@ -275,6 +284,23 @@ def test_security_output_failure_uses_blocking_fallback(framework) -> None:
 
     assert exit_code == 2
     assert error_output.getvalue() == "guard error\n"
+
+
+def test_security_guard_fails_closed_for_invalid_direct_decision(framework) -> None:
+    output = io.StringIO()
+
+    exit_code = framework.security_guard(
+        lambda event, config: framework.Decision("permit", "invalid action"),
+        input_stream=io.StringIO(json.dumps({
+            "tool_name": "Read", "tool_input": {"file_path": "safe.txt"}
+        })),
+        output_stream=output,
+    )
+
+    result = json.loads(output.getvalue())["hookSpecificOutput"]
+    assert exit_code == 0
+    assert result["permissionDecision"] == "deny"
+    assert result["permissionDecisionReason"] == "guard error"
 
 
 @pytest.mark.parametrize("failure_stage", ["payload", "config", "handler"])
@@ -465,6 +491,28 @@ def test_complete_audit_path_fails_open(
     assert exit_code == 0
     assert captured.out == captured.err == ""
     assert sentinel not in captured.out + captured.err
+
+
+def test_audit_wrapper_fails_open_when_python_entrypoint_fails(tmp_path) -> None:
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_python = fake_bin / "python3"
+    fake_python.write_text("#!/bin/sh\nexit 23\n", encoding="utf-8")
+    fake_python.chmod(0o755)
+    environment = os.environ.copy()
+    environment["PATH"] = f"{fake_bin}:/usr/bin:/bin"
+
+    result = subprocess.run(
+        ["/bin/bash", str(AUDIT_WRAPPER_PATH)],
+        input="{}",
+        text=True,
+        capture_output=True,
+        check=False,
+        env=environment,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == result.stderr == ""
 
 
 def test_framework_package_exposes_only_documented_public_contract(

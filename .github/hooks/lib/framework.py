@@ -129,6 +129,7 @@ def emit_decision(
 ) -> int:
     """Emit one structured decision, or a blocking exit-code-2 fallback."""
 
+    decision = make_decision(decision.action, decision.reason)
     output_stream = output_stream or sys.stdout
     error_stream = error_stream or sys.stderr
     if use_exit_code_fallback:
@@ -248,6 +249,7 @@ def security_guard(
             decision = handler(event, config)
         if not isinstance(decision, Decision):
             raise TypeError("security hook handler must return a Decision")
+        decision = make_decision(decision.action, decision.reason)
     except Exception:
         decision = make_decision("deny", "guard error")
 
