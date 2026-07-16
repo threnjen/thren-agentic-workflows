@@ -1062,6 +1062,64 @@ class OrphanPruningTests(unittest.TestCase):
             self.assertEqual(result["skill_orphans_removed"], 0)
             self.assertFalse((repo_root / "claude" / "skills").exists())
 
+    def test_hand_maintained_file_quoting_the_marker_survives(self) -> None:
+        """AC5: the marker guard keys on the one position the emitter writes to,
+        not on the marker appearing anywhere in the file. A hand-maintained doc
+        that *quotes* the marker — e.g. `claude/agents/README.md` explaining the
+        convention in a fenced code block — is not a generated file and must not
+        be swept. A whole-file search would delete exactly the file AC5 protects.
+        """
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
+            claude_agents = repo_root / "claude" / "agents"
+            claude_agents.mkdir(parents=True, exist_ok=True)
+            readme = claude_agents / "README.md"
+            body = (
+                "# Claude Agents\n\n"
+                "Generated files in this directory carry a marker:\n\n"
+                "```markdown\n"
+                f"{mod.GENERATED_AGENT_MARKDOWN_HEADER}\n"
+                "```\n\n"
+                "This README is hand-maintained and carries no such marker.\n"
+            )
+            readme.write_text(body, encoding="utf-8")
+
+            result = mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            self.assertTrue(readme.exists(), "a doc quoting the marker was deleted")
+            self.assertEqual(readme.read_text(encoding="utf-8"), body)
+            self.assertEqual(result["claude_orphans_removed"], 0)
+
+    def test_marker_guard_matches_every_real_generated_file(self) -> None:
+        """The guard must still positively identify all real generated output.
+        A guard tightened until it matches nothing would make the pruner inert
+        and pass AC7 for entirely the wrong reason."""
+        roots = [
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 33),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 46),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 46),
+            (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 19),
+        ]
+        for directory, pattern, marker, expected_count in roots:
+            with self.subTest(root=directory.name):
+                matched = [
+                    p
+                    for p in sorted(directory.glob(pattern))
+                    if mod._is_generated_output(p, marker)
+                ]
+                self.assertEqual(len(matched), expected_count)
+
+        # The two known unmarked files in claude/agents must stay unmatched.
+        for unmarked in ("README.md", "single-feature.md"):
+            path = mod.CLAUDE_AGENTS_DIR / unmarked
+            if path.exists():
+                with self.subTest(unmarked=unmarked):
+                    self.assertFalse(
+                        mod._is_generated_output(path, mod.GENERATED_AGENT_MARKDOWN_HEADER)
+                    )
+
     def test_real_repository_propagation_removes_nothing(self) -> None:
         """AC7: the pruner is proven inert against the current tree before it is
         trusted against a changed one. This asserts on the real repository."""

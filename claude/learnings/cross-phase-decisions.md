@@ -72,6 +72,24 @@
   generated skill Markdown or agent Markdown/TOML. Downstream checks must not
   require that metadata on non-hook assets without a corresponding propagator
   change.
+- **All Markdown generated roots now carry a generated marker, and the propagator
+  prunes orphans in all eight roots** (`01-propagator-orphan-pruning`). The marker
+  is `GENERATED_AGENT_MARKDOWN_HEADER` for `claude/agents`, `claude/commands`, and
+  `opencode/agents`; `GENERATED_SKILL_HEADER` for the three `*/skills` roots;
+  `GENERATED_AGENT_HEADER` for the Codex TOML roots. Generated skill `SKILL.md`
+  files are therefore **no longer byte-identical to their `.github/skills/` source**
+  — they differ by exactly the marker line. Any future check that assumes byte
+  identity between source and generated skill output must be updated.
+- **Deletion is gated on the marker, so a file orphaned before the marker existed
+  is unmarked and permanently unprunable.** This is a structural limitation of the
+  marker approach, accepted deliberately because it fails closed. Blast radius
+  measured at exactly one file (`claude/agents/single-feature.md`), owned by
+  `08-retirement-reconciliation`. Any future asset rename must land while the
+  propagator is marker-aware, or it leaves an orphan no sweep will ever collect.
+- **A `--watch` propagator holding pre-marker code is a silent-failure hazard.** It
+  rewrites generated roots without markers using stale code, disabling every prune
+  while the code still reads as correct. Restart the watcher after any propagator
+  change before trusting a propagation run.
 
 ## Review Contracts
 

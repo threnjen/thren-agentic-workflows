@@ -318,3 +318,44 @@ history recovery.
 
 Command examples in fetch-only contracts, missing unavailable-source handling,
 or mirror tests that inspect only one harness's permission boundary.
+
+## Pattern
+
+A marker-based guard that decides whether a generated file may be deleted must key
+on the exact position the emitter writes the marker to — never on the marker
+appearing anywhere in the file, and never on a prefix check that ignores
+frontmatter. Extract that position into one helper shared by the writer and the
+guard so the two cannot drift apart.
+
+## Impact
+
+Both looser rules fail, in opposite directions. A prefix check against output that
+opens with YAML frontmatter matches nothing: the guard reads as implemented, passes
+review, and silently disables the sweep indefinitely. A whole-file search matches any
+hand-maintained document that merely quotes the marker while documenting the
+convention, deleting exactly the file the guard exists to protect.
+
+## Watch for
+
+`startswith(MARKER)` applied to frontmatter-bearing output; `MARKER in text` or
+`MARKER in text.splitlines()` used as a deletion predicate; a guard tested only for
+what it deletes and never for what it must refuse to delete; README or convention
+docs living inside a generated root.
+
+## Pattern
+
+A destructive helper is proven only by tests that bracket it from both directions:
+one that fails if the guard is removed, and one that fails if the guard is tightened
+until it matches nothing.
+
+## Impact
+
+A single-sided suite lets a guard pass for the wrong reason. An inert guard trivially
+satisfies a "deletes zero files on a clean tree" criterion while the capability it
+gates does nothing at all. Mutation-test the guard rather than asserting it.
+
+## Watch for
+
+Inert-run criteria ("a run on the unmodified repo deletes nothing") with no companion
+test proving the pruner positively identifies real generated output; deletion counters
+asserted only as zero.

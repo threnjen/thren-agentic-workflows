@@ -156,6 +156,27 @@ def _write_if_changed(path: Path, content: str) -> bool:
     return True
 
 
+def _generated_marker_line_index(text: str) -> int:
+    """The one line index at which a generated marker is written, or -1 for none.
+
+    Single source of truth shared by `_with_generated_marker` (which writes the
+    marker there) and `_is_generated_output` (which looks for it only there), so
+    the writer and the guard cannot drift apart.
+
+    The position is line 0 for output with no YAML frontmatter (the TOML roots),
+    and the line immediately below the closing `---` otherwise. Text whose
+    frontmatter is opened but never closed has no valid position and returns -1:
+    it is never marked, and therefore never pruned.
+    """
+    if not text.startswith("---\n"):
+        return 0
+    lines = text.splitlines()
+    for index in range(1, len(lines)):
+        if lines[index] == "---":
+            return index + 1
+    return -1
+
+
 def _with_generated_marker(text: str, marker: str) -> str:
     """Insert `marker` immediately below the YAML frontmatter block.
 
@@ -165,32 +186,35 @@ def _with_generated_marker(text: str, marker: str) -> str:
     unmarked file is never deleted, so failing closed here is the safe direction.
     """
     marker_line = marker.strip("\n")
-    lines = text.splitlines(keepends=True)
-    if marker_line in [line.rstrip("\n") for line in lines]:
+    index = _generated_marker_line_index(text)
+    if index < 0:
         return text
 
-    if not text.startswith("---\n"):
-        return marker_line + "\n" + text
+    lines = text.splitlines(keepends=True)
+    if index < len(lines) and lines[index].rstrip("\n") == marker_line:
+        return text
 
-    for index in range(1, len(lines)):
-        if lines[index].rstrip("\n") == "---":
-            after_frontmatter = index + 1
-            return (
-                "".join(lines[:after_frontmatter])
-                + marker_line + "\n"
-                + "".join(lines[after_frontmatter:])
-            )
-    return text
+    return "".join(lines[:index]) + marker_line + "\n" + "".join(lines[index:])
 
 
 def _is_generated_output(path: Path, marker: str) -> bool:
-    """Whether `path` carries `marker` on a line of its own.
+    """Whether `path` carries `marker` at the exact line the emitter writes it to.
 
-    Deliberately a whole-line check rather than a prefix check. A prefix check is
-    what silently disabled the codex/skills prune: generated Markdown opens with
-    YAML frontmatter, so its marker sits below that block rather than at byte zero,
-    and `startswith` matched 0 of 24 files while the block read as implemented.
-    A whole-line check still matches the TOML outputs, whose marker is line 1.
+    Positional rather than a whole-file search, and deliberately not the original
+    `startswith` prefix check either. Both looser rules are unsafe in opposite
+    directions:
+
+    - `startswith` is what silently disabled the codex/skills prune. Generated
+      Markdown opens with YAML frontmatter, so its marker sits below that block
+      rather than at byte zero; the check matched 0 of 24 files for years while
+      reading as implemented.
+    - A whole-file search would delete any hand-maintained file that merely
+      *quotes* the marker — for example a README documenting the convention, in a
+      fenced code block. `claude/agents/README.md` is exactly such a file, living
+      inside a pruned root, and it is the file AC5 exists to protect.
+
+    Checking the single position the emitter writes to matches every real
+    generated file while making a quoted marker in a file body inert.
 
     An unreadable file is not a confirmed orphan, so read errors report False.
     """
@@ -198,7 +222,11 @@ def _is_generated_output(path: Path, marker: str) -> bool:
         text = _read_text(path)
     except OSError:
         return False
-    return marker.strip("\n") in text.splitlines()
+    index = _generated_marker_line_index(text)
+    if index < 0:
+        return False
+    lines = text.splitlines()
+    return index < len(lines) and lines[index] == marker.strip("\n")
 
 
 def _prune_orphaned_outputs(
