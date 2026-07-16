@@ -43,6 +43,16 @@
   writes to a root its own contract does not declare. Suggested close: `07` adds a test
   asserting the agent-declared root matches the skill-declared root. (Recorded 2026-07-16 by
   `03-pr-review-conventions-skills`'s review; originated as that feature's Gap 1.)
+  **Update: the "no test pins either root" half is now closed.**
+  `04-pr-review-orchestrator` added
+  `tests/test_pr_review_orchestrator.py::test_report_root_migration_cannot_split_silently`,
+  which asserts the **exact set** of six evaluators still on the retired root
+  (`05b`, `05g`, `05h`, `05j`, `05k`, `05l`). It fails the moment any of them migrates,
+  cannot be satisfied by regressing the orchestrator or the skills (both are separately
+  asserted onto the new root), and is deleted when the set empties. Verified by mutation in
+  both directions. The **migration itself is still open** and still owned by `05`–`07`; what
+  changed is that it can no longer ship half-done in silence. (Recorded 2026-07-16 by
+  `04-pr-review-orchestrator`'s review.)
 - **User-local configuration referencing the retired skill names** (`phase-final-review-conventions`,
   `phase-final-review-report`) — e.g. a personal `~/.claude/` setup — cannot be verified or
   fixed from this repository. Verified clean for `.github/`, `tests/`, `scripts/`, and all
@@ -50,6 +60,31 @@
   acknowledged, unclosable assumption rather than a gap. (Recorded 2026-07-16 by
   `03-pr-review-conventions-skills`'s review.)
 - **Adoption readiness is unplanned work with no roadmap entry.** Phases 01–04 are scoped for an audience of the author and friends — people who can ask a question and get an answer. That assumption is what makes three residual risks acceptable: Codex's partial tool coverage stays documented rather than redesigned, the file-access guard's friction profile stays hand-tuned to one workflow, and distribution stays "clone and run propagation". Adoption beyond that circle invalidates all three, because partial protection that reads as total protection is worse than none once the user cannot ask. A future phase would need: a packaged install path (see plugin packaging above), a friction budget tunable without editing rule files, recovery/kill-switch docs written for a stranger, an upgrade path when rules change, and install-time disclosure of Codex's coverage gap. **This needs a roadmap entry from `@project-planner`; it is explicitly out of scope for Phase 04.** (Recorded 2026-07-16.)
+
+- **The PR Review fixture dry run (`04-pr-review-orchestrator` AC13) is deferred to
+  `08-retirement-reconciliation`, and deferral is the only correct option.** The fixture
+  (`dev/pr-review/fixtures/pinned-diff-range.md`, `f5ab960..e6ff28a`, 26 files / 1288
+  insertions) is pinned, tracked, and asserted, but the run was not executed. Five of the
+  eight roster names — `05c`, `05d`, `05e`, `05f`, `05g` — resolve to **no agent on disk**
+  until features `05`–`07` land in waves 5–6. A dry run today would record five of six
+  fan-out evaluators as `not-run`, which by the orchestrator's own AC11 semantics caps the
+  verdict at NO-GO **by construction**: it would manufacture below-GO evidence from an
+  unrunnable roster, which is precisely what the recorded release rule (*a run whose required
+  evaluators are recorded `not-run` is below-GO evidence, not a passing run*) exists to
+  forbid. The report-root split above is a second, independent blocker: evaluators would be
+  routed to a root they do not write to. `08` already owns verifying the roster resolves and
+  is the first point at which the run is possible. **The general rule: a required-evidence
+  run whose prerequisites cannot exist yet must be deferred with a named owner, never
+  executed early to produce an artifact.** (Recorded 2026-07-16 by
+  `04-pr-review-orchestrator`'s review.)
+- **The `05x` roster forward reference is safe today because the propagator resolves
+  `agents:` by display name, not slug.** `05 PR - Review` forward-references `05g Readiness
+  Synthesizer` while `05g-artifact-sweeper.agent.md` exists on disk with the display name
+  `05g Artifact Sweeper`. Verified: no roster entry mis-binds to an existing agent. A
+  slug-based resolver would silently bind the synthesis position to the artifact sweeper.
+  Any future change to agent-reference resolution must preserve display-name matching, or
+  re-check every forward reference in the roster. (Recorded 2026-07-16 by
+  `04-pr-review-orchestrator`'s review.)
 
 ## Hook Composition
 

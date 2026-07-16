@@ -340,7 +340,13 @@ def test_agent_declares_it_writes_no_status_line_anywhere() -> None:
 
     assert "issue no verdict" in body or "issues no verdict" in body
     assert "never write a status line" in body
-    assert "advisory" in body
+
+    # Asserted against the body, not the whole file: `Advisory only` also occurs
+    # in the frontmatter `description:`, so deleting the advisory rule from the
+    # instructions left the description behind and this assertion stayed green
+    # over an agent that no longer told itself the report was advisory.
+    instructions = _prose().split("---", 2)[-1]
+    assert "the readiness report is advisory" in instructions
 
 
 def test_no_archive_before_overwrite_survives() -> None:
@@ -444,13 +450,37 @@ def test_self_exclusion_is_declared_for_branch_and_tracking_ref() -> None:
 
 def test_the_three_wrong_suggestion_cases_are_named() -> None:
     """AC5. Correction must be first-class, not an escape hatch: the user can
-    only correct a suggestion they have been told might be wrong."""
-    body = _prose()
+    only correct a suggestion they have been told might be wrong.
 
-    assert "branch cut from another feature branch" in body
-    assert "rebased branch" in body
-    assert "squash-merged base" in body
-    assert "first-class" in body
+    Scoped to the `Confirm, and make correction first-class` section rather than
+    asserted over the whole document, for the same reason
+    `test_suggestion_chain_appears_in_order` is: whole-document presence is inert
+    wherever the phrase occurs twice. Both halves of this test were inert before
+    scoping. `squash-merged base` also occurs in the `When there is no merge-base`
+    section, so deleting the AC5 bullet left the stray occurrence and the
+    assertion passed over a missing case; `first-class` also occurs in this
+    section's own heading, so demoting the rule in the prose below it passed too.
+    Verified by mutation: both deletions now fail here.
+    """
+    body = ORCHESTRATOR.read_text(encoding="utf-8")
+    section = body.split("### Confirm, and make correction first-class", 1)[1]
+    section = section.split("\n### ", 1)[0]
+
+    cases = re.findall(r"^- \*\*(.+?)\*\*", section, flags=re.MULTILINE)
+    assert len(cases) == 3, f"expected exactly three wrong-suggestion cases, got {cases}"
+
+    joined = " ".join(cases).lower()
+    for token in (
+        "branch cut from another feature branch",
+        "rebased branch",
+        "squash-merged base",
+    ):
+        assert token in joined, f"AC5 case not named as a bullet: {token!r}"
+
+    # The rule itself, not the heading it sits under.
+    prose = re.sub(r"\s+", " ", section.split("\n- ", 1)[0]).lower()
+    assert "correction is a first-class outcome" in prose
+    assert "not an escape hatch" in prose
 
 
 def test_override_replaces_the_suggestion_and_reaches_every_evaluator() -> None:
@@ -602,10 +632,17 @@ def test_frontmatter_agents_list_names_the_full_roster_by_display_name() -> None
 def test_evaluator_failure_never_aborts_and_never_passes() -> None:
     body = _prose()
 
-    assert "evaluator-status.jsonl" in body
     assert "never aborts the" in body
     assert "never becomes a passing result" in body
     assert "not-run" in body and "incomplete" in body
+
+    # The append rule itself, not merely the filename. `evaluator-status.jsonl`
+    # occurs twice -- once in the rule that writes a record, once in the
+    # sentence that collects them for `05g` -- so bare presence stayed green
+    # after the rule that produces the records was deleted, leaving an agent
+    # that reads a file it never writes.
+    assert "append exactly one json object to the current run's" in body
+    assert "`evaluator-status.jsonl`" in body
 
 
 def test_bounded_wait_is_retained() -> None:
@@ -669,8 +706,12 @@ def test_report_templates_and_severity_are_not_restated() -> None:
     Restating them here creates a second source of truth that drifts."""
     body = ORCHESTRATOR.read_text(encoding="utf-8")
 
-    assert "pr-review-conventions" in body
-    assert "pr-review-report" in body
+    # The load instruction, not bare presence: both skill names also occur in the
+    # evaluator invocation shape, so deleting the orchestrator's own load line
+    # left those occurrences and this assertion stayed green.
+    prose = _prose()
+    assert "load `pr-review-conventions` before any review work" in prose
+    assert "load `pr-review-report`" in prose
     for severity in ("Critical", "High", "Medium", "Low"):
         assert f"| {severity} |" not in body, f"severity table restated: {severity}"
 

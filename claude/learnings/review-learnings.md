@@ -470,3 +470,15 @@ re-lists them as literals — the duplication is the defect, and the sweep failu
 symptom correctly reporting it. Also: when replacing literals with a derived tuple, add a
 vacuity assert (`assert derived_list`), or an empty upstream list silently neuters the
 guard while it still reports green.
+
+## Pattern
+
+A contract test that asserts a literal is present somewhere in a whole document is inert wherever that literal occurs more than once. Deleting the occurrence the test exists to protect leaves a stray occurrence elsewhere, and the assertion stays green over a broken contract. Scope every prose assertion to the section, list item, or sentence that carries the obligation — parse the structure (numbered items, `- **bullets**`, the body below a heading) and assert against it, not against the flattened document.
+
+## Impact
+
+The guard reports green while the requirement it names is gone. This is worse than no test: absence tests are usually protecting the highest-risk deleted code or the least-defended contract, and a green inert guard is what licenses the next editor to remove the real thing. Reviewers cannot detect it by reading, because the test and the contract both look correct in isolation.
+
+## Watch for
+
+The same literal appearing in a heading and in the rule beneath it; in frontmatter `description:` and again in the body; in a rule that writes a file and again in a sentence that reads it; in a ranked list and again in a worked example. Before trusting any prose-assertion module, count occurrences of every asserted literal in the normalized target — a count of two or more marks a candidate, and only a deletion mutation settles it. Fixing the one or two instances that happen to surface is not sweeping the class: this defect arrives in cohorts, because whoever wrote one presence assertion wrote all of them.
