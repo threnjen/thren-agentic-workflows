@@ -85,10 +85,16 @@ proceeding with this unresolved PERF-01 risk on 2026-07-15. Root-cause profiling
 later attributed the overshoot to `python3` resolving through a pyenv shim
 (~50 ms of shell re-resolution per call, ~62 ms for a bare `python3 -c pass`);
 the guard runtime itself measures ~30 ms median through a directly resolved
-interpreter. The gate now invokes a resolved interpreter and passes at the
-original 50 ms threshold; deployments whose hook command resolves `python3`
-through a pyenv shim will still pay the shim overhead per call. SEC-01
-intermediate-directory containment is reproduced green.
+interpreter. The gate now invokes a resolved interpreter at the original 50 ms
+threshold, but **PERF-01 remains open**: the gate is still unstable, failing 2
+of 6 focused runs observed on 2026-07-16 and reproducing the original
+"failed two of five observed runs" finding. The guard's ~30 ms median leaves
+roughly 20 ms of headroom, so a loaded machine tips the gate over. Deployments
+whose hook command resolves `python3` through a pyenv shim will additionally pay
+the shim overhead per call. Closing PERF-01 is owned by Phase 04
+(`../phases/PHASE_04/PHASE_04_SUMMARY.md`); the fixed 50 ms budget must not be
+raised to make it pass. SEC-01 intermediate-directory containment is reproduced
+green.
 
 ## Known boundaries
 

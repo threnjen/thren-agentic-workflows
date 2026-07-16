@@ -1,5 +1,12 @@
 # Phase 05 QA Coverage Map
 
+> **Renumbered 2026-07-16: this phase is now Phase 03 (formerly Phase 05).** The
+> body below is preserved as the historical record from the original review and
+> still uses the Phase 05 numbering throughout. Development-fixture paths
+> (`dev/phase-final-review/fixtures/PHASE_05/`, `PHASE_05a`/`PHASE_05b`) and the
+> `05a`–`05l` agent names are unchanged and remain correct as written. See the
+> mapping table in `docs/phases/PROJECT_ROADMAP.md`.
+
 **Date:** 2026-07-15
 **Last Updated:** 2026-07-15
 **Scope:** Acceptance-criterion coverage for all six Phase 05 feature folders.

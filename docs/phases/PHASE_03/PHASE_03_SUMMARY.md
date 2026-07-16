@@ -1,9 +1,29 @@
-# Phase 5: Phase Final Review Agent Family
+# Phase 3: Phase Final Review Agent Family
 
-**Status**: NO-GO
-**Depends on**: None (independent of hook phases 01–04; consumes existing pipeline assets only)
+**Status**: Implemented — release blocked (NO-GO); blockers are owned by Phase 04
+**Depends on**: None (independent of the hook phases; consumes existing pipeline assets only)
 **Estimated complexity**: Large
-**Cross-references**: `docs/phases/DISCOVERY_CONTEXT.md` (§ "Phase 05 Design Notes" — the user-directed design capture this summary is authored from)
+**Cross-references**: `docs/phases/DISCOVERY_CONTEXT.md` (§ "Phase 03 Design Notes" — the user-directed design capture this summary is authored from), `docs/phases/PHASE_04/PHASE_04_SUMMARY.md` (remediation phase that closes this phase's NO-GO findings)
+
+> **Renumbered 2026-07-16: this phase was previously Phase 05.** It was planned
+> and executed out of numeric order (immediately after Phase 02), so it was
+> renumbered to 03 to match the order work actually happened. Two naming
+> details deliberately did **not** change:
+>
+> - The `05-phase-final-review` orchestrator and its `05a`–`05l` evaluators keep
+>   their numbers. Agent numbering marks pipeline position (`01-project-planner`
+>   → `02-phase-refiner` → `03-feature-decomposer` → `04-phase-execute` →
+>   `05-phase-final-review`), not the phase that built them.
+> - The development fixture keeps its legacy identifier
+>   `dev/phase-final-review/fixtures/PHASE_05/` (with pseudo-subphases
+>   `PHASE_05a`/`PHASE_05b`) and its report root
+>   `dev/phase-final-review/PHASE_05/`. These are synthetic phase identifiers
+>   pinned to recorded commit SHAs; renaming them would invalidate the fixture
+>   contract for no benefit.
+>
+> Older documents (including the Phase 01 and Phase 02 summaries) refer to the
+> pre-renumber scheme. See the mapping table in
+> `docs/phases/PROJECT_ROADMAP.md`.
 
 ## What's New
 
