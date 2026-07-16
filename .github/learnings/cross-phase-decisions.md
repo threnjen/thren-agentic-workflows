@@ -34,6 +34,21 @@
   commit SHAs. Retiring them is a design decision with real blast radius, not cleanup.
   Needs an explicit owner. (Recorded 2026-07-16 by `02-retired-evaluator-removal`'s
   review.)
+- **The seven surviving `05x` agents still declare `dev/phase-final-review/PHASE_0N/` report
+  roots** while `pr-review-conventions` now declares
+  `dev/pr-review/<base-sha-short>-<UTC-…>/`. The mismatch is **intentional and temporary** —
+  features `04`–`07` own those agent bodies and `03` correctly touched skill-reference tokens
+  only. But **no test pins either root**, so nothing forces the migration to actually happen:
+  if `04`–`07` each assume another owns it, the split ships silently and every evaluator
+  writes to a root its own contract does not declare. Suggested close: `07` adds a test
+  asserting the agent-declared root matches the skill-declared root. (Recorded 2026-07-16 by
+  `03-pr-review-conventions-skills`'s review; originated as that feature's Gap 1.)
+- **User-local configuration referencing the retired skill names** (`phase-final-review-conventions`,
+  `phase-final-review-report`) — e.g. a personal `~/.claude/` setup — cannot be verified or
+  fixed from this repository. Verified clean for `.github/`, `tests/`, `scripts/`, and all
+  three generated roots. Routes to `08-retirement-reconciliation`'s notes as an
+  acknowledged, unclosable assumption rather than a gap. (Recorded 2026-07-16 by
+  `03-pr-review-conventions-skills`'s review.)
 - **Adoption readiness is unplanned work with no roadmap entry.** Phases 01–04 are scoped for an audience of the author and friends — people who can ask a question and get an answer. That assumption is what makes three residual risks acceptable: Codex's partial tool coverage stays documented rather than redesigned, the file-access guard's friction profile stays hand-tuned to one workflow, and distribution stays "clone and run propagation". Adoption beyond that circle invalidates all three, because partial protection that reads as total protection is worse than none once the user cannot ask. A future phase would need: a packaged install path (see plugin packaging above), a friction budget tunable without editing rule files, recovery/kill-switch docs written for a stranger, an upgrade path when rules change, and install-time disclosure of Codex's coverage gap. **This needs a roadmap entry from `@project-planner`; it is explicitly out of scope for Phase 04.** (Recorded 2026-07-16.)
 
 ## Hook Composition

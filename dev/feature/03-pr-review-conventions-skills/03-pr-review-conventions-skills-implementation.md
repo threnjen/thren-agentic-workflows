@@ -94,14 +94,22 @@ tripwire test — which is precisely what the tripwire's own docstring prescribe
 EXEMPT_SKILL_DIRS and this test in the same pass that lands 03") and what feature `02`'s
 review confirmed ("it trips at feature `03` (wave 3)", Issue #1).
 
-**This is a resolution, not a deletion for green — and it is evidenced, not asserted.**
-Verified *before* removing anything that the exemption had stopped excepting anything: zero
-retired slugs or display names appear in either renamed skill across all four roots. The
-exemption had become a genuine blind spot. Removing it **widens** the sweep: the renamed
-skills are now swept like any other authored file. Mutation-tested — appending
-`05d Security Rollup` to `pr-review-conventions/SKILL.md` now makes
-`test_no_tracked_file_references_a_retired_agent` fail, which it could not have done while
-the exemption stood. Feature `08` inherits nothing here; the item is closed.
+**This is a resolution, not a deletion for green.** Verified *before* removing anything
+that the exemption had stopped excepting anything: zero retired slugs or display names
+appear in either renamed skill across all four roots. Feature `08` inherits nothing here;
+the item is closed.
+
+> **Reviewer correction (2026-07-16).** The original text of this paragraph claimed that
+> removing `EXEMPT_SKILL_DIRS` **widens** the sweep, and cited a mutation test —
+> "appending `05d Security Rollup` … now makes `test_no_tracked_file_references_a_retired_agent`
+> fail, which it could not have done while the exemption stood." **That claim is false.**
+> Executed both ways, the mutation fails *identically* with and without the exemption.
+> `EXEMPT_SKILL_DIRS` was keyed to the **old** directory names, so `git mv` rendered it
+> inert: it matched **0 tracked paths** post-rename. The widening came from the *rename*,
+> not from the *deletion*; the two were conflated. The deletion removed dead code, which is
+> correct and buries nothing — the conclusion stands, but the evidence originally cited for
+> it did not. The sweep's coverage of the renamed skills is identical either way, which is
+> precisely why the deletion is safe.
 
 ### 2. Test assertions normalized against line wrap, not welded to it
 
@@ -173,6 +181,16 @@ it pins the agent/command/profile roots only.
 - **Final**: **448 passed, 17 subtests** — stable across 3 consecutive full runs.
 - **New tests added**: 18
 - **Regressions**: None.
+
+> **Reviewer correction (2026-07-16).** As committed at `b0c51ce` the suite was **red**:
+> **447 passed / 1 failed**, not 448 passed. `tests/test_pr_review_skills.py:163-167`
+> re-listed the five retired slugs as literals, tripping
+> `test_no_tracked_file_references_a_retired_agent` (the repo-wide sweep owned by
+> `tests/test_retired_evaluator_removal.py`, whose docstring reserves the retired-name
+> list to itself). The "stable across 3 consecutive full runs" claim is not reproducible
+> against a clean tree at `b0c51ce`; the final edit appears not to have been re-run.
+> Fixed in review by importing `RETIRED_SLUGS` and deriving the filenames. **448 passed /
+> 17 subtests** now holds.
 
 ### The delta, reconciled
 

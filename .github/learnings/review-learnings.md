@@ -419,3 +419,54 @@ referenced_names`); identifier resolution that reads on-disk state rather than d
 from source — it makes such changes converge only across multiple generator runs, so a
 single run proves nothing. Run the generator until every counter reads zero before
 trusting the tree, and treat "one run, looks right" as unverified.
+
+---
+
+## Pattern
+
+An evidence-shaped claim is not evidence. Implementation records increasingly cite
+"mutation-tested", "stable across N consecutive runs", or a named counter as proof. These
+carry the *form* of verification and are read as settled, but they fail re-execution often
+enough that a reviewer who accepts them is not reviewing. Re-run every cited proof against
+a clean tree at the reviewed commit. A record's claim is a hypothesis about the tree, not
+a description of it.
+
+## Impact
+
+Two defects reached a commit behind such claims in one feature: a suite reported green
+that was red, and a correct action defended by a mutation test that passes identically
+with and without the change it supposedly proved. The right action on false evidence still
+validates the wrong reasoning, which is what the next feature inherits.
+
+## Watch for
+
+Claims of a passing suite where the arithmetic reconciles to *collected* rather than
+*passed* (447 passed + 1 failed reported as "448"). Mutation tests where the mutation would
+trip an unrelated guard anyway — verify the test fails for the stated reason, and that it
+*passes* once the change under test is reverted, or it proves nothing. Dead-code deletion
+described as a behaviour change: an exemption keyed to a name that a rename already
+invalidated matches nothing, so removing it can neither widen nor narrow the sweep. Ask
+what an exemption matched *at the moment it was deleted*, not what it matched when written.
+
+---
+
+## Pattern
+
+When a sweep test goes red because a new file legitimately contains the swept token, the
+one-line fix — add the file to the exemption list — is almost always wrong. It widens the
+hole the sweep exists to close, often in the exact pass that was supposed to narrow it.
+Remove the token instead: import the canonical definition and derive the values.
+
+## Impact
+
+Exemption lists grow monotonically and are never audited. Each entry is a permanent blind
+spot bought to make one test green, and the next regression that lands inside one is
+invisible.
+
+## Watch for
+
+A guard module that declares its names are defined "once, here" while another module
+re-lists them as literals — the duplication is the defect, and the sweep failure is the
+symptom correctly reporting it. Also: when replacing literals with a derived tuple, add a
+vacuity assert (`assert derived_list`), or an empty upstream list silently neuters the
+guard while it still reports green.

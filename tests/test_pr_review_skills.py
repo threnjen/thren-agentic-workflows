@@ -19,6 +19,13 @@ skill is the contract features `05`-`07` are then written against.
 
 from pathlib import Path
 
+# The retired names have a single definition, in the retirement guard. Importing
+# them keeps the literals out of this file: `test_no_tracked_file_references_a_
+# retired_agent` sweeps every tracked file, and re-listing the slugs here would
+# trip it -- the fix for that is to not re-list them, never to widen the sweep's
+# exemption list.
+from test_retired_evaluator_removal import RETIRED_SLUGS
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 SOURCE_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
@@ -159,13 +166,9 @@ def test_conventions_declares_exactly_the_surviving_report_roster() -> None:
 
 def test_no_retired_evaluator_report_filename_survives_in_either_skill() -> None:
     """AC3: the five retired evaluators' report files are gone from both skills."""
-    retired_report_files = (
-        "05c-qa-consolidator-report.md",
-        "05d-security-rollup-report.md",
-        "05e-ac-regression-report.md",
-        "05f-seam-analyzer-report.md",
-        "05i-learnings-harvester-report.md",
-    )
+    retired_report_files = tuple(f"{slug}-report.md" for slug in RETIRED_SLUGS)
+    assert retired_report_files, "retired slug list is empty -- the guard is vacuous"
+
     for skill_name in NEW_SKILL_NAMES:
         body = _skill_body(skill_name)
         for report in retired_report_files:
