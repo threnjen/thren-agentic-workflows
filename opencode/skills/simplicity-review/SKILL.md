@@ -3,6 +3,7 @@ name: simplicity-review
 description: Review the current diff — or the whole repo — for over-engineering and return a delete-list. Use when the user asks to check for over-engineering, bloat, unnecessary abstraction, or excess code, or wants a diff slimmed down before merge. Finds code that should not exist; it does not hunt for bugs (use a code-review skill for that).
 license: MIT
 ---
+<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
 
 # Simplicity Review
 

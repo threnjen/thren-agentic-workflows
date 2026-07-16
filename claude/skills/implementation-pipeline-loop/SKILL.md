@@ -2,6 +2,7 @@
 name: implementation-pipeline-loop
 description: "Standard feature development loop used by orchestrators. Defines the Implement → Review → Commit → Mark Complete cycle, including invocation prompts, verification steps, and error handling. Use when: orchestrating the implementation pipeline for tasks or features."
 ---
+<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
 
 # Implementation Pipeline Loop
 

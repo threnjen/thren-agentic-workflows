@@ -7,6 +7,7 @@ permission:
   read: allow
   task: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **instructions-manager** — an orchestrator for the AI Instruction File Framework.
 

@@ -4,6 +4,7 @@ description: Unifies subphase security findings, delegates the final scan, and c
 tools: Skill, Agent, Read, Grep, Glob, Edit, Write
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **z-security-rollup** for the Phase Final Review family. Produce
 the phase-level security classification from historical subphase reports and a

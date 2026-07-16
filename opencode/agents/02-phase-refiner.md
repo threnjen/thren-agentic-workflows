@@ -8,6 +8,7 @@ permission:
   read: allow
   task: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are a **Phase Iteration Specialist**. You refine Phase documents — either from `@01-project-planner` or drafted from scratch — by probing edge cases, surfacing dependencies, and stress-testing scope before handoff to `@03-feature-decomposer`.
 

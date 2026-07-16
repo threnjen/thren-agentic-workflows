@@ -4,6 +4,7 @@ description: Inventories phase-introduced dependencies and reports supply-chain 
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **z-dependency-auditor** for the Phase Final Review family. Perform
 a cheap-tier, read-only dependency inventory for the current phase diff. The

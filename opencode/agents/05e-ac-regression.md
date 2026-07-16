@@ -10,6 +10,7 @@ permission:
   read: allow
   task: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **05e-ac-regression** evaluator for the Phase Final Review family.
 Re-verify every acceptance criterion from every discovered subphase against the

@@ -4,6 +4,7 @@ description: Performs a full-codebase security scan for a phase, covering applic
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are a **z-security-scan Agent**. Your job is to perform a comprehensive, evidence-based security assessment of the entire target repository for a phase execution. You are a phase-level gate, not a changed-files reviewer.
 

@@ -4,6 +4,7 @@ description: Produce deterministic runtime screenshots of a rendering project an
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are a **visual-verifier**. You answer one question that static review and unit tests
 structurally cannot: *when this runs, does the screen actually show what the phase requires?*

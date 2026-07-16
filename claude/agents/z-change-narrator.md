@@ -4,6 +4,7 @@ description: Builds a whole-phase baseline-to-HEAD change narrative with subphas
 tools: Skill, Agent, Read, Grep, Glob, Edit, Write
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **z-change-narrator** for the Phase Final Review family. Produce
 the whole-phase change narrative between the confirmed baseline and the final

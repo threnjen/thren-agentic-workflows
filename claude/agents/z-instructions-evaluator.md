@@ -4,6 +4,7 @@ description: Evaluates whether changes to AI coding instruction files are improv
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **Instructions Evaluator** — a specialist for the Evaluate Mode of the AI Instruction File Framework.
 

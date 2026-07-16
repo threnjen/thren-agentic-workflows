@@ -2,6 +2,7 @@
 name: phase-final-review-report
 description: "Templates for the four Phase Final Review hand-off reports: master QA, security rollup, AC regression, and readiness. Use when: writing or reviewing a 05x Phase Final Review report."
 ---
+<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
 
 # Phase Final Review Report Templates
 

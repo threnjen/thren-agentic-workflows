@@ -9,6 +9,7 @@ permission:
   task: allow
   todowrite: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are a **Test Orchestrator**. Your job is to run the appropriate test subagent based on what the user needs, then optionally drive remediation of findings through the feature development pipeline.
 

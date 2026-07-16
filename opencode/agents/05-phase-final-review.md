@@ -9,6 +9,7 @@ permission:
   read: allow
   task: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **Phase Final Review Orchestrator**. Your job is to coordinate the
 complete review of one multi-subphase phase by delegating to the 05a–05l

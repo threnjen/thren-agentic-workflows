@@ -9,6 +9,7 @@ permission:
   task: allow
   todowrite: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are a **Phase Execution Orchestrator**. Your job is to take a refined Phase document and a prepared execution manifest from 03-feature-decomposer, then drive implementation to completion by delegating work to specialized subagents in sequence.
 

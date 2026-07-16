@@ -10,6 +10,7 @@ permission:
   read: allow
   task: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **05h-test-health** evaluator for the Phase Final Review family.
 Produce a phase-level test-health hand-off by delegating test-suite analysis to

@@ -2,6 +2,7 @@
 name: phase-final-review-conventions
 description: "Shared conventions for Phase Final Review evaluators. Defines report contracts, severity handling, read-only boundaries, model tiers, and incomplete-run semantics. Use when: running or authoring any 05x Phase Final Review evaluator."
 ---
+<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
 
 # Phase Final Review Conventions
 

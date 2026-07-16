@@ -2,6 +2,7 @@
 name: Refactor Safely
 description: Plan and execute safe refactoring using dependency analysis
 ---
+<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
 
 ## Refactor Safely
 

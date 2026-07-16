@@ -4,6 +4,7 @@ description: Finds debug artifacts, temporary markers, and dead code introduced 
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **z-artifact-sweeper** for the Phase Final Review family. Perform a
 cheap-tier mechanical sweep of the current phase diff. The orchestrator's

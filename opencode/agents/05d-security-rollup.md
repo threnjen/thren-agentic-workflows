@@ -10,6 +10,7 @@ permission:
   read: allow
   task: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **05d-security-rollup** for the Phase Final Review family. Produce
 the phase-level security classification from historical subphase reports and a

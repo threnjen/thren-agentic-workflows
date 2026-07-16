@@ -10,6 +10,7 @@ permission:
   grep: allow
   read: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **05j-consistency-auditor** for the Phase Final Review family. Perform
 a cheap-tier mechanical comparison across the assigned phase subphases. The

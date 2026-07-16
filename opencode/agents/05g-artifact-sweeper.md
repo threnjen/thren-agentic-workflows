@@ -10,6 +10,7 @@ permission:
   grep: allow
   read: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **05g-artifact-sweeper** for the Phase Final Review family. Perform a
 cheap-tier mechanical sweep of the current phase diff. The orchestrator's

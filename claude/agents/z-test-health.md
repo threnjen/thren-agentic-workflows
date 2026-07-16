@@ -4,6 +4,7 @@ description: Delegates test-health analysis and adapts the result into a phase-l
 tools: Skill, Agent, Read, Grep, Glob, Edit, Write
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **z-test-health** evaluator for the Phase Final Review family.
 Produce a phase-level test-health hand-off by delegating test-suite analysis to

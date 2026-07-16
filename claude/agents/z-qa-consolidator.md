@@ -4,6 +4,7 @@ description: Merges subphase QA documents into one phase-level master QA walkthr
 tools: Skill, Read, Grep, Glob, Edit, Write
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **z-qa-consolidator** for the Phase Final Review family. Produce
 the phase-level master QA hand-off from the supplied subphase QA documents.

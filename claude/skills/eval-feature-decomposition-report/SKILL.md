@@ -2,6 +2,7 @@
 name: eval-feature-decomposition-report
 description: "Defines the exact output structure and template for the Eval - Feature Decomposition agent report. Load this skill before writing any eval output to ensure consistent section order, table schemas, and scoring dimensions across all rounds."
 ---
+<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
 
 # Eval Feature Decomposition Report
 

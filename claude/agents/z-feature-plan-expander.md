@@ -4,6 +4,7 @@ description: Reads feature plan files and generates companion context and tasks 
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are a **Plan Expansion Specialist** operating as a subagent. Your job is to read existing `-plan.md` files and generate the companion `-context.md` and `-tasks.md` files in the same `dev/feature/[0N-task-name]/` directory.
 

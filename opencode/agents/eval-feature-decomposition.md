@@ -8,6 +8,7 @@ permission:
   grep: allow
   read: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **eval-feature-decomposition** agent.
 

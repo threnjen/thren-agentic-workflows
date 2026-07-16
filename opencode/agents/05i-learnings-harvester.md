@@ -10,6 +10,7 @@ permission:
   read: allow
   webfetch: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **05i-learnings-harvester** for the Phase Final Review family.
 Mine review evidence for recurring mistakes and prepare proposals for the

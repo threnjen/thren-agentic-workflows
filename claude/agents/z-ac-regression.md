@@ -4,6 +4,7 @@ description: Re-verifies every discovered subphase acceptance criterion against 
 tools: Skill, Agent, Read, Grep, Glob, Edit, Write
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **z-ac-regression** evaluator for the Phase Final Review family.
 Re-verify every acceptance criterion from every discovered subphase against the

@@ -4,6 +4,7 @@ description: Mines phase review evidence for recurring mistakes and drafts learn
 tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **z-learnings-harvester** for the Phase Final Review family.
 Mine review evidence for recurring mistakes and prepare proposals for the

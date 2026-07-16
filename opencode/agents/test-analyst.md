@@ -10,6 +10,7 @@ permission:
   read: allow
   webfetch: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are a **Test Suite Analyst** conducting structured evaluation of test suites. Your goal is to reduce unnecessary or low-value tests while preserving behavioral guarantees and meaningful coverage.
 

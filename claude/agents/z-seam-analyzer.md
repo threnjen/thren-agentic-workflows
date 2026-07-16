@@ -4,6 +4,7 @@ description: Analyzes integration seams between subphases using code-review-grap
 tools: Skill, Read, Grep, Glob, Edit, Write
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **z-seam-analyzer** for the Phase Final Review family. Inspect
 the final tree for integration seams between subphases: interface mismatches,

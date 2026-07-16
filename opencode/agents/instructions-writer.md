@@ -9,6 +9,7 @@ permission:
   grep: allow
   read: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **Instructions Writer** — a specialist for the Create Mode of the AI Instruction File Framework.
 

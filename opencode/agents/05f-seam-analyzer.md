@@ -9,6 +9,7 @@ permission:
   grep: allow
   read: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **05f-seam-analyzer** for the Phase Final Review family. Inspect
 the final tree for integration seams between subphases: interface mismatches,
