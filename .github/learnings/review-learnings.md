@@ -179,3 +179,142 @@ A symlinked parent directory can redirect generated files outside the consumer r
 ## Watch for
 
 Copy loops that call `target.write_*` beneath unchecked parent directories, validators that test path prefixes before normalization, source walks that follow symlinks without a resolved-root check, and tests that cover only leaf symlink replacement.
+
+## Pattern
+
+When selectively unignoring a nested fixture tree beneath a broad parent ignore
+rule, re-ignore sibling paths between the parent exception and the fixture
+exception.
+
+## Impact
+
+Negating only the parent directory can make unrelated future artifacts
+trackable, weakening repository hygiene and the intended scope of the
+exception.
+
+## Watch for
+
+Ignore files with a broad `parent/*` rule followed immediately by
+`!parent/child/` and `!parent/child/**`, without a `parent/*` rule restoring the
+boundary.
+
+## Pattern
+
+When a procedural document defines conditional resource lifecycle behavior,
+make each create, reuse, recreate, and refusal branch executable in sequence.
+
+## Impact
+
+A policy that is described only in prose can be followed literally as an
+unconditional create or cleanup operation, causing collisions or deleting
+resources that should have been retained.
+
+## Watch for
+
+Steps that say to apply a collision policy and then show one unconditional
+create command, especially when ownership determines whether cleanup is safe.
+
+## Pattern
+
+Orchestrators must validate both child report artifacts and the terminal synthesis result before accepting a readiness verdict.
+
+## Impact
+
+A child can return success with a missing or empty report, or the terminal synthesizer can fail, allowing incomplete coverage to be mistaken for a clean run.
+
+## Watch for
+
+Delegation contracts that record only explicit exceptions, trust returned report paths without metadata validation, or pass a synthesizer verdict directly to status write-back without an independent missing-check gate.
+
+## Pattern
+
+Diff-scoped static analyzers must require verifiable line or range attribution before treating repo-wide results as introduced changes.
+
+## Impact
+
+Filtering a repo-wide result only by touched file can misclassify pre-existing dead code or other findings as changes from the current phase.
+
+## Watch for
+
+Analyzers that fall back from added-line matching to file membership, accept missing source locations, or report findings when baseline attribution cannot be established.
+
+## Pattern
+
+Read-only dependency vulnerability checks must use supplied local evidence or an explicitly offline audit mode.
+
+## Impact
+
+A generic audit command can fetch or update vulnerability data, violating the evaluator's no-network boundary and making the evidence path non-reproducible.
+
+## Watch for
+
+Instructions that call an audit command read-only without stating offline behavior, commands with implicit network access, or missing-evidence paths that claim a clean vulnerability result.
+
+## Pattern
+
+Delegating or read-only wrapper agents should receive only the capabilities needed for input collection, child delegation, and report writing; generated harness outputs should be checked against the source renderer.
+
+## Impact
+
+Unneeded shell or execution permissions weaken prompt-level read-only boundaries, while untested generated mirrors can silently lose delegation or safety constraints in one platform.
+
+## Watch for
+
+Wrapper frontmatter that grants execute access without a local execution requirement, platform-specific permission mappings, and propagation tests that verify only unrelated hooks or skills instead of the new agent outputs.
+
+## Pattern
+
+When a delegated evaluator fails after dispatch, record both the concrete NOT RUN reason and an explicit NO-GO or below-GO readiness ceiling.
+
+## Impact
+
+A not-run marker without a visible readiness ceiling can be mistaken for neutral coverage, allowing an incomplete review to advance as if the evaluator had passed.
+
+## Watch for
+
+Status rows that contain `status: not-run` and `report: null` but no machine- or reader-visible verdict ceiling, especially when a child report is required for release readiness.
+
+## Pattern
+
+Parallel verifier fan-outs must assign deterministic, child-derived report paths.
+
+## Impact
+
+If concurrent children are told only to write into a shared directory, generic filenames can overwrite sibling evidence and make parent row-cardinality checks unreliable.
+
+## Watch for
+
+Delegation prompts that name a shared output directory without a unique filename template or a parent check that maps each child identifier to exactly one report artifact.
+
+## Pattern
+
+Propagation regression tests must cover every newly added agent output, including
+non-delegating harvesters and synthesis agents, and compare each harness render
+with the source renderer.
+
+## Impact
+
+Hard-coded evaluator subsets or orchestrator-only smoke checks can pass while a
+new Claude, OpenCode, or Codex mirror is stale or malformed.
+
+## Watch for
+
+Expected-slug tuples that omit newly added agents, tests named for one evaluator
+family that silently exclude sibling agents, or generated outputs checked only
+for existence rather than exact renderer parity.
+
+## Pattern
+
+Read-only history-mining agents must keep evidence-access instructions consistent
+with their declared capabilities and explicitly handle unavailable sources.
+
+## Impact
+
+A fetch-only agent that includes shell examples can violate its no-execute
+boundary, while a remote-only capability can be mistaken for guaranteed local
+history recovery.
+
+## Watch for
+
+Command examples in fetch-only contracts, missing unavailable-source handling,
+or mirror tests that inspect only one harness's permission boundary.
