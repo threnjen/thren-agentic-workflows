@@ -44,13 +44,19 @@ EXEMPT_PREFIXES = (
     # Feature planning documents. They name the retired agents in order to
     # describe retiring them; same category as docs/phases/ -- a record of the
     # work, not live harness wiring.
-    "dev/",
+    #
+    # Scoped to `dev/feature/`, NOT all of `dev/`: `dev/phase-final-review/
+    # fixtures/` is live wiring -- the surviving 05x evaluators and the
+    # orchestrator name it as their fixture root -- so it must stay swept.
+    "dev/feature/",
 )
 
 # Time-boxed. These two skills' report rosters name retired evaluators.
-# `03-pr-review-conventions-skills` rescopes them, and
-# `08-retirement-reconciliation` re-runs this sweep with these exemptions
-# removed. Rewriting a skill this feature does not own would collide with 03.
+# `03-pr-review-conventions-skills` owns them: it renames both directories
+# (`phase-final-review-*` -> `pr-review-*`) AND drops the retired-evaluator
+# templates. Rewriting a skill this feature does not own would collide with 03.
+# Whoever lands 03 deletes these exemptions -- see
+# `test_time_boxed_skill_exemption_is_still_load_bearing`, which trips then.
 # The trailing slash matches all four roots: .github/, claude/, opencode/, codex/.
 EXEMPT_SKILL_DIRS = (
     "skills/phase-final-review-conventions/",
@@ -166,9 +172,15 @@ def test_time_boxed_skill_exemption_is_still_load_bearing() -> None:
     """The skill exemption is deliberate and temporary -- it must not outlive its cause.
 
     `03-pr-review-conventions-skills` rescopes these two skills; once it has,
-    this test fails and tells `08-retirement-reconciliation` to delete the
-    exemption rather than leaving a hole in the sweep that hides a real
+    this test fails rather than leaving a hole in the sweep that hides a real
     regression.
+
+    This trips for whoever lands feature `03` (wave 3), not for
+    `08-retirement-reconciliation` (wave 7): 03 both renames the skill
+    directories -- which makes `EXEMPT_SKILL_DIRS` match nothing -- and strips
+    the retired templates. The cleanup is a two-symbol deletion and belongs in
+    03's own pass; deferring it to 08 would leave the suite red across waves
+    4-7 and poison every intermediate feature's green-baseline gate.
     """
     still_offending = [
         path
@@ -182,7 +194,8 @@ def test_time_boxed_skill_exemption_is_still_load_bearing() -> None:
 
     assert still_offending, (
         "no exempt skill file names a retired agent any more -- feature 03 has "
-        "landed. Delete EXEMPT_SKILL_DIRS and this test (08-retirement-reconciliation)."
+        "landed and the exemption is now a hole in the sweep. Delete "
+        "EXEMPT_SKILL_DIRS and this test in the same pass that lands 03."
     )
 
 

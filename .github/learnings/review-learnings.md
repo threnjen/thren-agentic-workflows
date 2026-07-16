@@ -359,3 +359,63 @@ gates does nothing at all. Mutation-test the guard rather than asserting it.
 Inert-run criteria ("a run on the unmodified repo deletes nothing") with no companion
 test proving the pruner positively identifies real generated output; deletion counters
 asserted only as zero.
+
+## Pattern
+
+A deliberately-failing tripwire that guards a time-boxed exemption must be addressed to
+the pass that will actually trip it, not the pass nominally assigned the cleanup. Verify
+which one that is by reading what the downstream work does to the exempted paths — if it
+renames or moves them, the exemption stops matching and the tripwire fires there.
+
+## Impact
+
+A tripwire addressed to a later pass than the one that trips it converts a clean hand-off
+into a red baseline for every pass in between, and each of those inherits a failing
+green-baseline gate for work it does not own. The likely outcomes are a wasted escalation
+or a suite left red on purpose — which trains implementers to ignore red. The tripwire
+itself is usually right; only its addressee is wrong, and the fix is a message edit.
+
+## Watch for
+
+Inverted assertions (`assert still_offending`) whose failure message names an owner; any
+exemption list keyed on a path that a downstream rename will invalidate; hand-off notes
+that assign cleanup to the pass that *removes the cause* rather than the pass that *first
+makes the exemption unnecessary*.
+
+## Pattern
+
+When an exemption list, a skip, or a non-goal is justified by a factual claim about the
+tree ("this directory does not exist", "this path is only planning records, no live
+wiring"), verify the claim against the tree before accepting the exemption. Do not accept
+the rationale on its own authority.
+
+## Impact
+
+Two distinct failures follow. An over-broad exemption resting on a false premise silently
+hides the very references the sweep exists to find. Worse, a non-goal justified by
+"already absent" leaves work *unowned* rather than *deferred* — deferred work has an
+inheritor, dismissed-as-nonexistent work has none, and it is invisible precisely because
+everyone believes it was already handled.
+
+## Watch for
+
+Non-goals whose justification is an assertion of absence rather than a decision to defer;
+exemption scopes broader than the rationale that justifies them (a whole tree exempted to
+cover one subtree of records); rationales phrased as sweeping claims about a directory's
+contents. Narrowing an exemption is cheap when the sweep still passes — and the passing
+sweep is itself the proof the narrowing was safe.
+
+## Pattern
+
+Deleting an orchestrator can rename a user-facing entry point it never owned. Where a
+generated artifact's name depends on whether some *other* asset references it, removing
+the last referrer reclassifies it and changes its public name. Before approving a
+deletion, ask what the deleted asset was the last declarer of.
+
+## Watch for
+
+Emission rules conditioned on a reference map (`user_invocable and name in
+referenced_names`); identifier resolution that reads on-disk state rather than deriving
+from source — it makes such changes converge only across multiple generator runs, so a
+single run proves nothing. Run the generator until every counter reads zero before
+trusting the tree, and treat "one run, looks right" as unverified.

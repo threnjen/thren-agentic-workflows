@@ -22,6 +22,18 @@
 - **Pre-edit file backup layer** (snapshot protected-adjacent files before Edit/Write, config-gated) was cut from Hooks Phase 01 during refinement. Candidate for the format-on-save/completion-gates phase, which owns edit-time hooks — that phase is **Phase 05** as of the 2026-07-16 renumber (it was Phase 03 when this note was written). (Recorded 2026-07-14; renumber noted 2026-07-16.)
 - **WebFetch as an exfiltration channel** is deliberately unguarded in Hooks Phase 01 (the guard blocks reading secrets in the first place). Addressed: pulled into Hooks Phase 02 scope as the WebFetch exfiltration guard deliverable (see `docs/phases/PHASE_02/PHASE_02_SUMMARY.md`). (Recorded 2026-07-14.)
 - **Plugin packaging as a distribution target**: propagation could emit a Claude Code plugin package (`${CLAUDE_PLUGIN_ROOT}`-relative hook paths) so others install the hook suite with one command, no cloning. Deferred; best revisited after the hook phases stabilize the hook set — written 2026-07-14 as "after Hooks Phases 01–03", which under the pre-renumber scheme meant **01, 02, and what is now Phase 05**. It does not mean the current Phase 03 (Phase Final Review), and Phase 04 does not unblock it. Folded into the adoption-readiness item below. (Recorded 2026-07-14; renumber ambiguity resolved 2026-07-16.)
+- **`dev/phase-final-review/fixtures/PHASE_05/` is still on disk and now has no owner.**
+  The Phase document instructs retiring both `dev/phase-final-review/fixtures/PHASE_05/`
+  and the report root `dev/phase-final-review/PHASE_05/`.
+  `02-retired-evaluator-removal`'s plan listed this as a Non-Goal on the stated grounds
+  that the directory "does not exist" — that is true of the report root but **false of
+  the fixtures**, which are tracked. Because it was dismissed as absent rather than
+  deferred, no feature inherited it. It is also not a simple deletion: seven surviving
+  agents (`05` orchestrator, `05b`, `05g`, `05h`, `05j`, `05k`, `05l`) name the fixture
+  root as live wiring, and the Phase Numbering note above pins the fixtures to recorded
+  commit SHAs. Retiring them is a design decision with real blast radius, not cleanup.
+  Needs an explicit owner. (Recorded 2026-07-16 by `02-retired-evaluator-removal`'s
+  review.)
 - **Adoption readiness is unplanned work with no roadmap entry.** Phases 01–04 are scoped for an audience of the author and friends — people who can ask a question and get an answer. That assumption is what makes three residual risks acceptable: Codex's partial tool coverage stays documented rather than redesigned, the file-access guard's friction profile stays hand-tuned to one workflow, and distribution stays "clone and run propagation". Adoption beyond that circle invalidates all three, because partial protection that reads as total protection is worse than none once the user cannot ask. A future phase would need: a packaged install path (see plugin packaging above), a friction budget tunable without editing rule files, recovery/kill-switch docs written for a stranger, an upgrade path when rules change, and install-time disclosure of Codex's coverage gap. **This needs a roadmap entry from `@project-planner`; it is explicitly out of scope for Phase 04.** (Recorded 2026-07-16.)
 
 ## Hook Composition
@@ -90,6 +102,30 @@
   rewrites generated roots without markers using stale code, disabling every prune
   while the code still reads as correct. Restart the watcher after any propagator
   change before trusting a propagation run.
+- **Propagation is not idempotent across a reclassification: one run does not prove
+  convergence — run until every counter is zero.** `_claude_filename_for` resolves an
+  output name against the stems already on disk, and pruning deliberately runs *after*
+  emission (so a survivor is never handed a different filename mid-run). The two
+  together mean that when an agent changes emission class, the stem it resolved
+  against is only deleted at the end of that run, so the *next* run computes a
+  different identifier. Retiring `05d-security-rollup` reclassified `Security Scan`
+  from dual-use to command-only and took **three** `--once` runs to reach a fixed
+  point (prune+reclassify → rename the command → settle `codex_profiles`). A single
+  run leaves the tree valid-looking but non-converged, and the committed roots are
+  then not a pure function of source. No test asserts this: the existing
+  `test_phase02_generated_wiring_is_complete_and_idempotent` covers
+  `propagate_hooks_once`, not `propagate_once`. Fixing it means changing identifier
+  resolution to derive from source rather than disk state. (Recorded 2026-07-16 by
+  `02-retired-evaluator-removal`'s review; first triggered there.)
+- **An agent that is user-invocable *and* declared as some orchestrator's child is
+  "dual-use" and gets both a slash command and a spawnable subagent file. Deleting its
+  last parent silently reclassifies it, which can rename a user-facing command.**
+  Retiring `05d` dropped `Security Scan` from `_referenced_agent_names`, removing
+  `claude/agents/z-security-scan.md` and renaming `/z-security-scan` → `/security-scan`.
+  That rename was a correction — `z-` marks hidden subagents, and OpenCode/Codex already
+  used the bare name — but the general lesson is that **deleting an orchestrator can
+  change the public name of an agent it merely referenced.** Before retiring any agent,
+  check what its `agents:` roster is the last declarer of.
 
 ## Review Contracts
 
