@@ -51,7 +51,7 @@ The core development workflow. **You interact with steps 1–3. Everything else 
 │  │  Loop back for next feature                  │                │
 │  └──────────────────────────────────────────────┘                │
 │  Feature - QA Writer    → Consolidated QA plan                │
-│  Security Scan          → Full-codebase security report       │
+│  04e Diff Security Scan → Diff-scoped security report         │
 │  Prod Code Review       → GO / NO-GO verdict                  │
 │                                                                   │
 │  PER-FEATURE MODE (one feature, one branch, one PR):             │
@@ -100,7 +100,7 @@ Interactive — you iterate to probe edge cases, dependencies, and decomposition
    - **Implement** → Red-Green-Refactor TDD, writes implementation record
    - **Review** → Finds bugs, applies fixes, writes review record
 5. Runs the **QA Writer**
-6. Runs the **Security Scan** across the full codebase
+6. Runs the **04e Diff Security Scan** across all files changed by the phase
 7. Runs the **Prod Code Review** with the security report
 8. Reports the verdict back to you
 9. Runs the **Docs Writer** to update any stale documentation
@@ -133,6 +133,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **02 Phase - Refiner** | Refine and deepen an individual Phase document |
 | **03 Feature - Decomposer** | Break a phase into features, prepare execution-ready bundles, and write the execution manifest |
 | **04 Phase - Execute** | Orchestrate full phase execution from a prepared manifest and feature bundles |
+| **05 Phase - Final Review** | Orchestrate a complete multi-subphase phase readiness review |
 | **05 Eval - Grader** | Score a completed phase run from ledger files plus a rubric YAML and write a structured report |
 | **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
 | **Single Feature - Agent** | Handle small, focused changes with a proposal + explicit permission gate before implementation |
@@ -159,7 +160,16 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Feature - Implementer** | Phase - Execute, Audit orchestrator, Test orchestrator | Implement a feature plan using Red-Green-Refactor TDD |
 | **Feature - Reviewer** | Phase - Execute, Audit orchestrator, Test orchestrator | Review implementation, apply fixes, produce review record |
 | **Feature - QA Writer** | Phase - Execute, Audit orchestrator | Write manual QA plan for non-automatable test cases |
-| **Security Scan** | Phase - Execute | Perform a full-codebase security assessment and write a phase-level security report |
+| **05b Change Narrator** | 05 Phase - Final Review | Build the whole-phase baseline-to-HEAD narrative and identify cross-subphase churn hotspots |
+| **05c QA Consolidator** | 05 Phase - Final Review | Merge subphase QA documents into one master QA walkthrough |
+| **05d Security Rollup** | 05 Phase - Final Review | Merge security findings, delegate the final scan, and classify final-state findings |
+| **05e AC Regression** | 05 Phase - Final Review | Re-verify every subphase acceptance criterion against the final codebase |
+| **05f Seam Analyzer** | 05 Phase - Final Review | Analyze cross-subphase interface mismatches, duplicated logic, and orphaned scaffolding |
+| **04e Diff Security Scan** | Phase - Execute | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
+| **Security Scan** | 05d Security Rollup | Perform a full-codebase security assessment and write a phase-level security report |
+| **05h Test Health** | 05 Phase - Final Review | Delegate coverage, redundancy, and flake analysis into a phase health report |
+| **05i Learnings Harvester** | 05 Phase - Final Review | Mine review evidence and draft learnings and instruction-update proposals |
+| **05l Readiness Synthesizer** | 05 Phase - Final Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
 | **Test - Writer** | Test orchestrator | Bootstrap a test suite from scratch for untested code |
@@ -181,6 +191,9 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **04 Phase - Execute** (orchestrator — delegates to subagents)
 > Give it a refined Phase document after 03 has already prepared the feature bundles. It reads `dev/feature/[phase-name]-execution-manifest.md`, verifies each listed feature has `-plan.md`, `-context.md`, and `-tasks.md`, and fails immediately if those prepared artifacts are missing. When the bundle set is complete, it implements features by manifest wave order, then runs consolidated QA and Final Review.
+
+**05 Phase - Final Review** (orchestrator — delegates to evaluators)
+> Give it a completed multi-subphase phase. It confirms a user-approved pre-phase baseline, inventories required artifacts, fans out the Phase Final Review evaluators, and returns a single readiness verdict without reading code or diffs itself.
 
 **Eval - Grader** (user-facing — standalone scorer)
 > Give it a rubric YAML path plus three branch names: clean base, source-of-truth golden path, and branch to evaluate. The rubric should follow the grader schema documented in the agent, with `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` as the seed example. The grader materializes clean-base->golden and clean-base->evaluated diffs, reads `eval/runs/<phase-slug>/ledger-commits.jsonl` and `eval/runs/<phase-slug>/ledger-events.jsonl`, correlates semantic events onto the commit timeline by SHA association, preserves remediation-turn metadata such as `event_kind` and `related_event_id` when present, supports both feature-level and AC-level commit cadence, fans out one parallel `Eval - Metric Grader` subagent per comparative review metric, keeps exact ledger-derived metrics in the parent grader, produces both a rubric verdict and a comparative scorecard, and appends normalized `1-10` scores to the persistent additive markdown history file at `eval/EVAL_GRADER_SCORE_HISTORY.md`.
@@ -225,7 +238,9 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Feature - QA Writer** *(subagent of Phase - Execute, Audit orchestrator)* — In batch mode: reads all pipeline docs from every feature in a phase and writes a single consolidated QA plan. In per-feature mode: reads pipeline docs from a single feature and writes QA plan and coverage map to that feature's directory.
 
-**Security Scan** *(subagent of Phase - Execute)* — Performs an evidence-based security assessment across all tracked, security-relevant repository artifacts. Writes a phase-level report that covers secrets, dependencies, application attack surface, authentication, data protection, runtime safety, infrastructure, CI/CD, observability, and cross-cutting security patterns. It redacts sensitive values and distinguishes phase regressions from pre-existing release risks.
+**04e Diff Security Scan** *(subagent of Phase - Execute)* — Performs a diff-scoped security review of only the files changed by an implementation pass (from an implementation record's "Files Changed" table or a git diff range), plus their immediate security-relevant context. Writes a compact report with verdict, findings, and the categories not assessable at diff scope. It does not replace the full-codebase Security Scan.
+
+**Security Scan** *(subagent of 05d Security Rollup)* — Performs an evidence-based security assessment across all tracked, security-relevant repository artifacts. Writes a phase-level report that covers secrets, dependencies, application attack surface, authentication, data protection, runtime safety, infrastructure, CI/CD, observability, and cross-cutting security patterns. It redacts sensitive values and distinguishes phase regressions from pre-existing release risks.
 
 **Auditor - Code** *(subagent of Audit orchestrator)* — Audits every source file for cleanup, bugs, security, type hints, readability, DRY, and consistency. Produces a structured report.
 
@@ -394,8 +409,8 @@ For the project pipeline, copy all files including the hidden subagents. For sta
 
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each agent file works standalone — just copy the `.md` file into any project's `.github/agents/` directory.
-- **Three orchestrators**: **04 Phase - Execute**, **Audit - Code, Infra, Refactor**, and **Test - Orchestrator** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
-- **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by all three orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned by all three orchestrators at the end of the pipeline to update stale documentation (it remains user-invocable for standalone use as well).
+- **Four orchestrators**: **04 Phase - Execute**, **05 Phase - Final Review**, **Audit - Code, Infra, Refactor**, and **Test - Orchestrator** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
+- **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned by Phase - Execute, Audit, and Test orchestrators at the end of the pipeline to update stale documentation (it remains user-invocable for standalone use as well).
 - **Dual-use agents**: **03 Feature - Decomposer** is user-facing for standalone plan creation and also spawned by **04 Phase - Execute** when plans are missing. **Docs Writer** is user-facing and also spawned by all three orchestrators.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
 - **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, and **Test - Analyst** do not modify code. They analyze and report only.

@@ -83,6 +83,130 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertTrue((repo_root / "opencode" / "skills" / "demo-skill" / "SKILL.md").exists())
             self.assertTrue((repo_root / "codex" / "skills" / "demo-skill" / "SKILL.md").exists())
 
+    def test_phase_review_agents_match_all_generated_harness_outputs(self) -> None:
+        agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
+        instructions = mod.load_instruction_docs()
+        expected_slugs = (
+            "05b-change-narrator",
+            "05c-qa-consolidator",
+            "05d-security-rollup",
+            "05e-ac-regression",
+            "05f-seam-analyzer",
+            "05h-test-health",
+            "05i-learnings-harvester",
+            "05l-readiness-synthesizer",
+        )
+
+        claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
+        opencode_stems = mod._discover_existing_stems(mod.OPENCODE_AGENTS_DIR)
+        claude_references = mod._build_agent_reference_map(
+            list(agents.values()),
+            lambda agent: mod._claude_identifier_for(agent, claude_stems),
+        )
+        opencode_references = mod._build_agent_reference_map(
+            list(agents.values()),
+            lambda agent: mod._opencode_identifier_for(agent, opencode_stems),
+        )
+        codex_references = mod._build_agent_reference_map(
+            list(agents.values()), mod._codex_identifier_for
+        )
+
+        for slug in expected_slugs:
+            with self.subTest(slug=slug):
+                agent = agents[slug]
+                self.assertNotIn("execute", agent.tools)
+                if slug == "05d-security-rollup":
+                    self.assertIn("NO-GO", agent.body)
+                    self.assertIn("NOT RUN", agent.body)
+                docs = mod.applicable_instructions(agent, instructions)
+
+                claude_identifier = mod._claude_identifier_for(agent, claude_stems)
+                claude_path = mod.CLAUDE_AGENTS_DIR / f"{claude_identifier}.md"
+                self.assertEqual(
+                    mod.render_claude_agent(
+                        agent, docs, claude_references, claude_identifier
+                    ),
+                    claude_path.read_text(encoding="utf-8"),
+                )
+
+                opencode_path = mod.OPENCODE_AGENTS_DIR / mod._opencode_filename_for(
+                    agent, opencode_stems
+                )
+                self.assertEqual(
+                    mod.render_opencode_agent(agent, docs, opencode_references),
+                    opencode_path.read_text(encoding="utf-8"),
+                )
+
+                codex_path = mod.CODEX_AGENTS_DIR / mod._codex_filename_for(agent)
+                self.assertEqual(
+                    mod.render_codex_agent(agent, docs, codex_references),
+                    codex_path.read_text(encoding="utf-8"),
+                )
+
+    def test_diff_security_scan_agent_matches_all_generated_harness_outputs(self) -> None:
+        agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
+        instructions = mod.load_instruction_docs()
+
+        agent = agents["04e-diff-security-scan"]
+        self.assertFalse(agent.user_invocable)
+        self.assertNotIn("execute", agent.tools)
+        self.assertIn("BLOCKED", agent.body)
+        self.assertIn("OUT OF SCOPE", agent.body)
+        docs = mod.applicable_instructions(agent, instructions)
+
+        claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
+        opencode_stems = mod._discover_existing_stems(mod.OPENCODE_AGENTS_DIR)
+        claude_references = mod._build_agent_reference_map(
+            list(agents.values()),
+            lambda a: mod._claude_identifier_for(a, claude_stems),
+        )
+        opencode_references = mod._build_agent_reference_map(
+            list(agents.values()),
+            lambda a: mod._opencode_identifier_for(a, opencode_stems),
+        )
+        codex_references = mod._build_agent_reference_map(
+            list(agents.values()), mod._codex_identifier_for
+        )
+
+        claude_identifier = mod._claude_identifier_for(agent, claude_stems)
+        self.assertEqual(claude_identifier, "z-diff-security-scan")
+        claude_path = mod.CLAUDE_AGENTS_DIR / f"{claude_identifier}.md"
+        self.assertEqual(
+            mod.render_claude_agent(agent, docs, claude_references, claude_identifier),
+            claude_path.read_text(encoding="utf-8"),
+        )
+
+        opencode_path = mod.OPENCODE_AGENTS_DIR / mod._opencode_filename_for(
+            agent, opencode_stems
+        )
+        self.assertEqual(opencode_path.name, "04e-diff-security-scan.md")
+        self.assertEqual(
+            mod.render_opencode_agent(agent, docs, opencode_references),
+            opencode_path.read_text(encoding="utf-8"),
+        )
+
+        codex_path = mod.CODEX_AGENTS_DIR / mod._codex_filename_for(agent)
+        self.assertEqual(codex_path.name, "z-diff-security-scan.toml")
+        self.assertEqual(
+            mod.render_codex_agent(agent, docs, codex_references),
+            codex_path.read_text(encoding="utf-8"),
+        )
+
+    def test_phase_final_review_agent_is_present_in_all_harness_outputs(self) -> None:
+        expected_markers = {
+            ".github/agents/05-phase-final-review.agent.md": "name: 05 Phase - Final Review",
+            "claude/commands/phase-final-review.md": "Phase Final Review Orchestrator",
+            "opencode/agents/05-phase-final-review.md": "Phase Final Review Orchestrator",
+            "codex/agents/05-phase-final-review.toml": 'name = "phase-final-review"',
+            "codex/profiles/phase-final-review.config.toml": "Phase Final Review Orchestrator",
+        }
+
+        for relative_path, marker in expected_markers.items():
+            with self.subTest(path=relative_path):
+                output = REPO_ROOT / relative_path
+                self.assertTrue(output.is_file(), relative_path)
+                self.assertIn(marker, output.read_text(encoding="utf-8"))
+
     def test_hook_propagation_copies_runtime_unit_and_writes_stable_version(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             tmp_root = Path(tmp_dir)

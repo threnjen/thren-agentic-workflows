@@ -14,7 +14,7 @@ The repository is documentation-heavy, but it is not purely static. Most files a
 
 Current inventory:
 
-- 27 source agent definitions under `.github/agents/`
+- 43 source agent definitions under `.github/agents/`
 - 16 shared skills under `.github/skills/`
 - 15 shared instruction files under `.github/instructions/`
 - 2 copyable language template sets under `nodejs/` and `python/`
@@ -127,7 +127,7 @@ The `nodejs/` and `python/` folders each contain:
 
 ### Agent system
 
-`.github/agents/` contains 27 source agent definitions following an orchestrator plus subagent pattern. These include the project planning pipeline (planner, refiner, decomposer, phase executor), the feature implementation pipeline (plan expander, implementer, reviewer, QA writer), evaluation agents (eval grader, eval decomposition reporter, eval metric grader, eval score recorder), audit orchestrators (code, infra, refactor), test operations (test orchestrator, analyst, writer, fixer), and standalone utility agents (documentation architect, debugger, evangelize, single-feature agent, prod code review, unity reviewer, web researcher). Most source agent files use the `.agent.md` suffix; `prod-code-review.md` is an intentional exception and is still treated as an agent definition by the propagation script.
+`.github/agents/` contains 43 source agent definitions following an orchestrator plus subagent pattern. These include the project planning pipeline (planner, refiner, decomposer, phase executor), the feature implementation pipeline (plan expander, implementer, reviewer, QA writer), Phase Final Review orchestration and evaluators, evaluation agents (eval grader, eval decomposition reporter, eval metric grader, eval score recorder), audit orchestrators (code, infra, refactor), test operations (test orchestrator, analyst, writer, fixer), and standalone utility agents (documentation architect, debugger, evangelize, single-feature agent, prod code review, unity reviewer, web researcher). Most source agent files use the `.agent.md` suffix; `prod-code-review.md` is an intentional exception and is still treated as an agent definition by the propagation script.
 
 See [.github/agents/README.md](.github/agents/README.md) for agent-by-agent descriptions and pipeline flow.
 
@@ -155,4 +155,3 @@ For agent, instruction, and skill changes in this repository, `.github/` is the 
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for non-obvious setup and propagation failures
 - [docs/porting/README.md](docs/porting/README.md) for the porting docs index
 - [eval/EVAL_SYSTEM_USAGE.md](eval/EVAL_SYSTEM_USAGE.md) for grader workflows and run artifacts
-
