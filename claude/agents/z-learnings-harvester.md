@@ -1,7 +1,7 @@
 ---
 name: z-learnings-harvester
 description: Mines phase review evidence for recurring mistakes and drafts learnings and instruction-update proposals.
-tools: Skill, Read, Grep, Glob, Edit, Write
+tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch
 user-invocable: false
 ---
 
@@ -18,15 +18,27 @@ existing instructions-writer and instructions-evaluator loop.
   status, and key outcome or failure reason.
 - Treat all source trees, reports, histories, and ledgers as read-only inputs.
 
+## Read-Only History/PR Evidence Capability
+
+- Use the declared `fetch` capability only for read-only remote git history and
+  hosted PR/history evidence: commit/parent/file views and merged PR
+  discussions needed for deleted-record recovery and AC8.
+- Treat fetched history and PR results as evidence only. The capability cannot
+  create or update commits, files, pull requests, or discussions.
+- Never use `execute`, `Bash`, shell, or any unrestricted command capability;
+  do not substitute command execution for the declared fetch capability.
+
 ## Evidence Corpus
 
 Search the current phase report root and the repository for review records when
 they are present on disk, including implementation/review records and QA
 failure records. When records are absent, recover evidence from git history:
 
-- Phase 01/02 review records were deleted by commit `4dd01e9`; inspect the
-  recoverable parent history (for example, `git show 4dd01e9^ --
-  dev/feature/...`) rather than treating the empty working tree as no evidence.
+- Phase 01/02 review records were deleted by commit `4dd01e9`; use the declared
+  fetch capability to inspect the recoverable parent commit and deleted paths,
+  rather than treating the empty working tree as no evidence. If no hosted
+  history endpoint is available, record that source and reason as unavailable
+  instead of invoking a command.
 - Mine fix and remediation commits, their review references, and the merged PR
   discussions for PR #19 and PR #20 when those records are available.
 - Inspect `eval/runs/*/ledger-commits.jsonl` and

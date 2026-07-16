@@ -13,7 +13,7 @@
 ## Stage 2: 05i Learnings Harvester
 
 - [x] Create `.github/agents/05i-learnings-harvester.agent.md` in house style, loading `phase-final-review-conventions` and honoring the ≤10-line return contract (AC3, AC4)
-- [x] Specify the mining corpus: review records, fix commits, and QA failures across the phase — explicitly including git-history recovery (on-disk Phase 01/02 review records were deleted in commit `4dd01e9`; history is in git, merged PRs #19/#20, and `eval/runs/*/ledger-commits.jsonl`) (AC3, AC8)
+- [x] Specify the mining corpus and its read-only evidence boundary: review records, fix commits, and QA failures across the phase — explicitly including git-history recovery (on-disk Phase 01/02 review records were deleted in commit `4dd01e9`; history is in git, merged PRs #19/#20, and `eval/runs/*/ledger-commits.jsonl`) (AC3, AC8)
 - [x] Specify outputs: draft `.github/learnings/` entries (matching the existing entry format in `review-learnings.md` / `project-learnings.md`) and instruction-file update proposals addressed to the instructions-writer/evaluator loop (AC3)
 - [x] Make the draft-only boundary explicit: 05i never edits `.github/instructions/` files and never commits learnings itself; the instructions-manager loop owns acceptance (AC3)
 - [x] Define the empty-harvest behavior: "none found" plus the corpus examined is a valid result in general runs
@@ -30,6 +30,6 @@
 ## Stage 4: Real-History Harvest + Propagation
 
 - [x] Run 05i against this repo's real Phase 01/02 history; verify at least one draft learnings entry or instruction-file update proposal exists and cites its evidence (AC8; Manual QA check 4)
-- [x] Run `scripts/propagate_master_assets.py` and verify both new agents are picked up in Claude, OpenCode, and Codex outputs with no script changes (AC9)
+- [x] Run `scripts/propagate_master_assets.py` and verify both new agents, including 05i's read-only history/PR fetch capability, are picked up in Claude, OpenCode, and Codex outputs with no script changes (AC9)
 - [x] Run `.venv/bin/python -m pytest tests/test_propagate_master_assets.py` and confirm it passes (baseline: 19 passed) (AC9)
 - [x] Confirm the two pre-existing failures in `tests/hooks/test_hook_distribution_integration.py` remain the only full-suite failures (no new regressions)

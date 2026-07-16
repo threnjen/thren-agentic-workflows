@@ -44,9 +44,12 @@ path is a readable, regular, non-empty file under the current report root.
 
 ## Synthesis Rules
 
-1. Read every supplied report and every evaluator-status record. A missing,
-   unreadable, empty, invalid, or unidentifiable report is a not-run check,
-   regardless of the evaluator's returned status.
+1. Read every supplied report and every evaluator-status record. Treat a
+   `not-run`, `failed`, or `incomplete` status, a null/unreadable report path,
+   or a report that fails the regular, non-empty, current-root checks as an
+   incomplete check. A canonical hand-off report cannot satisfy a missing
+   evaluator report unless the status record ties it to that evaluator as
+   successful evidence.
 2. Build the Blocking List from findings and release conditions. Sort it from
    Critical to Low and retain evidence paths plus the owner/action. When the
    same issue has conflicting severities, use the highest severity and

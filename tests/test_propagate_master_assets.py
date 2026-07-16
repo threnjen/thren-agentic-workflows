@@ -83,7 +83,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertTrue((repo_root / "opencode" / "skills" / "demo-skill" / "SKILL.md").exists())
             self.assertTrue((repo_root / "codex" / "skills" / "demo-skill" / "SKILL.md").exists())
 
-    def test_delegating_evaluators_match_all_generated_harness_outputs(self) -> None:
+    def test_phase_review_agents_match_all_generated_harness_outputs(self) -> None:
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
         instructions = mod.load_instruction_docs()
         expected_slugs = (
@@ -93,6 +93,8 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             "05e-ac-regression",
             "05f-seam-analyzer",
             "05h-test-health",
+            "05i-learnings-harvester",
+            "05l-readiness-synthesizer",
         )
 
         claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
