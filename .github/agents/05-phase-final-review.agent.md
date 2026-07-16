@@ -2,7 +2,7 @@
 name: 05 Phase - Final Review
 description: "Coordinates a complete multi-subphase Phase Final Review, from confirmed baseline and artifact preflight through evaluator fan-out, readiness synthesis, and verdict write-back."
 tools: [agent, read, search, edit, execute]
-agents: [Baseline Worktree, 05b Change Narrator, 05c QA Consolidator, 05d Security Rollup, 05e AC Regression, 05f Seam Analyzer, 05g Artifact Sweeper, 05h Test Health, 05i Learnings Harvester, 05j Consistency Auditor, 05k Dependency Auditor, 05l Readiness Synthesizer]
+agents: [Baseline Worktree, 05b Change Narrator, 05g Artifact Sweeper, 05h Test Health, 05j Consistency Auditor, 05k Dependency Auditor, 05l Readiness Synthesizer]
 ---
 
 You are the **Phase Final Review Orchestrator**. Your job is to coordinate the
@@ -34,9 +34,9 @@ Use these assignments in every evaluator prompt:
 
 | Evaluators | Assignment |
 |---|---|
-| `05b`, `05e`, `05f`, `05l` | Top available / state-of-the-art tier for deep judgment and synthesis |
+| `05b`, `05l` | Top available / state-of-the-art tier for deep judgment and synthesis |
 | `05g`, `05j`, `05k` | Cheap tier for mechanical sweeps |
-| `05a`, `05c`, `05d`, `05h`, `05i` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
+| `05a`, `05h` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
 
 Do not place model or harness identity in retained review reports or status
 records.

@@ -89,12 +89,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         instructions = mod.load_instruction_docs()
         expected_slugs = (
             "05b-change-narrator",
-            "05c-qa-consolidator",
-            "05d-security-rollup",
-            "05e-ac-regression",
-            "05f-seam-analyzer",
             "05h-test-health",
-            "05i-learnings-harvester",
             "05l-readiness-synthesizer",
         )
 
@@ -116,9 +111,6 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             with self.subTest(slug=slug):
                 agent = agents[slug]
                 self.assertNotIn("execute", agent.tools)
-                if slug == "05d-security-rollup":
-                    self.assertIn("NO-GO", agent.body)
-                    self.assertIn("NOT RUN", agent.body)
                 docs = mod.applicable_instructions(agent, instructions)
 
                 claude_identifier = mod._claude_identifier_for(agent, claude_stems)
@@ -1095,11 +1087,17 @@ class OrphanPruningTests(unittest.TestCase):
         """The guard must still positively identify all real generated output.
         A guard tightened until it matches nothing would make the pruner inert
         and pass AC7 for entirely the wrong reason."""
+        # Counts dropped when the five phase-shaped evaluators were retired:
+        # claude/agents 33 -> 27 (the five, plus `z-security-scan.md` -- Security
+        # Scan lost its spawnable subagent file once `05d` stopped declaring it as
+        # a child, and is now a user-invocable command only); opencode/agents and
+        # codex/agents 46 -> 41 (the five). Command and profile counts are
+        # unchanged: Security Scan's command was renamed, not removed.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 33),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 27),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 46),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 46),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 41),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 19),
         ]
         for directory, pattern, marker, expected_count in roots:

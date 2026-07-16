@@ -161,14 +161,9 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Feature - Reviewer** | Phase - Execute, Audit orchestrator, Test orchestrator | Review implementation, apply fixes, produce review record |
 | **Feature - QA Writer** | Phase - Execute, Audit orchestrator | Write manual QA plan for non-automatable test cases |
 | **05b Change Narrator** | 05 Phase - Final Review | Build the whole-phase baseline-to-HEAD narrative and identify cross-subphase churn hotspots |
-| **05c QA Consolidator** | 05 Phase - Final Review | Merge subphase QA documents into one master QA walkthrough |
-| **05d Security Rollup** | 05 Phase - Final Review | Merge security findings, delegate the final scan, and classify final-state findings |
-| **05e AC Regression** | 05 Phase - Final Review | Re-verify every subphase acceptance criterion against the final codebase |
-| **05f Seam Analyzer** | 05 Phase - Final Review | Analyze cross-subphase interface mismatches, duplicated logic, and orphaned scaffolding |
 | **04e Diff Security Scan** | Phase - Execute | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
-| **Security Scan** | 05d Security Rollup | Perform a full-codebase security assessment and write a phase-level security report |
+| **Security Scan** | None — user-invocable | Perform a full-codebase security assessment and write a phase-level security report |
 | **05h Test Health** | 05 Phase - Final Review | Delegate coverage, redundancy, and flake analysis into a phase health report |
-| **05i Learnings Harvester** | 05 Phase - Final Review | Mine review evidence and draft learnings and instruction-update proposals |
 | **05l Readiness Synthesizer** | 05 Phase - Final Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
@@ -240,7 +235,7 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **04e Diff Security Scan** *(subagent of Phase - Execute)* — Performs a diff-scoped security review of only the files changed by an implementation pass (from an implementation record's "Files Changed" table or a git diff range), plus their immediate security-relevant context. Writes a compact report with verdict, findings, and the categories not assessable at diff scope. It does not replace the full-codebase Security Scan.
 
-**Security Scan** *(subagent of 05d Security Rollup)* — Performs an evidence-based security assessment across all tracked, security-relevant repository artifacts. Writes a phase-level report that covers secrets, dependencies, application attack surface, authentication, data protection, runtime safety, infrastructure, CI/CD, observability, and cross-cutting security patterns. It redacts sensitive values and distinguishes phase regressions from pre-existing release risks.
+**Security Scan** *(standalone; user-invocable)* — Performs an evidence-based security assessment across all tracked, security-relevant repository artifacts. Writes a phase-level report that covers secrets, dependencies, application attack surface, authentication, data protection, runtime safety, infrastructure, CI/CD, observability, and cross-cutting security patterns. It redacts sensitive values and distinguishes phase regressions from pre-existing release risks.
 
 **Auditor - Code** *(subagent of Audit orchestrator)* — Audits every source file for cleanup, bugs, security, type hints, readability, DRY, and consistency. Produces a structured report.
 
