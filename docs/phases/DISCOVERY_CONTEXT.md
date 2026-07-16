@@ -57,7 +57,7 @@ User-directed addition: a new agentic flow named **"Phase Final Review"** (user 
 - `phase-final-review-report` — output templates: master QA doc, security rollup, AC-regression matrix, readiness report. Mirrors `implementation-record`/`eval-feature-decomposition-report`.
 - `worktree-baseline` — reusable "check out commit X in a worktree, hand back path" skill.
 
-Per the incremental-authoring gate, `PHASE_05_SUMMARY.md` is written only when the user returns for it after completing prior phases; these notes are the authoritative design capture until then.
+`PHASE_05_SUMMARY.md` was authored 2026-07-15 from these notes, taken out of order after Phase 02 (Phase 05 has no dependency on hook phases 03/04, which remain Planned). The phase summary is now the authoritative planning document; these notes remain the original design capture.
 
 ## Key Technical Facts Established
 

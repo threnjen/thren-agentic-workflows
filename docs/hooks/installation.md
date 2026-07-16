@@ -15,6 +15,16 @@ wiring. No virtual environment or package installation is required at runtime.
 
 ## Support matrix
 
+Per-harness hook support classification for this phase:
+
+| Harness | Classification |
+|---|---|
+| Claude Code | Fully supported (contract level; release blocked by phase verdict) |
+| OpenCode | Fully supported (automated contract; release blocked by phase verdict) |
+| Codex | Partial (PostToolUse only for Bash, `apply_patch`, and MCP results) |
+| Cursor | Not supported |
+| GitHub Copilot | Not supported |
+
 | Harness | Status | What is supported in this phase |
 |---|---|---|
 | Claude Code | Contract supported; release blocked | `PreToolUse` URL/file protection and `PostToolUse` scanning are generated. High matches use `updatedToolOutput`; warnings use redacted `additionalContext`. P2-SEC-01 through P2-SEC-03 remain open, and live UI/no-retry evidence remains `NOT RUN`. |
