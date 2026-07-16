@@ -185,13 +185,16 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             codex_path.read_text(encoding="utf-8"),
         )
 
-    def test_phase_final_review_agent_is_present_in_all_harness_outputs(self) -> None:
+    def test_pr_review_agent_is_present_in_all_harness_outputs(self) -> None:
+        # Renamed from `05 Phase - Final Review` by the PR-Review rescope. The
+        # Claude output is a *command*, not an agent: this orchestrator is
+        # user-invocable.
         expected_markers = {
-            ".github/agents/05-phase-final-review.agent.md": "name: 05 Phase - Final Review",
-            "claude/commands/phase-final-review.md": "Phase Final Review Orchestrator",
-            "opencode/agents/05-phase-final-review.md": "Phase Final Review Orchestrator",
-            "codex/agents/05-phase-final-review.toml": 'name = "phase-final-review"',
-            "codex/profiles/phase-final-review.config.toml": "Phase Final Review Orchestrator",
+            ".github/agents/05-pr-review.agent.md": "name: 05 PR - Review",
+            "claude/commands/pr-review.md": "PR Review Orchestrator",
+            "opencode/agents/05-pr-review.md": "PR Review Orchestrator",
+            "codex/agents/05-pr-review.toml": 'name = "pr-review"',
+            "codex/profiles/pr-review.config.toml": "PR Review Orchestrator",
         }
 
         for relative_path, marker in expected_markers.items():
