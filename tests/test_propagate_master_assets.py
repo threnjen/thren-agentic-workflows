@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -245,8 +246,49 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertEqual(generated["$source"], "file-access-guard")
             self.assertEqual(
                 generated["hooks"][0]["command"],
-                "python3 .github/hooks/scripts/file-access-guard.py",
+                'python3 "$CLAUDE_PROJECT_DIR/.github/hooks/scripts/file-access-guard.py"',
             )
+
+    def test_generated_hook_commands_resolve_from_a_subdirectory(self) -> None:
+        """Hook commands must survive a session whose cwd is not the repo root.
+
+        Claude Code and Codex run hook commands with the session working
+        directory. A relative script path stops resolving in a subdirectory,
+        the guard fails to launch, and fail-closed then blocks every tool call.
+        """
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_root = self._make_hook_source(tmp_root / "source")
+            consumer_root = tmp_root / "consumer"
+            mod.propagate_hooks_once(repo_root=consumer_root, source_root=source_root)
+
+            subdirectory = consumer_root / "nested" / "deeper"
+            subdirectory.mkdir(parents=True)
+            claude = json.loads(
+                (consumer_root / ".claude/settings.json").read_text(encoding="utf-8")
+            )
+            codex = json.loads(
+                (consumer_root / ".codex/hooks.json").read_text(encoding="utf-8")
+            )
+            subprocess.run(
+                ["git", "init", "--quiet"], cwd=consumer_root, check=True
+            )
+
+            for settings, environment in (
+                (claude, {"CLAUDE_PROJECT_DIR": str(consumer_root)}),
+                (codex, {}),
+            ):
+                command = settings["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+                probe = subprocess.run(
+                    f"{command} < /dev/null",
+                    shell=True,
+                    cwd=subdirectory,
+                    env={**os.environ, **environment},
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertNotIn("can't open file", probe.stderr)
+                self.assertNotIn("No such file or directory", probe.stderr)
 
     def test_hook_propagation_rejects_missing_runtime_asset(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
@@ -348,8 +390,11 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 entry for entry in command if entry.get("$source") == "file-access-guard"
             )
 
+            # Claude Code runs hook commands through a shell, which is what
+            # expands the $CLAUDE_PROJECT_DIR anchor the generated command uses.
             completed = subprocess.run(
-                guard_entry["hooks"][0]["command"].split(),
+                guard_entry["hooks"][0]["command"],
+                shell=True,
                 input=json.dumps(
                     {
                         "tool_name": "Read",
@@ -360,6 +405,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 text=True,
                 capture_output=True,
                 cwd=consumer_root,
+                env={**os.environ, "CLAUDE_PROJECT_DIR": str(consumer_root)},
                 check=False,
             )
 
@@ -647,15 +693,20 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             codex = json.loads(
                 (consumer_root / ".codex/hooks.json").read_text(encoding="utf-8")
             )
-            for settings in (claude, codex):
+            expected_commands = {
+                "claude": 'python3 "$CLAUDE_PROJECT_DIR'
+                '/.github/hooks/scripts/injection-scanner.py"',
+                "codex": 'python3 "$(git rev-parse --show-toplevel)'
+                '/.github/hooks/scripts/injection-scanner.py"',
+            }
+            for tool, settings in (("claude", claude), ("codex", codex)):
                 scanner = next(
                     entry
                     for entry in settings["hooks"]["PostToolUse"]
                     if entry.get("$source") == "injection-scanner"
                 )
                 self.assertEqual(
-                    scanner["hooks"][0]["command"],
-                    "python3 .github/hooks/scripts/injection-scanner.py",
+                    scanner["hooks"][0]["command"], expected_commands[tool]
                 )
             codex_scanner = next(
                 entry

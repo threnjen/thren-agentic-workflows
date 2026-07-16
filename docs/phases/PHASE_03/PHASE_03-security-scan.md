@@ -1,5 +1,12 @@
 # security-scan: phase-05-phase-final-review
 
+> **Renumbered 2026-07-16: this phase is now Phase 03 (formerly Phase 05).** The
+> body below is preserved as the historical record from the original review and
+> still uses the Phase 05 numbering throughout. Development-fixture paths
+> (`dev/phase-final-review/fixtures/PHASE_05/`, `PHASE_05a`/`PHASE_05b`) and the
+> `05a`–`05l` agent names are unchanged and remain correct as written. See the
+> mapping table in `docs/phases/PROJECT_ROADMAP.md`.
+
 ## Scan Metadata
 
 - Repository revision: `4484f0f234ee90de8cdab7eb2b0c1c4ffdfbee29` (`phase/phase-final-review-2`), scanned 2026-07-15.

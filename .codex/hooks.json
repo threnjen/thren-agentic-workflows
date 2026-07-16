@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .github/hooks/scripts/audit-log.sh",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.github/hooks/scripts/audit-log.sh\"",
             "timeout": 5
           }
         ]
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .github/hooks/scripts/injection-scanner.py",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.github/hooks/scripts/injection-scanner.py\"",
             "timeout": 10
           }
         ]
@@ -53,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "osascript -e 'display notification \"Codex is done\" with title \"Codex\"'"
+            "command": "osascript -e display notification \"Codex is done\" with title \"Codex\""
           }
         ]
       }
@@ -65,7 +65,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .github/hooks/scripts/file-access-guard.py",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.github/hooks/scripts/file-access-guard.py\"",
             "timeout": 10
           }
         ]

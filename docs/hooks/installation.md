@@ -76,10 +76,17 @@ printf '%s\n' '{"hook_event_name":"PostToolUse","tool_name":"WebFetch","tool_inp
 
 The guard command must return one structured `deny` without printing the input;
 the scanner command must return `{}`. Claude Code users can also run `/hooks` to
-confirm the `PreToolUse` registration. Codex users must launch from the
-repository root for this phase's relative project command; current Codex docs
-note that hook commands otherwise run with the session working directory and
-recommend git-root-based command resolution for subdirectory launches.
+confirm the `PreToolUse` registration.
+
+Both Claude Code and Codex run hook commands with the *session* working
+directory rather than the repository root, so generated commands anchor their
+script path to the project root instead of relying on a relative path: Claude
+wiring uses `$CLAUDE_PROJECT_DIR` and Codex wiring uses
+`$(git rev-parse --show-toplevel)`, each expanded by the shell at invocation.
+OpenCode plugins pin `cwd` to the plugin's `directory` for the same reason.
+Sessions may therefore be launched from any subdirectory. This matters beyond
+convenience: a guard that cannot launch fails closed, so an unanchored relative
+path turns any subdirectory session into a total tool-call outage.
 
 ## Generated global installation
 

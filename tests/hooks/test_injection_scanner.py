@@ -167,7 +167,38 @@ def test_ac2_encoded_candidate_limits_are_bounded(scanner) -> None:
     )
 
     assert limited.match is None
+    assert "candidate-cap" in limited.notices
     assert expanded.match.rule_id == "second-candidate"
+    assert "candidate-cap" not in expanded.notices
+
+
+def test_ac2_oversize_decoded_candidate_is_reported_as_unassessed(scanner) -> None:
+    rules = _rules(scanner, _rule("fixture-rule", "fixture directive"))
+    oversized = base64.b64encode(b"A" * 256).decode("ascii")
+
+    result = scanner.scan_output(
+        oversized,
+        rules,
+        limits={"max_scan_bytes": 4096, "max_encoded_candidates": 8, "max_decoded_bytes": 128},
+    )
+
+    assert result.match is None
+    assert "candidate-cap" in result.notices
+
+
+def test_ac2_undecodable_candidates_do_not_exhaust_candidate_budget(scanner) -> None:
+    rules = _rules(scanner, _rule("late-candidate", "fixture directive"))
+    undecodable = " ".join("ff" * 8 for _ in range(3))
+    encoded = base64.b64encode(b"fixture directive").decode("ascii")
+
+    result = scanner.scan_output(
+        f"{undecodable} {encoded}",
+        rules,
+        limits={"max_scan_bytes": 4096, "max_encoded_candidates": 1, "max_decoded_bytes": 128},
+    )
+
+    assert result.match.rule_id == "late-candidate"
+    assert "candidate-cap" not in result.notices
 
 
 def test_ac8_strongest_match_and_tie_break_are_deterministic(scanner) -> None:
@@ -313,13 +344,13 @@ def test_ac5_high_block_is_redacted_and_instructs_no_retry(
     assert result.updated_tool_output == result.reason
 
 
-def test_ac5_structured_high_block_preserves_builtin_shape_without_raw_values(
+def test_ac5_structured_high_block_replaces_builtin_output_with_fixed_shape(
     scanner, scanner_script, framework, tmp_path
 ) -> None:
     sentinel = "fixture directive"
     raw = {
         "stdout": sentinel,
-        "stderr": f"nested {sentinel}",
+        f"key {sentinel}": {"nested": [sentinel, 42, {sentinel: sentinel}]},
         "interrupted": False,
         "isImage": False,
     }
@@ -339,9 +370,7 @@ def test_ac5_structured_high_block_preserves_builtin_shape_without_raw_values(
     result = scanner_script.handle_event(event, config, repo_root=tmp_path)
 
     assert result.action == "block"
-    assert set(result.updated_tool_output) == set(raw)
-    assert result.updated_tool_output["interrupted"] is False
-    assert result.updated_tool_output["isImage"] is False
+    assert result.updated_tool_output == result.reason
     assert sentinel not in json.dumps(result.updated_tool_output)
 
 
@@ -400,6 +429,67 @@ def test_ac8_binary_notice_does_not_crash(scanner_script, framework, tmp_path) -
 
     assert result.action == "warn"
     assert "binary" in result.additional_context
+
+
+def test_ac8_scan_cap_overflow_blocks_instead_of_warning(
+    scanner_script, framework, tmp_path
+) -> None:
+    sentinel = "fixture directive"
+    config = framework.ConfigSnapshot(
+        {
+            "rules": {"fixture-high": _rule(
+                "fixture-high", sentinel, severity="high", response_action="block"
+            )},
+            "source_allowlist": [],
+            "scan_limits": {
+                "max_scan_bytes": 32,
+                "max_encoded_candidates": 4,
+                "max_decoded_bytes": 128,
+            },
+        },
+        True,
+    )
+    event = framework.parse_payload(_event_payload("Read", "x" * 33 + sentinel))
+
+    result = scanner_script.handle_event(event, config, repo_root=tmp_path)
+
+    assert result.action == "block"
+    assert "could not be assessed" in result.reason
+    assert "Do not retry" in result.reason
+    assert result.updated_tool_output == result.reason
+    assert sentinel not in json.dumps(result.updated_tool_output)
+
+
+def test_ac8_encoded_candidate_overflow_blocks_instead_of_warning(
+    scanner_script, framework, tmp_path
+) -> None:
+    sentinel = "fixture directive"
+    filler = " ".join(
+        base64.b64encode(f"harmless {index}".encode("ascii")).decode("ascii")
+        for index in range(3)
+    )
+    payload = f"{filler} {base64.b64encode(sentinel.encode('ascii')).decode('ascii')}"
+    config = framework.ConfigSnapshot(
+        {
+            "rules": {"fixture-high": _rule(
+                "fixture-high", sentinel, severity="high", response_action="block"
+            )},
+            "source_allowlist": [],
+            "scan_limits": {
+                "max_scan_bytes": 4096,
+                "max_encoded_candidates": 2,
+                "max_decoded_bytes": 128,
+            },
+        },
+        True,
+    )
+    event = framework.parse_payload(_event_payload("Read", payload))
+
+    result = scanner_script.handle_event(event, config, repo_root=tmp_path)
+
+    assert result.action == "block"
+    assert result.updated_tool_output == result.reason
+    assert sentinel not in json.dumps(result.updated_tool_output)
 
 
 def test_ac8_empty_output_takes_fast_allow_path(scanner_script, framework, tmp_path) -> None:

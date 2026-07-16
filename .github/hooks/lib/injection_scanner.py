@@ -188,29 +188,46 @@ def _normalize(text: str) -> str:
     ).casefold()
 
 
-def _decoded_candidates(text: str, limits: Mapping[str, int]) -> tuple[str, ...]:
+def _decoded_candidates(
+    text: str, limits: Mapping[str, int]
+) -> tuple[tuple[str, ...], bool]:
+    """Decode encoded candidates, reporting whether any assessable one was skipped.
+
+    Candidates that cannot decode to text at all are not a bypass channel and
+    do not consume the candidate budget. Candidates skipped for size or budget
+    reasons are unassessed content and must be reported so callers can fail
+    closed instead of passing them through (P2-SEC-02).
+    """
+
     candidates: dict[tuple[int, int], tuple[str, str]] = {}
     for match in _BASE64_CANDIDATE.finditer(text):
         candidates[match.span()] = ("base64", match.group(0))
     for match in _HEX_CANDIDATE.finditer(text):
         candidates[match.span()] = ("hex", match.group(0))
 
-    decoded = []
-    for _, (encoding, candidate) in sorted(candidates.items())[
-        : limits["max_encoded_candidates"]
-    ]:
+    decoded: list[str] = []
+    exhausted = False
+    for _, (encoding, candidate) in sorted(candidates.items()):
         try:
             if encoding == "hex":
                 raw = bytes.fromhex(candidate)
             else:
                 padded = candidate + "=" * (-len(candidate) % 4)
                 raw = base64.b64decode(padded, validate=True)
-            if len(raw) > limits["max_decoded_bytes"]:
-                continue
-            decoded.append(raw.decode("utf-8"))
-        except (ValueError, UnicodeDecodeError, binascii.Error):
+        except (ValueError, binascii.Error):
             continue
-    return tuple(decoded)
+        if len(raw) > limits["max_decoded_bytes"]:
+            exhausted = True
+            continue
+        try:
+            value = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        if len(decoded) >= limits["max_encoded_candidates"]:
+            exhausted = True
+            break
+        decoded.append(value)
+    return tuple(decoded), exhausted
 
 
 def _text_output(output: Any) -> tuple[str | None, tuple[str, ...]]:
@@ -275,8 +292,11 @@ def scan_output(
         encoded = encoded[: active_limits["max_scan_bytes"]]
         text = encoded.decode("utf-8", errors="ignore")
         notices = notices + ("scan-cap",)
+    decoded, exhausted = _decoded_candidates(text, active_limits)
+    if exhausted:
+        notices = notices + ("candidate-cap",)
     representations = (_normalize(text),) + tuple(
-        _normalize(candidate) for candidate in _decoded_candidates(text, active_limits)
+        _normalize(candidate) for candidate in decoded
     )
     matching = []
     for rule in rules:

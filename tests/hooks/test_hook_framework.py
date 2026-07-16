@@ -578,7 +578,19 @@ def test_mcp_redaction_discards_dynamic_structured_content_keys(framework) -> No
     assert sentinel not in json.dumps(redacted)
 
 
-def test_claude_post_tool_failure_replaces_structured_output_shape(framework) -> None:
+def test_builtin_redaction_discards_untrusted_keys_and_primitives(framework) -> None:
+    sentinel = "BUILTIN_DYNAMIC_KEY_SENTINEL"
+
+    redacted = framework.redact_tool_output(
+        {sentinel: {"nested": [sentinel, 42]}, "stdout": sentinel, "count": 7},
+        "redacted block reason",
+        tool_name="Bash",
+    )
+
+    assert redacted == "redacted block reason"
+
+
+def test_claude_post_tool_failure_replaces_structured_output_with_fixed_redaction(framework) -> None:
     sentinel = "CLAUDE_FAILURE_OUTPUT_SENTINEL"
     output = io.StringIO()
 
@@ -605,12 +617,7 @@ def test_claude_post_tool_failure_replaces_structured_output_shape(framework) ->
 
     emitted = json.loads(output.getvalue())
     assert exit_code == 0
-    assert emitted["hookSpecificOutput"]["updatedToolOutput"] == {
-        "stdout": "guard error",
-        "stderr": "guard error",
-        "interrupted": False,
-        "isImage": False,
-    }
+    assert emitted["hookSpecificOutput"]["updatedToolOutput"] == "guard error"
     assert sentinel not in output.getvalue()
 
 
