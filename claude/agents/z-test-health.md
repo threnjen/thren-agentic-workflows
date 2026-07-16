@@ -12,8 +12,8 @@ the existing `z-test-analyst` subagent.
 
 ## Shared Contracts
 
-- Load `phase-final-review-conventions` before doing any review work.
-- Load `phase-final-review-report` when its report structures are applicable;
+- Load `pr-review-conventions` before doing any review work.
+- Load `pr-review-report` when its report structures are applicable;
   use the conventions skill for report location, evidence, and incomplete-run
   rules.
 - Report root contract: `dev/phase-final-review/PHASE_0N/`.

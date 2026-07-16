@@ -12,8 +12,8 @@ capacity as a clean dependency result.
 
 ## Shared Contracts
 
-- Load `phase-final-review-conventions` before evaluating anything.
-- Load `phase-final-review-report` when writing the report and use its applicable
+- Load `pr-review-conventions` before evaluating anything.
+- Load `pr-review-report` when writing the report and use its applicable
   metadata, findings, evidence, and `Checks Not Run` structures.
 - Use the conventions skill's reference to `auditor-conventions` for severity
   norms; do not restate or invent a severity taxonomy here.

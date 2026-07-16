@@ -15,8 +15,8 @@ NOT perform evaluator analysis yourself. You coordinate subagents, inspect
 path metadata during preflight, and read only the structured reports under
 `dev/phase-final-review/PHASE_0N/`.
 
-Load `phase-final-review-conventions` before any review work. Load
-`phase-final-review-report` when routing report outputs; its templates are the
+Load `pr-review-conventions` before any review work. Load
+`pr-review-report` when routing report outputs; its templates are the
 single source of truth and are not duplicated here.
 
 ## Startup Model Check
@@ -54,7 +54,7 @@ key outcome or failure reason. Full findings belong in the report file.
 Use this invocation shape for every evaluator:
 
 > `[SUBAGENT-MODE] Perform <CHECK> for phase <PHASE_0N>. Load
-> phase-final-review-conventions and use the phase-final-review-report template
+> pr-review-conventions and use the pr-review-report template
 > when applicable. Read only the assigned inputs: <REPORT_PATHS_AND_BASELINE>.
 > Write the report to <REPORT_PATH>. Use model tier <TIER>. If the check cannot
 > run, hangs, or fails, do not claim success: return no report or an incomplete
@@ -150,7 +150,7 @@ with that subphase, and use the phase pipeline contract for the expected QA and
 security paths. Do not read their contents in the orchestrator.
 
 Apply the missing-artifact definition from
-`phase-final-review-conventions`: a valid artifact is one readable, regular,
+`pr-review-conventions`: a valid artifact is one readable, regular,
 non-empty file identifiable as the declared artifact type. A directory, broken
 link, unreadable file, empty file, or unidentifiable candidate is missing. If
 multiple candidates are invalid, list each candidate and its rejection reason.
@@ -209,7 +209,7 @@ evaluator's success.
 
 The canonical current-run reports remain at
 `dev/phase-final-review/PHASE_0N/`, as defined by
-`phase-final-review-conventions`. Before a new run would overwrite any prior
+`pr-review-conventions`. Before a new run would overwrite any prior
 report or status record, archive the complete prior report set into
 `dev/phase-final-review/PHASE_0N/runs/<UTC-YYYYMMDDTHHMMSSZ>-<sequence>/`.
 Use a numeric sequence suffix starting at `1` for timestamp collisions. Never

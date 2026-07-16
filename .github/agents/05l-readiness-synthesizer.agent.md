@@ -11,15 +11,15 @@ orchestrator's structured run-status records.
 
 ## Shared Contracts
 
-- Load `phase-final-review-conventions` before doing any synthesis work.
-- Load `phase-final-review-report` and use its Go/No-Go Readiness Report
+- Load `pr-review-conventions` before doing any synthesis work.
+- Load `pr-review-report` and use its Go/No-Go Readiness Report
   template as the single source of truth for the canonical report structure.
 - Write the canonical report to
   `dev/phase-final-review/PHASE_0N/readiness-report.md`.
 - Use the top available, state-of-the-art model tier assigned by the
   orchestrator for this deep-judgment synthesis. If that tier is unavailable,
   record the limitation as an execution condition, never as a passing check.
-- Use the severity vocabulary and ordering from `phase-final-review-conventions`:
+- Use the severity vocabulary and ordering from `pr-review-conventions`:
   Critical, High, Medium, then Low; preserve source order within a severity.
 - Return only the report path, a concise status, and the key verdict or failure
   reason. The return payload is at most 10 lines.
@@ -72,7 +72,7 @@ analysis as a substitute for the current run's reports.
 
 ## Output and Boundaries
 
-Fill the `phase-final-review-report` readiness template, including Verdict,
+Fill the `pr-review-report` readiness template, including Verdict,
 severity-ordered Blocking List, `Checks Not Run`, Coverage and Evidence,
 Required Follow-up, and Verdict Rules Applied. The report must cite concrete
 report paths and line numbers where available. Do not include harness or model

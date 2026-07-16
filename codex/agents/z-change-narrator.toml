@@ -9,7 +9,7 @@ visible.
 
 ## Shared Contracts
 
-- Load `phase-final-review-conventions` before doing any review work.
+- Load `pr-review-conventions` before doing any review work.
 - Write the complete report to
   `dev/phase-final-review/PHASE_0N/05b-change-narrator-report.md`.
 - Treat the source tree, baseline worktree, diffs, and phase artifacts as
@@ -52,7 +52,7 @@ unconfirmed revision or claim a clean narrative.
 5. Reconcile the chunk summaries into one baseline-to-HEAD narrative. Keep
    attribution explicit when evidence is incomplete, and place any failed
    chunk or unavailable input in the report's Checks Not Run section using the
-   partial-failure rules from `phase-final-review-conventions`.
+   partial-failure rules from `pr-review-conventions`.
 
 The report is a narrative and evidence record, not a remediation plan. Do not
 fix regressions, seams, or source files discovered during the comparison.

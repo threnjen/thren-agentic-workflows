@@ -51,28 +51,22 @@ EXEMPT_PREFIXES = (
     "dev/feature/",
 )
 
-# Time-boxed. These two skills' report rosters name retired evaluators.
-# `03-pr-review-conventions-skills` owns them: it renames both directories
-# (`phase-final-review-*` -> `pr-review-*`) AND drops the retired-evaluator
-# templates. Rewriting a skill this feature does not own would collide with 03.
-# Whoever lands 03 deletes these exemptions -- see
-# `test_time_boxed_skill_exemption_is_still_load_bearing`, which trips then.
-# The trailing slash matches all four roots: .github/, claude/, opencode/, codex/.
-EXEMPT_SKILL_DIRS = (
-    "skills/phase-final-review-conventions/",
-    "skills/phase-final-review-report/",
-)
+# `EXEMPT_SKILL_DIRS` lived here. It time-boxed the two skills whose report
+# rosters named retired evaluators, because `03-pr-review-conventions-skills`
+# owned those files and rewriting them from feature `02` would have collided.
+# Feature `03` has landed: both directories are renamed (`phase-final-review-*`
+# -> `pr-review-*`) and the retired-evaluator templates are dropped, so the
+# exemption stopped excepting anything and became a hole in the sweep. Removed
+# in that same pass, with `test_time_boxed_skill_exemption_is_still_load_bearing`
+# -- exactly as both were designed to be. The renamed skills are now swept like
+# any other authored file.
 
 # This module defines the retired-name list.
 EXEMPT_FILES = ("tests/test_retired_evaluator_removal.py",)
 
 
 def _is_exempt(path: str) -> bool:
-    return (
-        path.startswith(EXEMPT_PREFIXES)
-        or path in EXEMPT_FILES
-        or any(fragment in path for fragment in EXEMPT_SKILL_DIRS)
-    )
+    return path.startswith(EXEMPT_PREFIXES) or path in EXEMPT_FILES
 
 
 def _tracked_files() -> list[str]:
@@ -166,37 +160,6 @@ def test_no_tracked_file_references_a_retired_agent() -> None:
             offenders.append(f"{path}: {', '.join(found)}")
 
     assert not offenders, "retired agents still referenced:\n" + "\n".join(offenders)
-
-
-def test_time_boxed_skill_exemption_is_still_load_bearing() -> None:
-    """The skill exemption is deliberate and temporary -- it must not outlive its cause.
-
-    `03-pr-review-conventions-skills` rescopes these two skills; once it has,
-    this test fails rather than leaving a hole in the sweep that hides a real
-    regression.
-
-    This trips for whoever lands feature `03` (wave 3), not for
-    `08-retirement-reconciliation` (wave 7): 03 both renames the skill
-    directories -- which makes `EXEMPT_SKILL_DIRS` match nothing -- and strips
-    the retired templates. The cleanup is a two-symbol deletion and belongs in
-    03's own pass; deferring it to 08 would leave the suite red across waves
-    4-7 and poison every intermediate feature's green-baseline gate.
-    """
-    still_offending = [
-        path
-        for path in _tracked_files()
-        if any(fragment in path for fragment in EXEMPT_SKILL_DIRS)
-        and any(
-            name in (REPO_ROOT / path).read_text(encoding="utf-8")
-            for name in RETIRED_SLUGS + RETIRED_DISPLAY_NAMES
-        )
-    ]
-
-    assert still_offending, (
-        "no exempt skill file names a retired agent any more -- feature 03 has "
-        "landed and the exemption is now a hole in the sweep. Delete "
-        "EXEMPT_SKILL_DIRS and this test in the same pass that lands 03."
-    )
 
 
 def test_no_surviving_agent_declares_a_retired_child() -> None:

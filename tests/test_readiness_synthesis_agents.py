@@ -8,8 +8,8 @@ READINESS_AGENT = REPO_ROOT / ".github" / "agents" / "05l-readiness-synthesizer.
 def test_readiness_synthesizer_declares_report_only_synthesis_contract() -> None:
     body = READINESS_AGENT.read_text(encoding="utf-8")
 
-    assert "phase-final-review-conventions" in body
-    assert "phase-final-review-report" in body
+    assert "pr-review-conventions" in body
+    assert "pr-review-report" in body
     assert ".github/agents/prod-code-review.md" in body
     assert "evaluator report" in body.lower()
     assert "never read\ncode" in body.lower()

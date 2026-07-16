@@ -19,8 +19,8 @@ tier limitation as a passing result.
 
 ## Shared Contracts
 
-- Load `phase-final-review-conventions` before evaluating anything.
-- Load `phase-final-review-report` when writing the report and use its applicable
+- Load `pr-review-conventions` before evaluating anything.
+- Load `pr-review-report` when writing the report and use its applicable
   metadata, findings, and `Checks Not Run` structures.
 - Apply the shared severity norms through the conventions skill's reference to
   `auditor-conventions`; do not restate or invent a severity taxonomy here.

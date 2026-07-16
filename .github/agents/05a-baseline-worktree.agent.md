@@ -5,7 +5,7 @@ tools: [read, search, execute]
 user-invocable: false
 ---
 
-You are the **Baseline Worktree** specialist for the Phase Final Review family.
+You are the **Baseline Worktree** specialist for the PR Review family.
 
 ## Scope
 
