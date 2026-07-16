@@ -278,6 +278,12 @@
     },
     "self-opencode-plugins": {
       "id": "self-opencode-plugins", "action": "deny", "reason": "Generated OpenCode hook plugins are self-protected", "matcher": "path_glob", "pattern": "**/.opencode/plugins/**", "priority": 90, "safe_alternative": "Change the source hook and regenerate through the supported workflow", "escalate_in_bypass": "deny", "access": "write"
+    },
+    "self-injection-fixture-sources": {
+      "id": "self-injection-fixture-sources", "action": "deny", "reason": "Scanner-allowlisted injection fixture sources are self-protected", "matcher": "path_glob", "pattern": "**/tests/hooks/fixtures/injection/**", "priority": 90, "safe_alternative": "Request a human-reviewed change to allowlisted injection sources", "escalate_in_bypass": "deny", "access": "write"
+    },
+    "self-injection-inspiration-sources": {
+      "id": "self-injection-inspiration-sources", "action": "deny", "reason": "Scanner-allowlisted inspiration sources are self-protected", "matcher": "path_glob", "pattern": "**/docs/inspiration/**", "priority": 90, "safe_alternative": "Request a human-reviewed change to allowlisted injection sources", "escalate_in_bypass": "deny", "access": "write"
     }
   }
 }

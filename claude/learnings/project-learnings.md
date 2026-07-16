@@ -13,3 +13,41 @@ Do not write runtime identity into `ledger-events.jsonl`, score history, rubric 
 
 **Watch for**
 Any ledger schema, run template, or report contract that reintroduces `harness`, `model`, or similar runtime identity fields into retained evaluation evidence.
+## If a fixed subprocess latency gate fails, profile interpreter resolution before the code
+**Problem**
+The propagated-guard 50 ms latency gate failed with medians of 84-383 ms, was risk-accepted, then silently raised to 90 ms, while the guard itself was blamed.
+
+**Root cause**
+The gate invoked `python3`, which resolved through a pyenv shim — a shell script that re-resolves the interpreter on every call and alone costs ~50 ms (`python3 -c pass` is ~62 ms via shim, ~9 ms direct). The guard runtime is ~30 ms median through a resolved interpreter.
+
+**Fix**
+The gate now invokes `sys.executable` directly and passes at the original 50 ms threshold. Environment interpreter-resolution overhead is documented separately from guard cost.
+
+**Watch for**
+Any subprocess benchmark on a pyenv/asdf machine that spawns bare `python3`/`node`/`ruby` — measure `<interpreter> -c pass` first to isolate shim cost before optimizing the program.
+
+## Hook commands with relative script paths brick sessions when cwd moves
+**Problem**
+A `cd` into a subdirectory left the persistent shell cwd there; every subsequent tool call failed because PreToolUse hooks invoke `python3 .github/hooks/scripts/...` relative to cwd, and the fail-closed posture blocked all tools including the `cd` needed to recover.
+
+**Root cause**
+Hook wiring uses repo-relative script paths that only resolve from the repo root.
+
+**Fix (pending)**
+Anchor hook commands with `$CLAUDE_PROJECT_DIR` or absolute paths in generated settings so hooks resolve from any cwd.
+
+**Watch for**
+Generated hook/plugin wiring that assumes the repo root is the working directory; recovery requires the user to run `! cd <repo-root>` manually.
+
+## Security caps must fail closed, not downgrade to warnings
+**Problem**
+The injection scanner treated its own scan-byte cap and encoded-candidate budget as permission to pass unassessed content with a warning (P2-SEC-02), and block redaction preserved attacker-controlled mapping keys (P2-SEC-01).
+
+**Root cause**
+Bounded-work limits were implemented as scan-effort limits rather than trust boundaries, and redaction tried to preserve output shape instead of replacing it.
+
+**Fix**
+Cap overflow (scan-cap or candidate-cap notices) now blocks with a fixed replacement; blocked output is replaced wholesale with a fixed runner-valid shape so no untrusted key, value, or primitive survives.
+
+**Watch for**
+Any scanner/filter whose resource limit (bytes, candidates, depth, timeout) silently passes the unexamined remainder, and any redaction that recurses into attacker-controlled containers instead of replacing them.

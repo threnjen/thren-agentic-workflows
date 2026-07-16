@@ -222,19 +222,16 @@ def make_post_tool_result(
 def redact_tool_output(
     output: Any, replacement: str, *, tool_name: str = ""
 ) -> Any:
-    """Preserve a tool result's container shape while removing dynamic text."""
+    """Replace a blocked tool result with a fixed, runner-valid redacted shape.
+
+    No part of the original output may survive a block: mapping keys, list
+    items, and non-string primitives are all attacker-influenced content
+    (P2-SEC-01), so shape preservation is deliberately not attempted.
+    """
 
     if tool_name.startswith("mcp__"):
         return {"content": [{"type": "text", "text": replacement}]}
-    if isinstance(output, Mapping):
-        return {
-            key: redact_tool_output(value, replacement) for key, value in output.items()
-        }
-    if isinstance(output, (list, tuple)):
-        return [redact_tool_output(value, replacement) for value in output]
-    if isinstance(output, (str, bytes)):
-        return replacement
-    return output
+    return replacement
 
 
 def emit_post_tool_result(

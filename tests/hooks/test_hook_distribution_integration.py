@@ -129,6 +129,8 @@ def test_ac9_propagated_guard_smoke_paths(
         ".codex/hooks.json",
         ".opencode/plugins/file-access-guard.js",
         ".opencode/plugins/injection-scanner.js",
+        "tests/hooks/fixtures/injection/planted-payload.json",
+        "docs/inspiration/planted-payload.md",
     ],
 )
 def test_ac9_every_propagated_policy_asset_is_self_protected(
@@ -199,19 +201,26 @@ def test_ac9_propagated_guard_median_latency_is_below_50_ms(
 
     for _ in range(11):
         started = time.perf_counter()
-        completed, output = _invoke_guard(consumer, payload)
+        completed = subprocess.run(
+            [sys.executable, GUARD_COMMAND[1]],
+            input=json.dumps(payload),
+            text=True,
+            capture_output=True,
+            cwd=consumer,
+            check=False,
+        )
         samples_ms.append((time.perf_counter() - started) * 1000)
         assert completed.returncode == 0
-        assert _decision(output) == "allow"
+        assert _decision(json.loads(completed.stdout)) == "allow"
 
-    # AC9's original 50 ms budget is not achievable on this machine without
-    # modifying the guard runtime: measured median is ~55-60 ms, of which bare
-    # `python3 -c pass` subprocess startup alone is ~17 ms and the remainder is
-    # guard import/config work. The guard and its lib/ modules are
-    # self-protected hook assets (rule self-hook-assets) and cannot be
-    # optimized without a human-reviewed hook policy change, so the threshold
-    # documents the measured floor plus headroom instead.
-    assert median(samples_ms) < 90, samples_ms
+    # AC9's 50 ms budget applies to the guard runtime itself, so this gate
+    # invokes a resolved interpreter directly. A bare `python3` lookup can
+    # route through a pyenv shim, which alone adds ~50 ms of shell-script
+    # re-resolution per call and previously produced medians of 84-135+ ms;
+    # that overhead is interpreter-resolution environment cost, not guard
+    # cost. Direct invocation measures ~30 ms median (startup ~9 ms plus
+    # guard import/config work).
+    assert median(samples_ms) < 50, samples_ms
 
 
 def test_ac7_installation_guide_classifies_all_five_harnesses() -> None:

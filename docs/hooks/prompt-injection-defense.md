@@ -7,15 +7,23 @@ strongest-match selection, and allowlisting live in the shared scanner module.
 
 ## Release status
 
-**NO-GO:** Phase 02 is implemented but is not approved for release or promotion
-to manual sign-off. The final security and production reviews found three
-introduced High-severity bypasses:
+**NO-GO (blockers remediated, gate re-run pending):** Phase 02 is implemented
+but is not approved for release or promotion to manual sign-off until the
+security gate is re-run. The final security and production reviews found three
+introduced High-severity bypasses, since remediated:
 
-- **P2-SEC-01:** attacker-controlled structured mapping keys can survive the
-  nominal block replacement.
-- **P2-SEC-02:** content beyond the scan-byte cap or encoded-candidate limit can
-  remain model-visible without being assessed.
-- **P2-SEC-03:** mutable directory-wide source allowlists can bypass scanning.
+- **P2-SEC-01 (remediated):** attacker-controlled structured mapping keys could
+  survive the nominal block replacement. Blocked output is now replaced with a
+  fixed, runner-valid redacted shape; no original keys, values, or primitives
+  survive.
+- **P2-SEC-02 (remediated):** content beyond the scan-byte cap or
+  encoded-candidate limit could remain model-visible without being assessed.
+  Unassessed content (scan-cap or candidate-cap) now fails closed with a block
+  and fixed replacement instead of a warning.
+- **P2-SEC-03 (remediated):** mutable directory-wide source allowlists could
+  bypass scanning. The allowlisted roots (`tests/hooks/fixtures/injection` and
+  `docs/inspiration`) are now under the same enforced write-deny self-protection
+  boundary as hook assets.
 
 The accepted Codex coverage limitation and PERF-01 latency risk do not cover
 these findings. Live Claude Code, Codex, and OpenCode QA remains `NOT RUN`. See
@@ -28,8 +36,10 @@ the required re-entry sequence.
 - High-tier rules replace model-visible output with a redacted category/rule
   explanation and no-retry/manual-inspection guidance.
 - Medium/low rules preserve logical output and append redacted warning context.
-- Truncated or scan-capped inputs are assessed over available content and carry
-  an unscanned-tail notice.
+- Runner-truncated inputs are assessed over available content and carry an
+  unscanned-tail notice. Scanner-side caps (scan-byte cap, encoded-candidate
+  budget) fail closed: content the scanner cannot fully assess is blocked and
+  replaced rather than passed with a warning.
 - Scanner/config/emission failures fail closed with `guard error`; the only
   recovery bypass is the protected, human-edited project override.
 - Allowlisting is restricted to repository-owned, existing, non-symlinked paths
@@ -71,8 +81,14 @@ OpenCode plugin types at `anomalyco/opencode`'s `packages/plugin/src/index.ts`.
 The fixed Phase 01 50 ms subprocess budget is still a release prerequisite.
 Feature 07 reproduced failures from 117 to 383 ms median and did not weaken the
 threshold. **User approval in phase-execute session** explicitly accepted
-proceeding with this unresolved PERF-01 risk on 2026-07-15; the gate remains
-failed. SEC-01 intermediate-directory containment is reproduced green.
+proceeding with this unresolved PERF-01 risk on 2026-07-15. Root-cause profiling
+later attributed the overshoot to `python3` resolving through a pyenv shim
+(~50 ms of shell re-resolution per call, ~62 ms for a bare `python3 -c pass`);
+the guard runtime itself measures ~30 ms median through a directly resolved
+interpreter. The gate now invokes a resolved interpreter and passes at the
+original 50 ms threshold; deployments whose hook command resolves `python3`
+through a pyenv shim will still pay the shim overhead per call. SEC-01
+intermediate-directory containment is reproduced green.
 
 ## Known boundaries
 
