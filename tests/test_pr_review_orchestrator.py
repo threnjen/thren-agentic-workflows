@@ -38,17 +38,19 @@ CONVENTIONS_SKILL = (
 )
 
 # The surviving evaluators that still declare the retired `dev/phase-final-review/`
-# report root. Their bodies are owned by features 05 (mechanical evaluators), 06
-# (narrative + test health) and 07 (synthesis), which renumber and rescope them;
-# migrating them from feature 04 would collide with all three. Listed so the
-# split is pinned instead of implicit -- see
-# `test_report_root_migration_cannot_split_silently`.
+# report root. Their bodies are owned by features 06 (narrative + test health) and
+# 07 (synthesis), which renumber and rescope them; migrating them from feature 04
+# would collide with both. Listed so the split is pinned instead of implicit --
+# see `test_report_root_migration_cannot_split_silently`.
+#
+# Feature 05 has since migrated the three mechanical sweeps, which is why
+# `05g-artifact-sweeper`, `05j-consistency-auditor` and `05k-dependency-auditor`
+# are gone from this set rather than renamed into it: they now write to
+# `dev/pr-review/` as `05c`, `05d` and `05e`. That is the ledger working as
+# designed -- the migration tripped this assertion and was reconciled here.
 EVALUATORS_AWAITING_REPORT_ROOT_MIGRATION = {
     "05b-change-narrator.agent.md",
-    "05g-artifact-sweeper.agent.md",
     "05h-test-health.agent.md",
-    "05j-consistency-auditor.agent.md",
-    "05k-dependency-auditor.agent.md",
     "05l-readiness-synthesizer.agent.md",
 }
 

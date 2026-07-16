@@ -12,6 +12,56 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import propagate_master_assets as mod
 
+# The settled PR Review evaluator roster, and each agent's exact tool grant.
+#
+# This map is the propagation-enumeration ledger. `test_pr_review_evaluator_roster
+# _is_fully_enumerated` asserts it covers every `05*` evaluator on disk, so an
+# agent can no longer be dropped from enumeration to dodge an assertion about it.
+# That is precisely how the previous gap arose: `05a`, `05g`, `05j` and `05k` were
+# all omitted from the old `expected_slugs` tuple because they held `execute` and
+# would have failed its blanket `assertNotIn("execute", ...)`. Omission was free,
+# so omission happened. It is no longer free.
+#
+# Exact lists replace that blanket assertion. A grant change is now a deliberate
+# edit here rather than a silent widening, and the two directions that assertion
+# could not express are both covered:
+#
+#   * `edit` is REQUIRED by every evaluator that writes its own report. The bodies
+#     say "read-only, never remediate", which reads as license to strip `edit` --
+#     doing so would break the report contract. Pinned here so that fails.
+#   * `execute` is DECLARED, not hidden. It survives only on `05a-baseline-worktree`,
+#     whose `git worktree` call has no non-shell equivalent; the grant is recorded
+#     as explicitly unclosable in `.github/learnings/cross-phase-decisions.md:16`.
+#     Per-agent command scoping is not expressible in Claude subagent frontmatter
+#     (`tools: Bash(gh:*)` is an unresolved tool name, not a narrower grant), so
+#     removal is the only narrowing available -- and this one cannot be removed.
+#     Listing it is the honest outcome: visible and justified beats absent.
+PR_REVIEW_EVALUATOR_TOOLS = {
+    "05a-baseline-worktree": ["read", "search", "execute"],
+    "05b-change-narrator": ["agent", "read", "search", "edit"],
+    "05c-artifact-sweeper": ["read", "search", "edit"],
+    "05d-consistency-auditor": ["read", "search", "edit"],
+    "05e-dependency-auditor": ["read", "search", "edit"],
+    "05h-test-health": ["agent", "read", "search", "edit"],
+    "05l-readiness-synthesizer": ["read", "search", "edit"],
+}
+
+
+def _discover_pr_review_evaluator_slugs() -> set:
+    """Every `05`-family evaluator on disk, read from the source of truth.
+
+    Derived rather than restated: this is what makes omission from
+    `PR_REVIEW_EVALUATOR_TOOLS` fail instead of silently narrowing coverage.
+    `05-pr-review` is the orchestrator that dispatches the roster, not a member
+    of it.
+    """
+    agents_dir = REPO_ROOT / ".github" / "agents"
+    return {
+        path.name[: -len(".agent.md")]
+        for path in agents_dir.glob("05*.agent.md")
+        if path.name != "05-pr-review.agent.md"
+    }
+
 
 class PropagateMasterAssetsTests(unittest.TestCase):
     def _make_hook_source(self, root: Path) -> Path:
@@ -84,14 +134,41 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertTrue((repo_root / "opencode" / "skills" / "demo-skill" / "SKILL.md").exists())
             self.assertTrue((repo_root / "codex" / "skills" / "demo-skill" / "SKILL.md").exists())
 
+    def test_pr_review_evaluator_roster_is_fully_enumerated(self) -> None:
+        """AC8: no evaluator may be omitted from propagation enumeration.
+
+        The enumeration gap this closes was not a typo -- it was structural. The
+        old tuple asserted `assertNotIn("execute", agent.tools)` over a
+        hand-listed roster, so the four agents holding `execute` were simply left
+        out of the list, and nothing failed. Coverage narrowed silently and the
+        grants went unexamined.
+
+        Deriving the roster from disk inverts that: adding a `05*` evaluator
+        without a tool expectation fails here, and so does deleting one without
+        removing its entry.
+        """
+        self.assertEqual(
+            set(PR_REVIEW_EVALUATOR_TOOLS), _discover_pr_review_evaluator_slugs()
+        )
+
+    def test_pr_review_evaluator_tool_grants_match_expected_lists(self) -> None:
+        """AC3/AC4/AC8b/AC8c: exact per-agent grants, not a blanket prohibition.
+
+        Replaces the old `assertNotIn("execute", agent.tools)`. Exact equality
+        catches a widening (`execute` reappearing on a sweeper) and a narrowing
+        (`edit` stripped from an agent that must write its own report) in the
+        same assertion.
+        """
+        agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
+
+        for slug, expected_tools in PR_REVIEW_EVALUATOR_TOOLS.items():
+            with self.subTest(slug=slug):
+                self.assertEqual(agents[slug].tools, expected_tools)
+
     def test_phase_review_agents_match_all_generated_harness_outputs(self) -> None:
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
         instructions = mod.load_instruction_docs()
-        expected_slugs = (
-            "05b-change-narrator",
-            "05h-test-health",
-            "05l-readiness-synthesizer",
-        )
+        expected_slugs = tuple(sorted(PR_REVIEW_EVALUATOR_TOOLS))
 
         claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
         opencode_stems = mod._discover_existing_stems(mod.OPENCODE_AGENTS_DIR)
@@ -110,7 +187,8 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         for slug in expected_slugs:
             with self.subTest(slug=slug):
                 agent = agents[slug]
-                self.assertNotIn("execute", agent.tools)
+                # Tool grants are asserted per-agent in
+                # `test_pr_review_evaluator_tool_grants_match_expected_lists`.
                 docs = mod.applicable_instructions(agent, instructions)
 
                 claude_identifier = mod._claude_identifier_for(agent, claude_stems)
@@ -951,7 +1029,7 @@ class OrphanPruningTests(unittest.TestCase):
         already on disk, so pruning before emission could rename a survivor."""
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
-            self._write_source_agent(repo_root, "05g-artifact-sweeper", "05g Artifact Sweeper")
+            self._write_source_agent(repo_root, "05c-artifact-sweeper", "05c Artifact Sweeper")
             doomed = self._write_source_agent(repo_root, "09-doomed", "09 Doomed")
 
             mod.propagate_once(verbose=False, repo_root=repo_root)
@@ -1120,6 +1198,35 @@ class OrphanPruningTests(unittest.TestCase):
                     self.assertFalse(
                         mod._is_generated_output(path, mod.GENERATED_AGENT_MARKDOWN_HEADER)
                     )
+
+    def test_renumbered_mechanical_evaluators_left_no_opencode_orphans(self) -> None:
+        """AC9: OpenCode agent files key on slug, so a renumber orphans them.
+
+        Claude and Codex key on an existing stem (`z-artifact-sweeper`), which
+        survives the renumber untouched; OpenCode does not, so `05g-*.md` would
+        linger as a stale duplicate of `05c-*.md` and stay dispatchable.
+
+        Exact stems, deliberately not a `05g-*` glob: feature 07 renumbers the
+        readiness synthesizer to `05g-readiness-synthesizer`, so a glob would
+        pass today and break the moment that lands -- asserting the opposite of
+        what it means.
+        """
+        retired_stems = (
+            "05g-artifact-sweeper",
+            "05j-consistency-auditor",
+            "05k-dependency-auditor",
+        )
+        for stem in retired_stems:
+            with self.subTest(stem=stem):
+                self.assertFalse(
+                    (mod.OPENCODE_AGENTS_DIR / f"{stem}.md").exists(),
+                    f"retired OpenCode slug survived the renumber: {stem}.md",
+                )
+
+        for stem in ("05c-artifact-sweeper", "05d-consistency-auditor",
+                     "05e-dependency-auditor"):
+            with self.subTest(stem=stem):
+                self.assertTrue((mod.OPENCODE_AGENTS_DIR / f"{stem}.md").is_file())
 
     def test_real_repository_propagation_removes_nothing(self) -> None:
         """AC7: the pruner is proven inert against the current tree before it is
