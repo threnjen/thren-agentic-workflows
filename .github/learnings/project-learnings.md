@@ -51,3 +51,30 @@ Cap overflow (scan-cap or candidate-cap notices) now blocks with a fixed replace
 
 **Watch for**
 Any scanner/filter whose resource limit (bytes, candidates, depth, timeout) silently passes the unexamined remainder, and any redaction that recurses into attacker-controlled containers instead of replacing them.
+
+## Substring-matched command rules generate constant false-positive prompts
+**Problem**
+Destructive-command `ask` rules matched fixed substrings anywhere in the Bash command text, so `npm test > /dev/null`, commit messages containing "rm -rf", `--no-truncate` flags, and `echo $PATH` all prompted for confirmation.
+
+**Root cause**
+Legacy `bash-safety.sh` patterns were ported verbatim to pass a parity gate; the planned soak-period tuning never happened. Fixed-string matchers cannot distinguish an executed command token from quoted text, option flags, or redirects to harmless devices.
+
+**Fix**
+Destructive matchers are anchored to the executed-command position (`(?:^|[;&|()])\s*(?:\S*/)?cmd\b`), device redirection exempts null/stdout/stderr/tty/zero, env-echo prompts only for credential-named variables, and lock-file rules are write-only (`"access": "write"`).
+
+**Watch for**
+Any new `bash_rules` entry using `fixed_string` for a word that can appear in ordinary text, and any read-side `ask` on files agents routinely inspect.
+
+## If a hook command uses a relative script path, any subdirectory session is an outage
+
+**Problem**
+Generated wiring invoked the guard as `python3 .github/hooks/scripts/file-access-guard.py`. Any session whose working directory was not the repository root could not resolve the script, the guard failed to launch, and the fail-closed posture then blocked every tool call — including the `cd` that would have restored the working directory. The session could only be recovered by a human running `cd` outside the agent.
+
+**Root cause**
+Claude Code and Codex both execute hook commands with the *session* working directory, not the project root. A relative path silently depends on where the session happens to be. Fail-closed turns that dependency from a degraded check into a total outage, so the blast radius is much larger than a normal missing-file bug.
+
+**Fix**
+Generated commands anchor the script path to the project root per harness, since there is no portable token: Claude uses `$CLAUDE_PROJECT_DIR`, Codex uses `$(git rev-parse --show-toplevel)` (Codex exposes no project-root variable), and OpenCode plugins pin `cwd` to the plugin `directory`. Source manifests stay relative so `_validate_hook_commands` can keep resolving them against the source tree; anchoring happens at emit time in `_project_root_hook_command`. Note the anchored form only works because these are *shell-form* commands — a test that executes the command without `shell=True` will see the quotes and `$VAR` literally.
+
+**Watch for**
+Any hook command token that is a bare relative path, and any fail-closed guard whose failure mode is "blocks everything" rather than "blocks its own tool" — the recovery path must not itself require a blocked tool.

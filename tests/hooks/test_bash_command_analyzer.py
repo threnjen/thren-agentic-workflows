@@ -207,7 +207,7 @@ def test_ac3_evasion_fixtures_are_covered_or_documented(
 
 @pytest.mark.parametrize(
     "command",
-    ["printenv", "printenv HOME", "env", "set", "export", "echo $API_KEY", "echo $PATH"],
+    ["printenv", "printenv HOME", "env", "set", "export", "echo $API_KEY", "echo $GITHUB_TOKEN"],
 )
 def test_ac4_environment_exposure_uses_ask_tier(
     analyzer, file_access, default_config, tmp_path, command
@@ -218,8 +218,29 @@ def test_ac4_environment_exposure_uses_ask_tier(
     assert not any(match.action == "deny" for match in matches)
 
 
-@pytest.mark.parametrize("command", ["env FOO=bar true", "export FOO=bar", "echo hello"])
+@pytest.mark.parametrize(
+    "command",
+    ["env FOO=bar true", "export FOO=bar", "echo hello", "echo $PATH", "echo $PWD/$HOME"],
+)
 def test_ac4_non_dump_environment_commands_are_allowed(
+    analyzer, file_access, default_config, tmp_path, command
+) -> None:
+    assert _analyze(analyzer, file_access, default_config, command, tmp_path) == ()
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "npm test > /dev/null 2>&1",
+        "pytest -q 2> /dev/stderr",
+        'git commit -m "remove rm -rf usage from script"',
+        "grep -rn 'rm -rf' scripts/",
+        "python3 report.py --no-truncate",
+        "ls shredded-docs/",
+        "cat notes/mkfs-comparison.md",
+    ],
+)
+def test_ac6_benign_commands_mentioning_destructive_words_are_allowed(
     analyzer, file_access, default_config, tmp_path, command
 ) -> None:
     assert _analyze(analyzer, file_access, default_config, command, tmp_path) == ()
@@ -479,7 +500,7 @@ def test_ac8_ask_remains_ask_in_bypass_without_configured_escalation(
     decision = _guard_decision(
         guard_script,
         framework,
-        "echo $PATH",
+        "echo $API_KEY",
         tmp_path,
         permission_mode="bypassPermissions",
     )

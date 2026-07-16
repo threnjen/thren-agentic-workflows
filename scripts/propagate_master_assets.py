@@ -783,6 +783,32 @@ def _resolve_hook_command(entry: Dict, meta: Dict, tool: str) -> str:
     return entry.get("osx") or entry.get("command", "")
 
 
+HOOK_PROJECT_ROOT_TOKENS = {
+    "claude": "$CLAUDE_PROJECT_DIR",
+    "codex": "$(git rev-parse --show-toplevel)",
+}
+
+
+def _project_root_hook_command(command: str, tool: str) -> str:
+    """Anchor a project-relative hook command to the repository root.
+
+    Claude Code and Codex both run hook commands with the *session* working
+    directory, so a bare relative script path stops resolving as soon as the
+    agent works from a subdirectory — and a guard that fails to launch fails
+    closed, blocking every subsequent tool call. Both accept shell-form
+    commands, so the root token expands at invocation time. OpenCode has no
+    equivalent token; its plugins pin cwd at the call site instead.
+    """
+    root_token = HOOK_PROJECT_ROOT_TOKENS.get(tool)
+    if root_token is None:
+        return command
+    rendered = [
+        f'"{root_token}/{part}"' if part.startswith(".github/hooks/") else part
+        for part in shlex.split(command)
+    ]
+    return " ".join(rendered)
+
+
 def _strip_propagated_hooks(settings: Dict) -> None:
     """Remove all hook entries tagged with HOOK_SOURCE_KEY from settings in-place."""
     for event_key in list(settings.get("hooks", {}).keys()):
@@ -854,12 +880,12 @@ def _render_opencode_plugin(name: str, event_commands: List[Tuple[str, str]]) ->
         escaped = command.replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
         comma = "," if i < len(event_commands) - 1 else ""
         handler_lines.append(f'    "{event}": async (_input, _output) => {{')
-        handler_lines.append(f"      await $`{escaped}`")
+        handler_lines.append(f"      await $`{escaped}`.cwd(directory)")
         handler_lines.append(f"    }}{comma}")
     handlers = "\n".join(handler_lines)
     return (
         GENERATED_OPENCODE_PLUGIN_HEADER
-        + f"export const {fn_name} = async ({{ $ }}) => {{\n"
+        + f"export const {fn_name} = async ({{ $, directory }}) => {{\n"
         + f"  return {{\n"
         + f"{handlers}\n"
         + f"  }}\n"
@@ -889,6 +915,8 @@ def _update_nested_settings_file(
                     command = _resolve_hook_command(entry, source["meta"], tool)
                     if command_transform is not None:
                         command = command_transform(command)
+                    else:
+                        command = _project_root_hook_command(command, tool)
                     timeout = entry.get("timeout")
                     inner: Dict = {"type": "command", "command": command}
                     if timeout is not None:

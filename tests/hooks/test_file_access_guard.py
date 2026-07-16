@@ -221,6 +221,18 @@ def test_ac4_lock_files_use_configured_ask_tier(
     assert "package manager" in decision.reason
 
 
+@pytest.mark.parametrize("tool_name", ["Read", "Grep"])
+def test_ac4_lock_files_are_readable_without_confirmation(
+    guard_script, framework, tmp_path, tool_name
+) -> None:
+    field = "file_path" if tool_name == "Read" else "path"
+    decision = _decision_for(
+        guard_script, framework, tool_name, {field: "poetry.lock"}, tmp_path
+    )
+
+    assert decision.action == "allow"
+
+
 def test_ac4_unrelated_name_containing_lock_is_allowed(
     guard_script, framework, tmp_path
 ) -> None:

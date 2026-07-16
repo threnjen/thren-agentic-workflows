@@ -1,8 +1,8 @@
 // Generated from .github/hooks source-of-truth. Do not edit manually.
-export const AuditLog = async ({ $ }) => {
+export const AuditLog = async ({ $, directory }) => {
   return {
     "post_tool_call": async (_input, _output) => {
-      await $`bash .github/hooks/scripts/audit-log.sh`
+      await $`bash .github/hooks/scripts/audit-log.sh`.cwd(directory)
     }
   }
 }

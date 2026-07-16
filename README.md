@@ -155,3 +155,34 @@ For agent, instruction, and skill changes in this repository, `.github/` is the 
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for non-obvious setup and propagation failures
 - [docs/porting/README.md](docs/porting/README.md) for the porting docs index
 - [eval/EVAL_SYSTEM_USAGE.md](eval/EVAL_SYSTEM_USAGE.md) for grader workflows and run artifacts
+
+## Acknowledgments
+
+The hook system in this repository is an original, clean-room implementation
+written from scratch in stdlib Python. No code, pattern file, or prompt from any
+project below was copied. They are credited because surveying them shaped the
+design: which lifecycle events are worth hooking, which failure modes matter, and
+which enforcement tiers a guard needs to be useful rather than merely noisy.
+Each survey write-up lives in [docs/inspiration/](docs/inspiration/).
+
+Hooks in this project inspired by:
+
+- **[claudekit](URL)** (carlrannaberg) — ignore-file-driven blocking of
+  sensitive-file access, and the insight that a guard must parse bash commands to
+  catch indirect reads rather than only inspecting file-tool arguments.
+- **[claude-hooks](URL)** (Lasso Security) — prompt-injection defense belongs at
+  PostToolUse, treating tool output as untrusted input before the model sees it.
+- **[claude-code-hooks-mastery](URL)** (IndyDevDan / disler) — the baseline
+  hazard set for a pre-tool guard: environment-file reads and destructive
+  recursive deletes.
+- **[claude-workflow-v2 / project-starter](URL)** (CloudAI-X) — blocking writes
+  that carry secrets, as a write-side complement to read-side protection.
+- **[buildwithclaude](URL)** (davepoon) — Stop-time gating of unverified
+  completion claims, the idea that "done" is a claim a hook can hold to evidence.
+- **[claude-code-infrastructure-showcase](URL)** — deterministic skill
+  activation driven by a rules file, instead of relying on model judgment.
+- **[claude-code-hooks](URL)** (shanraisshan) — the most complete catalog of
+  hook events available, used to choose which events to attach to.
+- **[ponytail](URL)** (Dietrich Gebert) — multi-harness distribution from a
+  single source of truth: generated per-platform adapters, staleness-failing
+  tests, and honest per-harness support tiers.
