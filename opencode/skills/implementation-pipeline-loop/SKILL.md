@@ -33,15 +33,25 @@ After the subagent returns:
   - **Approved** or **Approved with Reservations** → proceed to Step C
   - **Changes Requested** → Re-spawn the Implementer with the review findings, then re-spawn the Reviewer. Retry once. If still "Changes Requested" after retry, log the issue and proceed
 
+### Step B2: Diff Security Scan
+
+spawn the **z-diff-security-scan** subagent:
+
+> "[SUBAGENT-MODE] Perform a diff-scoped security scan for the task at `[plan-path]`. Scan ONLY these changed files, taken from the 'Files Changed' table in `[plan-path]/[task-name]-implementation.md`: [list of changed file paths]. Write the report to `[plan-path]/[task-name]-security.md`. Do not modify source code or reveal secret values. Return the report path, verdict, severity totals, and any Critical/High findings."
+
+After the subagent returns:
+- Verify `[plan-path]/[task-name]-security.md` exists
+- Record the verdict. If the verdict is **BLOCKED**, log it and proceed — the final review surfaces it as a blocker. Do NOT auto-remediate security findings in this loop.
+
 ### Step C: Commit
 
 Execute the commit directly — do not spawn a subagent for this step.
 
-1. **Collect files to stage** — From the "Files Changed" table in `[plan-path]/[task-name]-implementation.md`, collect every source file and test file path listed. Also include all pipeline documents in `[plan-path]/` (plan, context, tasks, implementation, review files).
+1. **Collect files to stage** — From the "Files Changed" table in `[plan-path]/[task-name]-implementation.md`, collect every source file and test file path listed. Also include all pipeline documents in `[plan-path]/` (plan, context, tasks, implementation, review, and security files).
 
 2. **Stage only those files**:
    ```bash
-   git add <file1> <file2> ... [plan-path]/[task-name]-implementation.md [plan-path]/[task-name]-review.md
+   git add <file1> <file2> ... [plan-path]/[task-name]-implementation.md [plan-path]/[task-name]-review.md [plan-path]/[task-name]-security.md
    ```
    Do NOT use `git add -A` — staging untracked files outside the implementation record risks including debug files or changes from adjacent features.
 

@@ -157,17 +157,19 @@ After the subagent returns:
 - Verify the coverage map exists at the determined path
 - Stage only the consolidated QA outputs and any phase-level pipeline documents updated by this step. Do not stage feature-local source files or files from unrelated feature directories. Do not stage the Step 3 visual-verification report (`docs/phases/[phase-name]/[phase-name]-visual-verification.md`) here — it belongs to the Step 5 final-review checkpoint. Commit this checkpoint once with the exact message `eval: qa`.
 
-### Step 5: z-security-scan
+### Step 5: Diff Security Review
 
-spawn the **z-security-scan** subagent:
+Determine the full set of files changed by this phase execution: collect every path from each manifest feature's implementation record "Files Changed" table, or run `git diff --name-only <phase-baseline>..HEAD` on the current branch, where `<phase-baseline>` is the commit the phase started from. Use the union if both are available.
 
-> "[SUBAGENT-MODE] Perform a full-codebase security scan for phase [phase-name]. Scan the entire tracked repository, not only phase changes. Phase summary: `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan: `[QA output path]`. Execution manifest: `dev/feature/[phase-name]-execution-manifest.md`. Write the report to `docs/phases/[phase-name]/[phase-name]-security-scan.md`. Distinguish findings introduced or worsened by this phase from pre-existing release risks. Do not modify source code or reveal secret values. Return the report path, verdict, severity totals, Critical/High findings, phase relationship, and unavailable checks."
+spawn the **z-diff-security-scan** subagent:
 
-After the z-security-scan subagent returns:
+> "[SUBAGENT-MODE] Perform a diff-scoped security scan for phase [phase-name]. Scan ONLY the files changed by this phase on the current branch since the phase baseline: [list of changed file paths, or the diff range `<phase-baseline>..HEAD`]. Phase summary: `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. Write the report to `docs/phases/[phase-name]/[phase-name]-security-scan.md`. Do not modify source code or reveal secret values. Return the report path, verdict, severity totals, Critical/High findings, and categories not assessable at diff scope."
+
+After the z-diff-security-scan subagent returns:
 - Verify `docs/phases/[phase-name]/[phase-name]-security-scan.md` exists.
 - Record the verdict as `security-scan: Pass | Pass with Conditions | Blocked`.
 - If the verdict is `Blocked`, set `all-approved: no` so Step 6 (Prod Review) runs in standard mode.
-- Do not automatically remediate security findings. The scan is a full-codebase release-risk assessment, so prod-code-review determines the final GO / GO WITH CONDITIONS / NO-GO decision.
+- Do not automatically remediate security findings. prod-code-review determines the final GO / GO WITH CONDITIONS / NO-GO decision.
 - Do NOT emit a separate `eval:` commit for this step. Stage the report with the Step 6 final-review checkpoint.
 
 ### Step 6: Phase Final Review
