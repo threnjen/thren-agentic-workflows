@@ -18,7 +18,13 @@ from typing import Callable, Mapping, Sequence
 
 SUPPORTED_PLATFORMS = frozenset({"darwin", "linux", "windows"})
 MANAGED_METADATA = ".github-agents-managed.json"
-GENERATED_MARKER = b"Generated from .github/"
+GENERATED_MARKERS = frozenset(
+    {
+        "# Generated from .github/agents source-of-truth. Do not edit manually.",
+        "<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->",
+        "<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->",
+    }
+)
 
 
 class DestinationResolutionError(ValueError):
@@ -421,16 +427,34 @@ def _link_is_owned(path: Path, generated_roots: Sequence[Path]) -> bool:
     return target is not None and _inside_generated_roots(target, generated_roots)
 
 
+def _generated_marker_line_index(text: str) -> int:
+    if not text.startswith("---\n"):
+        return 0
+    lines = text.splitlines()
+    for index in range(1, len(lines)):
+        if lines[index] == "---":
+            return index + 1
+    return -1
+
+
+def _file_has_generated_marker(path: Path) -> bool:
+    if not path.is_file() or _is_link(path):
+        return False
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return False
+    index = _generated_marker_line_index(text)
+    lines = text.splitlines()
+    return index >= 0 and index < len(lines) and lines[index] in GENERATED_MARKERS
+
+
 def _has_generated_marker(path: Path) -> bool:
     try:
-        if path.is_file() and not _is_link(path):
-            with path.open("rb") as stream:
-                return GENERATED_MARKER in stream.read(256 * 1024)
+        if _file_has_generated_marker(path):
+            return True
         if path.is_dir() and not _is_link(path):
-            skill = path / "SKILL.md"
-            if skill.is_file() and not _is_link(skill):
-                with skill.open("rb") as stream:
-                    return GENERATED_MARKER in stream.read(256 * 1024)
+            return _file_has_generated_marker(path / "SKILL.md")
     except (OSError, PermissionError):
         return False
     return False
@@ -468,6 +492,19 @@ def _read_metadata(destination: Path) -> dict[str, str]:
     }
 
 
+def _metadata_entry_is_managed(destination: Path) -> bool:
+    metadata = destination / MANAGED_METADATA
+    if not _entry_exists(metadata):
+        return True
+    if not metadata.is_file() or _is_link(metadata):
+        return False
+    try:
+        payload = json.loads(metadata.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return False
+    return payload.get("schema") == 1 and isinstance(payload.get("owned"), dict)
+
+
 def _write_metadata(destination: Path, owned: set[str]) -> None:
     fingerprints = {
         name: fingerprint
@@ -475,9 +512,23 @@ def _write_metadata(destination: Path, owned: set[str]) -> None:
         if (fingerprint := _entry_fingerprint(destination / name)) is not None
     }
     payload = json.dumps({"schema": 1, "owned": fingerprints}, indent=2) + "\n"
-    stage = destination / f".{MANAGED_METADATA}.tmp"
-    stage.write_text(payload, encoding="utf-8")
-    os.replace(stage, destination / MANAGED_METADATA)
+    metadata = destination / MANAGED_METADATA
+    if not _metadata_entry_is_managed(destination):
+        raise OSError("metadata_collision")
+    expected_identity = _entry_identity(metadata)
+    descriptor, stage_name = tempfile.mkstemp(
+        prefix=f".{MANAGED_METADATA}.", suffix=".tmp", dir=destination
+    )
+    stage = Path(stage_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(payload)
+        if _entry_identity(metadata) != expected_identity:
+            raise OSError("metadata_changed")
+        os.replace(stage, metadata)
+    finally:
+        if _entry_exists(stage):
+            stage.unlink()
 
 
 def _same_entry(left: Path, right: Path) -> bool:
@@ -491,6 +542,23 @@ def _same_entry(left: Path, right: Path) -> bool:
     except OSError:
         return False
     return False
+
+
+def _entry_is_owned(
+    path: Path,
+    name: str,
+    metadata_owned: Mapping[str, str],
+    generated_roots: Sequence[Path],
+) -> bool:
+    """Require positive, current ownership evidence for one destination entry."""
+    return (
+        (
+            name in metadata_owned
+            and _entry_fingerprint(path) == metadata_owned[name]
+        )
+        or _has_generated_marker(path)
+        or (_is_link(path) and _link_is_owned(path, generated_roots))
+    )
 
 
 def _entry_identity(path: Path) -> tuple[int, int, int, int, int] | None:
@@ -530,14 +598,14 @@ def _install_staged_record(
     staged: Path,
     generated_roots: Sequence[Path],
     result: _MutableHarnessResult,
-) -> set[str]:
+) -> set[str] | None:
     destination = Path(record.destination)
     if not _entry_exists(destination):
         destination.parent.mkdir(parents=True, exist_ok=True)
+        owned = {child.name for child in staged.iterdir() if child.name != MANAGED_METADATA}
+        _write_metadata(staged, owned)
         _replace_preserving_old(staged, destination, None)
         result.copied += 1
-        owned = {child.name for child in destination.iterdir() if child.name != MANAGED_METADATA}
-        _write_metadata(destination, owned)
         return owned
 
     if _is_link(destination):
@@ -545,17 +613,21 @@ def _install_staged_record(
         if not _link_is_owned(destination, generated_roots):
             result.collisions += 1
             _remove_entry(staged)
-            return set()
+            return None
+        owned = {child.name for child in staged.iterdir() if child.name != MANAGED_METADATA}
+        _write_metadata(staged, owned)
         _replace_preserving_old(staged, destination, identity)
         result.replaced += 1
-        owned = {child.name for child in destination.iterdir() if child.name != MANAGED_METADATA}
-        _write_metadata(destination, owned)
         return owned
 
     if not destination.is_dir():
         result.collisions += 1
         _remove_entry(staged)
-        return set()
+        return None
+    if not _metadata_entry_is_managed(destination):
+        result.collisions += 1
+        _remove_entry(staged)
+        return None
 
     previous_owned = _read_metadata(destination)
     owned = set(previous_owned)
@@ -566,23 +638,21 @@ def _install_staged_record(
             _replace_preserving_old(candidate, final, identity)
             result.copied += 1
             owned.add(candidate.name)
-        elif _same_entry(candidate, final):
+        elif _entry_is_owned(
+            final, candidate.name, previous_owned, generated_roots
+        ) and _same_entry(candidate, final):
             result.unchanged += 1
             owned.add(candidate.name)
             _remove_entry(candidate)
-        elif (
-            (
-                candidate.name in previous_owned
-                and _entry_fingerprint(final) == previous_owned[candidate.name]
-            )
-            or _has_generated_marker(final)
-            or (_is_link(final) and _link_is_owned(final, generated_roots))
+        elif _entry_is_owned(
+            final, candidate.name, previous_owned, generated_roots
         ):
             _replace_preserving_old(candidate, final, identity)
             result.replaced += 1
             owned.add(candidate.name)
         else:
             result.collisions += 1
+            owned.discard(candidate.name)
             _remove_entry(candidate)
     _remove_entry(staged)
     _write_metadata(destination, owned)
@@ -592,6 +662,7 @@ def _install_staged_record(
 def _prune_record(
     record: DestinationRecord,
     expected: set[str],
+    managed: set[str],
     generated_roots: Sequence[Path],
     result: _MutableHarnessResult,
 ) -> None:
@@ -599,21 +670,20 @@ def _prune_record(
     if not destination.is_dir() or _is_link(destination):
         return
     metadata_owned = _read_metadata(destination)
-    retained = set(expected)
+    retained = set(managed)
     for path in tuple(destination.iterdir()):
         if path.name == MANAGED_METADATA or path.name in expected:
             continue
-        owned = (
-            (
-                path.name in metadata_owned
-                and _entry_fingerprint(path) == metadata_owned[path.name]
-            )
-            or _has_generated_marker(path)
-            or (_is_link(path) and _link_is_owned(path, generated_roots))
+        identity = _entry_identity(path)
+        owned = _entry_is_owned(
+            path, path.name, metadata_owned, generated_roots
         )
         if owned:
-            _remove_entry(path)
-            result.removed += 1
+            if _entry_identity(path) == identity:
+                _remove_entry(path)
+                result.removed += 1
+            else:
+                result.collisions += 1
         else:
             result.collisions += 1
     _write_metadata(destination, retained)
@@ -666,13 +736,15 @@ def deploy_managed_copies(
             final[harness] = outcome.freeze()
             continue
 
-        expected_by_record: list[tuple[DestinationRecord, set[str]]] = []
+        expected_by_record: list[
+            tuple[DestinationRecord, set[str], set[str] | None]
+        ] = []
         try:
             for record, stage in stages:
                 _validate_record(record)
                 expected = {child.name for child in stage.iterdir()}
                 installed = _install_staged_record(record, stage, generated_roots, outcome)
-                expected_by_record.append((record, expected if installed else set()))
+                expected_by_record.append((record, expected, installed))
         except Exception:
             for _, stage in stages:
                 if _entry_exists(stage):
@@ -684,9 +756,11 @@ def deploy_managed_copies(
             continue
 
         try:
-            for record, expected in expected_by_record:
-                if expected:
-                    _prune_record(record, expected, generated_roots, outcome)
+            for record, expected, managed in expected_by_record:
+                if managed is not None:
+                    _prune_record(
+                        record, expected, managed, generated_roots, outcome
+                    )
         except Exception:
             outcome.failed += 1
             outcome.reconciliation_skipped = True

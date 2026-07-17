@@ -334,7 +334,8 @@ class ManagedCopyReconciliationTests(unittest.TestCase):
     def _generated(self, path: Path, body: str = "body") -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
-            f"{body}\n<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->\n",
+            "<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->\n"
+            f"{body}\n",
             encoding="utf-8",
         )
 
@@ -366,7 +367,7 @@ class ManagedCopyReconciliationTests(unittest.TestCase):
             self.assertEqual(result.harnesses["claude"].replaced, 1)
             self.assertTrue(destination.is_dir())
             self.assertFalse(destination.is_symlink())
-            self.assertEqual((record.source / "one.md").read_text(encoding="utf-8").splitlines()[0], "fresh")
+            self.assertEqual((record.source / "one.md").read_text(encoding="utf-8").splitlines()[1], "fresh")
 
     def test_foreign_content_and_foreign_links_are_preserved_as_collisions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -388,6 +389,22 @@ class ManagedCopyReconciliationTests(unittest.TestCase):
             self.assertEqual((destination / "foreign.md").read_text(encoding="utf-8"), "keep me")
             self.assertTrue((destination / "owned.md").is_symlink())
 
+    def test_foreign_metadata_entry_blocks_record_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            record = self._record(root)
+            self._generated(record.source / "owned.md")
+            destination = Path(record.destination)
+            destination.mkdir(parents=True)
+            metadata = destination / deployment.MANAGED_METADATA
+            metadata.write_text("user content", encoding="utf-8")
+
+            result = deployment.deploy_managed_copies((record,))
+
+            self.assertEqual(metadata.read_text(encoding="utf-8"), "user content")
+            self.assertFalse((destination / "owned.md").exists())
+            self.assertEqual(result.harnesses["claude"].collisions, 1)
+
     def test_owned_stale_copy_is_pruned_but_unmarked_copy_survives(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -403,6 +420,70 @@ class ManagedCopyReconciliationTests(unittest.TestCase):
             self.assertEqual(result.harnesses["claude"].removed, 1)
             self.assertFalse((destination / "stale.md").exists())
             self.assertTrue((destination / "foreign.md").exists())
+
+    def test_empty_generated_root_prunes_only_owned_stale_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            record = self._record(Path(tmp))
+            destination = Path(record.destination)
+            destination.mkdir(parents=True)
+            self._generated(destination / "stale.md", "stale")
+            foreign = destination / "foreign.txt"
+            foreign.write_text("keep", encoding="utf-8")
+
+            result = deployment.deploy_managed_copies((record,))
+
+            self.assertFalse((destination / "stale.md").exists())
+            self.assertEqual(foreign.read_text(encoding="utf-8"), "keep")
+            self.assertEqual(result.harnesses["claude"].removed, 1)
+            self.assertEqual(result.harnesses["claude"].collisions, 1)
+
+    def test_quoted_generated_marker_does_not_prove_ownership(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            record = self._record(Path(tmp))
+            destination = Path(record.destination)
+            destination.mkdir(parents=True)
+            quoted = destination / "README.md"
+            quoted.write_text(
+                "Hand maintained\n"
+                "<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->\n",
+                encoding="utf-8",
+            )
+
+            result = deployment.deploy_managed_copies((record,))
+
+            self.assertTrue(quoted.exists())
+            self.assertEqual(result.harnesses["claude"].removed, 0)
+            self.assertEqual(result.harnesses["claude"].collisions, 1)
+
+    def test_prune_rechecks_identity_before_removing_owned_stale_copy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            record = self._record(root)
+            self._generated(record.source / "current.md")
+            destination = Path(record.destination)
+            destination.mkdir(parents=True)
+            stale = destination / "stale.md"
+            self._generated(stale, "stale")
+            real_identity = deployment._entry_identity
+            stale_checks = 0
+
+            def replace_before_recheck(path: Path):
+                nonlocal stale_checks
+                if path == stale:
+                    stale_checks += 1
+                    if stale_checks == 2:
+                        stale.unlink()
+                        stale.write_text("user replacement", encoding="utf-8")
+                return real_identity(path)
+
+            with mock.patch.object(
+                deployment, "_entry_identity", side_effect=replace_before_recheck
+            ):
+                result = deployment.deploy_managed_copies((record,))
+
+            self.assertEqual(stale.read_text(encoding="utf-8"), "user replacement")
+            self.assertEqual(result.harnesses["claude"].removed, 0)
+            self.assertGreaterEqual(result.harnesses["claude"].collisions, 1)
 
     def test_stage_failure_preserves_old_destination_and_skips_harness_pruning(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -456,6 +537,30 @@ class ManagedCopyReconciliationTests(unittest.TestCase):
 
             self.assertEqual(installed.read_text(encoding="utf-8"), "user replacement")
             self.assertEqual(result.harnesses["claude"].collisions, 1)
+
+            candidate.write_text("third generated", encoding="utf-8")
+            repeated = deployment.deploy_managed_copies((record,))
+
+            self.assertEqual(installed.read_text(encoding="utf-8"), "user replacement")
+            self.assertEqual(repeated.harnesses["claude"].collisions, 1)
+
+    def test_identical_unmarked_file_is_not_adopted_as_managed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            record = self._record(Path(tmp))
+            candidate = record.source / "plain.txt"
+            candidate.write_text("same", encoding="utf-8")
+            destination = Path(record.destination)
+            destination.mkdir(parents=True)
+            installed = destination / "plain.txt"
+            installed.write_text("same", encoding="utf-8")
+
+            first = deployment.deploy_managed_copies((record,))
+            candidate.write_text("generated update", encoding="utf-8")
+            second = deployment.deploy_managed_copies((record,))
+
+            self.assertEqual(first.harnesses["claude"].collisions, 1)
+            self.assertEqual(second.harnesses["claude"].collisions, 1)
+            self.assertEqual(installed.read_text(encoding="utf-8"), "same")
 
     def test_symlinked_active_home_is_rejected_before_copy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -514,7 +619,7 @@ class ManagedCopyReconciliationTests(unittest.TestCase):
 
             self.assertEqual(result.harnesses["claude"].status, "failed")
             self.assertTrue(result.harnesses["claude"].reconciliation_skipped)
-            self.assertEqual((destination / "one.md").read_text(encoding="utf-8").splitlines()[0], "old")
+            self.assertEqual((destination / "one.md").read_text(encoding="utf-8").splitlines()[1], "old")
 
     def test_mixed_harness_failure_does_not_roll_back_success(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
