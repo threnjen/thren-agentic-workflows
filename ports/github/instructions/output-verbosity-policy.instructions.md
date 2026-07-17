@@ -1,6 +1,6 @@
 ---
 description: "Defines concise soft-target defaults and delta-first response shape with quality-preserving exceptions."
-applyTo: ".github/agents/**"
+applyTo: "source_of_truth/agents/**"
 ---
 
 Use concise defaults for high-frequency responses as soft targets, never hard limits.

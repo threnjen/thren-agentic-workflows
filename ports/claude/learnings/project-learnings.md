@@ -1,3 +1,4 @@
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Project Learnings
 
 ## Keep Runtime Identity Out Of Retained Eval Artifacts

@@ -2,7 +2,7 @@
 name: unity-review-knowledge
 description: "Unity best practices knowledge base distilled from 11 official Unity ebooks (Unity 6 edition). Covers C# style, performance/profiling, architecture/design patterns, DOTS/ECS, 2D art/rendering, and general Unity practices. Use when: reviewing Unity C# code, checking for Unity anti-patterns, validating design patterns, performance review, style guide compliance, or any code quality review in a Unity project."
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 
 # Unity Review Knowledge Base
 

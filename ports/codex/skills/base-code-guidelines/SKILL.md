@@ -2,7 +2,7 @@
 name: base-code-guidelines
 description: "Activate when writing, adding, reviewing, refactoring, or fixing any code, or when choosing libraries and dependencies. Provides behavioral guidelines to avoid common LLM coding mistakes — overcomplication, untargeted edits, hidden assumptions, and missing success criteria — and enforces an escalation ladder that exhausts cheaper sources of a solution before new code gets written. Also activate when the user asks for the simplest or most minimal solution, or complains about bloat, boilerplate, or unnecessary dependencies."
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Base Code Guidelines
 
 Behavioral guidelines to reduce common LLM coding mistakes, derived from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls, with a minimalism ladder adapted from lazy-senior-dev skill patterns.

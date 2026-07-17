@@ -28,7 +28,7 @@ from test_retired_evaluator_removal import RETIRED_SLUGS
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
-SOURCE_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
+SOURCE_SKILLS_DIR = REPO_ROOT / "source_of_truth" / "skills"
 
 # (old directory name, new directory name)
 RENAMED_SKILLS = (
@@ -40,9 +40,9 @@ NEW_SKILL_NAMES = tuple(new for _, new in RENAMED_SKILLS)
 OLD_SKILL_NAMES = tuple(old for old, _ in RENAMED_SKILLS)
 
 GENERATED_SKILL_ROOTS = (
-    REPO_ROOT / "claude" / "skills",
-    REPO_ROOT / "opencode" / "skills",
-    REPO_ROOT / "codex" / "skills",
+    REPO_ROOT / "ports" / "claude" / "skills",
+    REPO_ROOT / "ports" / "opencode" / "skills",
+    REPO_ROOT / "ports" / "codex" / "skills",
 )
 
 # The seven survivors of the retirement, under the slugs features 05-07 give
@@ -85,7 +85,7 @@ def _frontmatter(text: str) -> str:
 
 
 def _surviving_evaluator_agents() -> list[Path]:
-    return sorted((REPO_ROOT / ".github" / "agents").glob("05*.agent.md"))
+    return sorted((REPO_ROOT / "source_of_truth" / "agents").glob("05*.agent.md"))
 
 
 # --- AC1, AC2: the rename itself -------------------------------------------
@@ -324,7 +324,7 @@ def test_agents_that_load_the_skills_reference_the_renamed_ones() -> None:
 def test_baseline_worktree_agent_acquires_no_skill_load() -> None:
     """AC9's boundary: `05a` carried no old-skill reference, so it gains none."""
     body = (
-        REPO_ROOT / ".github" / "agents" / "05a-baseline-worktree.agent.md"
+        REPO_ROOT / "source_of_truth" / "agents" / "05a-baseline-worktree.agent.md"
     ).read_text(encoding="utf-8")
 
     assert "worktree-baseline" in body, "05a must keep its only skill reference"

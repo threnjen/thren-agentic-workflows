@@ -2,7 +2,7 @@
 name: eval-score-table-output
 description: "Append Eval Grader comparison results to a persistent additive markdown score history table using normalized 1-10 scores where 10 is best."
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 
 # Eval Score Table Output
 

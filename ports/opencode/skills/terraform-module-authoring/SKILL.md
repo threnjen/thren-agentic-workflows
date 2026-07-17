@@ -2,7 +2,7 @@
 name: terraform-module-authoring
 description: "Author and publish reusable Terraform modules in cf-infra-terraform-modules. Use when: adding/updating a module under terraform_modules/modules/, validating publish artifacts, reviewing module source references, or deciding whether to introduce a new shared module."
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 
 # Terraform Module Authoring
 

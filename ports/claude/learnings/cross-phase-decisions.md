@@ -1,3 +1,4 @@
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Cross-Phase Decisions
 
 ## Phase Numbering

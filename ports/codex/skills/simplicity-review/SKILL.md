@@ -2,7 +2,7 @@
 name: simplicity-review
 description: "Review the current diff — or the whole repo — for over-engineering and return a delete-list. Use when the user asks to check for over-engineering, bloat, unnecessary abstraction, or excess code, or wants a diff slimmed down before merge. Finds code that should not exist; it does not hunt for bugs (use a code-review skill for that)."
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Simplicity Review
 
 A review pass with one question: **what here should not exist?** Ordinary code review asks "is this code correct?" This review asks "is this code necessary?" — and hands back a concrete delete-list.

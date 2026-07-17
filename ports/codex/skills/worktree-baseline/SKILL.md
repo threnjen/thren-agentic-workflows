@@ -2,7 +2,7 @@
 name: worktree-baseline
 description: "Reusable procedure for creating a detached, read-only git worktree at a requested baseline commit and returning its path. Use when: an evaluator or grading workflow needs an isolated local baseline checkout."
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Baseline Worktree
 
 Use this procedure whenever a workflow needs to inspect a commit without

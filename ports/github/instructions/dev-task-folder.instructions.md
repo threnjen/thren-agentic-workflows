@@ -1,6 +1,6 @@
 ---
 description: "Defines the dev/feature/[0N-task-name]/ output convention used by pipeline subagents. Loaded automatically when working with agent definitions."
-applyTo: ".github/agents/**"
+applyTo: "source_of_truth/agents/**"
 ---
 
 # Task Output Directory Convention

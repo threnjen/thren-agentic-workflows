@@ -1,65 +1,73 @@
 #!/usr/bin/env python3
-"""Propagate .github master assets to claude, opencode, and codex targets.
+"""Transform source_of_truth/ master assets into per-harness ports/ outputs.
 
-This script treats `.github/agents` as the canonical source for duplicated agent files,
-and regenerates target-platform variants.
+This script treats `source_of_truth/` as the canonical home for agents, skills,
+instructions, and learnings, and regenerates target-platform variants under
+`ports/{claude,codex,opencode,cursor}`. It also mirrors the source verbatim to
+`ports/github` and to a real `.github/` directory at the repository root.
 
-It also watches `.github/agents`, `.github/skills`, and `.github/instructions` so any
-save in those folders immediately triggers a propagation run.
+Run with `--watch` (the maintainer workflow) to re-propagate on every save under
+`source_of_truth/`. Deployment of `ports/` to real harness config directories is
+the separate `deploy_assets.py` script.
 """
 
 from __future__ import annotations
 
 import argparse
 import fnmatch
-import hashlib
 import json
 import re
 import shutil
 import sys
-import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Mapping, Sequence, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
-import runtime_deployment
+from asset_paths import (
+    GENERATED_AGENT_HEADER,
+    GENERATED_AGENT_MARKDOWN_HEADER,
+    GENERATED_SKILL_HEADER,
+    LEGACY_GENERATED_MARKERS,
+    PORTS_DIR,
+    REPO_ROOT,
+    SOT_DIR,
+    generated_marker_line_index as _generated_marker_line_index,
+    poll_watch,
+)
 
+# Source-of-truth roots.
+SOT_AGENTS_DIR = SOT_DIR / "agents"
+SOT_INSTRUCTIONS_DIR = SOT_DIR / "instructions"
+SOT_SKILLS_DIR = SOT_DIR / "skills"
+SOT_LEARNINGS_DIR = SOT_DIR / "learnings"
+SOT_HOOKS_DIR = SOT_DIR / "hooks"
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+# Generated platform output roots under `ports/`.
+CLAUDE_AGENTS_DIR = PORTS_DIR / "claude" / "agents"
+CLAUDE_COMMANDS_DIR = PORTS_DIR / "claude" / "commands"
+CLAUDE_SKILLS_DIR = PORTS_DIR / "claude" / "skills"
+CLAUDE_LEARNINGS_DIR = PORTS_DIR / "claude" / "learnings"
+OPENCODE_AGENTS_DIR = PORTS_DIR / "opencode" / "agents"
+OPENCODE_SKILLS_DIR = PORTS_DIR / "opencode" / "skills"
+CODEX_AGENTS_DIR = PORTS_DIR / "codex" / "agents"
+CODEX_PROFILES_DIR = PORTS_DIR / "codex" / "profiles"
+CODEX_SKILLS_DIR = PORTS_DIR / "codex" / "skills"
+CURSOR_COMMANDS_DIR = PORTS_DIR / "cursor" / "commands"
+CURSOR_RULES_DIR = PORTS_DIR / "cursor" / "rules"
+GITHUB_PORT_DIR = PORTS_DIR / "github"
+DOT_GITHUB_DIR = REPO_ROOT / ".github"
 
-# Source-of-truth roots under `.github`.
-GITHUB_AGENTS_DIR = REPO_ROOT / ".github" / "agents"
-GITHUB_INSTRUCTIONS_DIR = REPO_ROOT / ".github" / "instructions"
-GITHUB_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
-GITHUB_LEARNINGS_DIR = REPO_ROOT / ".github" / "learnings"
-
-# Generated platform output roots.
-CLAUDE_AGENTS_DIR = REPO_ROOT / "claude" / "agents"
-CLAUDE_COMMANDS_DIR = REPO_ROOT / "claude" / "commands"
-CLAUDE_SKILLS_DIR = REPO_ROOT / "claude" / "skills"
-CLAUDE_LEARNINGS_DIR = REPO_ROOT / "claude" / "learnings"
-OPENCODE_AGENTS_DIR = REPO_ROOT / "opencode" / "agents"
-OPENCODE_SKILLS_DIR = REPO_ROOT / "opencode" / "skills"
-CODEX_AGENTS_DIR = REPO_ROOT / "codex" / "agents"
-CODEX_PROFILES_DIR = REPO_ROOT / "codex" / "profiles"
-CODEX_SKILLS_DIR = REPO_ROOT / "codex" / "skills"
+# Subdirectories mirrored verbatim to ports/github and .github. Anything else in
+# .github/ (e.g. workflows/) is never touched.
+GITHUB_MIRRORED_SUBDIRS = ("agents", "hooks", "instructions", "learnings", "skills")
 
 WATCH_DIRS = [
-    GITHUB_AGENTS_DIR,
-    GITHUB_SKILLS_DIR,
-    GITHUB_INSTRUCTIONS_DIR,
-    GITHUB_LEARNINGS_DIR,
+    SOT_AGENTS_DIR,
+    SOT_SKILLS_DIR,
+    SOT_INSTRUCTIONS_DIR,
+    SOT_LEARNINGS_DIR,
+    SOT_HOOKS_DIR,
 ]
-
-
-GENERATED_AGENT_HEADER = "# Generated from .github/agents source-of-truth. Do not edit manually."
-# Markdown counterpart to GENERATED_AGENT_HEADER. That constant is a TOML comment,
-# correct for codex/agents/*.toml but rendered as an H1 heading by Markdown, so it
-# cannot be reused for the Claude/OpenCode agent and command outputs. This mirrors
-# the HTML-comment form of GENERATED_SKILL_HEADER, which is already Markdown-safe,
-# while naming the source root these outputs actually come from.
-GENERATED_AGENT_MARKDOWN_HEADER = "<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->"
-GENERATED_SKILL_HEADER = "<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->\n"
 # Agents that should not be propagated to any platform output directory.
 # Add a source slug string here to exclude an agent during propagation.
 # Currently empty — all source agents are propagated.
@@ -101,6 +109,7 @@ class InstructionDoc:
     path: Path
     apply_to_patterns: List[str]
     body: str
+    description: str = ""
 
 
 @dataclass(frozen=True)
@@ -117,53 +126,6 @@ class PropagationConvergenceError(RuntimeError):
         self.category = category
         self.pass_count = pass_count
         super().__init__(f"{category} after {pass_count} propagation pass(es)")
-
-
-@dataclass(frozen=True)
-class RuntimeVerificationResult:
-    status: str
-    regular_fresh: bool
-    repository_links: int
-
-
-@dataclass(frozen=True)
-class RuntimeDeploymentResult:
-    status: str
-    stages: tuple[str, ...]
-    convergence: PropagationConvergenceResult
-    inventory: tuple[dict[str, str], ...]
-    inventory_digest: str
-    deployment: runtime_deployment.ManagedCopyResult | None
-    verification: Mapping[str, RuntimeVerificationResult]
-    failure_categories: tuple[str, ...]
-    platform_evidence: Mapping[str, str]
-
-
-@dataclass(frozen=True)
-class HarnessDestination:
-    harness: str
-    destination: Path
-    ownership_evidence_available: bool = True
-    collision_ready: bool = True
-    create_parents: bool = True
-
-
-@dataclass(frozen=True)
-class HarnessDeploymentResult:
-    status: str
-    copied: int = 0
-    reconciled: int = 0
-    reconciliation_skipped: bool = False
-    failure: str | None = None
-
-
-@dataclass(frozen=True)
-class DeploymentResult:
-    convergence: PropagationConvergenceResult | None
-    propagation_failure: str | None
-    preflight_succeeded: bool
-    preflight_failures: Dict[str, str]
-    harnesses: Dict[str, HarnessDeploymentResult]
 
 
 FrontmatterValue = Union[str, List[str]]
@@ -202,27 +164,6 @@ def _write_if_changed(path: Path, content: str) -> bool:
 
     path.write_text(content, encoding="utf-8")
     return True
-
-
-def _generated_marker_line_index(text: str) -> int:
-    """The one line index at which a generated marker is written, or -1 for none.
-
-    Single source of truth shared by `_with_generated_marker` (which writes the
-    marker there) and `_is_generated_output` (which looks for it only there), so
-    the writer and the guard cannot drift apart.
-
-    The position is line 0 for output with no YAML frontmatter (the TOML roots),
-    and the line immediately below the closing `---` otherwise. Text whose
-    frontmatter is opened but never closed has no valid position and returns -1:
-    it is never marked, and therefore never pruned.
-    """
-    if not text.startswith("---\n"):
-        return 0
-    lines = text.splitlines()
-    for index in range(1, len(lines)):
-        if lines[index] == "---":
-            return index + 1
-    return -1
 
 
 def _with_generated_marker(text: str, marker: str) -> str:
@@ -274,7 +215,11 @@ def _is_generated_output(path: Path, marker: str) -> bool:
     if index < 0:
         return False
     lines = text.splitlines()
-    return index < len(lines) and lines[index] == marker.strip("\n")
+    if index >= len(lines):
+        return False
+    # Files written before the source_of_truth/ restructure carry the old marker
+    # text; they are still generated output and still prunable.
+    return lines[index] == marker.strip("\n") or lines[index] in LEGACY_GENERATED_MARKERS
 
 
 def _prune_orphaned_outputs(
@@ -462,7 +407,7 @@ def _extract_source_slug(path: Path) -> str:
 
 def load_source_agents() -> List[SourceAgent]:
     agents: List[SourceAgent] = []
-    for path in sorted(GITHUB_AGENTS_DIR.glob("*.md")):
+    for path in sorted(SOT_AGENTS_DIR.glob("*.md")):
         text = _read_text(path)
         fm, body = _parse_frontmatter(text)
 
@@ -500,18 +445,20 @@ def load_source_agents() -> List[SourceAgent]:
 
 def load_instruction_docs() -> List[InstructionDoc]:
     docs: List[InstructionDoc] = []
-    for path in sorted(GITHUB_INSTRUCTIONS_DIR.glob("*.instructions.md")):
+    for path in sorted(SOT_INSTRUCTIONS_DIR.glob("*.instructions.md")):
         text = _read_text(path)
         fm, body = _parse_frontmatter(text)
 
-        raw_apply_to = fm.get("applyTo", "")
-        patterns = [p.strip() for p in str(raw_apply_to).split(",") if p.strip()]
+        raw_apply_to = str(fm.get("applyTo", "")).strip().strip('"').strip("'")
+        patterns = [p.strip().strip('"').strip("'") for p in raw_apply_to.split(",")]
+        patterns = [p for p in patterns if p]
 
         docs.append(
             InstructionDoc(
                 path=path,
                 apply_to_patterns=patterns,
                 body=body.strip() + "\n",
+                description=str(fm.get("description", "")).strip().strip('"').strip("'"),
             )
         )
     return docs
@@ -1003,7 +950,7 @@ def _validate_nested_output_directory(root: Path, directory: Path) -> None:
 
 
 def propagate_skills_once() -> Dict[str, int]:
-    if not GITHUB_SKILLS_DIR.exists():
+    if not SOT_SKILLS_DIR.exists():
         return {
             "claude_changed": 0,
             "opencode_changed": 0,
@@ -1023,7 +970,7 @@ def propagate_skills_once() -> Dict[str, int]:
     expected_opencode_dirs: set[Path] = set()
     expected_codex_dirs: set[Path] = set()
 
-    for source_skill_dir in sorted(GITHUB_SKILLS_DIR.iterdir()):
+    for source_skill_dir in sorted(SOT_SKILLS_DIR.iterdir()):
         if not source_skill_dir.is_dir():
             continue
 
@@ -1106,17 +1053,173 @@ def propagate_skills_once() -> Dict[str, int]:
 
 
 def propagate_learnings_once() -> Dict[str, int]:
-    if not GITHUB_LEARNINGS_DIR.exists():
-        return {"claude_changed": 0, "learnings_changed": 0}
+    if not SOT_LEARNINGS_DIR.exists():
+        return {"claude_changed": 0, "learnings_changed": 0, "learning_orphans_removed": 0}
 
     CLAUDE_LEARNINGS_DIR.mkdir(parents=True, exist_ok=True)
 
     changed_claude = 0
-    for source_file in sorted(GITHUB_LEARNINGS_DIR.glob("*.md")):
-        if _write_if_changed(CLAUDE_LEARNINGS_DIR / source_file.name, _read_text(source_file)):
+    expected: set[Path] = set()
+    for source_file in sorted(SOT_LEARNINGS_DIR.glob("*.md")):
+        dest = CLAUDE_LEARNINGS_DIR / source_file.name
+        expected.add(dest)
+        # Marked so deploy_assets can prove ownership of the runtime copy.
+        content = _with_generated_marker(_read_text(source_file), GENERATED_SKILL_HEADER)
+        if _write_if_changed(dest, content):
             changed_claude += 1
 
-    return {"claude_changed": changed_claude, "learnings_changed": changed_claude}
+    orphans = _prune_orphaned_outputs(
+        CLAUDE_LEARNINGS_DIR, "*.md", expected, GENERATED_SKILL_HEADER
+    )
+    return {
+        "claude_changed": changed_claude,
+        "learnings_changed": changed_claude,
+        "learning_orphans_removed": orphans,
+    }
+
+
+def _first_sentence(text: str, limit: int = 200) -> str:
+    """A one-line description: the first `#` title, else the first prose sentence."""
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("# "):
+            return stripped[2:].strip()[:limit]
+        if not stripped or stripped.startswith(("#", "---", "<!--", "**", "|", "-", ">")):
+            continue
+        end = stripped.find(". ")
+        sentence = stripped if end == -1 else stripped[: end + 1]
+        return sentence[:limit]
+    return ""
+
+
+def render_cursor_command(
+    agent: SourceAgent,
+    docs: List[InstructionDoc],
+    reference_map: Dict[str, str],
+    identifier: str,
+) -> str:
+    """Render a Cursor command (plain markdown, no frontmatter) adopting this role."""
+    appendix = _build_instruction_appendix(agent, docs)
+    body = _rewrite_agent_references(agent.body.strip(), reference_map, preserve_at_sign=True)
+    body = _inject_claude_command_instruction(agent, identifier, body)
+
+    parts = [body]
+    if appendix:
+        parts.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
+
+    return _with_generated_marker("\n".join(parts).rstrip() + "\n", GENERATED_AGENT_MARKDOWN_HEADER)
+
+
+def render_cursor_rule(
+    description: str,
+    globs: List[str],
+    always_apply: bool,
+    body: str,
+) -> str:
+    """Render a Cursor rule (.mdc): MDC frontmatter, generated marker, body."""
+    lines = ["---", f"description: {json.dumps(description, ensure_ascii=False)}"]
+    if globs:
+        lines.append(f"globs: {','.join(globs)}")
+    lines.append(f"alwaysApply: {'true' if always_apply else 'false'}")
+    lines.extend(["---", "", body.strip(), ""])
+    return _with_generated_marker("\n".join(lines), GENERATED_AGENT_MARKDOWN_HEADER)
+
+
+def propagate_cursor_rules_once(instructions: List[InstructionDoc]) -> Dict[str, int]:
+    """Emit Cursor rules from instruction docs and learnings, then prune orphans.
+
+    Instructions whose applyTo patterns target agent-definition files are internal
+    plumbing for the agent renderers (their content already ships inside each
+    rendered agent/command) and are skipped. Instructions with real file globs
+    become glob-attached rules; learnings become agent-requested rules.
+    """
+    changed = 0
+    expected: set[Path] = set()
+
+    for doc in instructions:
+        globs = [
+            pattern
+            for pattern in doc.apply_to_patterns
+            if not pattern.rstrip("*/").endswith((".agent.md", "agents"))
+        ]
+        if doc.apply_to_patterns and not globs:
+            continue
+        name = doc.path.name.replace(".instructions.md", "")
+        dest = CURSOR_RULES_DIR / f"{name}.mdc"
+        expected.add(dest)
+        content = render_cursor_rule(
+            doc.description or _first_sentence(doc.body),
+            globs,
+            always_apply=not globs,
+            body=doc.body,
+        )
+        if _write_if_changed(dest, content):
+            changed += 1
+
+    if SOT_LEARNINGS_DIR.exists():
+        for source_file in sorted(SOT_LEARNINGS_DIR.glob("*.md")):
+            dest = CURSOR_RULES_DIR / f"{source_file.stem}.mdc"
+            expected.add(dest)
+            body = _read_text(source_file)
+            content = render_cursor_rule(
+                _first_sentence(body), [], always_apply=False, body=body
+            )
+            if _write_if_changed(dest, content):
+                changed += 1
+
+    orphans = _prune_orphaned_outputs(
+        CURSOR_RULES_DIR, "*.mdc", expected, GENERATED_AGENT_MARKDOWN_HEADER
+    )
+    return {"cursor_changed": changed, "cursor_rule_orphans_removed": orphans}
+
+
+def _mirror_tree(source: Path, destination: Path) -> int:
+    """Mirror `source` into `destination` byte-for-byte; delete stale files.
+
+    Deletion is scoped to `destination` itself (validated inside the repository),
+    never follows symlinks, and leaves empty directories cleaned up without
+    counting them as changes.
+    """
+    _validate_output_directory(destination)
+    changed = 0
+    expected: set[Path] = set()
+
+    if source.is_dir():
+        for source_file in sorted(source.rglob("*")):
+            if not source_file.is_file() or source_file.is_symlink():
+                continue
+            dest_file = destination / source_file.relative_to(source)
+            expected.add(dest_file)
+            data = source_file.read_bytes()
+            if dest_file.is_file() and not dest_file.is_symlink():
+                try:
+                    if dest_file.read_bytes() == data:
+                        continue
+                except OSError:
+                    pass
+            dest_file.parent.mkdir(parents=True, exist_ok=True)
+            dest_file.write_bytes(data)
+            shutil.copymode(source_file, dest_file)  # hooks ship executable scripts
+            changed += 1
+
+    if destination.is_dir():
+        for path in sorted(destination.rglob("*"), reverse=True):
+            if path.is_file() and not path.is_symlink() and path not in expected:
+                path.unlink()
+                changed += 1
+            elif path.is_dir() and not path.is_symlink() and not any(path.iterdir()):
+                path.rmdir()
+
+    return changed
+
+
+def mirror_github_once() -> Dict[str, int]:
+    """Mirror source_of_truth → ports/github → .github for the mirrored subdirs."""
+    changed = 0
+    for subdir in GITHUB_MIRRORED_SUBDIRS:
+        changed += _mirror_tree(SOT_DIR / subdir, GITHUB_PORT_DIR / subdir)
+        changed += _mirror_tree(GITHUB_PORT_DIR / subdir, DOT_GITHUB_DIR / subdir)
+    return {"github_changed": changed}
 
 
 def propagate_once(verbose: bool = True) -> Dict[str, int]:
@@ -1146,11 +1249,13 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     changed_opencode = 0
     changed_codex = 0
     changed_codex_profiles = 0
+    changed_cursor = 0
     expected_claude_files: set[Path] = set()
     expected_claude_command_files: set[Path] = set()
     expected_opencode_files: set[Path] = set()
     expected_codex_files: set[Path] = set()
     expected_codex_profile_files: set[Path] = set()
+    expected_cursor_command_files: set[Path] = set()
 
     for agent in agents:
         docs = applicable_instructions(agent, instructions)
@@ -1191,6 +1296,14 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
             ):
                 changed_claude += 1
 
+            cursor_file = CURSOR_COMMANDS_DIR / f"{claude_identifier}.md"
+            expected_cursor_command_files.add(cursor_file)
+            if _write_if_changed(
+                cursor_file,
+                render_cursor_command(agent, docs, claude_reference_map, claude_identifier),
+            ):
+                changed_cursor += 1
+
         if _write_if_changed(opencode_file, render_opencode_agent(agent, docs, opencode_reference_map)):
             changed_opencode += 1
         if _write_if_changed(codex_file, render_codex_agent(agent, docs, codex_reference_map)):
@@ -1226,11 +1339,19 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         expected_codex_profile_files,
         GENERATED_AGENT_HEADER,
     )
+    cursor_command_orphans = _prune_orphaned_outputs(
+        CURSOR_COMMANDS_DIR,
+        "*.md",
+        expected_cursor_command_files,
+        GENERATED_AGENT_MARKDOWN_HEADER,
+    )
 
     skill_result = propagate_skills_once()
     changed_skills = skill_result["skills_changed"]
 
     learnings_result = propagate_learnings_once()
+    cursor_rules_result = propagate_cursor_rules_once(instructions)
+    github_result = mirror_github_once()
 
     result = {
         "source_agents": len(agents),
@@ -1238,6 +1359,8 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         "opencode_changed": changed_opencode + skill_result["opencode_changed"],
         "codex_changed": changed_codex + skill_result["codex_changed"],
         "codex_profiles_changed": changed_codex_profiles,
+        "cursor_changed": changed_cursor + cursor_rules_result["cursor_changed"],
+        "github_changed": github_result["github_changed"],
         "skills_changed": changed_skills,
         "learnings_changed": learnings_result["learnings_changed"],
         # Deletions are reported on their own keys rather than folded into the
@@ -1249,6 +1372,9 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         "opencode_orphans_removed": opencode_orphans,
         "codex_orphans_removed": codex_orphans,
         "codex_profile_orphans_removed": codex_profile_orphans,
+        "cursor_command_orphans_removed": cursor_command_orphans,
+        "cursor_rule_orphans_removed": cursor_rules_result["cursor_rule_orphans_removed"],
+        "learning_orphans_removed": learnings_result["learning_orphans_removed"],
         "skill_orphans_removed": skill_result["skill_orphans_removed"],
     }
 
@@ -1324,392 +1450,21 @@ def propagate_until_converged(
     raise PropagationConvergenceError("bound_exhausted", max_passes)
 
 
-def resolve_destinations_after_convergence(
-    convergence: PropagationConvergenceResult,
-    *,
-    repo_root: Path | None = None,
-    active_home: Path | None = None,
-    environment: Mapping[str, str] | None = None,
-    platform_facts: runtime_deployment.PlatformFacts | None = None,
-) -> tuple[runtime_deployment.DestinationRecord, ...]:
-    """Resolve runtime destinations only after the fixed-point gate succeeds."""
-    if (
-        not isinstance(convergence, PropagationConvergenceResult)
-        or not convergence.converged
-    ):
-        pass_count = (
-            convergence.pass_count
-            if isinstance(convergence, PropagationConvergenceResult)
-            else 0
-        )
-        raise PropagationConvergenceError("deployment_before_convergence", pass_count)
-    return runtime_deployment.resolve_runtime_destinations(
-        repo_root=repo_root or REPO_ROOT,
-        active_home=active_home,
-        environment=environment,
-        platform_facts=platform_facts,
-    )
-
-
-def deploy_managed_copies_after_convergence(
-    convergence: PropagationConvergenceResult,
-    records: Sequence[runtime_deployment.DestinationRecord],
-) -> runtime_deployment.ManagedCopyResult:
-    """Run the shared managed-copy operation only behind the fixed-point gate."""
-    if (
-        not isinstance(convergence, PropagationConvergenceResult)
-        or not convergence.converged
-    ):
-        pass_count = (
-            convergence.pass_count
-            if isinstance(convergence, PropagationConvergenceResult)
-            else 0
-        )
-        raise PropagationConvergenceError("deployment_before_convergence", pass_count)
-    return runtime_deployment.deploy_managed_copies(records)
-
-
-def _runtime_inventory_digest(
-    inventory: Sequence[Mapping[str, str]], *, active_home: Path
-) -> str:
-    payload = {
-        "active_home": str(active_home.absolute()),
-        "inventory": tuple(inventory),
-    }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
-
-
-def _verify_runtime_records(
-    records: Sequence[runtime_deployment.DestinationRecord],
-) -> Dict[str, RuntimeVerificationResult]:
-    grouped: Dict[str, list[runtime_deployment.DestinationRecord]] = {}
-    for record in records:
-        grouped.setdefault(record.harness, []).append(record)
-    results: Dict[str, RuntimeVerificationResult] = {}
-    for harness, harness_records in grouped.items():
-        regular_fresh = True
-        repository_links = 0
-        for record in harness_records:
-            source = Path(record.source)
-            destination = Path(record.destination)
-            if (
-                not destination.is_dir()
-                or destination.is_symlink()
-                or destination.is_junction()
-            ):
-                regular_fresh = False
-                if destination.is_symlink() or destination.is_junction():
-                    repository_links += 1
-                continue
-            try:
-                expected = tuple(source.iterdir())
-            except OSError:
-                regular_fresh = False
-                continue
-            if any(
-                not runtime_deployment._same_entry(
-                    source_entry, destination / source_entry.name
-                )
-                for source_entry in expected
-            ):
-                regular_fresh = False
-        results[harness] = RuntimeVerificationResult(
-            status="verified" if regular_fresh else "failed",
-            regular_fresh=regular_fresh,
-            repository_links=repository_links,
-        )
-    return results
-
-
-def run_runtime_deployment(
-    *,
-    active_home: Path,
-    reviewed_inventory: str | None = None,
-    watcher_restarted: bool = False,
-    repo_root: Path | None = None,
-    environment: Mapping[str, str] | None = None,
-    platform_facts: runtime_deployment.PlatformFacts | None = None,
-    propagate: Callable[[], Dict[str, int]] | None = None,
-    deploy: Callable[
-        [Sequence[runtime_deployment.DestinationRecord]],
-        runtime_deployment.ManagedCopyResult,
-    ] = runtime_deployment.deploy_managed_copies,
-) -> RuntimeDeploymentResult:
-    """Converge, inventory, deploy reviewed copies, reconcile, and verify."""
-    convergence = propagate_until_converged(propagate=propagate)
-    records = resolve_destinations_after_convergence(
-        convergence,
-        repo_root=repo_root,
-        active_home=active_home,
-        environment=environment,
-        platform_facts=platform_facts,
-    )
-    inventory = runtime_deployment.managed_copy_inventory(records)
-    digest = _runtime_inventory_digest(inventory, active_home=active_home)
-    platforms = {
-        "macOS": "NOT RUN: live home migration not authorized",
-        "Linux": "NOT RUN: live Linux runner unavailable",
-        "native Windows": "NOT RUN: native Windows runner unavailable",
-        "WSL": "NOT RUN: WSL runner unavailable",
-    }
-    base_stages = ("convergence", "destination_preflight", "inventory")
-    if reviewed_inventory != digest:
-        category = "inventory_review_required" if reviewed_inventory is None else "inventory_drift"
-        return RuntimeDeploymentResult(
-            "review_required",
-            base_stages,
-            convergence,
-            inventory,
-            digest,
-            None,
-            {},
-            (category,),
-            platforms,
-        )
-    if not watcher_restarted:
-        return RuntimeDeploymentResult(
-            "failed",
-            base_stages + ("watcher_restart_confirmation",),
-            convergence,
-            inventory,
-            digest,
-            None,
-            {},
-            ("watcher_restart_required",),
-            platforms,
-        )
-
-    # Re-inventory immediately before the first write. A changed digest fails closed.
-    current_inventory = runtime_deployment.managed_copy_inventory(records)
-    current_digest = _runtime_inventory_digest(
-        current_inventory, active_home=active_home
-    )
-    if current_digest != digest:
-        return RuntimeDeploymentResult(
-            "failed",
-            base_stages + ("inventory_recheck",),
-            convergence,
-            current_inventory,
-            current_digest,
-            None,
-            {},
-            ("inventory_drift",),
-            platforms,
-        )
-
-    deployment = deploy(records)
-    verification = _verify_runtime_records(records)
-    harness_failed = any(
-        result.status != "verified" or result.collisions
-        for result in deployment.harnesses.values()
-    )
-    verification_failed = any(
-        result.status != "verified" for result in verification.values()
-    )
-    failures = []
-    if harness_failed:
-        failures.append("partial_deployment")
-    if verification_failed:
-        failures.append("runtime_verification_failed")
-    # Scratch automation is valid evidence, but all live platform rows remain NOT RUN.
-    status = (
-        "partial"
-        if failures or any(value.startswith("NOT RUN") for value in platforms.values())
-        else "go"
-    )
-    return RuntimeDeploymentResult(
-        status,
-        base_stages + ("inventory_recheck", "deployment", "reconciliation", "verification"),
-        convergence,
-        current_inventory,
-        digest,
-        deployment,
-        verification,
-        tuple(failures),
-        platforms,
-    )
-
-
-def preflight_destinations(
-    destinations: Iterable[HarnessDestination], *, home: Path | None = None
-) -> Dict[str, str]:
-    """Validate every destination before a caller performs any mutation."""
-    declared_home = (home or Path.home()).absolute()
-    active_home = declared_home.resolve()
-    failures: Dict[str, str] = {}
-    seen: set[str] = set()
-
-    for target in destinations:
-        if target.harness in seen:
-            failures[target.harness] = "duplicate_harness"
-            continue
-        seen.add(target.harness)
-
-        destination = target.destination.absolute()
-        resolved_destination = destination.resolve()
-        try:
-            resolved_destination.relative_to(active_home)
-        except ValueError:
-            failures[target.harness] = "outside_active_home"
-            continue
-
-        current = declared_home
-        try:
-            relative_parent = destination.parent.relative_to(declared_home)
-        except ValueError:
-            failures[target.harness] = "outside_active_home"
-            continue
-        unsafe_parent = False
-        for part in relative_parent.parts:
-            current = current / part
-            if current.is_symlink():
-                failures[target.harness] = "symlinked_parent"
-                unsafe_parent = True
-                break
-            if current.exists() and not current.is_dir():
-                failures[target.harness] = "parent_not_directory"
-                unsafe_parent = True
-                break
-        if unsafe_parent:
-            continue
-        if not destination.parent.exists() and not target.create_parents:
-            failures[target.harness] = "missing_parent_not_allowed"
-        elif not target.ownership_evidence_available:
-            failures[target.harness] = "ownership_evidence_unavailable"
-        elif not target.collision_ready:
-            failures[target.harness] = "collision_not_ready"
-
-    return failures
-
-
-def deploy_after_convergence(
-    destinations: Iterable[HarnessDestination],
-    *,
-    copy_operation: Callable[[HarnessDestination], int],
-    reconcile_operation: Callable[[HarnessDestination], int],
-    home: Path | None = None,
-    max_passes: int = DEFAULT_CONVERGENCE_PASSES,
-    propagate: Callable[[], Dict[str, int]] | None = None,
-) -> DeploymentResult:
-    """Gate isolated harness operations behind convergence and full preflight."""
-    targets = tuple(destinations)
-    try:
-        convergence = propagate_until_converged(
-            max_passes=max_passes, propagate=propagate
-        )
-    except PropagationConvergenceError as exc:
-        return DeploymentResult(None, exc.category, False, {}, {})
-
-    failures = preflight_destinations(targets, home=home)
-    if failures:
-        return DeploymentResult(convergence, None, False, failures, {})
-
-    harnesses: Dict[str, HarnessDeploymentResult] = {}
-    for target in targets:
-        try:
-            copied = copy_operation(target)
-        except Exception:
-            harnesses[target.harness] = HarnessDeploymentResult(
-                status="failed",
-                reconciliation_skipped=True,
-                failure="copy_failed",
-            )
-            continue
-
-        try:
-            reconciled = reconcile_operation(target)
-        except Exception:
-            harnesses[target.harness] = HarnessDeploymentResult(
-                status="failed",
-                copied=copied,
-                failure="reconciliation_failed",
-            )
-            continue
-
-        harnesses[target.harness] = HarnessDeploymentResult(
-            status="verified", copied=copied, reconciled=reconciled
-        )
-
-    return DeploymentResult(convergence, None, True, {}, harnesses)
-
-
-def _collect_file_state(paths: Iterable[Path]) -> Dict[str, Tuple[float, int]]:
-    state: Dict[str, Tuple[float, int]] = {}
-    for root in paths:
-        if not root.exists():
-            continue
-        for path in root.rglob("*"):
-            if not path.is_file():
-                continue
-            try:
-                stat = path.stat()
-            except FileNotFoundError:
-                continue
-            state[str(path)] = (stat.st_mtime, stat.st_size)
-    return state
-
-
-def _compute_changes(
-    old: Dict[str, Tuple[float, int]],
-    new: Dict[str, Tuple[float, int]],
-) -> List[str]:
-    changed: List[str] = []
-    old_keys = set(old.keys())
-    new_keys = set(new.keys())
-
-    for path in sorted(old_keys | new_keys):
-        if path not in old:
-            changed.append(path)
-            continue
-        if path not in new:
-            changed.append(path)
-            continue
-        if old[path] != new[path]:
-            changed.append(path)
-    return changed
-
 
 def watch_loop(interval_seconds: float = 1.0) -> None:
-    print("Starting master asset watcher for .github/{agents,skills,instructions,learnings} ...")
-    print(
-        "Restart this watcher after propagator changes before migration or "
-        "release verification."
-    )
+    print("Starting master asset watcher for source_of_truth/{agents,skills,instructions,learnings,hooks} ...")
     print(json.dumps(_convergence_payload(propagate_until_converged()), indent=2))
 
-    last_state = _collect_file_state(WATCH_DIRS)
-    pending_since: float | None = None
-    pending_changes: List[str] = []
-
-    while True:
-        time.sleep(interval_seconds)
-        current_state = _collect_file_state(WATCH_DIRS)
-        changes = _compute_changes(last_state, current_state)
-
-        if changes:
-            pending_changes = changes
-            pending_since = time.time()
-            last_state = current_state
-
-        if pending_since is None:
-            continue
-
-        if time.time() - pending_since < 0.8:
-            continue
-
-        sample = ", ".join(Path(c).name for c in pending_changes[:5])
-        more = "" if len(pending_changes) <= 5 else f" (+{len(pending_changes) - 5} more)"
-        print(f"Detected change in .github source: {sample}{more}")
-
+    def _on_change(changes: List[str]) -> None:
+        sample = ", ".join(Path(c).name for c in changes[:5])
+        more = "" if len(changes) <= 5 else f" (+{len(changes) - 5} more)"
+        print(f"Detected change in source_of_truth: {sample}{more}")
         try:
-            result = propagate_until_converged()
-            print(json.dumps(_convergence_payload(result), indent=2))
+            print(json.dumps(_convergence_payload(propagate_until_converged()), indent=2))
         except PropagationConvergenceError as exc:  # pragma: no cover - runtime guard
             print(f"Propagation failed: {exc}", file=sys.stderr)
 
-        pending_since = None
-        pending_changes = []
+    poll_watch(WATCH_DIRS, _on_change, interval_seconds=interval_seconds)
 
 
 def _convergence_payload(result: PropagationConvergenceResult) -> Dict[str, object]:
@@ -1722,92 +1477,20 @@ def _convergence_payload(result: PropagationConvergenceResult) -> Dict[str, obje
     }
 
 
-def _runtime_deployment_payload(result: RuntimeDeploymentResult) -> Dict[str, object]:
-    return {
-        "status": result.status,
-        "stages": result.stages,
-        "inventory": result.inventory,
-        "inventory_digest": result.inventory_digest,
-        "failure_categories": result.failure_categories,
-        "platform_evidence": result.platform_evidence,
-        "harnesses": (
-            {
-                name: {
-                    "status": harness.status,
-                    "inventoried": harness.inventoried,
-                    "copied": harness.copied,
-                    "replaced": harness.replaced,
-                    "removed": harness.removed,
-                    "unchanged": harness.unchanged,
-                    "collisions": harness.collisions,
-                    "failed": harness.failed,
-                    "reconciliation_skipped": harness.reconciliation_skipped,
-                }
-                for name, harness in result.deployment.harnesses.items()
-            }
-            if result.deployment is not None
-            else {}
-        ),
-        "verification": {
-            name: {
-                "status": verification.status,
-                "regular_fresh": verification.regular_fresh,
-                "repository_links": verification.repository_links,
-            }
-            for name, verification in result.verification.items()
-        },
-    }
-
-
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Propagate .github master assets to target platforms.")
+    parser = argparse.ArgumentParser(
+        description="Transform source_of_truth/ master assets into ports/ outputs."
+    )
     parser.add_argument("--once", action="store_true", help="Run one propagation pass and exit.")
-    parser.add_argument("--watch", action="store_true", help="Watch .github source folders and propagate on changes.")
     parser.add_argument(
-        "--runtime-deploy",
+        "--watch",
         action="store_true",
-        help="Converge, inventory, and deploy reviewed managed runtime copies.",
-    )
-    parser.add_argument(
-        "--active-home",
-        type=Path,
-        help="Explicit active home for --runtime-deploy.",
-    )
-    parser.add_argument(
-        "--reviewed-inventory",
-        help="SHA-256 digest emitted by a reviewed --runtime-deploy inventory.",
-    )
-    parser.add_argument(
-        "--watcher-restarted",
-        action="store_true",
-        help="Confirm stale propagation watchers were restarted before mutation.",
+        help="Watch source_of_truth/ folders and propagate on changes.",
     )
     args = parser.parse_args()
 
-    if (
-        not args.once
-        and not args.watch
-        and not args.runtime_deploy
-    ):
+    if not args.watch:
         args.once = True
-
-    if args.runtime_deploy:
-        if args.active_home is None:
-            parser.error("--runtime-deploy requires --active-home")
-        try:
-            runtime_result = run_runtime_deployment(
-                active_home=args.active_home,
-                reviewed_inventory=args.reviewed_inventory,
-                watcher_restarted=args.watcher_restarted,
-            )
-        except (PropagationConvergenceError, runtime_deployment.DestinationResolutionError) as exc:
-            category = getattr(exc, "category", "runtime_deployment_failed")
-            print(json.dumps({"status": "failed", "failure_categories": [category]}))
-            return 1
-        print(json.dumps(_runtime_deployment_payload(runtime_result), indent=2))
-        if runtime_result.status == "review_required":
-            return 2
-        return 0 if runtime_result.status == "go" else 1
 
     if args.once:
         try:

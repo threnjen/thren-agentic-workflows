@@ -2,7 +2,7 @@
 name: aws-sam
 description: "Conventions for AWS SAM templates (Python and Node.js runtimes). Use when: authoring or reviewing SAM template.yaml files, adding Lambda functions, configuring API Gateway, setting up CloudWatch log groups, or deploying serverless stacks."
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # AWS SAM Skill
 
 Conventions for authoring AWS SAM templates in this codebase. Apply these rules whenever creating or reviewing `template.yaml` files.

@@ -2,7 +2,7 @@
 name: Debug Issue
 description: Systematically debug issues using graph-powered code navigation
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 
 ## Debug Issue
 

@@ -1,3 +1,4 @@
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Debugging Learnings
 
 ## If Codex Agents Can't Find Their Subagents

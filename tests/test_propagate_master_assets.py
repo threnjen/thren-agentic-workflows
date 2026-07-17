@@ -35,7 +35,7 @@ import _propagate_env as env
 #     doing so would break the report contract. Pinned here so that fails.
 #   * `execute` is DECLARED, not hidden. It survives only on `05a-baseline-worktree`,
 #     whose `git worktree` call has no non-shell equivalent; the grant is recorded
-#     as explicitly unclosable in `.github/learnings/cross-phase-decisions.md:16`.
+#     as explicitly unclosable in `source_of_truth/learnings/cross-phase-decisions.md:16`.
 #     Per-agent command scoping is not expressible in Claude subagent frontmatter
 #     (`tools: Bash(gh:*)` is an unresolved tool name, not a narrower grant), so
 #     removal is the only narrowing available -- and this one cannot be removed.
@@ -59,7 +59,7 @@ def _discover_pr_review_evaluator_slugs() -> set:
     `05-pr-review` is the orchestrator that dispatches the roster, not a member
     of it.
     """
-    agents_dir = REPO_ROOT / ".github" / "agents"
+    agents_dir = REPO_ROOT / "source_of_truth" / "agents"
     return {
         path.name[: -len(".agent.md")]
         for path in agents_dir.glob("05*.agent.md")
@@ -84,7 +84,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
             env.use(self, repo_root)
-            skill_dir = repo_root / ".github" / "skills" / "demo-skill"
+            skill_dir = repo_root / "source_of_truth" / "skills" / "demo-skill"
             skill_dir.mkdir(parents=True, exist_ok=True)
             (skill_dir / "SKILL.md").write_text(
                 "---\nname: demo-skill\ndescription: \"Demo skill\"\n---\n# Demo body\n",
@@ -96,9 +96,9 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertEqual(result["claude_changed"], 1)
             self.assertEqual(result["opencode_changed"], 1)
             self.assertEqual(result["codex_changed"], 1)
-            self.assertTrue((repo_root / "claude" / "skills" / "demo-skill" / "SKILL.md").exists())
-            self.assertTrue((repo_root / "opencode" / "skills" / "demo-skill" / "SKILL.md").exists())
-            self.assertTrue((repo_root / "codex" / "skills" / "demo-skill" / "SKILL.md").exists())
+            self.assertTrue((repo_root / "ports" / "claude" / "skills" / "demo-skill" / "SKILL.md").exists())
+            self.assertTrue((repo_root / "ports" / "opencode" / "skills" / "demo-skill" / "SKILL.md").exists())
+            self.assertTrue((repo_root / "ports" / "codex" / "skills" / "demo-skill" / "SKILL.md").exists())
 
     def test_pr_review_evaluator_roster_is_fully_enumerated(self) -> None:
         """AC8: no evaluator may be omitted from propagation enumeration.
@@ -275,11 +275,11 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         # Claude output is a *command*, not an agent: this orchestrator is
         # user-invocable.
         expected_markers = {
-            ".github/agents/05-pr-review.agent.md": "name: 05 PR - Review",
-            "claude/commands/pr-review.md": "PR Review Orchestrator",
-            "opencode/agents/05-pr-review.md": "PR Review Orchestrator",
-            "codex/agents/05-pr-review.toml": 'name = "pr-review"',
-            "codex/profiles/pr-review.config.toml": "PR Review Orchestrator",
+            "source_of_truth/agents/05-pr-review.agent.md": "name: 05 PR - Review",
+            "ports/claude/commands/pr-review.md": "PR Review Orchestrator",
+            "ports/opencode/agents/05-pr-review.md": "PR Review Orchestrator",
+            "ports/codex/agents/05-pr-review.toml": 'name = "pr-review"',
+            "ports/codex/profiles/pr-review.config.toml": "PR Review Orchestrator",
         }
 
         for relative_path, marker in expected_markers.items():
@@ -325,9 +325,9 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         }
 
         renaming_roots = (
-            (REPO_ROOT / "claude" / "agents", "*.md", renamed_in_claude),
-            (REPO_ROOT / "claude" / "commands", "*.md", renamed_in_claude),
-            (REPO_ROOT / "codex" / "agents", "*.toml", renamed_in_codex),
+            (REPO_ROOT / "ports" / "claude" / "agents", "*.md", renamed_in_claude),
+            (REPO_ROOT / "ports" / "claude" / "commands", "*.md", renamed_in_claude),
+            (REPO_ROOT / "ports" / "codex" / "agents", "*.toml", renamed_in_codex),
         )
 
         offenders = []
@@ -395,118 +395,6 @@ class PropagationConvergenceTests(unittest.TestCase):
         self.assertEqual(raised.exception.category, "bound_exhausted")
         self.assertEqual(raised.exception.pass_count, 2)
 
-    def test_preflight_rejects_unsafe_destinations_before_any_copy(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            home = Path(tmp) / "home"
-            home.mkdir()
-            outside = Path(tmp) / "outside"
-            outside.mkdir()
-            (home / "linked").symlink_to(outside, target_is_directory=True)
-            targets = (
-                mod.HarnessDestination("claude", home / "claude"),
-                mod.HarnessDestination("codex", home / "linked" / "codex"),
-            )
-            copy = mock.Mock()
-
-            result = mod.deploy_after_convergence(
-                targets,
-                copy_operation=copy,
-                reconcile_operation=mock.Mock(),
-                home=home,
-                propagate=lambda: {"source_agents": 1, "claude_changed": 0},
-            )
-
-        self.assertFalse(result.preflight_succeeded)
-        self.assertEqual(result.preflight_failures["codex"], "outside_active_home")
-        copy.assert_not_called()
-
-    def test_preflight_reports_missing_parent_evidence_and_collision(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            home = Path(tmp)
-            targets = (
-                mod.HarnessDestination(
-                    "claude", home / "missing" / "claude", create_parents=False
-                ),
-                mod.HarnessDestination(
-                    "codex", home / "codex", ownership_evidence_available=False
-                ),
-                mod.HarnessDestination(
-                    "opencode", home / "opencode", collision_ready=False
-                ),
-            )
-
-            failures = mod.preflight_destinations(targets, home=home)
-
-        self.assertEqual(failures["claude"], "missing_parent_not_allowed")
-        self.assertEqual(failures["codex"], "ownership_evidence_unavailable")
-        self.assertEqual(failures["opencode"], "collision_not_ready")
-
-    def test_preflight_rejects_non_directory_parent_before_any_copy(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            home = Path(tmp)
-            blocked_parent = home / "blocked"
-            blocked_parent.write_text("not a directory", encoding="utf-8")
-            targets = (
-                mod.HarnessDestination("claude", home / "claude"),
-                mod.HarnessDestination("codex", blocked_parent / "codex"),
-            )
-            copy = mock.Mock()
-
-            result = mod.deploy_after_convergence(
-                targets,
-                copy_operation=copy,
-                reconcile_operation=mock.Mock(),
-                home=home,
-                propagate=lambda: {"source_agents": 1, "claude_changed": 0},
-            )
-
-        self.assertFalse(result.preflight_succeeded)
-        self.assertEqual(result.preflight_failures["codex"], "parent_not_directory")
-        copy.assert_not_called()
-
-    def test_failed_harness_skips_only_its_reconciliation(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            home = Path(tmp)
-            targets = (
-                mod.HarnessDestination("claude", home / "claude"),
-                mod.HarnessDestination("codex", home / "codex"),
-            )
-            reconciled = []
-
-            def copy(target: mod.HarnessDestination) -> int:
-                if target.harness == "codex":
-                    raise OSError("sensitive destination")
-                target.destination.mkdir()
-                return 2
-
-            result = mod.deploy_after_convergence(
-                targets,
-                copy_operation=copy,
-                reconcile_operation=lambda target: reconciled.append(target.harness) or 1,
-                home=home,
-                propagate=lambda: {"source_agents": 1, "claude_changed": 0},
-            )
-
-        self.assertEqual(result.harnesses["claude"].status, "verified")
-        self.assertEqual(result.harnesses["claude"].copied, 2)
-        self.assertFalse(result.harnesses["claude"].reconciliation_skipped)
-        self.assertEqual(result.harnesses["codex"].status, "failed")
-        self.assertTrue(result.harnesses["codex"].reconciliation_skipped)
-        self.assertEqual(reconciled, ["claude"])
-        self.assertNotIn("sensitive destination", result.harnesses["codex"].failure)
-
-    def test_watcher_announces_restart_requirement(self) -> None:
-        convergence = mod.PropagationConvergenceResult(True, 1, 0, {}, {})
-        with mock.patch.object(mod, "propagate_until_converged", return_value=convergence), \
-             mock.patch.object(mod, "_collect_file_state", return_value={}), \
-             mock.patch.object(mod.time, "sleep", side_effect=KeyboardInterrupt), \
-             mock.patch("builtins.print") as printed:
-            with self.assertRaises(KeyboardInterrupt):
-                mod.watch_loop()
-        output = " ".join(str(call.args[0]) for call in printed.call_args_list)
-        self.assertIn("restart", output.lower())
-        self.assertIn("release verification", output.lower())
-
 
 class OrphanPruningTests(unittest.TestCase):
     """Pruning of generated outputs whose source asset no longer exists.
@@ -525,7 +413,7 @@ class OrphanPruningTests(unittest.TestCase):
         name: str,
         user_invocable: bool = False,
     ) -> Path:
-        agents_dir = repo_root / ".github" / "agents"
+        agents_dir = repo_root / "source_of_truth" / "agents"
         agents_dir.mkdir(parents=True, exist_ok=True)
         path = agents_dir / f"{slug}.agent.md"
         path.write_text(
@@ -542,7 +430,7 @@ class OrphanPruningTests(unittest.TestCase):
         return path
 
     def _write_source_skill(self, repo_root: Path, skill_name: str) -> Path:
-        skill_dir = repo_root / ".github" / "skills" / skill_name
+        skill_dir = repo_root / "source_of_truth" / "skills" / skill_name
         skill_dir.mkdir(parents=True, exist_ok=True)
         (skill_dir / "SKILL.md").write_text(
             f"---\nname: {skill_name}\ndescription: \"Fixture skill.\"\n---\n"
@@ -561,8 +449,8 @@ class OrphanPruningTests(unittest.TestCase):
 
             mod.propagate_once(verbose=False)
 
-            claude_orphan = repo_root / "claude" / "agents" / "z-doomed.md"
-            opencode_orphan = repo_root / "opencode" / "agents" / "02-doomed.md"
+            claude_orphan = repo_root / "ports" / "claude" / "agents" / "z-doomed.md"
+            opencode_orphan = repo_root / "ports" / "opencode" / "agents" / "02-doomed.md"
             self.assertTrue(claude_orphan.exists(), "fixture: expected generated output")
             self.assertTrue(opencode_orphan.exists(), "fixture: expected generated output")
 
@@ -571,8 +459,8 @@ class OrphanPruningTests(unittest.TestCase):
 
             self.assertFalse(claude_orphan.exists())
             self.assertFalse(opencode_orphan.exists())
-            self.assertTrue((repo_root / "claude" / "agents" / "z-keeper.md").exists())
-            self.assertTrue((repo_root / "opencode" / "agents" / "01-keeper.md").exists())
+            self.assertTrue((repo_root / "ports" / "claude" / "agents" / "z-keeper.md").exists())
+            self.assertTrue((repo_root / "ports" / "opencode" / "agents" / "01-keeper.md").exists())
             self.assertEqual(result["claude_orphans_removed"], 1)
             self.assertEqual(result["opencode_orphans_removed"], 1)
 
@@ -585,7 +473,7 @@ class OrphanPruningTests(unittest.TestCase):
             repo_root = Path(tmp_dir)
             env.use(self, repo_root)
             self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
-            claude_agents = repo_root / "claude" / "agents"
+            claude_agents = repo_root / "ports" / "claude" / "agents"
             claude_agents.mkdir(parents=True, exist_ok=True)
             readme = claude_agents / "README.md"
             readme.write_text("# Agent index\n\nHand-maintained.\n", encoding="utf-8")
@@ -605,7 +493,7 @@ class OrphanPruningTests(unittest.TestCase):
             self._write_source_agent(repo_root, "01-flipper", "01 Flipper", user_invocable=True)
 
             mod.propagate_once(verbose=False)
-            command_file = repo_root / "claude" / "commands" / "flipper.md"
+            command_file = repo_root / "ports" / "claude" / "commands" / "flipper.md"
             self.assertTrue(command_file.exists(), "fixture: expected a command file")
 
             self._write_source_agent(repo_root, "01-flipper", "01 Flipper", user_invocable=False)
@@ -614,7 +502,7 @@ class OrphanPruningTests(unittest.TestCase):
             self.assertFalse(command_file.exists())
             # A non-invocable agent takes the `z-` prefix, so the subagent file it
             # gains on the flip is `z-flipper.md`.
-            self.assertTrue((repo_root / "claude" / "agents" / "z-flipper.md").exists())
+            self.assertTrue((repo_root / "ports" / "claude" / "agents" / "z-flipper.md").exists())
             self.assertEqual(result["claude_command_orphans_removed"], 1)
 
     def test_emission_completes_before_pruning(self) -> None:
@@ -627,15 +515,15 @@ class OrphanPruningTests(unittest.TestCase):
             doomed = self._write_source_agent(repo_root, "09-doomed", "09 Doomed")
 
             mod.propagate_once(verbose=False)
-            survivor = repo_root / "claude" / "agents" / "z-artifact-sweeper.md"
+            survivor = repo_root / "ports" / "claude" / "agents" / "z-artifact-sweeper.md"
             self.assertTrue(survivor.exists(), "fixture: expected the z- stem")
 
             doomed.unlink()
             mod.propagate_once(verbose=False)
 
             self.assertTrue(survivor.exists(), "survivor lost its stem to prune ordering")
-            self.assertFalse((repo_root / "claude" / "agents" / "z-doomed.md").exists())
-            self.assertFalse((repo_root / "opencode" / "agents" / "09-doomed.md").exists())
+            self.assertFalse((repo_root / "ports" / "claude" / "agents" / "z-doomed.md").exists())
+            self.assertFalse((repo_root / "ports" / "opencode" / "agents" / "09-doomed.md").exists())
 
     def test_orphaned_skill_directories_are_pruned_in_all_three_roots(self) -> None:
         """AC4: no root pruned skills before this feature. The `codex/skills/`
@@ -649,9 +537,9 @@ class OrphanPruningTests(unittest.TestCase):
 
             mod.propagate_once(verbose=False)
             orphans = [
-                repo_root / "claude" / "skills" / "doomed-skill",
-                repo_root / "opencode" / "skills" / "doomed-skill",
-                repo_root / "codex" / "skills" / "doomed-skill",
+                repo_root / "ports" / "claude" / "skills" / "doomed-skill",
+                repo_root / "ports" / "opencode" / "skills" / "doomed-skill",
+                repo_root / "ports" / "codex" / "skills" / "doomed-skill",
             ]
             for orphan in orphans:
                 self.assertTrue(orphan.exists(), f"fixture: expected {orphan}")
@@ -662,7 +550,7 @@ class OrphanPruningTests(unittest.TestCase):
             for orphan in orphans:
                 self.assertFalse(orphan.exists(), f"orphaned skill dir survived: {orphan}")
             for root in ("claude", "opencode", "codex"):
-                self.assertTrue((repo_root / root / "skills" / "keeper-skill" / "SKILL.md").exists())
+                self.assertTrue((repo_root / "ports" / root / "skills" / "keeper-skill" / "SKILL.md").exists())
 
     def test_unmarked_skill_directory_survives(self) -> None:
         """AC5 for the skill roots: a skill directory this propagator did not
@@ -671,7 +559,7 @@ class OrphanPruningTests(unittest.TestCase):
             repo_root = Path(tmp_dir)
             env.use(self, repo_root)
             self._write_source_skill(repo_root, "keeper-skill")
-            handmade = repo_root / "claude" / "skills" / "handmade-skill"
+            handmade = repo_root / "ports" / "claude" / "skills" / "handmade-skill"
             handmade.mkdir(parents=True, exist_ok=True)
             (handmade / "SKILL.md").write_text(
                 "---\nname: handmade-skill\n---\n# Hand written\n", encoding="utf-8"
@@ -693,7 +581,7 @@ class OrphanPruningTests(unittest.TestCase):
                 f"---\nname: outside\n---\n{mod.GENERATED_AGENT_MARKDOWN_HEADER}\nreal file\n",
                 encoding="utf-8",
             )
-            claude_agents = repo_root / "claude" / "agents"
+            claude_agents = repo_root / "ports" / "claude" / "agents"
             claude_agents.mkdir(parents=True, exist_ok=True)
             link = claude_agents / "z-linked.md"
             link.symlink_to(outside)
@@ -726,8 +614,8 @@ class OrphanPruningTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            claude_dir = repo_root / "claude"
-            claude_dir.mkdir()
+            claude_dir = repo_root / "ports" / "claude"
+            claude_dir.mkdir(parents=True)
             (claude_dir / "agents").symlink_to(outside, target_is_directory=True)
 
             with self.assertRaises(ValueError):
@@ -746,7 +634,7 @@ class OrphanPruningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir) / "repo"
             env.use(self, repo_root)
-            (repo_root / ".github" / "skills").mkdir(parents=True)
+            (repo_root / "source_of_truth" / "skills").mkdir(parents=True)
 
             outside = Path(tmp_dir) / "outside"
             precious = outside / "precious-skill"
@@ -757,8 +645,8 @@ class OrphanPruningTests(unittest.TestCase):
             never_inspected = precious / "irreplaceable.txt"
             never_inspected.write_text("carries no marker; rmtree does not care\n", encoding="utf-8")
 
-            claude_dir = repo_root / "claude"
-            claude_dir.mkdir()
+            claude_dir = repo_root / "ports" / "claude"
+            claude_dir.mkdir(parents=True)
             (claude_dir / "skills").symlink_to(outside, target_is_directory=True)
 
             with self.assertRaises(ValueError):
@@ -789,8 +677,9 @@ class OrphanPruningTests(unittest.TestCase):
             )
 
             # `claude` is the symlink; `claude/agents` is a real directory beyond it.
-            (repo_root / "claude").symlink_to(outside, target_is_directory=True)
-            self.assertFalse((repo_root / "claude" / "agents").is_symlink())
+            (repo_root / "ports").mkdir()
+            (repo_root / "ports" / "claude").symlink_to(outside, target_is_directory=True)
+            self.assertFalse((repo_root / "ports" / "claude" / "agents").is_symlink())
 
             with self.assertRaises(ValueError):
                 mod.propagate_once(verbose=False)
@@ -803,7 +692,7 @@ class OrphanPruningTests(unittest.TestCase):
             repo_root = Path(tmp_dir)
             env.use(self, repo_root)
             self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
-            claude_agents = repo_root / "claude" / "agents"
+            claude_agents = repo_root / "ports" / "claude" / "agents"
             claude_agents.mkdir(parents=True, exist_ok=True)
             unreadable = claude_agents / "z-unreadable.md"
             unreadable.write_text("whatever\n", encoding="utf-8")
@@ -820,13 +709,13 @@ class OrphanPruningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
             env.use(self, repo_root)
-            (repo_root / ".github" / "agents").mkdir(parents=True)
+            (repo_root / "source_of_truth" / "agents").mkdir(parents=True)
 
             result = mod.propagate_once(verbose=False)
 
             self.assertEqual(result["claude_orphans_removed"], 0)
             self.assertEqual(result["skill_orphans_removed"], 0)
-            self.assertFalse((repo_root / "claude" / "skills").exists())
+            self.assertFalse((repo_root / "ports" / "claude" / "skills").exists())
 
     def test_hand_maintained_file_quoting_the_marker_survives(self) -> None:
         """AC5: the marker guard keys on the one position the emitter writes to,
@@ -839,7 +728,7 @@ class OrphanPruningTests(unittest.TestCase):
             repo_root = Path(tmp_dir)
             env.use(self, repo_root)
             self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
-            claude_agents = repo_root / "claude" / "agents"
+            claude_agents = repo_root / "ports" / "claude" / "agents"
             claude_agents.mkdir(parents=True, exist_ok=True)
             readme = claude_agents / "README.md"
             body = (
@@ -939,7 +828,9 @@ class OrphanPruningTests(unittest.TestCase):
         self.assertEqual(result["codex_orphans_removed"], 0)
         self.assertEqual(result["codex_profile_orphans_removed"], 0)
         self.assertEqual(result["skill_orphans_removed"], 0)
-        self.assertTrue((mod.CLAUDE_AGENTS_DIR / "README.md").exists())
+        self.assertEqual(result["cursor_command_orphans_removed"], 0)
+        self.assertEqual(result["cursor_rule_orphans_removed"], 0)
+        self.assertEqual(result["learning_orphans_removed"], 0)
 
 
 class StaticDoneNotifyNonInterferenceTests(unittest.TestCase):
@@ -953,7 +844,7 @@ class StaticDoneNotifyNonInterferenceTests(unittest.TestCase):
     """
 
     def _write_source_agent(self, repo_root: Path) -> None:
-        agents_dir = repo_root / ".github" / "agents"
+        agents_dir = repo_root / "source_of_truth" / "agents"
         agents_dir.mkdir(parents=True, exist_ok=True)
         (agents_dir / "01-keeper.agent.md").write_text(
             "---\n"
@@ -1044,6 +935,175 @@ class StaticDoneNotifyNonInterferenceTests(unittest.TestCase):
                 "the header-less static done-notify plugin must survive propagation",
             )
             self.assertEqual(plugin_file.read_text(encoding="utf-8"), original)
+
+
+class CursorPropagationTests(unittest.TestCase):
+    """Cursor harness outputs: commands from user-invocable agents, rules from
+    instructions with real file globs and from learnings."""
+
+    def _seed(self, repo_root: Path) -> None:
+        agents_dir = repo_root / "source_of_truth" / "agents"
+        agents_dir.mkdir(parents=True, exist_ok=True)
+        (agents_dir / "01-captain.agent.md").write_text(
+            "---\n"
+            "name: 01 Captain\n"
+            'description: "Fixture orchestrator."\n'
+            "tools: [read, search]\n"
+            "user-invocable: true\n"
+            "---\n\nYou are the **01 Captain** fixture agent.\n",
+            encoding="utf-8",
+        )
+        (agents_dir / "02-hidden.agent.md").write_text(
+            "---\n"
+            "name: 02 Hidden\n"
+            'description: "Fixture subagent."\n'
+            "tools: [read]\n"
+            "user-invocable: false\n"
+            "---\n\nYou are the **02 Hidden** fixture agent.\n",
+            encoding="utf-8",
+        )
+        instructions_dir = repo_root / "source_of_truth" / "instructions"
+        instructions_dir.mkdir(parents=True, exist_ok=True)
+        (instructions_dir / "style.instructions.md").write_text(
+            "---\n"
+            'description: "Style rules."\n'
+            'applyTo: "**/*.cs,**/*.py"\n'
+            "---\n\nUse the style guide.\n",
+            encoding="utf-8",
+        )
+        (instructions_dir / "agent-only.instructions.md").write_text(
+            "---\n"
+            'description: "Agent plumbing."\n'
+            'applyTo: "source_of_truth/agents/**"\n'
+            "---\n\nInternal to agent rendering.\n",
+            encoding="utf-8",
+        )
+        learnings_dir = repo_root / "source_of_truth" / "learnings"
+        learnings_dir.mkdir(parents=True, exist_ok=True)
+        (learnings_dir / "project-learnings.md").write_text(
+            "# Project Learnings\n\nLesson one.\n", encoding="utf-8"
+        )
+
+    def test_user_invocable_agent_becomes_a_cursor_command(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+
+            mod.propagate_once(verbose=False)
+
+            command = repo_root / "ports" / "cursor" / "commands" / "captain.md"
+            self.assertTrue(command.is_file())
+            text = command.read_text(encoding="utf-8")
+            self.assertTrue(text.startswith(mod.GENERATED_AGENT_MARKDOWN_HEADER))
+            self.assertIn("01 Captain", text)
+            self.assertFalse(
+                (repo_root / "ports" / "cursor" / "commands" / "z-hidden.md").exists(),
+                "non-invocable agents must not become Cursor commands",
+            )
+
+    def test_glob_instruction_and_learning_become_rules_agent_plumbing_does_not(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+
+            mod.propagate_once(verbose=False)
+
+            rules = repo_root / "ports" / "cursor" / "rules"
+            style = (rules / "style.mdc").read_text(encoding="utf-8")
+            self.assertIn('description: "Style rules."', style)
+            self.assertIn("globs: **/*.cs,**/*.py", style)
+            self.assertIn("alwaysApply: false", style)
+
+            learning = (rules / "project-learnings.mdc").read_text(encoding="utf-8")
+            self.assertIn('description: "Project Learnings"', learning)
+            self.assertIn("alwaysApply: false", learning)
+            self.assertNotIn("globs:", learning)
+
+            self.assertFalse(
+                (rules / "agent-only.mdc").exists(),
+                "agent-targeted instructions ship inside rendered agents, not as rules",
+            )
+
+    def test_orphaned_cursor_outputs_are_pruned(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+
+            mod.propagate_once(verbose=False)
+            command = repo_root / "ports" / "cursor" / "commands" / "captain.md"
+            rule = repo_root / "ports" / "cursor" / "rules" / "style.mdc"
+            self.assertTrue(command.exists())
+            self.assertTrue(rule.exists())
+
+            (repo_root / "source_of_truth" / "agents" / "01-captain.agent.md").unlink()
+            (repo_root / "source_of_truth" / "instructions" / "style.instructions.md").unlink()
+            result = mod.propagate_once(verbose=False)
+
+            self.assertFalse(command.exists())
+            self.assertFalse(rule.exists())
+            self.assertEqual(result["cursor_command_orphans_removed"], 1)
+            self.assertEqual(result["cursor_rule_orphans_removed"], 1)
+
+
+class GithubMirrorTests(unittest.TestCase):
+    def _seed(self, repo_root: Path) -> None:
+        agents_dir = repo_root / "source_of_truth" / "agents"
+        agents_dir.mkdir(parents=True, exist_ok=True)
+        (agents_dir / "01-keeper.agent.md").write_text(
+            "---\nname: 01 Keeper\ndescription: \"Fixture.\"\n---\n\nBody.\n",
+            encoding="utf-8",
+        )
+        hooks_dir = repo_root / "source_of_truth" / "hooks"
+        hooks_dir.mkdir(parents=True, exist_ok=True)
+        (hooks_dir / "hook.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+
+    def test_source_is_mirrored_to_ports_github_and_dot_github(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+
+            mod.mirror_github_once()
+
+            for base in (repo_root / "ports" / "github", repo_root / ".github"):
+                self.assertTrue((base / "agents" / "01-keeper.agent.md").is_file())
+                self.assertTrue((base / "hooks" / "hook.sh").is_file())
+
+    def test_stale_mirror_files_are_deleted_but_foreign_dirs_survive(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+            mod.mirror_github_once()
+
+            stale = repo_root / ".github" / "agents" / "01-keeper.agent.md"
+            workflows = repo_root / ".github" / "workflows"
+            workflows.mkdir(parents=True)
+            (workflows / "ci.yml").write_text("on: push\n", encoding="utf-8")
+
+            (repo_root / "source_of_truth" / "agents" / "01-keeper.agent.md").unlink()
+            mod.mirror_github_once()
+
+            self.assertFalse(stale.exists(), "stale mirror copy survived")
+            self.assertTrue(
+                (workflows / "ci.yml").exists(),
+                "mirror touched a non-mirrored .github subdir",
+            )
+
+    def test_mirror_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+
+            first = mod.mirror_github_once()
+            second = mod.mirror_github_once()
+
+            self.assertGreater(first["github_changed"], 0)
+            self.assertEqual(second["github_changed"], 0)
 
 
 if __name__ == "__main__":

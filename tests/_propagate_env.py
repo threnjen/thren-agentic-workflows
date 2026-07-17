@@ -20,21 +20,30 @@ import propagate_master_assets as mod  # noqa: E402
 def repo_dir_overrides(root: Path) -> dict:
     """Every directory global the propagator reads, rebased onto `root`."""
     root = Path(root)
+    sot = root / "source_of_truth"
+    ports = root / "ports"
     return {
         "REPO_ROOT": root,
-        "GITHUB_AGENTS_DIR": root / ".github" / "agents",
-        "GITHUB_INSTRUCTIONS_DIR": root / ".github" / "instructions",
-        "GITHUB_SKILLS_DIR": root / ".github" / "skills",
-        "GITHUB_LEARNINGS_DIR": root / ".github" / "learnings",
-        "CLAUDE_AGENTS_DIR": root / "claude" / "agents",
-        "CLAUDE_COMMANDS_DIR": root / "claude" / "commands",
-        "CLAUDE_SKILLS_DIR": root / "claude" / "skills",
-        "CLAUDE_LEARNINGS_DIR": root / "claude" / "learnings",
-        "OPENCODE_AGENTS_DIR": root / "opencode" / "agents",
-        "OPENCODE_SKILLS_DIR": root / "opencode" / "skills",
-        "CODEX_AGENTS_DIR": root / "codex" / "agents",
-        "CODEX_PROFILES_DIR": root / "codex" / "profiles",
-        "CODEX_SKILLS_DIR": root / "codex" / "skills",
+        "SOT_DIR": sot,
+        "PORTS_DIR": ports,
+        "SOT_AGENTS_DIR": sot / "agents",
+        "SOT_INSTRUCTIONS_DIR": sot / "instructions",
+        "SOT_SKILLS_DIR": sot / "skills",
+        "SOT_LEARNINGS_DIR": sot / "learnings",
+        "SOT_HOOKS_DIR": sot / "hooks",
+        "CLAUDE_AGENTS_DIR": ports / "claude" / "agents",
+        "CLAUDE_COMMANDS_DIR": ports / "claude" / "commands",
+        "CLAUDE_SKILLS_DIR": ports / "claude" / "skills",
+        "CLAUDE_LEARNINGS_DIR": ports / "claude" / "learnings",
+        "OPENCODE_AGENTS_DIR": ports / "opencode" / "agents",
+        "OPENCODE_SKILLS_DIR": ports / "opencode" / "skills",
+        "CODEX_AGENTS_DIR": ports / "codex" / "agents",
+        "CODEX_PROFILES_DIR": ports / "codex" / "profiles",
+        "CODEX_SKILLS_DIR": ports / "codex" / "skills",
+        "CURSOR_COMMANDS_DIR": ports / "cursor" / "commands",
+        "CURSOR_RULES_DIR": ports / "cursor" / "rules",
+        "GITHUB_PORT_DIR": ports / "github",
+        "DOT_GITHUB_DIR": root / ".github",
     }
 
 

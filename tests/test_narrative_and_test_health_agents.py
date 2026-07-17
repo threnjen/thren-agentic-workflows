@@ -33,18 +33,18 @@ import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-AGENTS_DIR = REPO_ROOT / ".github" / "agents"
+AGENTS_DIR = REPO_ROOT / "source_of_truth" / "agents"
 
 NARRATOR = AGENTS_DIR / "05b-change-narrator.agent.md"
 TEST_HEALTH = AGENTS_DIR / "05f-test-health.agent.md"
 RETIRED_TEST_HEALTH = AGENTS_DIR / "05h-test-health.agent.md"
 
-OPENCODE_AGENTS_DIR = REPO_ROOT / "opencode" / "agents"
+OPENCODE_AGENTS_DIR = REPO_ROOT / "ports" / "opencode" / "agents"
 
 # Feature 03's canonical report contract. Read, never restated -- the same
 # discipline `tests/test_pr_review_orchestrator.py` applies to the orchestrator.
 CONVENTIONS_SKILL = (
-    REPO_ROOT / ".github" / "skills" / "pr-review-conventions" / "SKILL.md"
+    REPO_ROOT / "source_of_truth" / "skills" / "pr-review-conventions" / "SKILL.md"
 )
 
 

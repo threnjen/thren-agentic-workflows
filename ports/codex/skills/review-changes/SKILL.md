@@ -2,7 +2,7 @@
 name: Review Changes
 description: "Perform a structured code review using change detection and impact"
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 ## Review Changes
 
 Perform a thorough, risk-aware code review using the knowledge graph.

@@ -1,6 +1,6 @@
 ---
 description: "Bootstraps agent context by reading docs/CODEBASE_CONTEXT.md before discovery. Reduces redundant codebase scanning for all agents."
-applyTo: ".github/agents/**"
+applyTo: "source_of_truth/agents/**"
 ---
 
 # Codebase Context Bootstrap

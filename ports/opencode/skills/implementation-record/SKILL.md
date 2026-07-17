@@ -2,7 +2,7 @@
 name: implementation-record
 description: "Template for the implementation record artifact produced by the 04b-feature-implementer. Load when writing [0N-task-name]-implementation.md."
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 
 # Implementation Record Template
 

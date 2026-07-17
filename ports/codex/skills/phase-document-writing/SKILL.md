@@ -2,7 +2,7 @@
 name: phase-document-writing
 description: "Write or update Phase documents and Phases Overview files. Use when: creating phase summaries, writing project roadmaps, drafting PHASE_0N_SUMMARY.md files, producing PROJECT_ROADMAP.md, or any task that outputs planning documents in the docs/phases/ directory."
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Phase Document Writing
 
 Templates and quality standards for the two document types produced by the project planning pipeline: individual Phase summaries and the Phases Overview roadmap.

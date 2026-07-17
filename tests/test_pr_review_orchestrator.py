@@ -24,9 +24,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
-ORCHESTRATOR = REPO_ROOT / ".github" / "agents" / "05-pr-review.agent.md"
+ORCHESTRATOR = REPO_ROOT / "source_of_truth" / "agents" / "05-pr-review.agent.md"
 RETIRED_ORCHESTRATOR = (
-    REPO_ROOT / ".github" / "agents" / "05-phase-final-review.agent.md"
+    REPO_ROOT / "source_of_truth" / "agents" / "05-phase-final-review.agent.md"
 )
 
 FIXTURE = REPO_ROOT / "dev" / "pr-review" / "fixtures" / "pinned-diff-range.md"
@@ -34,7 +34,7 @@ FIXTURE = REPO_ROOT / "dev" / "pr-review" / "fixtures" / "pinned-diff-range.md"
 # Feature 03's canonical report contract. The report root is declared there;
 # this module reads it rather than restating it.
 CONVENTIONS_SKILL = (
-    REPO_ROOT / ".github" / "skills" / "pr-review-conventions" / "SKILL.md"
+    REPO_ROOT / "source_of_truth" / "skills" / "pr-review-conventions" / "SKILL.md"
 )
 
 # The surviving evaluators that still declare the retired `dev/phase-final-review/`
@@ -247,10 +247,10 @@ def test_agent_name_does_not_collide_with_prose_in_any_source_asset() -> None:
 
 def test_renamed_orchestrator_reaches_all_three_generated_roots() -> None:
     expected_markers = {
-        "claude/commands/pr-review.md": "PR Review Orchestrator",
-        "opencode/agents/05-pr-review.md": "PR Review Orchestrator",
-        "codex/agents/05-pr-review.toml": 'name = "pr-review"',
-        "codex/profiles/pr-review.config.toml": "PR Review Orchestrator",
+        "ports/claude/commands/pr-review.md": "PR Review Orchestrator",
+        "ports/opencode/agents/05-pr-review.md": "PR Review Orchestrator",
+        "ports/codex/agents/05-pr-review.toml": 'name = "pr-review"',
+        "ports/codex/profiles/pr-review.config.toml": "PR Review Orchestrator",
     }
 
     for relative_path, marker in expected_markers.items():
@@ -575,7 +575,7 @@ def test_report_root_migration_cannot_split_silently() -> None:
     and skills are separately asserted to be on the new root, so this cannot be
     satisfied by regressing them.
     """
-    agents_dir = REPO_ROOT / ".github" / "agents"
+    agents_dir = REPO_ROOT / "source_of_truth" / "agents"
     still_retired = {
         path.name
         for path in sorted(agents_dir.glob("05*.agent.md"))

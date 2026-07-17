@@ -28,7 +28,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-AGENTS_DIR = REPO_ROOT / ".github" / "agents"
+AGENTS_DIR = REPO_ROOT / "source_of_truth" / "agents"
 READINESS_AGENT = AGENTS_DIR / "05g-readiness-synthesizer.agent.md"
 RETIRED_READINESS_AGENT = AGENTS_DIR / "05l-readiness-synthesizer.agent.md"
 ORCHESTRATOR = AGENTS_DIR / "05-pr-review.agent.md"
@@ -597,14 +597,14 @@ def test_readiness_synthesizer_propagates_to_all_three_roots() -> None:
     `05l-*` orphan there and only there; Claude and Codex key on the stem
     (`z-readiness-synthesizer`) and survive the renumber with the filename intact.
     """
-    opencode = REPO_ROOT / "opencode" / "agents" / "05g-readiness-synthesizer.md"
-    claude = REPO_ROOT / "claude" / "agents" / "z-readiness-synthesizer.md"
-    codex = REPO_ROOT / "codex" / "agents" / "z-readiness-synthesizer.toml"
+    opencode = REPO_ROOT / "ports" / "opencode" / "agents" / "05g-readiness-synthesizer.md"
+    claude = REPO_ROOT / "ports" / "claude" / "agents" / "z-readiness-synthesizer.md"
+    codex = REPO_ROOT / "ports" / "codex" / "agents" / "z-readiness-synthesizer.toml"
 
     for generated in (opencode, claude, codex):
         assert generated.is_file(), f"05g did not propagate to {generated}"
 
-    assert not (REPO_ROOT / "opencode" / "agents" / "05l-readiness-synthesizer.md").exists(), (
+    assert not (REPO_ROOT / "ports" / "opencode" / "agents" / "05l-readiness-synthesizer.md").exists(), (
         "the slug-keyed OpenCode orphan survived the rename"
     )
 

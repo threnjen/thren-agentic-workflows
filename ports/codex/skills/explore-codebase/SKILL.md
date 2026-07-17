@@ -2,7 +2,7 @@
 name: Explore Codebase
 description: "Navigate and understand codebase structure using the knowledge graph"
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 ## Explore Codebase
 
 Use the code-review-graph MCP tools to explore and understand the codebase.

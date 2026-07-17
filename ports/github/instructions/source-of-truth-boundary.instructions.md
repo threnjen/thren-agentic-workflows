@@ -1,6 +1,6 @@
 ---
 description: "Constrains agent/instruction/skill work in this repo to the .github source-of-truth surfaces and treats claude/opencode/codex outputs as downstream unless Evangelize is doing intentional porting."
-applyTo: ".github/agents/**"
+applyTo: "source_of_truth/agents/**"
 ---
 
 # Source-of-Truth Boundary

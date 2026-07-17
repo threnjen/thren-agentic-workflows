@@ -2,7 +2,7 @@
 name: auditor-conventions
 description: "Shared conventions for all auditor subagents (Code, Infra, Refactor). Defines standard constraints, deliverables, scope determination, file-type taxonomy, common exclusions, process flow, report structure, severity levels, and output format. Each auditor extends this with domain-specific content. Use when: performing any type of audit."
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 
 # Auditor Conventions
 

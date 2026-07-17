@@ -30,7 +30,7 @@ RETIRED_SLUGS = tuple(slug for slug, _ in RETIRED_AGENTS)
 RETIRED_DISPLAY_NAMES = tuple(name for _, name in RETIRED_AGENTS)
 
 
-GITHUB_AGENTS_DIR = REPO_ROOT / ".github" / "agents"
+GITHUB_AGENTS_DIR = REPO_ROOT / "source_of_truth" / "agents"
 
 # Paths allowed to keep retired names. Directory-scoped, and the single source of
 # truth for the sweep -- an exception list that drifts from the thing it excepts
@@ -39,8 +39,11 @@ EXEMPT_PREFIXES = (
     # Historical phase records. They describe what was built and must retain it.
     "docs/phases/",
     # Decision history, and its propagated copy -- generated, not authored.
+    "source_of_truth/learnings/",
     ".github/learnings/",
-    "claude/learnings/",
+    "ports/claude/learnings/",
+    "ports/github/learnings/",
+    "ports/cursor/rules/",
     # Feature planning documents. They name the retired agents in order to
     # describe retiring them; same category as docs/phases/ -- a record of the
     # work, not live harness wiring.
@@ -94,9 +97,9 @@ def test_retired_agents_are_absent_from_every_generated_root() -> None:
     `git rm` the output, which would mask the defect until the next rename.
     """
     generated = {
-        REPO_ROOT / "claude" / "agents": "z-{stem}.md",
-        REPO_ROOT / "opencode" / "agents": "{slug}.md",
-        REPO_ROOT / "codex" / "agents": "z-{stem}.toml",
+        REPO_ROOT / "ports" / "claude" / "agents": "z-{stem}.md",
+        REPO_ROOT / "ports" / "opencode" / "agents": "{slug}.md",
+        REPO_ROOT / "ports" / "codex" / "agents": "z-{stem}.toml",
     }
 
     for root, template in generated.items():
@@ -119,17 +122,17 @@ def test_security_scan_survives_and_still_propagates() -> None:
     loses its Claude *spawnable subagent* file (`claude/agents/z-security-scan.md`),
     because after `05d` no agent declares it as a child.
     """
-    assert (REPO_ROOT / ".github" / "agents" / "security-scan.agent.md").exists()
+    assert (REPO_ROOT / "source_of_truth" / "agents" / "security-scan.agent.md").exists()
 
     for output in (
-        REPO_ROOT / "claude" / "commands" / "security-scan.md",
-        REPO_ROOT / "opencode" / "agents" / "security-scan.md",
-        REPO_ROOT / "codex" / "agents" / "security-scan.toml",
-        REPO_ROOT / "codex" / "profiles" / "security-scan.config.toml",
+        REPO_ROOT / "ports" / "claude" / "commands" / "security-scan.md",
+        REPO_ROOT / "ports" / "opencode" / "agents" / "security-scan.md",
+        REPO_ROOT / "ports" / "codex" / "agents" / "security-scan.toml",
+        REPO_ROOT / "ports" / "codex" / "profiles" / "security-scan.config.toml",
     ):
         assert output.exists(), f"Security Scan stopped propagating to {output}"
 
-    assert not (REPO_ROOT / "claude" / "agents" / "z-security-scan.md").exists(), (
+    assert not (REPO_ROOT / "ports" / "claude" / "agents" / "z-security-scan.md").exists(), (
         "no agent declares Security Scan as a child, so it must not keep a "
         "spawnable subagent file"
     )

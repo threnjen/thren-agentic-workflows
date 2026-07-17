@@ -2,7 +2,7 @@
 name: feature-plan-set
 description: "Write feature plan documents for implementation. Use when: decomposing phases into features, creating plan/context/tasks files, writing acceptance criteria, producing traceability matrices, defining test plans for features, or any task that outputs planning documents to dev/feature/[0N-task-name]/."
 ---
-<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Feature Plan Set
 
 The three-file plan convention: `-plan.md` is produced by the Feature - Decomposer; `-context.md` and `-tasks.md` are produced by the 04a-feature-plan-expander. All three files are consumed by 04b-feature-implementer, 04c-feature-reviewer, 04d-feature-qa-writer, and orchestrators.
