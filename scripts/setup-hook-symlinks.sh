@@ -1,63 +1,58 @@
 #!/usr/bin/env bash
-# setup-hook-symlinks.sh
-# Wire .claude/settings.json, .codex/hooks.json, and .opencode/plugins/*.js
-# from this repo into their user-scoped runtime locations.
-# Idempotent — safe to rerun.
+# Generate user-scoped hook wiring with absolute source paths.
+# The historical filename is retained for compatibility with existing setup docs.
 
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUTPUT="${HOOK_GLOBAL_OUTPUT_DIR:-$REPO/.generated-global-hooks}"
 
-echo "==> Repo root: $REPO"
-
-# ---------------------------------------------------------------------------
-# 1. Claude: ~/.claude/settings.json -> <repo>/.claude/settings.json
-# ---------------------------------------------------------------------------
-echo ""
-echo "--- Claude settings.json ---"
-mkdir -p "$HOME/.claude"
-target="$HOME/.claude/settings.json"
-if [ -e "$target" ] && ! [ -L "$target" ]; then
-  echo "  Backing up real file: $target.backup"
-  mv "$target" "$target.backup"
-fi
-ln -sfn "$REPO/.claude/settings.json" "$target"
-echo "  Linked: $target -> $(readlink "$target")"
-
-# ---------------------------------------------------------------------------
-# 2. Codex: ~/.codex/hooks.json -> <repo>/.codex/hooks.json
-# ---------------------------------------------------------------------------
-echo ""
-echo "--- Codex hooks.json ---"
-mkdir -p "$HOME/.codex"
-target="$HOME/.codex/hooks.json"
-if [ -e "$target" ] && ! [ -L "$target" ]; then
-  echo "  Backing up real file: $target.backup"
-  mv "$target" "$target.backup"
-fi
-ln -sfn "$REPO/.codex/hooks.json" "$target"
-echo "  Linked: $target -> $(readlink "$target")"
-
-# ---------------------------------------------------------------------------
-# 3. OpenCode: ~/.config/opencode/plugins/<name>.js -> <repo>/.opencode/plugins/<name>.js
-# ---------------------------------------------------------------------------
-echo ""
-echo "--- OpenCode plugins ---"
-mkdir -p "$HOME/.config/opencode/plugins"
-for js in "$REPO/.opencode/plugins/"*.js; do
-  [ -f "$js" ] || continue
-  name="$(basename "$js")"
-  target="$HOME/.config/opencode/plugins/$name"
-  if [ -e "$target" ] && ! [ -L "$target" ]; then
-    echo "  Backing up real file: $target.backup"
-    mv "$target" "$target.backup"
+backup_once() {
+  local target="$1"
+  if [ -L "$target" ]; then
+    rm "$target"
+  elif [ -e "$target" ] && [ ! -e "$target.backup" ]; then
+    cp -p "$target" "$target.backup"
+    echo "  Backed up: $target.backup"
   fi
-  ln -sfn "$js" "$target"
-  echo "  Linked: $target -> $(readlink "$target")"
+}
+
+install_generated_file() {
+  local source="$1"
+  local target="$2"
+  if [ ! -f "$source" ]; then
+    echo "ERROR: generated hook output is missing: $source" >&2
+    return 1
+  fi
+  mkdir -p "$(dirname "$target")"
+  backup_once "$target"
+  cp "$source" "$target"
+  echo "  Installed: $target"
+}
+
+echo "==> Generating absolute hook wiring from: $REPO"
+python3 "$REPO/scripts/propagate_master_assets.py" --global-output "$OUTPUT"
+
+echo "==> Installing Claude Code and Codex settings"
+install_generated_file "$OUTPUT/.claude/settings.json" "$HOME/.claude/settings.json"
+install_generated_file "$OUTPUT/.codex/hooks.json" "$HOME/.codex/hooks.json"
+
+echo "==> Installing OpenCode plugins"
+mkdir -p "$HOME/.config/opencode/plugins"
+for target in "$HOME/.config/opencode/plugins/"*.js; do
+  [ -f "$target" ] || continue
+  name="$(basename "$target")"
+  if [ ! -f "$OUTPUT/.opencode/plugins/$name" ] \
+    && head -n 1 "$target" | grep -q '^// Generated from .github/hooks source-of-truth'; then
+    rm "$target"
+    echo "  Removed stale generated plugin: $target"
+  fi
+done
+for source in "$OUTPUT/.opencode/plugins/"*.js; do
+  [ -f "$source" ] || continue
+  install_generated_file "$source" "$HOME/.config/opencode/plugins/$(basename "$source")"
 done
 
-echo ""
-echo "==> Done. Verify with:"
-echo "    readlink ~/.claude/settings.json"
-echo "    readlink ~/.codex/hooks.json"
-echo "    ls -la ~/.config/opencode/plugins/"
+echo "==> Hook setup complete"
+echo "    Local generated output: $OUTPUT"
+echo "    Commands in installed wiring use absolute paths; no user files are symlinks."

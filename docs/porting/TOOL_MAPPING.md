@@ -41,6 +41,6 @@ This document defines how tools are represented across GitHub Copilot source man
 
 ## Reference Guides
 
-- `claude/CLAUDE_PORTING_GUIDE.md`
-- `opencode/OPENCODE_PORTING_GUIDE.md`
-- `codex/CODEX_PORTING_GUIDE.md`
+- `CLAUDE_PORTING_GUIDE.md`
+- `OPENCODE_PORTING_GUIDE.md`
+- `CODEX_PORTING_GUIDE.md`

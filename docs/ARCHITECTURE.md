@@ -2,124 +2,161 @@
 
 ## Overview
 
-This repository is organized around one authoring surface and several downstream consumers:
+This repository is organized around one authoring surface and a two-stage pipeline:
 
-- `.github/` is the master source-of-truth for agent definitions, reusable skills, and shared instructions.
-- `claude/`, `opencode/`, and `codex/agents/` are generated or derived outputs.
-- `nodejs/` and `python/` provide copyable project templates.
-- `docs/`, `eval/`, and harness setup references explain how to use and maintain the system.
+- `source_of_truth/` is the master source for agent definitions, skills, instructions,
+  learnings, and hooks.
+- `ports/{claude,codex,opencode,cursor,github}` are generated outputs.
+- `.github/` at the repo root is a real, deployed mirror of `ports/github`.
+- `docs/`, `eval/`, `benchmarks/`, and `packages/` are supporting material.
 
-The only code in the repo is maintenance tooling, primarily `scripts/propagate_master_assets.py`, which rewrites the generated platform variants after changes in `.github/`.
+The repository code is transform-and-deploy tooling. `scripts/propagate_master_assets.py`
+rewrites the generated `ports/` variants (and the `.github/` mirror) after changes in
+`source_of_truth/`. `deploy_agents.py` copies the converged `ports/` outputs out to the
+real user-level directories each harness reads. Both scripts share
+`scripts/asset_paths.py`, which owns the generated-output markers, the marker-ownership
+check, and the poll-based watch loop.
 
 ## Top-Level Component Map
 
-%% Shows the repository's authoring surfaces, generated outputs, and supporting docs.
+%% Shows the authoring surface, the two-stage pipeline, generated outputs, and supporting material.
 ```mermaid
 flowchart TD
     Root[github-agents-source-of-truth]
 
-    Root --> GH[.github source of truth]
-    Root --> Claude[claude generated agents]
-    Root --> OpenCode[opencode generated agents]
-    Root --> Codex[codex docs and generated TOML agents]
-    Root --> Runtime[.codex runtime config]
-    Root --> Templates[language templates]
-    Root --> Docs[docs and setup guides]
-    Root --> Eval[eval artifacts and runbooks]
-    Root --> Scripts[scripts]
+    Root --> SOT[source_of_truth authoring surface]
+    Root --> Ports[ports generated outputs]
+    Root --> DotGithub[.github deployed mirror]
+    Root --> Docs[docs and porting guides]
+    Root --> Eval[eval grader system]
+    Root --> Bench[benchmarks model data]
+    Root --> Pkg[packages visual-verification UPM]
+    Root --> Scripts[scripts and deploy_agents.py]
 
-    GH --> GHAgents[32 source agent definitions]
-    GH --> GHSkills[16 skill directories]
-    GH --> GHInstructions[15 instruction files]
-
-    Templates --> Node[nodejs AGENTS plus STYLE_GUIDE]
-    Templates --> Python[python AGENTS plus STYLE_GUIDE]
+    SOT --> Agents[41 agent definitions]
+    SOT --> Skills[24 skill directories]
+    SOT --> Instructions[15 instruction files]
+    SOT --> Learnings[4 learnings files]
+    SOT --> Hooks[defunct injection scanner]
 
     Scripts --> Propagate[propagate_master_assets.py]
-    Propagate --> Claude
-    Propagate --> OpenCode
-    Propagate --> Codex
-
-    Docs --> ArchitectureDoc[ARCHITECTURE.md]
-    Docs --> ContextDoc[CODEBASE_CONTEXT.md]
-    Docs --> LocalDevDoc[LOCAL_DEVELOPMENT.md]
-    Docs --> TroubleshootingDoc[TROUBLESHOOTING.md]
+    Scripts --> Shared[asset_paths.py]
+    Propagate --> Ports
+    Propagate --> DotGithub
+    Deploy[deploy_agents.py] --> RealDirs[real harness config dirs]
+    Ports --> Deploy
 ```
 
-## Propagation Flow
+## The Two-Stage Pipeline
 
-%% Shows how edits in the master source are transformed into platform-specific outputs.
+### Stage 1 — Transform (propagate_master_assets.py)
+
+%% Shows how edits under source_of_truth are transformed into per-harness ports/ outputs and the .github mirror.
 ```mermaid
 flowchart LR
-    Author[Edit .github source files] --> Watcher[VS Code task or manual script run]
-    Watcher --> Script[scripts/propagate_master_assets.py]
-    Script --> ClaudeOut[claude/agents/*.md]
-    Script --> OpenCodeOut[opencode/agents/*.md]
-    Script --> CodexOut[codex/agents/*.toml]
-
-    GHAgents[.github/agents] --> Script
-    GHSkills[.github/skills] --> Script
-    GHInstructions[.github/instructions] --> Script
+    Author[Edit source_of_truth files] --> Watcher[VS Code watch task or --once]
+    Watcher --> Script[propagate_master_assets.py]
+    Script --> ClaudeOut[ports/claude agents commands skills learnings]
+    Script --> CodexOut[ports/codex agents profiles skills TOML]
+    Script --> OpenCodeOut[ports/opencode agents skills]
+    Script --> CursorOut[ports/cursor commands rules]
+    Script --> GithubPort[ports/github verbatim mirror]
+    GithubPort --> DotGithub[.github mirror at repo root]
 ```
 
-The watcher task in `.vscode/tasks.json` starts automatically on folder open and monitors `.github/agents/`, `.github/skills/`, and `.github/instructions/`. The one-shot task and `--once` CLI path use the same transformation logic.
+The transform runs to a fixed point: `propagate_until_converged` repeats a single pass
+until a pass makes zero changes (max 25 passes). Each pass rewrites agents per platform,
+regenerates skills and learnings, emits Cursor commands and rules, and mirrors the five
+source subdirs to `ports/github` and `.github/`.
+
+The watcher in `.vscode/tasks.json` starts on folder open and monitors the five source
+directories (`agents`, `skills`, `instructions`, `learnings`, `hooks`). `--once` (the
+default when no flag is passed) and `--watch` use the same transformation logic.
+
+### Stage 2 — Deploy (deploy_agents.py)
+
+%% Shows how converged ports/ outputs are deployed to real harness config directories.
+```mermaid
+flowchart LR
+    Ports[ports/<harness>] --> Deploy[deploy_agents.py]
+    Config[.deploy-config.json selection] --> Deploy
+    Deploy --> Claude[~/.claude]
+    Deploy --> Codex[~/.codex + ~/.agents/skills]
+    Deploy --> OpenCode[~/.config/opencode]
+    Deploy --> Cursor[~/.cursor]
+    Deploy --> Github[.github in this repo]
+```
+
+Deploy is a simple direct copy with generated-marker ownership. A destination file is
+copied only when its bytes differ, and overwritten or pruned only when it carries a
+generated marker (or lives inside a marked skill directory). Files without a marker are
+foreign and never touched — they are surfaced under `skipped_paths` in the run output so
+a fail-closed skip is visible, not silent. The `github` harness is the one exception:
+its mirrored tree is copied verbatim (no per-file marker), so it is treated as
+unconditionally managed within the five mirrored subdirs.
 
 ## Major Components
 
-### `.github/`
+### `source_of_truth/`
 
-This is the primary authoring surface.
+The only authoring surface.
 
-- `.github/agents/` contains 32 source agent definitions.
-- Most source agents use the `.agent.md` suffix.
-- `prod-code-review.md` is an intentional plain `.md` exception that is still loaded as an agent because the propagation script keys off frontmatter, not only filename suffixes.
-- `.github/skills/` contains 16 directory-based skills, each rooted at `SKILL.md`.
-- `.github/instructions/` contains 15 reusable instruction files matched by `applyTo` globs.
+- `agents/` — 41 agent definitions. Most use the `.agent.md` suffix; `docs-writer.md`
+  and `prod-code-review.md` are intentional plain-`.md` exceptions still loaded as
+  agents because loading keys off `name`/`description` frontmatter, not the suffix.
+- `skills/` — 24 directory-based skills, each rooted at `SKILL.md`.
+- `instructions/` — 15 instruction files matched by `applyTo` globs.
+- `learnings/` — 4 cross-cutting learnings files.
+- `hooks/` — a defunct prompt-injection scanner, retained but wired nowhere. See
+  `source_of_truth/hooks/DEFUNCT.md`.
 
-### Generated platform outputs
+### Generated outputs (`ports/`)
 
-`claude/agents/`, `opencode/agents/`, and `codex/agents/` are not edited manually in the normal workflow. They are regenerated from `.github/` with platform-specific transformations:
+Not edited by hand in the normal workflow. Regenerated from `source_of_truth/` with
+platform-specific transformations:
 
 - tool declarations are remapped per platform
 - agent references are rewritten to the correct generated identifiers
-- hidden subagents gain platform-specific naming or flags
-- applicable instruction content is appended or inlined when the destination platform does not support `.github/instructions/` directly
+- hidden subagents gain `z-` naming for Claude and Codex outputs
+- applicable instruction content is inlined when the destination platform does not
+  support `instructions/` directly
+- Cursor: user-invocable agents become `commands/*.md`; instructions and learnings
+  become `rules/*.mdc` (agent-targeted instructions are excluded, since their content
+  ships inside the rendered agents)
 
-For normal agent, instruction, and skill work in this repo, discovery and edits should stay inside `.github/`. The downstream platform directories are for generated output verification or intentional porting only.
+Known filename aliases preserved during propagation: `docs-writer` → `docs-writer`,
+`web-research-specialist` → `web-researcher`, `audit-code-or-infra` →
+`audit-code-infra-refactor`.
 
-The propagation script also preserves several filename aliases, including `docs-writer` to `docs-writer` and `web-research-specialist` to `web-researcher`.
+### The `.github/` mirror
 
-### `codex/` versus `.codex/`
+`ports/github` is a verbatim copy of the five mirrored source subdirs, and `.github/`
+at the repo root is a real deployed copy of it. Only the five mirrored subdirs
+(`agents`, `hooks`, `instructions`, `learnings`, `skills`) are touched — anything else
+in `.github/` (for example a future `workflows/`) is left alone.
 
-These directories serve different purposes.
+### Shared module (`scripts/asset_paths.py`)
 
-- `codex/` is repository-owned source material and generated TOML output for Codex work.
-- `.codex/` is repo-scoped runtime configuration used by Codex itself.
+Owns the generated-marker constants (current `source_of_truth` markers plus legacy
+`.github` markers that are still honored so the marker-text change did not orphan old
+files), the positional marker-ownership check (`file_has_generated_marker` — a file
+that merely quotes a marker in prose stays inert), and the debounced `poll_watch` loop
+used by both scripts' watch modes.
 
-The separation is deliberate so the repository can document Codex authoring without treating runtime configuration as source-of-truth content.
+### Supporting material
 
-### Language template sets
-
-`nodejs/` and `python/` are copyable starter packages for target repositories.
-
-Each language folder contains:
-
-- `AGENTS.md` for high-signal workflow and coding guidance
-- `docs/STYLE_GUIDE.md` for detailed conventions loaded on demand
-
-The two variants intentionally share structure while diverging on ecosystem-specific tooling and style expectations.
-
-### Supporting docs and evaluation assets
-
-- `docs/` holds contributor-facing architecture, setup, and troubleshooting material.
-- `eval/` holds grader usage docs, example config, rubrics, hook templates, and historical score output.
-- `HARNESS_SETUP.md` documents how to expose these agents and skills to different harnesses.
+- `docs/` — architecture, setup, troubleshooting, porting guides, and inspiration write-ups.
+- `eval/` — the agent evaluation grader system, rubrics, hook templates, and run artifacts.
+- `benchmarks/` — model cost/performance benchmark data and charts.
+- `packages/com.threnjen.visual-verification/` — a Unity UPM package for deterministic
+  screenshot capture, paired with the Visual Verifier agent.
 
 ## Agent System Shape
 
-The source agent system uses an orchestrator-plus-subagent pattern, with integrated evaluation and quality assurance stages.
+The source agent system uses an orchestrator + subagent pattern with integrated
+evaluation and QA stages.
 
-%% Shows the high-level source agent relationships, including planning, execution, eval, and support agents.
+%% Shows high-level source agent relationships: planning, execution, eval, and support.
 ```mermaid
 flowchart TD
     Planner[01 Project - Planner]
@@ -135,70 +172,48 @@ flowchart TD
     Implementer[04b Feature - Implementer]
     Reviewer[04c Feature - Reviewer]
     QA[04d Feature - QA Writer]
-    Security[Security Scan]
-    
-    AuditorCode[Auditor - Code]
-    AuditorInfra[Auditor - Infra]
-    AuditorRefactor[Auditor - Refactor]
-    
-    TestAnalyst[Test - Analyst]
-    TestWriter[Test - Writer]
-    TestFixer[Test - Fixer]
-    
-    EvalDecomp[Eval - Feature Decomposition]
-    EvalMetric[Eval - Metric Grader]
-    EvalScore[Eval - Score Recorder]
-    
-    Support[Support Agents]
-    DocsWriter[Documentation Architect]
-    Debugger[Debugger]
-    Evangelize[Evangelize]
-    Single[Single Feature - Agent]
-    Unity[Unity Reviewer]
-    Web[Web Researcher]
+    Security[Diff Security Scan]
 
     Planner --> Refiner
     Refiner --> Decomposer
     Decomposer --> PhaseExecute
-    
+
     PhaseExecute --> PlanExpander
     PhaseExecute --> Implementer
     PhaseExecute --> Reviewer
     PhaseExecute --> QA
     PhaseExecute --> Security
-    PhaseExecute --> DocsWriter
-    
-    Audit --> AuditorCode
-    Audit --> AuditorInfra
-    Audit --> AuditorRefactor
-    
-    Test --> TestAnalyst
-    Test --> TestWriter
-    Test --> TestFixer
-    
-    EvalGrader --> EvalDecomp
-    EvalGrader --> EvalMetric
-    EvalGrader --> EvalScore
-    
-    Support --> Unity
-    Support --> Web
-    Support --> Debugger
-    Support --> Evangelize
-    Support --> Single
-    Support --> ProdReview
+    PhaseExecute --> ProdReview
+
+    Audit --> AuditorCode[Auditor - Code]
+    Audit --> AuditorInfra[Auditor - Infra]
+    Audit --> AuditorRefactor[Auditor - Refactor]
+
+    Test --> TestAnalyst[Test - Analyst]
+    Test --> TestWriter[Test - Writer]
+    Test --> TestFixer[Test - Fixer]
+
+    EvalGrader --> EvalDecomp[Eval - Decomposition]
+    EvalGrader --> EvalMetric[Eval - Metric Grader]
+    EvalGrader --> EvalScore[Eval - Score Recorder]
 ```
 
 ## External Dependencies And Integrations
 
-- Python standard library only for `scripts/propagate_master_assets.py`; no project package manifest is required.
-- VS Code task integration via `.vscode/tasks.json` for one-shot and watch propagation.
-- Code-review-graph MCP registration via `.mcp.json` and `.codex/config.toml` using `uvx code-review-graph serve`.
-- GitHub Copilot, Claude Code, OpenCode, and Codex as the target harnesses described by the repo.
+- Python standard library only for both scripts; no project package manifest is required.
+- VS Code task integration via `.vscode/tasks.json` for propagate (once/watch) and deploy (watch).
+- Code-review-graph MCP as a review/exploration aid (see `AGENTS.md`).
+- Claude Code, Codex, OpenCode, Cursor, and GitHub Copilot as the deployment targets.
 
 ## Design Decisions
 
-- Keep `.github/` as the only authoritative source for shared agent behavior.
+- Keep `source_of_truth/` as the only authoritative source for shared agent behavior.
+- Split the pipeline into a transform stage (safe to auto-run on save) and a deploy
+  stage (explicit, selection-driven), so regeneration never mutates real config dirs.
+- Deploy with generated-marker ownership: only ever overwrite/prune files this system
+  wrote; surface fail-closed skips instead of guessing.
 - Regenerate platform variants instead of hand-maintaining parallel agent files.
-- Separate `codex/` authoring content from `.codex/` runtime configuration.
-- Keep template language packs self-contained so users can copy one folder into another repo without inheritance machinery.
-- Use directory-based skills and instruction files so shared guidance can be reused instead of duplicated across agent bodies.
+- Mirror the source verbatim to `ports/github` and `.github/` so Copilot reads the
+  same content without transformation.
+- Use directory-based skills and instruction files so shared guidance is reused, not
+  duplicated across agent bodies.

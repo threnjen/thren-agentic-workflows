@@ -2,7 +2,7 @@
 
 **Purpose:** This document explains a few common agentic AI concepts in plain language, then goes a level deeper for people who want to understand how these systems are put together.
 
-The goal is to make it easier to explain why the same prompt can behave differently in ChatGPT, GitHub Copilot, Claude Code, or another AI product — even when the underlying model is similar or identical.
+The goal is to make it easier to explain why the same prompt can behave differently in Codex, GitHub Copilot, Claude Code, or another AI product — even when the underlying model is similar or identical.
 
 ---
 
@@ -13,7 +13,7 @@ When people say "I'm using AI to help me code" or "I asked the AI to write this,
 | Layer | What it is | Examples |
 |---|---|---|
 | **Model** | The AI brain doing the reasoning | GPT-4o, Claude Sonnet, Gemini |
-| **Harness / Orchestrator** | The product wrapping the model | GitHub Copilot, Claude Code, Cursor, ChatGPT |
+| **Harness / Orchestrator** | The product wrapping the model | GitHub Copilot, Claude Code, Codex, Cursor |
 | **Agent** | A specialized role defined inside the harness | Planner Agent, Reviewer Agent, QA Agent |
 | **Context** | Everything the model can "see" right now | Your file, conversation history, instructions |
 
@@ -42,9 +42,9 @@ The harness is the product or tool that wraps around the model. It is responsibl
 - How to handle the model's response
 - Whether to call tools, run code, search files, or loop back with follow-up requests
 
-This is why the same prompt can produce noticeably different results in ChatGPT versus GitHub Copilot versus Claude Code — even if all three are using the same underlying model. The harness shapes how the model behaves.
+This is why the same prompt can produce noticeably different results in Codex versus GitHub Copilot versus Claude Code — even if all three are using the same underlying model. The harness shapes how the model behaves.
 
-**Examples:** GitHub Copilot, Claude Code, Cursor, Windsurf, ChatGPT, Microsoft Copilot
+**Examples:** GitHub Copilot, Claude Code, Cursor, Windsurf, Codex, Microsoft Copilot
 
 **Analogy:** The harness is the vehicle and the driver combined. It decides where to go, what tools to use, and how to get there — the engine just powers it.
 

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Propagate .github master assets to claude, opencode, and codex targets.
+"""Transform source_of_truth/ master assets into per-harness ports/ outputs.
 
-This script treats `.github/agents` as the canonical source for duplicated agent files,
-and regenerates target-platform variants.
+This script treats `source_of_truth/` as the canonical home for agents, skills,
+instructions, and learnings, and regenerates target-platform variants under
+`ports/{claude,codex,opencode,cursor}`. It also mirrors the source verbatim to
+`ports/github` and to a real `.github/` directory at the repository root.
 
-It also watches `.github/agents`, `.github/skills`, and `.github/instructions` so any
-save in those folders immediately triggers a propagation run.
+Run with `--watch` (the maintainer workflow) to re-propagate on every save under
+`source_of_truth/`. Deployment of `ports/` to real harness config directories is
+the separate `deploy_assets.py` script.
 """
 
 from __future__ import annotations
@@ -16,57 +19,62 @@ import json
 import re
 import shutil
 import sys
-import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
+from asset_paths import (
+    GENERATED_AGENT_HEADER,
+    GENERATED_AGENT_MARKDOWN_HEADER,
+    GENERATED_SKILL_HEADER,
+    LEGACY_GENERATED_MARKERS,
+    PORTS_DIR,
+    REPO_ROOT,
+    SOT_DIR,
+    generated_marker_line_index as _generated_marker_line_index,
+    poll_watch,
+)
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-GITHUB_AGENTS_DIR = REPO_ROOT / ".github" / "agents"
-GITHUB_INSTRUCTIONS_DIR = REPO_ROOT / ".github" / "instructions"
+# Source-of-truth roots.
+SOT_AGENTS_DIR = SOT_DIR / "agents"
+SOT_INSTRUCTIONS_DIR = SOT_DIR / "instructions"
+SOT_SKILLS_DIR = SOT_DIR / "skills"
+SOT_LEARNINGS_DIR = SOT_DIR / "learnings"
+SOT_HOOKS_DIR = SOT_DIR / "hooks"
+
+# Generated platform output roots under `ports/`.
+CLAUDE_AGENTS_DIR = PORTS_DIR / "claude" / "agents"
+CLAUDE_COMMANDS_DIR = PORTS_DIR / "claude" / "commands"
+CLAUDE_SKILLS_DIR = PORTS_DIR / "claude" / "skills"
+CLAUDE_LEARNINGS_DIR = PORTS_DIR / "claude" / "learnings"
+OPENCODE_AGENTS_DIR = PORTS_DIR / "opencode" / "agents"
+OPENCODE_SKILLS_DIR = PORTS_DIR / "opencode" / "skills"
+CODEX_AGENTS_DIR = PORTS_DIR / "codex" / "agents"
+CODEX_PROFILES_DIR = PORTS_DIR / "codex" / "profiles"
+CODEX_SKILLS_DIR = PORTS_DIR / "codex" / "skills"
+CURSOR_COMMANDS_DIR = PORTS_DIR / "cursor" / "commands"
+CURSOR_RULES_DIR = PORTS_DIR / "cursor" / "rules"
+GITHUB_PORT_DIR = PORTS_DIR / "github"
+
+# Subdirectories mirrored verbatim to ports/github and .github. Anything else in
+# .github/ (e.g. workflows/) is never touched.
+GITHUB_MIRRORED_SUBDIRS = ("agents", "hooks", "instructions", "learnings", "skills")
+
 WATCH_DIRS = [
-    REPO_ROOT / ".github" / "agents",
-    REPO_ROOT / ".github" / "skills",
-    REPO_ROOT / ".github" / "instructions",
-    REPO_ROOT / ".github" / "hooks",
+    SOT_AGENTS_DIR,
+    SOT_SKILLS_DIR,
+    SOT_INSTRUCTIONS_DIR,
+    SOT_LEARNINGS_DIR,
+    SOT_HOOKS_DIR,
 ]
-
-CLAUDE_AGENTS_DIR = REPO_ROOT / "claude" / "agents"
-CLAUDE_COMMANDS_DIR = REPO_ROOT / "claude" / "commands"
-OPENCODE_AGENTS_DIR = REPO_ROOT / "opencode" / "agents"
-CODEX_AGENTS_DIR = REPO_ROOT / "codex" / "agents"
-CODEX_PROFILES_DIR = REPO_ROOT / "codex" / "profiles"
-GITHUB_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
-CODEX_SKILLS_DIR = REPO_ROOT / "codex" / "skills"
-GITHUB_HOOKS_DIR = REPO_ROOT / ".github" / "hooks"
-CLAUDE_SETTINGS_FILE = REPO_ROOT / ".claude" / "settings.json"
-CODEX_HOOKS_FILE = REPO_ROOT / ".codex" / "hooks.json"
-OPENCODE_PLUGINS_DIR = REPO_ROOT / ".opencode" / "plugins"
-
-
-GENERATED_AGENT_HEADER = "# Generated from .github/agents source-of-truth. Do not edit manually."
-GENERATED_SKILL_HEADER = "<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->\n"
-GENERATED_OPENCODE_PLUGIN_HEADER = "// Generated from .github/hooks source-of-truth. Do not edit manually.\n"
-HOOK_SOURCE_KEY = "$source"
-
-# Default translation from VS Code Copilot hook events → target tool events.
-# Keys are VS Code event names. Values map tool name → list of target event names.
-# Overridden per-file via $meta.<VsCodeEvent>.<tool> in the hook JSON.
-HOOK_EVENT_MAP: Dict[str, Dict[str, List[str]]] = {
-    "Stop":             {"claude": ["Stop", "Notification"], "codex": ["Stop"],          "opencode": ["session.idle"]},
-    "SessionStart":     {"claude": ["SessionStart"],          "codex": ["SessionStart"],  "opencode": ["session.created"]},
-    "PreToolUse":       {"claude": ["PreToolUse"],            "codex": ["PreToolUse"],    "opencode": ["tool.execute.before"]},
-    "PostToolUse":      {"claude": ["PostToolUse"],           "codex": ["PostToolUse"],   "opencode": ["tool.execute.after"]},
-    "UserPromptSubmit": {"claude": ["UserPromptSubmit"],      "codex": ["UserPromptSubmit"], "opencode": []},
-    "SubagentStop":     {"claude": ["SubagentStop"],          "codex": ["SubagentStop"],  "opencode": []},
-    "PreCompact":       {"claude": ["PreCompact"],            "codex": ["PreCompact"],    "opencode": []},
-}
-
 # Agents that should not be propagated to any platform output directory.
 # Add a source slug string here to exclude an agent during propagation.
 # Currently empty — all source agents are propagated.
 PROPAGATION_EXCLUDE: set[str] = set()
+
+INVENTORY_COUNTERS = frozenset({"source_agents"})
+DEFAULT_CONVERGENCE_PASSES = 5
+MAX_CONVERGENCE_PASSES = 25
 
 
 OPENCODE_FILE_ALIASES = {
@@ -100,6 +108,23 @@ class InstructionDoc:
     path: Path
     apply_to_patterns: List[str]
     body: str
+    description: str = ""
+
+
+@dataclass(frozen=True)
+class PropagationConvergenceResult:
+    converged: bool
+    pass_count: int
+    changed_passes: int
+    total_changes: Dict[str, int]
+    final_counters: Dict[str, int]
+
+
+class PropagationConvergenceError(RuntimeError):
+    def __init__(self, category: str, pass_count: int) -> None:
+        self.category = category
+        self.pass_count = pass_count
+        super().__init__(f"{category} after {pass_count} propagation pass(es)")
 
 
 FrontmatterValue = Union[str, List[str]]
@@ -138,6 +163,140 @@ def _write_if_changed(path: Path, content: str) -> bool:
 
     path.write_text(content, encoding="utf-8")
     return True
+
+
+def _with_generated_marker(text: str, marker: str) -> str:
+    """Insert `marker` immediately below the YAML frontmatter block.
+
+    The marker must never sit above the opening `---`: consumers parse that block
+    and would stop seeing it as frontmatter. Text whose frontmatter is unterminated
+    is returned unchanged rather than marked, which leaves it unprunable — an
+    unmarked file is never deleted, so failing closed here is the safe direction.
+    """
+    marker_line = marker.strip("\n")
+    index = _generated_marker_line_index(text)
+    if index < 0:
+        return text
+
+    lines = text.splitlines(keepends=True)
+    if index < len(lines) and lines[index].rstrip("\n") == marker_line:
+        return text
+
+    return "".join(lines[:index]) + marker_line + "\n" + "".join(lines[index:])
+
+
+def _is_generated_output(path: Path, marker: str) -> bool:
+    """Whether `path` carries `marker` at the exact line the emitter writes it to.
+
+    Positional rather than a whole-file search, and deliberately not the original
+    `startswith` prefix check either. Both looser rules are unsafe in opposite
+    directions:
+
+    - `startswith` is what silently disabled the codex/skills prune. Generated
+      Markdown opens with YAML frontmatter, so its marker sits below that block
+      rather than at byte zero; the check matched 0 of 24 files for years while
+      reading as implemented.
+    - A whole-file search would delete any hand-maintained file that merely
+      *quotes* the marker — for example a README documenting the convention, in a
+      fenced code block. `claude/agents/README.md` is exactly such a file, living
+      inside a pruned root, and it is the file AC5 exists to protect.
+
+    Checking the single position the emitter writes to matches every real
+    generated file while making a quoted marker in a file body inert.
+
+    An unreadable file is not a confirmed orphan, so read errors report False.
+    """
+    try:
+        text = _read_text(path)
+    except OSError:
+        return False
+    index = _generated_marker_line_index(text)
+    if index < 0:
+        return False
+    lines = text.splitlines()
+    if index >= len(lines):
+        return False
+    # Files written before the source_of_truth/ restructure carry the old marker
+    # text; they are still generated output and still prunable.
+    return lines[index] == marker.strip("\n") or lines[index] in LEGACY_GENERATED_MARKERS
+
+
+def _prune_orphaned_outputs(
+    directory: Path,
+    pattern: str,
+    expected: set[Path],
+    marker: str,
+) -> int:
+    """Delete generated files under `directory` whose source asset is gone.
+
+    Deletion requires BOTH conditions: absent from `expected` AND positively
+    identified as generated by `marker`. Absence alone is not enough —
+    `claude/agents/README.md` is a real, hand-maintained file inside a generated
+    root, and the marker guard is the only thing that saves it.
+
+    A missing root has nothing to prune and is never created here.
+
+    Containment is checked before anything is enumerated. Guarding only the leaf
+    is not enough: if the generated ROOT is itself a symlink out of the repo, its
+    children are ordinary files that pass every leaf check, and each carrying the
+    marker gets unlinked outside the repository. This is REPO-SEC-06 in deletion
+    form, and unlike a bad write it cannot be undone by re-running propagation.
+    """
+    _validate_output_directory(directory)
+
+    if not directory.is_dir():
+        return 0
+
+    removed = 0
+    for path in sorted(directory.glob(pattern)):
+        if path in expected:
+            continue
+        # A symlink is never something this propagator wrote; unlinking through one
+        # could reach a real file outside the generated root.
+        if path.is_symlink() or not path.is_file():
+            continue
+        if not _is_generated_output(path, marker):
+            continue
+        path.unlink()
+        removed += 1
+    return removed
+
+
+def _prune_orphaned_skill_dirs(
+    skills_dir: Path,
+    expected: set[Path],
+    marker: str,
+) -> int:
+    """Delete generated skill directories under `skills_dir` whose source is gone.
+
+    Same two-condition rule as `_prune_orphaned_outputs`, applied to a directory via
+    its SKILL.md. Skills are removed as a tree because a skill is a directory of
+    assets; this is the one path where recursive removal is in scope.
+
+    Containment is checked before anything is enumerated, for the same reason as
+    `_prune_orphaned_outputs` and with a wider blast radius: the marker guard reads
+    one file (`SKILL.md`) but `shutil.rmtree` removes the whole tree, so every
+    sibling of that marker is deleted without ever being inspected. A symlinked
+    skills root therefore trades one marker for an entire directory outside the
+    repository.
+    """
+    _validate_output_directory(skills_dir)
+
+    if not skills_dir.is_dir():
+        return 0
+
+    removed = 0
+    for dest_dir in sorted(skills_dir.iterdir()):
+        if dest_dir in expected or dest_dir.is_symlink() or not dest_dir.is_dir():
+            continue
+        skill_md = dest_dir / "SKILL.md"
+        if skill_md.is_symlink() or not skill_md.is_file():
+            continue
+        if not _is_generated_output(skill_md, marker):
+            continue
+        shutil.rmtree(dest_dir)
+        removed += 1
+    return removed
 
 
 def _parse_frontmatter(text: str) -> Tuple[Dict[str, FrontmatterValue], str]:
@@ -247,7 +406,7 @@ def _extract_source_slug(path: Path) -> str:
 
 def load_source_agents() -> List[SourceAgent]:
     agents: List[SourceAgent] = []
-    for path in sorted(GITHUB_AGENTS_DIR.glob("*.md")):
+    for path in sorted(SOT_AGENTS_DIR.glob("*.md")):
         text = _read_text(path)
         fm, body = _parse_frontmatter(text)
 
@@ -285,18 +444,20 @@ def load_source_agents() -> List[SourceAgent]:
 
 def load_instruction_docs() -> List[InstructionDoc]:
     docs: List[InstructionDoc] = []
-    for path in sorted(GITHUB_INSTRUCTIONS_DIR.glob("*.instructions.md")):
+    for path in sorted(SOT_INSTRUCTIONS_DIR.glob("*.instructions.md")):
         text = _read_text(path)
         fm, body = _parse_frontmatter(text)
 
-        raw_apply_to = fm.get("applyTo", "")
-        patterns = [p.strip() for p in str(raw_apply_to).split(",") if p.strip()]
+        raw_apply_to = str(fm.get("applyTo", "")).strip().strip('"').strip("'")
+        patterns = [p.strip().strip('"').strip("'") for p in raw_apply_to.split(",")]
+        patterns = [p for p in patterns if p]
 
         docs.append(
             InstructionDoc(
                 path=path,
                 apply_to_patterns=patterns,
                 body=body.strip() + "\n",
+                description=str(fm.get("description", "")).strip().strip('"').strip("'"),
             )
         )
     return docs
@@ -539,7 +700,7 @@ def render_claude_agent(
     if appendix:
         parts.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
 
-    return "\n".join(parts).rstrip() + "\n"
+    return _with_generated_marker("\n".join(parts).rstrip() + "\n", GENERATED_AGENT_MARKDOWN_HEADER)
 
 
 def render_claude_command(
@@ -568,7 +729,7 @@ def render_claude_command(
     if appendix:
         parts.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
 
-    return "\n".join(parts).rstrip() + "\n"
+    return _with_generated_marker("\n".join(parts).rstrip() + "\n", GENERATED_AGENT_MARKDOWN_HEADER)
 
 
 def _referenced_agent_names(agents: List[SourceAgent]) -> set[str]:
@@ -608,7 +769,7 @@ def render_opencode_agent(agent: SourceAgent, docs: List[InstructionDoc], refere
     if appendix:
         lines.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
 
-    return "\n".join(lines).rstrip() + "\n"
+    return _with_generated_marker("\n".join(lines).rstrip() + "\n", GENERATED_AGENT_MARKDOWN_HEADER)
 
 
 def _render_toml_string(value: str) -> List[str]:
@@ -752,203 +913,90 @@ def render_codex_profile(agent: SourceAgent, docs: List[InstructionDoc], referen
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _to_pascal_case(name: str) -> str:
-    """Convert a dash/underscore-separated name to PascalCase for JS identifiers."""
-    return "".join(word.title() for word in name.replace("-", "_").split("_"))
+def _validate_output_directory(directory: Path) -> None:
+    """Reject generated-output directories that resolve outside the target root."""
+    resolved_root = REPO_ROOT.resolve()
+    resolved_directory = directory.resolve()
+    try:
+        resolved_directory.relative_to(resolved_root)
+    except ValueError as exc:
+        raise ValueError(
+            f"generated output directory resolves outside target root: {directory}"
+        ) from exc
+    if directory.is_symlink():
+        raise ValueError(f"generated output directory must not be a symlink: {directory}")
 
 
-def _resolve_hook_events(vscode_event: str, meta: Dict, tool: str) -> List[str]:
-    """Return target events for a tool, using $meta overrides when present."""
-    event_meta = meta.get(vscode_event, {})
-    if tool in event_meta:
-        return event_meta[tool]
-    return HOOK_EVENT_MAP.get(vscode_event, {}).get(tool, [])
+def _validate_nested_output_directory(root: Path, directory: Path) -> None:
+    """Reject symlinked or escaping intermediate directories under an output root."""
+
+    relative = directory.relative_to(root)
+    resolved_root = root.resolve()
+    current = root
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError(
+                f"generated output directory must not be a symlink: {current}"
+            )
+        if current.exists():
+            try:
+                current.resolve().relative_to(resolved_root)
+            except ValueError as exc:
+                raise ValueError(
+                    f"generated output directory resolves outside target root: {current}"
+                ) from exc
 
 
-def _resolve_hook_command(entry: Dict, meta: Dict, tool: str) -> str:
-    """Return the command for a tool, with $meta.commands override support."""
-    commands_override = meta.get("commands", {})
-    if tool in commands_override:
-        return commands_override[tool]
-    return entry.get("osx") or entry.get("command", "")
+def propagate_skills_once() -> Dict[str, int]:
+    if not SOT_SKILLS_DIR.exists():
+        return {
+            "claude_changed": 0,
+            "opencode_changed": 0,
+            "codex_changed": 0,
+            "skills_changed": 0,
+            "skill_orphans_removed": 0,
+        }
 
-
-def _strip_propagated_hooks(settings: Dict) -> None:
-    """Remove all hook entries tagged with HOOK_SOURCE_KEY from settings in-place."""
-    for event_key in list(settings.get("hooks", {}).keys()):
-        settings["hooks"][event_key] = [
-            e for e in settings["hooks"][event_key]
-            if HOOK_SOURCE_KEY not in e
-        ]
-        if not settings["hooks"][event_key]:
-            del settings["hooks"][event_key]
-
-
-def _render_opencode_plugin(name: str, event_commands: List[Tuple[str, str]]) -> str:
-    """Render an OpenCode JS plugin file from (event, command) pairs."""
-    fn_name = _to_pascal_case(name)
-    handler_lines: List[str] = []
-    for i, (event, command) in enumerate(event_commands):
-        escaped = command.replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
-        comma = "," if i < len(event_commands) - 1 else ""
-        handler_lines.append(f'    "{event}": async (_input, _output) => {{')
-        handler_lines.append(f"      await $`{escaped}`")
-        handler_lines.append(f"    }}{comma}")
-    handlers = "\n".join(handler_lines)
-    return (
-        GENERATED_OPENCODE_PLUGIN_HEADER
-        + f"export const {fn_name} = async ({{ $ }}) => {{\n"
-        + f"  return {{\n"
-        + f"{handlers}\n"
-        + f"  }}\n"
-        + f"}}\n"
-    )
-
-
-def _update_nested_settings_file(
-    settings_file: Path,
-    source_hooks: List[Dict],
-    tool: str,
-) -> bool:
-    """Rebuild Claude/Codex-style nested settings, preserving untagged entries."""
-    if settings_file.exists():
-        settings: Dict = json.loads(settings_file.read_text(encoding="utf-8"))
-    else:
-        settings = {}
-    settings.setdefault("hooks", {})
-    _strip_propagated_hooks(settings)
-    for source in source_hooks:
-        for vscode_event, entries in source["hooks_by_event"].items():
-            target_events = _resolve_hook_events(vscode_event, source["meta"], tool)
-            for target_event in target_events:
-                settings["hooks"].setdefault(target_event, [])
-                for entry in entries:
-                    command = _resolve_hook_command(entry, source["meta"], tool)
-                    timeout = entry.get("timeout")
-                    inner: Dict = {"type": "command", "command": command}
-                    if timeout is not None:
-                        inner["timeout"] = timeout
-                    settings["hooks"][target_event].append({
-                        "matcher": "",
-                        HOOK_SOURCE_KEY: source["name"],
-                        "hooks": [inner],
-                    })
-    return _write_if_changed(settings_file, json.dumps(settings, indent=2) + "\n")
-
-
-def propagate_hooks_once(verbose: bool = False) -> Dict[str, int]:
-    """Propagate .github/hooks/*.json -> Claude settings, Codex hooks, OpenCode plugins."""
-    if not GITHUB_HOOKS_DIR.exists():
-        return {"hooks_source": 0, "claude_changed": 0, "codex_changed": 0, "opencode_changed": 0}
-
-    source_hooks: List[Dict] = []
-    for hook_file in sorted(GITHUB_HOOKS_DIR.glob("*.json")):
-        try:
-            data = json.loads(hook_file.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            continue
-        source_hooks.append({
-            "name": hook_file.stem,
-            "hooks_by_event": data.get("hooks", {}),
-            "meta": data.get("$meta", {}),
-        })
-
-    claude_changed = _update_nested_settings_file(CLAUDE_SETTINGS_FILE, source_hooks, "claude")
-    codex_changed = _update_nested_settings_file(CODEX_HOOKS_FILE, source_hooks, "codex")
-
-    OPENCODE_PLUGINS_DIR.mkdir(parents=True, exist_ok=True)
-    opencode_changed = 0
-    expected_plugins: set[Path] = set()
-
-    for source in source_hooks:
-        event_commands: List[Tuple[str, str]] = []
-        for vscode_event, entries in source["hooks_by_event"].items():
-            target_events = _resolve_hook_events(vscode_event, source["meta"], "opencode")
-            for target_event in target_events:
-                for entry in entries:
-                    command = _resolve_hook_command(entry, source["meta"], "opencode")
-                    event_commands.append((target_event, command))
-        if not event_commands:
-            continue
-        plugin_file = OPENCODE_PLUGINS_DIR / f"{source['name']}.js"
-        expected_plugins.add(plugin_file)
-        if _write_if_changed(plugin_file, _render_opencode_plugin(source["name"], event_commands)):
-            opencode_changed += 1
-
-    if OPENCODE_PLUGINS_DIR.exists():
-        for plugin_file in OPENCODE_PLUGINS_DIR.glob("*.js"):
-            if plugin_file in expected_plugins:
-                continue
-            content = plugin_file.read_text(encoding="utf-8")
-            if content.startswith(GENERATED_OPENCODE_PLUGIN_HEADER):
-                plugin_file.unlink()
-                opencode_changed += 1
-
-    if verbose:
-        print(json.dumps({
-            "hooks_source": len(source_hooks),
-            "claude_changed": int(claude_changed),
-            "codex_changed": int(codex_changed),
-            "opencode_changed": opencode_changed,
-        }, indent=2))
-
-    return {
-        "hooks_source": len(source_hooks),
-        "claude_changed": int(claude_changed),
-        "codex_changed": int(codex_changed),
-        "opencode_changed": opencode_changed,
-    }
-
-
-def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
-    repo_root = repo_root or REPO_ROOT
-    github_skills_dir = repo_root / ".github" / "skills"
-    claude_skills_dir = repo_root / "claude" / "skills"
-    opencode_skills_dir = repo_root / "opencode" / "skills"
-    codex_skills_dir = repo_root / "codex" / "skills"
-
-    if not github_skills_dir.exists():
-        return {"claude_changed": 0, "opencode_changed": 0, "codex_changed": 0, "skills_changed": 0}
-
-    if claude_skills_dir.exists() and claude_skills_dir.is_symlink():
-        claude_ready = False
-    else:
-        claude_skills_dir.mkdir(parents=True, exist_ok=True)
-        claude_ready = True
-
-    opencode_skills_dir.mkdir(parents=True, exist_ok=True)
-    codex_skills_dir.mkdir(parents=True, exist_ok=True)
+    CLAUDE_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
+    OPENCODE_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
+    CODEX_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
 
     changed_claude = 0
     changed_opencode = 0
     changed_codex = 0
+    expected_claude_dirs: set[Path] = set()
+    expected_opencode_dirs: set[Path] = set()
     expected_codex_dirs: set[Path] = set()
 
-    for source_skill_dir in sorted(github_skills_dir.iterdir()):
+    for source_skill_dir in sorted(SOT_SKILLS_DIR.iterdir()):
         if not source_skill_dir.is_dir():
             continue
 
         skill_name = source_skill_dir.name
         source_skill_md = source_skill_dir / "SKILL.md"
 
-        if claude_ready:
-            dest_claude_dir = claude_skills_dir / skill_name
-            dest_claude_dir.mkdir(parents=True, exist_ok=True)
-            if source_skill_md.exists():
-                if _write_if_changed(dest_claude_dir / "SKILL.md", _read_text(source_skill_md)):
-                    changed_claude += 1
-            for source_file in sorted(source_skill_dir.rglob("*")):
-                if not source_file.is_file() or source_file.name == "SKILL.md":
-                    continue
-                rel = source_file.relative_to(source_skill_dir)
-                dest_file = dest_claude_dir / rel
-                if _write_if_changed(dest_file, _read_text(source_file)):
-                    changed_claude += 1
+        dest_claude_dir = CLAUDE_SKILLS_DIR / skill_name
+        expected_claude_dirs.add(dest_claude_dir)
+        dest_claude_dir.mkdir(parents=True, exist_ok=True)
+        if source_skill_md.exists():
+            dest_content = _with_generated_marker(_read_text(source_skill_md), GENERATED_SKILL_HEADER)
+            if _write_if_changed(dest_claude_dir / "SKILL.md", dest_content):
+                changed_claude += 1
+        for source_file in sorted(source_skill_dir.rglob("*")):
+            if not source_file.is_file() or source_file.name == "SKILL.md":
+                continue
+            rel = source_file.relative_to(source_skill_dir)
+            dest_file = dest_claude_dir / rel
+            if _write_if_changed(dest_file, _read_text(source_file)):
+                changed_claude += 1
 
-        dest_opencode_dir = opencode_skills_dir / skill_name
+        dest_opencode_dir = OPENCODE_SKILLS_DIR / skill_name
+        expected_opencode_dirs.add(dest_opencode_dir)
         dest_opencode_dir.mkdir(parents=True, exist_ok=True)
         if source_skill_md.exists():
-            if _write_if_changed(dest_opencode_dir / "SKILL.md", _read_text(source_skill_md)):
+            dest_content = _with_generated_marker(_read_text(source_skill_md), GENERATED_SKILL_HEADER)
+            if _write_if_changed(dest_opencode_dir / "SKILL.md", dest_content):
                 changed_opencode += 1
         for source_file in sorted(source_skill_dir.rglob("*")):
             if not source_file.is_file() or source_file.name == "SKILL.md":
@@ -958,7 +1006,7 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
             if _write_if_changed(dest_file, _read_text(source_file)):
                 changed_opencode += 1
 
-        dest_codex_dir = codex_skills_dir / skill_name
+        dest_codex_dir = CODEX_SKILLS_DIR / skill_name
         expected_codex_dirs.add(dest_codex_dir)
         dest_codex_dir.mkdir(parents=True, exist_ok=True)
         if source_skill_md.exists():
@@ -981,28 +1029,187 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
             if _write_if_changed(dest_file, _read_text(source_file)):
                 changed_codex += 1
 
-    if codex_skills_dir.exists():
-        for dest_dir in sorted(codex_skills_dir.iterdir()):
-            if not dest_dir.is_dir() or dest_dir in expected_codex_dirs:
-                continue
-            skill_md = dest_dir / "SKILL.md"
-            if skill_md.exists() and _read_text(skill_md).startswith(GENERATED_SKILL_HEADER):
-                for f in dest_dir.rglob("*"):
-                    if f.is_file():
-                        f.unlink()
-                for d in sorted(dest_dir.rglob("*"), reverse=True):
-                    if d.is_dir():
-                        d.rmdir()
-                dest_dir.rmdir()
-                changed_codex += 1
+    # Pruning runs only after every skill has been emitted.
+    orphans_removed = (
+        _prune_orphaned_skill_dirs(
+            CLAUDE_SKILLS_DIR, expected_claude_dirs, GENERATED_SKILL_HEADER
+        )
+        + _prune_orphaned_skill_dirs(
+            OPENCODE_SKILLS_DIR, expected_opencode_dirs, GENERATED_SKILL_HEADER
+        )
+        + _prune_orphaned_skill_dirs(
+            CODEX_SKILLS_DIR, expected_codex_dirs, GENERATED_SKILL_HEADER
+        )
+    )
 
     return {
         "claude_changed": changed_claude,
         "opencode_changed": changed_opencode,
         "codex_changed": changed_codex,
         "skills_changed": changed_claude + changed_opencode + changed_codex,
+        "skill_orphans_removed": orphans_removed,
     }
 
+
+def propagate_learnings_once() -> Dict[str, int]:
+    if not SOT_LEARNINGS_DIR.exists():
+        return {"claude_changed": 0, "learnings_changed": 0, "learning_orphans_removed": 0}
+
+    CLAUDE_LEARNINGS_DIR.mkdir(parents=True, exist_ok=True)
+
+    changed_claude = 0
+    expected: set[Path] = set()
+    for source_file in sorted(SOT_LEARNINGS_DIR.glob("*.md")):
+        dest = CLAUDE_LEARNINGS_DIR / source_file.name
+        expected.add(dest)
+        # Marked so deploy_assets can prove ownership of the runtime copy.
+        content = _with_generated_marker(_read_text(source_file), GENERATED_SKILL_HEADER)
+        if _write_if_changed(dest, content):
+            changed_claude += 1
+
+    orphans = _prune_orphaned_outputs(
+        CLAUDE_LEARNINGS_DIR, "*.md", expected, GENERATED_SKILL_HEADER
+    )
+    return {
+        "claude_changed": changed_claude,
+        "learnings_changed": changed_claude,
+        "learning_orphans_removed": orphans,
+    }
+
+
+def _first_sentence(text: str, limit: int = 200) -> str:
+    """A one-line description: the first `#` title, else the first prose sentence."""
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("# "):
+            return stripped[2:].strip()[:limit]
+        if not stripped or stripped.startswith(("#", "---", "<!--", "**", "|", "-", ">")):
+            continue
+        end = stripped.find(". ")
+        sentence = stripped if end == -1 else stripped[: end + 1]
+        return sentence[:limit]
+    return ""
+
+
+def render_cursor_command(
+    agent: SourceAgent,
+    docs: List[InstructionDoc],
+    reference_map: Dict[str, str],
+    identifier: str,
+) -> str:
+    """Render a Cursor command (plain markdown, no frontmatter) adopting this role."""
+    appendix = _build_instruction_appendix(agent, docs)
+    body = _rewrite_agent_references(agent.body.strip(), reference_map, preserve_at_sign=True)
+    body = _inject_claude_command_instruction(agent, identifier, body)
+
+    parts = [body]
+    if appendix:
+        parts.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
+
+    return _with_generated_marker("\n".join(parts).rstrip() + "\n", GENERATED_AGENT_MARKDOWN_HEADER)
+
+
+def render_cursor_rule(
+    description: str,
+    globs: List[str],
+    always_apply: bool,
+    body: str,
+) -> str:
+    """Render a Cursor rule (.mdc): MDC frontmatter, generated marker, body."""
+    lines = ["---", f"description: {json.dumps(description, ensure_ascii=False)}"]
+    if globs:
+        lines.append(f"globs: {','.join(globs)}")
+    lines.append(f"alwaysApply: {'true' if always_apply else 'false'}")
+    lines.extend(["---", "", body.strip(), ""])
+    return _with_generated_marker("\n".join(lines), GENERATED_AGENT_MARKDOWN_HEADER)
+
+
+def propagate_cursor_rules_once(instructions: List[InstructionDoc]) -> Dict[str, int]:
+    """Emit Cursor rules from instruction docs and learnings, then prune orphans.
+
+    Instructions whose applyTo patterns target agent-definition files are internal
+    plumbing for the agent renderers (their content already ships inside each
+    rendered agent/command) and are skipped. Instructions with real file globs
+    become glob-attached rules; learnings become agent-requested rules.
+    """
+    changed = 0
+    expected: set[Path] = set()
+
+    for doc in instructions:
+        globs = [
+            pattern
+            for pattern in doc.apply_to_patterns
+            if not pattern.rstrip("*/").endswith((".agent.md", "agents"))
+        ]
+        if doc.apply_to_patterns and not globs:
+            continue
+        name = doc.path.name.replace(".instructions.md", "")
+        dest = CURSOR_RULES_DIR / f"{name}.mdc"
+        expected.add(dest)
+        content = render_cursor_rule(
+            doc.description or _first_sentence(doc.body),
+            globs,
+            always_apply=not globs,
+            body=doc.body,
+        )
+        if _write_if_changed(dest, content):
+            changed += 1
+
+    if SOT_LEARNINGS_DIR.exists():
+        for source_file in sorted(SOT_LEARNINGS_DIR.glob("*.md")):
+            dest = CURSOR_RULES_DIR / f"{source_file.stem}.mdc"
+            expected.add(dest)
+            body = _read_text(source_file)
+            content = render_cursor_rule(
+                _first_sentence(body), [], always_apply=False, body=body
+            )
+            if _write_if_changed(dest, content):
+                changed += 1
+
+    orphans = _prune_orphaned_outputs(
+        CURSOR_RULES_DIR, "*.mdc", expected, GENERATED_AGENT_MARKDOWN_HEADER
+    )
+    return {"cursor_changed": changed, "cursor_rule_orphans_removed": orphans}
+
+
+def _mirror_tree(source: Path, destination: Path) -> int:
+    """Mirror `source` into `destination` byte-for-byte; delete stale files.
+
+    Deletion is scoped to `destination` itself (validated inside the repository),
+    never follows symlinks, and leaves empty directories cleaned up without
+    counting them as changes.
+    """
+    _validate_output_directory(destination)
+    changed = 0
+    expected: set[Path] = set()
+
+    if source.is_dir():
+        for source_file in sorted(source.rglob("*")):
+            if not source_file.is_file() or source_file.is_symlink():
+                continue
+            dest_file = destination / source_file.relative_to(source)
+            expected.add(dest_file)
+            data = source_file.read_bytes()
+            if dest_file.is_file() and not dest_file.is_symlink():
+                try:
+                    if dest_file.read_bytes() == data:
+                        continue
+                except OSError:
+                    pass
+            dest_file.parent.mkdir(parents=True, exist_ok=True)
+            dest_file.write_bytes(data)
+            shutil.copymode(source_file, dest_file)  # hooks ship executable scripts
+            changed += 1
+
+    if destination.is_dir():
+        for path in sorted(destination.rglob("*"), reverse=True):
+            if path.is_file() and not path.is_symlink() and path not in expected:
+                path.unlink()
+                changed += 1
+            elif path.is_dir() and not path.is_symlink() and not any(path.iterdir()):
+                path.rmdir()
+
+    return changed
 
 def propagate_once(verbose: bool = True) -> Dict[str, int]:
     agents = load_source_agents()
@@ -1031,8 +1238,13 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     changed_opencode = 0
     changed_codex = 0
     changed_codex_profiles = 0
+    changed_cursor = 0
+    expected_claude_files: set[Path] = set()
+    expected_claude_command_files: set[Path] = set()
+    expected_opencode_files: set[Path] = set()
     expected_codex_files: set[Path] = set()
     expected_codex_profile_files: set[Path] = set()
+    expected_cursor_command_files: set[Path] = set()
 
     for agent in agents:
         docs = applicable_instructions(agent, instructions)
@@ -1041,6 +1253,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         claude_file = CLAUDE_AGENTS_DIR / f"{claude_identifier}.md"
         opencode_file = OPENCODE_AGENTS_DIR / _opencode_filename_for(agent, opencode_existing_stems)
         codex_file = CODEX_AGENTS_DIR / _codex_filename_for(agent)
+        expected_opencode_files.add(opencode_file)
         expected_codex_files.add(codex_file)
 
         # Claude emission rule (Claude target only):
@@ -1052,6 +1265,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         emit_claude_agent = (not agent.user_invocable) or is_dual_use
 
         if emit_claude_agent:
+            expected_claude_files.add(claude_file)
             if _write_if_changed(
                 claude_file,
                 render_claude_agent(agent, docs, claude_reference_map, claude_identifier),
@@ -1064,11 +1278,20 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
 
         if agent.user_invocable:
             command_file = CLAUDE_COMMANDS_DIR / f"{claude_identifier}.md"
+            expected_claude_command_files.add(command_file)
             if _write_if_changed(
                 command_file,
                 render_claude_command(agent, docs, claude_reference_map, claude_identifier),
             ):
                 changed_claude += 1
+
+            cursor_file = CURSOR_COMMANDS_DIR / f"{claude_identifier}.md"
+            expected_cursor_command_files.add(cursor_file)
+            if _write_if_changed(
+                cursor_file,
+                render_cursor_command(agent, docs, claude_reference_map, claude_identifier),
+            ):
+                changed_cursor += 1
 
         if _write_if_changed(opencode_file, render_opencode_agent(agent, docs, opencode_reference_map)):
             changed_opencode += 1
@@ -1081,35 +1304,65 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
             if _write_if_changed(codex_profile_file, render_codex_profile(agent, docs, codex_reference_map)):
                 changed_codex_profiles += 1
 
-    for codex_file in CODEX_AGENTS_DIR.glob("*.toml"):
-        if codex_file in expected_codex_files:
-            continue
-        if not _read_text(codex_file).startswith(GENERATED_AGENT_HEADER):
-            continue
-        codex_file.unlink()
-        changed_codex += 1
-
-    for profile_file in CODEX_PROFILES_DIR.glob("*.config.toml"):
-        if profile_file in expected_codex_profile_files:
-            continue
-        if not _read_text(profile_file).startswith(GENERATED_AGENT_HEADER):
-            continue
-        profile_file.unlink()
-        changed_codex_profiles += 1
+    # Every prune runs only after all emission above has completed. `_claude_filename_for`
+    # and `_opencode_filename_for` resolve an output name against the stems already on
+    # disk, so deleting first could hand a survivor a different filename (AC6).
+    claude_orphans = _prune_orphaned_outputs(
+        CLAUDE_AGENTS_DIR, "*.md", expected_claude_files, GENERATED_AGENT_MARKDOWN_HEADER
+    )
+    claude_command_orphans = _prune_orphaned_outputs(
+        CLAUDE_COMMANDS_DIR,
+        "*.md",
+        expected_claude_command_files,
+        GENERATED_AGENT_MARKDOWN_HEADER,
+    )
+    opencode_orphans = _prune_orphaned_outputs(
+        OPENCODE_AGENTS_DIR, "*.md", expected_opencode_files, GENERATED_AGENT_MARKDOWN_HEADER
+    )
+    codex_orphans = _prune_orphaned_outputs(
+        CODEX_AGENTS_DIR, "*.toml", expected_codex_files, GENERATED_AGENT_HEADER
+    )
+    codex_profile_orphans = _prune_orphaned_outputs(
+        CODEX_PROFILES_DIR,
+        "*.config.toml",
+        expected_codex_profile_files,
+        GENERATED_AGENT_HEADER,
+    )
+    cursor_command_orphans = _prune_orphaned_outputs(
+        CURSOR_COMMANDS_DIR,
+        "*.md",
+        expected_cursor_command_files,
+        GENERATED_AGENT_MARKDOWN_HEADER,
+    )
 
     skill_result = propagate_skills_once()
     changed_skills = skill_result["skills_changed"]
 
-    hooks_result = propagate_hooks_once(verbose=False)
+    learnings_result = propagate_learnings_once()
+    cursor_rules_result = propagate_cursor_rules_once(instructions)
 
     result = {
         "source_agents": len(agents),
-        "hooks_source": hooks_result["hooks_source"],
-        "claude_changed": changed_claude + hooks_result["claude_changed"] + skill_result["claude_changed"],
-        "opencode_changed": changed_opencode + hooks_result["opencode_changed"] + skill_result["opencode_changed"],
-        "codex_changed": changed_codex + hooks_result["codex_changed"] + skill_result["codex_changed"],
+        "claude_changed": changed_claude + skill_result["claude_changed"] + learnings_result["claude_changed"],
+        "opencode_changed": changed_opencode + skill_result["opencode_changed"],
+        "codex_changed": changed_codex + skill_result["codex_changed"],
         "codex_profiles_changed": changed_codex_profiles,
+        "cursor_changed": changed_cursor + cursor_rules_result["cursor_changed"],
         "skills_changed": changed_skills,
+        "learnings_changed": learnings_result["learnings_changed"],
+        # Deletions are reported on their own keys rather than folded into the
+        # `changed_*` counters, which already conflate writes with removals. This
+        # follows the orphan-removal precedent: a run that
+        # removes a file says so instead of removing it silently.
+        "claude_orphans_removed": claude_orphans,
+        "claude_command_orphans_removed": claude_command_orphans,
+        "opencode_orphans_removed": opencode_orphans,
+        "codex_orphans_removed": codex_orphans,
+        "codex_profile_orphans_removed": codex_profile_orphans,
+        "cursor_command_orphans_removed": cursor_command_orphans,
+        "cursor_rule_orphans_removed": cursor_rules_result["cursor_rule_orphans_removed"],
+        "learning_orphans_removed": learnings_result["learning_orphans_removed"],
+        "skill_orphans_removed": skill_result["skill_orphans_removed"],
     }
 
     if verbose:
@@ -1118,90 +1371,121 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     return result
 
 
-def _collect_file_state(paths: Iterable[Path]) -> Dict[str, Tuple[float, int]]:
-    state: Dict[str, Tuple[float, int]] = {}
-    for root in paths:
-        if not root.exists():
-            continue
-        for path in root.rglob("*"):
-            if not path.is_file():
-                continue
-            try:
-                stat = path.stat()
-            except FileNotFoundError:
-                continue
-            state[str(path)] = (stat.st_mtime, stat.st_size)
-    return state
+def propagation_changes(counters: Dict[str, int]) -> Dict[str, int]:
+    """Return repository mutation counters, rejecting ambiguous results."""
+    if not isinstance(counters, dict):
+        raise ValueError("propagation result must be a dictionary")
+
+    changes: Dict[str, int] = {}
+    for key, value in counters.items():
+        if not isinstance(key, str) or isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError("propagation counters must map names to integers")
+        if value < 0:
+            raise ValueError("propagation counters cannot be negative")
+        if key not in INVENTORY_COUNTERS and value:
+            changes[key] = value
+    return changes
 
 
-def _compute_changes(
-    old: Dict[str, Tuple[float, int]],
-    new: Dict[str, Tuple[float, int]],
-) -> List[str]:
-    changed: List[str] = []
-    old_keys = set(old.keys())
-    new_keys = set(new.keys())
+def propagate_until_converged(
+    *,
+    max_passes: int = DEFAULT_CONVERGENCE_PASSES,
+    propagate: Callable[[], Dict[str, int]] | None = None,
+) -> PropagationConvergenceResult:
+    """Repeat propagation, within a total-pass bound, through a zero-change pass."""
+    if (
+        isinstance(max_passes, bool)
+        or not isinstance(max_passes, int)
+        or not 1 <= max_passes <= MAX_CONVERGENCE_PASSES
+    ):
+        raise ValueError(
+            f"max_passes must be between 1 and {MAX_CONVERGENCE_PASSES}"
+        )
 
-    for path in sorted(old_keys | new_keys):
-        if path not in old:
-            changed.append(path)
-            continue
-        if path not in new:
-            changed.append(path)
-            continue
-        if old[path] != new[path]:
-            changed.append(path)
-    return changed
+    run_pass = propagate or (lambda: propagate_once(verbose=False))
+    total_changes: Dict[str, int] = {}
+    changed_passes = 0
+
+    for pass_count in range(1, max_passes + 1):
+        try:
+            counters = run_pass()
+        except Exception as exc:
+            if isinstance(exc, PropagationConvergenceError):
+                raise
+            raise PropagationConvergenceError(
+                "propagation_failed", pass_count
+            ) from exc
+
+        try:
+            changes = propagation_changes(counters)
+        except (TypeError, ValueError) as exc:
+            raise PropagationConvergenceError("malformed_result", pass_count) from exc
+
+        if not changes:
+            return PropagationConvergenceResult(
+                converged=True,
+                pass_count=pass_count,
+                changed_passes=changed_passes,
+                total_changes=total_changes,
+                final_counters=dict(counters),
+            )
+
+        changed_passes += 1
+        for key, value in changes.items():
+            total_changes[key] = total_changes.get(key, 0) + value
+
+    raise PropagationConvergenceError("bound_exhausted", max_passes)
+
 
 
 def watch_loop(interval_seconds: float = 1.0) -> None:
-    print("Starting master asset watcher for .github/{agents,skills,instructions,hooks} ...")
-    propagate_once(verbose=True)
+    print("Starting master asset watcher for source_of_truth/{agents,skills,instructions,learnings,hooks} ...")
+    print(json.dumps(_convergence_payload(propagate_until_converged()), indent=2))
 
-    last_state = _collect_file_state(WATCH_DIRS)
-    pending_since: float | None = None
-    pending_changes: List[str] = []
-
-    while True:
-        time.sleep(interval_seconds)
-        current_state = _collect_file_state(WATCH_DIRS)
-        changes = _compute_changes(last_state, current_state)
-
-        if changes:
-            pending_changes = changes
-            pending_since = time.time()
-            last_state = current_state
-
-        if pending_since is None:
-            continue
-
-        if time.time() - pending_since < 0.8:
-            continue
-
-        sample = ", ".join(Path(c).name for c in pending_changes[:5])
-        more = "" if len(pending_changes) <= 5 else f" (+{len(pending_changes) - 5} more)"
-        print(f"Detected change in .github source: {sample}{more}")
-
+    def _on_change(changes: List[str]) -> None:
+        sample = ", ".join(Path(c).name for c in changes[:5])
+        more = "" if len(changes) <= 5 else f" (+{len(changes) - 5} more)"
+        print(f"Detected change in source_of_truth: {sample}{more}")
         try:
-            propagate_once(verbose=True)
-        except Exception as exc:  # pragma: no cover - runtime guard
+            print(json.dumps(_convergence_payload(propagate_until_converged()), indent=2))
+        except PropagationConvergenceError as exc:  # pragma: no cover - runtime guard
             print(f"Propagation failed: {exc}", file=sys.stderr)
 
-        pending_since = None
-        pending_changes = []
+    poll_watch(WATCH_DIRS, _on_change, interval_seconds=interval_seconds)
+
+
+def _convergence_payload(result: PropagationConvergenceResult) -> Dict[str, object]:
+    return {
+        "converged": result.converged,
+        "propagation_passes": result.pass_count,
+        "changed_passes": result.changed_passes,
+        "propagation_changes": result.total_changes,
+        "verification_changes": propagation_changes(result.final_counters),
+    }
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Propagate .github master assets to target platforms.")
+    parser = argparse.ArgumentParser(
+        description="Transform source_of_truth/ master assets into ports/ outputs."
+    )
     parser.add_argument("--once", action="store_true", help="Run one propagation pass and exit.")
-    parser.add_argument("--watch", action="store_true", help="Watch .github source folders and propagate on changes.")
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="Watch source_of_truth/ folders and propagate on changes.",
+    )
     args = parser.parse_args()
 
-    if not args.once and not args.watch:
+    if not args.watch:
         args.once = True
 
     if args.once:
-        propagate_once(verbose=True)
+        try:
+            result = propagate_until_converged()
+        except PropagationConvergenceError as exc:
+            print(f"Propagation failed: {exc}", file=sys.stderr)
+            return 1
+        print(json.dumps(_convergence_payload(result), indent=2))
 
     if args.watch:
         watch_loop()
