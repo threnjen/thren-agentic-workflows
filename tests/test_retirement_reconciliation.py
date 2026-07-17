@@ -667,21 +667,20 @@ def test_propagation_is_idempotent() -> None:
     propagator that never converges from scratch.
     """
     import shutil
-    import sys
     import tempfile
 
-    sys.path.insert(0, str(REPO_ROOT / "scripts"))
-    import propagate_master_assets as mod
+    import _propagate_env as env
 
     with tempfile.TemporaryDirectory() as tmp:
         consumer = Path(tmp) / "consumer"
         consumer.mkdir()
         shutil.copytree(REPO_ROOT / ".github", consumer / ".github")
 
-        # `propagate_once` reads its source from `repo_root/.github`, so copying
-        # the source tree in is all the isolation this needs.
-        mod.propagate_once(verbose=False, repo_root=consumer)
-        second = mod.propagate_once(verbose=False, repo_root=consumer)
+        # `propagate_once` reads its source from the redirected `.github`, so
+        # copying the source tree into the consumer is all the isolation this needs.
+        with env.redirect(consumer):
+            env.mod.propagate_once(verbose=False)
+            second = env.mod.propagate_once(verbose=False)
 
     assert not _changes(second), (
         "a second consecutive propagation run still changed things: "
@@ -703,12 +702,9 @@ def test_committed_tree_is_at_a_propagation_fixed_point() -> None:
     This writes to the working tree only when it is already wrong, in which case
     the write is the repair and the failure is the report.
     """
-    import sys
+    import _propagate_env as env
 
-    sys.path.insert(0, str(REPO_ROOT / "scripts"))
-    import propagate_master_assets as mod
-
-    counters = mod.propagate_once(verbose=False, repo_root=REPO_ROOT)
+    counters = env.mod.propagate_once(verbose=False)
     assert not _changes(counters), (
         "the committed tree is not at a propagation fixed point; a run still "
         f"changed things: {_changes(counters)}. Run propagation repeatedly until "

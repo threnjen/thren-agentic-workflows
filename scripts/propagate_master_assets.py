@@ -26,24 +26,30 @@ import runtime_deployment
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+# Source-of-truth roots under `.github`.
 GITHUB_AGENTS_DIR = REPO_ROOT / ".github" / "agents"
 GITHUB_INSTRUCTIONS_DIR = REPO_ROOT / ".github" / "instructions"
-WATCH_DIRS = [
-    REPO_ROOT / ".github" / "agents",
-    REPO_ROOT / ".github" / "skills",
-    REPO_ROOT / ".github" / "instructions",
-    REPO_ROOT / ".github" / "learnings",
-]
+GITHUB_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
+GITHUB_LEARNINGS_DIR = REPO_ROOT / ".github" / "learnings"
 
+# Generated platform output roots.
 CLAUDE_AGENTS_DIR = REPO_ROOT / "claude" / "agents"
 CLAUDE_COMMANDS_DIR = REPO_ROOT / "claude" / "commands"
 CLAUDE_SKILLS_DIR = REPO_ROOT / "claude" / "skills"
+CLAUDE_LEARNINGS_DIR = REPO_ROOT / "claude" / "learnings"
 OPENCODE_AGENTS_DIR = REPO_ROOT / "opencode" / "agents"
 OPENCODE_SKILLS_DIR = REPO_ROOT / "opencode" / "skills"
 CODEX_AGENTS_DIR = REPO_ROOT / "codex" / "agents"
 CODEX_PROFILES_DIR = REPO_ROOT / "codex" / "profiles"
-GITHUB_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
 CODEX_SKILLS_DIR = REPO_ROOT / "codex" / "skills"
+
+WATCH_DIRS = [
+    GITHUB_AGENTS_DIR,
+    GITHUB_SKILLS_DIR,
+    GITHUB_INSTRUCTIONS_DIR,
+    GITHUB_LEARNINGS_DIR,
+]
 
 
 GENERATED_AGENT_HEADER = "# Generated from .github/agents source-of-truth. Do not edit manually."
@@ -272,7 +278,6 @@ def _is_generated_output(path: Path, marker: str) -> bool:
 
 
 def _prune_orphaned_outputs(
-    repo_root: Path,
     directory: Path,
     pattern: str,
     expected: set[Path],
@@ -293,7 +298,7 @@ def _prune_orphaned_outputs(
     marker gets unlinked outside the repository. This is REPO-SEC-06 in deletion
     form, and unlike a bad write it cannot be undone by re-running propagation.
     """
-    _validate_output_directory(repo_root, directory)
+    _validate_output_directory(directory)
 
     if not directory.is_dir():
         return 0
@@ -314,7 +319,6 @@ def _prune_orphaned_outputs(
 
 
 def _prune_orphaned_skill_dirs(
-    repo_root: Path,
     skills_dir: Path,
     expected: set[Path],
     marker: str,
@@ -332,7 +336,7 @@ def _prune_orphaned_skill_dirs(
     skills root therefore trades one marker for an entire directory outside the
     repository.
     """
-    _validate_output_directory(repo_root, skills_dir)
+    _validate_output_directory(skills_dir)
 
     if not skills_dir.is_dir():
         return 0
@@ -456,12 +460,9 @@ def _extract_source_slug(path: Path) -> str:
     return path.stem
 
 
-def load_source_agents(repo_root: Path | None = None) -> List[SourceAgent]:
-    repo_root = repo_root or REPO_ROOT
-    agents_dir = repo_root / ".github" / "agents"
-
+def load_source_agents() -> List[SourceAgent]:
     agents: List[SourceAgent] = []
-    for path in sorted(agents_dir.glob("*.md")):
+    for path in sorted(GITHUB_AGENTS_DIR.glob("*.md")):
         text = _read_text(path)
         fm, body = _parse_frontmatter(text)
 
@@ -469,7 +470,7 @@ def load_source_agents(repo_root: Path | None = None) -> List[SourceAgent]:
         if "name" not in fm or "description" not in fm:
             continue
 
-        rel_path = path.relative_to(repo_root).as_posix()
+        rel_path = path.relative_to(REPO_ROOT).as_posix()
         source_slug = _extract_source_slug(path)
 
         if source_slug in PROPAGATION_EXCLUDE:
@@ -497,12 +498,9 @@ def load_source_agents(repo_root: Path | None = None) -> List[SourceAgent]:
     return agents
 
 
-def load_instruction_docs(repo_root: Path | None = None) -> List[InstructionDoc]:
-    repo_root = repo_root or REPO_ROOT
-    instructions_dir = repo_root / ".github" / "instructions"
-
+def load_instruction_docs() -> List[InstructionDoc]:
     docs: List[InstructionDoc] = []
-    for path in sorted(instructions_dir.glob("*.instructions.md")):
+    for path in sorted(GITHUB_INSTRUCTIONS_DIR.glob("*.instructions.md")):
         text = _read_text(path)
         fm, body = _parse_frontmatter(text)
 
@@ -969,9 +967,9 @@ def render_codex_profile(agent: SourceAgent, docs: List[InstructionDoc], referen
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _validate_output_directory(repo_root: Path, directory: Path) -> None:
+def _validate_output_directory(directory: Path) -> None:
     """Reject generated-output directories that resolve outside the target root."""
-    resolved_root = repo_root.resolve()
+    resolved_root = REPO_ROOT.resolve()
     resolved_directory = directory.resolve()
     try:
         resolved_directory.relative_to(resolved_root)
@@ -1004,9 +1002,7 @@ def _validate_nested_output_directory(root: Path, directory: Path) -> None:
                 ) from exc
 
 
-def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
-    repo_root = repo_root or REPO_ROOT
-
+def propagate_skills_once() -> Dict[str, int]:
     if not GITHUB_SKILLS_DIR.exists():
         return {
             "claude_changed": 0,
@@ -1090,13 +1086,13 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
     # Pruning runs only after every skill has been emitted.
     orphans_removed = (
         _prune_orphaned_skill_dirs(
-            repo_root, CLAUDE_SKILLS_DIR, expected_claude_dirs, GENERATED_SKILL_HEADER
+            CLAUDE_SKILLS_DIR, expected_claude_dirs, GENERATED_SKILL_HEADER
         )
         + _prune_orphaned_skill_dirs(
-            repo_root, OPENCODE_SKILLS_DIR, expected_opencode_dirs, GENERATED_SKILL_HEADER
+            OPENCODE_SKILLS_DIR, expected_opencode_dirs, GENERATED_SKILL_HEADER
         )
         + _prune_orphaned_skill_dirs(
-            repo_root, CODEX_SKILLS_DIR, expected_codex_dirs, GENERATED_SKILL_HEADER
+            CODEX_SKILLS_DIR, expected_codex_dirs, GENERATED_SKILL_HEADER
         )
     )
 
@@ -1109,29 +1105,23 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
     }
 
 
-def propagate_learnings_once(repo_root: Path | None = None) -> Dict[str, int]:
-    repo_root = repo_root or REPO_ROOT
-    github_learnings_dir = repo_root / ".github" / "learnings"
-    claude_learnings_dir = repo_root / "claude" / "learnings"
-
-    if not github_learnings_dir.exists():
+def propagate_learnings_once() -> Dict[str, int]:
+    if not GITHUB_LEARNINGS_DIR.exists():
         return {"claude_changed": 0, "learnings_changed": 0}
 
-    claude_learnings_dir.mkdir(parents=True, exist_ok=True)
+    CLAUDE_LEARNINGS_DIR.mkdir(parents=True, exist_ok=True)
 
     changed_claude = 0
-    for source_file in sorted(github_learnings_dir.glob("*.md")):
-        if _write_if_changed(claude_learnings_dir / source_file.name, _read_text(source_file)):
+    for source_file in sorted(GITHUB_LEARNINGS_DIR.glob("*.md")):
+        if _write_if_changed(CLAUDE_LEARNINGS_DIR / source_file.name, _read_text(source_file)):
             changed_claude += 1
 
     return {"claude_changed": changed_claude, "learnings_changed": changed_claude}
 
 
-def propagate_once(verbose: bool = True, repo_root: Path | None = None) -> Dict[str, int]:
-    repo_root = repo_root or REPO_ROOT
-
-    agents = load_source_agents(repo_root)
-    instructions = load_instruction_docs(repo_root)
+def propagate_once(verbose: bool = True) -> Dict[str, int]:
+    agents = load_source_agents()
+    instructions = load_instruction_docs()
 
     CLAUDE_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
     CLAUDE_COMMANDS_DIR.mkdir(parents=True, exist_ok=True)
@@ -1216,33 +1206,31 @@ def propagate_once(verbose: bool = True, repo_root: Path | None = None) -> Dict[
     # and `_opencode_filename_for` resolve an output name against the stems already on
     # disk, so deleting first could hand a survivor a different filename (AC6).
     claude_orphans = _prune_orphaned_outputs(
-        repo_root, CLAUDE_AGENTS_DIR, "*.md", expected_claude_files, GENERATED_AGENT_MARKDOWN_HEADER
+        CLAUDE_AGENTS_DIR, "*.md", expected_claude_files, GENERATED_AGENT_MARKDOWN_HEADER
     )
     claude_command_orphans = _prune_orphaned_outputs(
-        repo_root,
         CLAUDE_COMMANDS_DIR,
         "*.md",
         expected_claude_command_files,
         GENERATED_AGENT_MARKDOWN_HEADER,
     )
     opencode_orphans = _prune_orphaned_outputs(
-        repo_root, OPENCODE_AGENTS_DIR, "*.md", expected_opencode_files, GENERATED_AGENT_MARKDOWN_HEADER
+        OPENCODE_AGENTS_DIR, "*.md", expected_opencode_files, GENERATED_AGENT_MARKDOWN_HEADER
     )
     codex_orphans = _prune_orphaned_outputs(
-        repo_root, CODEX_AGENTS_DIR, "*.toml", expected_codex_files, GENERATED_AGENT_HEADER
+        CODEX_AGENTS_DIR, "*.toml", expected_codex_files, GENERATED_AGENT_HEADER
     )
     codex_profile_orphans = _prune_orphaned_outputs(
-        repo_root,
         CODEX_PROFILES_DIR,
         "*.config.toml",
         expected_codex_profile_files,
         GENERATED_AGENT_HEADER,
     )
 
-    skill_result = propagate_skills_once(repo_root)
+    skill_result = propagate_skills_once()
     changed_skills = skill_result["skills_changed"]
 
-    learnings_result = propagate_learnings_once(repo_root)
+    learnings_result = propagate_learnings_once()
 
     result = {
         "source_agents": len(agents),
@@ -1288,7 +1276,6 @@ def propagation_changes(counters: Dict[str, int]) -> Dict[str, int]:
 
 def propagate_until_converged(
     *,
-    repo_root: Path | None = None,
     max_passes: int = DEFAULT_CONVERGENCE_PASSES,
     propagate: Callable[[], Dict[str, int]] | None = None,
 ) -> PropagationConvergenceResult:
@@ -1302,9 +1289,7 @@ def propagate_until_converged(
             f"max_passes must be between 1 and {MAX_CONVERGENCE_PASSES}"
         )
 
-    run_pass = propagate or (
-        lambda: propagate_once(verbose=False, repo_root=repo_root)
-    )
+    run_pass = propagate or (lambda: propagate_once(verbose=False))
     total_changes: Dict[str, int] = {}
     changed_passes = 0
 
@@ -1452,9 +1437,7 @@ def run_runtime_deployment(
     ] = runtime_deployment.deploy_managed_copies,
 ) -> RuntimeDeploymentResult:
     """Converge, inventory, deploy reviewed copies, reconcile, and verify."""
-    convergence = propagate_until_converged(
-        repo_root=repo_root, propagate=propagate
-    )
+    convergence = propagate_until_converged(propagate=propagate)
     records = resolve_destinations_after_convergence(
         convergence,
         repo_root=repo_root,
@@ -1606,7 +1589,6 @@ def deploy_after_convergence(
     copy_operation: Callable[[HarnessDestination], int],
     reconcile_operation: Callable[[HarnessDestination], int],
     home: Path | None = None,
-    repo_root: Path | None = None,
     max_passes: int = DEFAULT_CONVERGENCE_PASSES,
     propagate: Callable[[], Dict[str, int]] | None = None,
 ) -> DeploymentResult:
@@ -1614,7 +1596,7 @@ def deploy_after_convergence(
     targets = tuple(destinations)
     try:
         convergence = propagate_until_converged(
-            repo_root=repo_root, max_passes=max_passes, propagate=propagate
+            max_passes=max_passes, propagate=propagate
         )
     except PropagationConvergenceError as exc:
         return DeploymentResult(None, exc.category, False, {}, {})

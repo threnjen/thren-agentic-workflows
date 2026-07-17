@@ -14,6 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import propagate_master_assets as mod
+import _propagate_env as env
 
 # The settled PR Review evaluator roster, and each agent's exact tool grant.
 #
@@ -82,6 +83,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
     def test_propagate_skills_mirrors_to_claude_opencode_and_codex(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             skill_dir = repo_root / ".github" / "skills" / "demo-skill"
             skill_dir.mkdir(parents=True, exist_ok=True)
             (skill_dir / "SKILL.md").write_text(
@@ -89,7 +91,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            result = mod.propagate_skills_once(repo_root)
+            result = mod.propagate_skills_once()
 
             self.assertEqual(result["claude_changed"], 1)
             self.assertEqual(result["opencode_changed"], 1)
@@ -553,10 +555,11 @@ class OrphanPruningTests(unittest.TestCase):
         """AC1 + AC3: outputs survive their source agent's deletion today."""
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
             doomed = self._write_source_agent(repo_root, "02-doomed", "02 Doomed")
 
-            mod.propagate_once(verbose=False, repo_root=repo_root)
+            mod.propagate_once(verbose=False)
 
             claude_orphan = repo_root / "claude" / "agents" / "z-doomed.md"
             opencode_orphan = repo_root / "opencode" / "agents" / "02-doomed.md"
@@ -564,7 +567,7 @@ class OrphanPruningTests(unittest.TestCase):
             self.assertTrue(opencode_orphan.exists(), "fixture: expected generated output")
 
             doomed.unlink()
-            result = mod.propagate_once(verbose=False, repo_root=repo_root)
+            result = mod.propagate_once(verbose=False)
 
             self.assertFalse(claude_orphan.exists())
             self.assertFalse(opencode_orphan.exists())
@@ -580,13 +583,14 @@ class OrphanPruningTests(unittest.TestCase):
         This test must fail if that guard is removed."""
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
             claude_agents = repo_root / "claude" / "agents"
             claude_agents.mkdir(parents=True, exist_ok=True)
             readme = claude_agents / "README.md"
             readme.write_text("# Agent index\n\nHand-maintained.\n", encoding="utf-8")
 
-            result = mod.propagate_once(verbose=False, repo_root=repo_root)
+            result = mod.propagate_once(verbose=False)
 
             self.assertTrue(readme.exists(), "hand-maintained README.md was deleted")
             self.assertEqual(readme.read_text(encoding="utf-8"), "# Agent index\n\nHand-maintained.\n")
@@ -597,14 +601,15 @@ class OrphanPruningTests(unittest.TestCase):
         file but keeps its subagent file."""
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             self._write_source_agent(repo_root, "01-flipper", "01 Flipper", user_invocable=True)
 
-            mod.propagate_once(verbose=False, repo_root=repo_root)
+            mod.propagate_once(verbose=False)
             command_file = repo_root / "claude" / "commands" / "flipper.md"
             self.assertTrue(command_file.exists(), "fixture: expected a command file")
 
             self._write_source_agent(repo_root, "01-flipper", "01 Flipper", user_invocable=False)
-            result = mod.propagate_once(verbose=False, repo_root=repo_root)
+            result = mod.propagate_once(verbose=False)
 
             self.assertFalse(command_file.exists())
             # A non-invocable agent takes the `z-` prefix, so the subagent file it
@@ -617,15 +622,16 @@ class OrphanPruningTests(unittest.TestCase):
         already on disk, so pruning before emission could rename a survivor."""
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             self._write_source_agent(repo_root, "05c-artifact-sweeper", "05c Artifact Sweeper")
             doomed = self._write_source_agent(repo_root, "09-doomed", "09 Doomed")
 
-            mod.propagate_once(verbose=False, repo_root=repo_root)
+            mod.propagate_once(verbose=False)
             survivor = repo_root / "claude" / "agents" / "z-artifact-sweeper.md"
             self.assertTrue(survivor.exists(), "fixture: expected the z- stem")
 
             doomed.unlink()
-            mod.propagate_once(verbose=False, repo_root=repo_root)
+            mod.propagate_once(verbose=False)
 
             self.assertTrue(survivor.exists(), "survivor lost its stem to prune ordering")
             self.assertFalse((repo_root / "claude" / "agents" / "z-doomed.md").exists())
@@ -637,10 +643,11 @@ class OrphanPruningTests(unittest.TestCase):
         used a prefix check); Claude and OpenCode had no prune at all."""
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             self._write_source_skill(repo_root, "keeper-skill")
             doomed = self._write_source_skill(repo_root, "doomed-skill")
 
-            mod.propagate_once(verbose=False, repo_root=repo_root)
+            mod.propagate_once(verbose=False)
             orphans = [
                 repo_root / "claude" / "skills" / "doomed-skill",
                 repo_root / "opencode" / "skills" / "doomed-skill",
@@ -650,7 +657,7 @@ class OrphanPruningTests(unittest.TestCase):
                 self.assertTrue(orphan.exists(), f"fixture: expected {orphan}")
 
             shutil.rmtree(doomed)
-            mod.propagate_once(verbose=False, repo_root=repo_root)
+            mod.propagate_once(verbose=False)
 
             for orphan in orphans:
                 self.assertFalse(orphan.exists(), f"orphaned skill dir survived: {orphan}")
@@ -662,6 +669,7 @@ class OrphanPruningTests(unittest.TestCase):
         generate carries no marker and must never be swept."""
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             self._write_source_skill(repo_root, "keeper-skill")
             handmade = repo_root / "claude" / "skills" / "handmade-skill"
             handmade.mkdir(parents=True, exist_ok=True)
@@ -669,7 +677,7 @@ class OrphanPruningTests(unittest.TestCase):
                 "---\nname: handmade-skill\n---\n# Hand written\n", encoding="utf-8"
             )
 
-            mod.propagate_once(verbose=False, repo_root=repo_root)
+            mod.propagate_once(verbose=False)
 
             self.assertTrue((handmade / "SKILL.md").exists())
 
@@ -678,6 +686,7 @@ class OrphanPruningTests(unittest.TestCase):
         would reach a real tree outside the generated root."""
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
             outside = repo_root / "outside.md"
             outside.write_text(
@@ -689,7 +698,7 @@ class OrphanPruningTests(unittest.TestCase):
             link = claude_agents / "z-linked.md"
             link.symlink_to(outside)
 
-            mod.propagate_once(verbose=False, repo_root=repo_root)
+            mod.propagate_once(verbose=False)
 
             self.assertTrue(outside.exists(), "prune followed a symlink into a real file")
             self.assertTrue(link.is_symlink())
@@ -705,6 +714,7 @@ class OrphanPruningTests(unittest.TestCase):
         """
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir) / "repo"
+            env.use(self, repo_root)
             repo_root.mkdir()
             self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
 
@@ -721,7 +731,7 @@ class OrphanPruningTests(unittest.TestCase):
             (claude_dir / "agents").symlink_to(outside, target_is_directory=True)
 
             with self.assertRaises(ValueError):
-                mod.propagate_once(verbose=False, repo_root=repo_root)
+                mod.propagate_once(verbose=False)
 
             self.assertTrue(victim.exists(), "prune deleted a file outside the repo root")
 
@@ -735,6 +745,7 @@ class OrphanPruningTests(unittest.TestCase):
         """
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir) / "repo"
+            env.use(self, repo_root)
             (repo_root / ".github" / "skills").mkdir(parents=True)
 
             outside = Path(tmp_dir) / "outside"
@@ -751,7 +762,7 @@ class OrphanPruningTests(unittest.TestCase):
             (claude_dir / "skills").symlink_to(outside, target_is_directory=True)
 
             with self.assertRaises(ValueError):
-                mod.propagate_skills_once(repo_root)
+                mod.propagate_skills_once()
 
             self.assertTrue(precious.exists(), "rmtree removed a tree outside the repo root")
             self.assertTrue(never_inspected.exists())
@@ -765,6 +776,7 @@ class OrphanPruningTests(unittest.TestCase):
         """
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir) / "repo"
+            env.use(self, repo_root)
             repo_root.mkdir()
             self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
 
@@ -781,7 +793,7 @@ class OrphanPruningTests(unittest.TestCase):
             self.assertFalse((repo_root / "claude" / "agents").is_symlink())
 
             with self.assertRaises(ValueError):
-                mod.propagate_once(verbose=False, repo_root=repo_root)
+                mod.propagate_once(verbose=False)
 
             self.assertTrue(victim.exists(), "prune escaped through a symlinked parent")
 
@@ -789,6 +801,7 @@ class OrphanPruningTests(unittest.TestCase):
         """An unreadable file is not a confirmed orphan — fail closed."""
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
             claude_agents = repo_root / "claude" / "agents"
             claude_agents.mkdir(parents=True, exist_ok=True)
@@ -796,7 +809,7 @@ class OrphanPruningTests(unittest.TestCase):
             unreadable.write_text("whatever\n", encoding="utf-8")
             unreadable.chmod(0o000)
             try:
-                mod.propagate_once(verbose=False, repo_root=repo_root)
+                mod.propagate_once(verbose=False)
                 self.assertTrue(unreadable.exists())
             finally:
                 # Restore before the temp root is torn down.
@@ -806,9 +819,10 @@ class OrphanPruningTests(unittest.TestCase):
         """A missing root has nothing to prune; never create one to sweep it."""
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             (repo_root / ".github" / "agents").mkdir(parents=True)
 
-            result = mod.propagate_once(verbose=False, repo_root=repo_root)
+            result = mod.propagate_once(verbose=False)
 
             self.assertEqual(result["claude_orphans_removed"], 0)
             self.assertEqual(result["skill_orphans_removed"], 0)
@@ -823,6 +837,7 @@ class OrphanPruningTests(unittest.TestCase):
         """
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
             claude_agents = repo_root / "claude" / "agents"
             claude_agents.mkdir(parents=True, exist_ok=True)
@@ -837,7 +852,7 @@ class OrphanPruningTests(unittest.TestCase):
             )
             readme.write_text(body, encoding="utf-8")
 
-            result = mod.propagate_once(verbose=False, repo_root=repo_root)
+            result = mod.propagate_once(verbose=False)
 
             self.assertTrue(readme.exists(), "a doc quoting the marker was deleted")
             self.assertEqual(readme.read_text(encoding="utf-8"), body)
@@ -955,6 +970,7 @@ class StaticDoneNotifyNonInterferenceTests(unittest.TestCase):
     def test_propagation_leaves_untagged_done_notify_entry_untouched(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             self._write_source_agent(repo_root)
             settings_file = repo_root / ".claude" / "settings.json"
             settings_file.parent.mkdir(parents=True, exist_ok=True)
@@ -993,7 +1009,7 @@ class StaticDoneNotifyNonInterferenceTests(unittest.TestCase):
             ) + "\n"
             settings_file.write_text(original, encoding="utf-8")
 
-            mod.propagate_once(verbose=False, repo_root=repo_root)
+            mod.propagate_once(verbose=False)
 
             self.assertEqual(
                 settings_file.read_text(encoding="utf-8"),
@@ -1004,6 +1020,7 @@ class StaticDoneNotifyNonInterferenceTests(unittest.TestCase):
     def test_propagation_does_not_prune_static_done_notify_plugin(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
             self._write_source_agent(repo_root)
             plugins_dir = repo_root / ".opencode" / "plugins"
             plugins_dir.mkdir(parents=True, exist_ok=True)
@@ -1020,7 +1037,7 @@ class StaticDoneNotifyNonInterferenceTests(unittest.TestCase):
             )
             plugin_file.write_text(original, encoding="utf-8")
 
-            mod.propagate_once(verbose=False, repo_root=repo_root)
+            mod.propagate_once(verbose=False)
 
             self.assertTrue(
                 plugin_file.is_file(),
