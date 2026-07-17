@@ -8,14 +8,14 @@ positively carries a generated marker (or lives inside a generated skill
 directory) — hand-maintained files are never touched.
 
 Usage:
-  deploy_assets.py                       # use saved selection; prompt if none (tty)
-  deploy_assets.py --harness claude,cursor
-  deploy_assets.py --all
-  deploy_assets.py --watch               # maintainer: auto-deploy on ports/ change
-  deploy_assets.py --list                # show harnesses and resolved destinations
+  deploy_agents.py                       # use saved selection; prompt if none (tty)
+  deploy_agents.py --harness claude,cursor
+  deploy_agents.py --all
+  deploy_agents.py --watch               # maintainer: auto-deploy on ports/ change
+  deploy_agents.py --list                # show harnesses and resolved destinations
 
 The selection is saved to `.deploy-config.json` (gitignored) so re-runs are just
-`python3 scripts/deploy_assets.py`.
+`python3 deploy_agents.py`.
 """
 
 from __future__ import annotations

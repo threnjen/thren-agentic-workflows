@@ -4,145 +4,111 @@ Quick-reference for AI agents working in this repository.
 
 ## What This Repo Is
 
-- Source-of-truth repository for multi-harness agent assets.
-- Primary authoring surface is `.github/`.
-- Derived or related platform surfaces are `claude/`, `opencode/`, `codex/`, and `.codex/`.
-- Includes copyable template packs for Node.js and Python projects.
-- Mostly Markdown plus Python propagation and runtime-deployment tooling under `scripts/`.
-- No root `package.json` or `pyproject.toml`; Python tests live under `tests/` and use repository-available runners.
+- Single source-of-truth repository for multi-harness agent assets.
+- Authoring surface is `source_of_truth/`. Everything else derived from it is generated.
+- Two-stage pipeline: transform (`source_of_truth/` → `ports/`) then deploy (`ports/` → real harness dirs).
+- Mostly Markdown plus two Python scripts (stdlib only) and a shared module.
+- No root `package.json` or `pyproject.toml` runtime deps; Python tests live under `tests/`.
 
 ## Current Counts
 
-- 41 source agent definitions in `.github/agents/`.
-- 24 skills in `.github/skills/`.
-- 15 instructions in `.github/instructions/`.
-- 2 template packs: `nodejs/` and `python/`.
+- 41 agent definitions in `source_of_truth/agents/` (39 `*.agent.md` + `docs-writer.md` + `prod-code-review.md`).
+- 24 skills in `source_of_truth/skills/`.
+- 15 instructions in `source_of_truth/instructions/`.
+- 4 learnings in `source_of_truth/learnings/`.
+- 1 defunct hook artifact set in `source_of_truth/hooks/`.
 
 ## Key Paths
 
 ```text
-AGENTS.md                                  # Repo-specific graph/MCP workflow guidance
-HARNESS_SETUP.md                           # How to expose repo assets to Copilot, Claude, and OpenCode
-.mcp.json                                  # Registers code-review-graph MCP with uvx
-.codex/config.toml                         # Repo-scoped Codex runtime MCP config
-.github/
-  agents/                                  # 41 source agent definitions
-    README.md                              # Full agent catalog and pipeline docs
-    *.agent.md                             # Most source agents (41 total definitions)
-    prod-code-review.md                    # Plain .md agent definition; still part of source set
-    docs-writer.md                         # Second plain .md agent definition; still part of source set
-  instructions/                            # 15 shared instruction files with applyTo globs
-  skills/                                  # 24 shared skill directories with SKILL.md entrypoints
-claude/agents/                             # Generated Claude copies
-opencode/agents/                           # Generated OpenCode copies
-codex/
-  agents/                                  # Generated Codex TOML agents
-  instructions/                            # Repo-owned Codex instruction source material
-  *.md                                     # Codex platform and porting docs
-docs/
-  ARCHITECTURE.md
-  CODEBASE_CONTEXT.md
-  LOCAL_DEVELOPMENT.md
-  TROUBLESHOOTING.md
-  porting/README.md
-eval/
-  EVAL_SYSTEM_USAGE.md
-  EVAL_GRADER_SCORE_HISTORY.md
-nodejs/
-  AGENTS.md
-  docs/STYLE_GUIDE.md
-python/
-  AGENTS.md
-  docs/STYLE_GUIDE.md
+AGENTS.md                                  # code-review-graph MCP workflow guidance
+INSTALLATION.md                            # deploy pointer
+source_of_truth/                           # THE authoring surface
+  agents/
+    README.md                              # full agent catalog and pipeline docs
+    *.agent.md                             # 39 agent definitions
+    docs-writer.md                         # plain .md agent (loaded by frontmatter)
+    prod-code-review.md                    # plain .md agent (loaded by frontmatter)
+  skills/                                  # 24 skill dirs, each rooted at SKILL.md
+  instructions/                            # 15 applyTo-glob instruction files
+  learnings/                               # 4 learnings files
+  hooks/                                   # defunct injection scanner (DEFUNCT.md)
+ports/                                     # GENERATED — do not hand-edit
+  claude/  {agents, commands, skills, learnings}
+  codex/   {agents, profiles, skills}      # TOML agents; profiles/ not deployed
+  opencode/{agents, skills}
+  cursor/  {commands, rules}               # commands=*.md, rules=*.mdc
+  github/  {agents, hooks, instructions, learnings, skills}   # verbatim mirror
+.github/                                   # real deployed mirror of ports/github
 scripts/
-  propagate_master_assets.py               # Master propagation entry point
-  runtime_deployment.py                     # Reviewed managed-copy deployment and reconciliation
-.vscode/tasks.json                         # One-shot and watch propagation tasks
+  propagate_master_assets.py               # transform entry point (--once | --watch)
+  asset_paths.py                           # shared markers + poll_watch
+  extract_pdfs.py, setup-hook-symlinks.sh  # utilities
+deploy_agents.py                           # deploy entry point (root, not scripts/)
+docs/ ARCHITECTURE.md CODEBASE_CONTEXT.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
+docs/porting/ docs/inspiration/
+eval/ benchmarks/ packages/ tests/
+.deploy-config.json                        # gitignored; saved harness selection
+.vscode/tasks.json                         # propagate once/watch + deploy watch
 ```
 
-## Propagation Model
+## Pipeline Model
 
-- Edit `.github/agents/`, `.github/skills/`, or `.github/instructions/` first.
-- Regenerate downstream outputs with `python3 scripts/propagate_master_assets.py --once`.
-- The VS Code task `watch: propagate master assets` runs `--watch` and is configured to start on folder open.
-- Generated targets are:
-  - `claude/agents/`
-  - `opencode/agents/`
-  - `codex/agents/`
-- Optional user-global deployment begins only after repository convergence. The first
-  `--runtime-deploy --active-home <path>` pass emits a content-bound inventory; writes
-  require its reviewed digest and watcher-restart confirmation.
+- Edit `source_of_truth/{agents,skills,instructions,learnings,hooks}` first.
+- Transform: `python3 scripts/propagate_master_assets.py --once` (default) or `--watch`.
+  Runs to a fixed point via `propagate_until_converged` (max 25 passes).
+- Transform targets: `ports/{claude,codex,opencode,cursor}` plus `ports/github` and `.github/`.
+- Deploy: `python3 deploy_agents.py [--harness a,b | --all | --watch | --list | --no-save]`.
+- Deploy destinations:
+  - claude → `$CLAUDE_CONFIG_DIR` or `~/.claude` (agents, commands, skills, learnings)
+  - codex → `$CODEX_HOME` or `~/.codex` (agents) + `~/.agents/skills` (skills); profiles not deployed
+  - opencode → `$OPENCODE_CONFIG_DIR` or `~/.config/opencode` (agents, skills)
+  - cursor → `~/.cursor` (commands, rules)
+  - github → `<repo>/.github` (verbatim mirror of the 5 subdirs)
+- Deploy selection persists to `.deploy-config.json` (gitignored) unless `--no-save`.
 
 ## Important Script Facts
 
-- `load_source_agents()` reads any `.github/agents/*.md` file with `name` and `description` frontmatter.
-- Source agent detection is not limited to `.agent.md`; that is why `prod-code-review.md` still propagates.
-- The script watches three directories: `.github/agents`, `.github/skills`, and `.github/instructions`.
-- Runtime deployment uses `scripts/runtime_deployment.py`; it resolves only the active
-  environment's destinations, preserves foreign collisions, and reconciles only
-  successfully copied harnesses.
-- Claude and OpenCode outputs preserve existing filename aliases when present.
-- Known aliases include:
-  - `docs-writer` -> `docs-writer`
-  - `web-research-specialist` -> `web-researcher`
-  - `audit-code-or-infra` -> `audit-code-infra-refactor`
-- Hidden agents are renamed for some targets:
-  - Claude uses `z-` filenames for non-user-invocable subagents.
-  - Codex uses `z-` in both filename and TOML `name`.
-
-## Agent Topology
-
-- 6 orchestrators: `01 Project - Planner`, `02 Phase - Refiner`, `04 Phase - Execute`, `Audit - Code, Infra, Refactor`, `Test - Orchestrator`, `Eval - Grader`.
-- 11 visible user-facing agents: decomposer, documentation architect, debugger, evangelize, single-feature agent, prod code review, unity reviewer, web researcher, and 3 auditors (deployed separately but user-invocable).
-- 22 hidden subagents, including plan expander, implementer, reviewer, QA writer, PR Review evaluators, diff security scan, evaluator helpers, auditors, and test helpers.
-
-## Template Pack Facts
-
-- `nodejs/AGENTS.md` and `python/AGENTS.md` are meant to be copied into another repo's root as `AGENTS.md`.
-- Each template expects a sibling `docs/STYLE_GUIDE.md` in the destination repository.
-- The two template packs intentionally share structure but differ on ecosystem-specific tooling and style guidance.
-- Do not introduce inheritance or a shared base file for the template packs.
+- Both scripts are stdlib-only and share `scripts/asset_paths.py`.
+- `deploy_agents.py` lives at the repo root, not in `scripts/`; it imports `scripts.asset_paths`.
+- Generated-marker ownership: a destination file is overwritten/pruned only if it
+  carries a marker at the emitter's exact write position (line 0 for no-frontmatter
+  output, the line after the closing `---` otherwise). A file merely quoting a marker
+  in prose stays inert.
+- Legacy `.github`-text markers are still honored so the source_of_truth marker-text
+  change did not orphan previously generated files.
+- Skill auxiliary files carry no marker of their own; the whole skill dir is owned via
+  its marked `SKILL.md`.
+- The `github` harness is a verbatim mirror: its files carry no marker and are treated
+  as unconditionally managed within the 5 mirrored subdirs.
+- Deploy heals debris from the old symlink deployment: destination roots that are
+  symlinks pointing into this repo (or dangling) are unlinked and replaced with real
+  dirs; foreign symlinks are left alone and skipped.
+- Known filename aliases: `docs-writer` → `docs-writer`, `web-research-specialist` →
+  `web-researcher`, `audit-code-or-infra` → `audit-code-infra-refactor`.
+- Hidden (non-user-invocable) subagents become `z-*` in Claude and Codex outputs.
 
 ## Platform Surface Rules
 
-- `.github/` is the only shared source-of-truth for agents, skills, and instructions.
-- `claude/` and `opencode/` are generated outputs, not normal authoring surfaces.
-- `codex/` is a repository-owned Codex area; `.codex/` is runtime configuration.
-- Do not treat `codex/` as if it were the live runtime install path.
-- Code-review-graph MCP is configured in both `.mcp.json` and `.codex/config.toml` via `uvx code-review-graph serve`.
+- `source_of_truth/` is the only shared source-of-truth for agents, skills, instructions, learnings.
+- `ports/*` and `.github/` are generated outputs, not authoring surfaces.
+- Make the logical change in `source_of_truth/` first; do not mirror it manually into `ports/`.
+- Rerun propagation rather than hand-editing generated outputs.
 
-## Authoring Boundary
+## Testing
 
-- When the task is about agent definitions, instruction files, skill content, or agent behavior in this repo, constrain discovery and edits to:
-  - `.github/agents/`
-  - `.github/instructions/`
-  - `.github/skills/`
-- Treat `claude/`, `opencode/`, and `codex/` as downstream or platform-specific outputs for those tasks.
-- Ignore those downstream directories during normal discovery and editing unless the assigned role is `Evangelize` or the user explicitly asks for propagation debugging or output verification.
-- Make the logical change in `.github/` first; do not mirror the same change manually into generated outputs.
-
-## File Relationships
-
-- `.github/agents/README.md` must stay in sync with the actual source agent set.
-- `docs/ARCHITECTURE.md` and this file should be updated when counts, directories, or propagation rules change.
-- `HARNESS_SETUP.md` is the canonical setup reference for multi-root VS Code and non-Copilot managed-copy deployment.
-- `docs/porting/README.md` is the neutral index for porting docs.
-- `codex/README.md` defines the separation between repository-owned Codex content and runtime `.codex/` content.
-
-## Editing Guidance
-
-- When changing shared agent behavior, edit `.github/` first and rerun propagation.
-- When the task is about agent, instruction, or skill behavior, do not widen discovery into `claude/`, `opencode/`, or `codex/` unless the task is explicitly about porting or generated-output verification.
-- When adding or removing an agent, update both `.github/agents/README.md` and the standard docs.
-- When adding a skill or instruction, update the relevant counts and documentation references.
-- When documenting commands, prefer the existing `python3 scripts/propagate_master_assets.py --once`, `--watch`, and reviewed `--runtime-deploy` entry points.
+- Python regression tests under `tests/` cover both scripts.
+- Run with `.venv/bin/python -m pytest tests/` (or the runner available in your env).
+- `tests/_propagate_env.py` redirects the propagator's directory globals to a temp tree
+  so tests never read/write the real repo.
 
 ## Do Not
 
-- Do not assume this repo is Markdown-only; the propagation script is part of the maintenance flow.
-- Do not edit generated Claude, OpenCode, or Codex agents first unless you are intentionally repairing generation output.
-- Do not search `claude/`, `opencode/`, or `codex/` to decide how source agent, instruction, or skill behavior should change; decide that from `.github/`.
+- Do not treat this repo as Markdown-only; the two scripts are the maintenance flow.
+- Do not edit generated `ports/*` or `.github/*` first unless intentionally repairing generation.
 - Do not assume filename parity across platforms; aliases and `z-` prefixes are intentional.
-- Do not document a root `dev/` directory as if it exists in this repo.
-- Do not treat `prod-code-review.md` as non-agent content just because it lacks the `.agent.md` suffix.
-- Do not invent deployment or CI/CD flows outside the canonical managed-copy guidance in `HARNESS_SETUP.md`.
+- Do not reference removed surfaces: `nodejs/`, `python/`, `HARNESS_SETUP.md`, `.mcp.json`,
+  `codex/README.md`, and `scripts/runtime_deployment.py` no longer exist.
+- Do not treat `prod-code-review.md` or `docs-writer.md` as non-agent content just because
+  they lack the `.agent.md` suffix.
+- Do not document a root `dev/` beyond `dev/pr-review/` (its fixtures are tracked; run output is gitignored).

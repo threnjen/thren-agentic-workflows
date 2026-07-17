@@ -8,29 +8,48 @@
 
 ### Cause
 
-Your shell startup is hitting a blocked or stale `pyenv` rehash operation before repo commands run. This is external to the repository, but it can break local propagation commands because they rely on a working `python3` in the shell.
+Your shell startup is hitting a blocked or stale `pyenv` rehash before repo commands
+run. This is external to the repository, but it breaks the scripts because they rely on
+a working `python3`.
 
 ### Fix
 
-- Confirm no other `pyenv` process is actively running.
-- Clear the stale `pyenv` lock or shim file only after verifying it is not in use.
+- Confirm no other `pyenv` process is running.
+- Clear the stale `pyenv` lock or shim only after verifying it is not in use.
 - Open a fresh shell and verify `python3` resolves before rerunning repo commands.
 
-## Propagation And Generated Outputs
+## Transform (propagate)
 
 ### Symptom
 
-Changes under `.github/` do not appear in `claude/agents/`, `opencode/agents/`, or `codex/agents/`.
+Changes under `source_of_truth/` do not appear in `ports/` or `.github/`.
 
 ### Cause
 
-The propagation watcher is not running, or you changed source-of-truth files without rerunning the one-shot generation command.
+The transform watcher is not running, or you edited source files without rerunning the
+one-shot command.
 
 ### Fix
 
 - Run `python3 scripts/propagate_master_assets.py --once`.
 - In VS Code, confirm the `watch: propagate master assets` task is running.
-- If you edited generated files directly, rerun propagation and recheck the diff from the `.github/` source.
+- If you edited generated files directly, rerun the transform and recheck the diff.
+
+### Symptom
+
+`Propagation failed: ...` and a non-zero exit.
+
+### Cause
+
+A pass raised, or propagation did not reach a fixed point within the max passes. Usually
+a malformed source file (bad frontmatter, an unclosed `---` block, or an `applyTo` value
+that no longer matches anything).
+
+### Fix
+
+- Read the error; fix the offending source file under `source_of_truth/`.
+- Rerun `--once`; a clean run prints a JSON convergence summary and a second run should
+  report zero changes.
 
 ### Symptom
 
@@ -38,74 +57,94 @@ Generated filenames do not match the source agent slug.
 
 ### Cause
 
-The propagation script intentionally rewrites some names for target platforms. It also uses `z-` prefixes for hidden Claude and Codex subagents.
+The transform intentionally rewrites some names for target platforms, and uses `z-`
+prefixes for hidden (non-user-invocable) Claude and Codex subagents.
 
 ### Fix
 
-- Check the alias rules in `scripts/propagate_master_assets.py` before assuming a file is missing.
-- Expect these built-in aliases:
-  - `docs-writer` -> `docs-writer`
-  - `web-research-specialist` -> `web-researcher`
-  - `audit-code-or-infra` -> `audit-code-infra-refactor`
+- Expect these aliases: `docs-writer` → `docs-writer`, `web-research-specialist` →
+  `web-researcher`, `audit-code-or-infra` → `audit-code-infra-refactor`.
 - Expect non-user-invocable agents to become `z-*` files in Claude and Codex outputs.
 
 ### Symptom
 
-An agent exists in `.github/agents/` but is skipped by downstream tooling.
+An agent exists in `source_of_truth/agents/` but is skipped by downstream tooling.
 
 ### Cause
 
-The source file may not have valid agent frontmatter. The propagation script loads agent definitions by checking for `name` and `description`, not strictly by extension.
+The source file may lack valid agent frontmatter. Agent definitions are loaded by
+checking for `name` and `description`, not strictly by extension.
 
 ### Fix
 
 - Verify the file has frontmatter with `name` and `description`.
-- Do not rename `prod-code-review.md` just because it lacks `.agent.md`; it is intentionally part of the source set.
+- Do not rename `prod-code-review.md` or `docs-writer.md` just because they lack
+  `.agent.md`; they are intentionally part of the source set.
 
-## VS Code And Harness Loading
-
-### Symptom
-
-GitHub Copilot does not show the agents from this repository.
-
-### Cause
-
-The repository is not open as part of the current VS Code workspace, so Copilot cannot discover `.github/agents/`, `.github/skills/`, and `.github/instructions/`.
-
-### Fix
-
-- Open this repository as a workspace folder.
-- If you are working in another repo, use a multi-root workspace as described in [HARNESS_SETUP.md](../HARNESS_SETUP.md).
+## Deploy
 
 ### Symptom
 
-Claude, Codex, or OpenCode cannot see a generated skill or agent after deployment.
+`no saved harness selection; pass --harness ... or --all` (exit 2).
 
 ### Cause
 
-Repository outputs may not have converged, the active-home destination may differ from the expected environment variable, a foreign collision may have been preserved, or the harness session may be stale.
+`deploy_agents.py` ran in a non-interactive shell with no `.deploy-config.json` and no
+`--harness`/`--all` flag, so it has nothing to deploy and will not guess.
 
 ### Fix
 
-- Restart any long-running propagation watcher and run repository propagation to a verified fixed point.
-- Run `scripts/propagate_master_assets.py --runtime-deploy --active-home <path>` and review the printed inventory, expected roster, and collision outcomes.
-- Rerun with `--reviewed-inventory <digest>` and `--watcher-restarted` to deploy; do not use ad hoc copy or retired runtime-link repair instructions.
-- Confirm deployed assets are fresh regular files/directories, then restart the harness and verify discovery.
-- Report native Windows and WSL separately. If one environment is unavailable, record it as `NOT RUN`.
+- Pass `--harness claude,codex,opencode,cursor,github` or `--all`, or run once
+  interactively to create the saved selection.
 
 ### Symptom
 
-Code-review-graph tools are unavailable even though the repo documents them.
+A file at a destination is not being updated; it shows up under `skipped_paths` in the
+deploy output.
 
 ### Cause
 
-The MCP server configuration exists in `.mcp.json` and `.codex/config.toml`, but the runtime that should load it is not active or cannot resolve `uvx`.
+Deploy is fail-closed: it only overwrites or prunes files that carry a generated marker
+(or live inside a marked skill directory). The destination file is hand-maintained (or a
+stale copy from before markers existed), so it is left untouched.
 
 ### Fix
 
-- Verify `uvx` is installed and available on your `PATH`.
-- Confirm the active harness is loading the repo's MCP configuration file.
-- Retry after restarting the harness session so it reloads MCP configuration.
+- If the file is a stale copy you want replaced, delete it by hand and rerun deploy.
+- If it is genuinely hand-maintained, leave it — the skip is correct.
+
+### Symptom
+
+`FileExistsError` on a destination like `~/.config/opencode/agents`, or deploy refuses to
+write into a destination directory.
+
+### Cause
+
+Debris from the pre-split symlink deployment: the destination root is a symlink (often
+dangling) pointing into this repo.
+
+### Fix
+
+- Deploy self-heals this: a destination root that is a symlink pointing into the repo (or
+  dangling) is unlinked and replaced with a real directory. Rerun `python3 deploy_agents.py`.
+- A symlink pointing somewhere *else* is treated as foreign and skipped — remove it by
+  hand if you want deploy to manage that path.
+
+### Symptom
+
+A harness cannot see a deployed skill or agent.
+
+### Cause
+
+`ports/` was not regenerated before deploy, the destination differs from the expected env
+variable, or the harness session is stale.
+
+### Fix
+
+- Run the transform to a fixed point, then rerun deploy.
+- Check `python3 deploy_agents.py --list` to see the resolved destinations (and whether
+  `CLAUDE_CONFIG_DIR` / `CODEX_HOME` / `OPENCODE_CONFIG_DIR` are redirecting them).
+- Restart the harness session so it rediscovers the deployed files.
 
 ## Documentation Drift
 
@@ -115,22 +154,25 @@ Counts in `README.md`, `docs/ARCHITECTURE.md`, and `docs/CODEBASE_CONTEXT.md` di
 
 ### Cause
 
-Agent, skill, or instruction inventories changed without updating the standard docs as a set.
+Agent, skill, instruction, or learnings inventories changed without updating the standard
+docs as a set.
 
 ### Fix
 
-- Update all three standard overview docs in the same change.
-- Recount the actual files in `.github/agents/`, `.github/skills/`, and `.github/instructions/` before finalizing the docs.
+- Recount the actual files under `source_of_truth/{agents,skills,instructions,learnings}`
+  and update all three overview docs in the same change.
 
 ### Symptom
 
-Docs mention paths like `dev/` that do not exist in this repository.
+Docs mention `nodejs/`, `python/`, `HARNESS_SETUP.md`, `.mcp.json`, `codex/README.md`, or
+`scripts/runtime_deployment.py`.
 
 ### Cause
 
-Older documentation was copied forward from agent expectations for downstream project repos rather than this repository's actual checked-in structure.
+Those surfaces were removed in the `source_of_truth/`/`ports/` restructure. Older docs
+referenced the previous `.github/` → `claude/`/`codex/`/`opencode/` layout.
 
 ### Fix
 
-- Prefer the real workspace layout over inferred agent output paths when documenting this repo.
-- Keep repository docs focused on checked-in directories and explicitly label downstream project conventions when they appear.
+- Treat `source_of_truth/` as the authoring surface and `ports/` + `.github/` as
+  generated outputs. Delete stale references to the removed paths.
