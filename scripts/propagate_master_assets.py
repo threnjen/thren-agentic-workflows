@@ -230,6 +230,7 @@ def _is_generated_output(path: Path, marker: str) -> bool:
 
 
 def _prune_orphaned_outputs(
+    repo_root: Path,
     directory: Path,
     pattern: str,
     expected: set[Path],
@@ -243,7 +244,15 @@ def _prune_orphaned_outputs(
     root, and the marker guard is the only thing that saves it.
 
     A missing root has nothing to prune and is never created here.
+
+    Containment is checked before anything is enumerated. Guarding only the leaf
+    is not enough: if the generated ROOT is itself a symlink out of the repo, its
+    children are ordinary files that pass every leaf check, and each carrying the
+    marker gets unlinked outside the repository. This is REPO-SEC-06 in deletion
+    form, and unlike a bad write it cannot be undone by re-running propagation.
     """
+    _validate_output_directory(repo_root, directory)
+
     if not directory.is_dir():
         return 0
 
@@ -262,13 +271,27 @@ def _prune_orphaned_outputs(
     return removed
 
 
-def _prune_orphaned_skill_dirs(skills_dir: Path, expected: set[Path], marker: str) -> int:
+def _prune_orphaned_skill_dirs(
+    repo_root: Path,
+    skills_dir: Path,
+    expected: set[Path],
+    marker: str,
+) -> int:
     """Delete generated skill directories under `skills_dir` whose source is gone.
 
     Same two-condition rule as `_prune_orphaned_outputs`, applied to a directory via
     its SKILL.md. Skills are removed as a tree because a skill is a directory of
     assets; this is the one path where recursive removal is in scope.
+
+    Containment is checked before anything is enumerated, for the same reason as
+    `_prune_orphaned_outputs` and with a wider blast radius: the marker guard reads
+    one file (`SKILL.md`) but `shutil.rmtree` removes the whole tree, so every
+    sibling of that marker is deleted without ever being inspected. A symlinked
+    skills root therefore trades one marker for an entire directory outside the
+    repository.
     """
+    _validate_output_directory(repo_root, skills_dir)
+
     if not skills_dir.is_dir():
         return 0
 
@@ -1441,9 +1464,15 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
 
     # Pruning runs only after every skill has been emitted.
     orphans_removed = (
-        _prune_orphaned_skill_dirs(claude_skills_dir, expected_claude_dirs, GENERATED_SKILL_HEADER)
-        + _prune_orphaned_skill_dirs(opencode_skills_dir, expected_opencode_dirs, GENERATED_SKILL_HEADER)
-        + _prune_orphaned_skill_dirs(codex_skills_dir, expected_codex_dirs, GENERATED_SKILL_HEADER)
+        _prune_orphaned_skill_dirs(
+            repo_root, claude_skills_dir, expected_claude_dirs, GENERATED_SKILL_HEADER
+        )
+        + _prune_orphaned_skill_dirs(
+            repo_root, opencode_skills_dir, expected_opencode_dirs, GENERATED_SKILL_HEADER
+        )
+        + _prune_orphaned_skill_dirs(
+            repo_root, codex_skills_dir, expected_codex_dirs, GENERATED_SKILL_HEADER
+        )
     )
 
     return {
@@ -1567,19 +1596,27 @@ def propagate_once(verbose: bool = True, repo_root: Path | None = None) -> Dict[
     # and `_opencode_filename_for` resolve an output name against the stems already on
     # disk, so deleting first could hand a survivor a different filename (AC6).
     claude_orphans = _prune_orphaned_outputs(
-        claude_agents_dir, "*.md", expected_claude_files, GENERATED_AGENT_MARKDOWN_HEADER
+        repo_root, claude_agents_dir, "*.md", expected_claude_files, GENERATED_AGENT_MARKDOWN_HEADER
     )
     claude_command_orphans = _prune_orphaned_outputs(
-        claude_commands_dir, "*.md", expected_claude_command_files, GENERATED_AGENT_MARKDOWN_HEADER
+        repo_root,
+        claude_commands_dir,
+        "*.md",
+        expected_claude_command_files,
+        GENERATED_AGENT_MARKDOWN_HEADER,
     )
     opencode_orphans = _prune_orphaned_outputs(
-        opencode_agents_dir, "*.md", expected_opencode_files, GENERATED_AGENT_MARKDOWN_HEADER
+        repo_root, opencode_agents_dir, "*.md", expected_opencode_files, GENERATED_AGENT_MARKDOWN_HEADER
     )
     codex_orphans = _prune_orphaned_outputs(
-        codex_agents_dir, "*.toml", expected_codex_files, GENERATED_AGENT_HEADER
+        repo_root, codex_agents_dir, "*.toml", expected_codex_files, GENERATED_AGENT_HEADER
     )
     codex_profile_orphans = _prune_orphaned_outputs(
-        codex_profiles_dir, "*.config.toml", expected_codex_profile_files, GENERATED_AGENT_HEADER
+        repo_root,
+        codex_profiles_dir,
+        "*.config.toml",
+        expected_codex_profile_files,
+        GENERATED_AGENT_HEADER,
     )
 
     skill_result = propagate_skills_once(repo_root)

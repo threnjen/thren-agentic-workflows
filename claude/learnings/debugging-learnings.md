@@ -71,3 +71,33 @@ unrewritten_slug` is that guard. Note it must compare against the set of agents 
 root actually *renames*: most slugs equal their identifier (`prod-code-review`) and
 those references are correct, and `claude/agents/README.md` is hand-maintained
 inside a generated root and documents slugs on purpose.
+
+## If code deletes files, validate the root before enumerating — not the leaf before unlinking
+
+**Problem**: An orphan-pruning sweep guarded every leaf it was about to delete
+(`path.is_symlink()`, marker check) but never checked the directory it enumerated.
+With a generated root itself symlinked outside the repository, every child is an
+ordinary marker-bearing file that passes all leaf checks, so the sweep unlinked
+files outside the repo. The `rmtree` variant was worse: the marker guard reads one
+file (`SKILL.md`) while the deletion is recursive, so every sibling of that marker
+was removed without ever being inspected.
+
+**Root cause**: Leaf-level validation answers "is this specific thing safe to
+delete", never "am I standing in the right place". Those are different questions,
+and only the second one is a containment property. A validator already existed in
+the same module and neither prune site called it.
+
+**Fix**: Resolve the enumeration root and assert it is inside the target root
+*before* globbing, and fail loudly rather than skipping. Resolution must cover the
+whole path, not the leaf: a symlinked *parent* with a real leaf directory defeats
+`directory.is_symlink()` while still escaping. That is the same nested-destination
+shape as the write-side escape, so a repo that fixed it for writes should assume
+the delete path has it too.
+
+**Watch for**: Reversibility asymmetry decides the severity. A bad write is undone
+by re-running propagation; a bad delete is gone. Any sweep that combines "enumerate
+a directory" with "delete what matches" needs its containment check at the
+enumeration boundary, and the regression test must include the symlinked-parent case
+— a leaf-only check passes the obvious test and still deletes outside the repo. Test
+that the guard refuses AND that the legitimate in-root sweep still prunes; a
+containment check that bricks the feature will be reverted by whoever hits it next.

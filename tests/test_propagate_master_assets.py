@@ -1167,6 +1167,97 @@ class OrphanPruningTests(unittest.TestCase):
             self.assertTrue(outside.exists(), "prune followed a symlink into a real file")
             self.assertTrue(link.is_symlink())
 
+    def test_prune_refuses_a_generated_root_symlinked_outside_the_repo(self) -> None:
+        """P3-SEC-01. Guarding the leaf is not enough; the ROOT must be contained.
+
+        `test_symlinked_orphan_is_not_unlinked` covers a symlinked *file* inside a
+        real root. This is the inverse and the dangerous one: the root itself is the
+        symlink, so every child is an ordinary marker-bearing file that passes every
+        leaf check, and the prune unlinks it outside the repository. A bad write can
+        be undone by re-running propagation; a bad delete cannot.
+        """
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir) / "repo"
+            repo_root.mkdir()
+            self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
+
+            outside = Path(tmp_dir) / "outside"
+            outside.mkdir()
+            victim = outside / "z-victim.md"
+            victim.write_text(
+                f"---\nname: victim\n---\n{mod.GENERATED_AGENT_MARKDOWN_HEADER}\nreal file\n",
+                encoding="utf-8",
+            )
+
+            claude_dir = repo_root / "claude"
+            claude_dir.mkdir()
+            (claude_dir / "agents").symlink_to(outside, target_is_directory=True)
+
+            with self.assertRaises(ValueError):
+                mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            self.assertTrue(victim.exists(), "prune deleted a file outside the repo root")
+
+    def test_prune_refuses_a_skills_root_symlinked_outside_the_repo(self) -> None:
+        """P3-SEC-01, recursive form -- the wider blast radius of the two.
+
+        The marker guard reads one file (`SKILL.md`), but `shutil.rmtree` removes the
+        whole tree: every sibling of that marker is deleted without ever being
+        inspected. A symlinked skills root trades a single marker for an entire
+        directory outside the repository.
+        """
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir) / "repo"
+            (repo_root / ".github" / "skills").mkdir(parents=True)
+
+            outside = Path(tmp_dir) / "outside"
+            precious = outside / "precious-skill"
+            precious.mkdir(parents=True)
+            (precious / "SKILL.md").write_text(
+                f"---\nname: precious\n---\n{mod.GENERATED_SKILL_HEADER}\n", encoding="utf-8"
+            )
+            never_inspected = precious / "irreplaceable.txt"
+            never_inspected.write_text("carries no marker; rmtree does not care\n", encoding="utf-8")
+
+            claude_dir = repo_root / "claude"
+            claude_dir.mkdir()
+            (claude_dir / "skills").symlink_to(outside, target_is_directory=True)
+
+            with self.assertRaises(ValueError):
+                mod.propagate_skills_once(repo_root)
+
+            self.assertTrue(precious.exists(), "rmtree removed a tree outside the repo root")
+            self.assertTrue(never_inspected.exists())
+
+    def test_prune_refuses_a_root_escaping_through_a_symlinked_parent(self) -> None:
+        """The nested-destination form: the leaf directory is real, its PARENT is not.
+
+        This is SEC-01's shape (already fixed once for writes) applied to deletes. A
+        check that only asks `directory.is_symlink()` passes here and deletes outside
+        the repo anyway; only resolving the whole path catches it.
+        """
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir) / "repo"
+            repo_root.mkdir()
+            self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
+
+            outside = Path(tmp_dir) / "outside"
+            (outside / "agents").mkdir(parents=True)
+            victim = outside / "agents" / "z-victim.md"
+            victim.write_text(
+                f"---\nname: victim\n---\n{mod.GENERATED_AGENT_MARKDOWN_HEADER}\nreal file\n",
+                encoding="utf-8",
+            )
+
+            # `claude` is the symlink; `claude/agents` is a real directory beyond it.
+            (repo_root / "claude").symlink_to(outside, target_is_directory=True)
+            self.assertFalse((repo_root / "claude" / "agents").is_symlink())
+
+            with self.assertRaises(ValueError):
+                mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            self.assertTrue(victim.exists(), "prune escaped through a symlinked parent")
+
     def test_unreadable_orphan_is_not_deleted(self) -> None:
         """An unreadable file is not a confirmed orphan — fail closed."""
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
