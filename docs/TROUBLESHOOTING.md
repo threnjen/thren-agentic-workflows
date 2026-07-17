@@ -88,8 +88,8 @@ Repository outputs may not have converged, the active-home destination may diffe
 ### Fix
 
 - Restart any long-running propagation watcher and run repository propagation to a verified fixed point.
-- Resolve destinations again and review the inventory, expected roster, and collision outcomes.
-- Rerun `deploy_managed_copies_after_convergence`; do not use ad hoc copy or retired runtime-link repair instructions.
+- Run `scripts/propagate_master_assets.py --runtime-deploy --active-home <path>` and review the printed inventory, expected roster, and collision outcomes.
+- Rerun with `--reviewed-inventory <digest>` and `--watcher-restarted` to deploy; do not use ad hoc copy or retired runtime-link repair instructions.
 - Confirm deployed assets are fresh regular files/directories, then restart the harness and verify discovery.
 - Report native Windows and WSL separately. If one environment is unavailable, record it as `NOT RUN`.
 

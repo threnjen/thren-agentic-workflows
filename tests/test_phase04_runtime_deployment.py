@@ -939,10 +939,8 @@ class DeploymentGuidanceTests(unittest.TestCase):
     SUPPORTED_SURFACES = (
         ".github/agents/evangelize.agent.md",
         "claude/README.md",
-        "claude/SYMLINK_SETUP.md",
         "claude/agents/README.md",
-        "codex/MACOS_SETUP_AND_SYMLINKS.md",
-        "opencode/SYMLINK_SETUP.md",
+        "codex/PILOT_SLICE_PLAN.md",
         "HARNESS_SETUP.md",
         "docs/TROUBLESHOOTING.md",
         "README.md",
@@ -989,12 +987,13 @@ class DeploymentGuidanceTests(unittest.TestCase):
         )
         for obligation in (
             "propagate_until_converged",
-            "resolve_destinations_after_convergence",
-            "deploy_managed_copies_after_convergence",
+            "--runtime-deploy",
+            "--reviewed-inventory",
+            "--watcher-restarted",
             "regular-copy freshness",
             "expected roster coverage",
             "collision",
-            "Inspect the returned managed-copy result",
+            "Inspect the printed managed-copy result",
             "runtime discovery",
             "NOT RUN",
         ):

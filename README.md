@@ -37,12 +37,11 @@ Current inventory:
 │   ├── skills/                       # Generated copies from .github/skills/
 │   └── README.md
 ├── opencode/
-│   ├── agents/                       # Generated OpenCode-formatted agent copies
-│   └── OPENCODE_PORTING_GUIDE.md
+│   └── agents/                       # Generated OpenCode-formatted agent copies
 ├── codex/
 │   ├── agents/                       # Generated Codex TOML agents
 │   ├── instructions/                 # Repo-owned Codex source material
-│   └── *.md                          # Codex platform reference and porting docs
+│   └── *.md                          # Codex platform reference and pilot-slice history (porting guide lives in docs/porting/)
 ├── .codex/
 │   ├── config.toml                   # Repo-scoped Codex runtime config
 │   └── hooks.json

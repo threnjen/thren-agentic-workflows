@@ -6,7 +6,7 @@ Specialized agents for structured software development workflows, configured for
 
 ## Setup
 
-Before using these agents, follow the managed-copy workflow in [SYMLINK_SETUP.md](SYMLINK_SETUP.md) (the legacy filename is retained for compatibility). Converge repository outputs, review the destination inventory, deploy through `deploy_managed_copies_after_convergence`, and verify regular-copy freshness plus fresh-session discovery.
+Before using these agents, follow the managed-copy workflow in [HARNESS_SETUP.md](../HARNESS_SETUP.md). Converge repository outputs, review the destination inventory, deploy through `scripts/propagate_master_assets.py --runtime-deploy`, and verify regular-copy freshness plus fresh-session discovery.
 
 ---
 
@@ -320,4 +320,4 @@ Each agent file is standalone. To use these agents in a different repository:
 
 1. Copy the `claude/agents/` directory into the target repo.
 2. Run repository propagation to a verified fixed point.
-3. Review and run the managed-copy deployment workflow in [SYMLINK_SETUP.md](SYMLINK_SETUP.md).
+3. Review and run the managed-copy deployment workflow in [HARNESS_SETUP.md](../HARNESS_SETUP.md).

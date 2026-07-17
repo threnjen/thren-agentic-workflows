@@ -44,7 +44,7 @@ You are an auditor...
 
 ## Porting Process
 
-See [claude/CLAUDE_PORTING_GUIDE.md](../CLAUDE_PORTING_GUIDE.md) for complete instructions on:
+See [docs/porting/CLAUDE_PORTING_GUIDE.md](../../docs/porting/CLAUDE_PORTING_GUIDE.md) for complete instructions on:
 - How to identify which instructions apply
 - Tool name mapping across platforms
 - Common mistakes to avoid
@@ -62,9 +62,9 @@ See [claude/CLAUDE_PORTING_GUIDE.md](../CLAUDE_PORTING_GUIDE.md) for complete in
 
 ## Setup
 
-Run repository propagation to a fixed point, resolve and review the active Claude destination inventory, then invoke `deploy_managed_copies_after_convergence`. Verify regular-copy freshness, roster coverage, collision outcomes, and discovery from a fresh Claude session.
+Run repository propagation to a fixed point, resolve and review the active Claude destination inventory, then deploy through `scripts/propagate_master_assets.py --runtime-deploy`. Verify regular-copy freshness, roster coverage, collision outcomes, and discovery from a fresh Claude session.
 
-See [../SYMLINK_SETUP.md](../SYMLINK_SETUP.md) for details; its legacy filename is retained for compatibility.
+See [HARNESS_SETUP.md](../../HARNESS_SETUP.md) for the full canonical sequence.
 
 ---
 
@@ -120,4 +120,4 @@ When adding or updating agents:
 3. Sync changes to `opencode/agents/` (different format)
 4. Update this README if the process changes
 
-See [claude/CLAUDE_PORTING_GUIDE.md](../CLAUDE_PORTING_GUIDE.md) for full process.
+See [docs/porting/CLAUDE_PORTING_GUIDE.md](../../docs/porting/CLAUDE_PORTING_GUIDE.md) for full process.

@@ -18,7 +18,7 @@ You are a cross-platform porter for source-of-truth assets under `.github/`. You
 - `.github/agents/`, `.github/instructions/`, and `.github/skills/` are the authoring sources.
 - `claude/`, `codex/`, and `opencode/` are generated repository outputs.
 - Edit source assets first. Never hand-edit generated agent variants or replace generated directories with links.
-- Use `claude/CLAUDE_PORTING_GUIDE.md`, `codex/CODEX_PORTING_GUIDE.md`, and `opencode/OPENCODE_PORTING_GUIDE.md` for platform transformations.
+- Use `docs/porting/CLAUDE_PORTING_GUIDE.md`, `docs/porting/CODEX_PORTING_GUIDE.md`, and `docs/porting/OPENCODE_PORTING_GUIDE.md` for platform transformations.
 
 For Claude, `user-invocable: false` emits a subagent and `user-invocable: true` emits a command, plus a subagent only when another source agent spawns it. Preserve established identifiers and remove stale generated outputs only through propagation.
 
@@ -44,13 +44,13 @@ Operate on one source by default. Do not mutate unrelated sources and do not ski
 
 ## Reviewed Managed-Copy Deployment
 
-Runtime deployment uses the settled public APIs; do not reproduce their path, ownership, collision, staging, replacement, or pruning algorithms:
+Runtime deployment is driven entirely through `scripts/propagate_master_assets.py --runtime-deploy`, a two-invocation review-then-deploy flow. Do not reproduce its path, ownership, collision, staging, replacement, or pruning algorithms, and do not call its internal functions directly — the flag is the only supported entry point:
 
-1. Pass the successful convergence result to `resolve_destinations_after_convergence`.
-2. Review `runtime_deployment.destination_inventory(records)` before mutation. Confirm the active home on the destination records, expected roster coverage, and the destination for every harness and asset class.
-3. After that inventory is explicitly reviewed, call `deploy_managed_copies_after_convergence` with the same convergence result and records.
-4. Inspect the returned managed-copy result for each harness's collision, copy, replacement, pruning, failure, and reconciliation-skipped outcomes.
-5. Re-run convergence and deployment to verify a fixed point.
+1. Run `python3 scripts/propagate_master_assets.py --runtime-deploy --active-home <path>` with no `--reviewed-inventory`. This converges repository outputs and prints the destination inventory plus an `inventory_digest` as JSON. No mutation happens yet; it exits `2` (`status: "review_required"`).
+2. Review the printed inventory before mutation: confirm the active home, expected roster coverage, and the destination for every harness and asset class.
+3. After that inventory is explicitly reviewed, and the watcher restart from step 2 above is confirmed, rerun the same command with `--reviewed-inventory <digest-from-step-1>` and `--watcher-restarted`. This re-verifies convergence and the digest before any write (aborting on drift), then deploys.
+4. Inspect the printed managed-copy result for each harness's collision, copy, replacement, pruning, failure, and reconciliation-skipped outcomes.
+5. Re-run the sequence and verify it reports a fixed point.
 
 Supported runtime assets are regular managed copies. Never create, repair, recommend, or validate runtime symlinks or junctions for generated agents, commands, skills, profiles, settings/hooks outputs, or learning assets. Never replace the managed deployment with ad hoc shell copy commands.
 

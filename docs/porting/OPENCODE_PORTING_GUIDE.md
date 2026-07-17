@@ -8,8 +8,8 @@ This document describes how to port agent definitions from the GitHub master sou
 - Destination: `opencode/agents/*.md`
 - This guide is OpenCode-only by design.
 
-For Claude, see `claude/CLAUDE_PORTING_GUIDE.md`.
-For Codex, see `codex/CODEX_PORTING_GUIDE.md`.
+For Claude, see `CLAUDE_PORTING_GUIDE.md`.
+For Codex, see `CODEX_PORTING_GUIDE.md`.
 For cross-platform tool names, see `docs/porting/TOOL_MAPPING.md`.
 
 ## OpenCode Model
