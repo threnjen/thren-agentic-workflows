@@ -146,7 +146,15 @@ def test_delegation_is_declared_not_inlined() -> None:
     """
     body = _prose(TEST_HEALTH)
 
-    assert "delegate" in body
+    # The imperative itself, with its objects and target attached. A bare
+    # `"delegate" in body` cannot fail: the token occurs 13 times in this file
+    # ("the delegate's analysis procedure", "delegate inputs", "as delegated
+    # analysis"), so the one sentence that actually issues the instruction can
+    # be reversed to "Perform coverage..." while the guard stays green.
+    assert (
+        "delegate coverage, redundancy, and flake-candidate analysis to `test - analyst`"
+        in body
+    )
     assert "analysis belongs to `test - analyst`" in body
     assert "do not reimplement the delegate's analysis procedure" in body
     assert "no local scan or test-analysis procedure is defined here" in body
@@ -176,11 +184,17 @@ def test_test_health_preserves_the_not_run_ceiling() -> None:
 
     `.github/learnings/review-learnings.md:267-271`: a not-run marker without a
     visible readiness ceiling reads as neutral coverage.
+
+    Pinned at the rule that requires the entry, not as a bare `"not run"`: the
+    token also appears in the max_depth paragraph ("that is the NOT RUN case
+    below"), so a loose check stays green while the rule that actually requires
+    the entry is deleted.
     """
     body = _prose(TEST_HEALTH)
 
-    assert "not run" in body
+    assert "write a report with a not run entry and concrete reason" in body
     assert "verdict ceiling is below go" in body
+    assert "missing analysis is never a clean result" in body
 
 
 # ---------------------------------------------------------------------------
@@ -258,10 +272,20 @@ def test_narrator_has_no_subphase_attribution_anywhere_in_the_file() -> None:
 
 
 def test_narrator_frames_the_comparison_as_the_branch_diff() -> None:
-    """AC2. Whole-phase baseline->final becomes `<merge-base>..HEAD`."""
+    """AC2. Whole-phase baseline->final becomes `<merge-base>..HEAD`.
+
+    Pinned in both positions that must hold -- the assigned-scope statement and
+    the reconciliation step that ranges the narrative. The token occurs three
+    times, so a bare membership check stays green while either individual
+    framing is deleted.
+    """
     body = _prose(NARRATOR)
 
-    assert "<merge-base>..head" in body
+    assert "the subject is the branch diff `<merge-base>..head`" in body
+    assert (
+        "reconcile the chunk summaries into one narrative over `<merge-base>..head`"
+        in body
+    )
     assert "whole-phase" not in body
 
 
@@ -382,7 +406,11 @@ def test_both_agents_defer_the_report_path_to_the_conventions_skill() -> None:
         assert "dev/phase-final-review/" not in text, (
             f"{path.name} still declares the retired report root"
         )
-        assert "pr-review-conventions" in text, (
+        # The load instruction itself, not a bare token: `05b` names
+        # `pr-review-conventions` twice (the load line and the partial-failure
+        # rules), so a membership check stays green there while the line that
+        # actually loads the skill is deleted.
+        assert "Load `pr-review-conventions` before doing any review work." in text, (
             f"{path.name} must load the skill that owns the report path"
         )
 

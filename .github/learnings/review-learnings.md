@@ -506,3 +506,15 @@ Grant audits stall in argument about whether some command "might be needed", and
 ## Watch for
 
 A family of agents where one holds a grant recorded as unclosable and the rest are assumed to need it too. Check what the privileged one hands back: if it returns a path or artifact the others merely read, the others need no grant. Conversely, when a plan asserts an agent uses a capability, verify against the prior body before building to match — a plan's claim about existing code is a hypothesis, and implementing to satisfy a false one manufactures a dependency and a failure mode that never existed. Reporting the plan's error is the correct move, not the insubordinate one.
+
+## Pattern
+
+A mutation sweep that only breaks the phrase each guard *intends* to pin will systematically miss inert guards. The blind spot is the guard whose assertion is a short phrase or single token that occurs several times in the target prose: the sweep damages the occurrence the author had in mind, the guard fires, and the guard is scored live — while the sentence that actually carries the contract can be removed or negated with the guard still green. A sweep must independently attempt to negate each load-bearing sentence, not merely damage the phrase the guard names. Negation matters more than deletion: inverting an imperative to its opposite instruction is the mutation that models the real regression, and a deletion-only sweep never tries it.
+
+## Impact
+
+The verification claim inverts. A report of "N/N killed, zero inert" is produced by a sweep that could not have detected the defect it is cited to rule out, and the guards protecting the feature's headline contract are the likeliest to be affected — headline contracts get restated in prose more often than incidental ones, so their key tokens are exactly the ones that recur. The count is honestly arrived at and worthless, and the next reviewer inherits it as settled.
+
+## Watch for
+
+Any assertion matching a short phrase against agent prose, rule files, or any document that restates its own vocabulary. Before trusting it, count occurrences of the token in the target: if greater than one, the assertion cannot fail independently and is inert regardless of what a sweep reported. A token appearing ten-plus times — a delegating agent's word for delegation, a reporting agent's word for its report — makes the assertion unconditionally true. Also watch for guards that loop over several files sharing one assertion: the token may occur once in one file and repeatedly in another, so the guard is live for one and inert for the other, and a sweep targeting either file alone scores it wrong. Anchor on the full sentence with its objects attached, or on a claim verified to occur exactly once.
