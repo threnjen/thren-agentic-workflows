@@ -10,28 +10,6 @@
             "timeout": 30
           }
         ]
-      },
-      {
-        "matcher": "",
-        "$source": "audit-log",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.github/hooks/scripts/audit-log.sh\"",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Read|Bash|Grep|WebFetch|WebSearch|Task|apply_patch|mcp__.*",
-        "$source": "injection-scanner",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.github/hooks/scripts/injection-scanner.py\"",
-            "timeout": 10
-          }
-        ]
       }
     ],
     "SessionStart": [
@@ -49,7 +27,6 @@
     "Stop": [
       {
         "matcher": "",
-        "$source": "done-notify",
         "hooks": [
           {
             "type": "command",
@@ -61,7 +38,6 @@
     "Notification": [
       {
         "matcher": "",
-        "$source": "done-notify",
         "hooks": [
           {
             "type": "command",

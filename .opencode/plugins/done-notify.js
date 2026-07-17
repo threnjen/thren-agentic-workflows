@@ -1,4 +1,3 @@
-// Generated from .github/hooks source-of-truth. Do not edit manually.
 export const DoneNotify = async ({ $, directory }) => {
   return {
     "session.idle": async (_input, _output) => {
