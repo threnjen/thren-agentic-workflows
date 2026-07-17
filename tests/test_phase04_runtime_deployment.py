@@ -654,5 +654,75 @@ class ManagedCopyReconciliationTests(unittest.TestCase):
             propagator.deploy_managed_copies_after_convergence(unconverged, ())
 
 
+class DeploymentGuidanceTests(unittest.TestCase):
+    SUPPORTED_SURFACES = (
+        ".github/agents/evangelize.agent.md",
+        "claude/README.md",
+        "claude/SYMLINK_SETUP.md",
+        "claude/agents/README.md",
+        "codex/MACOS_SETUP_AND_SYMLINKS.md",
+        "opencode/SYMLINK_SETUP.md",
+        "HARNESS_SETUP.md",
+        "docs/TROUBLESHOOTING.md",
+        "README.md",
+    )
+    PROHIBITED_OPERATIONAL_TOKENS = (
+        "ln -s",
+        "New-Item -ItemType SymbolicLink",
+        "mklink /J",
+        "mklink /H",
+    )
+
+    def _assert_no_runtime_link_recipe(self, text: str) -> None:
+        for token in self.PROHIBITED_OPERATIONAL_TOKENS:
+            self.assertNotIn(token.casefold(), text.casefold())
+
+    def test_supported_guidance_has_no_runtime_link_creation_recipe(self) -> None:
+        for relative in self.SUPPORTED_SURFACES:
+            with self.subTest(path=relative):
+                text = (REPO_ROOT / relative).read_text(encoding="utf-8")
+                self._assert_no_runtime_link_recipe(text)
+
+    def test_runtime_link_guard_rejects_negative_fixture(self) -> None:
+        for recipe in self.PROHIBITED_OPERATIONAL_TOKENS:
+            with self.subTest(recipe=recipe):
+                with self.assertRaises(AssertionError):
+                    self._assert_no_runtime_link_recipe(
+                        f"Install generated agents with `{recipe} source destination`."
+                    )
+
+    def test_security_and_retirement_discussion_remains_allowed(self) -> None:
+        allowed = (
+            "Reject a hostile symlinked parent before mutation. "
+            "The former runtime-link deployment model is retired."
+        )
+        self._assert_no_runtime_link_recipe(allowed)
+
+    def test_evangelize_requires_managed_copy_readiness_contract(self) -> None:
+        source = (REPO_ROOT / ".github/agents/evangelize.agent.md").read_text(
+            encoding="utf-8"
+        )
+        for obligation in (
+            "propagate_until_converged",
+            "resolve_destinations_after_convergence",
+            "deploy_managed_copies_after_convergence",
+            "regular-copy freshness",
+            "expected roster coverage",
+            "collision",
+            "runtime discovery",
+            "NOT RUN",
+        ):
+            with self.subTest(obligation=obligation):
+                self.assertIn(obligation, source)
+
+    def test_native_windows_and_wsl_are_separate_evidence(self) -> None:
+        source = (REPO_ROOT / ".github/agents/evangelize.agent.md").read_text(
+            encoding="utf-8"
+        )
+        normalized = " ".join(source.split()).casefold()
+        self.assertIn("native windows and wsl are separate runs", normalized)
+        self.assertIn("not run prevents a full cross-platform go", normalized)
+
+
 if __name__ == "__main__":
     unittest.main()

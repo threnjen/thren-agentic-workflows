@@ -79,16 +79,19 @@ The repository is not open as part of the current VS Code workspace, so Copilot 
 
 ### Symptom
 
-Claude or OpenCode cannot see skills or agents that should be symlinked from this repo.
+Claude, Codex, or OpenCode cannot see a generated skill or agent after deployment.
 
 ### Cause
 
-The global or project-local symlinks were not created, or the host platform checked symlinks out as plain files.
+Repository outputs may not have converged, the active-home destination may differ from the expected environment variable, a foreign collision may have been preserved, or the harness session may be stale.
 
 ### Fix
 
-- Recreate the symlinks using the instructions in [HARNESS_SETUP.md](../HARNESS_SETUP.md).
-- On Windows, verify symlink support is enabled before re-checking out or recreating the linked directories.
+- Restart any long-running propagation watcher and run repository propagation to a verified fixed point.
+- Resolve destinations again and review the inventory, expected roster, and collision outcomes.
+- Rerun `deploy_managed_copies_after_convergence`; do not use ad hoc copy or retired runtime-link repair instructions.
+- Confirm deployed assets are fresh regular files/directories, then restart the harness and verify discovery.
+- Report native Windows and WSL separately. If one environment is unavailable, record it as `NOT RUN`.
 
 ### Symptom
 

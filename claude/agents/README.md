@@ -62,28 +62,9 @@ See [claude/CLAUDE_PORTING_GUIDE.md](../CLAUDE_PORTING_GUIDE.md) for complete in
 
 ## Setup
 
-To use these agents with Claude Code CLI:
+Run repository propagation to a fixed point, resolve and review the active Claude destination inventory, then invoke `deploy_managed_copies_after_convergence`. Verify regular-copy freshness, roster coverage, collision outcomes, and discovery from a fresh Claude session.
 
-```bash
-# From repo root, create symlinks
-cd claude
-ln -sfn ../.github/skills skills
-ln -sfn ../.github/learnings learnings
-
-# Link agents into ~/.claude one file at a time
-mkdir -p ~/.claude
-rm -f ~/.claude/agents
-mkdir -p ~/.claude/agents
-for src in /path/to/repo/claude/agents/*; do
-	ln -sfn "$src" "$HOME/.claude/agents/$(basename "$src")"
-done
-
-# Link shared directories into ~/.claude
-ln -sfn /path/to/repo/claude/skills ~/.claude/skills
-ln -sfn /path/to/repo/claude/learnings ~/.claude/learnings
-```
-
-See [../SYMLINK_SETUP.md](../SYMLINK_SETUP.md) for details.
+See [../SYMLINK_SETUP.md](../SYMLINK_SETUP.md) for details; its legacy filename is retained for compatibility.
 
 ---
 
@@ -97,10 +78,10 @@ This differs from GitHub (`04b-feature-implementer`) and OpenCode (same as GitHu
 
 ## Skills and Learnings
 
-- **Skills:** Symlinked from `.github/skills/` (shared across platforms)
-- **Learnings:** Symlinked from `.github/learnings/` (shared across platforms)
+- **Skills:** Generated from `.github/skills/` (shared source across platforms)
+- **Learnings:** Generated from `.github/learnings/` (shared source across platforms)
 
-These are read-only symlinks. To update, modify the source in `.github/` directory.
+To update them, modify the source in `.github/` and rerun propagation.
 
 ---
 

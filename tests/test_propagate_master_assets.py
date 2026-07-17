@@ -217,6 +217,47 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                     codex_path.read_text(encoding="utf-8"),
                 )
 
+    def test_evangelize_matches_every_generated_harness_variant(self) -> None:
+        agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
+        instructions = mod.load_instruction_docs()
+        agent = agents["evangelize"]
+        docs = mod.applicable_instructions(agent, instructions)
+        claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
+        opencode_stems = mod._discover_existing_stems(mod.OPENCODE_AGENTS_DIR)
+        claude_references = mod._build_agent_reference_map(
+            list(agents.values()),
+            lambda item: mod._claude_identifier_for(item, claude_stems),
+        )
+        opencode_references = mod._build_agent_reference_map(
+            list(agents.values()),
+            lambda item: mod._opencode_identifier_for(item, opencode_stems),
+        )
+        codex_references = mod._build_agent_reference_map(
+            list(agents.values()), mod._codex_identifier_for
+        )
+
+        claude_identifier = mod._claude_identifier_for(agent, claude_stems)
+        self.assertEqual(
+            mod.render_claude_command(
+                agent, docs, claude_references, claude_identifier
+            ),
+            (mod.CLAUDE_COMMANDS_DIR / "evangelize.md").read_text(encoding="utf-8"),
+        )
+        self.assertEqual(
+            mod.render_opencode_agent(agent, docs, opencode_references),
+            (mod.OPENCODE_AGENTS_DIR / "evangelize.md").read_text(encoding="utf-8"),
+        )
+        self.assertEqual(
+            mod.render_codex_agent(agent, docs, codex_references),
+            (mod.CODEX_AGENTS_DIR / "evangelize.toml").read_text(encoding="utf-8"),
+        )
+        self.assertEqual(
+            mod.render_codex_profile(agent, docs, codex_references),
+            (mod.CODEX_PROFILES_DIR / "evangelize.config.toml").read_text(
+                encoding="utf-8"
+            ),
+        )
+
     def test_diff_security_scan_agent_matches_all_generated_harness_outputs(self) -> None:
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
         instructions = mod.load_instruction_docs()

@@ -1,224 +1,23 @@
-# Codex macOS Setup And Symlinks
+# Codex Managed-Copy Setup
 
-This guide documents the macOS runtime targets that Codex uses and shows how to point those runtime locations back to repository-owned source artifacts under `codex/`.
+This legacy filename is retained for incoming references. Runtime symlink and junction installation is retired.
 
-Custom agents and skills are now available under `codex/agents/` and `codex/skills/` respectively. The symlink commands below are ready to run.
+## Supported Workflow
 
-## Global AGENTS Policy
+1. Regenerate repository outputs with `python3 scripts/propagate_master_assets.py --once` and require fixed-point convergence.
+2. Call `resolve_destinations_after_convergence` and review `runtime_deployment.destination_inventory(records)` for the active home, `CODEX_HOME`, agent roster, skill roster, ownership evidence, and collisions.
+3. After review, call `deploy_managed_copies_after_convergence` to stage and reconcile regular managed copies.
+4. Repeat the workflow and require no changes.
 
-If you later port AGENTS-derived guidance into Codex, install that content into the global Codex AGENTS layer under `~/.codex/AGENTS.md` or `~/.codex/AGENTS.override.md`.
+The managed roster currently deploys custom agents under `CODEX_HOME` (default `~/.codex/agents`) and skills to the documented active-user skill root (default `$HOME/.agents/skills`). Profiles and global AGENTS guidance are not silently mapped into this roster; retain repository outputs until their runtime destinations are explicitly supported.
 
-Do not install Codex guidance by pointing either runtime location at this repository's checked-in `AGENTS.md` or the sibling repository's checked-in `AGENTS.md`. Those files are not the runtime destination for Codex guidance in this phase.
+## Verification
 
-## Source Versus Runtime On macOS
+- Every managed agent and skill is a regular file or directory with current content.
+- Expected roster coverage, collision outcomes, and stale-copy reconciliation are reported.
+- Foreign files and package/plugin-managed assets are unchanged.
+- A fresh Codex session discovers the deployed agents and skills.
 
-Keep the authoring surface and the runtime surfaces separate:
+Native Windows and WSL require separate runs. An unavailable environment is `NOT RUN`, not evidence from the other environment. Partial deployment remains partial and blocks full cross-platform GO.
 
-| Surface | Role |
-|---------|------|
-| `codex/` | Repository-owned authoring area for Codex docs and source artifacts |
-| `.codex/` | Repo-scoped runtime config or installed runtime assets |
-| `~/.codex/` | User-scoped runtime config, global AGENTS guidance, custom agents, and skills |
-| `~/.codex/agents/` | User-scoped installed custom-agent TOML files |
-| `~/.codex/skills/` | User-scoped installed skill directories (already exists as a real directory on macOS) |
-
-The symlink direction in this guide always flows from a runtime destination back to a repository-owned source path under `codex/`.
-
-## Runtime Targets
-
-These are the macOS locations that matter for this setup flow.
-
-| Runtime target | Scope | Purpose | Repository-owned source example |
-|----------------|-------|---------|---------------------------------|
-| `~/.codex/config.toml` | User | Global Codex config | Not linked in this feature |
-| `~/.codex/AGENTS.md` | User | Global Codex guidance when no home override exists | `$REPO_ROOT/codex/global-agents/AGENTS.md` |
-| `~/.codex/AGENTS.override.md` | User | Higher-precedence global Codex guidance | `$REPO_ROOT/codex/global-agents/AGENTS.override.md` |
-| `~/.codex/agents/<agent-name>.toml` | User | Installed custom-agent TOML file | `$REPO_ROOT/codex/agents/<agent-name>.toml` |
-| `~/.codex/skills/<skill-name>` | User | Installed skill directory (symlink inside real `~/.codex/skills/` dir) | `$REPO_ROOT/codex/skills/<skill-name>` |
-| `~/.codex/hooks.json` | User | Lifecycle hooks (propagated from `.github/hooks/`) | `$REPO_ROOT/.codex/hooks.json` |
-
-## Preflight Checks
-
-Before replacing anything under `~/.codex/` or `$HOME/.agents/skills/`, inspect the current state and verify that the future source path exists.
-
-```sh
-REPO_ROOT=/absolute/path/to/github-agents-source-of-truth
-
-ls -ld "$HOME/.codex" "$HOME/.codex/agents" "$HOME/.agents" "$HOME/.agents/skills" 2>/dev/null || true
-ls -l "$HOME/.codex/AGENTS.md" "$HOME/.codex/AGENTS.override.md" 2>/dev/null || true
-ls -l "$HOME/.codex/agents/" "$HOME/.agents/skills/" 2>/dev/null || true
-readlink "$HOME/.codex/AGENTS.md" 2>/dev/null || true
-readlink "$HOME/.codex/AGENTS.override.md" 2>/dev/null || true
-
-# Verify skill sources exist before symlinking
-test -d "$REPO_ROOT/codex/skills" && echo "codex/skills ready" || echo "not yet: codex/skills"
-test -d "$REPO_ROOT/codex/agents" && echo "codex/agents ready" || echo "not yet: codex/agents"
-
-# Check for broken symlinks (stale links from before a propagation rename)
-for link in "$HOME/.codex/agents/"*.toml; do
-  [ -L "$link" ] && [ ! -f "$(readlink "$link")" ] && echo "BROKEN: $(basename "$link") -> $(readlink "$link")"
-done
-```
-
-If any runtime target is a real file or directory instead of a symlink, move it aside manually before relinking so the replacement is explicit and reversible.
-
-## Removing Stale Symlinks After A Propagation Run
-
-The propagation script (`scripts/propagate_master_assets.py`) generates Codex agent files using the source agent basename for user-invocable agents and a `z-` prefix for non-user-invocable subagents. If you previously created symlinks using the source filenames (for example `04a-feature-plan-expander.toml`) before running the propagation script, those symlinks will be broken because the generated files now use `z-` names (for example `z-feature-plan-expander.toml`).
-
-Run this cleanup before or after relinking to remove broken stale symlinks:
-
-```sh
-# Remove any symlink in ~/.codex/agents/ whose target no longer exists
-for link in "$HOME/.codex/agents/"*.toml; do
-  [ -L "$link" ] && [ ! -f "$(readlink "$link")" ] && rm "$link" && echo "Removed broken: $(basename "$link")"
-done
-```
-
-After cleanup, re-run the idempotent symlink command to add correct links for all current source files.
-
-**Naming rule**: subagent TOML files generated by the propagation script use a `z-` prefix (e.g. `z-feature-implementer.toml`). Always symlink to the generated filename, not to the source `.github/agents/` filename.
-
-## Parent Directories For A Clean Machine
-
-Create parent directories first so the later symlink commands work on a clean macOS machine.
-
-Note: `~/.codex/skills/` already exists on macOS as a real directory managed by Codex. Do not replace it with a symlink — add per-skill symlinks inside it instead.
-
-```sh
-mkdir -p "$HOME/.codex/agents"
-```
-
-## Idempotent Symlink Examples
-
-The following commands use `ln -sfn` so rerunning them updates existing symlink targets without creating duplicate links.
-
-```sh
-REPO_ROOT=/absolute/path/to/github-agents-source-of-truth
-
-# Link each custom agent TOML individually
-for toml in "$REPO_ROOT"/codex/agents/*.toml; do
-  ln -sfn "$toml" "$HOME/.codex/agents/$(basename "$toml")"
-done
-
-# Link each skill directory individually inside the existing ~/.codex/skills/ directory
-# Do NOT replace ~/.codex/skills itself — it is a real directory managed by Codex
-for skill_dir in "$REPO_ROOT"/codex/skills/*/; do
-  skill_name=$(basename "$skill_dir")
-  ln -sfn "$skill_dir" "$HOME/.codex/skills/$skill_name"
-done
-```
-
-These commands are idempotent only when the destination is absent or already a symlink. If the destination is a regular file or directory, inspect it first and replace it deliberately rather than relying on `ln -sfn` to decide for you.
-
-## Replace Or Roll Back Safely
-
-If a destination already exists as a non-symlink, back it up first.
-
-```sh
-# Back up individual agent TOMLs if they exist as real files
-for toml in "$REPO_ROOT"/codex/agents/*.toml; do
-  dest="$HOME/.codex/agents/$(basename "$toml")"
-  [ -e "$dest" ] && ! [ -L "$dest" ] && mv "$dest" "$dest.backup"
-done
-
-# Back up individual skill dirs if they exist as real directories
-for skill_dir in "$REPO_ROOT"/codex/skills/*/; do
-  skill_name=$(basename "$skill_dir")
-  dest="$HOME/.codex/skills/$skill_name"
-  [ -e "$dest" ] && ! [ -L "$dest" ] && mv "$dest" "$dest.backup"
-done
-```
-
-If you want to undo the symlinked setup later, remove the symlinks.
-
-```sh
-for toml in "$REPO_ROOT"/codex/agents/*.toml; do
-  rm -f "$HOME/.codex/agents/$(basename "$toml")"
-done
-
-for skill_dir in "$REPO_ROOT"/codex/skills/*/; do
-  rm -f "$HOME/.codex/skills/$(basename "$skill_dir")"
-done
-```
-
-After any relink or rollback step, verify the targets.
-
-```sh
-ls -la "$HOME/.codex/agents/"
-ls -la "$HOME/.agents/skills/"
-```
-
-## Hooks Symlink
-
-Codex lifecycle hooks (Stop, PostToolUse, SessionStart, etc.) are authored in `.github/hooks/*.json` and propagated automatically by `propagate_master_assets.py` into `.codex/hooks.json`. Link `~/.codex/hooks.json` to the repo copy so changes take effect immediately.
-
-```sh
-REPO_ROOT="$HOME/github_repos/github-agents-source-of-truth"
-
-# Backup any existing real file
-[ -e "$HOME/.codex/hooks.json" ] && ! [ -L "$HOME/.codex/hooks.json" ] && mv "$HOME/.codex/hooks.json" "$HOME/.codex/hooks.json.backup"
-
-ln -sfn "$REPO_ROOT/.codex/hooks.json" "$HOME/.codex/hooks.json"
-```
-
-Verify:
-```sh
-readlink ~/.codex/hooks.json
-# Expected: /Users/<your-username>/github_repos/github-agents-source-of-truth/.codex/hooks.json
-```
-
-**How hooks flow:** `.github/hooks/*.json` → `propagate_master_assets.py` → `.codex/hooks.json` (entries tagged `"$source": "<hook-name>"`) → `~/.codex/hooks.json` via this symlink. Manually-added entries without a `$source` key are preserved across propagation runs.
-
-## Profiles Symlink (Direct Agent Invocation)
-
-Profiles are the Codex equivalent of Claude slash commands. Each `codex/profiles/<name>.config.toml` sets `developer_instructions` as a config-layer key. When you start Codex with `codex --profile <name>` (or `codex -p <name>`), the session adopts that agent role from the first turn.
-
-Shell tab-completion on profile names means you no longer need to look up agent names — just type `codex -p ` and tab.
-
-The propagation script generates one profile per user-invocable agent in `codex/profiles/`. Profile files install directly into `~/.codex/` (not a subdirectory).
-
-```sh
-REPO_ROOT=/absolute/path/to/github-agents-source-of-truth
-
-# Backup any existing real profile config files
-for toml in "$REPO_ROOT"/codex/profiles/*.config.toml; do
-  dest="$HOME/.codex/$(basename "$toml")"
-  [ -e "$dest" ] && ! [ -L "$dest" ] && mv "$dest" "$dest.backup"
-done
-
-# Link each profile TOML directly into ~/.codex/
-for toml in "$REPO_ROOT"/codex/profiles/*.config.toml; do
-  ln -sfn "$toml" "$HOME/.codex/$(basename "$toml")"
-done
-```
-
-Verify:
-```sh
-ls -la "$HOME/.codex/"*.config.toml 2>/dev/null
-```
-
-Usage:
-```sh
-# Start a session as a specific agent
-codex --profile single-feature-agent
-codex --profile phase-execute
-codex --profile debugger
-
-# Combined with a prompt
-codex -p single-feature-agent "fix the pagination bug in UserList.tsx"
-```
-
-To undo:
-```sh
-for toml in "$REPO_ROOT"/codex/profiles/*.config.toml; do
-  rm -f "$HOME/.codex/$(basename "$toml")"
-done
-```
-
-**Relationship to custom agent TOMLs**: both files are generated for every user-invocable agent. The agent TOML (`codex/agents/`) is for subagent spawning within a session. The profile TOML (`codex/profiles/`) is for adopting the role as the session itself at startup.
-
-## What This Guide Does Not Do
-
-- It does not install anything automatically into `~/.codex/` or `$HOME/.agents/skills/`.
-- It does not treat `codex/` as a runtime mirror of either repository's checked-in `AGENTS.md` files.
+The deployment engine may discuss hostile symlinks and junction containment because migration must reject unsafe parents and classify legacy repository-owned links without traversing them. Those security rules are not operational installation instructions.
