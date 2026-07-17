@@ -191,9 +191,18 @@ def test_pr_review_roster_is_exactly_seven_contiguous_agents() -> None:
 def test_orchestrator_and_delegated_security_scan_both_exist() -> None:
     """AC5. The roster is seven *plus* the delegated scan -- not seven alone.
 
-    `04e` is the whole reason retiring `05d-security-rollup` was a shape change
-    rather than a coverage regression. If it disappears, that justification
-    silently stops holding.
+    `04e` is the whole reason retiring the phase-shaped security-rollup
+    evaluator was a shape change rather than a coverage regression. If `04e`
+    disappears, that justification silently stops holding.
+
+    That evaluator is deliberately not named here. Its slug lives exactly once,
+    in `tests/test_retired_evaluator_removal.py`'s `RETIRED_AGENTS`, and that
+    module sweeps every tracked non-exempt file for it -- so spelling it out in
+    this docstring both forks the list and trips the sweep. It did: this module
+    named it, and `test_no_tracked_file_references_a_retired_agent` failed as
+    soon as the file was committed and `git ls-files` began to see it. The sweep
+    was right and the docstring was wrong; the exemption that would have
+    silenced it is the thing the sweep exists to refuse.
     """
     for slug in (PR_REVIEW_ORCHESTRATOR_SLUG, DELEGATED_SECURITY_SCAN_SLUG):
         assert (GITHUB_AGENTS_DIR / f"{slug}.agent.md").exists(), (
@@ -396,28 +405,88 @@ def _display_name_for(slug: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _assert_every_count_claim(text: str, pattern: str, expected: int, label: str) -> None:
+    """Assert *every* claim matching `pattern` states `expected`.
+
+    Not `_assert_once` on the corrected string. That was the shape of this guard
+    until a mutation sweep showed it inert, and the inertness was not
+    theoretical: asserting `"41 source agent definitions"` appears exactly once
+    is satisfied by one corrected sentence while *four* stale `43` restatements
+    survive elsewhere on the same two surfaces -- which is exactly what shipped.
+
+    A guard keyed to the corrected text can only see the statement someone
+    already remembered to fix. A count claim is not a single sentence to pin; it
+    is a *class* of sentence, and the stale members are invisible to any needle
+    built from the right answer. So this matches the claim's shape and reads the
+    number out of it, which makes a restatement fail rather than hide.
+    """
+    import re
+
+    found = re.findall(pattern, text)
+    assert found, (
+        f"{label}: no claim matching {pattern!r} found at all. The count claim "
+        "was reworded or removed, so this guard now verifies nothing -- update "
+        "the pattern or drop the guard deliberately."
+    )
+    wrong = sorted({value for value in found if int(value) != expected})
+    assert not wrong, (
+        f"{label}: disk holds {expected}, but the surface still claims "
+        f"{', '.join(wrong)} ({len(found)} claim(s) matched). Recount from disk; "
+        "do not arithmetic a new number out of the old one."
+    )
+
+
 def test_root_readme_source_agent_count_matches_disk() -> None:
-    """AC6b. A count is a claim; this verifies it.
+    """AC6b. A count is a claim; this verifies every instance of it.
 
     Recounted from disk rather than arithmetic-ed from the old number, per the
     plan. That distinction is load-bearing here: the old claim was 43 while the
     baseline actually held 46, so subtracting this phase's five deletions would
     have produced 38 -- a *newly* wrong number that looked derived.
+
+    `README.md` states the count twice (inventory bullet and prose). Both are
+    checked, because the surface is only correct if every restatement is.
     """
     count = len(_source_agent_slugs())
-    _assert_once(
+    _assert_every_count_claim(
         _read("README.md"),
-        f"{count} source agent definitions",
+        r"(\d+) source agent definitions",
+        count,
         "root README source-agent count",
+    )
+
+
+def test_codebase_context_source_agent_count_matches_disk() -> None:
+    """AC6b. The same claim, on the surface that restates it three times.
+
+    `docs/CODEBASE_CONTEXT.md` carries the source-agent count in its counts
+    list, in the key-paths tree, and again as `(N total definitions)`. Nothing
+    tested this surface's copy of the count at all: the sibling guard reads
+    `README.md` only, so three stale claims sat here unswept.
+    """
+    count = len(_source_agent_slugs())
+    text = _read("docs/CODEBASE_CONTEXT.md")
+    _assert_every_count_claim(
+        text,
+        r"(\d+) source agent definitions",
+        count,
+        "CODEBASE_CONTEXT source-agent count",
+    )
+    _assert_every_count_claim(
+        text,
+        r"\((\d+) total definitions\)",
+        count,
+        "CODEBASE_CONTEXT total-definitions count",
     )
 
 
 def test_codebase_context_hidden_subagent_count_matches_disk() -> None:
     """AC6b. Same claim class, same failure mode: 24 claimed, 27 actual."""
     hidden = _hidden_agent_count()
-    _assert_once(
+    _assert_every_count_claim(
         _read("docs/CODEBASE_CONTEXT.md"),
-        f"{hidden} hidden subagents",
+        r"(\d+) hidden subagents",
+        hidden,
         "CODEBASE_CONTEXT hidden-subagent count",
     )
 

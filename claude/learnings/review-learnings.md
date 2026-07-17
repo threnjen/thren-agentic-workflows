@@ -532,3 +532,77 @@ The blast radius is the newest and least-reviewed code path, protected by the ol
 ## Watch for
 
 Any feature that appends a section to a shared file whose earlier sections already state the contract in general terms — orchestrators, routers, and long-lived agent bodies attract this. For each guard, locate the line number of the text it pins and check which feature introduced it: if the pinned line predates the diff under review, the new path needs its own pin regardless of what the guard reports. Then ask, per acceptance criterion, which single line performs the work — delete exactly that line and confirm something fails. If the criterion's guards only cover configuration, consent, wording, or intent, the mechanism is unguarded.
+
+---
+
+## Pattern
+
+A repository-wide sweep that enumerates candidates through `git ls-files` cannot see an
+untracked file. A new test module that itself violates the sweep — most often by writing a
+retired identifier into a docstring in order to explain it — is therefore green for its
+entire authoring life and turns red at `git add`. Every local run before the commit is
+honest, reproducible, and wrong. The implementer records a green suite in good faith, and
+the failure surfaces to whoever runs the suite next on a clean checkout.
+
+The same visibility gap hides an empty directory: git tracks files, not directories, so a
+directory left behind by a test harness or a partial deletion is invisible to `git status`,
+and doubly invisible inside a gitignored tree.
+
+## Impact
+
+The recorded test baseline is false, and it is false in the direction that hides work:
+"green" when the tree is red. Because the number is arithmetic-checked against a prediction
+(`baseline + new tests = final`), an off-by-one caused by a *pre-existing* test flipping to
+failing lands inside the rounding of the reconciliation and reads as confirmation. The
+reconciliation then certifies the wrong number. Downstream stages inherit a baseline that no
+one can reproduce, and the next implementer's honest count looks like a regression they
+caused.
+
+The tempting fix is worse than the defect: adding the new file to the sweep's exemption list
+silences the guard permanently to protect a docstring. A sweep that grows an exemption every
+time it fires stops sweeping.
+
+## Watch for
+
+Never accept a reported test count that was measured before the feature's own files were
+committed. Re-run the suite on a clean tree at the implement commit — `git stash` and run —
+and compare against the record; if the numbers differ, the reported run predates a `git add`.
+Treat a passed-count reconciliation that *matches its own prediction* as unverified rather
+than confirmed: it is evidence about arithmetic, not about the tree. Reconcile against a
+measurement, and state which commit it was measured at.
+
+When a sweep fires on a test module's own text, fix the text, not the sweep — the retired
+identifier belongs in exactly one module, and any other module naming it has forked the list
+the sweep exists to keep singular. Check for empty-directory residue with `find . -type d
+-empty`, never with `git status`.
+
+---
+
+## Pattern
+
+`_assert_once`-style guards pin one load-bearing statement and fail on zero or many
+occurrences. They are the right instrument for a directive that must exist exactly once, and
+the wrong instrument for a **count claim** — or any claim that is a *class* of sentence
+rather than one sentence. A guard keyed to the corrected string (`"41 widgets"`) cannot
+match a stale restatement (`"43 widgets"`), so it verifies only the sentence someone already
+remembered to fix and is blind, by construction, to every one they missed. The guard is
+green, the surface is wrong, and the guard is specifically the one written to prevent that.
+
+## Impact
+
+Counts are restated: an inventory bullet, a prose paragraph, a directory-tree comment, a
+parenthetical. Fixing the one the reviewer read leaves the rest false while the test suite
+certifies the surface. The failure is self-concealing, because the guard's own name asserts
+the property it does not check, and it is most likely on precisely the documents where a
+count is load-bearing enough for someone to have written a guard.
+
+## Watch for
+
+For any guard asserting a derived fact about a document, ask whether the document could state
+that fact **more than once**. If so, the guard must match the claim's *shape* — a regex over
+the pattern (`(\d+) widgets`) — and read the value out of it, so every restatement is
+verified and a stale one fails. Add the inverse assertion too: at least one claim must match,
+or rewording the sentence out of existence silently disarms the guard. Mutation-test both
+directions — plant a *stale* restatement elsewhere on the surface, not just a wrong value in
+the sentence the guard names. A guard that only catches mutations to the text it quotes is
+pinning text, not verifying a fact.

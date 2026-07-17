@@ -14,7 +14,7 @@ The repository is documentation-heavy, but it is not purely static. Most files a
 
 Current inventory:
 
-- 43 source agent definitions under `.github/agents/`
+- 41 source agent definitions under `.github/agents/`
 - 16 shared skills under `.github/skills/`
 - 15 shared instruction files under `.github/instructions/`
 - 2 copyable language template sets under `nodejs/` and `python/`

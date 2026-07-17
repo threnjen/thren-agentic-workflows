@@ -13,7 +13,7 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 43 source agent definitions in `.github/agents/`.
+- 41 source agent definitions in `.github/agents/`.
 - 16 skills in `.github/skills/`.
 - 15 instructions in `.github/instructions/`.
 - 2 template packs: `nodejs/` and `python/`.
@@ -26,10 +26,11 @@ HARNESS_SETUP.md                           # How to expose repo assets to Copilo
 .mcp.json                                  # Registers code-review-graph MCP with uvx
 .codex/config.toml                         # Repo-scoped Codex runtime MCP config
 .github/
-  agents/                                  # 43 source agent definitions
+  agents/                                  # 41 source agent definitions
     README.md                              # Full agent catalog and pipeline docs
-    *.agent.md                             # Most source agents (43 total definitions)
+    *.agent.md                             # Most source agents (41 total definitions)
     prod-code-review.md                    # Plain .md agent definition; still part of source set
+    docs-writer.md                         # Second plain .md agent definition; still part of source set
   instructions/                            # 15 shared instruction files with applyTo globs
   skills/                                  # 16 shared skill directories with SKILL.md entrypoints
 claude/agents/                             # Generated Claude copies

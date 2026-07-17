@@ -18,6 +18,9 @@
 
 ## Deferred Pipeline Work
 
+- **`.github/skills/` count claims are false on both documentation surfaces. OPEN. Owner: whoever owns `README.md` / `docs/CODEBASE_CONTEXT.md`; routing: recount from disk and guard by claim-shape.** `README.md:18` and `docs/CODEBASE_CONTEXT.md:17,34` claim 16 skills; disk holds 24. Found at feature `08` review. **Not falsified by the PR-Review phase** — the phase renamed two skill directories and changed no count — which is why it was recorded rather than fixed there: AC6b scoped to the counts the phase itself made false, and widening scope mid-review to adjacent wrong numbers is how a feature stops being reviewable. The agent and hidden-subagent counts on those same surfaces are now guarded by `_assert_every_count_claim` in `tests/test_retirement_reconciliation.py`; the skills count needs the same treatment plus a decision on what "shared skill" counts. (Recorded 2026-07-16.)
+- **`docs/CODEBASE_CONTEXT.md:87-88`'s "6 orchestrators" and "11 visible user-facing agents" disagree with disk, and the two surfaces disagree on the *definition*. OPEN. Owner: whoever owns that doc.** Disk holds 19 user-invocable agents; the 3 auditors it counts as user-facing declare `user-invocable: false`; its 6-orchestrator list omits `05 PR - Review` while `.github/agents/README.md:410` says "Four orchestrators" and names a different set. This is not a stale number but two live definitions of "orchestrator", so recounting cannot fix it — the definition has to be reconciled first. Both predate the PR-Review phase. (Recorded 2026-07-16 at feature `08` review.)
+
 - **PR posting (AC7/AC8) ships verified by contract assertion only; live QA is outstanding
   and routed to the QA stage with a scratch consumer repo.** `07-synthesis-and-pr-posting`
   implements the auto / ask-when-ready / never consent path and the no-PR, absent-`gh`, and
