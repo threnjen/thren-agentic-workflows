@@ -1,22 +1,51 @@
 # github-agents-source-of-truth
 
-Single source of truth for a multi-harness AI development workflow. Agents, skills,
-instructions, learnings, and hooks are authored once under `source_of_truth/`, then
-transformed into per-harness outputs under `ports/` and deployed to the real
-config directories that Claude, Codex, OpenCode, Cursor, and GitHub Copilot read.
+A ready-to-use library of AI development agents, skills, and instructions that work
+across Claude, Codex, OpenCode, Cursor, and GitHub Copilot. Everything is authored once
+under `source_of_truth/`, transformed into per-harness variants under `ports/`, and
+deployed into the real config directories each harness reads.
 
-## What This Repo Does
+## Get Started
+
+If you just want to use these agents in your own harness, install them with one command
+from the repository root:
+
+```bash
+python3 deploy_agents.py
+```
+
+The first run asks which harnesses you use (Claude, Codex, OpenCode, Cursor, GitHub) and
+remembers your choice. It only writes files this system generated — your hand-maintained
+config is never touched.
+
+**→ See [INSTALLATION.md](INSTALLATION.md) for full installation instructions, options,
+and destinations.**
+
+## What You Get
+
+- **41 agents** — a full project workflow (planner, refiner, decomposer, phase executor),
+  a feature implementation pipeline (implementer, reviewer, QA writer), PR review, audit
+  orchestrators, test operations, and standalone helpers (docs writer, debugger, web
+  researcher, and more).
+- **24 skills** — directory-based capabilities agents load on demand.
+- **15 instruction files** and **4 learnings files** — cross-cutting guidance applied by
+  file-glob matching.
+
+Only the destinations differ per harness; the agents behave the same everywhere.
+
+## How It Works
 
 The repository has two jobs, handled by two scripts:
 
 1. **Transform** — `scripts/propagate_master_assets.py` reads `source_of_truth/`
    and regenerates platform-specific variants under `ports/{claude,codex,opencode,cursor}`.
    It also mirrors the source verbatim to `ports/github` and to a real `.github/`
-   directory at the repository root (so GitHub Copilot reads the same source).
+   directory at the repository root (so GitHub Copilot reads the same source). This step
+   is for maintainers editing the agents; end users can skip it.
 2. **Deploy** — `deploy_agents.py` copies the generated `ports/` outputs out to the
    real user-level config directories each harness reads (`~/.claude`, `~/.codex`,
    `~/.config/opencode`, `~/.cursor`), and mirrors the `github` port into this
-   repo's `.github/`.
+   repo's `.github/`. This is the step end users run.
 
 Both steps are safe by construction: a destination file is only ever overwritten
 or pruned when it positively carries a generated marker (or lives inside a
@@ -38,7 +67,7 @@ generated skill directory). Hand-maintained files are never touched.
 ```text
 .
 ├── AGENTS.md                       # Repo-specific code-review-graph MCP guidance
-├── INSTALLATION.md                 # Quick deploy pointer
+├── INSTALLATION.md                 # How to deploy the agents into your harness
 ├── README.md
 ├── source_of_truth/                # THE authoring surface — edit here
 │   ├── agents/                     # 41 agent definitions + README (agent catalog)
@@ -95,18 +124,7 @@ There is no application to build or serve. The maintenance loop is: edit
 
 ## Common Workflows
 
-### Regenerate ports/ and .github/ from source
-
-```bash
-python3 scripts/propagate_master_assets.py --once
-```
-
-Runs one propagation pass to a fixed point (converges, then exits). In VS Code the
-equivalent task is `propagate: master assets (once)`. The background task
-`watch: propagate master assets` starts on folder open and re-propagates on every
-save under `source_of_truth/`.
-
-### Deploy generated outputs to your real harness directories
+### Deploy the agents to your real harness directories (users)
 
 ```bash
 python3 deploy_agents.py            # use saved selection, or prompt (tty) and save
@@ -117,6 +135,18 @@ python3 deploy_agents.py --list     # show harnesses and resolved destinations
 
 The first interactive run asks which harnesses you use and saves the choice to
 `.deploy-config.json` (gitignored). Subsequent runs are just `python3 deploy_agents.py`.
+Full details are in [INSTALLATION.md](INSTALLATION.md).
+
+### Regenerate ports/ and .github/ from source (maintainers)
+
+```bash
+python3 scripts/propagate_master_assets.py --once
+```
+
+Runs one propagation pass to a fixed point (converges, then exits). Run this only if you
+have edited files under `source_of_truth/`. In VS Code the equivalent task is
+`propagate: master assets (once)`. The background task `watch: propagate master assets`
+starts on folder open and re-propagates on every save under `source_of_truth/`.
 
 See [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) for the full command
 reference and [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for failure modes.
@@ -150,6 +180,7 @@ screenshot capture, paired with the Visual Verifier agent.
 
 ## Related Documentation
 
+- [INSTALLATION.md](INSTALLATION.md) — how to deploy the agents into your harness
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — components and the transform/deploy flow
 - [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — AI-oriented quick orientation
 - [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) — setup, commands, testing
