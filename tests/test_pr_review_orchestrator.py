@@ -52,11 +52,19 @@ CONVENTIONS_SKILL = (
 # Feature 06 has since migrated the narrator and test health the same way, and
 # for the same reason they are removed rather than renamed: `05b-change-narrator`
 # and `05h-test-health` (now `05f-test-health`) both defer their report path to
-# the `pr-review-conventions` skill. Only the synthesizer is left, and feature 07
-# owns it -- when that lands, this set is empty and this test can go.
-EVALUATORS_AWAITING_REPORT_ROOT_MIGRATION = {
-    "05l-readiness-synthesizer.agent.md",
-}
+# the `pr-review-conventions` skill.
+#
+# Feature 07 has now migrated the synthesizer (`05l` -> `05g`), which was the last
+# entry. The set is empty, and the migration is COMPLETE.
+#
+# The original note said "when that lands, this set is empty and this test can go".
+# Deleting it is the one move not taken. An empty ledger is no longer a record of
+# known drift -- it is the assertion that no drift exists, which is a stronger and
+# permanently useful guard than the ledger ever was. Deleting the test would leave
+# the retired root free to reappear in any `05*` body with nothing to catch it.
+# Kept, with the set frozen empty: the failure message below now reads as
+# "an evaluator regressed to the retired root" rather than "update the ledger".
+EVALUATORS_AWAITING_REPORT_ROOT_MIGRATION: set[str] = set()
 
 # The pinned base/head pair (AC13). Declared here once so the fixture document
 # and the tests cannot drift apart: the test reads these out of the fixture
@@ -548,22 +556,24 @@ def test_orchestrator_report_root_matches_the_canonical_skill_contract() -> None
 
 
 def test_report_root_migration_cannot_split_silently() -> None:
-    """Pins the in-flight `dev/phase-final-review/` -> `dev/pr-review/` migration.
+    """The `dev/phase-final-review/` -> `dev/pr-review/` migration is complete.
 
-    Nothing else pins this. The orchestrator and both skills are on the new
-    root; the six surviving evaluators still declare the retired one, because
-    features 05-07 own their bodies and rewriting them from here would collide.
-    That is a real, known split, and the failure mode is silent: if every
-    feature in waves 4-6 assumes another one owns the migration, the roster
-    ships half-migrated and each half looks internally consistent. The
+    Nothing else pins this. Written by feature 04 as a ledger of known drift --
+    the orchestrator and both skills were on the new root while the surviving
+    evaluators still declared the retired one, because features 05-07 owned
+    those bodies. The failure mode it defended against was silent: if every
+    feature in waves 4-6 assumed another one owned the migration, the roster
+    would ship half-migrated with each half internally consistent, and the
     orchestrator would route evaluators to a root they do not write to.
 
-    So the split is pinned rather than left implicit. This is a ledger of known
-    drift, green at the moment it was written and asserting the exact set --
-    migrating an evaluator fails this test until its name is removed below, and
-    an empty set means the migration is complete and this test can go. It does
-    NOT exempt anything: the orchestrator and skills are separately asserted to
-    be on the new root, so this cannot be satisfied by regressing them.
+    Features 05, 06 and 07 each tripped it and reconciled it, which is the ledger
+    working as designed. Feature 07 migrated the last entry, so the set is now
+    empty and the assertion has inverted meaning: it no longer records drift, it
+    denies drift exists. In that form it is a permanent guard -- any `05*` body
+    that declares the retired root fails here, whether by regression or by a new
+    agent copying an old template. It does NOT exempt anything: the orchestrator
+    and skills are separately asserted to be on the new root, so this cannot be
+    satisfied by regressing them.
     """
     agents_dir = REPO_ROOT / ".github" / "agents"
     still_retired = {
@@ -573,9 +583,10 @@ def test_report_root_migration_cannot_split_silently() -> None:
     }
 
     assert still_retired == EVALUATORS_AWAITING_REPORT_ROOT_MIGRATION, (
-        "the report-root migration moved. Update "
-        "EVALUATORS_AWAITING_REPORT_ROOT_MIGRATION to match, and delete this "
-        "test once the set is empty.\n"
+        "an evaluator declares the retired `dev/phase-final-review/` report root. "
+        "The migration completed in feature 07; this set is frozen empty. Migrate "
+        "the agent to `dev/pr-review/<base-sha-short>-<UTC-YYYYMMDDTHHMMSSZ>/` "
+        "rather than re-adding it here.\n"
         f"  expected: {sorted(EVALUATORS_AWAITING_REPORT_ROOT_MIGRATION)}\n"
         f"  actual:   {sorted(still_retired)}"
     )

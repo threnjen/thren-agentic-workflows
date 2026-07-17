@@ -40,7 +40,13 @@ block. The block contains exactly three questions:
    Suggest-and-Confirm**).
 3. **PR comments.** Ask how the readiness report should reach the pull request:
    **post automatically**, **ask once the report is written**, or **never**.
-   Record the choice and carry it to the end of the run.
+   Record the choice and carry it to the end of the run. Posting is opt-in, and
+   the block must state the cost of *post automatically* plainly rather than
+   present it as a convenience: a `NO-GO` with a severity-ordered blocking list
+   appears on a colleague's pull request before the author has read it. Recommend
+   *ask once the report is written*: it keeps a human between the finding and the
+   audience without blocking the run, because the report is already on disk when
+   it asks. A posted comment is published; reverting this agent does not unpost it.
 
 **After this block, no code path may introduce a new prompt.** Not on evaluator
 failure, not on timeout, not when `gh` is absent, not when no PR exists, not on
@@ -48,6 +54,12 @@ an unreadable report. After the block the run reaches a report or it records a
 failure — it never asks. A question asked after the work is on disk blocks
 nothing, which is exactly what makes "ask me once the report is written" both
 unattended and safe.
+
+There is exactly one prompt after this block: the *ask once the report is
+written* confirmation is the single designed exception, and it blocks nothing
+because the report is already written. It is not a precedent. Every other
+question — retry this evaluator? post anyway? pick a different base? — is
+forbidden on every path.
 
 This is a structural property, not a courtesy. It became achievable only because
 the ledger, artifact-refusal, and verdict-recording questions were removed,
@@ -268,6 +280,68 @@ evaluator-status set. **Any `not-run` or `incomplete` record makes `GO`
 invalid**; the canonical verdict for missing or incomplete required coverage is
 `NO-GO` with the coverage reason. The verdict can never be `GO` while any check
 is missing. A failed evaluator is not repaired by a later evaluator's success.
+
+## Posting the Report to the Pull Request
+
+Honor the choice captured in the single interaction block. Do not re-ask it, do
+not infer it, and do not change it because a condition below occurred.
+
+Posting is **one command with three outcomes**: posted, no PR, or unavailable.
+Resist growing it. Retries, formatting modes, and fallback ladders accreting
+inside this section is the named complexity risk, and every one of them is a path
+back to a prompt after the block.
+
+The command, run only once the readiness report exists on disk:
+
+```
+gh pr comment --body-file <readiness report path>
+```
+
+`gh pr comment` resolves the pull request from the current branch, so the caller
+never needs the PR number. When no PR is open for the branch, that resolution
+fails — which is the documented no-PR outcome below, not an error to recover from.
+
+### The three settings
+
+- **post automatically** — post the readiness report once it is written, with no
+  further interaction.
+- **ask once the report is written** — the report must already exist on disk
+  before the confirmation appears. Show the report path and the verdict, ask
+  once, and post on confirmation using the same single command. This is the only
+  prompt permitted after the block, and it blocks nothing.
+- **never** — make no `gh` invocation and no network call on this path. The local
+  readiness report is the entire deliverable. Do not check whether a PR exists,
+  do not probe `gh` availability, and do not report a posting condition: there is
+  nothing to report, because nothing was attempted.
+
+### Reported conditions
+
+Handle each by recording it alongside the local report path in the return:
+
+- **`gh` posting succeeds** — report the comment URL.
+- **no pull request is open** for the branch — report the condition.
+- **`gh` is absent or unauthenticated** — report which one.
+- **posting fails mid-way** (network, rate limit, permissions) — report the
+  concrete failure. Never retry into a prompt, and do not silently retry either.
+
+None of these is a run failure: the local readiness report is the deliverable
+either way, and the review already completed before posting was attempted. A
+posting condition never changes the verdict and never becomes an evaluator
+status record — posting is delivery, not evidence.
+
+### When the report exceeds the comment size limit
+
+GitHub bounds comment bodies, and a large diff can produce a readiness report
+that exceeds it. Decided here rather than left to runtime judgment, because a
+silently truncated verdict is a misreported verdict: post a truncated report with
+an explicit truncation notice and the local report path, keeping the Verdict,
+the Blocking List, and `Checks Not Run` — the three sections a reader acts on.
+Never truncate silently, and never drop `Checks Not Run` to fit, since dropping
+it converts an incomplete run into one that reads as complete.
+
+Output is one-way on this path as everywhere else: post the comment and read
+nothing back. Do not fetch the posted comment to confirm it, and do not read
+existing comments to check whether a report was already posted.
 
 ## Re-invocation
 

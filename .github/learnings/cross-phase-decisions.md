@@ -85,6 +85,27 @@
   Any future change to agent-reference resolution must preserve display-name matching, or
   re-check every forward reference in the roster. (Recorded 2026-07-16 by
   `04-pr-review-orchestrator`'s review.)
+- **P5-SEC-02 remains OPEN after the readiness-path rebuild. Owner: a future hook- or
+  script-owning phase; routing: the same phase that gains code execution for the PR Review
+  path.** The earlier record said the finding "is closed by rebuilding the readiness path
+  **in code**", and anticipated that the rescope *would be* that rebuild — so the validator
+  would arrive with it. It did not, and the distinction matters: the rescope rebuilt the
+  readiness path **as agent Markdown**, not as code. `05g-readiness-synthesizer` still
+  reduces evaluator *claims* into a verdict behind metadata-only validation (readable,
+  regular, non-empty, under the current run root). There is still no strict schema and no
+  deterministic status reducer over structured records, because there is still no code to
+  attach them to — only a differently-worded prompt. Closing it here would have meant
+  asserting the trust contract more firmly in prose, which is precisely the move the Phase
+  03 scan faulted, and would have made the record say closed without closing anything.
+  What this feature did instead: `05g` names the gap in its own body (**Trust Boundary**)
+  and instructs against resolving it by tightening prose, so the agent cannot present a
+  metadata check as claim validation. That is honest scoping, not closure. **The rule
+  applied: when the honest fix requires capability a phase has excluded, the phase records
+  the finding — it does not redefine the finding to fit the scope.** The generalization
+  worth carrying: "the rebuild will bring the validator" is a prediction, not a plan, and a
+  finding routed to a rebuild must name the capability the rebuild has to gain — otherwise
+  the rebuild arrives, lacks it, and the finding silently looks overdue instead of
+  correctly deferred. (Recorded 2026-07-16 by `07-synthesis-and-pr-posting`.)
 
 ## Hook Composition
 

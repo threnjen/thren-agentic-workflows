@@ -167,7 +167,7 @@ These agents are not visible in the picker. They run automatically as part of or
 | **04e Diff Security Scan** | Phase - Execute | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
 | **Security Scan** | None — user-invocable | Perform a full-codebase security assessment and write a phase-level security report |
 | **05h Test Health** | 05 PR - Review | Delegate coverage, redundancy, and flake analysis into a test health report |
-| **05l Readiness Synthesizer** | 05 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
+| **05g Readiness Synthesizer** | 05 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
 | **Test - Writer** | Test orchestrator | Bootstrap a test suite from scratch for untested code |
