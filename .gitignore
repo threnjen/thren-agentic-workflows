@@ -24,3 +24,4 @@ file-access-guard.ndjson
 .deploy-config.json
 
 .github
+dev/
