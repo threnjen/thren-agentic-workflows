@@ -15,7 +15,6 @@ import fnmatch
 import hashlib
 import json
 import re
-import shlex
 import shutil
 import sys
 import time
@@ -33,7 +32,6 @@ WATCH_DIRS = [
     REPO_ROOT / ".github" / "agents",
     REPO_ROOT / ".github" / "skills",
     REPO_ROOT / ".github" / "instructions",
-    REPO_ROOT / ".github" / "hooks",
     REPO_ROOT / ".github" / "learnings",
 ]
 
@@ -44,10 +42,6 @@ CODEX_AGENTS_DIR = REPO_ROOT / "codex" / "agents"
 CODEX_PROFILES_DIR = REPO_ROOT / "codex" / "profiles"
 GITHUB_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
 CODEX_SKILLS_DIR = REPO_ROOT / "codex" / "skills"
-GITHUB_HOOKS_DIR = REPO_ROOT / ".github" / "hooks"
-CLAUDE_SETTINGS_FILE = REPO_ROOT / ".claude" / "settings.json"
-CODEX_HOOKS_FILE = REPO_ROOT / ".codex" / "hooks.json"
-OPENCODE_PLUGINS_DIR = REPO_ROOT / ".opencode" / "plugins"
 
 
 GENERATED_AGENT_HEADER = "# Generated from .github/agents source-of-truth. Do not edit manually."
@@ -58,89 +52,12 @@ GENERATED_AGENT_HEADER = "# Generated from .github/agents source-of-truth. Do no
 # while naming the source root these outputs actually come from.
 GENERATED_AGENT_MARKDOWN_HEADER = "<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->"
 GENERATED_SKILL_HEADER = "<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->\n"
-GENERATED_OPENCODE_PLUGIN_HEADER = "// Generated from .github/hooks source-of-truth. Do not edit manually.\n"
-HOOK_SOURCE_KEY = "$source"
-RETIRED_HOOK_ASSETS = (
-    "bash-safety.json",
-    "file-access-guard.json",
-    "protect-files.json",
-    "config/file-access-overrides.json",
-    "config/file-access-rules.json",
-    "lib/bash_analyzer.py",
-    "lib/file_access.py",
-    "lib/url_exfiltration.py",
-    "scripts/bash-safety.sh",
-    "scripts/file-access-guard.py",
-    "scripts/protect-files.sh",
-    "scripts/protect-files.py",
-    "scripts/rtk-rewrite.sh",
-)
-
-# Retired runtime assets have no generated-file header. Only remove a regular
-# file when its bytes match a source revision we owned; a same-named user file
-# must survive retirement cleanup. Add hashes deliberately when retiring a
-# shipped revision instead of broadening this to filename-based deletion.
-RETIRED_HOOK_ASSET_HASHES = {
-    "bash-safety.json": {
-        "65ad357ee32f417b828b25a51d0758d21ee7d5b5a5b890c3f7a4346e58cc885b",
-    },
-    "file-access-guard.json": {
-        "d5b2b1a8e7b4fcbae49a62edafa08989f9ad79bd85801e1119db2fe5bb8ffbd1",
-    },
-    "protect-files.json": {
-        "086758a1b3f58e70ba16758c595636bf7191a038919e6515021a1bc5ad3e29d3",
-    },
-    "config/file-access-overrides.json": {
-        "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
-    },
-    "config/file-access-rules.json": {
-        "7e1b228b290ae112d8c8df034da69999199196937c33eb4a3118e0dd951889ef",
-    },
-    "lib/bash_analyzer.py": {
-        "833f2c0728085210840481efca08ab483946e1115a354df0e51dc80e632db249",
-    },
-    "lib/file_access.py": {
-        "7596b8642a795cbcd05c2b0a6188cc68aab8f1e8ffa1ebaaee5c0fa975b9f997",
-    },
-    "lib/url_exfiltration.py": {
-        "98935c0186e2b64968ca7be0f169c8127fcec60c84e421be629f49ac73e29c4b",
-    },
-    "scripts/file-access-guard.py": {
-        "37ee760fb6cfb18b1e622bd998ae4c6117266e941b33b44cd2ae0484d42c7d57",
-    },
-    "scripts/bash-safety.sh": {
-        "d9a71487fab1e87a54482c5daa6ae1d6e8d57513a1e80346a6764779d25b7a1f",
-    },
-    "scripts/protect-files.sh": {
-        "d40ec48ba898e6141ea22d80e756816eeb34c5f04ac63f663c4ea048661194df",
-    },
-    "scripts/protect-files.py": {
-        "b11ca42619d38f28630ea0ee1884b9430cf436b0e2a5ccf12e7635d71e68c8e2",
-    },
-    "scripts/rtk-rewrite.sh": {
-        "37b436eb03897d49d5c66588b320357cfe2d121c1d0eb76df9ada2e7ba8f0702",
-    },
-}
-
-# Default translation from VS Code Copilot hook events → target tool events.
-# Keys are VS Code event names. Values map tool name → list of target event names.
-# Overridden per-file via $meta.<VsCodeEvent>.<tool> in the hook JSON.
-HOOK_EVENT_MAP: Dict[str, Dict[str, List[str]]] = {
-    "Stop":             {"claude": ["Stop", "Notification"], "codex": ["Stop"],          "opencode": ["session.idle"]},
-    "SessionStart":     {"claude": ["SessionStart"],          "codex": ["SessionStart"],  "opencode": ["session.created"]},
-    "PreToolUse":       {"claude": ["PreToolUse"],            "codex": ["PreToolUse"],    "opencode": ["tool.execute.before"]},
-    "PostToolUse":      {"claude": ["PostToolUse"],           "codex": ["PostToolUse"],   "opencode": ["tool.execute.after"]},
-    "UserPromptSubmit": {"claude": ["UserPromptSubmit"],      "codex": ["UserPromptSubmit"], "opencode": []},
-    "SubagentStop":     {"claude": ["SubagentStop"],          "codex": ["SubagentStop"],  "opencode": []},
-    "PreCompact":       {"claude": ["PreCompact"],            "codex": ["PreCompact"],    "opencode": []},
-}
-
 # Agents that should not be propagated to any platform output directory.
 # Add a source slug string here to exclude an agent during propagation.
 # Currently empty — all source agents are propagated.
 PROPAGATION_EXCLUDE: set[str] = set()
 
-INVENTORY_COUNTERS = frozenset({"source_agents", "hooks_source"})
+INVENTORY_COUNTERS = frozenset({"source_agents"})
 DEFAULT_CONVERGENCE_PASSES = 5
 MAX_CONVERGENCE_PASSES = 25
 
@@ -1050,285 +967,6 @@ def render_codex_profile(agent: SourceAgent, docs: List[InstructionDoc], referen
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _to_pascal_case(name: str) -> str:
-    """Convert a dash/underscore-separated name to PascalCase for JS identifiers."""
-    return "".join(word.title() for word in name.replace("-", "_").split("_"))
-
-
-def _resolve_hook_events(vscode_event: str, meta: Dict, tool: str) -> List[str]:
-    """Return target events for a tool, using $meta overrides when present."""
-    event_meta = meta.get(vscode_event, {})
-    if tool in event_meta:
-        return event_meta[tool]
-    return HOOK_EVENT_MAP.get(vscode_event, {}).get(tool, [])
-
-
-def _resolve_hook_command(entry: Dict, meta: Dict, tool: str) -> str:
-    """Return the command for a tool, with $meta.commands override support."""
-    commands_override = meta.get("commands", {})
-    if tool in commands_override:
-        return commands_override[tool]
-    return entry.get("osx") or entry.get("command", "")
-
-
-HOOK_PROJECT_ROOT_TOKENS = {
-    "claude": "$CLAUDE_PROJECT_DIR",
-    "codex": "$(git rev-parse --show-toplevel)",
-}
-
-
-def _project_root_hook_command(command: str, tool: str) -> str:
-    """Anchor a project-relative hook command to the repository root.
-
-    Claude Code and Codex both run hook commands with the *session* working
-    directory, so a bare relative script path stops resolving as soon as the
-    agent works from a subdirectory — and a guard that fails to launch fails
-    closed, blocking every subsequent tool call. Both accept shell-form
-    commands, so the root token expands at invocation time. OpenCode has no
-    equivalent token; its plugins pin cwd at the call site instead.
-    """
-    root_token = HOOK_PROJECT_ROOT_TOKENS.get(tool)
-    if root_token is None:
-        return command
-    rendered = [
-        f'"{root_token}/{part}"' if part.startswith(".github/hooks/") else part
-        for part in shlex.split(command)
-    ]
-    return " ".join(rendered)
-
-
-def _strip_propagated_hooks(settings: Dict) -> None:
-    """Remove all hook entries tagged with HOOK_SOURCE_KEY from settings in-place."""
-    for event_key in list(settings.get("hooks", {}).keys()):
-        settings["hooks"][event_key] = [
-            e for e in settings["hooks"][event_key]
-            if HOOK_SOURCE_KEY not in e
-        ]
-        if not settings["hooks"][event_key]:
-            del settings["hooks"][event_key]
-
-
-def _render_opencode_plugin(name: str, event_commands: List[Tuple[str, str]]) -> str:
-    """Render an OpenCode JS plugin file from (event, command) pairs."""
-    if name == "injection-scanner" and len(event_commands) == 1:
-        event, command = event_commands[0]
-        if event == "tool.execute.after":
-            command_parts = json.dumps(shlex.split(command))
-            return (
-                GENERATED_OPENCODE_PLUGIN_HEADER
-                + "export const InjectionScanner = async ({ directory }) => {\n"
-                + "  return {\n"
-                + '    "tool.execute.after": async (input, output) => {\n'
-                + "      const toolAliases = {\n"
-                + '        shell: "Bash", bash: "Bash", read: "Read", grep: "Grep",\n'
-                + '        fetch: "WebFetch", webfetch: "WebFetch",\n'
-                + '        search: "WebSearch", websearch: "WebSearch", task: "Task",\n'
-                + '        patch: "apply_patch"\n'
-                + "      }\n"
-                + "      const toolName = toolAliases[input.tool] ?? input.tool\n"
-                + "      const toolInput = input.args && typeof input.args === \"object\" && !Array.isArray(input.args)\n"
-                + "        ? { ...input.args } : {}\n"
-                + "      if (toolName === \"Read\" && typeof toolInput.filePath === \"string\" && toolInput.file_path === undefined) {\n"
-                + "        toolInput.file_path = toolInput.filePath\n"
-                + "      }\n"
-                + "      const payload = {\n"
-                + '        hook_event_name: "PostToolUse",\n'
-                + "        tool_name: toolName,\n"
-                + "        tool_input: toolInput,\n"
-                + "        tool_output: output.output,\n"
-                + "        tool_output_truncated: false,\n"
-                + "        session_id: input.sessionID\n"
-                + "      }\n"
-                + f"      const proc = Bun.spawnSync({command_parts}, {{\n"
-                + "        cwd: directory,\n"
-                + "        stdin: new TextEncoder().encode(JSON.stringify(payload)),\n"
-                + "        stdout: \"pipe\", stderr: \"pipe\"\n"
-                + "      })\n"
-                + "      const stdout = new TextDecoder().decode(proc.stdout)\n"
-                + "      let result\n"
-                + "      try { result = JSON.parse(stdout) } catch { result = null }\n"
-                + "      const context = result?.hookSpecificOutput?.additionalContext\n"
-                + "      const isBlock = result?.decision === \"block\" && typeof result.reason === \"string\"\n"
-                + "      const isWarn = result?.decision === undefined && typeof context === \"string\" && context.length > 0\n"
-                + "      const isAllow = result && Object.keys(result).length === 0\n"
-                + "      if (proc.exitCode !== 0 || (!isBlock && !isWarn && !isAllow)) {\n"
-                + '        output.output = "Injection scanner blocked tool output. guard error"\n'
-                + "      } else if (isBlock) {\n"
-                + "        output.output = result.reason\n"
-                + "      } else if (isWarn) {\n"
-                + "        output.output += `\\n\\n${context}`\n"
-                + "      }\n"
-                + "    }\n"
-                + "  }\n"
-                + "}\n"
-            )
-    fn_name = _to_pascal_case(name)
-    handler_lines: List[str] = []
-    for i, (event, command) in enumerate(event_commands):
-        escaped = command.replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
-        comma = "," if i < len(event_commands) - 1 else ""
-        handler_lines.append(f'    "{event}": async (_input, _output) => {{')
-        handler_lines.append(f"      await $`{escaped}`.cwd(directory)")
-        handler_lines.append(f"    }}{comma}")
-    handlers = "\n".join(handler_lines)
-    return (
-        GENERATED_OPENCODE_PLUGIN_HEADER
-        + f"export const {fn_name} = async ({{ $, directory }}) => {{\n"
-        + f"  return {{\n"
-        + f"{handlers}\n"
-        + f"  }}\n"
-        + f"}}\n"
-    )
-
-
-def _update_nested_settings_file(
-    settings_file: Path,
-    source_hooks: List[Dict],
-    tool: str,
-    command_transform: Callable[[str], str] | None = None,
-) -> bool:
-    """Rebuild Claude/Codex-style nested settings, preserving untagged entries."""
-    if settings_file.exists():
-        settings: Dict = json.loads(settings_file.read_text(encoding="utf-8"))
-    else:
-        settings = {}
-    settings.setdefault("hooks", {})
-    _strip_propagated_hooks(settings)
-    for source in source_hooks:
-        for vscode_event, entries in source["hooks_by_event"].items():
-            target_events = _resolve_hook_events(vscode_event, source["meta"], tool)
-            for target_event in target_events:
-                settings["hooks"].setdefault(target_event, [])
-                for entry in entries:
-                    command = _resolve_hook_command(entry, source["meta"], tool)
-                    if command_transform is not None:
-                        command = command_transform(command)
-                    else:
-                        command = _project_root_hook_command(command, tool)
-                    timeout = entry.get("timeout")
-                    inner: Dict = {"type": "command", "command": command}
-                    if timeout is not None:
-                        inner["timeout"] = timeout
-                    settings["hooks"][target_event].append({
-                        "matcher": entry.get("matcher", ""),
-                        HOOK_SOURCE_KEY: source["name"],
-                        "hooks": [inner],
-                    })
-    return _write_if_changed(settings_file, json.dumps(settings, indent=2) + "\n")
-
-
-def _hook_asset_files(hooks_dir: Path) -> List[Path]:
-    hooks_root = hooks_dir.resolve()
-    assets: List[Path] = []
-    for path in sorted(hooks_dir.rglob("*")):
-        if (
-            not path.is_file()
-            or path.name == ".distribution-version"
-            or "__pycache__" in path.parts
-            or path.suffix == ".pyc"
-        ):
-            continue
-        try:
-            path.resolve().relative_to(hooks_root)
-        except ValueError as exc:
-            raise ValueError(
-                f"hook source asset resolves outside .github/hooks: {path}"
-            ) from exc
-        assets.append(path)
-    return assets
-
-
-def _hook_distribution_version(hooks_dir: Path) -> str:
-    digest = hashlib.sha256()
-    for path in _hook_asset_files(hooks_dir):
-        digest.update(path.relative_to(hooks_dir).as_posix().encode("utf-8"))
-        digest.update(b"\0")
-        digest.update(path.read_bytes())
-        digest.update(b"\0")
-    return f"phase-01-sha256:{digest.hexdigest()}\n"
-
-
-def _copy_hook_assets(source_dir: Path, target_dir: Path) -> int:
-    changed = 0
-    same_tree = source_dir.resolve() == target_dir.resolve()
-    for source_path in _hook_asset_files(source_dir):
-        target_path = target_dir / source_path.relative_to(source_dir)
-        if same_tree:
-            continue
-        content = source_path.read_bytes()
-        _validate_nested_output_directory(target_dir, target_path.parent)
-        if target_path.is_symlink():
-            target_path.unlink()
-        if target_path.exists() and target_path.read_bytes() == content:
-            continue
-        target_path.parent.mkdir(parents=True, exist_ok=True)
-        target_path.write_bytes(content)
-        changed += 1
-    return changed
-
-
-def _remove_retired_hook_assets(source_dir: Path, target_dir: Path) -> int:
-    removed = 0
-    same_tree = source_dir.resolve() == target_dir.resolve()
-    for relative_path in RETIRED_HOOK_ASSETS:
-        if (source_dir / relative_path).exists():
-            continue
-        target_path = target_dir / relative_path
-        _validate_nested_output_directory(target_dir, target_path.parent)
-        if target_path.is_symlink():
-            link_target = (target_path.parent / target_path.readlink()).resolve()
-            retired_source = (source_dir / relative_path).resolve()
-            if not same_tree and link_target == retired_source:
-                target_path.unlink()
-                removed += 1
-            continue
-        if not target_path.is_file():
-            continue
-        owned_hashes = RETIRED_HOOK_ASSET_HASHES.get(relative_path, set())
-        target_hash = hashlib.sha256(target_path.read_bytes()).hexdigest()
-        if target_hash not in owned_hashes:
-            continue
-        target_path.unlink()
-        removed += 1
-    return removed
-
-
-def _validate_hook_commands(source_hooks: List[Dict], source_root: Path) -> None:
-    hooks_root = (source_root / ".github" / "hooks").resolve()
-    for source in source_hooks:
-        for entries in source["hooks_by_event"].values():
-            for entry in entries:
-                for tool in ("claude", "codex", "opencode"):
-                    command = _resolve_hook_command(entry, source["meta"], tool)
-                    try:
-                        command_parts = shlex.split(command)
-                    except ValueError as exc:
-                        raise ValueError(
-                            f"invalid generated hook command for {source['name']}: {exc}"
-                        ) from exc
-                    candidate_parts = list(command_parts)
-                    for part in command_parts:
-                        if any(character.isspace() for character in part):
-                            candidate_parts.extend(shlex.split(part))
-                    for part in candidate_parts:
-                        normalized = part.removeprefix("./")
-                        if not normalized.startswith(".github/hooks/"):
-                            continue
-                        candidate = (source_root / normalized).resolve()
-                        try:
-                            candidate.relative_to(hooks_root)
-                        except ValueError as exc:
-                            raise ValueError(
-                                "generated hook command escapes .github/hooks: "
-                                f"{part}"
-                            ) from exc
-                        if not candidate.is_file():
-                            raise FileNotFoundError(
-                                "generated hook command references missing asset: "
-                                f"{part}"
-                            )
-
-
 def _validate_output_directory(repo_root: Path, directory: Path) -> None:
     """Reject generated-output directories that resolve outside the target root."""
     resolved_root = repo_root.resolve()
@@ -1362,153 +1000,6 @@ def _validate_nested_output_directory(root: Path, directory: Path) -> None:
                 raise ValueError(
                     f"generated output directory resolves outside target root: {current}"
                 ) from exc
-
-
-def propagate_hooks_once(
-    verbose: bool = False,
-    repo_root: Path | None = None,
-    source_root: Path | None = None,
-    *,
-    copy_assets: bool = True,
-    command_transform: Callable[[str], str] | None = None,
-) -> Dict[str, int]:
-    """Propagate source hooks and their runtime assets into one repository root."""
-    repo_root = repo_root or REPO_ROOT
-    source_root = source_root or REPO_ROOT
-    github_hooks_dir = source_root / ".github" / "hooks"
-    target_hooks_dir = repo_root / ".github" / "hooks"
-    claude_settings_file = repo_root / ".claude" / "settings.json"
-    codex_hooks_file = repo_root / ".codex" / "hooks.json"
-    opencode_plugins_dir = repo_root / ".opencode" / "plugins"
-    for output_directory in (
-        target_hooks_dir,
-        claude_settings_file.parent,
-        codex_hooks_file.parent,
-        opencode_plugins_dir,
-    ):
-        _validate_output_directory(repo_root, output_directory)
-        _validate_nested_output_directory(repo_root, output_directory)
-    if not github_hooks_dir.exists():
-        return {
-            "hooks_source": 0,
-            "assets_changed": 0,
-            "retired_assets_removed": 0,
-            "version_changed": 0,
-            "claude_changed": 0,
-            "codex_changed": 0,
-            "opencode_changed": 0,
-        }
-
-    assets_changed = (
-        _copy_hook_assets(github_hooks_dir, target_hooks_dir) if copy_assets else 0
-    )
-    retired_assets_removed = (
-        _remove_retired_hook_assets(github_hooks_dir, target_hooks_dir)
-        if copy_assets
-        else 0
-    )
-    version_path = (
-        target_hooks_dir / ".distribution-version"
-        if copy_assets
-        else repo_root / ".hook-distribution-version"
-    )
-    version_changed = _write_if_changed(
-        version_path, _hook_distribution_version(github_hooks_dir)
-    )
-
-    source_hooks: List[Dict] = []
-    for hook_file in sorted(github_hooks_dir.glob("*.json")):
-        try:
-            data = json.loads(hook_file.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            continue
-        source_hooks.append({
-            "name": hook_file.stem,
-            "hooks_by_event": data.get("hooks", {}),
-            "meta": data.get("$meta", {}),
-        })
-    _validate_hook_commands(source_hooks, source_root)
-
-    claude_changed = _update_nested_settings_file(
-        claude_settings_file, source_hooks, "claude", command_transform
-    )
-    codex_changed = _update_nested_settings_file(
-        codex_hooks_file, source_hooks, "codex", command_transform
-    )
-
-    opencode_plugins_dir.mkdir(parents=True, exist_ok=True)
-    opencode_changed = 0
-    expected_plugins: set[Path] = set()
-
-    for source in source_hooks:
-        event_commands: List[Tuple[str, str]] = []
-        for vscode_event, entries in source["hooks_by_event"].items():
-            target_events = _resolve_hook_events(vscode_event, source["meta"], "opencode")
-            for target_event in target_events:
-                for entry in entries:
-                    command = _resolve_hook_command(entry, source["meta"], "opencode")
-                    if command_transform is not None:
-                        command = command_transform(command)
-                    event_commands.append((target_event, command))
-        if not event_commands:
-            continue
-        plugin_file = opencode_plugins_dir / f"{source['name']}.js"
-        expected_plugins.add(plugin_file)
-        if _write_if_changed(plugin_file, _render_opencode_plugin(source["name"], event_commands)):
-            opencode_changed += 1
-
-    if opencode_plugins_dir.exists():
-        for plugin_file in opencode_plugins_dir.glob("*.js"):
-            if plugin_file in expected_plugins:
-                continue
-            content = plugin_file.read_text(encoding="utf-8")
-            if content.startswith(GENERATED_OPENCODE_PLUGIN_HEADER):
-                plugin_file.unlink()
-                opencode_changed += 1
-
-    if verbose:
-        print(json.dumps({
-            "hooks_source": len(source_hooks),
-            "assets_changed": assets_changed,
-            "retired_assets_removed": retired_assets_removed,
-            "version_changed": int(version_changed),
-            "claude_changed": int(claude_changed),
-            "codex_changed": int(codex_changed),
-            "opencode_changed": opencode_changed,
-        }, indent=2))
-
-    return {
-        "hooks_source": len(source_hooks),
-        "assets_changed": assets_changed,
-        "retired_assets_removed": retired_assets_removed,
-        "version_changed": int(version_changed),
-        "claude_changed": int(claude_changed),
-        "codex_changed": int(codex_changed),
-        "opencode_changed": opencode_changed,
-    }
-
-
-def _absolute_hook_command(command: str, source_root: Path) -> str:
-    parts = shlex.split(command)
-    replaced = [
-        str(source_root / part) if part.startswith(".github/hooks/") else part
-        for part in parts
-    ]
-    return shlex.join(replaced)
-
-
-def generate_global_hooks(
-    output_root: Path, source_root: Path | None = None, verbose: bool = False
-) -> Dict[str, int]:
-    """Generate local-only user-scope hook wiring with absolute source paths."""
-    source_root = (source_root or REPO_ROOT).resolve()
-    return propagate_hooks_once(
-        verbose=verbose,
-        repo_root=output_root,
-        source_root=source_root,
-        copy_assets=False,
-        command_transform=lambda command: _absolute_hook_command(command, source_root),
-    )
 
 
 def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
@@ -1760,23 +1251,17 @@ def propagate_once(verbose: bool = True, repo_root: Path | None = None) -> Dict[
 
     learnings_result = propagate_learnings_once(repo_root)
 
-    hooks_result = propagate_hooks_once(verbose=False, repo_root=repo_root, source_root=repo_root)
-
     result = {
         "source_agents": len(agents),
-        "hooks_source": hooks_result["hooks_source"],
-        "hook_assets_changed": hooks_result["assets_changed"],
-        "retired_hook_assets_removed": hooks_result["retired_assets_removed"],
-        "hook_version_changed": hooks_result["version_changed"],
-        "claude_changed": changed_claude + hooks_result["claude_changed"] + skill_result["claude_changed"] + learnings_result["claude_changed"],
-        "opencode_changed": changed_opencode + hooks_result["opencode_changed"] + skill_result["opencode_changed"],
-        "codex_changed": changed_codex + hooks_result["codex_changed"] + skill_result["codex_changed"],
+        "claude_changed": changed_claude + skill_result["claude_changed"] + learnings_result["claude_changed"],
+        "opencode_changed": changed_opencode + skill_result["opencode_changed"],
+        "codex_changed": changed_codex + skill_result["codex_changed"],
         "codex_profiles_changed": changed_codex_profiles,
         "skills_changed": changed_skills,
         "learnings_changed": learnings_result["learnings_changed"],
         # Deletions are reported on their own keys rather than folded into the
         # `changed_*` counters, which already conflate writes with removals. This
-        # follows the `retired_hook_assets_removed` precedent above: a run that
+        # follows the orphan-removal precedent: a run that
         # removes a file says so instead of removing it silently.
         "claude_orphans_removed": claude_orphans,
         "claude_command_orphans_removed": claude_command_orphans,
@@ -2211,7 +1696,7 @@ def _compute_changes(
 
 
 def watch_loop(interval_seconds: float = 1.0) -> None:
-    print("Starting master asset watcher for .github/{agents,skills,instructions,hooks} ...")
+    print("Starting master asset watcher for .github/{agents,skills,instructions,learnings} ...")
     print(
         "Restart this watcher after propagator changes before migration or "
         "release verification."
@@ -2304,11 +1789,6 @@ def main() -> int:
     parser.add_argument("--once", action="store_true", help="Run one propagation pass and exit.")
     parser.add_argument("--watch", action="store_true", help="Watch .github source folders and propagate on changes.")
     parser.add_argument(
-        "--global-output",
-        type=Path,
-        help="Generate local user-scope hook wiring with absolute source paths.",
-    )
-    parser.add_argument(
         "--runtime-deploy",
         action="store_true",
         help="Converge, inventory, and deploy reviewed managed runtime copies.",
@@ -2332,7 +1812,6 @@ def main() -> int:
     if (
         not args.once
         and not args.watch
-        and args.global_output is None
         and not args.runtime_deploy
     ):
         args.once = True
@@ -2355,18 +1834,7 @@ def main() -> int:
             return 2
         return 0 if runtime_result.status == "go" else 1
 
-    convergence_ran = False
-    if args.global_output is not None:
-        try:
-            result = propagate_until_converged()
-        except PropagationConvergenceError as exc:
-            print(f"Propagation failed: {exc}", file=sys.stderr)
-            return 1
-        convergence_ran = True
-        print(json.dumps(_convergence_payload(result), indent=2))
-        generate_global_hooks(args.global_output, verbose=True)
-
-    if args.once and not convergence_ran:
+    if args.once:
         try:
             result = propagate_until_converged()
         except PropagationConvergenceError as exc:

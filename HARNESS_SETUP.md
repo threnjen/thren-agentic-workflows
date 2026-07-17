@@ -25,7 +25,7 @@ Do not replace `--runtime-deploy` with manual copy commands or by calling `propa
 | Codex | agents, skills | `CODEX_HOME` for agents; documented active-user skill root for skills |
 | OpenCode | agents, skills | `OPENCODE_CONFIG_DIR` or documented defaults |
 
-Profiles, project-local assets, and generated hook/settings outputs are not manual escape hatches. If they are not in the current destination roster, report them as unsupported by this deployment run rather than installing them ad hoc.
+Profiles, project-local assets, and generated settings outputs are not manual escape hatches. If they are not in the current destination roster, report them as unsupported by this deployment run rather than installing them ad hoc.
 
 ## GitHub Copilot (VS Code)
 

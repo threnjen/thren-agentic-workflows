@@ -1,6 +1,5 @@
 import json
 import os
-import runpy
 import shutil
 import subprocess
 import sys
@@ -877,40 +876,6 @@ class PhaseRuntimeOrchestrationTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
 
-    def test_retired_interceptors_are_absent_while_scanner_framework_remains(self) -> None:
-        retired = (
-            ".github/hooks/scripts/file-access-guard.py",
-            ".github/hooks/scripts/rtk-rewrite.sh",
-            ".github/hooks/scripts/bash-command-analyzer.py",
-            ".github/hooks/file-access-guard.json",
-        )
-        for relative in retired:
-            with self.subTest(relative=relative):
-                self.assertFalse((REPO_ROOT / relative).exists())
-        self.assertTrue((REPO_ROOT / ".github/hooks/scripts/injection-scanner.py").is_file())
-        self.assertTrue((REPO_ROOT / ".github/hooks/injection-scanner.json").is_file())
-        self.assertTrue((REPO_ROOT / ".github/hooks/lib/framework.py").is_file())
-
-        scanner = runpy.run_path(
-            str(REPO_ROOT / ".github/hooks/scripts/injection-scanner.py")
-        )
-        self.assertTrue(callable(scanner["handle_event"]))
-
-        benchmark = subprocess.run(
-            [sys.executable, str(REPO_ROOT / "tests/hooks/injection_benchmark.py")],
-            cwd=REPO_ROOT,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        self.assertEqual(benchmark.returncode, 0, benchmark.stderr)
-        summary = next(
-            line.removeprefix("summary-json: ")
-            for line in benchmark.stdout.splitlines()
-            if line.startswith("summary-json: ")
-        )
-        self.assertTrue(json.loads(summary)["passed"])
-
     def test_runtime_cli_reports_review_required_without_deploying(self) -> None:
         convergence = propagator.PropagationConvergenceResult(True, 1, 0, {}, {})
         expected = propagator.RuntimeDeploymentResult(
@@ -999,17 +964,6 @@ class DeploymentGuidanceTests(unittest.TestCase):
         ):
             with self.subTest(obligation=obligation):
                 self.assertIn(obligation, source)
-
-    def test_explicit_rtk_guidance_remains_available(self) -> None:
-        expected_guidance = {
-            "docs/hooks/bash-command-limitations.md": "Use explicit `rtk` prefixes",
-            "docs/hooks/hook-verification.md": "explicitly prefixed `rtk` command",
-            "docs/hooks/manual-qa.md": "explicit `rtk git status`",
-        }
-        for relative, statement in expected_guidance.items():
-            with self.subTest(path=relative):
-                text = (REPO_ROOT / relative).read_text(encoding="utf-8")
-                self.assertIn(statement, text)
 
     def test_native_windows_and_wsl_are_separate_evidence(self) -> None:
         source = (REPO_ROOT / ".github/agents/evangelize.agent.md").read_text(

@@ -1,138 +1,128 @@
-# Phase 7: Hook Release Remediation & Verification
+# Phase 7: Package for General Use
 
 **Status**: Planned
-**Depends on**: Phases 01, 02 (Phase 01's framework/propagation implemented and carried forward by Phase 04; Phase 02 implemented and release-blocked)
-**Required by**: Phases 05 and 06 — both build on a verified hook foundation. This phase carries a number higher than its dependents because phase numbers in this project record identity, not execution order; the `Depends On` column is authoritative.
+**Depends on**: Phases 01, 02, 04 (deployment machinery), 05, 06 (the complete hook set — package once, not three times). Runs last; execution order is 01 → 02 → 03 → 04 → 05 → 06 → 07.
+**Required by**: Nothing — terminal phase.
 **Estimated complexity**: Medium
-**Cross-references**: `docs/phases/DISCOVERY_CONTEXT.md`, `docs/phases/PHASE_02/PHASE_02-security-scan.md` (P2-SEC-01..03), `docs/phases/PHASE_03/PHASE_03-qa-analysis.md` (Phase 03's open findings, retained by Phase 03's own rescope), `docs/phases/PHASE_03/PHASE_03_SUMMARY.md` (the PR Review rescope that retains them), `docs/phases/PHASE_01/PHASE_01_SUMMARY.md` (surviving framework/propagation deliverables), `docs/phases/PHASE_04/PHASE_04_SUMMARY.md` (guard retirement; cross-platform deployment this phase's QA verifies), `dev/phase-final-review/PHASE_05/z-security-scan-final.md` (F-15), `docs/hooks/prompt-injection-defense.md`, `.github/learnings/cross-phase-decisions.md`
+**Cross-references**: `docs/phases/PHASE_07/PHASE_07_DISCOVERY_CONTEXT.md`, `dev/research/codex-hooks-mechanism/`, `docs/phases/PHASE_04/PHASE_04_SUMMARY.md` (deployment machinery this phase extends), `docs/phases/PHASE_02/PHASE_02-security-scan.md` (P2-SEC-01..03), `docs/phases/PHASE_03/PHASE_03_SUMMARY.md` (PR Review rescope; verdict evidence), `docs/hooks/prompt-injection-defense.md`, `.github/learnings/cross-phase-decisions.md`
 
 ## What's New
 
-Nothing new ships in this phase — that is the point. The project's one remaining live hook-security component, the injection scanner, is implemented but sitting behind an open blocker, and **has never been tested in a live agent session**. Every claim about it rests on automated tests and payload fixtures. Phase 01's hook framework and propagation deliverables carry a similar gap: they are implemented and extended by Phase 04's cross-platform deployment, but that deployment's live fresh-session evidence is `NOT RUN` on every platform.
+Distribution. Today the hook suite protects exactly one repository: this one. Hook wiring is generated only into this repo's own config surfaces (`.claude/settings.json`, `.codex/hooks.json`, `.opencode/plugins/`), anchored to paths that resolve nowhere else, while `--runtime-deploy` ships agents, commands, skills, and learnings to the user's home — but not hooks. The hooks this project authors mean nothing without a path out.
 
-This phase stops adding surface area and makes the surviving hooks trustworthy. It closes the remaining Phase 02 blocker, resolves a propagation-containment gap, runs the real end-to-end QA in Claude Code, Codex, and OpenCode for the first time, and reconciles the written record with what is genuinely true. When it completes, Phase 02 is either releasable or honestly recorded as not releasable, with evidence either way, and Phase 01's surviving framework/propagation deliverables have live QA evidence to match what Phase 04 already implemented.
+This phase makes the hooks **global**: hook scripts deployed to stable home locations through the same reviewed managed-copy machinery Phase 04 built, and hook wiring registered in user-level harness config so hooks fire in every repo the user works in. All three harnesses support user-global hook registration (verified from primary sources — see Technical Context). The phase then verifies the packaged install live — the first live agent-session testing this project has ever run — and issues the release verdicts (Phase 02, Phase 03) that have been waiting on that evidence.
 
 ## Objective
 
-Convert Phase 02 from "implemented but blocked" to a verified verdict, and give Phase 01's surviving framework/propagation deliverables their first live-harness evidence, by closing the open Phase 02 blocker, resolving REPO-SEC-06, executing the live multi-harness QA that has never run, and correcting records and documentation that currently overstate remediation status.
+A stranger can install the hook suite into their environment with one reviewed command, have it protect every repo they work in, opt out per-project, recover when it blocks them, and upgrade when rules change — with per-harness coverage disclosed honestly at install time. Then: live verification of that install, and evidence-backed verdicts for the phases that have been waiting on live QA.
 
 ## Audience and Bar
 
-The current adopters are **the author and friends** — people who can ask a question and get an answer. That fact is what makes several residual risks acceptable, and it is recorded here because if it changes, the bar changes with it:
+This phase *changes* the audience assumption. Phases 01–06 are scoped for the author and friends; this phase is what makes the suite fit for anyone else. That is why recovery docs written for a stranger, per-repo opt-out, and install-time disclosure are deliverables here rather than niceties.
 
-- Codex tool-coverage parity stays an accepted limitation, documented rather than redesigned.
-- Distribution stays "clone the repo and run propagation" rather than a packaged install.
-
-Broad public adoption would invalidate both — partial protection that reads as total protection is worse than none once the user cannot ask. That work is deliberately **not** in this phase; see "Deferred to a Future Phase" below.
+Platform bar: the author has macOS only. **macOS is the sole live-evidence platform; Linux, native Windows, and WSL are recorded `NOT RUN` by hardware constraint** — permanently for this phase, not as a gap to close. Phase 04's cross-platform conditions stay open; this phase does not claim to close them.
 
 ## Scope
 
 ### In Scope
 
-- **Phase 02 security gate re-run**: re-execute the security gate against the P2-SEC-01/P2-SEC-02/P2-SEC-03 remediations already made in code, and record a verified verdict from final-state evidence.
-- **REPO-SEC-06**: resolve the propagation containment gap via a single canonical no-follow contract. This is propagation code, independent of the agent family.
-- **Live harness QA**: execute the `NOT RUN` manual QA for Phase 02's scanner and for Phase 01's surviving framework/propagation deliverables across Claude Code, Codex, and OpenCode, recording honest per-harness support tiers.
-- **Record reconciliation**: close DOC-01's `PENDING` commit SHAs; fold the project-root hook-command anchoring into the phase record.
-- **Documentation correction**: keep statements about remediation status matched to verified reality.
-- **Phase 03 verdict**: issue a NO-GO from existing evidence, with its open findings enumerated and routed back to Phase 03's rescope.
+- **Per-harness global-hook verification** — confirm live, and pin version gates for, each harness's user-global hook mechanism: Claude Code (`~/.claude/settings.json`), OpenCode (global config/plugin directory), and Codex (`~/.codex/hooks.json` / `[hooks]` in `~/.codex/config.toml`). The mechanisms are documented as existing; the deliverable is a verified support matrix with version prerequisites that the deployment design and install docs consume.
+- **Global hook deployment** — a `hooks` asset class in the `--runtime-deploy` managed-copy flow (scripts + config to stable home paths), plus wiring registration in user-level harness config, with the same review/digest/collision-preservation contract as the existing asset classes. User-level config files (e.g. `~/.claude/settings.json`) are user-owned and merged, never overwritten.
+- **Per-repo opt-out** — a global install fires everywhere, so a per-project "not here" mechanism is required, built on the framework's existing config layering. Includes fixing the kill-switch asymmetry: the scanner's disable mechanism must not remain "create a file to disable, delete it to restore" once a stranger depends on it.
+- **Install, upgrade, and recovery path** — one documented install command; a defined upgrade story when upstream rules change (including Codex's per-hook hash-based re-trust, which makes upgrades non-silent there); recovery/kill-switch docs written for someone who cannot ask the author.
+- **Install-time disclosure** — per-harness support tiers and prerequisites surfaced where the installer runs: Codex partial tool-hook coverage and minimum version, Codex `max_depth` operator prerequisite, OpenCode plugin caveats.
+- **REPO-SEC-06** — propagation containment via the single canonical no-follow contract; this phase owns the propagation write path anyway.
+- **Live packaged-install QA (macOS)** — a fresh repo with no connection to this project, installed via the packaged path, with the scanner proven to fire; opt-out and recovery proven; the runtime-only enforcement tiers covered (PostToolUse output replacement, Stop behavior, subagent contexts), per harness.
+- **Verdicts and record reconciliation** — Phase 02 security gate re-run against final-state code (P2-SEC-01/02/03, all three overflow paths); DOC-01 `PENDING` SHAs closed; project-root anchoring record written; Phase 03 verdict issued from evidence (including live PR Review run evidence); documentation matched to verified reality with test assertions updated in lockstep.
 
 ### Out of Scope
 
-- Any new hook capability, rule, or agent. This phase adds no features.
-- **The `05a`–`05l` agent family.** Its `execute` grants, its propagation-enumeration gap, its runtime evidence, and P5-SEC-02 all belong to Phase 03's rescope. Fixing capability grants on agents slated for rewrite is churn, and enumerating agents slated for retirement is worse.
-- Format-on-save and completion gates, and skill enforcement.
-- Adoption readiness: packaging, install UX, configurable friction, upgrade path. See below.
-
-### Deferred to a Future Phase
-
-Making this suite fit for adoption beyond the author's circle is real work and is **not** part of this phase: a packaged install path (the deferred plugin-packaging idea in `.github/learnings/cross-phase-decisions.md`), recovery documentation written for someone who is not the author, an upgrade path when rules change, and an install-time disclosure of Codex's partial coverage. This requires a new roadmap entry and belongs to `@project-planner`.
-
-### Retained by Phase 03's Rescope
-
-These are real, open, and deliberately not addressed here. Each is a NO-GO input for Phase 03's verdict, and each is closed by the PR Review rescope in `docs/phases/PHASE_03/PHASE_03_SUMMARY.md` rather than by this phase.
-
-| Finding | Why it moves | Disposition |
-|---|---|---|
-| **P5-SEC-02** — the readiness path consumes report claims after metadata-only validation | Closing it requires a strict schema and deterministic status reducer. There is no code to attach that to today: the readiness path is agent Markdown. Phase 03's rescope rebuilds that path as `05g-readiness-synthesizer`, so the validator arrives with the rebuild instead of being bolted onto prose. | Open High; a requirement of Phase 03's rescope. |
-| **`execute` grants on `05`, `05g`, `05j`, `05k`** | The orchestrator is being rewritten; the three sweeps are being rescoped. Grants should be set correctly when each agent is rebuilt, not fixed twice. `05k` in particular is not a simple removal — its contract permits an offline read-only audit command. | Open High; the rescope must not carry `execute` forward without justification. |
-| **`05a` unconstrained `execute`** | The propagation format maps `execute` to `Bash`/`bash` with no allowlist syntax, so a narrower grant is inexpressible today. `05a` genuinely needs `git worktree`. Phase 03's rescope adds that allowlist syntax as its first deliverable, which makes the narrow grant expressible for the first time. | Closable in Phase 03; not a residual risk once the allowlist lands. |
-| **Propagation enumeration omits `05g`/`05j`/`05k`** | The enumeration and the `execute` grants land in the same test function, and the enumeration is only correct once the roster is settled. Phase 03 settles it at seven contiguous slugs. | Open High; belongs with Phase 03's rescoped roster. |
-| **Absent curl/wget exfiltration enforcement** | Four of the 17 loosened rules describe patterns with no enforcement rule behind them. "Reinstating" means authoring rules that never existed — new capability. | Coverage gap, recorded with routing. The review still adjudicates all 17. |
+- New hook capabilities beyond what packaging itself requires. Phases 05 and 06 own new hooks.
+- Non-macOS live evidence (hardware constraint; recorded `NOT RUN`).
+- The `05a`–`05g` PR Review agent family's internals — Phase 03's rescope owns them; this phase only consumes run evidence for the verdict.
+- Public registry publication (npm, marketplace, Homebrew). Install is "from a clone or release artifact of this repo"; a hosted channel is future work if adoption warrants it.
+- Closing Phase 04's Linux/Windows/WSL evidence conditions.
 
 ## Key Deliverables
 
 | # | Deliverable | Description | Likely Features |
 |---|-------------|-------------|-----------------|
-| 1 | Phase 02 verified verdict | Security gate re-run against final-state code; verdict recorded from fresh evidence for all three P2-SEC findings. | Phase 02 security verification |
-| 2 | Containment contract | REPO-SEC-06 resolved through one canonical no-follow contract in the propagation write path. | Propagation security |
-| 3 | Live multi-harness QA | First live execution of Claude/Codex/OpenCode QA for Phase 02's scanner and Phase 01's surviving framework/propagation deliverables, with per-harness support tiers recorded honestly. | QA execution |
-| 4 | Record and doc reconciliation | DOC-01 SHAs closed; anchoring fix recorded; docs matched to verified reality; Phase 03's findings enumerated and routed. | Records/docs |
+| 1 | Harness hook-support matrix | Live confirmation and version-gate pinning of user-global hooks on Claude Code, Codex, and OpenCode, from primary sources plus local verification. Consumed by deliverable 2's design and deliverable 3's docs. | Harness verification |
+| 2 | Global hook deployment | `hooks` asset class in `--runtime-deploy` + user-level wiring registration + per-repo opt-out. Same review/digest contract as existing classes; user-owned config merged, never clobbered, with a restore path. | Deployment build |
+| 3 | Stranger-grade docs | Install command, upgrade story (incl. Codex re-trust), recovery/kill-switch docs, install-time per-harness disclosure. | Docs |
+| 4 | REPO-SEC-06 containment | Canonical no-follow contract routed through the existing helper (`_validate_nested_output_directory`) — not a second helper. | Propagation security |
+| 5 | Live packaged-install QA | First live multi-harness QA, on macOS, against a fresh repo via the packaged install path. Early smoke pass + full tail walkthrough. | QA execution |
+| 6 | Verdicts & reconciliation | Phase 02 gate re-run; Phase 02/03 user-issued verdicts from fresh evidence; DOC-01 SHAs; anchoring record; docs/tests in lockstep. | Records/verdicts |
 
 ## Technical Context
 
-### Why the Phase 02 gate re-run is the right instrument
+### Harness global-hook support (researched 2026-07-17; report in `dev/research/codex-hooks-mechanism/`)
 
-The Phase 03 evaluator run's delegated scan (`dev/phase-final-review/PHASE_05/z-security-scan-final.md`) classifies P2-SEC-01, P2-SEC-02, and P2-SEC-03 as **persisting**. That classification is correct for the revision it examined and does not describe current code. The scan records its subject explicitly: revision `344711df78c5` on branch `phase/phase-final-review-2`. At that commit, `redact_tool_output` in `.github/hooks/lib/framework.py` recursed through mappings and lists preserving container shape — the P2-SEC-01 defect itself. At HEAD the same function returns a fixed redacted shape and documents P2-SEC-01 by name.
+- **Claude Code**: hooks in `~/.claude/settings.json` apply to all sessions in every repo. First-class.
+- **Codex**: user-global hooks exist and are official — `~/.codex/hooks.json` (highest precedence) or `[hooks]` in `~/.codex/config.toml`, merged **additively** with repo-level hooks (all matching hooks run). The event set and decision protocol are Claude-Code-shaped: `PreToolUse` can deny via exit code 2 or JSON `permissionDecision`, and can rewrite tool inputs. Caveats that shape this phase: **per-hook hash-based trust** (regenerating a hook command changes its hash and requires re-trust via `/hooks` — upgrades are non-silent); not all shell calls are intercepted (only "simple" ones under `unified_exec`); an open bug where `codex exec` non-interactive mode does not dispatch repo-level `hooks.json` hooks (verify whether the user-global layer is affected during live QA); minimum version ~v0.123 (late Apr 2026) for the full feature set; enterprise `requirements.toml` can suppress user/project hooks entirely.
+- **OpenCode**: global plugin/config directory (`~/.config/opencode/`) is already a deployment destination for skills; hooks ride the plugin mechanism. The plugin working-directory caveat from prior QA notes still applies.
 
-The two conclusions are not in conflict; they describe different code. This is precisely why *"remediated in code is not verified"* cuts both ways: a stale scan is no more authoritative than a stale fix. Deliverable 1 exists to classify all three findings against final-state code, and the evidence-recency check in Deliverable 4 exists to catch this class of mismatch generally.
+### Deployment machinery
 
-### Other context
+- **The managed-copy flow is built and reviewed** — `scripts/runtime_deployment.py`'s `_ASSET_POLICIES` is where a `hooks` asset class lands; the review/digest/collision flow extends rather than being redesigned. The genuinely new part is **wiring registration**: existing asset classes copy directories, while hook wiring must *merge into user-owned config files* — a new write mode needing its own collision rules and restore path.
+- **Config layering already supports global-with-override** — the framework loads repo defaults → project overrides; per-repo opt-out builds on this, not on new mechanism.
+- **Kill-switch asymmetry**: `.github/hooks/config/injection-overrides.json` absent = enabled, present = disabled; restoring means deleting, not writing `{}`. Any live QA that provokes the scanner arms the switch first. The packaged design should remove the asymmetry.
+- **Watcher staleness**: a long-running `--watch` propagator executes pre-change code; propagator changes here require watcher restart before any deployment, as Phase 04's flow already enforces.
 
-- **Phase 02 remediations already in code**: `redact_tool_output` in `.github/hooks/lib/framework.py` (fixed replacement shape) and scan/candidate cap fail-closed behavior. Implemented but unverified by a gate re-run. Note that P2-SEC-02 covers **three** overflow paths — the scan-byte cap, the encoded-candidate budget, and `max_decoded_bytes` — and that the fail-closed block/replace behavior lives in `.github/hooks/scripts/injection-scanner.py`, not in the lib module, which only truncates and raises a notice. A classification drawn from the lib alone is a false negative.
-- **REPO-SEC-06 containment**: a canonical helper already exists in `scripts/propagate_master_assets.py` (`_validate_nested_output_directory`). The work is routing the write path's call sites through it, not authoring a second contract — a second helper alongside it would be the finding rather than the fix.
-- **Out-of-pipeline changes needing records**: `_project_root_hook_command` in `scripts/propagate_master_assets.py` (project-root anchoring for Claude/Codex/OpenCode wiring).
+### Phase 02 gate specifics (unchanged from the prior scope)
+
+- P2-SEC-02 covers **three** overflow paths — the scan-byte cap, the encoded-candidate budget, and `max_decoded_bytes`. The fail-closed block/replace behavior lives in `.github/hooks/scripts/injection-scanner.py`, not the lib module (which only truncates and raises a notice); a classification drawn from the lib alone is a false negative.
+- Every finding classification names the revision it examined; every evidence artifact must post-date the code it covers. The stale-scan history behind this rule is recorded in `.github/learnings/cross-phase-decisions.md`.
 - **Test entry points**: `.venv/bin/python -m pytest tests/` (system `python3` lacks pytest).
 
 ### Test impact
 
-- This file also pins the honesty of `docs/hooks/prompt-injection-defense.md` via exact-string assertions (`"NOT RUN"` and a dated residual-risk approval), so Deliverable 4's documentation corrections require lockstep assertion updates. These documents are test-asserted by design; correcting them is expected to touch tests.
-- Stale NO-GO status text lives in multiple documents under `docs/hooks/`. Deliverable 4 is unsatisfiable while any of them contradict the corrected status.
+- `docs/hooks/prompt-injection-defense.md` is pinned by exact-string test assertions (`"NOT RUN"`, dated residual-risk approval); deliverable 6's documentation corrections require lockstep assertion updates. These documents are test-asserted by design.
+- Deliverable 2 changes propagation/deployment code covered by `tests/test_phase04_runtime_deployment.py` and `tests/test_propagate_master_assets.py`; expect additions for the new asset class and the config-merge write mode, including collision and restore cases.
 
 ## Dependencies & Risks
 
-- **Dependency**: Live QA requires working installs of Claude Code, Codex, and OpenCode. Codex and OpenCode coverage is already classified Partial; live QA may confirm rather than remove that limitation.
-- **Risk — verification reveals more work.** Live QA has never run, so it is the most likely source of surprises. Mitigation: the findings containment rule below.
-- **Risk — "remediated in code" is not "verified", and neither is a stale scan.** Every remediation needs fresh final-state evidence before any status line moves, and every finding classification needs to name the revision it examined.
-- **Risk — the recovery path for the scanner is a separate switch from the retired guard's.** `.github/hooks/config/injection-overrides.json` does not exist by default; creating it disables the scanner, so restoring it means **deleting** it rather than writing `{}`. Any live QA that provokes the scanner must arm this switch before doing so.
+- **Dependency**: Phases 05 and 06 must land first — their hooks are part of what gets packaged, and packaging before they exist means packaging twice.
+- **Risk — merging into user-owned config files.** `~/.claude/settings.json` and `~/.codex/hooks.json` may contain the user's own hooks and settings; a bad merge breaks their environment in every repo at once. This is the highest-blast-radius write the project has attempted; it inherits the review-before-mutate contract and needs its own restore path.
+- **Risk — Codex re-trust friction.** Hash-based per-hook trust means every upgrade prompts re-approval on Codex. Not fixable from this side; must be disclosed, and the upgrade docs must walk through it.
+- **Risk — consequence of running last**: Phase 02 carries its NO-GO (unverified) status through Phases 05 and 06. Accepted deliberately: the scanner protects only this repo until this phase runs, and its verdict waits for the live QA this phase owns.
+- **Risk — live QA reveals more work.** It has never run; it is the most likely source of surprises. Mitigated by the findings containment rule below and by an early smoke pass.
 
 ### Findings containment rule
 
-New findings surfaced during this phase are fixed here **only if High or Critical**. Medium and below are recorded with routing and deferred. Without this rule, "verify the work" silently becomes "keep working" — and live QA, having never run, is exactly the kind of discovery that could expand indefinitely.
-
-The rule cuts both ways and is not a lever. A finding is not promoted to High because fixing it is desirable, and not demoted to Medium because fixing it is inconvenient.
+New findings surfaced during this phase are fixed here **only if High or Critical**. Medium and below are recorded with routing and deferred. The rule cuts both ways and is not a lever: a finding is not promoted to High because fixing it is desirable, and not demoted because fixing it is inconvenient.
 
 ## Success Criteria
 
+- [ ] A harness hook-support matrix exists with primary-source citations and live local verification, and the deployment design records which mechanism each harness uses, with minimum-version prerequisites documented at install time.
+- [ ] `--runtime-deploy` ships hook assets and registers user-level wiring under the same reviewed-inventory contract; user-owned config is merged, never clobbered, with a verified restore path.
+- [ ] A repo with no connection to this project is protected by the scanner after a documented install, verified live on macOS per harness; opt-out and recovery verified live; runtime-only enforcement tiers covered.
+- [ ] Per-repo opt-out exists and the kill-switch restore is no longer delete-to-enable.
+- [ ] Install docs, upgrade story (including Codex re-trust), recovery docs, and per-harness disclosure exist and are written for a stranger.
+- [ ] REPO-SEC-06 is resolved through the existing canonical helper rather than a second one.
 - [ ] The Phase 02 security gate has been re-run against final-state code and records a verdict derived from fresh evidence for P2-SEC-01, P2-SEC-02 (all three overflow paths), and P2-SEC-03.
-- [ ] REPO-SEC-06 is resolved through a single canonical no-follow containment contract, routed through the existing helper rather than a second one.
-- [ ] Live QA has been executed for Phase 02 on Claude Code, and attempted on Codex and OpenCode, with per-harness results and support tiers recorded — run against a scratch consumer repo, not this one.
-- [ ] Live QA has been executed for Phase 01's surviving framework and propagation deliverables on Claude Code, and attempted on Codex and OpenCode, with per-harness results recorded.
-- [ ] No implementation record retains a `PENDING` commit SHA.
-- [ ] The project-root hook-command anchoring has a phase record describing what changed and why.
-- [ ] Documentation states no remediation as complete that is not backed by fresh evidence, with test assertions updated in lockstep.
-- [ ] Every piece of evidence post-dates the last change to the code it covers; anything invalidated by a later change is re-run or marked stale.
-- [ ] Phase 03 has a user-issued NO-GO with its open findings enumerated and routed back to Phase 03's rescope.
-- [ ] Phase 02 has a user-issued verdict backed by evidence — GO or NO-GO, either is a valid outcome of this phase.
+- [ ] Phase 02 and Phase 03 have user-issued, evidence-backed verdicts — GO or NO-GO, either is a valid outcome.
+- [ ] No implementation record retains a `PENDING` commit SHA; the project-root anchoring has a phase record.
+- [ ] Every piece of evidence post-dates the last change to the code it covers; Linux, native Windows, and WSL rows are recorded `NOT RUN` (hardware constraint).
 
 ## QA Considerations
 
-This phase is largely QA, and it carries the project's **first live agent-session testing**. Manual QA docs are mandatory, not optional.
+This phase carries the project's **first live agent-session testing**. Manual QA docs are mandatory.
 
-- **A smoke pass runs early, not at the tail.** Live QA is the highest-uncertainty item in the phase — this project's hooks have already contradicted a passing test suite live before, and neither incident was found by a green suite. An early smoke pass de-risks the remediation work before it is finished. The full walkthrough still runs at the end against the final state.
-- Live QA must cover the enforcement tiers that only exist at runtime: PostToolUse output replacement, Stop behavior, and subagent contexts.
-- The subdirectory case must be tested **per harness**, not once. The project-root anchoring rewrites Claude and Codex hook commands but leaves OpenCode's unchanged — OpenCode relies on its plugin working directory instead. A pass on one harness is not evidence about the others.
-- Recovery needs live verification: the scanner's kill switch, and the fact that a scanner failure must never require a blocked tool to recover from.
-- QA must record NOT RUN honestly where a harness is unavailable. A missing check is a NO-GO input, not an omission.
+- **A smoke pass runs early, not at the tail** — as soon as deliverable 2 can deploy anything, prove one hook fires in one fresh repo on one harness. This project's hooks have contradicted a passing test suite live before; a green suite is not live evidence.
+- Live QA must cover the enforcement tiers that only exist at runtime: PostToolUse output replacement, Stop behavior, and subagent contexts — per harness, not once.
+- Codex QA must additionally verify: global-layer hooks fire in interactive sessions, whether the `codex exec` dispatch bug affects the user-global layer, and the re-trust flow after a regeneration.
+- Recovery needs live verification: kill switch, per-repo opt-out, uninstall/restore of merged user config, and the property that a hook failure never requires a blocked tool to recover from.
+- QA records `NOT RUN` honestly where a platform or harness is unavailable. A missing check is a below-GO input, not an omission.
 
 ## Notes for Feature - Decomposer
 
-Suggested feature boundaries, ordered so that verification work is not blocked by remediation work:
+Suggested feature boundaries, ordered:
 
-1. **Live QA smoke pass** — small and early. Just enough to confirm the scanner and hook framework behave in a live session at all. Runs against a scratch consumer repo with the kill switch armed. Feeds findings into the remediation features while they are still in flight.
-2. **Phase 02 security gate re-run and verdict** — verification-only, against final-state code.
-3. **REPO-SEC-06 containment** — propagation write path only. Independent of everything else here; parallel-safe.
-4. **Full live multi-harness QA** — depends on the remediation features being complete, since it validates the final state. This is the phase's tail.
-5. **Records and reconciliation** — the DOC-01 SHAs and the anchoring record. **Documentation that describes verdicts is not part of this feature** — it cannot be written before the verdicts it describes, so it belongs at the tail.
-6. **Release evidence consolidation** — the integration feature. Every other feature produces evidence in isolation and none can tell whether the evidence, taken together, supports a release decision. This one assembles the per-phase dossier, verifies that every artifact post-dates the code it covers, surfaces contradictions rather than averaging them, enumerates Phase 03's open findings for routing, hands the dossier to the user for hand-issued verdicts, and only then writes the records those verdicts imply.
-
-Integration point to watch: feature 4 exercises the surviving hooks in a live session and must not double-record findings already surfaced by feature 1's smoke pass. The phase's defining rule is that **no status line moves without fresh evidence** — decomposition should make evidence production an explicit deliverable of each feature, not a side effect. Verdicts themselves are issued by the user, by hand; no feature should attempt to write one.
+1. **Harness hook-support verification** — first, small, blocks deliverable 2's design decisions. Codex needs the most attention (version gate, trust flow, `codex exec` behavior); Claude/OpenCode are confirmations.
+2. **Hooks asset class + wiring registration** — the core build. The merge-into-user-owned-config write mode is the risky half; suggest splitting it into its own reviewable increment with collision and restore tests. Suggested implementation shape, to be verified by Feature Decomposer against current code and tests: extend `_ASSET_POLICIES` and the inventory/review flow in `scripts/runtime_deployment.py`.
+3. **Opt-out + kill-switch rework** — depends on 2's config layout; removes the delete-to-enable asymmetry.
+4. **REPO-SEC-06 containment** — independent of 1–3; parallel-safe.
+5. **Docs + disclosure** — after 2 and 3 stabilize the install surface.
+6. **Live packaged-install QA** — early smoke pass as soon as 2 can deploy; full walkthrough at the tail against the final state. Scratch repo, kill switch armed first. Must not double-record findings already surfaced by the smoke pass.
+7. **Verdicts & reconciliation** — strictly last; consumes QA evidence plus live PR Review run evidence for Phase 03. The phase's defining rule: **no status line moves without fresh evidence**, and verdicts are issued by the user, by hand — no feature writes one.

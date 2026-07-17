@@ -1,93 +1,75 @@
-# Project Roadmap: Security & Determinism Hooks + PR Review
+# Project Roadmap: PR Review + Agent Distribution
 
 ## Vision
 
-A propagated, source-of-truth hook system (Python stdlib, under `.github/hooks/`) that hardens every project against prompt injection — even under bypass permissions — and converts agent-judgment steps in the existing pipeline (formatting, completion claims, skill activation) into deterministic, testable gates. All hooks are original implementations that improve on patterns surveyed in `docs/inspiration/`, never direct copies. The project also adds **PR Review** — a `05-` orchestrator agent family that evaluates the diff between a branch and its base when the branch is ready to open a pull request, and hands back a single advisory go/no-go readiness report.
+A source-of-truth repository of pipeline agents, skills, and instructions — headlined by
+**PR Review**, the `05-` orchestrator agent family that evaluates a branch's diff against
+its base and hands back a single advisory go/no-go readiness report — propagated to
+Claude, Codex, and OpenCode outputs and deployable to user homes via the reviewed
+managed-copy flow, with a final packaging phase that makes the agent suite installable
+by people who are not this repo's author.
 
-**Vision correction (2026-07-17):** the original vision also promised protection against **file/secret manipulation**, delivered in Phase 01 as a PreToolUse file-access guard and Bash-command analyzer. Phase 04 retired both — see "What Phase 04 Removed From Phase 01" below. The bypass-permissions guarantee that survives today covers **prompt-injection defense only** (Phase 02); this project no longer blocks direct or Bash-mediated reads/writes of secrets or protected files. That is a real reduction in security posture, not a documentation nuance, and it is recorded here because the Vision paragraph above is the sentence every other status line gets checked against.
+**Vision rewrite (2026-07-17):** this project was originally a security/determinism
+*hook* project (prompt-injection defense, file-access guards, format-on-save, skill
+enforcement, completion gates). The user cancelled the hook effort in full. Phase 05 now
+removes all hook functionality and its documentation record from the repository; the
+prompt-injection scanner is retained on disk as an explicitly defunct artifact, and
+`docs/inspiration/` is kept as research history. No bypass-permissions security claim
+survives. Phase docs for the hook phases (01, 02, 04) are deleted by Phase 05; git
+history is the archival record.
 
-## Phase Numbering 
+## Phase Numbering
 
-| Phase | Name | Runs |
-|-------|------|------|
-| 01 | Hook Foundation + File-Access Guard | 1st |
-| 02 | Prompt-Injection Defense | 2nd |
-| 03 | PR Review agent family | 3rd |
-| 04 | Hook Retirement & Cross-Platform Deployment | 4th |
-| 07 | Hook Release Remediation & Verification | **5th** |
-| 05 | Format-on-Save + Completion Gates | 6th |
-| 06 | Skill Enforcement / Auto-Activation | 7th |
-
-**Numbers are identity; the `Depends On` column is execution order.** Two places in this project already work that way, and both are deliberate:
-
-- **Agent names did not renumber.** The `05-pr-review` orchestrator and its `05a`–`05g` evaluators mark pipeline position (`01-project-planner` → `02-phase-refiner` → `03-feature-decomposer` → `04-phase-execute` → `05-pr-review`), not the phase that built them. That Phase 03 ships `05-` agents is correct and intentional.
-- **Phase 07 runs before Phases 05 and 06**, which both depend on it. It was filed at 07 rather than renumbering 05→06→07, because a prior renumber is recorded as having silently changed the meaning of a deferral, and re-sequencing two more phases to preserve a tidy count would risk the same failure for no benefit.
-
-If you are deciding what to work on next, read the dependency column. The number tells you which phase, never when.
+**Numbers are identity, not execution order — read the `Depends On` column.** Agent
+names (`05-pr-review`, `05a`–`05g`) mark pipeline position, not the phase that built
+them.
 
 ## Phases
 
-Listed in execution order.
-
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
-| 01 | Hook Foundation + File-Access Guard | **Partially retired (2026-07-17)** — framework & propagation implemented and retained; file-access guard & Bash analyzer retired by Phase 04 | None | Large | Python hook framework (shared helpers, config layering, fail-closed posture, tests) — **retained**. Propagation/distribution integration — **retained and since extended by Phase 04**. The tiered PreToolUse file-access guard (deny secrets/protected files incl. Grep coverage and self-protection; ask for destructive commands) and its bash-command analyzer — **retired by Phase 04**; see "What Phase 04 Removed From Phase 01" below. SEC-01 and PERF-01, both scoped to the retired guard, are moot rather than open. |
-| 02 | Prompt-Injection Defense | Implemented — release blocked (NO-GO) | Phase 01 | Large | Scanner, clean-room corpus/benchmark, URL-payload guard, and multi-harness wiring. **P2-SEC-01, P2-SEC-02, and P2-SEC-03 have been remediated in code**, but the phase stays NO-GO until the security gate is re-run against those fixes and live harness QA is executed. Codex remains Partial under accepted residual risk. Verification is owned by Phase 07. Unaffected by Phase 04's guard retirement — this scanner is now the project's **only** surviving bypass-permissions protection. |
-| 03 | PR Review agent family | Partially implemented — rescoped; diff-scoped orchestration re-planned | None (independent of the hook phases; uses existing pipeline assets) | Medium | `05-pr-review` orchestrator + `05a`–`05g` evaluator subagents + 2 rescoped skills, scoped to the diff between the current branch and its base: merge-base worktree, change narrative, artifact/consistency/dependency sweeps, test health, delegated diff-scoped security via the existing `04e-diff-security-scan`, and go/no-go readiness synthesis. A branch's base is not recoverable from git, so it is suggested (`origin/HEAD` → `origin/main` → `origin/master` → candidates) and user-confirmed. All questions — model-tier warning, base confirmation, and the opt-in PR-comment choice — are asked in one upfront block; the run then reaches a report unattended. Reports land at `dev/pr-review/<base-sha-short>-<timestamp>/`; the agent writes no status lines and the verdict is advisory. Adds orphan pruning to `propagate_master_assets.py`, without which every retirement and rename strands a live artifact in the generated roots. Retires five phase-shaped evaluators. Per-agent command scoping is out of scope — it is not expressible in Claude subagent frontmatter and needs a PreToolUse hook, so `execute` is narrowed by removal where it is not required and declared where it is. Formerly Phase 05, and formerly the Phase Final Review family. |
-| 04 | Hook Retirement & Cross-Platform Deployment | Implementation complete — **GO WITH CONDITIONS** | Phase 01 | Large | Retired the branch-added file-access guard, its Bash analyzer, and automatic `rtk-rewrite.sh` interception while preserving RTK itself, explicit RTK usage, the shared hook framework, and prompt-injection defense. `propagate_master_assets.py` now gates managed-copy deployment on repository convergence, a reviewed active-home inventory, and watcher-restart confirmation, with per-harness isolation and ownership-safe reconciliation. Supported setup guidance no longer creates runtime links. Automated scratch-home evidence is complete, but pytest hook integration and fresh-session macOS, Linux, native Windows, and WSL evidence are `NOT RUN`; full cross-platform production GO remains unavailable. **Phase 01 and Phase 07 status lines reconciled 2026-07-17** — see below. |
-| 05 | Format-on-Save + Completion Gates | Planned | Phases 01, 07 | Medium | Project-aware formatter dispatch on edit for consuming projects (this repo has no formatter toolchain of its own), plus Stop-time verification gates that block unverified "done" claims using this repo's pipeline artifacts as evidence. Owns edit-time hooks, including the pre-edit file backup layer deferred from Phase 01 — **that backup layer covered edits to files the retired guard protected; its motivating case shrinks accordingly and Phase 05's refiner should re-scope it against Phase 02's protected paths only.** Formerly Phase 03. |
-| 06 | Skill Enforcement / Auto-Activation | Planned | Phase 01 (framework), Phase 07; informed by 01–05 tuning | Large | Rules file mapping globs/keywords → required skills; UserPromptSubmit suggestion injection + PreToolUse guard with block/suggest/warn enforcement levels, propagated multi-harness. Formerly Phase 04. |
-| 07 | Hook Release Remediation & Verification | Planned — **rescoped 2026-07-17, shrunk by Phase 04's guard retirement** | Phases 01, 02 | Medium (down from Large) | **Hooks only; adds no features. Required by Phases 05 and 06 despite its higher number** — see the ordering rationale below. **Removed from scope, now moot**: PERF-01 (the propagated-*guard* latency budget — there is no guard left to time), the bash-rewrite bypass (was about the guard's classification being invalidated by `rtk-rewrite.sh` — both are retired), and the security review of the 17 loosened guard rules (the rules and the engine that reads them are retired). **Still in scope**: re-run the Phase 02 security gate against final-state code for P2-SEC-01/02/03; resolve REPO-SEC-06 propagation-containment in the in-repo write path (independent of the guard); execute the live Claude/Codex/OpenCode QA that is `NOT RUN` for Phase 01's surviving framework/propagation and for Phase 02; reconcile records (DOC-01's `PENDING` SHAs, the project-root anchoring record). Phase 03 gets a NO-GO issued here from existing evidence, superseded rather than repaired. **Phase 02 has no route to a release verdict until this phase runs; Phase 01's surviving framework/propagation deliverables inherit Phase 04's GO WITH CONDITIONS rather than waiting on this phase for guard-specific gates that no longer apply.** Verdicts are issued by the user by hand. Scoped for an audience of the author and friends; adoption readiness is deferred. |
-
-## What Phase 04 Removed From Phase 01
-
-Phase 01 shipped four deliverables. Phase 04 retired two of them outright and left two standing:
-
-| Phase 01 deliverable | Status after Phase 04 | Detail |
-|---|---|---|
-| 1. Hook framework | **Retained** | Shared Python lib (payload parsing, allow/ask/deny decisions, config layering, fail-closed posture, structured logging) is unchanged and still backs Phase 02's scanner. |
-| 2. File-access guard | **Retired** | `scripts/file-access-guard.py`, `lib/file_access.py`, the secrets/protected-file rule set, Grep coverage, and self-protection rules are gone. Direct Read/Edit/Write/Grep access to secrets and protected files is **no longer blocked by this project**. |
-| 3. Bash-command analyzer | **Retired** | `lib/bash_analyzer.py` and `lib/url_exfiltration.py` (guard-only, orphaned by the same cut) are gone, along with the destructive-command `ask` tier and env-dump/exfiltration rules they implemented. Bash-mediated indirect access to secrets is likewise unenforced. |
-| 4. Propagation + consolidation + install guide | **Retained, superseded by Phase 04** | The propagation stage no longer emits guard assets; Phase 04 extended it into full cross-platform managed-copy deployment (`--runtime-deploy`). The install guide's guard sections are stale and need a Phase 04-driven correction pass (tracked as a documentation gap, not a phase blocker). |
-
-Also retired alongside the guard: automatic `rtk-rewrite.sh` Bash-command rewriting (added later, during the Phase Final Review work, not originally a Phase 01 deliverable — see Phase 04's technical context). RTK itself, and explicitly RTK-prefixed commands, are unaffected.
-
-**Net effect on the project's headline security claim**: the Vision's "even under bypass permissions" guarantee now covers prompt-injection defense only (Phase 02). File/secret manipulation protection — Phase 01's original headline deliverable — does not exist in this project after Phase 04. This is a deliberate, user-approved trade against guard friction (see `.github/learnings/cross-phase-decisions.md`, "File-Access Guard Retirement"), not an oversight, and it is recorded here so no later phase or document quietly assumes the guard is still there.
-
-## Current Release Status
-
-No phase has an unconditional production GO today.
-
-- **Phase 01** is split: its hook framework and propagation deliverables are implemented and carried forward into Phase 04's `--runtime-deploy` path, inheriting Phase 04's **GO WITH CONDITIONS** rather than standing separately release-blocked. Its file-access guard and Bash analyzer are **retired, not blocked** — SEC-01 and PERF-01 are moot, not open findings, because there is no longer a guard for either finding to describe.
-- **Phase 02** remains release-blocked (NO-GO): P2-SEC-01/02/03 are remediated in code but unverified by a re-run gate, and live harness QA has never executed. This is now the project's sole open hook-security verdict tied to a still-live component.
-- **Phase 03** remains release-blocked; Phase 07 issues its NO-GO from existing evidence rather than repairing it, per the PR Review rescope.
-- **Phase 04** is implementation-complete with **GO WITH CONDITIONS**: pytest hook integration and fresh-session macOS, Linux, native Windows, and WSL evidence are all `NOT RUN`, and the authorized active-home migration gates remain manual. Scratch-home and simulated platform coverage do not replace those results.
-- **Phase 07** is rescoped smaller (Large → Medium): it no longer owns PERF-01, the bash-rewrite bypass, or the 17-rule guard review, all moot after Phase 04's retirement. It still owns the Phase 02 gate re-run, REPO-SEC-06, live Claude/Codex/OpenCode QA, and record reconciliation.
-
-This reconciliation was performed 2026-07-17 by `project-planner`, closing the item the roadmap had previously flagged as pending. Per the Final Review contract in `.github/learnings/cross-phase-decisions.md`, an unverified verdict must not update roadmap or summary status lines — the status entries above record what Phase 04 actually removed and what remains open, without asserting a release verdict that hasn't been gated.
+| 01 | Hook Foundation + File-Access Guard | **Historical — superseded by hook cancellation** | — | — | Built the Python hook framework and (retired earlier by Phase 04) the file-access guard and Bash analyzer. All surviving hook assets are removed or marked defunct by Phase 05. Its phase docs are deleted by Phase 05; see git history. |
+| 02 | Prompt-Injection Defense | **Historical — scanner retained on disk, defunct** | — | — | Built the injection scanner, corpus, and multi-harness wiring. Never reached GO. Under the hook cancellation, the scanner code stays in `.github/hooks/` unwired and marked DEFUNCT; its wiring, tests, and phase docs are removed by Phase 05. |
+| 03 | PR Review agent family | Partially implemented — rescoped; diff-scoped orchestration re-planned | None | Medium | `05-pr-review` orchestrator + `05a`–`05g` evaluator subagents + 2 rescoped skills, scoped to the diff between the current branch and its base: merge-base worktree, change narrative, artifact/consistency/dependency sweeps, test health, delegated diff-scoped security scan, and go/no-go readiness synthesis. Base is suggested and user-confirmed; all questions asked in one upfront block; reports land at `dev/pr-review/<base-sha-short>-<timestamp>/`; the verdict is advisory. The first live end-to-end run was started 2026-07-17 on a real external repo; its outcome is this phase's key open evidence. |
+| 04 | Hook Retirement & Cross-Platform Deployment | **Historical — deployment machinery retained** | — | — | Retired the file-access guard and Bash analyzer, and built the reviewed managed-copy `--runtime-deploy` flow (convergence gate, inventory digest, watcher-restart confirmation). The deployment machinery is live and carried forward; the hook-specific remainder and the phase docs are removed by Phase 05. |
+| 05 | Hook Removal | **Planned — next to run** | None | Medium | Removes all hook functionality and its documentation record: deletes the propagator's entire hook-emission pipeline, unwires generated harness configs, deletes the hook framework and `tests/hooks/`, purges phase docs 01/02/04 and the decision log's hook sections (line-level scrub in mixed sections), and scrubs the standard docs. Keeps: the injection scanner on disk marked DEFUNCT, the `done-notify` notification converted to static hand-committed harness config (no longer propagated), and `docs/inspiration/`. See `docs/phases/PHASE_05/PHASE_05_SUMMARY.md`. |
+| 06 | Skill Enforcement / Auto-Activation | **Cancelled** | — | — | Was a hook-based enforcement phase; cancelled with the hook effort. No phase doc was ever written. |
+| 07 | Package Agents for General Use | Planned — needs re-planning | Phases 03, 05 | Medium | Makes the **agent suite** (agents, commands, skills, learnings — the asset classes `--runtime-deploy` already ships) installable and upgradable by strangers: install/upgrade/recovery docs and a reviewed one-command path. **No hooks.** The existing `docs/phases/PHASE_07/` documents describe the pre-cancellation hook-packaging scope and are stale; return to `@project-planner` after Phase 05 completes to rewrite them. |
 
 ## Constraints & Non-Goals
 
-- **Clean-room constraint**: All hooks and skills are written from scratch. `docs/inspiration/` files are requirements/design references (which events to hook, which failure modes to cover) — never code to copy. No verbatim reuse of pattern files, scripts, or prompts from the surveyed repos. Attribution for the surveyed projects lives in `README.md` (§ Acknowledgments).
-- **Runtime**: Python 3 stdlib only for hook logic (no pip dependencies in the hooks themselves). Existing bash hooks are folded in or retired as phases absorb their responsibilities.
-- **Enforcement posture (Phase 02, currently live)**: warn-and-continue for prompt-injection matches except high-confidence patterns, which block. Tier is declared per-rule in config.
-- **Enforcement posture (Phase 01, retired by Phase 04 — historical record only)**: hard-block (deny) for secrets/protected-file access, high-confidence exfiltration, and hook self-tampering was the tier meant to hold in bypass-permissions mode; `ask` (user confirmation) covered destructive-but-legitimate commands and ambiguous env-var exposure. No rule in this tier is enforced today — the guard and analyzer that read it are gone. Kept here so a future phase re-adding file-access enforcement inherits the prior tiering rather than re-deriving it.
-- **Friction budget**: Guards must prompt for genuinely destructive actions only. Rules matching ordinary text (commit messages, search patterns, benign redirects, lock-file reads) are defects, not safety.
-- **Distribution**: Hooks live in `.github/hooks/` as source of truth and are propagated to platform outputs via `scripts/propagate_master_assets.py`, consistent with agents/skills/instructions.
-- **Non-goal**: Adopting any surveyed repo wholesale (claudekit binary, gstack pipeline, workflow-v2 agents/skills — the latter duplicate this repo's existing pipeline).
-- **Non-goal**: Notification/TTS/sound hooks, telemetry hooks, and duplicate agents (code-reviewer, security-auditor, docs-writer variants already exist here).
-- **Non-goal**: UI/design skill packs (ui-ux-pro-max is orthogonal to this effort).
+- **Runtime**: propagation and deployment tooling is Python 3; tests run via
+  `.venv/bin/python -m pytest tests/`.
+- **Distribution**: `.github/` is the source of truth; `scripts/propagate_master_assets.py`
+  generates the Claude, Codex, and OpenCode outputs and prunes orphans;
+  `--runtime-deploy` performs reviewed managed-copy deployment to user homes.
+- **Non-goal**: generated or managed hooks of any kind — enforcement, formatting,
+  security, or otherwise. The hook effort is cancelled; the propagator has no hook
+  pipeline and nothing may quietly re-add one. The sole surviving hook wiring is the
+  `done-notify` Stop notification, kept as static hand-committed harness config, not a
+  managed asset.
+- **Non-goal**: adopting any surveyed repo wholesale; `docs/inspiration/` is reference
+  history only.
+- **Non-goal**: notification/TTS beyond the retained `done-notify`, telemetry, and
+  duplicate agents.
 
 ## Architecture Notes
 
-- **Hook framework**: shared Python helpers for reading the hook JSON payload from stdin, emitting decision JSON (allow/deny/block with reason), loading layered config (repo defaults → project overrides), and structured logging. Every hook is a thin entrypoint over this framework, unit-testable with pytest fixtures of real hook payloads.
-- **Why hooks, not permissions**: `permissions.deny` rules do not survive bypass-permissions mode; PreToolUse hooks fire regardless of permission mode and an exit-2 result blocks the tool call. This is the mechanism the retired file-access guard used to satisfy "protect files even with bypass permissions," and it is the same mechanism the live injection scanner uses today — the principle survived the guard's retirement even though the guard itself did not.
-- **Rule/pattern configs are data, not code**: protected-file rules, injection patterns, formatter mappings, and skill rules all live in readable config files (JSON/YAML) with per-rule reasons, so they can be reviewed, tested, and tuned without touching hook logic.
-- **Hook commands are anchored to the project root**: Claude Code and Codex both run hook commands with the *session* working directory, so generated wiring anchors script paths (`$CLAUDE_PROJECT_DIR` for Claude, `$(git rev-parse --show-toplevel)` for Codex, plugin `directory` cwd for OpenCode). A relative path combined with fail-closed turns any subdirectory session into a total tool-call outage.
-- **Propagation and runtime deployment**: `propagate_master_assets.py` emits the generated Claude, Codex, and OpenCode outputs, prunes retired owned outputs, and can hand a converged result to the managed-copy runtime deployment flow. `--runtime-deploy` first emits a home-relative, content-bound inventory; mutation requires the reviewed digest and watcher-restart confirmation. Long-running `--watch` processes execute the propagation code they started with, so edits to the propagator require a watcher restart before deployment.
-- **Phase numbers record identity, not execution order. The `Depends On` column is authoritative.** This is already true elsewhere in the project — Phase 03 ships `05-` agents because those numbers mark pipeline position — and it is now true of the phase list itself: **Phase 07 is required by Phases 05 and 06.** The alternative was renumbering 05→06 and 06→07 to keep the sequence tidy, which was rejected: the 2026-07-16 renumber is recorded below as having silently changed the meaning of the plugin-packaging deferral, and a second renumber would put two more phases at that risk to satisfy a convention the project had already abandoned. **Read the dependency column, never the number.**
-- **Phase ordering rationale**: Phase 01 builds the framework everything reuses. Phase 02 is an independent consumer of that framework. Phase 03 (PR Review) has no dependency on the hook phases and was deliberately taken out of the original order after Phase 02. Phase 04 removes the two branch-added command interceptors, preserves the reusable framework and prompt-injection defense, and completes cross-platform user deployment through managed copies. The Phase 01 and Phase 07 consequences were reconciled 2026-07-17 by `project-planner` — see "What Phase 04 Removed From Phase 01" and the rescoped Phase 07 row above. The execution order remains **01 → 02 → 03 → 04 → 07 → 05 → 06**.
+- **Propagation and runtime deployment**: `propagate_master_assets.py` emits the
+  generated Claude, Codex, and OpenCode outputs, prunes retired owned outputs, and can
+  hand a converged result to the managed-copy runtime deployment flow. `--runtime-deploy`
+  first emits a home-relative, content-bound inventory; mutation requires the reviewed
+  digest and watcher-restart confirmation. Long-running `--watch` processes execute the
+  propagation code they started with, so propagator edits require a watcher restart.
+- **PR Review**: a branch's base is not recoverable from git, so it is suggested
+  (`origin/HEAD` → `origin/main` → `origin/master` → candidates) and user-confirmed.
+  The readiness verdict is advisory by design — nothing blocks a merge on NO-GO.
+- **Defunct scanner**: `.github/hooks/` retains the prompt-injection scanner code,
+  unwired and marked DEFUNCT, per the 2026-07-17 cancellation decision. It is not part
+  of the product and must not be counted in asset inventories.
 
 ## Research Base
 
-Ten surveyed repos are inventoried in `docs/inspiration/` (one file per repo + README comparison). Key design references per phase are cross-referenced in each phase summary and in `DISCOVERY_CONTEXT.md`. Attribution is published in `README.md` (§ Acknowledgments).
+Ten surveyed repos are inventoried in `docs/inspiration/` (one file per repo + README
+comparison), kept as research history. Attribution remains in `README.md`
+(§ Acknowledgments).

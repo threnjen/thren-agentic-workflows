@@ -14,7 +14,7 @@ Quick-reference for AI agents working in this repository.
 ## Current Counts
 
 - 41 source agent definitions in `.github/agents/`.
-- 16 skills in `.github/skills/`.
+- 24 skills in `.github/skills/`.
 - 15 instructions in `.github/instructions/`.
 - 2 template packs: `nodejs/` and `python/`.
 
@@ -32,7 +32,7 @@ HARNESS_SETUP.md                           # How to expose repo assets to Copilo
     prod-code-review.md                    # Plain .md agent definition; still part of source set
     docs-writer.md                         # Second plain .md agent definition; still part of source set
   instructions/                            # 15 shared instruction files with applyTo globs
-  skills/                                  # 16 shared skill directories with SKILL.md entrypoints
+  skills/                                  # 24 shared skill directories with SKILL.md entrypoints
 claude/agents/                             # Generated Claude copies
 opencode/agents/                           # Generated OpenCode copies
 codex/

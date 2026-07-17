@@ -92,7 +92,7 @@ assuming an installed project package.
 Use this validation sequence:
 
 1. Run `python3 scripts/propagate_master_assets.py --once` when `.github/` source files changed.
-2. Run the focused Python tests for the changed propagation, hook, or runtime-deployment behavior.
+2. Run the focused Python tests for the changed propagation or runtime-deployment behavior.
 3. Inspect `git diff` for unexpected generated output churn.
 4. If you changed harness setup or porting docs, compare the documented paths against the checked-in directories and config files.
 
