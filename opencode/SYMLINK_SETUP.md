@@ -2,7 +2,7 @@
 
 This legacy filename remains as a compatibility entry point. Runtime symlink setup is retired.
 
-Generate repository outputs with `python3 scripts/propagate_master_assets.py --once`, require successful fixed-point convergence, then pass the result through `resolve_destinations_after_convergence`. Review the destination inventory for the active `OPENCODE_CONFIG_DIR` (or documented default), expected agent and skill rosters, ownership evidence, and collisions. Only after review, invoke `deploy_managed_copies_after_convergence`.
+Generate repository outputs with `python3 scripts/propagate_master_assets.py --once`, require successful fixed-point convergence, then pass the result through `resolve_destinations_after_convergence`. Confirm the active `OPENCODE_CONFIG_DIR` (or documented default) on the destination records, then review the destination inventory for expected agent and skill rosters plus their destinations. Only after review, invoke `deploy_managed_copies_after_convergence` and inspect its returned per-harness result for collision and reconciliation outcomes.
 
 Verify that OpenCode agents and skills are fresh regular managed copies, foreign content is preserved, the second run makes no changes, and a fresh OpenCode session discovers the expected assets. Project-local deployment is out of scope; do not create a project-local runtime-link fallback. Generated notification plugins remain outside this managed asset roster until a documented deployment API supports them.
 

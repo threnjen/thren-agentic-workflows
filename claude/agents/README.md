@@ -96,7 +96,8 @@ For tool name mapping and frontmatter format differences, see:
 ## Troubleshooting
 
 **Q: My agent isn't loading**
-- Check symlinks: `ls -la ~/.claude/agents`
+- Confirm the managed-copy result reports the Claude agents roster as verified
+- Start a fresh Claude session and confirm the agent is discovered
 - Verify agent frontmatter is valid YAML
 - Ensure instructions are properly inlined (not referencing external files)
 

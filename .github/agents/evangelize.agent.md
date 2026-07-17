@@ -40,9 +40,10 @@ Operate on one source by default. Do not mutate unrelated sources and do not ski
 Runtime deployment uses the settled public APIs; do not reproduce their path, ownership, collision, staging, replacement, or pruning algorithms:
 
 1. Pass the successful convergence result to `resolve_destinations_after_convergence`.
-2. Review `runtime_deployment.destination_inventory(records)` before mutation. Confirm the active home, expected roster coverage, ownership evidence, preserved foreign collisions, and the destination for every harness and asset class.
+2. Review `runtime_deployment.destination_inventory(records)` before mutation. Confirm the active home on the destination records, expected roster coverage, and the destination for every harness and asset class.
 3. After that inventory is explicitly reviewed, call `deploy_managed_copies_after_convergence` with the same convergence result and records.
-4. Re-run convergence and deployment to verify a fixed point.
+4. Inspect the returned managed-copy result for each harness's collision, copy, replacement, pruning, failure, and reconciliation-skipped outcomes.
+5. Re-run convergence and deployment to verify a fixed point.
 
 Supported runtime assets are regular managed copies. Never create, repair, recommend, or validate runtime symlinks or junctions for generated agents, commands, skills, profiles, settings/hooks outputs, or learning assets. Never replace the managed deployment with ad hoc shell copy commands.
 

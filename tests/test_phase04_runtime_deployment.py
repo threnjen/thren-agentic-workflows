@@ -672,9 +672,13 @@ class DeploymentGuidanceTests(unittest.TestCase):
         "mklink /J",
         "mklink /H",
     )
+    PROHIBITED_RUNTIME_LINK_VALIDATION = ("check symlinks:",)
 
     def _assert_no_runtime_link_recipe(self, text: str) -> None:
-        for token in self.PROHIBITED_OPERATIONAL_TOKENS:
+        for token in (
+            *self.PROHIBITED_OPERATIONAL_TOKENS,
+            *self.PROHIBITED_RUNTIME_LINK_VALIDATION,
+        ):
             self.assertNotIn(token.casefold(), text.casefold())
 
     def test_supported_guidance_has_no_runtime_link_creation_recipe(self) -> None:
@@ -709,11 +713,23 @@ class DeploymentGuidanceTests(unittest.TestCase):
             "regular-copy freshness",
             "expected roster coverage",
             "collision",
+            "Inspect the returned managed-copy result",
             "runtime discovery",
             "NOT RUN",
         ):
             with self.subTest(obligation=obligation):
                 self.assertIn(obligation, source)
+
+    def test_explicit_rtk_guidance_remains_available(self) -> None:
+        expected_guidance = {
+            "docs/hooks/bash-command-limitations.md": "Use explicit `rtk` prefixes",
+            "docs/hooks/hook-verification.md": "explicitly prefixed `rtk` command",
+            "docs/hooks/manual-qa.md": "explicit `rtk git status`",
+        }
+        for relative, statement in expected_guidance.items():
+            with self.subTest(path=relative):
+                text = (REPO_ROOT / relative).read_text(encoding="utf-8")
+                self.assertIn(statement, text)
 
     def test_native_windows_and_wsl_are_separate_evidence(self) -> None:
         source = (REPO_ROOT / ".github/agents/evangelize.agent.md").read_text(

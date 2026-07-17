@@ -6,8 +6,8 @@ This legacy filename now documents the supported Claude deployment model. Runtim
 
 1. Edit sources under `.github/` and restart any long-running propagation watcher.
 2. Run `python3 scripts/propagate_master_assets.py --once` and require the JSON result to show `converged: true` with zero `verification_changes`.
-3. Use `resolve_destinations_after_convergence` with that convergence result and review `runtime_deployment.destination_inventory(records)`. Confirm the active `CLAUDE_CONFIG_DIR` (or `~/.claude`), expected agents, commands, skills, and learnings, plus every collision outcome.
-4. After review, invoke `deploy_managed_copies_after_convergence`. It stages and reconciles regular managed copies using ownership evidence; do not substitute manual copy recipes.
+3. Use `resolve_destinations_after_convergence` with that convergence result. Confirm the active `CLAUDE_CONFIG_DIR` (or `~/.claude`) on the destination records, then review `runtime_deployment.destination_inventory(records)` for expected agents, commands, skills, learnings, and destinations.
+4. After review, invoke `deploy_managed_copies_after_convergence`. Inspect its returned per-harness result for collision and reconciliation outcomes. It stages and reconciles regular managed copies using ownership evidence; do not substitute manual copy recipes.
 
 ## Verify
 

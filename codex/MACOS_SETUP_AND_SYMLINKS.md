@@ -5,8 +5,8 @@ This legacy filename is retained for incoming references. Runtime symlink and ju
 ## Supported Workflow
 
 1. Regenerate repository outputs with `python3 scripts/propagate_master_assets.py --once` and require fixed-point convergence.
-2. Call `resolve_destinations_after_convergence` and review `runtime_deployment.destination_inventory(records)` for the active home, `CODEX_HOME`, agent roster, skill roster, ownership evidence, and collisions.
-3. After review, call `deploy_managed_copies_after_convergence` to stage and reconcile regular managed copies.
+2. Call `resolve_destinations_after_convergence`. Confirm the active home and `CODEX_HOME` on the destination records, then review `runtime_deployment.destination_inventory(records)` for the agent roster, skill roster, and destinations.
+3. After review, call `deploy_managed_copies_after_convergence` to stage and reconcile regular managed copies, then inspect its returned per-harness result for collision and reconciliation outcomes.
 4. Repeat the workflow and require no changes.
 
 The managed roster currently deploys custom agents under `CODEX_HOME` (default `~/.codex/agents`) and skills to the documented active-user skill root (default `$HOME/.agents/skills`). Profiles and global AGENTS guidance are not silently mapped into this roster; retain repository outputs until their runtime destinations are explicitly supported.
