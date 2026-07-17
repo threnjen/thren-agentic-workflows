@@ -482,3 +482,27 @@ The guard reports green while the requirement it names is gone. This is worse th
 ## Watch for
 
 The same literal appearing in a heading and in the rule beneath it; in frontmatter `description:` and again in the body; in a rule that writes a file and again in a sentence that reads it; in a ranked list and again in a worked example. Before trusting any prose-assertion module, count occurrences of every asserted literal in the normalized target — a count of two or more marks a candidate, and only a deletion mutation settles it. Fixing the one or two instances that happen to surface is not sweeping the class: this defect arrives in cohorts, because whoever wrote one presence assertion wrote all of them.
+
+## Pattern
+
+A prose assertion against a hard-wrapped document can pass or fail on where the lines happen to break rather than on what the document says. A regex spanning two words that a reflow moves onto separate lines stops matching content that is still present; an assertion that only ever matched because its phrase fit on one line is inert against the requirement it names. Normalize runs of whitespace to single spaces before asserting on a sentence, and reserve raw-text assertions for literal tokens and frontmatter, where line structure is part of the contract.
+
+## Impact
+
+The guard's verdict tracks the formatter, not the author. Reflowing a paragraph — an edit with no semantic content — silently drops the assertion or reddens a correct document. Both directions destroy trust: the first hides a broken contract, the second trains the next editor to loosen the regex until it stops biting.
+
+## Watch for
+
+Any assertion module that reads an agent body, a Markdown rule file, or any hard-wrapped prose and matches multi-word phrases. This defect arrives in cohorts — whoever wrote one line-break-sensitive regex wrote all of them. Two normalized readers (one for literals, one for sentences) is the shape that works. The normalization itself is not evidence: only a mutation sweep that breaks each contract at its own anchor proves the guards bite, and anchor drift during that sweep is the harness being wrong, not the guard.
+
+## Pattern
+
+When adjudicating whether a capability grant is genuinely required, the decisive evidence is not the strength of the justification — it is whether a sibling with the same job already operates without the grant. An existing agent doing the harder version of the work under the narrower grant settles the question that argument cannot. Look for the architectural provision first: a capability is often already supplied as an artifact by one privileged component (a path, a prepared tree, an evidence bundle), which is the non-shell equivalent that a removal bar demands be named.
+
+## Impact
+
+Grant audits stall in argument about whether some command "might be needed", and the default resolution is retention with a comment — the exact anti-pattern a removal bar exists to forbid. A single sibling precedent converts an unresolvable judgment call into a verified fact, and it usually reveals the grant was vestigial rather than load-bearing.
+
+## Watch for
+
+A family of agents where one holds a grant recorded as unclosable and the rest are assumed to need it too. Check what the privileged one hands back: if it returns a path or artifact the others merely read, the others need no grant. Conversely, when a plan asserts an agent uses a capability, verify against the prior body before building to match — a plan's claim about existing code is a hypothesis, and implementing to satisfy a false one manufactures a dependency and a failure mode that never existed. Reporting the plan's error is the correct move, not the insubordinate one.
