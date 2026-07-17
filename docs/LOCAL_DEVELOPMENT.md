@@ -85,19 +85,30 @@ The watch task is configured with `runOn: folderOpen`, so VS Code will start it 
 
 ## Testing And Validation
 
-This repository does not define a root automated test suite.
+Python regression tests live under `tests/`. The repository has no package manifest,
+so invoke the runner available in the active development environment rather than
+assuming an installed project package.
 
-Use this validation sequence instead:
+Use this validation sequence:
 
 1. Run `python3 scripts/propagate_master_assets.py --once` when `.github/` source files changed.
-2. Inspect `git diff` for unexpected generated output churn.
-3. If you changed harness setup or porting docs, compare the documented paths against the checked-in directories and config files.
+2. Run the focused Python tests for the changed propagation, hook, or runtime-deployment behavior.
+3. Inspect `git diff` for unexpected generated output churn.
+4. If you changed harness setup or porting docs, compare the documented paths against the checked-in directories and config files.
 
 Interpretation guidance:
 
 - A clean propagation run with only expected file updates is the normal success case.
 - Large unexpected diffs in generated outputs usually mean a source rename, alias mismatch, or instruction-routing change.
 - If the propagation command fails before writing files, fix that error first rather than editing generated outputs manually.
+
+## Reviewed Runtime Deployment
+
+Runtime deployment is not part of the ordinary source-edit loop. When it is explicitly
+required, restart any long-running watcher and follow [HARNESS_SETUP.md](../HARNESS_SETUP.md):
+converge repository outputs, generate and review the active-home inventory, then rerun
+with the reviewed digest and watcher-restart confirmation. Never test this path against
+an unreviewed live home or replace it with ad hoc links or copy commands.
 
 ## Harness-Specific Setup References
 

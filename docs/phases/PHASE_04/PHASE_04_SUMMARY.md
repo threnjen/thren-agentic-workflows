@@ -1,6 +1,9 @@
 # Phase 4: Hook Retirement & Cross-Platform Deployment
 
-**Status**: Planned
+**Status**: Complete (implementation)
+**Release readiness**: **GO WITH CONDITIONS** — live macOS, Linux, native Windows,
+WSL, and pytest hook-integration evidence remains `NOT RUN`; this is not a full
+cross-platform production GO.
 **Depends on**: Phase 01
 **Estimated complexity**: Large
 **Cross-references**: `docs/phases/PHASE_04/PHASE_04_DISCOVERY_CONTEXT.md`, `.github/learnings/cross-phase-decisions.md`, `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`, `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `docs/phases/PHASE_07/PHASE_07_SUMMARY.md`
@@ -140,26 +143,26 @@ Symlink-oriented setup documents, runtime examples, generated learnings, and rea
 
 ## Success Criteria
 
-- [ ] No file-access guard entrypoint, Bash analyzer, guard-only policy implementation, guard configuration, hook registration, or generated wiring remains active.
-- [ ] Direct file operations and Bash commands are not intercepted by the retired file-access system.
-- [ ] The prompt-injection scanner and shared hook framework continue to pass their independent tests.
-- [ ] `rtk-rewrite.sh` and its automatic hook registration are retired.
-- [ ] RTK remains installed and an explicitly RTK-prefixed command works.
-- [ ] Repository RTK guidance does not claim that RTK itself was retired.
-- [ ] User-global deployment begins only after Claude, Codex, and OpenCode repository outputs reach a verified fixed point.
-- [ ] Default and configured destinations resolve correctly for macOS, Linux, native Windows, and WSL.
-- [ ] Native Windows and WSL are treated as separate current-environment deployments.
+- [x] No file-access guard entrypoint, Bash analyzer, guard-only policy implementation, guard configuration, hook registration, or generated wiring remains active.
+- [x] Direct file operations and Bash commands are not intercepted by the retired file-access system.
+- [x] The prompt-injection scanner and shared hook framework continue to pass their recorded independent tests. The final pytest integration gate remains `NOT RUN`.
+- [x] `rtk-rewrite.sh` and its automatic hook registration are retired.
+- [x] RTK remains installed and an explicitly RTK-prefixed command works.
+- [x] Repository RTK guidance does not claim that RTK itself was retired.
+- [x] User-global deployment begins only after Claude, Codex, and OpenCode repository outputs reach a verified fixed point.
+- [x] Default and configured destinations resolve correctly for macOS, Linux, native Windows, and WSL in automated policy tests; live platform evidence remains `NOT RUN`.
+- [x] Native Windows and WSL are treated as separate current-environment deployments.
 - [ ] Every repository-managed runtime link or junction in the fresh migration inventory is replaced by a regular managed copy or removed when obsolete.
 - [ ] No managed user-global asset points into this repository through a symlink or junction after migration.
-- [ ] Foreign files, directories, links, package links, plugin links, and Git hook links remain untouched.
-- [ ] Stale managed copies are pruned without deleting unowned content.
-- [ ] A failed harness retains its prior usable state and skips destructive reconciliation.
-- [ ] Evangelize contains no behavior that creates, repairs, recommends, or validates runtime symlinks or junctions.
-- [ ] Generated Evangelize variants match the corrected source behavior.
-- [ ] Supported setup guidance contains no runtime link-creation path for generated agents, commands, skills, profiles, or learning assets.
+- [x] Foreign files, directories, links, package links, plugin links, and Git hook links remain untouched in automated scratch-home coverage; live comparison remains a release gate.
+- [x] Stale managed copies are pruned without deleting unowned content in automated scratch-home coverage.
+- [x] A failed harness retains its prior usable state and skips destructive reconciliation in automated coverage.
+- [x] Evangelize contains no behavior that creates, repairs, recommends, or validates runtime symlinks or junctions.
+- [x] Generated Evangelize variants match the corrected source behavior.
+- [x] Supported setup guidance contains no runtime link-creation path for generated agents, commands, skills, profiles, or learning assets.
 - [ ] Fresh sessions resolve the deployed assets on macOS, Linux, native Windows, and WSL.
-- [ ] Friction and deployment records describe the measured behavior and resulting security posture accurately.
-- [ ] No Phase 01, Phase 02, or Phase 07 status line moves within this phase.
+- [x] Friction and deployment records describe the measured behavior and resulting security posture accurately.
+- [x] No Phase 01, Phase 02, or Phase 07 status line moves within this phase.
 
 ## QA Considerations
 
@@ -208,3 +211,9 @@ Live fresh-session evidence remains separate and unavailable: macOS `NOT RUN` (l
 home migration not authorized), Linux `NOT RUN`, native Windows `NOT RUN`, and WSL
 `NOT RUN`. Consequently this evidence is partial and does not issue a full
 cross-platform GO. Phase 01, Phase 02, and Phase 07 status ownership is unchanged.
+
+The final readiness analysis issued **GO WITH CONDITIONS**. In addition to the four
+platform rows above, the pytest-based hook integration remains `NOT RUN`; the live
+inventory review, watcher restart, authorized active-home deployment, foreign-content
+comparison, regular-copy/no-repository-link proof, and second-run fixed point remain
+manual release gates. See `PHASE_04-qa-analysis.md` for the complete conditions.
