@@ -1,5 +1,6 @@
 import json
 import os
+import runpy
 import shutil
 import subprocess
 import sys
@@ -770,6 +771,39 @@ class PhaseRuntimeOrchestrationTests(unittest.TestCase):
             self.assertEqual(result.failure_categories, ("inventory_drift",))
             self.assertFalse(deployed)
 
+    def test_review_digest_is_bound_to_the_active_home(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo = self._generated_repo(root)
+            first_home = root / "first-home"
+            second_home = root / "second-home"
+            first_home.mkdir()
+            second_home.mkdir()
+            common = {
+                "repo_root": repo,
+                "environment": {},
+                "platform_facts": deployment.PlatformFacts("linux"),
+                "propagate": lambda: {"source_agents": 1},
+            }
+
+            first = propagator.run_runtime_deployment(
+                active_home=first_home, **common
+            )
+            second = propagator.run_runtime_deployment(
+                active_home=second_home, **common
+            )
+            replay = propagator.run_runtime_deployment(
+                active_home=second_home,
+                reviewed_inventory=first.inventory_digest,
+                watcher_restarted=True,
+                **common,
+            )
+
+            self.assertNotEqual(first.inventory_digest, second.inventory_digest)
+            self.assertEqual(replay.status, "review_required")
+            self.assertEqual(replay.failure_categories, ("inventory_drift",))
+            self.assertEqual(list(second_home.iterdir()), [])
+
     def test_unreviewed_or_wrong_inventory_digest_never_mutates(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -855,6 +889,27 @@ class PhaseRuntimeOrchestrationTests(unittest.TestCase):
                 self.assertFalse((REPO_ROOT / relative).exists())
         self.assertTrue((REPO_ROOT / ".github/hooks/scripts/injection-scanner.py").is_file())
         self.assertTrue((REPO_ROOT / ".github/hooks/injection-scanner.json").is_file())
+        self.assertTrue((REPO_ROOT / ".github/hooks/lib/framework.py").is_file())
+
+        scanner = runpy.run_path(
+            str(REPO_ROOT / ".github/hooks/scripts/injection-scanner.py")
+        )
+        self.assertTrue(callable(scanner["handle_event"]))
+
+        benchmark = subprocess.run(
+            [sys.executable, str(REPO_ROOT / "tests/hooks/injection_benchmark.py")],
+            cwd=REPO_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(benchmark.returncode, 0, benchmark.stderr)
+        summary = next(
+            line.removeprefix("summary-json: ")
+            for line in benchmark.stdout.splitlines()
+            if line.startswith("summary-json: ")
+        )
+        self.assertTrue(json.loads(summary)["passed"])
 
     def test_runtime_cli_reports_review_required_without_deploying(self) -> None:
         convergence = propagator.PropagationConvergenceResult(True, 1, 0, {}, {})

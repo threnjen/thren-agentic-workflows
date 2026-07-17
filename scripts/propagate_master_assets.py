@@ -1906,8 +1906,14 @@ def deploy_managed_copies_after_convergence(
     return runtime_deployment.deploy_managed_copies(records)
 
 
-def _runtime_inventory_digest(inventory: Sequence[Mapping[str, str]]) -> str:
-    encoded = json.dumps(tuple(inventory), sort_keys=True, separators=(",", ":"))
+def _runtime_inventory_digest(
+    inventory: Sequence[Mapping[str, str]], *, active_home: Path
+) -> str:
+    payload = {
+        "active_home": str(active_home.absolute()),
+        "inventory": tuple(inventory),
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
@@ -1979,7 +1985,7 @@ def run_runtime_deployment(
         platform_facts=platform_facts,
     )
     inventory = runtime_deployment.managed_copy_inventory(records)
-    digest = _runtime_inventory_digest(inventory)
+    digest = _runtime_inventory_digest(inventory, active_home=active_home)
     platforms = {
         "macOS": "NOT RUN: live home migration not authorized",
         "Linux": "NOT RUN: live Linux runner unavailable",
@@ -2015,13 +2021,16 @@ def run_runtime_deployment(
 
     # Re-inventory immediately before the first write. A changed digest fails closed.
     current_inventory = runtime_deployment.managed_copy_inventory(records)
-    if _runtime_inventory_digest(current_inventory) != digest:
+    current_digest = _runtime_inventory_digest(
+        current_inventory, active_home=active_home
+    )
+    if current_digest != digest:
         return RuntimeDeploymentResult(
             "failed",
             base_stages + ("inventory_recheck",),
             convergence,
             current_inventory,
-            _runtime_inventory_digest(current_inventory),
+            current_digest,
             None,
             {},
             ("inventory_drift",),
