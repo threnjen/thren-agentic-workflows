@@ -60,11 +60,50 @@ GENERATED_OPENCODE_PLUGIN_HEADER = "// Generated from .github/hooks source-of-tr
 HOOK_SOURCE_KEY = "$source"
 RETIRED_HOOK_ASSETS = (
     "bash-safety.json",
+    "file-access-guard.json",
     "protect-files.json",
+    "config/file-access-overrides.json",
+    "config/file-access-rules.json",
+    "lib/bash_analyzer.py",
+    "lib/file_access.py",
+    "lib/url_exfiltration.py",
     "scripts/bash-safety.sh",
+    "scripts/file-access-guard.py",
     "scripts/protect-files.sh",
     "scripts/protect-files.py",
+    "scripts/rtk-rewrite.sh",
 )
+
+# Retired runtime assets have no generated-file header. Only remove a regular
+# file when its bytes match a source revision we owned; a same-named user file
+# must survive retirement cleanup. Add hashes deliberately when retiring a
+# shipped revision instead of broadening this to filename-based deletion.
+RETIRED_HOOK_ASSET_HASHES = {
+    "file-access-guard.json": {
+        "d5b2b1a8e7b4fcbae49a62edafa08989f9ad79bd85801e1119db2fe5bb8ffbd1",
+    },
+    "config/file-access-overrides.json": {
+        "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+    },
+    "config/file-access-rules.json": {
+        "7e1b228b290ae112d8c8df034da69999199196937c33eb4a3118e0dd951889ef",
+    },
+    "lib/bash_analyzer.py": {
+        "833f2c0728085210840481efca08ab483946e1115a354df0e51dc80e632db249",
+    },
+    "lib/file_access.py": {
+        "7596b8642a795cbcd05c2b0a6188cc68aab8f1e8ffa1ebaaee5c0fa975b9f997",
+    },
+    "lib/url_exfiltration.py": {
+        "98935c0186e2b64968ca7be0f169c8127fcec60c84e421be629f49ac73e29c4b",
+    },
+    "scripts/file-access-guard.py": {
+        "37ee760fb6cfb18b1e622bd998ae4c6117266e941b33b44cd2ae0484d42c7d57",
+    },
+    "scripts/rtk-rewrite.sh": {
+        "37b436eb03897d49d5c66588b320357cfe2d121c1d0eb76df9ada2e7ba8f0702",
+    },
+}
 
 # Default translation from VS Code Copilot hook events → target tool events.
 # Keys are VS Code event names. Values map tool name → list of target event names.
@@ -1146,14 +1185,27 @@ def _copy_hook_assets(source_dir: Path, target_dir: Path) -> int:
 
 def _remove_retired_hook_assets(source_dir: Path, target_dir: Path) -> int:
     removed = 0
+    same_tree = source_dir.resolve() == target_dir.resolve()
     for relative_path in RETIRED_HOOK_ASSETS:
         if (source_dir / relative_path).exists():
             continue
         target_path = target_dir / relative_path
         _validate_nested_output_directory(target_dir, target_path.parent)
-        if target_path.is_file() or target_path.is_symlink():
-            target_path.unlink()
-            removed += 1
+        if target_path.is_symlink():
+            link_target = (target_path.parent / target_path.readlink()).resolve()
+            retired_source = (source_dir / relative_path).resolve()
+            if not same_tree and link_target == retired_source:
+                target_path.unlink()
+                removed += 1
+            continue
+        if not target_path.is_file():
+            continue
+        owned_hashes = RETIRED_HOOK_ASSET_HASHES.get(relative_path, set())
+        target_hash = hashlib.sha256(target_path.read_bytes()).hexdigest()
+        if target_hash not in owned_hashes:
+            continue
+        target_path.unlink()
+        removed += 1
     return removed
 
 

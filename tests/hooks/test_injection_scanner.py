@@ -624,25 +624,6 @@ def test_ac10_hook_registration_is_post_tool_use_only() -> None:
     assert "mcp__" in matcher
 
 
-def test_ac7_self_hook_assets_protect_new_scanner_configuration(framework, tmp_path) -> None:
-    hooks_dir = HOOKS_DIR
-    sys.path.insert(0, str(hooks_dir))
-    try:
-        from lib.file_access import evaluate_path, load_rules
-    finally:
-        sys.path.pop(0)
-    config = json.loads((HOOKS_DIR / "config" / "file-access-rules.json").read_text(encoding="utf-8"))
-    rules = load_rules(config)
-    for path in (
-        ALLOWLIST_PATH,
-        HOOKS_DIR / "config" / "injection-patterns.json",
-        HOOKS_DIR / "config" / "injection-future-corpus.json",
-    ):
-        decision = evaluate_path(path, rules, cwd=REPO_ROOT, access="write")
-        assert decision is not None
-        assert (decision.rule_id, decision.action) == ("self-hook-assets", "deny")
-
-
 def test_scanner_runtime_is_stdlib_only_and_contains_no_production_policy() -> None:
     tree = ast.parse(ENGINE_PATH.read_text(encoding="utf-8"))
     imported_roots = set()

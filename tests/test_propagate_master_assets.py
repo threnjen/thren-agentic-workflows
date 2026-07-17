@@ -1,3 +1,4 @@
+import hashlib
 import json
 import re
 import os
@@ -70,15 +71,15 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         (hooks_dir / "scripts").mkdir(parents=True)
         (hooks_dir / "lib").mkdir()
         (hooks_dir / "config").mkdir()
-        (hooks_dir / "file-access-guard.json").write_text(
+        (hooks_dir / "injection-scanner.json").write_text(
             json.dumps(
                 {
                     "hooks": {
-                        "PreToolUse": [
+                        "PostToolUse": [
                             {
                                 "matcher": "Read|Write|Bash",
                                 "type": "command",
-                                "command": "python3 .github/hooks/scripts/file-access-guard.py",
+                                "command": "python3 .github/hooks/scripts/injection-scanner.py",
                                 "timeout": 10,
                             }
                         ]
@@ -87,19 +88,19 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        (hooks_dir / "scripts" / "file-access-guard.py").write_text(
+        (hooks_dir / "scripts" / "injection-scanner.py").write_text(
             "from lib.framework import main\nmain()\n", encoding="utf-8"
         )
         (hooks_dir / "lib" / "framework.py").write_text(
             "def main():\n    return None\n", encoding="utf-8"
         )
-        (hooks_dir / "lib" / "bash_analyzer.py").write_text(
-            "def analyze(command):\n    return command\n", encoding="utf-8"
+        (hooks_dir / "lib" / "injection_scanner.py").write_text(
+            "def scan(value):\n    return value\n", encoding="utf-8"
         )
-        (hooks_dir / "config" / "file-access-rules.json").write_text(
+        (hooks_dir / "config" / "injection-patterns.json").write_text(
             "{}\n", encoding="utf-8"
         )
-        (hooks_dir / "config" / "file-access-overrides.json").write_text(
+        (hooks_dir / "config" / "injection-allowlist.json").write_text(
             "{}\n", encoding="utf-8"
         )
         return root
@@ -357,7 +358,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 repo_root=consumer_root, source_root=source_root
             )
             second_version = marker.read_text(encoding="utf-8")
-            (source_root / ".github" / "hooks" / "config" / "file-access-rules.json").write_text(
+            (source_root / ".github" / "hooks" / "config" / "injection-patterns.json").write_text(
                 '{"version": 2}\n', encoding="utf-8"
             )
             third = mod.propagate_hooks_once(
@@ -375,12 +376,12 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             settings = json.loads(
                 (consumer_root / ".claude" / "settings.json").read_text(encoding="utf-8")
             )
-            generated = settings["hooks"]["PreToolUse"][0]
+            generated = settings["hooks"]["PostToolUse"][0]
             self.assertEqual(generated["matcher"], "Read|Write|Bash")
-            self.assertEqual(generated["$source"], "file-access-guard")
+            self.assertEqual(generated["$source"], "injection-scanner")
             self.assertEqual(
                 generated["hooks"][0]["command"],
-                'python3 "$CLAUDE_PROJECT_DIR/.github/hooks/scripts/file-access-guard.py"',
+                'python3 "$CLAUDE_PROJECT_DIR/.github/hooks/scripts/injection-scanner.py"',
             )
 
     def test_generated_hook_commands_resolve_from_a_subdirectory(self) -> None:
@@ -412,7 +413,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 (claude, {"CLAUDE_PROJECT_DIR": str(consumer_root)}),
                 (codex, {}),
             ):
-                command = settings["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+                command = settings["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
                 probe = subprocess.run(
                     f"{command} < /dev/null",
                     shell=True,
@@ -428,7 +429,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             tmp_root = Path(tmp_dir)
             source_root = self._make_hook_source(tmp_root / "source")
-            (source_root / ".github" / "hooks" / "scripts" / "file-access-guard.py").unlink()
+            (source_root / ".github" / "hooks" / "scripts" / "injection-scanner.py").unlink()
 
             with self.assertRaisesRegex(
                 FileNotFoundError, "generated hook command references missing asset"
@@ -443,9 +444,9 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             source_root = self._make_hook_source(tmp_root / "source")
             outside_asset = source_root / ".github" / "outside.py"
             outside_asset.write_text("# not part of the hook runtime\n", encoding="utf-8")
-            hook_file = source_root / ".github" / "hooks" / "file-access-guard.json"
+            hook_file = source_root / ".github" / "hooks" / "injection-scanner.json"
             hook_data = json.loads(hook_file.read_text(encoding="utf-8"))
-            hook_data["hooks"]["PreToolUse"][0]["command"] = (
+            hook_data["hooks"]["PostToolUse"][0]["command"] = (
                 "python3 .github/hooks/../../outside.py"
             )
             hook_file.write_text(json.dumps(hook_data), encoding="utf-8")
@@ -461,14 +462,14 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             tmp_root = Path(tmp_dir)
             source_root = self._make_hook_source(tmp_root / "source")
-            hook_file = source_root / ".github" / "hooks" / "file-access-guard.json"
+            hook_file = source_root / ".github" / "hooks" / "injection-scanner.json"
             hook_data = json.loads(hook_file.read_text(encoding="utf-8"))
 
             for command in (
                 "python3 ./.github/hooks/scripts/missing.py",
                 "bash -lc 'python3 .github/hooks/scripts/missing.py'",
             ):
-                hook_data["hooks"]["PreToolUse"][0]["command"] = command
+                hook_data["hooks"]["PostToolUse"][0]["command"] = command
                 hook_file.write_text(json.dumps(hook_data), encoding="utf-8")
                 with self.assertRaisesRegex(
                     FileNotFoundError,
@@ -513,26 +514,28 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 )
             self.assertEqual(list(outside.iterdir()), [])
 
-    def test_propagated_guard_runs_from_detached_consumer_without_dependencies(self) -> None:
+    def test_propagated_scanner_runs_from_detached_consumer_without_dependencies(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             consumer_root = Path(tmp_dir) / "consumer"
             mod.propagate_hooks_once(repo_root=consumer_root, source_root=REPO_ROOT)
             command = json.loads(
                 (consumer_root / ".claude" / "settings.json").read_text(encoding="utf-8")
-            )["hooks"]["PreToolUse"]
-            guard_entry = next(
-                entry for entry in command if entry.get("$source") == "file-access-guard"
+            )["hooks"]["PostToolUse"]
+            scanner_entry = next(
+                entry for entry in command if entry.get("$source") == "injection-scanner"
             )
 
             # Claude Code runs hook commands through a shell, which is what
             # expands the $CLAUDE_PROJECT_DIR anchor the generated command uses.
             completed = subprocess.run(
-                guard_entry["hooks"][0]["command"],
+                scanner_entry["hooks"][0]["command"],
                 shell=True,
                 input=json.dumps(
                     {
+                        "hook_event_name": "PostToolUse",
                         "tool_name": "Read",
-                        "tool_input": {"file_path": ".env"},
+                        "tool_input": {"file_path": "README.md"},
+                        "tool_output": "ordinary output",
                         "cwd": str(consumer_root),
                     }
                 ),
@@ -544,10 +547,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             )
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            decision = json.loads(completed.stdout)
-            self.assertEqual(
-                decision["hookSpecificOutput"]["permissionDecision"], "deny"
-            )
+            self.assertEqual(completed.stdout, "{}\n")
 
     def test_generate_global_hooks_uses_absolute_source_commands(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
@@ -562,14 +562,14 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            command = settings["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+            command = settings["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
             self.assertIn(
                 str(
                     source_root
                     / ".github"
                     / "hooks"
                     / "scripts"
-                    / "file-access-guard.py"
+                    / "injection-scanner.py"
                 ),
                 command,
             )
@@ -589,14 +589,14 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             plugin_dir.mkdir(parents=True)
             original_claude = '{"user_setting": true}\n'
             original_codex = '{"user_hook": true}\n'
-            original_plugin = "// user-owned file-access guard\n"
+            original_plugin = "// user-owned injection scanner\n"
             (claude_dir / "settings.json").write_text(
                 original_claude, encoding="utf-8"
             )
             (codex_dir / "hooks.json").write_text(
                 original_codex, encoding="utf-8"
             )
-            (plugin_dir / "file-access-guard.js").write_text(
+            (plugin_dir / "injection-scanner.js").write_text(
                 original_plugin, encoding="utf-8"
             )
             (plugin_dir / "user-owned.js").write_text(
@@ -631,14 +631,14 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertEqual(second.returncode, 0, second.stderr)
             installed = claude_dir / "settings.json"
             codex_installed = codex_dir / "hooks.json"
-            plugin_installed = plugin_dir / "file-access-guard.js"
+            plugin_installed = plugin_dir / "injection-scanner.js"
             for target in (installed, codex_installed, plugin_installed):
                 self.assertTrue(target.is_file())
                 self.assertFalse(target.is_symlink())
             expected_backups = {
                 claude_dir / "settings.json.backup": original_claude,
                 codex_dir / "hooks.json.backup": original_codex,
-                plugin_dir / "file-access-guard.js.backup": original_plugin,
+                plugin_dir / "injection-scanner.js.backup": original_plugin,
             }
             for backup, expected in expected_backups.items():
                 self.assertEqual(backup.read_text(encoding="utf-8"), expected)
@@ -697,15 +697,13 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 [entry["matcher"] for entry in entries if "$source" not in entry],
                 ["UserOwned"],
             )
-            generated = next(
-                entry for entry in entries if entry.get("$source") == "file-access-guard"
-            )
+            generated = settings["hooks"]["PostToolUse"][0]
             self.assertEqual(generated["matcher"], "Read|Write|Bash")
             self.assertTrue((plugins / "user-owned.js").is_file())
             self.assertFalse((plugins / "stale-generated.js").exists())
-            plugin = (plugins / "file-access-guard.js").read_text(encoding="utf-8")
+            plugin = (plugins / "injection-scanner.js").read_text(encoding="utf-8")
             self.assertTrue(plugin.startswith(mod.GENERATED_OPENCODE_PLUGIN_HEADER))
-            self.assertIn('"tool.execute.before"', plugin)
+            self.assertIn('"tool.execute.after"', plugin)
 
     def test_hook_regeneration_removes_only_known_retired_runtime_assets(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
@@ -714,18 +712,79 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             consumer_root = tmp_root / "consumer"
             scripts = consumer_root / ".github" / "hooks" / "scripts"
             scripts.mkdir(parents=True)
-            retired = scripts / "protect-files.py"
+            retired = scripts / "file-access-guard.py"
+            retired_bytes = b"owned retired asset\n"
             user_owned = scripts / "consumer-custom.py"
-            retired.write_text("# old generated guard\n", encoding="utf-8")
+            retired.write_bytes(retired_bytes)
             user_owned.write_text("# user owned\n", encoding="utf-8")
+
+            original_hashes = mod.RETIRED_HOOK_ASSET_HASHES
+            mod.RETIRED_HOOK_ASSET_HASHES = {
+                **original_hashes,
+                "scripts/file-access-guard.py": {
+                    hashlib.sha256(retired_bytes).hexdigest()
+                },
+            }
+            try:
+                result = mod.propagate_hooks_once(
+                    repo_root=consumer_root, source_root=source_root
+                )
+            finally:
+                mod.RETIRED_HOOK_ASSET_HASHES = original_hashes
+
+            self.assertEqual(result["retired_assets_removed"], 1)
+            self.assertFalse(retired.exists())
+            self.assertTrue(user_owned.is_file())
+
+    def test_hook_regeneration_preserves_unowned_retired_name_collisions(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_root = self._make_hook_source(tmp_root / "source")
+            consumer_root = tmp_root / "consumer"
+            scripts = consumer_root / ".github" / "hooks" / "scripts"
+            scripts.mkdir(parents=True)
+            regular = scripts / "file-access-guard.py"
+            regular.write_text("# user owned collision\n", encoding="utf-8")
+            outside = tmp_root / "outside.py"
+            outside.write_text("# outside\n", encoding="utf-8")
+            link = scripts / "rtk-rewrite.sh"
+            link.symlink_to(outside)
 
             result = mod.propagate_hooks_once(
                 repo_root=consumer_root, source_root=source_root
             )
 
-            self.assertEqual(result["retired_assets_removed"], 1)
-            self.assertFalse(retired.exists())
-            self.assertTrue(user_owned.is_file())
+            self.assertEqual(result["retired_assets_removed"], 0)
+            self.assertEqual(
+                regular.read_text(encoding="utf-8"), "# user owned collision\n"
+            )
+            self.assertTrue(link.is_symlink())
+            self.assertEqual(outside.read_text(encoding="utf-8"), "# outside\n")
+
+    def test_hook_regeneration_removes_owned_dangling_retired_link_once(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_root = self._make_hook_source(tmp_root / "source")
+            consumer_root = tmp_root / "consumer"
+            scripts = consumer_root / ".github" / "hooks" / "scripts"
+            scripts.mkdir(parents=True)
+            retired_source = (
+                source_root / ".github/hooks/scripts/file-access-guard.py"
+            )
+            retired_link = scripts / "file-access-guard.py"
+            retired_link.symlink_to(retired_source)
+
+            first = mod.propagate_hooks_once(
+                repo_root=consumer_root, source_root=source_root
+            )
+            second = mod.propagate_hooks_once(
+                repo_root=consumer_root, source_root=source_root
+            )
+
+            self.assertEqual(first["retired_assets_removed"], 1)
+            self.assertEqual(second["retired_assets_removed"], 0)
+            self.assertFalse(retired_link.exists())
+            self.assertFalse(retired_link.is_symlink())
 
     def test_hook_asset_copy_replaces_symlink_without_writing_through_it(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
@@ -737,7 +796,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 / ".github"
                 / "hooks"
                 / "scripts"
-                / "file-access-guard.py"
+                / "injection-scanner.py"
             )
             target.parent.mkdir(parents=True)
             outside = tmp_root / "outside.py"
@@ -816,8 +875,6 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 ".github/hooks/lib/injection_scanner.py",
                 ".github/hooks/config/injection-patterns.json",
                 ".github/hooks/config/injection-allowlist.json",
-                ".github/hooks/lib/url_exfiltration.py",
-                ".github/hooks/config/file-access-rules.json",
             )
             for relative in required_assets:
                 self.assertTrue((consumer_root / relative).is_file(), relative)
