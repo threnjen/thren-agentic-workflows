@@ -37,7 +37,9 @@ WATCH_DIRS = [
 
 CLAUDE_AGENTS_DIR = REPO_ROOT / "claude" / "agents"
 CLAUDE_COMMANDS_DIR = REPO_ROOT / "claude" / "commands"
+CLAUDE_SKILLS_DIR = REPO_ROOT / "claude" / "skills"
 OPENCODE_AGENTS_DIR = REPO_ROOT / "opencode" / "agents"
+OPENCODE_SKILLS_DIR = REPO_ROOT / "opencode" / "skills"
 CODEX_AGENTS_DIR = REPO_ROOT / "codex" / "agents"
 CODEX_PROFILES_DIR = REPO_ROOT / "codex" / "profiles"
 GITHUB_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
@@ -1004,12 +1006,8 @@ def _validate_nested_output_directory(root: Path, directory: Path) -> None:
 
 def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
     repo_root = repo_root or REPO_ROOT
-    github_skills_dir = repo_root / ".github" / "skills"
-    claude_skills_dir = repo_root / "claude" / "skills"
-    opencode_skills_dir = repo_root / "opencode" / "skills"
-    codex_skills_dir = repo_root / "codex" / "skills"
 
-    if not github_skills_dir.exists():
+    if not GITHUB_SKILLS_DIR.exists():
         return {
             "claude_changed": 0,
             "opencode_changed": 0,
@@ -1018,9 +1016,9 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
             "skill_orphans_removed": 0,
         }
 
-    claude_skills_dir.mkdir(parents=True, exist_ok=True)
-    opencode_skills_dir.mkdir(parents=True, exist_ok=True)
-    codex_skills_dir.mkdir(parents=True, exist_ok=True)
+    CLAUDE_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
+    OPENCODE_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
+    CODEX_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
 
     changed_claude = 0
     changed_opencode = 0
@@ -1029,14 +1027,14 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
     expected_opencode_dirs: set[Path] = set()
     expected_codex_dirs: set[Path] = set()
 
-    for source_skill_dir in sorted(github_skills_dir.iterdir()):
+    for source_skill_dir in sorted(GITHUB_SKILLS_DIR.iterdir()):
         if not source_skill_dir.is_dir():
             continue
 
         skill_name = source_skill_dir.name
         source_skill_md = source_skill_dir / "SKILL.md"
 
-        dest_claude_dir = claude_skills_dir / skill_name
+        dest_claude_dir = CLAUDE_SKILLS_DIR / skill_name
         expected_claude_dirs.add(dest_claude_dir)
         dest_claude_dir.mkdir(parents=True, exist_ok=True)
         if source_skill_md.exists():
@@ -1051,7 +1049,7 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
             if _write_if_changed(dest_file, _read_text(source_file)):
                 changed_claude += 1
 
-        dest_opencode_dir = opencode_skills_dir / skill_name
+        dest_opencode_dir = OPENCODE_SKILLS_DIR / skill_name
         expected_opencode_dirs.add(dest_opencode_dir)
         dest_opencode_dir.mkdir(parents=True, exist_ok=True)
         if source_skill_md.exists():
@@ -1066,7 +1064,7 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
             if _write_if_changed(dest_file, _read_text(source_file)):
                 changed_opencode += 1
 
-        dest_codex_dir = codex_skills_dir / skill_name
+        dest_codex_dir = CODEX_SKILLS_DIR / skill_name
         expected_codex_dirs.add(dest_codex_dir)
         dest_codex_dir.mkdir(parents=True, exist_ok=True)
         if source_skill_md.exists():
@@ -1092,13 +1090,13 @@ def propagate_skills_once(repo_root: Path | None = None) -> Dict[str, int]:
     # Pruning runs only after every skill has been emitted.
     orphans_removed = (
         _prune_orphaned_skill_dirs(
-            repo_root, claude_skills_dir, expected_claude_dirs, GENERATED_SKILL_HEADER
+            repo_root, CLAUDE_SKILLS_DIR, expected_claude_dirs, GENERATED_SKILL_HEADER
         )
         + _prune_orphaned_skill_dirs(
-            repo_root, opencode_skills_dir, expected_opencode_dirs, GENERATED_SKILL_HEADER
+            repo_root, OPENCODE_SKILLS_DIR, expected_opencode_dirs, GENERATED_SKILL_HEADER
         )
         + _prune_orphaned_skill_dirs(
-            repo_root, codex_skills_dir, expected_codex_dirs, GENERATED_SKILL_HEADER
+            repo_root, CODEX_SKILLS_DIR, expected_codex_dirs, GENERATED_SKILL_HEADER
         )
     )
 
@@ -1131,24 +1129,19 @@ def propagate_learnings_once(repo_root: Path | None = None) -> Dict[str, int]:
 
 def propagate_once(verbose: bool = True, repo_root: Path | None = None) -> Dict[str, int]:
     repo_root = repo_root or REPO_ROOT
-    claude_agents_dir = repo_root / "claude" / "agents"
-    claude_commands_dir = repo_root / "claude" / "commands"
-    opencode_agents_dir = repo_root / "opencode" / "agents"
-    codex_agents_dir = repo_root / "codex" / "agents"
-    codex_profiles_dir = repo_root / "codex" / "profiles"
 
     agents = load_source_agents(repo_root)
     instructions = load_instruction_docs(repo_root)
 
-    claude_agents_dir.mkdir(parents=True, exist_ok=True)
-    claude_commands_dir.mkdir(parents=True, exist_ok=True)
-    opencode_agents_dir.mkdir(parents=True, exist_ok=True)
-    codex_agents_dir.mkdir(parents=True, exist_ok=True)
-    codex_profiles_dir.mkdir(parents=True, exist_ok=True)
+    CLAUDE_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
+    CLAUDE_COMMANDS_DIR.mkdir(parents=True, exist_ok=True)
+    OPENCODE_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
+    CODEX_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
+    CODEX_PROFILES_DIR.mkdir(parents=True, exist_ok=True)
 
     referenced_names = _referenced_agent_names(agents)
-    claude_existing_stems = _discover_existing_stems(claude_agents_dir)
-    opencode_existing_stems = _discover_existing_stems(opencode_agents_dir)
+    claude_existing_stems = _discover_existing_stems(CLAUDE_AGENTS_DIR)
+    opencode_existing_stems = _discover_existing_stems(OPENCODE_AGENTS_DIR)
     claude_reference_map = _build_agent_reference_map(
         agents,
         lambda agent: _claude_identifier_for(agent, claude_existing_stems),
@@ -1173,9 +1166,9 @@ def propagate_once(verbose: bool = True, repo_root: Path | None = None) -> Dict[
         docs = applicable_instructions(agent, instructions)
 
         claude_identifier = _claude_identifier_for(agent, claude_existing_stems)
-        claude_file = claude_agents_dir / f"{claude_identifier}.md"
-        opencode_file = opencode_agents_dir / _opencode_filename_for(agent, opencode_existing_stems)
-        codex_file = codex_agents_dir / _codex_filename_for(agent)
+        claude_file = CLAUDE_AGENTS_DIR / f"{claude_identifier}.md"
+        opencode_file = OPENCODE_AGENTS_DIR / _opencode_filename_for(agent, opencode_existing_stems)
+        codex_file = CODEX_AGENTS_DIR / _codex_filename_for(agent)
         expected_opencode_files.add(opencode_file)
         expected_codex_files.add(codex_file)
 
@@ -1200,7 +1193,7 @@ def propagate_once(verbose: bool = True, repo_root: Path | None = None) -> Dict[
             changed_claude += 1
 
         if agent.user_invocable:
-            command_file = claude_commands_dir / f"{claude_identifier}.md"
+            command_file = CLAUDE_COMMANDS_DIR / f"{claude_identifier}.md"
             expected_claude_command_files.add(command_file)
             if _write_if_changed(
                 command_file,
@@ -1214,7 +1207,7 @@ def propagate_once(verbose: bool = True, repo_root: Path | None = None) -> Dict[
             changed_codex += 1
 
         if agent.user_invocable:
-            codex_profile_file = codex_profiles_dir / f"{_codex_identifier_for(agent)}.config.toml"
+            codex_profile_file = CODEX_PROFILES_DIR / f"{_codex_identifier_for(agent)}.config.toml"
             expected_codex_profile_files.add(codex_profile_file)
             if _write_if_changed(codex_profile_file, render_codex_profile(agent, docs, codex_reference_map)):
                 changed_codex_profiles += 1
@@ -1223,24 +1216,24 @@ def propagate_once(verbose: bool = True, repo_root: Path | None = None) -> Dict[
     # and `_opencode_filename_for` resolve an output name against the stems already on
     # disk, so deleting first could hand a survivor a different filename (AC6).
     claude_orphans = _prune_orphaned_outputs(
-        repo_root, claude_agents_dir, "*.md", expected_claude_files, GENERATED_AGENT_MARKDOWN_HEADER
+        repo_root, CLAUDE_AGENTS_DIR, "*.md", expected_claude_files, GENERATED_AGENT_MARKDOWN_HEADER
     )
     claude_command_orphans = _prune_orphaned_outputs(
         repo_root,
-        claude_commands_dir,
+        CLAUDE_COMMANDS_DIR,
         "*.md",
         expected_claude_command_files,
         GENERATED_AGENT_MARKDOWN_HEADER,
     )
     opencode_orphans = _prune_orphaned_outputs(
-        repo_root, opencode_agents_dir, "*.md", expected_opencode_files, GENERATED_AGENT_MARKDOWN_HEADER
+        repo_root, OPENCODE_AGENTS_DIR, "*.md", expected_opencode_files, GENERATED_AGENT_MARKDOWN_HEADER
     )
     codex_orphans = _prune_orphaned_outputs(
-        repo_root, codex_agents_dir, "*.toml", expected_codex_files, GENERATED_AGENT_HEADER
+        repo_root, CODEX_AGENTS_DIR, "*.toml", expected_codex_files, GENERATED_AGENT_HEADER
     )
     codex_profile_orphans = _prune_orphaned_outputs(
         repo_root,
-        codex_profiles_dir,
+        CODEX_PROFILES_DIR,
         "*.config.toml",
         expected_codex_profile_files,
         GENERATED_AGENT_HEADER,
