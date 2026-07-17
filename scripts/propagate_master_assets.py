@@ -55,7 +55,6 @@ CODEX_SKILLS_DIR = PORTS_DIR / "codex" / "skills"
 CURSOR_COMMANDS_DIR = PORTS_DIR / "cursor" / "commands"
 CURSOR_RULES_DIR = PORTS_DIR / "cursor" / "rules"
 GITHUB_PORT_DIR = PORTS_DIR / "github"
-DOT_GITHUB_DIR = REPO_ROOT / ".github"
 
 # Subdirectories mirrored verbatim to ports/github and .github. Anything else in
 # .github/ (e.g. workflows/) is never touched.
@@ -1212,16 +1211,6 @@ def _mirror_tree(source: Path, destination: Path) -> int:
 
     return changed
 
-
-def mirror_github_once() -> Dict[str, int]:
-    """Mirror source_of_truth → ports/github → .github for the mirrored subdirs."""
-    changed = 0
-    for subdir in GITHUB_MIRRORED_SUBDIRS:
-        changed += _mirror_tree(SOT_DIR / subdir, GITHUB_PORT_DIR / subdir)
-        changed += _mirror_tree(GITHUB_PORT_DIR / subdir, DOT_GITHUB_DIR / subdir)
-    return {"github_changed": changed}
-
-
 def propagate_once(verbose: bool = True) -> Dict[str, int]:
     agents = load_source_agents()
     instructions = load_instruction_docs()
@@ -1351,7 +1340,6 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
 
     learnings_result = propagate_learnings_once()
     cursor_rules_result = propagate_cursor_rules_once(instructions)
-    github_result = mirror_github_once()
 
     result = {
         "source_agents": len(agents),
@@ -1360,7 +1348,6 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         "codex_changed": changed_codex + skill_result["codex_changed"],
         "codex_profiles_changed": changed_codex_profiles,
         "cursor_changed": changed_cursor + cursor_rules_result["cursor_changed"],
-        "github_changed": github_result["github_changed"],
         "skills_changed": changed_skills,
         "learnings_changed": learnings_result["learnings_changed"],
         # Deletions are reported on their own keys rather than folded into the

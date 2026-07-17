@@ -27,13 +27,17 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Mapping, Tuple
 
-from asset_paths import PORTS_DIR, REPO_ROOT, file_has_generated_marker, poll_watch
+from scripts.asset_paths import PORTS_DIR, REPO_ROOT, file_has_generated_marker, poll_watch
 
 CONFIG_PATH = REPO_ROOT / ".deploy-config.json"
 
-HARNESSES = ("claude", "codex", "opencode", "cursor")
-# ports/github is deliberately absent: it deploys into this repository's .github/
-# and is handled by propagate_master_assets.py.
+HARNESSES = ("claude", "codex", "opencode", "cursor", "github")
+
+# The github "harness" deploys into this repository, not the home directory: it
+# mirrors ports/github verbatim into .github/ so GitHub-side tooling reads the
+# same source of truth. Its files carry no generated marker (they are exact
+# copies), so the whole mirrored tree is treated as managed.
+GITHUB_MIRRORED_SUBDIRS = ("agents", "hooks", "instructions", "learnings", "skills")
 
 
 def harness_mappings(
@@ -64,6 +68,9 @@ def harness_mappings(
     if harness == "cursor":
         base = home / ".cursor"
         return [(port / sub, base / sub) for sub in ("commands", "rules")]
+    if harness == "github":
+        base = REPO_ROOT / ".github"
+        return [(port / sub, base / sub) for sub in GITHUB_MIRRORED_SUBDIRS]
     raise ValueError(f"unknown harness: {harness}")
 
 
@@ -91,14 +98,29 @@ def deploy_harness(
     *,
     home: Path | None = None,
     environ: Mapping[str, str] | None = None,
-) -> Dict[str, int]:
+) -> Dict[str, object]:
     """Copy one harness's ports/ outputs to its real directories and prune stale copies."""
     copied = 0
     pruned = 0
-    skipped = 0
+    skipped: List[str] = []
+    # Verbatim mirror: every file in the mapped subtrees is ours by definition.
+    unconditional = harness == "github"
 
     for source_root, dest_root in harness_mappings(harness, home=home, environ=environ):
         expected: set[Path] = set()
+
+        # The pre-split deployment linked destination roots straight into this
+        # repository. Those links are ours: replace them (dangling or not) with a
+        # real directory so managed copies can land. A symlink pointing anywhere
+        # else is foreign — leave it alone and skip the mapping.
+        if dest_root.is_symlink():
+            target = Path(os.readlink(dest_root))
+            points_into_repo = REPO_ROOT == target or REPO_ROOT in target.parents
+            if points_into_repo or not dest_root.exists():
+                dest_root.unlink()
+            else:
+                skipped.append(str(dest_root))
+                continue
 
         if source_root.is_dir():
             for source_file in sorted(source_root.rglob("*")):
@@ -109,33 +131,43 @@ def deploy_harness(
                 data = source_file.read_bytes()
 
                 if dest_file.is_symlink():
-                    skipped += 1
+                    skipped.append(str(dest_file))
                     continue
                 if dest_file.is_file():
                     try:
                         if dest_file.read_bytes() == data:
                             continue
                     except OSError:
-                        skipped += 1
+                        skipped.append(str(dest_file))
                         continue
-                    if not _is_managed(dest_file, dest_root):
-                        skipped += 1
+                    if not unconditional and not _is_managed(dest_file, dest_root):
+                        skipped.append(str(dest_file))
                         continue
-                dest_file.parent.mkdir(parents=True, exist_ok=True)
-                dest_file.write_bytes(data)
+                try:
+                    dest_file.parent.mkdir(parents=True, exist_ok=True)
+                    dest_file.write_bytes(data)
+                except OSError:
+                    skipped.append(str(dest_file))
+                    continue
                 copied += 1
 
         if dest_root.is_dir() and not dest_root.is_symlink():
             for path in sorted(dest_root.rglob("*"), reverse=True):
                 if path in expected or path.is_symlink():
                     continue
-                if path.is_file() and _is_managed(path, dest_root):
+                if path.is_file() and (unconditional or _is_managed(path, dest_root)):
                     path.unlink()
                     pruned += 1
                 elif path.is_dir() and not any(path.iterdir()):
                     path.rmdir()
 
-    return {"copied": copied, "pruned": pruned, "skipped_unmanaged": skipped}
+    result: Dict[str, object] = {"copied": copied, "pruned": pruned, "skipped_unmanaged": len(skipped)}
+    if skipped:
+        # Surfaced so a fail-closed skip is a visible decision for the user, not
+        # a silent one. These files exist at the destination without a generated
+        # marker; delete them by hand if they are stale copies you want replaced.
+        result["skipped_paths"] = skipped
+    return result
 
 
 def deploy(
@@ -144,7 +176,7 @@ def deploy(
     home: Path | None = None,
     environ: Mapping[str, str] | None = None,
     verbose: bool = True,
-) -> Dict[str, Dict[str, int]]:
+) -> Dict[str, Dict[str, object]]:
     results = {name: deploy_harness(name, home=home, environ=environ) for name in harnesses}
     if verbose:
         print(json.dumps(results, indent=2))
@@ -224,7 +256,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.list:
-        list_harnesses(load_config())
+        list_harnesses(load_config(CONFIG_PATH))
         return 0
 
     if args.all:
@@ -235,7 +267,7 @@ def main() -> int:
         except ValueError as exc:
             parser.error(str(exc))
     else:
-        selected = load_config()
+        selected = load_config(CONFIG_PATH)
         if not selected:
             if sys.stdin.isatty():
                 selected = prompt_for_harnesses()
@@ -245,7 +277,7 @@ def main() -> int:
                 )
 
     if not args.no_save:
-        save_config(selected)
+        save_config(selected, CONFIG_PATH)
 
     if args.watch:
         watch(selected)

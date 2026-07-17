@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import asset_paths
-import deploy_assets as mod
+import deploy_agents as mod
 
 MARKER = asset_paths.GENERATED_AGENT_MARKDOWN_HEADER
 SKILL_MARKER = asset_paths.GENERATED_SKILL_HEADER.strip("\n")
@@ -62,8 +62,13 @@ class HarnessMappingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mod.harness_mappings("emacs", home=Path("/home/fixture"), environ={})
 
-    def test_github_port_is_not_a_deployable_harness(self) -> None:
-        self.assertNotIn("github", mod.HARNESSES)
+    def test_github_harness_targets_the_repo_dot_github(self) -> None:
+        self.assertIn("github", mod.HARNESSES)
+        mappings = mod.harness_mappings("github", home=Path("/home/fixture"), environ={})
+        for source, dest in mappings:
+            self.assertEqual(source.parts[-3], "ports")
+            self.assertEqual(source.parts[-2], "github")
+            self.assertEqual(dest.parent, mod.REPO_ROOT / ".github")
 
 
 class DeployTests(unittest.TestCase):
@@ -95,7 +100,7 @@ class DeployTests(unittest.TestCase):
         second = mod.deploy_harness("cursor", home=self.home, environ={})
 
         self.assertEqual(first["copied"], 2)
-        self.assertEqual(second, {"copied": 0, "pruned": 0, "skipped_unmanaged": 0})
+        self.assertEqual(second, {"copied": 0, "pruned": 0, "skipped_unmanaged": 0})  # no skipped_paths key when clean
         self.assertTrue((self.home / ".cursor" / "commands" / "captain.md").is_file())
 
     def test_owned_stale_copy_is_pruned_but_unmarked_file_survives(self) -> None:
@@ -161,6 +166,57 @@ class DeployTests(unittest.TestCase):
         shutil.rmtree(self.ports / "claude" / "skills" / "demo")
         mod.deploy_harness("claude", home=self.home, environ={})
         self.assertFalse((self.home / ".claude" / "skills" / "demo").exists())
+
+    def test_repo_linked_destination_root_is_replaced_with_real_dir(self) -> None:
+        """Pre-split deployments symlinked dest roots into the repo; deploy heals them."""
+        fake_repo = self.root / "repo"
+        (fake_repo / "old" / "agents").mkdir(parents=True)
+        with mock.patch.object(mod, "REPO_ROOT", fake_repo):
+            self._write_port_file("opencode/agents/keeper.md", self._marked())
+            agents_root = self.home / ".config" / "opencode" / "agents"
+            agents_root.parent.mkdir(parents=True)
+            agents_root.symlink_to(fake_repo / "old" / "agents")
+
+            result = mod.deploy_harness("opencode", home=self.home, environ={})
+
+        self.assertFalse(agents_root.is_symlink(), "repo link must be replaced")
+        self.assertTrue((agents_root / "keeper.md").is_file())
+        self.assertEqual(result["copied"], 1)
+
+    def test_foreign_symlinked_destination_root_is_left_alone(self) -> None:
+        elsewhere = self.root / "elsewhere"
+        elsewhere.mkdir()
+        self._write_port_file("opencode/agents/keeper.md", self._marked())
+        agents_root = self.home / ".config" / "opencode" / "agents"
+        agents_root.parent.mkdir(parents=True)
+        agents_root.symlink_to(elsewhere)
+
+        result = mod.deploy_harness("opencode", home=self.home, environ={})
+
+        self.assertTrue(agents_root.is_symlink(), "foreign symlink must survive")
+        self.assertFalse((elsewhere / "keeper.md").exists())
+        self.assertGreaterEqual(result["skipped_unmanaged"], 1)
+
+    def test_github_mirror_deploys_unmarked_files_and_prunes_stale(self) -> None:
+        fake_repo = self.root / "repo"
+        fake_repo.mkdir()
+        with mock.patch.object(mod, "REPO_ROOT", fake_repo):
+            self._write_port_file("github/agents/keeper.agent.md", "no marker at all\n")
+            stale = fake_repo / ".github" / "agents" / "gone.agent.md"
+            stale.parent.mkdir(parents=True)
+            stale.write_text("stale copy, also unmarked\n", encoding="utf-8")
+            workflows = fake_repo / ".github" / "workflows"
+            workflows.mkdir()
+            (workflows / "ci.yml").write_text("on: push\n", encoding="utf-8")
+
+            result = mod.deploy_harness("github", home=self.home, environ={})
+
+            deployed = fake_repo / ".github" / "agents" / "keeper.agent.md"
+            self.assertEqual(deployed.read_text(encoding="utf-8"), "no marker at all\n")
+            self.assertFalse(stale.exists(), "stale mirror file must be pruned")
+            self.assertTrue((workflows / "ci.yml").exists(), "non-mirrored subdir touched")
+            self.assertEqual(result["copied"], 1)
+            self.assertEqual(result["pruned"], 1)
 
     def test_symlinked_destination_is_skipped(self) -> None:
         self._write_port_file("claude/agents/keeper.md", self._marked("new\n"))
