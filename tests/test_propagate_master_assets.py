@@ -42,7 +42,7 @@ PR_REVIEW_EVALUATOR_TOOLS = {
     "05c-artifact-sweeper": ["read", "search", "edit"],
     "05d-consistency-auditor": ["read", "search", "edit"],
     "05e-dependency-auditor": ["read", "search", "edit"],
-    "05h-test-health": ["agent", "read", "search", "edit"],
+    "05f-test-health": ["agent", "read", "search", "edit"],
     "05l-readiness-synthesizer": ["read", "search", "edit"],
 }
 

@@ -48,9 +48,13 @@ CONVENTIONS_SKILL = (
 # are gone from this set rather than renamed into it: they now write to
 # `dev/pr-review/` as `05c`, `05d` and `05e`. That is the ledger working as
 # designed -- the migration tripped this assertion and was reconciled here.
+#
+# Feature 06 has since migrated the narrator and test health the same way, and
+# for the same reason they are removed rather than renamed: `05b-change-narrator`
+# and `05h-test-health` (now `05f-test-health`) both defer their report path to
+# the `pr-review-conventions` skill. Only the synthesizer is left, and feature 07
+# owns it -- when that lands, this set is empty and this test can go.
 EVALUATORS_AWAITING_REPORT_ROOT_MIGRATION = {
-    "05b-change-narrator.agent.md",
-    "05h-test-health.agent.md",
     "05l-readiness-synthesizer.agent.md",
 }
 
