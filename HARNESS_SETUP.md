@@ -1,18 +1,21 @@
 # Harness Managed-Copy Setup
 
-Claude, Codex, and OpenCode user-global assets are deployed as regular managed copies. The former runtime-link setup model is retired.
+Claude, Codex, and OpenCode user-global assets are deployed as regular managed copies.
 
 ## Canonical Sequence
 
-1. Edit `.github/` sources and restart any long-running propagation watcher.
-2. Run `python3 scripts/propagate_master_assets.py --once`. Continue only when repository outputs converge and the immediate verification pass reports zero changes.
-3. Pass that convergence result to `resolve_destinations_after_convergence`.
-4. Review the active home and relocation variables on the destination records, then review `runtime_deployment.destination_inventory(records)` for the harness and asset-class roster plus every destination.
-5. After explicit review, pass the same result and records to `deploy_managed_copies_after_convergence`.
-6. Inspect the returned per-harness result for collision, copy, replacement, pruning, failure, and reconciliation-skipped outcomes.
-7. Repeat the sequence and require a fixed point, then start fresh harness sessions and verify runtime discovery.
+Deployment is driven entirely through the `--runtime-deploy` flag on `scripts/propagate_master_assets.py` — a two-invocation review-then-deploy flow, not a sequence of manual Python calls.
 
-Do not replace the deployment APIs with manual copy commands. They own staging, atomic replacement, repository-link migration, metadata, collision preservation, and stale managed-copy pruning.
+1. Edit `.github/` sources and restart any long-running propagation watcher (a stale `--watch` process runs pre-edit propagation code — see Troubleshooting).
+2. Run `python3 scripts/propagate_master_assets.py --runtime-deploy --active-home <path>` with no `--reviewed-inventory`. This converges repository outputs (aborting if they cannot reach a fixed point), computes the destination inventory, and prints it as JSON with an `inventory_digest`. No runtime mutation happens on this call; it exits `2` (`status: "review_required"`).
+
+   > **What `<path>` should be**: your actual current-user home directory on the machine you're deploying to — the same value `$HOME` (`echo $HOME`) resolves to on macOS/Linux/WSL, or `%USERPROFILE%` on native Windows — passed as an **absolute** path (a relative path is rejected). If omitted, it defaults to `Path.home()`, so most single-user runs can skip the flag entirely and let it default. Pass an explicit `--active-home` only when deploying for a different user or into a scratch/QA home (e.g. a throwaway directory for dry-run testing before touching your live home) — never point it at a path inside this repository, and never at a symlink, since destinations are validated to resolve underneath it. `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, and `OPENCODE_CONFIG_DIR`, if set, override individual harness roots but are still validated against this same home.
+3. Review the printed `inventory` — the harness/asset-class roster and every destination path — and note the `inventory_digest`.
+4. After explicit review, and after confirming the watcher was restarted, rerun the same command with `--reviewed-inventory <digest-from-step-2>` and `--watcher-restarted`. This re-checks convergence and re-verifies the digest before any write (aborting on drift), then deploys managed copies, reconciles only the harnesses that deployed successfully, and verifies regular-copy freshness.
+5. Inspect the printed `harnesses` map (status, copied, replaced, removed, unchanged, collisions, failed, reconciliation_skipped per harness) and `verification` map (regular-copy freshness, remaining repository links) for the outcome. Exit `0` means `status: "go"`; exit `1` means `failed` or `partial`.
+6. Repeat step 2 and require it to report a fixed point (zero further changes) before trusting step 4's result, then start fresh harness sessions and verify runtime discovery.
+
+Do not replace `--runtime-deploy` with manual copy commands or by calling `propagate_master_assets.py`'s internal functions directly. The flag owns staging, atomic replacement, repository-link migration, metadata, collision preservation, and stale managed-copy pruning.
 
 ## Harness Coverage
 

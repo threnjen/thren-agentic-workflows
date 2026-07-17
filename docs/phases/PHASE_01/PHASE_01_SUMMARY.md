@@ -1,9 +1,20 @@
 # Phase 1: Hook Foundation + File-Access Guard
 
-**Status**: In Progress — implementation complete; release blocked pending Feature 04 remediation
+**Status**: **Partially retired (2026-07-17)** — hook framework and propagation deliverables (1 and 4) remain implemented and are carried forward by Phase 04's `--runtime-deploy` path; the file-access guard and Bash-command analyzer (deliverables 2 and 3) were **retired by Phase 04** and no longer exist in this project. See "Retirement Note (2026-07-17)" below.
 **Depends on**: None
 **Estimated complexity**: Large
-**Cross-references**: `docs/phases/DISCOVERY_CONTEXT.md`, `docs/phases/PHASE_01/PHASE_01-qa-analysis.md`, `docs/hooks/installation.md`, `docs/inspiration/README.md`
+**Cross-references**: `docs/phases/DISCOVERY_CONTEXT.md`, `docs/phases/PHASE_01/PHASE_01-qa-analysis.md`, `docs/hooks/installation.md`, `docs/inspiration/README.md`, `docs/phases/PHASE_04/PHASE_04_SUMMARY.md`, `.github/learnings/cross-phase-decisions.md`
+
+## Retirement Note (2026-07-17)
+
+Everything below this note describes Phase 01 **as originally implemented**. It is left intact as historical record — the hook framework and propagation sections remain accurate today — but the following must be read as superseded:
+
+- **Deliverable 2 (File-access guard)** and **Deliverable 3 (Bash-command analyzer)** were retired in full by Phase 04: `scripts/file-access-guard.py`, `lib/file_access.py`, `lib/bash_analyzer.py`, `lib/url_exfiltration.py`, the secrets/protected-file rule set, Grep coverage, self-protection rules, and the destructive-command/env-exfiltration `ask` tier are all gone. Direct and Bash-mediated access to secrets and protected files is **no longer enforced by this project**.
+- **SEC-01** (nested-destination symlink escape in propagation) and **PERF-01** (unstable sub-50ms propagated-guard latency) are **moot, not open** — both described the now-retired guard. Any success-criteria checkbox below tied to guard behavior, live guard QA, or guard latency should be read as *inapplicable* rather than *incomplete*.
+- **Deliverable 1 (Hook framework)** and **Deliverable 4 (Propagation + distribution)** survive unchanged and now also back Phase 02's scanner and Phase 04's cross-platform deployment. Phase 04's install-guide correction is still pending as a documentation gap, not a phase blocker.
+- The Vision's "even under bypass permissions" guarantee for **file/secret manipulation** no longer holds. Only Phase 02's prompt-injection defense retains that guarantee. This was a deliberate, user-approved trade against guard friction (see `.github/learnings/cross-phase-decisions.md`, "File-Access Guard Retirement"), reconciled at the project level in `docs/phases/PROJECT_ROADMAP.md` on 2026-07-17.
+
+Do not action any open item below that depends on the guard or analyzer (e.g. "Live bypass-permissions behavior for `deny` and `ask`", "self-protection for propagated runtime", subagent guard QA) — those requirements no longer have a subject.
 
 ## What's New
 
