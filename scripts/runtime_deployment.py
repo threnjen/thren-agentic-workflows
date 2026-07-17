@@ -4,15 +4,21 @@
 from __future__ import annotations
 
 import ntpath
+import hashlib
+import json
 import os
 import posixpath
+import shutil
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
-from typing import Mapping, Sequence
+from typing import Callable, Mapping, Sequence
 
 
 SUPPORTED_PLATFORMS = frozenset({"darwin", "linux", "windows"})
+MANAGED_METADATA = ".github-agents-managed.json"
+GENERATED_MARKER = b"Generated from .github/"
 
 
 class DestinationResolutionError(ValueError):
@@ -57,6 +63,57 @@ class DestinationRecord:
     destination: PurePath
     active_home: PurePath
     status: str = "planned"
+
+
+@dataclass(frozen=True)
+class HarnessManagedCopyResult:
+    """Aggregated, content-safe managed-copy outcome for one harness."""
+
+    status: str
+    inventoried: int = 0
+    staged: int = 0
+    copied: int = 0
+    replaced: int = 0
+    removed: int = 0
+    unchanged: int = 0
+    collisions: int = 0
+    failed: int = 0
+    reconciliation_skipped: bool = False
+    failures: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class ManagedCopyResult:
+    harnesses: Mapping[str, HarnessManagedCopyResult]
+
+
+@dataclass
+class _MutableHarnessResult:
+    inventoried: int = 0
+    staged: int = 0
+    copied: int = 0
+    replaced: int = 0
+    removed: int = 0
+    unchanged: int = 0
+    collisions: int = 0
+    failed: int = 0
+    reconciliation_skipped: bool = False
+    failures: list[str] | None = None
+
+    def freeze(self) -> HarnessManagedCopyResult:
+        return HarnessManagedCopyResult(
+            status="failed" if self.failed else "verified",
+            inventoried=self.inventoried,
+            staged=self.staged,
+            copied=self.copied,
+            replaced=self.replaced,
+            removed=self.removed,
+            unchanged=self.unchanged,
+            collisions=self.collisions,
+            failed=self.failed,
+            reconciliation_skipped=self.reconciliation_skipped,
+            failures=tuple(self.failures or ()),
+        )
 
 
 @dataclass(frozen=True)
@@ -259,3 +316,381 @@ def destination_inventory(
             }
         )
     return tuple(inventory)
+
+
+def _entry_exists(path: Path) -> bool:
+    """Test the directory entry without following a dangling link."""
+    return os.path.lexists(path)
+
+
+def _is_link(path: Path) -> bool:
+    return path.is_symlink() or path.is_junction()
+
+
+def _remove_entry(path: Path) -> None:
+    """Remove exactly one entry; link targets are never traversed."""
+    if _is_link(path) or path.is_file():
+        path.unlink()
+    elif path.is_dir():
+        shutil.rmtree(path)
+    else:
+        path.unlink()
+
+
+def _copy_source(source: Path, target: Path) -> None:
+    """Copy one complete generated source tree into an absent staging path."""
+    shutil.copytree(source, target, symlinks=False)
+
+
+def _file_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(128 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _tree_manifest(root: Path) -> dict[str, tuple[str, str]]:
+    """Describe a regular staged/source tree; reject links and special files."""
+    manifest: dict[str, tuple[str, str]] = {}
+    for path in sorted(root.rglob("*")):
+        relative = path.relative_to(root).as_posix()
+        if _is_link(path):
+            raise OSError("generated_source_link")
+        if path.is_dir():
+            manifest[relative] = ("directory", "")
+        elif path.is_file():
+            manifest[relative] = ("file", _file_digest(path))
+        else:
+            raise OSError("unsupported_generated_entry")
+    return manifest
+
+
+def _validate_record(record: DestinationRecord) -> tuple[Path, Path, Path]:
+    """Validate source and active-home boundaries before any enumeration."""
+    if not all(isinstance(value, Path) for value in (record.source, record.destination, record.active_home)):
+        raise DestinationResolutionError("non_native_destination")
+    source = record.source.absolute()
+    destination = record.destination.absolute()
+    home = record.active_home.absolute()
+    if home.is_symlink() or home.is_junction():
+        raise DestinationResolutionError("linked_active_home")
+    if not home.is_dir():
+        raise DestinationResolutionError("invalid_active_home")
+    try:
+        destination.relative_to(home)
+    except ValueError as exc:
+        raise DestinationResolutionError("outside_active_home") from exc
+    _check_existing_parents(destination, home)
+    if not source.is_dir() or _is_link(source):
+        raise DestinationResolutionError("generated_source_missing")
+    return source, destination, home
+
+
+def _recorded_target(path: Path) -> Path | None:
+    """Return a link's recorded target without requiring that target to exist."""
+    if not _is_link(path):
+        return None
+    try:
+        raw = os.readlink(path)
+    except OSError:
+        # Native Windows junctions may not expose readlink consistently.
+        try:
+            return path.resolve(strict=False)
+        except OSError:
+            return None
+    target = Path(raw)
+    if not target.is_absolute():
+        target = path.parent / target
+    return target.resolve(strict=False)
+
+
+def _inside_generated_roots(path: Path, generated_roots: Sequence[Path]) -> bool:
+    target = path.resolve(strict=False)
+    for root in generated_roots:
+        try:
+            target.relative_to(root.resolve())
+            return True
+        except ValueError:
+            continue
+    return False
+
+
+def _link_is_owned(path: Path, generated_roots: Sequence[Path]) -> bool:
+    target = _recorded_target(path)
+    return target is not None and _inside_generated_roots(target, generated_roots)
+
+
+def _has_generated_marker(path: Path) -> bool:
+    try:
+        if path.is_file() and not _is_link(path):
+            with path.open("rb") as stream:
+                return GENERATED_MARKER in stream.read(256 * 1024)
+        if path.is_dir() and not _is_link(path):
+            skill = path / "SKILL.md"
+            if skill.is_file() and not _is_link(skill):
+                with skill.open("rb") as stream:
+                    return GENERATED_MARKER in stream.read(256 * 1024)
+    except (OSError, PermissionError):
+        return False
+    return False
+
+
+def _entry_fingerprint(path: Path) -> str | None:
+    try:
+        if path.is_file() and not _is_link(path):
+            return "file:" + _file_digest(path)
+        if path.is_dir() and not _is_link(path):
+            encoded = json.dumps(_tree_manifest(path), sort_keys=True).encode("utf-8")
+            return "directory:" + hashlib.sha256(encoded).hexdigest()
+    except OSError:
+        return None
+    return None
+
+
+def _read_metadata(destination: Path) -> dict[str, str]:
+    metadata = destination / MANAGED_METADATA
+    if not metadata.is_file() or _is_link(metadata):
+        return {}
+    try:
+        payload = json.loads(metadata.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return {}
+    if payload.get("schema") != 1 or not isinstance(payload.get("owned"), dict):
+        return {}
+    return {
+        name: fingerprint
+        for name, fingerprint in payload["owned"].items()
+        if isinstance(name, str)
+        and isinstance(fingerprint, str)
+        and "/" not in name
+        and name not in {"", ".", "..", MANAGED_METADATA}
+    }
+
+
+def _write_metadata(destination: Path, owned: set[str]) -> None:
+    fingerprints = {
+        name: fingerprint
+        for name in sorted(owned)
+        if (fingerprint := _entry_fingerprint(destination / name)) is not None
+    }
+    payload = json.dumps({"schema": 1, "owned": fingerprints}, indent=2) + "\n"
+    stage = destination / f".{MANAGED_METADATA}.tmp"
+    stage.write_text(payload, encoding="utf-8")
+    os.replace(stage, destination / MANAGED_METADATA)
+
+
+def _same_entry(left: Path, right: Path) -> bool:
+    if _is_link(left) or _is_link(right):
+        return False
+    try:
+        if left.is_file() and right.is_file():
+            return _file_digest(left) == _file_digest(right)
+        if left.is_dir() and right.is_dir():
+            return _tree_manifest(left) == _tree_manifest(right)
+    except OSError:
+        return False
+    return False
+
+
+def _entry_identity(path: Path) -> tuple[int, int, int, int, int] | None:
+    try:
+        state = path.lstat()
+    except FileNotFoundError:
+        return None
+    return (state.st_mode, state.st_dev, state.st_ino, state.st_size, state.st_mtime_ns)
+
+
+def _replace_preserving_old(
+    staged: Path,
+    destination: Path,
+    expected_identity: tuple[int, int, int, int, int] | None,
+) -> None:
+    """Install a verified stage, restoring the old entry if installation fails."""
+    backup = destination.parent / f".{destination.name}.managed-backup"
+    if _entry_exists(backup):
+        raise OSError("backup_collision")
+    if _entry_identity(destination) != expected_identity:
+        raise OSError("destination_changed")
+    had_old = _entry_exists(destination)
+    if had_old:
+        os.replace(destination, backup)
+    try:
+        os.replace(staged, destination)
+    except Exception:
+        if had_old and _entry_exists(backup) and not _entry_exists(destination):
+            os.replace(backup, destination)
+        raise
+    if had_old and _entry_exists(backup):
+        _remove_entry(backup)
+
+
+def _install_staged_record(
+    record: DestinationRecord,
+    staged: Path,
+    generated_roots: Sequence[Path],
+    result: _MutableHarnessResult,
+) -> set[str]:
+    destination = Path(record.destination)
+    if not _entry_exists(destination):
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        _replace_preserving_old(staged, destination, None)
+        result.copied += 1
+        owned = {child.name for child in destination.iterdir() if child.name != MANAGED_METADATA}
+        _write_metadata(destination, owned)
+        return owned
+
+    if _is_link(destination):
+        identity = _entry_identity(destination)
+        if not _link_is_owned(destination, generated_roots):
+            result.collisions += 1
+            _remove_entry(staged)
+            return set()
+        _replace_preserving_old(staged, destination, identity)
+        result.replaced += 1
+        owned = {child.name for child in destination.iterdir() if child.name != MANAGED_METADATA}
+        _write_metadata(destination, owned)
+        return owned
+
+    if not destination.is_dir():
+        result.collisions += 1
+        _remove_entry(staged)
+        return set()
+
+    previous_owned = _read_metadata(destination)
+    owned = set(previous_owned)
+    for candidate in tuple(staged.iterdir()):
+        final = destination / candidate.name
+        identity = _entry_identity(final)
+        if not _entry_exists(final):
+            _replace_preserving_old(candidate, final, identity)
+            result.copied += 1
+            owned.add(candidate.name)
+        elif _same_entry(candidate, final):
+            result.unchanged += 1
+            owned.add(candidate.name)
+            _remove_entry(candidate)
+        elif (
+            (
+                candidate.name in previous_owned
+                and _entry_fingerprint(final) == previous_owned[candidate.name]
+            )
+            or _has_generated_marker(final)
+            or (_is_link(final) and _link_is_owned(final, generated_roots))
+        ):
+            _replace_preserving_old(candidate, final, identity)
+            result.replaced += 1
+            owned.add(candidate.name)
+        else:
+            result.collisions += 1
+            _remove_entry(candidate)
+    _remove_entry(staged)
+    _write_metadata(destination, owned)
+    return owned
+
+
+def _prune_record(
+    record: DestinationRecord,
+    expected: set[str],
+    generated_roots: Sequence[Path],
+    result: _MutableHarnessResult,
+) -> None:
+    destination = Path(record.destination)
+    if not destination.is_dir() or _is_link(destination):
+        return
+    metadata_owned = _read_metadata(destination)
+    retained = set(expected)
+    for path in tuple(destination.iterdir()):
+        if path.name == MANAGED_METADATA or path.name in expected:
+            continue
+        owned = (
+            (
+                path.name in metadata_owned
+                and _entry_fingerprint(path) == metadata_owned[path.name]
+            )
+            or _has_generated_marker(path)
+            or (_is_link(path) and _link_is_owned(path, generated_roots))
+        )
+        if owned:
+            _remove_entry(path)
+            result.removed += 1
+        else:
+            result.collisions += 1
+    _write_metadata(destination, retained)
+
+
+def deploy_managed_copies(
+    records: Sequence[DestinationRecord],
+    *,
+    copy_tree: Callable[[Path, Path], None] = _copy_source,
+) -> ManagedCopyResult:
+    """Stage, verify, install, then reconcile generated runtime copies.
+
+    All records for a harness must stage successfully before that harness mutates
+    destinations. Pruning starts only after every install for the harness succeeds.
+    """
+    grouped: dict[str, list[DestinationRecord]] = {}
+    for record in records:
+        grouped.setdefault(record.harness, []).append(record)
+    generated_roots = tuple(Path(record.source).absolute() for record in records)
+    final: dict[str, HarnessManagedCopyResult] = {}
+
+    for harness, harness_records in grouped.items():
+        outcome = _MutableHarnessResult(failures=[])
+        stages: list[tuple[DestinationRecord, Path]] = []
+        try:
+            for record in harness_records:
+                source, destination, _ = _validate_record(record)
+                outcome.inventoried += 1
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                stage = Path(tempfile.mkdtemp(prefix=f".{destination.name}.managed-stage-", dir=destination.parent))
+                stage.rmdir()
+                try:
+                    source_manifest = _tree_manifest(source)
+                    copy_tree(source, stage)
+                    if source_manifest != _tree_manifest(stage):
+                        raise OSError("stage_verification_failed")
+                except Exception:
+                    if _entry_exists(stage):
+                        _remove_entry(stage)
+                    raise
+                stages.append((record, stage))
+                outcome.staged += 1
+        except Exception:
+            for _, stage in stages:
+                if _entry_exists(stage):
+                    _remove_entry(stage)
+            outcome.failed += 1
+            outcome.reconciliation_skipped = True
+            outcome.failures.append("staging_failed")
+            final[harness] = outcome.freeze()
+            continue
+
+        expected_by_record: list[tuple[DestinationRecord, set[str]]] = []
+        try:
+            for record, stage in stages:
+                _validate_record(record)
+                expected = {child.name for child in stage.iterdir()}
+                installed = _install_staged_record(record, stage, generated_roots, outcome)
+                expected_by_record.append((record, expected if installed else set()))
+        except Exception:
+            for _, stage in stages:
+                if _entry_exists(stage):
+                    _remove_entry(stage)
+            outcome.failed += 1
+            outcome.reconciliation_skipped = True
+            outcome.failures.append("replacement_failed")
+            final[harness] = outcome.freeze()
+            continue
+
+        try:
+            for record, expected in expected_by_record:
+                if expected:
+                    _prune_record(record, expected, generated_roots, outcome)
+        except Exception:
+            outcome.failed += 1
+            outcome.reconciliation_skipped = True
+            outcome.failures.append("reconciliation_failed")
+        final[harness] = outcome.freeze()
+
+    return ManagedCopyResult(final)

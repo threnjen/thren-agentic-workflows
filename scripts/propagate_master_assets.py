@@ -1868,6 +1868,24 @@ def resolve_destinations_after_convergence(
     )
 
 
+def deploy_managed_copies_after_convergence(
+    convergence: PropagationConvergenceResult,
+    records: Sequence[runtime_deployment.DestinationRecord],
+) -> runtime_deployment.ManagedCopyResult:
+    """Run the shared managed-copy operation only behind the fixed-point gate."""
+    if (
+        not isinstance(convergence, PropagationConvergenceResult)
+        or not convergence.converged
+    ):
+        pass_count = (
+            convergence.pass_count
+            if isinstance(convergence, PropagationConvergenceResult)
+            else 0
+        )
+        raise PropagationConvergenceError("deployment_before_convergence", pass_count)
+    return runtime_deployment.deploy_managed_copies(records)
+
+
 def preflight_destinations(
     destinations: Iterable[HarnessDestination], *, home: Path | None = None
 ) -> Dict[str, str]:

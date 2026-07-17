@@ -321,5 +321,233 @@ class RuntimeDestinationTests(unittest.TestCase):
         self.assertTrue(all(set(item) == expected_fields for item in inventory))
 
 
+class ManagedCopyReconciliationTests(unittest.TestCase):
+    def _record(self, root: Path, harness: str = "claude") -> deployment.DestinationRecord:
+        source = root / "repo" / harness / "agents"
+        source.mkdir(parents=True)
+        home = root / "home"
+        home.mkdir(exist_ok=True)
+        return deployment.DestinationRecord(
+            harness, "agents", source, home / f".{harness}" / "agents", home
+        )
+
+    def _generated(self, path: Path, body: str = "body") -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            f"{body}\n<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->\n",
+            encoding="utf-8",
+        )
+
+    def test_absent_destination_is_staged_as_regular_managed_copy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            record = self._record(Path(tmp))
+            self._generated(record.source / "one.md")
+
+            result = deployment.deploy_managed_copies((record,))
+
+            destination = Path(record.destination)
+            self.assertEqual(result.harnesses["claude"].status, "verified")
+            self.assertEqual(result.harnesses["claude"].inventoried, 1)
+            self.assertTrue((destination / "one.md").is_file())
+            self.assertFalse(destination.is_symlink())
+            self.assertTrue((destination / deployment.MANAGED_METADATA).is_file())
+
+    def test_repository_link_is_unlinked_without_traversing_target(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            record = self._record(root)
+            self._generated(record.source / "one.md", "fresh")
+            destination = Path(record.destination)
+            destination.parent.mkdir(parents=True)
+            destination.symlink_to(record.source, target_is_directory=True)
+
+            result = deployment.deploy_managed_copies((record,))
+
+            self.assertEqual(result.harnesses["claude"].replaced, 1)
+            self.assertTrue(destination.is_dir())
+            self.assertFalse(destination.is_symlink())
+            self.assertEqual((record.source / "one.md").read_text(encoding="utf-8").splitlines()[0], "fresh")
+
+    def test_foreign_content_and_foreign_links_are_preserved_as_collisions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            record = self._record(root)
+            self._generated(record.source / "owned.md")
+            (record.source / "foreign.md").write_text("generated candidate", encoding="utf-8")
+            destination = Path(record.destination)
+            destination.mkdir(parents=True)
+            (destination / "foreign.md").write_text("keep me", encoding="utf-8")
+            outside = root / "outside"
+            outside.write_text("outside", encoding="utf-8")
+            (destination / "owned.md").symlink_to(outside)
+
+            result = deployment.deploy_managed_copies((record,))
+
+            harness = result.harnesses["claude"]
+            self.assertEqual(harness.collisions, 2)
+            self.assertEqual((destination / "foreign.md").read_text(encoding="utf-8"), "keep me")
+            self.assertTrue((destination / "owned.md").is_symlink())
+
+    def test_owned_stale_copy_is_pruned_but_unmarked_copy_survives(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            record = self._record(root)
+            self._generated(record.source / "current.md")
+            destination = Path(record.destination)
+            destination.mkdir(parents=True)
+            self._generated(destination / "stale.md", "stale")
+            (destination / "foreign.md").write_text("keep", encoding="utf-8")
+
+            result = deployment.deploy_managed_copies((record,))
+
+            self.assertEqual(result.harnesses["claude"].removed, 1)
+            self.assertFalse((destination / "stale.md").exists())
+            self.assertTrue((destination / "foreign.md").exists())
+
+    def test_stage_failure_preserves_old_destination_and_skips_harness_pruning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            first = self._record(root)
+            self._generated(first.source / "current.md")
+            destination = Path(first.destination)
+            destination.mkdir(parents=True)
+            self._generated(destination / "stale.md")
+            second_source = root / "repo" / "claude" / "commands"
+            second_source.mkdir(parents=True)
+            self._generated(second_source / "command.md")
+            second = deployment.DestinationRecord(
+                "claude", "commands", second_source, root / "home/.claude/commands", root / "home"
+            )
+
+            def copy(source: Path, target: Path) -> None:
+                if source == second_source:
+                    raise OSError("injected")
+                deployment._copy_source(source, target)
+
+            result = deployment.deploy_managed_copies((first, second), copy_tree=copy)
+
+            self.assertEqual(result.harnesses["claude"].status, "failed")
+            self.assertTrue(result.harnesses["claude"].reconciliation_skipped)
+            self.assertTrue((destination / "stale.md").exists())
+
+    def test_second_run_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            record = self._record(Path(tmp))
+            self._generated(record.source / "one.md")
+            deployment.deploy_managed_copies((record,))
+
+            result = deployment.deploy_managed_copies((record,))
+
+            harness = result.harnesses["claude"]
+            self.assertEqual(harness.copied + harness.replaced + harness.removed, 0)
+            self.assertGreaterEqual(harness.unchanged, 1)
+
+    def test_stale_metadata_does_not_authorize_overwriting_user_replacement(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            record = self._record(Path(tmp))
+            candidate = record.source / "plain.txt"
+            candidate.write_text("generated", encoding="utf-8")
+            deployment.deploy_managed_copies((record,))
+            installed = Path(record.destination) / "plain.txt"
+            installed.write_text("user replacement", encoding="utf-8")
+            candidate.write_text("new generated", encoding="utf-8")
+
+            result = deployment.deploy_managed_copies((record,))
+
+            self.assertEqual(installed.read_text(encoding="utf-8"), "user replacement")
+            self.assertEqual(result.harnesses["claude"].collisions, 1)
+
+    def test_symlinked_active_home_is_rejected_before_copy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            real_home = root / "real-home"
+            real_home.mkdir()
+            linked_home = root / "home"
+            linked_home.symlink_to(real_home, target_is_directory=True)
+            source = root / "repo/claude/agents"
+            source.mkdir(parents=True)
+            self._generated(source / "one.md")
+            record = deployment.DestinationRecord(
+                "claude", "agents", source, linked_home / ".claude/agents", linked_home
+            )
+
+            result = deployment.deploy_managed_copies((record,))
+
+            self.assertEqual(result.harnesses["claude"].status, "failed")
+            self.assertFalse((real_home / ".claude").exists())
+
+    def test_dangling_repository_link_is_replaced_but_foreign_one_survives(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            record = self._record(root)
+            self._generated(record.source / "owned.md")
+            self._generated(record.source / "foreign.md")
+            destination = Path(record.destination)
+            destination.mkdir(parents=True)
+            (destination / "owned.md").symlink_to(record.source / "retired.md")
+            (destination / "foreign.md").symlink_to(root / "elsewhere/missing.md")
+
+            result = deployment.deploy_managed_copies((record,))
+
+            self.assertTrue((destination / "owned.md").is_file())
+            self.assertFalse((destination / "owned.md").is_symlink())
+            self.assertTrue((destination / "foreign.md").is_symlink())
+            self.assertEqual(result.harnesses["claude"].collisions, 1)
+
+    def test_replacement_failure_restores_prior_managed_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            record = self._record(root)
+            self._generated(record.source / "one.md", "fresh")
+            destination = Path(record.destination)
+            destination.mkdir(parents=True)
+            self._generated(destination / "one.md", "old")
+            real_replace = os.replace
+
+            def fail_install(source, target):
+                if ".managed-stage-" in os.fspath(source) and Path(target).name == "one.md":
+                    raise PermissionError("locked")
+                return real_replace(source, target)
+
+            with mock.patch.object(deployment.os, "replace", side_effect=fail_install):
+                result = deployment.deploy_managed_copies((record,))
+
+            self.assertEqual(result.harnesses["claude"].status, "failed")
+            self.assertTrue(result.harnesses["claude"].reconciliation_skipped)
+            self.assertEqual((destination / "one.md").read_text(encoding="utf-8").splitlines()[0], "old")
+
+    def test_mixed_harness_failure_does_not_roll_back_success(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            claude = self._record(root, "claude")
+            codex = self._record(root, "codex")
+            self._generated(claude.source / "one.md")
+            self._generated(codex.source / "one.md")
+
+            def copy(source: Path, target: Path) -> None:
+                if "codex" in source.parts:
+                    raise OSError("injected")
+                deployment._copy_source(source, target)
+
+            result = deployment.deploy_managed_copies((claude, codex), copy_tree=copy)
+
+            self.assertEqual(result.harnesses["claude"].status, "verified")
+            self.assertTrue((Path(claude.destination) / "one.md").is_file())
+            self.assertEqual(result.harnesses["codex"].status, "failed")
+            self.assertFalse(Path(codex.destination).exists())
+
+    def test_propagator_gate_invokes_settled_managed_copy_api(self) -> None:
+        convergence = propagator.PropagationConvergenceResult(True, 1, 0, {}, {})
+        expected = deployment.ManagedCopyResult({})
+        with mock.patch.object(deployment, "deploy_managed_copies", return_value=expected) as managed:
+            actual = propagator.deploy_managed_copies_after_convergence(convergence, ())
+        self.assertIs(actual, expected)
+        managed.assert_called_once_with(())
+
+        unconverged = propagator.PropagationConvergenceResult(False, 1, 0, {}, {})
+        with self.assertRaises(propagator.PropagationConvergenceError):
+            propagator.deploy_managed_copies_after_convergence(unconverged, ())
+
+
 if __name__ == "__main__":
     unittest.main()
