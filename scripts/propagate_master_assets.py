@@ -21,7 +21,9 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Mapping, Sequence, Tuple, Union
+
+import runtime_deployment
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -60,11 +62,65 @@ GENERATED_OPENCODE_PLUGIN_HEADER = "// Generated from .github/hooks source-of-tr
 HOOK_SOURCE_KEY = "$source"
 RETIRED_HOOK_ASSETS = (
     "bash-safety.json",
+    "file-access-guard.json",
     "protect-files.json",
+    "config/file-access-overrides.json",
+    "config/file-access-rules.json",
+    "lib/bash_analyzer.py",
+    "lib/file_access.py",
+    "lib/url_exfiltration.py",
     "scripts/bash-safety.sh",
+    "scripts/file-access-guard.py",
     "scripts/protect-files.sh",
     "scripts/protect-files.py",
+    "scripts/rtk-rewrite.sh",
 )
+
+# Retired runtime assets have no generated-file header. Only remove a regular
+# file when its bytes match a source revision we owned; a same-named user file
+# must survive retirement cleanup. Add hashes deliberately when retiring a
+# shipped revision instead of broadening this to filename-based deletion.
+RETIRED_HOOK_ASSET_HASHES = {
+    "bash-safety.json": {
+        "65ad357ee32f417b828b25a51d0758d21ee7d5b5a5b890c3f7a4346e58cc885b",
+    },
+    "file-access-guard.json": {
+        "d5b2b1a8e7b4fcbae49a62edafa08989f9ad79bd85801e1119db2fe5bb8ffbd1",
+    },
+    "protect-files.json": {
+        "086758a1b3f58e70ba16758c595636bf7191a038919e6515021a1bc5ad3e29d3",
+    },
+    "config/file-access-overrides.json": {
+        "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+    },
+    "config/file-access-rules.json": {
+        "7e1b228b290ae112d8c8df034da69999199196937c33eb4a3118e0dd951889ef",
+    },
+    "lib/bash_analyzer.py": {
+        "833f2c0728085210840481efca08ab483946e1115a354df0e51dc80e632db249",
+    },
+    "lib/file_access.py": {
+        "7596b8642a795cbcd05c2b0a6188cc68aab8f1e8ffa1ebaaee5c0fa975b9f997",
+    },
+    "lib/url_exfiltration.py": {
+        "98935c0186e2b64968ca7be0f169c8127fcec60c84e421be629f49ac73e29c4b",
+    },
+    "scripts/file-access-guard.py": {
+        "37ee760fb6cfb18b1e622bd998ae4c6117266e941b33b44cd2ae0484d42c7d57",
+    },
+    "scripts/bash-safety.sh": {
+        "d9a71487fab1e87a54482c5daa6ae1d6e8d57513a1e80346a6764779d25b7a1f",
+    },
+    "scripts/protect-files.sh": {
+        "d40ec48ba898e6141ea22d80e756816eeb34c5f04ac63f663c4ea048661194df",
+    },
+    "scripts/protect-files.py": {
+        "b11ca42619d38f28630ea0ee1884b9430cf436b0e2a5ccf12e7635d71e68c8e2",
+    },
+    "scripts/rtk-rewrite.sh": {
+        "37b436eb03897d49d5c66588b320357cfe2d121c1d0eb76df9ada2e7ba8f0702",
+    },
+}
 
 # Default translation from VS Code Copilot hook events → target tool events.
 # Keys are VS Code event names. Values map tool name → list of target event names.
@@ -83,6 +139,10 @@ HOOK_EVENT_MAP: Dict[str, Dict[str, List[str]]] = {
 # Add a source slug string here to exclude an agent during propagation.
 # Currently empty — all source agents are propagated.
 PROPAGATION_EXCLUDE: set[str] = set()
+
+INVENTORY_COUNTERS = frozenset({"source_agents", "hooks_source"})
+DEFAULT_CONVERGENCE_PASSES = 5
+MAX_CONVERGENCE_PASSES = 25
 
 
 OPENCODE_FILE_ALIASES = {
@@ -116,6 +176,69 @@ class InstructionDoc:
     path: Path
     apply_to_patterns: List[str]
     body: str
+
+
+@dataclass(frozen=True)
+class PropagationConvergenceResult:
+    converged: bool
+    pass_count: int
+    changed_passes: int
+    total_changes: Dict[str, int]
+    final_counters: Dict[str, int]
+
+
+class PropagationConvergenceError(RuntimeError):
+    def __init__(self, category: str, pass_count: int) -> None:
+        self.category = category
+        self.pass_count = pass_count
+        super().__init__(f"{category} after {pass_count} propagation pass(es)")
+
+
+@dataclass(frozen=True)
+class RuntimeVerificationResult:
+    status: str
+    regular_fresh: bool
+    repository_links: int
+
+
+@dataclass(frozen=True)
+class RuntimeDeploymentResult:
+    status: str
+    stages: tuple[str, ...]
+    convergence: PropagationConvergenceResult
+    inventory: tuple[dict[str, str], ...]
+    inventory_digest: str
+    deployment: runtime_deployment.ManagedCopyResult | None
+    verification: Mapping[str, RuntimeVerificationResult]
+    failure_categories: tuple[str, ...]
+    platform_evidence: Mapping[str, str]
+
+
+@dataclass(frozen=True)
+class HarnessDestination:
+    harness: str
+    destination: Path
+    ownership_evidence_available: bool = True
+    collision_ready: bool = True
+    create_parents: bool = True
+
+
+@dataclass(frozen=True)
+class HarnessDeploymentResult:
+    status: str
+    copied: int = 0
+    reconciled: int = 0
+    reconciliation_skipped: bool = False
+    failure: str | None = None
+
+
+@dataclass(frozen=True)
+class DeploymentResult:
+    convergence: PropagationConvergenceResult | None
+    propagation_failure: str | None
+    preflight_succeeded: bool
+    preflight_failures: Dict[str, str]
+    harnesses: Dict[str, HarnessDeploymentResult]
 
 
 FrontmatterValue = Union[str, List[str]]
@@ -1146,14 +1269,27 @@ def _copy_hook_assets(source_dir: Path, target_dir: Path) -> int:
 
 def _remove_retired_hook_assets(source_dir: Path, target_dir: Path) -> int:
     removed = 0
+    same_tree = source_dir.resolve() == target_dir.resolve()
     for relative_path in RETIRED_HOOK_ASSETS:
         if (source_dir / relative_path).exists():
             continue
         target_path = target_dir / relative_path
         _validate_nested_output_directory(target_dir, target_path.parent)
-        if target_path.is_file() or target_path.is_symlink():
-            target_path.unlink()
-            removed += 1
+        if target_path.is_symlink():
+            link_target = (target_path.parent / target_path.readlink()).resolve()
+            retired_source = (source_dir / relative_path).resolve()
+            if not same_tree and link_target == retired_source:
+                target_path.unlink()
+                removed += 1
+            continue
+        if not target_path.is_file():
+            continue
+        owned_hashes = RETIRED_HOOK_ASSET_HASHES.get(relative_path, set())
+        target_hash = hashlib.sha256(target_path.read_bytes()).hexdigest()
+        if target_hash not in owned_hashes:
+            continue
+        target_path.unlink()
+        removed += 1
     return removed
 
 
@@ -1656,6 +1792,388 @@ def propagate_once(verbose: bool = True, repo_root: Path | None = None) -> Dict[
     return result
 
 
+def propagation_changes(counters: Dict[str, int]) -> Dict[str, int]:
+    """Return repository mutation counters, rejecting ambiguous results."""
+    if not isinstance(counters, dict):
+        raise ValueError("propagation result must be a dictionary")
+
+    changes: Dict[str, int] = {}
+    for key, value in counters.items():
+        if not isinstance(key, str) or isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError("propagation counters must map names to integers")
+        if value < 0:
+            raise ValueError("propagation counters cannot be negative")
+        if key not in INVENTORY_COUNTERS and value:
+            changes[key] = value
+    return changes
+
+
+def propagate_until_converged(
+    *,
+    repo_root: Path | None = None,
+    max_passes: int = DEFAULT_CONVERGENCE_PASSES,
+    propagate: Callable[[], Dict[str, int]] | None = None,
+) -> PropagationConvergenceResult:
+    """Repeat propagation, within a total-pass bound, through a zero-change pass."""
+    if (
+        isinstance(max_passes, bool)
+        or not isinstance(max_passes, int)
+        or not 1 <= max_passes <= MAX_CONVERGENCE_PASSES
+    ):
+        raise ValueError(
+            f"max_passes must be between 1 and {MAX_CONVERGENCE_PASSES}"
+        )
+
+    run_pass = propagate or (
+        lambda: propagate_once(verbose=False, repo_root=repo_root)
+    )
+    total_changes: Dict[str, int] = {}
+    changed_passes = 0
+
+    for pass_count in range(1, max_passes + 1):
+        try:
+            counters = run_pass()
+        except Exception as exc:
+            if isinstance(exc, PropagationConvergenceError):
+                raise
+            raise PropagationConvergenceError(
+                "propagation_failed", pass_count
+            ) from exc
+
+        try:
+            changes = propagation_changes(counters)
+        except (TypeError, ValueError) as exc:
+            raise PropagationConvergenceError("malformed_result", pass_count) from exc
+
+        if not changes:
+            return PropagationConvergenceResult(
+                converged=True,
+                pass_count=pass_count,
+                changed_passes=changed_passes,
+                total_changes=total_changes,
+                final_counters=dict(counters),
+            )
+
+        changed_passes += 1
+        for key, value in changes.items():
+            total_changes[key] = total_changes.get(key, 0) + value
+
+    raise PropagationConvergenceError("bound_exhausted", max_passes)
+
+
+def resolve_destinations_after_convergence(
+    convergence: PropagationConvergenceResult,
+    *,
+    repo_root: Path | None = None,
+    active_home: Path | None = None,
+    environment: Mapping[str, str] | None = None,
+    platform_facts: runtime_deployment.PlatformFacts | None = None,
+) -> tuple[runtime_deployment.DestinationRecord, ...]:
+    """Resolve runtime destinations only after the fixed-point gate succeeds."""
+    if (
+        not isinstance(convergence, PropagationConvergenceResult)
+        or not convergence.converged
+    ):
+        pass_count = (
+            convergence.pass_count
+            if isinstance(convergence, PropagationConvergenceResult)
+            else 0
+        )
+        raise PropagationConvergenceError("deployment_before_convergence", pass_count)
+    return runtime_deployment.resolve_runtime_destinations(
+        repo_root=repo_root or REPO_ROOT,
+        active_home=active_home,
+        environment=environment,
+        platform_facts=platform_facts,
+    )
+
+
+def deploy_managed_copies_after_convergence(
+    convergence: PropagationConvergenceResult,
+    records: Sequence[runtime_deployment.DestinationRecord],
+) -> runtime_deployment.ManagedCopyResult:
+    """Run the shared managed-copy operation only behind the fixed-point gate."""
+    if (
+        not isinstance(convergence, PropagationConvergenceResult)
+        or not convergence.converged
+    ):
+        pass_count = (
+            convergence.pass_count
+            if isinstance(convergence, PropagationConvergenceResult)
+            else 0
+        )
+        raise PropagationConvergenceError("deployment_before_convergence", pass_count)
+    return runtime_deployment.deploy_managed_copies(records)
+
+
+def _runtime_inventory_digest(
+    inventory: Sequence[Mapping[str, str]], *, active_home: Path
+) -> str:
+    payload = {
+        "active_home": str(active_home.absolute()),
+        "inventory": tuple(inventory),
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _verify_runtime_records(
+    records: Sequence[runtime_deployment.DestinationRecord],
+) -> Dict[str, RuntimeVerificationResult]:
+    grouped: Dict[str, list[runtime_deployment.DestinationRecord]] = {}
+    for record in records:
+        grouped.setdefault(record.harness, []).append(record)
+    results: Dict[str, RuntimeVerificationResult] = {}
+    for harness, harness_records in grouped.items():
+        regular_fresh = True
+        repository_links = 0
+        for record in harness_records:
+            source = Path(record.source)
+            destination = Path(record.destination)
+            if (
+                not destination.is_dir()
+                or destination.is_symlink()
+                or destination.is_junction()
+            ):
+                regular_fresh = False
+                if destination.is_symlink() or destination.is_junction():
+                    repository_links += 1
+                continue
+            try:
+                expected = tuple(source.iterdir())
+            except OSError:
+                regular_fresh = False
+                continue
+            if any(
+                not runtime_deployment._same_entry(
+                    source_entry, destination / source_entry.name
+                )
+                for source_entry in expected
+            ):
+                regular_fresh = False
+        results[harness] = RuntimeVerificationResult(
+            status="verified" if regular_fresh else "failed",
+            regular_fresh=regular_fresh,
+            repository_links=repository_links,
+        )
+    return results
+
+
+def run_runtime_deployment(
+    *,
+    active_home: Path,
+    reviewed_inventory: str | None = None,
+    watcher_restarted: bool = False,
+    repo_root: Path | None = None,
+    environment: Mapping[str, str] | None = None,
+    platform_facts: runtime_deployment.PlatformFacts | None = None,
+    propagate: Callable[[], Dict[str, int]] | None = None,
+    deploy: Callable[
+        [Sequence[runtime_deployment.DestinationRecord]],
+        runtime_deployment.ManagedCopyResult,
+    ] = runtime_deployment.deploy_managed_copies,
+) -> RuntimeDeploymentResult:
+    """Converge, inventory, deploy reviewed copies, reconcile, and verify."""
+    convergence = propagate_until_converged(
+        repo_root=repo_root, propagate=propagate
+    )
+    records = resolve_destinations_after_convergence(
+        convergence,
+        repo_root=repo_root,
+        active_home=active_home,
+        environment=environment,
+        platform_facts=platform_facts,
+    )
+    inventory = runtime_deployment.managed_copy_inventory(records)
+    digest = _runtime_inventory_digest(inventory, active_home=active_home)
+    platforms = {
+        "macOS": "NOT RUN: live home migration not authorized",
+        "Linux": "NOT RUN: live Linux runner unavailable",
+        "native Windows": "NOT RUN: native Windows runner unavailable",
+        "WSL": "NOT RUN: WSL runner unavailable",
+    }
+    base_stages = ("convergence", "destination_preflight", "inventory")
+    if reviewed_inventory != digest:
+        category = "inventory_review_required" if reviewed_inventory is None else "inventory_drift"
+        return RuntimeDeploymentResult(
+            "review_required",
+            base_stages,
+            convergence,
+            inventory,
+            digest,
+            None,
+            {},
+            (category,),
+            platforms,
+        )
+    if not watcher_restarted:
+        return RuntimeDeploymentResult(
+            "failed",
+            base_stages + ("watcher_restart_confirmation",),
+            convergence,
+            inventory,
+            digest,
+            None,
+            {},
+            ("watcher_restart_required",),
+            platforms,
+        )
+
+    # Re-inventory immediately before the first write. A changed digest fails closed.
+    current_inventory = runtime_deployment.managed_copy_inventory(records)
+    current_digest = _runtime_inventory_digest(
+        current_inventory, active_home=active_home
+    )
+    if current_digest != digest:
+        return RuntimeDeploymentResult(
+            "failed",
+            base_stages + ("inventory_recheck",),
+            convergence,
+            current_inventory,
+            current_digest,
+            None,
+            {},
+            ("inventory_drift",),
+            platforms,
+        )
+
+    deployment = deploy(records)
+    verification = _verify_runtime_records(records)
+    harness_failed = any(
+        result.status != "verified" or result.collisions
+        for result in deployment.harnesses.values()
+    )
+    verification_failed = any(
+        result.status != "verified" for result in verification.values()
+    )
+    failures = []
+    if harness_failed:
+        failures.append("partial_deployment")
+    if verification_failed:
+        failures.append("runtime_verification_failed")
+    # Scratch automation is valid evidence, but all live platform rows remain NOT RUN.
+    status = (
+        "partial"
+        if failures or any(value.startswith("NOT RUN") for value in platforms.values())
+        else "go"
+    )
+    return RuntimeDeploymentResult(
+        status,
+        base_stages + ("inventory_recheck", "deployment", "reconciliation", "verification"),
+        convergence,
+        current_inventory,
+        digest,
+        deployment,
+        verification,
+        tuple(failures),
+        platforms,
+    )
+
+
+def preflight_destinations(
+    destinations: Iterable[HarnessDestination], *, home: Path | None = None
+) -> Dict[str, str]:
+    """Validate every destination before a caller performs any mutation."""
+    declared_home = (home or Path.home()).absolute()
+    active_home = declared_home.resolve()
+    failures: Dict[str, str] = {}
+    seen: set[str] = set()
+
+    for target in destinations:
+        if target.harness in seen:
+            failures[target.harness] = "duplicate_harness"
+            continue
+        seen.add(target.harness)
+
+        destination = target.destination.absolute()
+        resolved_destination = destination.resolve()
+        try:
+            resolved_destination.relative_to(active_home)
+        except ValueError:
+            failures[target.harness] = "outside_active_home"
+            continue
+
+        current = declared_home
+        try:
+            relative_parent = destination.parent.relative_to(declared_home)
+        except ValueError:
+            failures[target.harness] = "outside_active_home"
+            continue
+        unsafe_parent = False
+        for part in relative_parent.parts:
+            current = current / part
+            if current.is_symlink():
+                failures[target.harness] = "symlinked_parent"
+                unsafe_parent = True
+                break
+            if current.exists() and not current.is_dir():
+                failures[target.harness] = "parent_not_directory"
+                unsafe_parent = True
+                break
+        if unsafe_parent:
+            continue
+        if not destination.parent.exists() and not target.create_parents:
+            failures[target.harness] = "missing_parent_not_allowed"
+        elif not target.ownership_evidence_available:
+            failures[target.harness] = "ownership_evidence_unavailable"
+        elif not target.collision_ready:
+            failures[target.harness] = "collision_not_ready"
+
+    return failures
+
+
+def deploy_after_convergence(
+    destinations: Iterable[HarnessDestination],
+    *,
+    copy_operation: Callable[[HarnessDestination], int],
+    reconcile_operation: Callable[[HarnessDestination], int],
+    home: Path | None = None,
+    repo_root: Path | None = None,
+    max_passes: int = DEFAULT_CONVERGENCE_PASSES,
+    propagate: Callable[[], Dict[str, int]] | None = None,
+) -> DeploymentResult:
+    """Gate isolated harness operations behind convergence and full preflight."""
+    targets = tuple(destinations)
+    try:
+        convergence = propagate_until_converged(
+            repo_root=repo_root, max_passes=max_passes, propagate=propagate
+        )
+    except PropagationConvergenceError as exc:
+        return DeploymentResult(None, exc.category, False, {}, {})
+
+    failures = preflight_destinations(targets, home=home)
+    if failures:
+        return DeploymentResult(convergence, None, False, failures, {})
+
+    harnesses: Dict[str, HarnessDeploymentResult] = {}
+    for target in targets:
+        try:
+            copied = copy_operation(target)
+        except Exception:
+            harnesses[target.harness] = HarnessDeploymentResult(
+                status="failed",
+                reconciliation_skipped=True,
+                failure="copy_failed",
+            )
+            continue
+
+        try:
+            reconciled = reconcile_operation(target)
+        except Exception:
+            harnesses[target.harness] = HarnessDeploymentResult(
+                status="failed",
+                copied=copied,
+                failure="reconciliation_failed",
+            )
+            continue
+
+        harnesses[target.harness] = HarnessDeploymentResult(
+            status="verified", copied=copied, reconciled=reconciled
+        )
+
+    return DeploymentResult(convergence, None, True, {}, harnesses)
+
+
 def _collect_file_state(paths: Iterable[Path]) -> Dict[str, Tuple[float, int]]:
     state: Dict[str, Tuple[float, int]] = {}
     for root in paths:
@@ -1694,7 +2212,11 @@ def _compute_changes(
 
 def watch_loop(interval_seconds: float = 1.0) -> None:
     print("Starting master asset watcher for .github/{agents,skills,instructions,hooks} ...")
-    propagate_once(verbose=True)
+    print(
+        "Restart this watcher after propagator changes before migration or "
+        "release verification."
+    )
+    print(json.dumps(_convergence_payload(propagate_until_converged()), indent=2))
 
     last_state = _collect_file_state(WATCH_DIRS)
     pending_since: float | None = None
@@ -1721,12 +2243,60 @@ def watch_loop(interval_seconds: float = 1.0) -> None:
         print(f"Detected change in .github source: {sample}{more}")
 
         try:
-            propagate_once(verbose=True)
-        except Exception as exc:  # pragma: no cover - runtime guard
+            result = propagate_until_converged()
+            print(json.dumps(_convergence_payload(result), indent=2))
+        except PropagationConvergenceError as exc:  # pragma: no cover - runtime guard
             print(f"Propagation failed: {exc}", file=sys.stderr)
 
         pending_since = None
         pending_changes = []
+
+
+def _convergence_payload(result: PropagationConvergenceResult) -> Dict[str, object]:
+    return {
+        "converged": result.converged,
+        "propagation_passes": result.pass_count,
+        "changed_passes": result.changed_passes,
+        "propagation_changes": result.total_changes,
+        "verification_changes": propagation_changes(result.final_counters),
+    }
+
+
+def _runtime_deployment_payload(result: RuntimeDeploymentResult) -> Dict[str, object]:
+    return {
+        "status": result.status,
+        "stages": result.stages,
+        "inventory": result.inventory,
+        "inventory_digest": result.inventory_digest,
+        "failure_categories": result.failure_categories,
+        "platform_evidence": result.platform_evidence,
+        "harnesses": (
+            {
+                name: {
+                    "status": harness.status,
+                    "inventoried": harness.inventoried,
+                    "copied": harness.copied,
+                    "replaced": harness.replaced,
+                    "removed": harness.removed,
+                    "unchanged": harness.unchanged,
+                    "collisions": harness.collisions,
+                    "failed": harness.failed,
+                    "reconciliation_skipped": harness.reconciliation_skipped,
+                }
+                for name, harness in result.deployment.harnesses.items()
+            }
+            if result.deployment is not None
+            else {}
+        ),
+        "verification": {
+            name: {
+                "status": verification.status,
+                "regular_fresh": verification.regular_fresh,
+                "repository_links": verification.repository_links,
+            }
+            for name, verification in result.verification.items()
+        },
+    }
 
 
 def main() -> int:
@@ -1738,16 +2308,71 @@ def main() -> int:
         type=Path,
         help="Generate local user-scope hook wiring with absolute source paths.",
     )
+    parser.add_argument(
+        "--runtime-deploy",
+        action="store_true",
+        help="Converge, inventory, and deploy reviewed managed runtime copies.",
+    )
+    parser.add_argument(
+        "--active-home",
+        type=Path,
+        help="Explicit active home for --runtime-deploy.",
+    )
+    parser.add_argument(
+        "--reviewed-inventory",
+        help="SHA-256 digest emitted by a reviewed --runtime-deploy inventory.",
+    )
+    parser.add_argument(
+        "--watcher-restarted",
+        action="store_true",
+        help="Confirm stale propagation watchers were restarted before mutation.",
+    )
     args = parser.parse_args()
 
-    if args.global_output is not None:
-        generate_global_hooks(args.global_output, verbose=True)
-
-    if not args.once and not args.watch and args.global_output is None:
+    if (
+        not args.once
+        and not args.watch
+        and args.global_output is None
+        and not args.runtime_deploy
+    ):
         args.once = True
 
-    if args.once:
-        propagate_once(verbose=True)
+    if args.runtime_deploy:
+        if args.active_home is None:
+            parser.error("--runtime-deploy requires --active-home")
+        try:
+            runtime_result = run_runtime_deployment(
+                active_home=args.active_home,
+                reviewed_inventory=args.reviewed_inventory,
+                watcher_restarted=args.watcher_restarted,
+            )
+        except (PropagationConvergenceError, runtime_deployment.DestinationResolutionError) as exc:
+            category = getattr(exc, "category", "runtime_deployment_failed")
+            print(json.dumps({"status": "failed", "failure_categories": [category]}))
+            return 1
+        print(json.dumps(_runtime_deployment_payload(runtime_result), indent=2))
+        if runtime_result.status == "review_required":
+            return 2
+        return 0 if runtime_result.status == "go" else 1
+
+    convergence_ran = False
+    if args.global_output is not None:
+        try:
+            result = propagate_until_converged()
+        except PropagationConvergenceError as exc:
+            print(f"Propagation failed: {exc}", file=sys.stderr)
+            return 1
+        convergence_ran = True
+        print(json.dumps(_convergence_payload(result), indent=2))
+        generate_global_hooks(args.global_output, verbose=True)
+
+    if args.once and not convergence_ran:
+        try:
+            result = propagate_until_converged()
+        except PropagationConvergenceError as exc:
+            print(f"Propagation failed: {exc}", file=sys.stderr)
+            return 1
+        print(json.dumps(_convergence_payload(result), indent=2))
 
     if args.watch:
         watch_loop()

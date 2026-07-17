@@ -365,6 +365,20 @@ These are scope-independent. They were learned building the whole-phase review a
 - **Open for feature 08:** the four agents historically missing from `.github/agents/README.md` are precisely the four that were missing from `expected_slugs` — the same four `execute` holders. The enumeration gap is closed; the README gap is not (`05a-baseline-worktree` remains unlisted). The correlation is pre-existing and unconfirmed, but a reconciliation pass should assume the two omissions share a cause. Nothing yet asserts that the orchestrator's dispatch roster resolves to agents that exist on disk — a real gap, and feature 08's to close.
 - **Behavioral evaluator ACs are not closable by static contract tests.** Feature 05's attribution, report-path and tier contracts are pinned in prose and mutation-verified, which proves the bodies *say* the right thing and that the guards bite. It does not prove the agents *behave*. A sweep that reports pre-existing findings as branch-introduced looks exactly like a working sweep. The fixture dry-run remains outstanding release evidence for these.
 
+## Phase 04 Runtime Deployment Contract (verified 2026-07-17)
+
+- Runtime deployment uses one ordered path: repository convergence, destination
+  preflight, classified inventory, immediate inventory recheck, managed-copy
+  deployment, owned reconciliation, and regular-copy verification.
+- Human review is bound to the exact home-relative inventory and generated-source
+  fingerprints by SHA-256. A missing digest returns `review_required`; a changed
+  digest returns `inventory_drift`; neither state permits a runtime write.
+- Scratch-home automation is not live-platform evidence. macOS, Linux, native
+  Windows, and WSL retain separate evidence rows, and any `NOT RUN` row caps the
+  full cross-platform verdict below GO.
+- Phase 04 does not move Phase 01, Phase 02, or Phase 07 status lines. Those remain
+  project-level reconciliation work.
+
 ## Narrative and Test Health (resolved at feature 06)
 
 - **The report-root migration ledger is now one entry from empty.** `EVALUATORS_AWAITING_REPORT_ROOT_MIGRATION` in `tests/test_pr_review_orchestrator.py` holds only `05l-readiness-synthesizer.agent.md`, which feature 07 owns. When 07 migrates it, the set is empty and `test_report_root_migration_cannot_split_silently` should be deleted rather than left asserting an empty set. Note the shape that made this safe to shrink: the compared set is *derived from disk* and asserted by exact equality, so removing an entry is reconciliation, not exemption — a regressing agent re-enters the derived set and fails. Verified by mutation at feature 06. A ledger keyed to a hand-written allowlist would not have this property; do not replace it with one.

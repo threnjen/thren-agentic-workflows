@@ -57,19 +57,6 @@
           }
         ]
       }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Bash|WebFetch",
-        "$source": "file-access-guard",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$(git rev-parse --show-toplevel)/.github/hooks/scripts/file-access-guard.py\"",
-            "timeout": 10
-          }
-        ]
-      }
     ]
   }
 }

@@ -1,9 +1,0 @@
-[
-  {"tool_name": "Read", "tool_input": {"file_path": "docs/README.md"}},
-  {"tool_name": "Edit", "tool_input": {"file_path": "src/example.py"}},
-  {"tool_name": "Write", "tool_input": {"file_path": "tmp/output.txt"}},
-  {"tool_name": "MultiEdit", "tool_input": {"file_path": "src/example.py"}},
-  {"tool_name": "NotebookEdit", "tool_input": {"notebook_path": "notebooks/demo.ipynb"}},
-  {"tool_name": "Grep", "tool_input": {"pattern": "needle", "path": "src"}},
-  {"tool_name": "Grep", "tool_input": {"pattern": "needle", "glob": "*.py"}}
-]

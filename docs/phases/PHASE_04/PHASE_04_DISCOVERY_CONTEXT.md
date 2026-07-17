@@ -1,142 +1,157 @@
 # Phase 04 Discovery Context
 
-Context gathered during Phase 04 refinement that is not derivable from the codebase alone. Downstream agents should read this before re-deriving any of it.
+Context gathered during Phase 04 refinement that is not fully derivable from the current codebase. Downstream agents should read this before planning or implementing the phase.
 
-## 1. Guard Friction — Measured, Not Estimated
+## 1. Branch and Interceptor History
 
-### The instrument
+The current branch is `repo_improvements_project`; its merge base with `main` is `e3398c7b2591378e61a62a3c4dd5444891bdb3d1`.
 
-`.agent/logs/file-access-guard.ndjson` — the guard's own audit log, configured via the `audit_log` key in `.github/hooks/config/file-access-rules.json`. It existed and had never been read. It is the only live behavioral instrument in this project; everything else is fixtures.
+Git history establishes two independent branch-added integrations:
 
-### The measurement
+| Integration | Introduction | Main-branch status |
+|---|---|---|
+| File-access guard, Bash analyzer, file-access policy, and guard rules | `8e2a498` — Phase/hook foundation file access guard (#19), 2026-07-14 | Absent from `main` |
+| Automatic RTK rewrite hook and its tests | `370fcba` — Phase/phase final review (#22), 2026-07-16 | Absent from `main` |
 
-22 events from one working session. All 22 carry `tool: "Bash"`.
+RTK is an external executable and is independent of both integrations. Retiring the guard and automatic rewrite hook does not uninstall RTK or prevent explicitly prefixed RTK commands.
+
+## 2. File-Access Guard Friction Evidence
+
+The guard's audit log, `.agent/logs/file-access-guard.ndjson`, contained 22 events from one working session:
 
 | Decision | Count |
-|---|---|
+|---|---:|
 | `deny` | 18 |
 | `ask` | 4 |
 
-| Rule | Fired | Tier | Assessment |
-|---|---|---|---|
-| `kubeconfig-file` | 10 | deny | all false positives |
-| `ssh-rsa` | 5 | deny | all false positives |
-| `credential-json` | 3 | deny | all false positives |
-| `destructive-rm-recursive-force-variants` | 3 | ask | correct behavior |
-| `environment-printenv` | 1 | ask | arguable |
+All 18 denials were false positives caused by search patterns, glob arguments, or regular expressions being evaluated as paths. Ten fired `kubeconfig-file`, five fired `ssh-rsa`, and three fired `credential-json`. The four prompts were three destructive-command confirmations and one environment inspection.
 
-Every one of the 18 denials recorded a `path` that is a grep pattern, a glob argument, or a regex — not a file path. Representative rows, verbatim from the log:
+During this refinement the same guard blocked a Git history query because exclusion pathspecs were classified as an SSH-key access. The evidence therefore extends beyond the original grep reproduction.
 
-- `/users/.../^\- \*\*ac[0-9]+[a-z]?\*\*` → `ssh-rsa`
-- `/users/.../z-[a-z-]*` → `kubeconfig-file`
-- `/users/.../not done.*` → `kubeconfig-file`
-- `/users/.../delegate[a-z']*` → `kubeconfig-file`
-- `/users/.../*.agent/logs*` → `kubeconfig-file`
+The root cause is `_candidate_paths` in `.github/hooks/lib/bash_analyzer.py` treating non-path Bash operands as filesystem candidates. The retirement decision removes this analyzer rather than preserving GUARD-01 as a repair feature.
 
-The last row is the command that went looking for the audit log. The guard blocked the investigation into itself twice during this refinement.
+## 3. Author-Machine Runtime-Link Inventory
 
-### Config shape, for contrast
+A read-only inventory on 2026-07-16 examined repository-targeting links beneath:
 
-Counted from `.github/hooks/config/file-access-rules.json`:
+- `~/.claude`
+- `~/.codex`
+- `~/.config/opencode`
+- `~/.agents`
 
-- `rules`: 37 entries — 32 `deny`, 3 `ask`, 2 `allow`
-- `bash_rules`: 20 entries — **all 20 `ask`**
-- `legacy_bash_parity`: 27 entries (metadata inventory, not enforcement)
+| Harness root | Repository-targeting links |
+|---|---:|
+| Claude | 41 |
+| Codex | 70 |
+| OpenCode | 2 |
+| Shared `.agents` root | 0 |
+| **Total** | **113** |
 
-Reasoning from this shape alone produces the conclusion that all friction originates in the 20 `ask` rules and that the 32 `deny` rules are silent. The log refutes it: the denials are 82% of observed traffic. **Counting rules is not measuring behavior.**
+Of the 113 links, 101 resolved and 12 were dangling. The inventory includes whole-directory links and per-file or per-skill links. It excludes Codex package/executable links, Claude debug pointers, plugin-cache links, Git hooks, and other application-managed links that do not target this repository.
 
-### Root cause, reproduced by execution
+These counts are a baseline, not an implementation constant. Migration must take a fresh inventory and classify each entry from its current type and target.
 
-`_candidate_paths` in `.github/hooks/lib/bash_analyzer.py` extracts grep's **pattern** operand as a filesystem path. `evaluate_path` normalizes it against the repo root and passes it to `_glob_patterns_overlap` in `.github/hooks/lib/file_access.py`:
+## 4. Official Runtime Destination Research
 
-```python
-literal_chunks = tuple(
-    sorted({"", "x", *re.findall(r"[A-Za-z0-9_-]+", first + " " + second)})
-)
-first_samples = _glob_samples(first, literal_chunks)
-second_samples = _glob_samples(second, literal_chunks)
-if first_samples is None or second_samples is None:
-    return True
-samples = first_samples | second_samples
-return any(
-    fnmatch.fnmatchcase(sample, first) and fnmatch.fnmatchcase(sample, second)
-    for sample in samples
-)
-```
+Research was performed against current primary documentation on 2026-07-16.
 
-The witness is constructed from literals scraped from **both** patterns. For candidate `foo*` against rule pattern `*kubeconfig`, it synthesizes `fookubeconfig`, finds both patterns match it, and reports overlap. Any candidate ending in `*` overlaps any rule.
+### Claude Code
 
-Verified behavior table (`analyze_command`, live config, cwd = repo root):
+- User agents: `~/.claude/agents/*.md`
+- Legacy commands: `~/.claude/commands/*.md`
+- Skills: `~/.claude/skills/<name>/SKILL.md`
+- `CLAUDE_CONFIG_DIR` relocates the `.claude` root.
+- Native Windows uses the active Windows user profile. WSL uses the active Linux home.
 
-| Command | Verdict |
-|---|---|
-| `cat ~/.ssh/id_rsa` | DENY `ssh-rsa` — correct |
-| `cat ~/.ssh/id_*` | DENY `ssh-rsa` — correct |
-| `cp ~/.ssh/id_rsa /tmp/x` | DENY `ssh-rsa` — correct |
-| `head ~/.kube/kubeconfig` | DENY `kubeconfig-file` — correct |
-| `grep -rn "foo*" .` | DENY `kubeconfig-file` — **false positive** |
-| `grep -rn "test*" .` | DENY `kubeconfig-file` — **false positive** |
-| `rg "z-[a-z-]*" .` | DENY `kubeconfig-file` — **false positive** |
-| `grep -rn "hello" .` | clean — correct |
-| `ls src/*` | clean |
-| `find . -name "*.md"` | clean |
-| `ls -la` | clean |
-| `printenv` | ASK `environment-printenv` |
-| `ls ~/.ssh/id_rsa` | clean — **coverage hole** |
+Sources: [Claude directory](https://code.claude.com/docs/en/claude-directory), [subagents](https://code.claude.com/docs/en/sub-agents), [skills](https://code.claude.com/docs/en/skills), [environment variables](https://code.claude.com/docs/en/env-vars), [installation](https://code.claude.com/docs/en/installation).
 
-### The trap in this finding
+### Codex CLI
 
-`_glob_patterns_overlap` looks wrong and is right. It is what makes `cat ~/.ssh/id_*` deny. Rebuilding the witness from the candidate's literals only — the natural cleanup — silently breaks real secret detection while making every test about grep pass. The defect is upstream, in which operands become path candidates at all.
+- User agents: `${CODEX_HOME:-~/.codex}/agents/*.toml`
+- Custom prompts: `${CODEX_HOME:-~/.codex}/prompts/*.md`
+- Skills: `~/.agents/skills/<name>/SKILL.md`
+- `CODEX_HOME` relocates Codex-owned state but does not relocate the documented shared skill root.
+- A custom `CODEX_HOME` must already exist.
+- Native Windows and WSL are distinct runtime environments.
 
-## 2. Claude Code Configuration Discovery
+Sources: [environment variables](https://learn.chatgpt.com/docs/config-file/environment-variables), [subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents), [custom prompts](https://learn.chatgpt.com/docs/custom-prompts), [skills](https://learn.chatgpt.com/docs/build-skills), [Windows and WSL](https://learn.chatgpt.com/docs/windows/wsl).
 
-Researched against current Claude Code documentation during refinement. Confidence noted per item.
+### OpenCode
 
-| Question | Finding | Confidence |
-|---|---|---|
-| User-level commands | `~/.claude/commands/*.md` | Documented |
-| User-level skills | `~/.claude/skills/<name>/SKILL.md` | Documented |
-| User-level settings | `~/.claude/settings.json` | Documented |
-| **User-level agents** | **No documented path.** Project-level `.claude/agents/` is documented; there is no documented user-level equivalent. `~/.claude/agents/` demonstrably exists and is in use. | **Undocumented — verify** |
-| `CLAUDE_CONFIG_DIR` | **Does not exist.** No environment variable relocates the configuration directories. Paths are hardcoded. | Documented (by absence) |
-| Symlinked skill directories | Explicitly supported. Claude follows the link and reads `SKILL.md` from the target; a target reachable from multiple locations loads once. | Documented |
-| Symlinked rules | Explicitly supported; circular symlinks detected and handled. | Documented |
-| Symlinked agent directories | Not documented either way. | **Unknown** |
-| Skills hot-reload | Yes — adding, editing, or removing a skill takes effect within the session. **Exception**: creating a top-level skills directory that did not exist at session start requires a restart. | Documented |
-| Agents hot-reload | Not documented. Direct evidence from this project: additions are **not** detected mid-session; removals **are** (a dangling link fails to load). Consistent with a start-time load and cache. | Evidence, not doc |
-| Precedence | Enterprise > User > Project, for skills. Not documented for agents. **User outranks project.** | Documented (skills only) |
-| Plugins | The official distribution mechanism — bundles skills, agents, hooks, MCP servers; auto-updates. Symlinking into `~/.claude/` is characterized as a personal workaround for one's own setup, not a sanctioned distribution pattern. | Documented |
+- User agents: `~/.config/opencode/agents/*.md`
+- Commands: `~/.config/opencode/commands/*.md`
+- Skills: `~/.config/opencode/skills/<name>/SKILL.md`; OpenCode also recognizes documented shared skill roots.
+- `OPENCODE_CONFIG_DIR` covers agents and commands but is not documented as relocating skills.
+- Public documentation does not promise general `XDG_CONFIG_HOME` relocation for these assets.
+- Native Windows uses the active Windows profile; OpenCode recommends WSL for full compatibility. WSL state remains inside WSL.
 
-**Codex and OpenCode user-global paths**: no authoritative source located. `scripts/setup-hook-symlinks.sh` currently hardcodes `$HOME/.codex/hooks.json` and `$HOME/.config/opencode/plugins/` without honoring `XDG_CONFIG_HOME`. Treat both as unverified.
+Sources: [configuration](https://opencode.ai/docs/config/), [agents](https://opencode.ai/docs/agents/), [commands](https://opencode.ai/docs/commands/), [skills](https://opencode.ai/docs/skills/), [troubleshooting](https://opencode.ai/docs/troubleshooting/), [Windows and WSL](https://opencode.ai/docs/windows-wsl).
 
-### Implication for scope
+### Cross-platform boundary
 
-Because `CLAUDE_CONFIG_DIR` does not exist and the phase is macOS-only, "OS detection and directory discovery" reduces to a small set of hardcoded, documented paths plus a home lookup. The original framing anticipated meaningful platform branching; the research does not support that at this scope. Windows would reintroduce it — symlink creation there requires Developer Mode or `SeCreateSymbolicLinkPrivilege`, forcing a privilege check and a copy-mode fallback.
+macOS, Linux, native Windows, and WSL are supported deployment environments. Deployment targets only the environment in which the propagator runs. Native Windows and each WSL distribution require separate runs; the propagator does not cross their home-directory boundary.
 
-## 3. Prior Art — the Superseded Symlink Flow
+No harness documents a required atomic-copy, file-lock, ACL, or rollback protocol for these user-authored asset directories. Phase 04 therefore owns its safe replacement behavior. Windows sharing violations must preserve the existing destination and be reported.
 
-`docs/phases/PHASE_01/PHASE_01_SUMMARY.md` records: *"The former user-global symlink flow has been superseded by generated regular files with absolute commands."*
+## 5. Existing Propagator Facts
 
-`scripts/setup-hook-symlinks.sh` retains its name only for documentation compatibility. Its header states the filename is historical, it installs with `cp`, and it closes by printing *"no user files are symlinks."*
+Verified from `scripts/propagate_master_assets.py` and the generated roots:
 
-**This precedent does not bind the current work.** The reversal was about **hooks**, whose commands can carry absolute paths into the source repository — which is what made regular files viable. Agents, commands, and skills are content, not commands; a copy goes stale the moment the source changes, which is the property the author already relies on for `~/.claude/commands` and `~/.claude/skills`. The hook reversal should be preserved (hooks stay generated files) and not extended to the asset layer.
+- Repository-generated roots are `claude/`, `codex/`, and `opencode/`.
+- Claude currently emits agents, commands, skills, instructions, and learnings.
+- Codex currently emits agents, profiles, skills, and instructions.
+- OpenCode currently emits agents, skills, and instructions.
+- User-global hooks already use generated regular files with absolute commands; hook deployment must not be folded into the new asset-copy stage.
+- `propagate_once` emits all outputs before pruning.
+- Propagation may require multiple runs to converge after an emission-class change because destination naming observes existing disk state.
+- Long-running watchers execute the propagator code loaded when they started and must be restarted after propagator changes.
+- Existing containment helpers reject symlinked output roots and symlinked intermediate parents for in-repository generation.
+- No general user-global managed-copy stage exists.
 
-## 4. Existing Propagator Facts
+User deployment must consume completed generated outputs rather than independently transforming `.github` sources.
 
-Verified by reading `scripts/propagate_master_assets.py` in full.
+## 6. Evangelize and Documentation Findings
 
-- **No OS detection exists.** No `sys.platform`, no `platform` module, and `os` is not imported at all. All filesystem work goes through `pathlib` and `shutil`. The nearest platform-ish behavior is `_resolve_hook_command`, which prefers an `osx` key unconditionally, with no detection behind it.
-- **No symlink is ever created.** `is_symlink` appears eight times, all defensive: unlink-before-write, skip-when-pruning, and raise-on-symlinked-output-root.
-- **No home-directory discovery.** No `Path.home()`, `expanduser`, or environment reads. `generate_global_hooks` takes its destination entirely from the caller's `--global-output`.
-- **No dry-run mode.** Every code path writes. `verbose` prints results after mutation.
-- **The user-global layer is hooks-only**, and is a thin wrapper: `propagate_hooks_once` with `copy_assets=False` plus an absolute-command transform.
-- **Output roots are recomputed locally from a `repo_root` parameter**, not read from the module constants, which are largely dead. `repo_root` is the de-facto injection point for destination.
-- **Pruning requires two conditions**: absent from the run's expected set **and** carrying the generated marker at a positional line index. The marker check is positional, not a whole-file search — a README that merely quotes the marker must survive.
-- **Ordering contract**: all pruning runs strictly after all emission, because filename resolution reads stems already on disk.
-- `_validate_output_directory` and `_validate_nested_output_directory` raise on any symlinked component and require containment under `repo_root`. Both are called before enumeration on every prune path, per the P3-SEC-01 fix.
+The source agent `.github/agents/evangelize.agent.md` currently requires runtime symlinks and can recreate them. Its link behavior appears in:
 
-## 5. Decisions Taken at Refinement
+- Runtime discovery and preflight requirements.
+- Claude, Codex, and OpenCode agent-link instructions.
+- Codex per-skill link commands.
+- Windows symbolic-link, junction, and hard-link fallback guidance.
+- Quality gates and the runtime verification matrix.
 
-- **The file-access guard is fixed, not retired.** The retirement proposal recorded in `.github/learnings/cross-phase-decisions.md` was raised on friction grounds; the measurement shows the friction is a bounded extraction defect rather than a policy outcome. The 32 deny rules, the 20 ask rules, and `_glob_patterns_overlap` all stay.
-- **macOS only.** Windows and Linux are explicit non-goals at this scope. Untested cross-platform support would be the "partial protection that reads as total protection" failure already recorded under adoption readiness.
-- **The phase splits.** Phase 04 becomes the unblock work — guard accuracy and propagation reach. The verification work formerly scoped here is preserved in the phase summary's deferral table and requires a new roadmap entry from `@project-planner`. Phases 01 and 02 remain release-blocked; nothing in this phase changes that, and no status line moves.
+Generated Evangelize variants repeat this behavior. Setup and explanatory documents also contain active runtime-link instructions, including `HARNESS_SETUP.md`, Claude and OpenCode symlink setup documents, Codex setup and pilot documents, generated READMEs, and generated learnings.
+
+Phase 04 must correct the source agent first, regenerate its platform variants, and reconcile supported setup guidance. References that discuss symlinks only as a security threat, containment boundary, unrelated Git hook, or application-managed implementation detail are not retirement targets.
+
+## 7. Authoritative Phase Boundaries
+
+- The file-access guard and its Bash analyzer are retired as one unit.
+- Automatic RTK rewriting is retired independently.
+- RTK remains installed and available for explicit use.
+- The hook framework and prompt-injection scanner remain.
+- Repository outputs propagate and converge before user-global deployment begins.
+- User-global assets are managed copies, never runtime symlinks or junctions.
+- Repository-targeting legacy links and junctions are migrated; foreign content is preserved.
+- Deployment supports macOS, Linux, native Windows, and WSL in the current environment only.
+- Project-local deployment, plugin packaging, and cross-environment Windows/WSL mutation are excluded.
+- Phase 01 and Phase 07 require project-level reconciliation by `project-planner`; Phase 04 does not alter their documents or status lines.
+
+## 8. Fresh Runtime Verification Evidence (2026-07-17)
+
+The discovery count of 113 author-machine links remains a historical baseline; it
+was not reused as an expected constant and no author runtime directory was read or
+mutated during automated verification.
+
+At repository revision `3ba5caa` plus the Feature 06 worktree, scratch-home integration
+classified planned replacements, unchanged managed copies, collisions, obsolete owned
+removals, and preserved foreign entries. Review was bound to a deterministic inventory
+digest and rechecked immediately before mutation. Claude, Codex, and OpenCode managed
+copies were verified as fresh regular directories with no managed repository links; a
+second reviewed deployment made zero copy, replace, or removal mutations. Injected
+partial failure remained non-GO and preserved successful harness evidence.
+
+Live evidence was not produced in this implementation session: macOS `NOT RUN` (no
+author-home migration authorized), Linux `NOT RUN` (no live Linux runner), native
+Windows `NOT RUN` (runner unavailable), and WSL `NOT RUN` (runner unavailable). Full
+cross-platform readiness therefore remains below GO.

@@ -78,3 +78,19 @@ Generated commands anchor the script path to the project root per harness, since
 
 **Watch for**
 Any hook command token that is a bare relative path, and any fail-closed guard whose failure mode is "blocks everything" rather than "blocks its own tool" — the recovery path must not itself require a blocked tool.
+
+## Review runtime inventory by content-bound digest, not by path list
+
+**Problem**
+An inventory containing only destination names can become stale when generated
+content or destination types change while retaining the same paths.
+
+**Fix**
+The Phase 04 runtime path emits home-relative classifications with generated-source
+fingerprints and binds operator review to their deterministic SHA-256 digest. It
+rebuilds that inventory immediately before mutation and fails closed on drift.
+
+**Watch for**
+Boolean confirmation flags, inventories keyed only by modification time, absolute
+home paths in normal output, or tests that treat simulated platform policy as live
+fresh-session evidence.

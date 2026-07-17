@@ -8,8 +8,8 @@ Quick-reference for AI agents working in this repository.
 - Primary authoring surface is `.github/`.
 - Derived or related platform surfaces are `claude/`, `opencode/`, `codex/`, and `.codex/`.
 - Includes copyable template packs for Node.js and Python projects.
-- Mostly Markdown plus one maintenance script: `scripts/propagate_master_assets.py`.
-- No root `package.json`, `pyproject.toml`, or automated test suite.
+- Mostly Markdown plus Python propagation and runtime-deployment tooling under `scripts/`.
+- No root `package.json` or `pyproject.toml`; Python tests live under `tests/` and use repository-available runners.
 
 ## Current Counts
 
@@ -56,6 +56,7 @@ python/
   docs/STYLE_GUIDE.md
 scripts/
   propagate_master_assets.py               # Master propagation entry point
+  runtime_deployment.py                     # Reviewed managed-copy deployment and reconciliation
 .vscode/tasks.json                         # One-shot and watch propagation tasks
 ```
 
@@ -68,12 +69,18 @@ scripts/
   - `claude/agents/`
   - `opencode/agents/`
   - `codex/agents/`
+- Optional user-global deployment begins only after repository convergence. The first
+  `--runtime-deploy --active-home <path>` pass emits a content-bound inventory; writes
+  require its reviewed digest and watcher-restart confirmation.
 
 ## Important Script Facts
 
 - `load_source_agents()` reads any `.github/agents/*.md` file with `name` and `description` frontmatter.
 - Source agent detection is not limited to `.agent.md`; that is why `prod-code-review.md` still propagates.
 - The script watches three directories: `.github/agents`, `.github/skills`, and `.github/instructions`.
+- Runtime deployment uses `scripts/runtime_deployment.py`; it resolves only the active
+  environment's destinations, preserves foreign collisions, and reconciles only
+  successfully copied harnesses.
 - Claude and OpenCode outputs preserve existing filename aliases when present.
 - Known aliases include:
   - `docs-writer` -> `docs-writer`
@@ -118,7 +125,7 @@ scripts/
 
 - `.github/agents/README.md` must stay in sync with the actual source agent set.
 - `docs/ARCHITECTURE.md` and this file should be updated when counts, directories, or propagation rules change.
-- `HARNESS_SETUP.md` is the canonical setup reference for multi-root VS Code and non-Copilot harness linking.
+- `HARNESS_SETUP.md` is the canonical setup reference for multi-root VS Code and non-Copilot managed-copy deployment.
 - `docs/porting/README.md` is the neutral index for porting docs.
 - `codex/README.md` defines the separation between repository-owned Codex content and runtime `.codex/` content.
 
@@ -128,7 +135,7 @@ scripts/
 - When the task is about agent, instruction, or skill behavior, do not widen discovery into `claude/`, `opencode/`, or `codex/` unless the task is explicitly about porting or generated-output verification.
 - When adding or removing an agent, update both `.github/agents/README.md` and the standard docs.
 - When adding a skill or instruction, update the relevant counts and documentation references.
-- When documenting commands, prefer the existing `python3 scripts/propagate_master_assets.py --once` and `--watch` entry points.
+- When documenting commands, prefer the existing `python3 scripts/propagate_master_assets.py --once`, `--watch`, and reviewed `--runtime-deploy` entry points.
 
 ## Do Not
 
@@ -138,4 +145,4 @@ scripts/
 - Do not assume filename parity across platforms; aliases and `z-` prefixes are intentional.
 - Do not document a root `dev/` directory as if it exists in this repo.
 - Do not treat `prod-code-review.md` as non-agent content just because it lacks the `.agent.md` suffix.
-- Do not add deployment or CI/CD runbooks to the standard docs.
+- Do not invent deployment or CI/CD flows outside the canonical managed-copy guidance in `HARNESS_SETUP.md`.
