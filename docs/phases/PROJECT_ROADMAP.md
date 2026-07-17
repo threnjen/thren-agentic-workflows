@@ -9,7 +9,7 @@ Claude, Codex, and OpenCode outputs and deployable to user homes via the reviewe
 managed-copy flow, with a final packaging phase that makes the agent suite installable
 by people who are not this repo's author.
 
-**Vision rewrite (2026-07-17):** this project was originally a security/determinism
+**Vision rewrite (2026-06-17):** this project was originally a security/determinism
 *hook* project (prompt-injection defense, file-access guards, format-on-save, skill
 enforcement, completion gates). The user cancelled the hook effort in full. Phase 05 now
 removes all hook functionality and its documentation record from the repository; the
@@ -30,11 +30,10 @@ them.
 |-------|------|--------|------------|------------|-------------|
 | 01 | Hook Foundation + File-Access Guard | **Historical — superseded by hook cancellation** | — | — | Built the Python hook framework and (retired earlier by Phase 04) the file-access guard and Bash analyzer. All surviving hook assets are removed or marked defunct by Phase 05. Its phase docs are deleted by Phase 05; see git history. |
 | 02 | Prompt-Injection Defense | **Historical — scanner retained on disk, defunct** | — | — | Built the injection scanner, corpus, and multi-harness wiring. Never reached GO. Under the hook cancellation, the scanner code stays in `.github/hooks/` unwired and marked DEFUNCT; its wiring, tests, and phase docs are removed by Phase 05. |
-| 03 | PR Review agent family | Partially implemented — rescoped; diff-scoped orchestration re-planned | None | Medium | `05-pr-review` orchestrator + `05a`–`05g` evaluator subagents + 2 rescoped skills, scoped to the diff between the current branch and its base: merge-base worktree, change narrative, artifact/consistency/dependency sweeps, test health, delegated diff-scoped security scan, and go/no-go readiness synthesis. Base is suggested and user-confirmed; all questions asked in one upfront block; reports land at `dev/pr-review/<base-sha-short>-<timestamp>/`; the verdict is advisory. The first live end-to-end run was started 2026-07-17 on a real external repo; its outcome is this phase's key open evidence. |
+| 03 | PR Review agent family | Partially implemented — rescoped; diff-scoped orchestration re-planned | None | Medium | `05-pr-review` orchestrator + `05a`–`05g` evaluator subagents + 2 rescoped skills, scoped to the diff between the current branch and its base: merge-base worktree, change narrative, artifact/consistency/dependency sweeps, test health, delegated diff-scoped security scan, and go/no-go readiness synthesis. Base is suggested and user-confirmed; all questions asked in one upfront block; reports land at `dev/pr-review/<base-sha-short>-<timestamp>/`; the verdict is advisory. The first live end-to-end run was started 2026-06-17 on a real external repo; its outcome is this phase's key open evidence. |
 | 04 | Hook Retirement & Cross-Platform Deployment | **Historical — deployment machinery retained** | — | — | Retired the file-access guard and Bash analyzer, and built the reviewed managed-copy `--runtime-deploy` flow (convergence gate, inventory digest, watcher-restart confirmation). The deployment machinery is live and carried forward; the hook-specific remainder and the phase docs are removed by Phase 05. |
 | 05 | Hook Removal | **Planned — next to run** | None | Medium | Removes all hook functionality and its documentation record: deletes the propagator's entire hook-emission pipeline, unwires generated harness configs, deletes the hook framework and `tests/hooks/`, purges phase docs 01/02/04 and the decision log's hook sections (line-level scrub in mixed sections), and scrubs the standard docs. Keeps: the injection scanner on disk marked DEFUNCT, the `done-notify` notification converted to static hand-committed harness config (no longer propagated), and `docs/inspiration/`. See `docs/phases/PHASE_05/PHASE_05_SUMMARY.md`. |
-| 06 | Skill Enforcement / Auto-Activation | **Cancelled** | — | — | Was a hook-based enforcement phase; cancelled with the hook effort. No phase doc was ever written. |
-| 07 | Package Agents for General Use | Planned — needs re-planning | Phases 03, 05 | Medium | Makes the **agent suite** (agents, commands, skills, learnings — the asset classes `--runtime-deploy` already ships) installable and upgradable by strangers: install/upgrade/recovery docs and a reviewed one-command path. **No hooks.** The existing `docs/phases/PHASE_07/` documents describe the pre-cancellation hook-packaging scope and are stale; return to `@project-planner` after Phase 05 completes to rewrite them. |
+| 06 | Package Agents for General Use | Planned — needs re-planning | Phases 03, 05 | Medium | Makes the **agent suite** (agents, commands, skills, learnings — the asset classes `--runtime-deploy` already ships) installable and upgradable by strangers: install/upgrade/recovery docs and a reviewed one-command path. **No hooks.** The existing `docs/phases/PHASE_06/` documents describe the pre-cancellation hook-packaging scope and are stale; return to `@project-planner` after Phase 05 completes to rewrite them. |
 
 ## Constraints & Non-Goals
 
@@ -65,7 +64,7 @@ them.
   (`origin/HEAD` → `origin/main` → `origin/master` → candidates) and user-confirmed.
   The readiness verdict is advisory by design — nothing blocks a merge on NO-GO.
 - **Defunct scanner**: `.github/hooks/` retains the prompt-injection scanner code,
-  unwired and marked DEFUNCT, per the 2026-07-17 cancellation decision. It is not part
+  unwired and marked DEFUNCT, per the 2026-06-17 cancellation decision. It is not part
   of the product and must not be counted in asset inventories.
 
 ## Research Base
