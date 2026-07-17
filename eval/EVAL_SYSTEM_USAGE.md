@@ -52,7 +52,7 @@ The hook and agents normalize the branch into a run directory slug:
 From the target repo:
 
 ```bash
-ln -sfn "$HOME/github_repos/github-agents-source-of-truth/eval/hooks/post-commit.sh" .git/hooks/post-commit
+ln -sfn "$HOME/github_repos/thren-agentic-workflows/eval/hooks/post-commit.sh" .git/hooks/post-commit
 chmod +x .git/hooks/post-commit
 ```
 

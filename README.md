@@ -1,4 +1,4 @@
-# github-agents-source-of-truth
+# thren-agentic-workflows
 
 A ready-to-use library of AI development agents, skills, and instructions that work
 across Claude, Codex, OpenCode, Cursor, and GitHub Copilot. Everything is authored once

@@ -80,7 +80,7 @@ Do the same capture pass as Step 2.
 
 ### Step 4: Read Agent and Skill Source Files
 
-Before drafting improvement opportunities, locate and read the actual agent and skill source files. Look in the source-of-truth repository (typically `github-agents-source-of-truth`):
+Before drafting improvement opportunities, locate and read the actual agent and skill source files. Look in the source-of-truth repository (typically `thren-agentic-workflows`):
 
 - Feature Decomposer agent definition: `.github/agents/` — find the file for the feature decomposer
 - `feature-plan-set` skill: `.github/skills/feature-plan-set/SKILL.md`

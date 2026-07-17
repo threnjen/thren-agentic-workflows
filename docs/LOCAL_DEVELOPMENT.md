@@ -18,8 +18,8 @@ application to build or serve.
 ## Clone And Open The Repo
 
 ```bash
-git clone https://github.com/threnjen/github-agents-source-of-truth.git
-cd github-agents-source-of-truth
+git clone https://github.com/threnjen/thren-agentic-workflows.git
+cd thren-agentic-workflows
 ```
 
 If you use VS Code, open the repository root. The workspace defines three tasks in

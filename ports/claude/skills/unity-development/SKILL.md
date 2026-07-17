@@ -268,7 +268,7 @@ it, not authoring per-feature test code:
    ```jsonc
    {
      "dependencies": {
-       "com.threnjen.visual-verification": "https://github.com/threnjen/github-agents-source-of-truth.git?path=/packages/com.threnjen.visual-verification#visual-verification/v0.2.1"
+       "com.threnjen.visual-verification": "https://github.com/threnjen/thren-agentic-workflows.git?path=/packages/com.threnjen.visual-verification#visual-verification/v0.2.1"
        // …existing dependencies…
      },
      "testables": [ "com.threnjen.visual-verification" ]

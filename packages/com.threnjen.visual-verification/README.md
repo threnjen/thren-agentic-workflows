@@ -34,7 +34,7 @@ Add to the consuming project's `Packages/manifest.json`:
 {
   "dependencies": {
     "com.threnjen.visual-verification":
-      "https://github.com/threnjen/github-agents-source-of-truth.git?path=/packages/com.threnjen.visual-verification#visual-verification/v0.2.1"
+      "https://github.com/threnjen/thren-agentic-workflows.git?path=/packages/com.threnjen.visual-verification#visual-verification/v0.2.1"
   },
   "testables": [ "com.threnjen.visual-verification" ]
 }

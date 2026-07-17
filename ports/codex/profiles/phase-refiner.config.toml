@@ -182,7 +182,7 @@ After the user affirms the phase document is ready for implementation and the do
 	- If the branch already exists because the user is resuming work, use `git checkout phase/<slug>` instead of `-b`
 4. Install the eval hook with the exact commands below, using absolute paths:
 	```sh
-	ln -sfn <absolute-path-to-github-agents-source-of-truth>/eval/hooks/post-commit.sh <target-repo>/.git/hooks/post-commit
+	ln -sfn <absolute-path-to-thren-agentic-workflows>/eval/hooks/post-commit.sh <target-repo>/.git/hooks/post-commit
 	chmod +x <target-repo>/.git/hooks/post-commit
 	```
 5. Create the ledger directory for this phase run: `mkdir -p <target-repo>/eval/runs/phase-<slug>/`
@@ -195,7 +195,7 @@ After the user affirms the phase document is ready for implementation and the do
 	```
 8. After the branch-open steps are complete, stage the `docs/phases/` files modified in this session and the target repo `.gitignore` if Step 7 appended `eval/runs/`, then commit them with the exact message `eval: phase-affirmed`.
 
-Path assumption risk: the hook symlink depends on the absolute path to `github-agents-source-of-truth`. If that repo moves, reinstall it with the same one-command `ln -sfn <absolute-path-to-github-agents-source-of-truth>/eval/hooks/post-commit.sh <target-repo>/.git/hooks/post-commit` command using the new absolute path, then rerun `chmod +x <target-repo>/.git/hooks/post-commit`.
+Path assumption risk: the hook symlink depends on the absolute path to `thren-agentic-workflows`. If that repo moves, reinstall it with the same one-command `ln -sfn <absolute-path-to-thren-agentic-workflows>/eval/hooks/post-commit.sh <target-repo>/.git/hooks/post-commit` command using the new absolute path, then rerun `chmod +x <target-repo>/.git/hooks/post-commit`.
 
 ## Escalation to project-planner
 

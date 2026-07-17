@@ -22,7 +22,7 @@ check, and the poll-based watch loop.
 %% Shows the authoring surface, the two-stage pipeline, generated outputs, and supporting material.
 ```mermaid
 flowchart TD
-    Root[github-agents-source-of-truth]
+    Root[thren-agentic-workflows]
 
     Root --> SOT[source_of_truth authoring surface]
     Root --> Ports[ports generated outputs]
