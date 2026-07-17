@@ -164,6 +164,8 @@ def _check_existing_parents(destination: PurePath, active_home: PurePath) -> Non
         current = current / part
         if current.is_symlink():
             raise DestinationResolutionError("symlinked_parent")
+        if current.is_junction():
+            raise DestinationResolutionError("junction_parent")
         if current.exists() and not current.is_dir():
             raise DestinationResolutionError("parent_not_directory")
         if current.exists():

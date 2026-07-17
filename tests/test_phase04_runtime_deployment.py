@@ -3,6 +3,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path, PureWindowsPath
+from unittest import mock
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -258,6 +259,35 @@ class RuntimeDestinationTests(unittest.TestCase):
                     platform_facts=deployment.PlatformFacts("linux"),
                 )
             self.assertEqual(raised.exception.category, "symlinked_parent")
+
+    def test_junction_parent_is_rejected_before_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / "home"
+            home.mkdir()
+            junction = home / "junction"
+            junction.mkdir()
+            repo = self._repo(root)
+
+            with mock.patch.object(
+                Path,
+                "is_junction",
+                autospec=True,
+                side_effect=lambda path: path == junction,
+            ):
+                with self.assertRaises(
+                    deployment.DestinationResolutionError
+                ) as raised:
+                    deployment.resolve_runtime_destinations(
+                        repo_root=repo,
+                        active_home=home,
+                        environment={
+                            "CLAUDE_CONFIG_DIR": str(junction / "claude")
+                        },
+                        platform_facts=deployment.PlatformFacts("linux"),
+                    )
+
+            self.assertEqual(raised.exception.category, "junction_parent")
 
     def test_unconverged_handoff_is_rejected_before_resolution(self) -> None:
         unconverged = propagator.PropagationConvergenceResult(False, 1, 0, {}, {})
