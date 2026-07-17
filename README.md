@@ -6,11 +6,13 @@ This repository has three main jobs:
 
 1. Provide copyable `AGENTS.md` and `docs/STYLE_GUIDE.md` templates for Node.js and Python projects.
 2. Maintain the master `.github/` agent system used by GitHub Copilot.
-3. Regenerate derived agent outputs for Claude, OpenCode, and Codex from that master source.
+3. Regenerate derived agent outputs for Claude, OpenCode, and Codex from that master source, then optionally deploy them as reviewed user-global managed copies.
 
 ## Overview
 
-The repository is documentation-heavy, but it is not purely static. Most files are Markdown, and one maintenance script, `scripts/propagate_master_assets.py`, keeps the generated platform variants aligned with the `.github/` source-of-truth.
+The repository is documentation-heavy, but it is not purely static. Most files are
+Markdown; Python tooling under `scripts/` keeps generated platform variants aligned
+with the `.github/` source of truth and performs reviewed managed-copy deployment.
 
 Current inventory:
 
@@ -25,14 +27,14 @@ Current inventory:
 .
 ├── AGENTS.md                         # Repo-specific graph/MCP guidance for contributors
 ├── README.md
-├── HARNESS_SETUP.md                  # Harness-specific setup and linking instructions
+├── HARNESS_SETUP.md                  # Cross-harness managed-copy deployment guidance
 ├── .github/
 │   ├── agents/                       # Master Copilot agent definitions and agent README
 │   ├── instructions/                 # Shared instruction files matched by applyTo globs
 │   └── skills/                       # Shared skill directories with SKILL.md entrypoints
 ├── claude/
 │   ├── agents/                       # Generated Claude-formatted agent copies
-│   ├── skills/                       # Symlinked to .github/skills/
+│   ├── skills/                       # Generated copies from .github/skills/
 │   └── README.md
 ├── opencode/
 │   ├── agents/                       # Generated OpenCode-formatted agent copies
@@ -64,7 +66,8 @@ Current inventory:
 ├── packages/                         # Distributable packages consumed by other repos
 │   └── com.threnjen.visual-verification/  # Unity UPM package: deterministic screenshot capture (paired with the Visual Verifier agent)
 ├── scripts/
-│   └── propagate_master_assets.py    # Regenerates claude/, opencode/, and codex/agents/
+│   ├── propagate_master_assets.py    # Regenerates platform outputs and orchestrates optional runtime deployment
+│   └── runtime_deployment.py         # Destination, inventory, managed-copy, and reconciliation logic
 └── .vscode/tasks.json                # One-shot and watch tasks for propagation
 ```
 
@@ -114,7 +117,7 @@ After copying, customize the files for the destination codebase rather than trea
 
 ### Work with the full GitHub Copilot agent system
 
-Use the `.github/agents/`, `.github/skills/`, and `.github/instructions/` directories together. For multi-root VS Code setup and non-Copilot harness linking, see [HARNESS_SETUP.md](HARNESS_SETUP.md).
+Use the `.github/agents/`, `.github/skills/`, and `.github/instructions/` directories together. For multi-root VS Code setup and managed-copy deployment to non-Copilot harnesses, see [HARNESS_SETUP.md](HARNESS_SETUP.md).
 
 ## Key Contents
 
@@ -146,6 +149,13 @@ See [.github/agents/README.md](.github/agents/README.md) for agent-by-agent desc
 - `codex/agents/`
 
 For agent, instruction, and skill changes in this repository, `.github/` is the only authoring surface. The downstream `claude/`, `opencode/`, and `codex/` directories are synchronized from there and should not be edited manually except during intentional porting work.
+
+After repository outputs converge, `--runtime-deploy --active-home <path>` can produce
+a content-bound deployment inventory for Claude, Codex, and OpenCode. Runtime mutation
+requires the reviewed inventory digest and watcher-restart confirmation. The deployment
+uses regular managed copies, preserves foreign collisions, and reconciles only harnesses
+whose copy stage succeeds. See [HARNESS_SETUP.md](HARNESS_SETUP.md) for the canonical
+reviewed workflow; do not substitute ad hoc links or copy commands.
 
 ## Related Documentation
 

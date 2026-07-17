@@ -1,3 +1,4 @@
+import hashlib
 import json
 import re
 import os
@@ -6,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -70,15 +72,15 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         (hooks_dir / "scripts").mkdir(parents=True)
         (hooks_dir / "lib").mkdir()
         (hooks_dir / "config").mkdir()
-        (hooks_dir / "file-access-guard.json").write_text(
+        (hooks_dir / "injection-scanner.json").write_text(
             json.dumps(
                 {
                     "hooks": {
-                        "PreToolUse": [
+                        "PostToolUse": [
                             {
                                 "matcher": "Read|Write|Bash",
                                 "type": "command",
-                                "command": "python3 .github/hooks/scripts/file-access-guard.py",
+                                "command": "python3 .github/hooks/scripts/injection-scanner.py",
                                 "timeout": 10,
                             }
                         ]
@@ -87,19 +89,19 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        (hooks_dir / "scripts" / "file-access-guard.py").write_text(
+        (hooks_dir / "scripts" / "injection-scanner.py").write_text(
             "from lib.framework import main\nmain()\n", encoding="utf-8"
         )
         (hooks_dir / "lib" / "framework.py").write_text(
             "def main():\n    return None\n", encoding="utf-8"
         )
-        (hooks_dir / "lib" / "bash_analyzer.py").write_text(
-            "def analyze(command):\n    return command\n", encoding="utf-8"
+        (hooks_dir / "lib" / "injection_scanner.py").write_text(
+            "def scan(value):\n    return value\n", encoding="utf-8"
         )
-        (hooks_dir / "config" / "file-access-rules.json").write_text(
+        (hooks_dir / "config" / "injection-patterns.json").write_text(
             "{}\n", encoding="utf-8"
         )
-        (hooks_dir / "config" / "file-access-overrides.json").write_text(
+        (hooks_dir / "config" / "injection-allowlist.json").write_text(
             "{}\n", encoding="utf-8"
         )
         return root
@@ -214,6 +216,47 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                     mod.render_codex_agent(agent, docs, codex_references),
                     codex_path.read_text(encoding="utf-8"),
                 )
+
+    def test_evangelize_matches_every_generated_harness_variant(self) -> None:
+        agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
+        instructions = mod.load_instruction_docs()
+        agent = agents["evangelize"]
+        docs = mod.applicable_instructions(agent, instructions)
+        claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
+        opencode_stems = mod._discover_existing_stems(mod.OPENCODE_AGENTS_DIR)
+        claude_references = mod._build_agent_reference_map(
+            list(agents.values()),
+            lambda item: mod._claude_identifier_for(item, claude_stems),
+        )
+        opencode_references = mod._build_agent_reference_map(
+            list(agents.values()),
+            lambda item: mod._opencode_identifier_for(item, opencode_stems),
+        )
+        codex_references = mod._build_agent_reference_map(
+            list(agents.values()), mod._codex_identifier_for
+        )
+
+        claude_identifier = mod._claude_identifier_for(agent, claude_stems)
+        self.assertEqual(
+            mod.render_claude_command(
+                agent, docs, claude_references, claude_identifier
+            ),
+            (mod.CLAUDE_COMMANDS_DIR / "evangelize.md").read_text(encoding="utf-8"),
+        )
+        self.assertEqual(
+            mod.render_opencode_agent(agent, docs, opencode_references),
+            (mod.OPENCODE_AGENTS_DIR / "evangelize.md").read_text(encoding="utf-8"),
+        )
+        self.assertEqual(
+            mod.render_codex_agent(agent, docs, codex_references),
+            (mod.CODEX_AGENTS_DIR / "evangelize.toml").read_text(encoding="utf-8"),
+        )
+        self.assertEqual(
+            mod.render_codex_profile(agent, docs, codex_references),
+            (mod.CODEX_PROFILES_DIR / "evangelize.config.toml").read_text(
+                encoding="utf-8"
+            ),
+        )
 
     def test_diff_security_scan_agent_matches_all_generated_harness_outputs(self) -> None:
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
@@ -357,7 +400,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 repo_root=consumer_root, source_root=source_root
             )
             second_version = marker.read_text(encoding="utf-8")
-            (source_root / ".github" / "hooks" / "config" / "file-access-rules.json").write_text(
+            (source_root / ".github" / "hooks" / "config" / "injection-patterns.json").write_text(
                 '{"version": 2}\n', encoding="utf-8"
             )
             third = mod.propagate_hooks_once(
@@ -375,12 +418,12 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             settings = json.loads(
                 (consumer_root / ".claude" / "settings.json").read_text(encoding="utf-8")
             )
-            generated = settings["hooks"]["PreToolUse"][0]
+            generated = settings["hooks"]["PostToolUse"][0]
             self.assertEqual(generated["matcher"], "Read|Write|Bash")
-            self.assertEqual(generated["$source"], "file-access-guard")
+            self.assertEqual(generated["$source"], "injection-scanner")
             self.assertEqual(
                 generated["hooks"][0]["command"],
-                'python3 "$CLAUDE_PROJECT_DIR/.github/hooks/scripts/file-access-guard.py"',
+                'python3 "$CLAUDE_PROJECT_DIR/.github/hooks/scripts/injection-scanner.py"',
             )
 
     def test_generated_hook_commands_resolve_from_a_subdirectory(self) -> None:
@@ -412,7 +455,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 (claude, {"CLAUDE_PROJECT_DIR": str(consumer_root)}),
                 (codex, {}),
             ):
-                command = settings["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+                command = settings["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
                 probe = subprocess.run(
                     f"{command} < /dev/null",
                     shell=True,
@@ -428,7 +471,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             tmp_root = Path(tmp_dir)
             source_root = self._make_hook_source(tmp_root / "source")
-            (source_root / ".github" / "hooks" / "scripts" / "file-access-guard.py").unlink()
+            (source_root / ".github" / "hooks" / "scripts" / "injection-scanner.py").unlink()
 
             with self.assertRaisesRegex(
                 FileNotFoundError, "generated hook command references missing asset"
@@ -443,9 +486,9 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             source_root = self._make_hook_source(tmp_root / "source")
             outside_asset = source_root / ".github" / "outside.py"
             outside_asset.write_text("# not part of the hook runtime\n", encoding="utf-8")
-            hook_file = source_root / ".github" / "hooks" / "file-access-guard.json"
+            hook_file = source_root / ".github" / "hooks" / "injection-scanner.json"
             hook_data = json.loads(hook_file.read_text(encoding="utf-8"))
-            hook_data["hooks"]["PreToolUse"][0]["command"] = (
+            hook_data["hooks"]["PostToolUse"][0]["command"] = (
                 "python3 .github/hooks/../../outside.py"
             )
             hook_file.write_text(json.dumps(hook_data), encoding="utf-8")
@@ -461,14 +504,14 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             tmp_root = Path(tmp_dir)
             source_root = self._make_hook_source(tmp_root / "source")
-            hook_file = source_root / ".github" / "hooks" / "file-access-guard.json"
+            hook_file = source_root / ".github" / "hooks" / "injection-scanner.json"
             hook_data = json.loads(hook_file.read_text(encoding="utf-8"))
 
             for command in (
                 "python3 ./.github/hooks/scripts/missing.py",
                 "bash -lc 'python3 .github/hooks/scripts/missing.py'",
             ):
-                hook_data["hooks"]["PreToolUse"][0]["command"] = command
+                hook_data["hooks"]["PostToolUse"][0]["command"] = command
                 hook_file.write_text(json.dumps(hook_data), encoding="utf-8")
                 with self.assertRaisesRegex(
                     FileNotFoundError,
@@ -513,26 +556,28 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 )
             self.assertEqual(list(outside.iterdir()), [])
 
-    def test_propagated_guard_runs_from_detached_consumer_without_dependencies(self) -> None:
+    def test_propagated_scanner_runs_from_detached_consumer_without_dependencies(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             consumer_root = Path(tmp_dir) / "consumer"
             mod.propagate_hooks_once(repo_root=consumer_root, source_root=REPO_ROOT)
             command = json.loads(
                 (consumer_root / ".claude" / "settings.json").read_text(encoding="utf-8")
-            )["hooks"]["PreToolUse"]
-            guard_entry = next(
-                entry for entry in command if entry.get("$source") == "file-access-guard"
+            )["hooks"]["PostToolUse"]
+            scanner_entry = next(
+                entry for entry in command if entry.get("$source") == "injection-scanner"
             )
 
             # Claude Code runs hook commands through a shell, which is what
             # expands the $CLAUDE_PROJECT_DIR anchor the generated command uses.
             completed = subprocess.run(
-                guard_entry["hooks"][0]["command"],
+                scanner_entry["hooks"][0]["command"],
                 shell=True,
                 input=json.dumps(
                     {
+                        "hook_event_name": "PostToolUse",
                         "tool_name": "Read",
-                        "tool_input": {"file_path": ".env"},
+                        "tool_input": {"file_path": "README.md"},
+                        "tool_output": "ordinary output",
                         "cwd": str(consumer_root),
                     }
                 ),
@@ -544,10 +589,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             )
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            decision = json.loads(completed.stdout)
-            self.assertEqual(
-                decision["hookSpecificOutput"]["permissionDecision"], "deny"
-            )
+            self.assertEqual(completed.stdout, "{}\n")
 
     def test_generate_global_hooks_uses_absolute_source_commands(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
@@ -562,14 +604,14 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
-            command = settings["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+            command = settings["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
             self.assertIn(
                 str(
                     source_root
                     / ".github"
                     / "hooks"
                     / "scripts"
-                    / "file-access-guard.py"
+                    / "injection-scanner.py"
                 ),
                 command,
             )
@@ -589,14 +631,14 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             plugin_dir.mkdir(parents=True)
             original_claude = '{"user_setting": true}\n'
             original_codex = '{"user_hook": true}\n'
-            original_plugin = "// user-owned file-access guard\n"
+            original_plugin = "// user-owned injection scanner\n"
             (claude_dir / "settings.json").write_text(
                 original_claude, encoding="utf-8"
             )
             (codex_dir / "hooks.json").write_text(
                 original_codex, encoding="utf-8"
             )
-            (plugin_dir / "file-access-guard.js").write_text(
+            (plugin_dir / "injection-scanner.js").write_text(
                 original_plugin, encoding="utf-8"
             )
             (plugin_dir / "user-owned.js").write_text(
@@ -631,14 +673,14 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertEqual(second.returncode, 0, second.stderr)
             installed = claude_dir / "settings.json"
             codex_installed = codex_dir / "hooks.json"
-            plugin_installed = plugin_dir / "file-access-guard.js"
+            plugin_installed = plugin_dir / "injection-scanner.js"
             for target in (installed, codex_installed, plugin_installed):
                 self.assertTrue(target.is_file())
                 self.assertFalse(target.is_symlink())
             expected_backups = {
                 claude_dir / "settings.json.backup": original_claude,
                 codex_dir / "hooks.json.backup": original_codex,
-                plugin_dir / "file-access-guard.js.backup": original_plugin,
+                plugin_dir / "injection-scanner.js.backup": original_plugin,
             }
             for backup, expected in expected_backups.items():
                 self.assertEqual(backup.read_text(encoding="utf-8"), expected)
@@ -697,15 +739,13 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 [entry["matcher"] for entry in entries if "$source" not in entry],
                 ["UserOwned"],
             )
-            generated = next(
-                entry for entry in entries if entry.get("$source") == "file-access-guard"
-            )
+            generated = settings["hooks"]["PostToolUse"][0]
             self.assertEqual(generated["matcher"], "Read|Write|Bash")
             self.assertTrue((plugins / "user-owned.js").is_file())
             self.assertFalse((plugins / "stale-generated.js").exists())
-            plugin = (plugins / "file-access-guard.js").read_text(encoding="utf-8")
+            plugin = (plugins / "injection-scanner.js").read_text(encoding="utf-8")
             self.assertTrue(plugin.startswith(mod.GENERATED_OPENCODE_PLUGIN_HEADER))
-            self.assertIn('"tool.execute.before"', plugin)
+            self.assertIn('"tool.execute.after"', plugin)
 
     def test_hook_regeneration_removes_only_known_retired_runtime_assets(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
@@ -714,18 +754,90 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             consumer_root = tmp_root / "consumer"
             scripts = consumer_root / ".github" / "hooks" / "scripts"
             scripts.mkdir(parents=True)
-            retired = scripts / "protect-files.py"
+            retired = scripts / "file-access-guard.py"
+            retired_bytes = b"owned retired asset\n"
             user_owned = scripts / "consumer-custom.py"
-            retired.write_text("# old generated guard\n", encoding="utf-8")
+            retired.write_bytes(retired_bytes)
             user_owned.write_text("# user owned\n", encoding="utf-8")
+
+            original_hashes = mod.RETIRED_HOOK_ASSET_HASHES
+            mod.RETIRED_HOOK_ASSET_HASHES = {
+                **original_hashes,
+                "scripts/file-access-guard.py": {
+                    hashlib.sha256(retired_bytes).hexdigest()
+                },
+            }
+            try:
+                result = mod.propagate_hooks_once(
+                    repo_root=consumer_root, source_root=source_root
+                )
+            finally:
+                mod.RETIRED_HOOK_ASSET_HASHES = original_hashes
+
+            self.assertEqual(result["retired_assets_removed"], 1)
+            self.assertFalse(retired.exists())
+            self.assertTrue(user_owned.is_file())
+
+    def test_every_retired_regular_asset_has_explicit_ownership_hashes(self) -> None:
+        self.assertEqual(
+            set(mod.RETIRED_HOOK_ASSETS), set(mod.RETIRED_HOOK_ASSET_HASHES)
+        )
+        for relative_path, hashes in mod.RETIRED_HOOK_ASSET_HASHES.items():
+            with self.subTest(relative_path=relative_path):
+                self.assertTrue(hashes)
+                self.assertTrue(
+                    all(re.fullmatch(r"[0-9a-f]{64}", value) for value in hashes)
+                )
+
+    def test_hook_regeneration_preserves_unowned_retired_name_collisions(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_root = self._make_hook_source(tmp_root / "source")
+            consumer_root = tmp_root / "consumer"
+            scripts = consumer_root / ".github" / "hooks" / "scripts"
+            scripts.mkdir(parents=True)
+            regular = scripts / "file-access-guard.py"
+            regular.write_text("# user owned collision\n", encoding="utf-8")
+            outside = tmp_root / "outside.py"
+            outside.write_text("# outside\n", encoding="utf-8")
+            link = scripts / "rtk-rewrite.sh"
+            link.symlink_to(outside)
 
             result = mod.propagate_hooks_once(
                 repo_root=consumer_root, source_root=source_root
             )
 
-            self.assertEqual(result["retired_assets_removed"], 1)
-            self.assertFalse(retired.exists())
-            self.assertTrue(user_owned.is_file())
+            self.assertEqual(result["retired_assets_removed"], 0)
+            self.assertEqual(
+                regular.read_text(encoding="utf-8"), "# user owned collision\n"
+            )
+            self.assertTrue(link.is_symlink())
+            self.assertEqual(outside.read_text(encoding="utf-8"), "# outside\n")
+
+    def test_hook_regeneration_removes_owned_dangling_retired_link_once(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_root = self._make_hook_source(tmp_root / "source")
+            consumer_root = tmp_root / "consumer"
+            scripts = consumer_root / ".github" / "hooks" / "scripts"
+            scripts.mkdir(parents=True)
+            retired_source = (
+                source_root / ".github/hooks/scripts/file-access-guard.py"
+            )
+            retired_link = scripts / "file-access-guard.py"
+            retired_link.symlink_to(retired_source)
+
+            first = mod.propagate_hooks_once(
+                repo_root=consumer_root, source_root=source_root
+            )
+            second = mod.propagate_hooks_once(
+                repo_root=consumer_root, source_root=source_root
+            )
+
+            self.assertEqual(first["retired_assets_removed"], 1)
+            self.assertEqual(second["retired_assets_removed"], 0)
+            self.assertFalse(retired_link.exists())
+            self.assertFalse(retired_link.is_symlink())
 
     def test_hook_asset_copy_replaces_symlink_without_writing_through_it(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
@@ -737,7 +849,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 / ".github"
                 / "hooks"
                 / "scripts"
-                / "file-access-guard.py"
+                / "injection-scanner.py"
             )
             target.parent.mkdir(parents=True)
             outside = tmp_root / "outside.py"
@@ -816,8 +928,6 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 ".github/hooks/lib/injection_scanner.py",
                 ".github/hooks/config/injection-patterns.json",
                 ".github/hooks/config/injection-allowlist.json",
-                ".github/hooks/lib/url_exfiltration.py",
-                ".github/hooks/config/file-access-rules.json",
             )
             for relative in required_assets:
                 self.assertTrue((consumer_root / relative).is_file(), relative)
@@ -977,6 +1087,176 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 "Injection scanner blocked tool output. guard error",
             )
             self.assertNotIn("RAW_OUTPUT_SENTINEL", completed.stdout + completed.stderr)
+
+
+class PropagationConvergenceTests(unittest.TestCase):
+    def test_convergence_requires_an_immediate_zero_change_pass(self) -> None:
+        passes = [
+            {"source_agents": 2, "hooks_source": 1, "claude_changed": 2},
+            {"source_agents": 2, "hooks_source": 1, "codex_changed": 1},
+            {"source_agents": 2, "hooks_source": 1, "claude_changed": 0},
+        ]
+
+        result = mod.propagate_until_converged(
+            max_passes=4, propagate=lambda: passes.pop(0)
+        )
+
+        self.assertTrue(result.converged)
+        self.assertEqual(result.pass_count, 3)
+        self.assertEqual(result.changed_passes, 2)
+        self.assertEqual(result.total_changes["claude_changed"], 2)
+        self.assertEqual(result.total_changes["codex_changed"], 1)
+
+    def test_convergence_rejects_invalid_bounds(self) -> None:
+        for bound in (0, -1, mod.MAX_CONVERGENCE_PASSES + 1, True):
+            with self.subTest(bound=bound), self.assertRaises(ValueError):
+                mod.propagate_until_converged(max_passes=bound, propagate=lambda: {})
+
+    def test_convergence_fails_closed_for_exception_and_malformed_result(self) -> None:
+        with self.assertRaises(mod.PropagationConvergenceError) as raised:
+            mod.propagate_until_converged(
+                max_passes=2,
+                propagate=mock.Mock(side_effect=RuntimeError("private/path")),
+            )
+        self.assertEqual(raised.exception.category, "propagation_failed")
+        self.assertNotIn("private/path", str(raised.exception))
+
+        with self.assertRaises(mod.PropagationConvergenceError) as raised:
+            mod.propagate_until_converged(
+                max_passes=2, propagate=lambda: {"claude_changed": "one"}
+            )
+        self.assertEqual(raised.exception.category, "malformed_result")
+
+    def test_convergence_exhaustion_includes_pass_count(self) -> None:
+        with self.assertRaises(mod.PropagationConvergenceError) as raised:
+            mod.propagate_until_converged(
+                max_passes=2, propagate=lambda: {"claude_changed": 1}
+            )
+        self.assertEqual(raised.exception.category, "bound_exhausted")
+        self.assertEqual(raised.exception.pass_count, 2)
+
+    def test_preflight_rejects_unsafe_destinations_before_any_copy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "home"
+            home.mkdir()
+            outside = Path(tmp) / "outside"
+            outside.mkdir()
+            (home / "linked").symlink_to(outside, target_is_directory=True)
+            targets = (
+                mod.HarnessDestination("claude", home / "claude"),
+                mod.HarnessDestination("codex", home / "linked" / "codex"),
+            )
+            copy = mock.Mock()
+
+            result = mod.deploy_after_convergence(
+                targets,
+                copy_operation=copy,
+                reconcile_operation=mock.Mock(),
+                home=home,
+                propagate=lambda: {"source_agents": 1, "claude_changed": 0},
+            )
+
+        self.assertFalse(result.preflight_succeeded)
+        self.assertEqual(result.preflight_failures["codex"], "outside_active_home")
+        copy.assert_not_called()
+
+    def test_preflight_reports_missing_parent_evidence_and_collision(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            targets = (
+                mod.HarnessDestination(
+                    "claude", home / "missing" / "claude", create_parents=False
+                ),
+                mod.HarnessDestination(
+                    "codex", home / "codex", ownership_evidence_available=False
+                ),
+                mod.HarnessDestination(
+                    "opencode", home / "opencode", collision_ready=False
+                ),
+            )
+
+            failures = mod.preflight_destinations(targets, home=home)
+
+        self.assertEqual(failures["claude"], "missing_parent_not_allowed")
+        self.assertEqual(failures["codex"], "ownership_evidence_unavailable")
+        self.assertEqual(failures["opencode"], "collision_not_ready")
+
+    def test_preflight_rejects_non_directory_parent_before_any_copy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            blocked_parent = home / "blocked"
+            blocked_parent.write_text("not a directory", encoding="utf-8")
+            targets = (
+                mod.HarnessDestination("claude", home / "claude"),
+                mod.HarnessDestination("codex", blocked_parent / "codex"),
+            )
+            copy = mock.Mock()
+
+            result = mod.deploy_after_convergence(
+                targets,
+                copy_operation=copy,
+                reconcile_operation=mock.Mock(),
+                home=home,
+                propagate=lambda: {"source_agents": 1, "claude_changed": 0},
+            )
+
+        self.assertFalse(result.preflight_succeeded)
+        self.assertEqual(result.preflight_failures["codex"], "parent_not_directory")
+        copy.assert_not_called()
+
+    def test_failed_harness_skips_only_its_reconciliation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            targets = (
+                mod.HarnessDestination("claude", home / "claude"),
+                mod.HarnessDestination("codex", home / "codex"),
+            )
+            reconciled = []
+
+            def copy(target: mod.HarnessDestination) -> int:
+                if target.harness == "codex":
+                    raise OSError("sensitive destination")
+                target.destination.mkdir()
+                return 2
+
+            result = mod.deploy_after_convergence(
+                targets,
+                copy_operation=copy,
+                reconcile_operation=lambda target: reconciled.append(target.harness) or 1,
+                home=home,
+                propagate=lambda: {"source_agents": 1, "claude_changed": 0},
+            )
+
+        self.assertEqual(result.harnesses["claude"].status, "verified")
+        self.assertEqual(result.harnesses["claude"].copied, 2)
+        self.assertFalse(result.harnesses["claude"].reconciliation_skipped)
+        self.assertEqual(result.harnesses["codex"].status, "failed")
+        self.assertTrue(result.harnesses["codex"].reconciliation_skipped)
+        self.assertEqual(reconciled, ["claude"])
+        self.assertNotIn("sensitive destination", result.harnesses["codex"].failure)
+
+    def test_global_cli_converges_before_mutating_user_output(self) -> None:
+        convergence = mock.Mock(
+            side_effect=mod.PropagationConvergenceError("bound_exhausted", 3)
+        )
+        generate = mock.Mock()
+        with mock.patch.object(sys, "argv", ["propagate", "--global-output", "/tmp/x"]), \
+             mock.patch.object(mod, "propagate_until_converged", convergence), \
+             mock.patch.object(mod, "generate_global_hooks", generate):
+            self.assertEqual(mod.main(), 1)
+        generate.assert_not_called()
+
+    def test_watcher_announces_restart_requirement(self) -> None:
+        convergence = mod.PropagationConvergenceResult(True, 1, 0, {}, {})
+        with mock.patch.object(mod, "propagate_until_converged", return_value=convergence), \
+             mock.patch.object(mod, "_collect_file_state", return_value={}), \
+             mock.patch.object(mod.time, "sleep", side_effect=KeyboardInterrupt), \
+             mock.patch("builtins.print") as printed:
+            with self.assertRaises(KeyboardInterrupt):
+                mod.watch_loop()
+        output = " ".join(str(call.args[0]) for call in printed.call_args_list)
+        self.assertIn("restart", output.lower())
+        self.assertIn("release verification", output.lower())
 
 
 class OrphanPruningTests(unittest.TestCase):

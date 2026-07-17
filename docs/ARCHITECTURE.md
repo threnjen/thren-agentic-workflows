@@ -9,7 +9,7 @@ This repository is organized around one authoring surface and several downstream
 - `nodejs/` and `python/` provide copyable project templates.
 - `docs/`, `eval/`, and harness setup references explain how to use and maintain the system.
 
-The only code in the repo is maintenance tooling, primarily `scripts/propagate_master_assets.py`, which rewrites the generated platform variants after changes in `.github/`.
+The repository code is maintenance and deployment tooling. `scripts/propagate_master_assets.py` rewrites generated platform variants after changes in `.github/`, while `scripts/runtime_deployment.py` owns destination resolution, reviewed inventories, managed-copy replacement, and reconciliation.
 
 ## Top-Level Component Map
 
@@ -28,7 +28,7 @@ flowchart TD
     Root --> Eval[eval artifacts and runbooks]
     Root --> Scripts[scripts]
 
-    GH --> GHAgents[32 source agent definitions]
+    GH --> GHAgents[41 source agent definitions]
     GH --> GHSkills[16 skill directories]
     GH --> GHInstructions[15 instruction files]
 
@@ -39,6 +39,8 @@ flowchart TD
     Propagate --> Claude
     Propagate --> OpenCode
     Propagate --> Codex
+    Propagate --> RuntimeDeploy[runtime_deployment.py]
+    RuntimeDeploy --> UserRuntime[reviewed user-global managed copies]
 
     Docs --> ArchitectureDoc[ARCHITECTURE.md]
     Docs --> ContextDoc[CODEBASE_CONTEXT.md]
@@ -56,13 +58,16 @@ flowchart LR
     Script --> ClaudeOut[claude/agents/*.md]
     Script --> OpenCodeOut[opencode/agents/*.md]
     Script --> CodexOut[codex/agents/*.toml]
+    Script --> Inventory[Content-bound runtime inventory]
+    Inventory --> Review[Operator reviews digest and restarts watcher]
+    Review --> ManagedCopies[Claude, Codex, and OpenCode managed copies]
 
     GHAgents[.github/agents] --> Script
     GHSkills[.github/skills] --> Script
     GHInstructions[.github/instructions] --> Script
 ```
 
-The watcher task in `.vscode/tasks.json` starts automatically on folder open and monitors `.github/agents/`, `.github/skills/`, and `.github/instructions/`. The one-shot task and `--once` CLI path use the same transformation logic.
+The watcher task in `.vscode/tasks.json` starts automatically on folder open and monitors `.github/agents/`, `.github/skills/`, and `.github/instructions/`. The one-shot task and `--once` CLI path use the same transformation logic. Runtime deployment is a separate, explicit stage: repository outputs must converge first, then the operator reviews a home-relative inventory before any user-global mutation.
 
 ## Major Components
 
@@ -70,7 +75,7 @@ The watcher task in `.vscode/tasks.json` starts automatically on folder open and
 
 This is the primary authoring surface.
 
-- `.github/agents/` contains 32 source agent definitions.
+- `.github/agents/` contains 41 source agent definitions.
 - Most source agents use the `.agent.md` suffix.
 - `prod-code-review.md` is an intentional plain `.md` exception that is still loaded as an agent because the propagation script keys off frontmatter, not only filename suffixes.
 - `.github/skills/` contains 16 directory-based skills, each rooted at `SKILL.md`.
@@ -114,6 +119,7 @@ The two variants intentionally share structure while diverging on ecosystem-spec
 - `docs/` holds contributor-facing architecture, setup, and troubleshooting material.
 - `eval/` holds grader usage docs, example config, rubrics, hook templates, and historical score output.
 - `HARNESS_SETUP.md` documents how to expose these agents and skills to different harnesses.
+- `scripts/runtime_deployment.py` implements active-environment destinations, ownership-aware managed copies, collision preservation, and stale-copy reconciliation.
 
 ## Agent System Shape
 
@@ -190,7 +196,7 @@ flowchart TD
 
 ## External Dependencies And Integrations
 
-- Python standard library only for `scripts/propagate_master_assets.py`; no project package manifest is required.
+- Python standard library only for the propagation and runtime-deployment tooling; no project package manifest is required.
 - VS Code task integration via `.vscode/tasks.json` for one-shot and watch propagation.
 - Code-review-graph MCP registration via `.mcp.json` and `.codex/config.toml` using `uvx code-review-graph serve`.
 - GitHub Copilot, Claude Code, OpenCode, and Codex as the target harnesses described by the repo.
@@ -199,6 +205,7 @@ flowchart TD
 
 - Keep `.github/` as the only authoritative source for shared agent behavior.
 - Regenerate platform variants instead of hand-maintaining parallel agent files.
+- Deploy user-global assets only from converged generated outputs, after a reviewed content-bound inventory, as regular managed copies rather than repository links.
 - Separate `codex/` authoring content from `.codex/` runtime configuration.
 - Keep template language packs self-contained so users can copy one folder into another repo without inheritance machinery.
 - Use directory-based skills and instruction files so shared guidance can be reused instead of duplicated across agent bodies.

@@ -649,19 +649,13 @@ def test_replacement_claude_command_exists_and_is_derived_not_assumed() -> None:
 # ---------------------------------------------------------------------------
 
 
-# `propagate_once` returns inventory totals alongside its change counters.
-# These two are inventories -- "41 source agents were considered" is not a
-# change. Everything NOT listed here must be zero at a fixed point, so a counter
-# added later fails closed into the assertion rather than out of it.
-INVENTORY_COUNTERS = frozenset({"source_agents", "hooks_source"})
-
-
 def _changes(counters: dict) -> dict:
-    return {
-        key: value
-        for key, value in counters.items()
-        if key not in INVENTORY_COUNTERS and value
-    }
+    import sys
+
+    sys.path.insert(0, str(REPO_ROOT / "scripts"))
+    import propagate_master_assets as mod
+
+    return mod.propagation_changes(counters)
 
 
 def test_propagation_is_idempotent() -> None:
