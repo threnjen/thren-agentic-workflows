@@ -138,6 +138,10 @@ HOOK_EVENT_MAP: Dict[str, Dict[str, List[str]]] = {
 # Currently empty — all source agents are propagated.
 PROPAGATION_EXCLUDE: set[str] = set()
 
+INVENTORY_COUNTERS = frozenset({"source_agents", "hooks_source"})
+DEFAULT_CONVERGENCE_PASSES = 5
+MAX_CONVERGENCE_PASSES = 25
+
 
 OPENCODE_FILE_ALIASES = {
     "docs-writer": "docs-writer",
@@ -170,6 +174,49 @@ class InstructionDoc:
     path: Path
     apply_to_patterns: List[str]
     body: str
+
+
+@dataclass(frozen=True)
+class PropagationConvergenceResult:
+    converged: bool
+    pass_count: int
+    changed_passes: int
+    total_changes: Dict[str, int]
+    final_counters: Dict[str, int]
+
+
+class PropagationConvergenceError(RuntimeError):
+    def __init__(self, category: str, pass_count: int) -> None:
+        self.category = category
+        self.pass_count = pass_count
+        super().__init__(f"{category} after {pass_count} propagation pass(es)")
+
+
+@dataclass(frozen=True)
+class HarnessDestination:
+    harness: str
+    destination: Path
+    ownership_evidence_available: bool = True
+    collision_ready: bool = True
+    create_parents: bool = True
+
+
+@dataclass(frozen=True)
+class HarnessDeploymentResult:
+    status: str
+    copied: int = 0
+    reconciled: int = 0
+    reconciliation_skipped: bool = False
+    failure: str | None = None
+
+
+@dataclass(frozen=True)
+class DeploymentResult:
+    convergence: PropagationConvergenceResult | None
+    propagation_failure: str | None
+    preflight_succeeded: bool
+    preflight_failures: Dict[str, str]
+    harnesses: Dict[str, HarnessDeploymentResult]
 
 
 FrontmatterValue = Union[str, List[str]]
@@ -1723,6 +1770,175 @@ def propagate_once(verbose: bool = True, repo_root: Path | None = None) -> Dict[
     return result
 
 
+def propagation_changes(counters: Dict[str, int]) -> Dict[str, int]:
+    """Return repository mutation counters, rejecting ambiguous results."""
+    if not isinstance(counters, dict):
+        raise ValueError("propagation result must be a dictionary")
+
+    changes: Dict[str, int] = {}
+    for key, value in counters.items():
+        if not isinstance(key, str) or isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError("propagation counters must map names to integers")
+        if value < 0:
+            raise ValueError("propagation counters cannot be negative")
+        if key not in INVENTORY_COUNTERS and value:
+            changes[key] = value
+    return changes
+
+
+def propagate_until_converged(
+    *,
+    repo_root: Path | None = None,
+    max_passes: int = DEFAULT_CONVERGENCE_PASSES,
+    propagate: Callable[[], Dict[str, int]] | None = None,
+) -> PropagationConvergenceResult:
+    """Repeat propagation, within a total-pass bound, through a zero-change pass."""
+    if (
+        isinstance(max_passes, bool)
+        or not isinstance(max_passes, int)
+        or not 1 <= max_passes <= MAX_CONVERGENCE_PASSES
+    ):
+        raise ValueError(
+            f"max_passes must be between 1 and {MAX_CONVERGENCE_PASSES}"
+        )
+
+    run_pass = propagate or (
+        lambda: propagate_once(verbose=False, repo_root=repo_root)
+    )
+    total_changes: Dict[str, int] = {}
+    changed_passes = 0
+
+    for pass_count in range(1, max_passes + 1):
+        try:
+            counters = run_pass()
+        except Exception as exc:
+            if isinstance(exc, PropagationConvergenceError):
+                raise
+            raise PropagationConvergenceError(
+                "propagation_failed", pass_count
+            ) from exc
+
+        try:
+            changes = propagation_changes(counters)
+        except (TypeError, ValueError) as exc:
+            raise PropagationConvergenceError("malformed_result", pass_count) from exc
+
+        if not changes:
+            return PropagationConvergenceResult(
+                converged=True,
+                pass_count=pass_count,
+                changed_passes=changed_passes,
+                total_changes=total_changes,
+                final_counters=dict(counters),
+            )
+
+        changed_passes += 1
+        for key, value in changes.items():
+            total_changes[key] = total_changes.get(key, 0) + value
+
+    raise PropagationConvergenceError("bound_exhausted", max_passes)
+
+
+def preflight_destinations(
+    destinations: Iterable[HarnessDestination], *, home: Path | None = None
+) -> Dict[str, str]:
+    """Validate every destination before a caller performs any mutation."""
+    declared_home = (home or Path.home()).absolute()
+    active_home = declared_home.resolve()
+    failures: Dict[str, str] = {}
+    seen: set[str] = set()
+
+    for target in destinations:
+        if target.harness in seen:
+            failures[target.harness] = "duplicate_harness"
+            continue
+        seen.add(target.harness)
+
+        destination = target.destination.absolute()
+        resolved_destination = destination.resolve()
+        try:
+            resolved_destination.relative_to(active_home)
+        except ValueError:
+            failures[target.harness] = "outside_active_home"
+            continue
+
+        current = declared_home
+        try:
+            relative_parent = destination.parent.relative_to(declared_home)
+        except ValueError:
+            failures[target.harness] = "outside_active_home"
+            continue
+        unsafe_parent = False
+        for part in relative_parent.parts:
+            current = current / part
+            if current.is_symlink():
+                failures[target.harness] = "symlinked_parent"
+                unsafe_parent = True
+                break
+        if unsafe_parent:
+            continue
+        if not destination.parent.exists() and not target.create_parents:
+            failures[target.harness] = "missing_parent_not_allowed"
+        elif not target.ownership_evidence_available:
+            failures[target.harness] = "ownership_evidence_unavailable"
+        elif not target.collision_ready:
+            failures[target.harness] = "collision_not_ready"
+
+    return failures
+
+
+def deploy_after_convergence(
+    destinations: Iterable[HarnessDestination],
+    *,
+    copy_operation: Callable[[HarnessDestination], int],
+    reconcile_operation: Callable[[HarnessDestination], int],
+    home: Path | None = None,
+    repo_root: Path | None = None,
+    max_passes: int = DEFAULT_CONVERGENCE_PASSES,
+    propagate: Callable[[], Dict[str, int]] | None = None,
+) -> DeploymentResult:
+    """Gate isolated harness operations behind convergence and full preflight."""
+    targets = tuple(destinations)
+    try:
+        convergence = propagate_until_converged(
+            repo_root=repo_root, max_passes=max_passes, propagate=propagate
+        )
+    except PropagationConvergenceError as exc:
+        return DeploymentResult(None, exc.category, False, {}, {})
+
+    failures = preflight_destinations(targets, home=home)
+    if failures:
+        return DeploymentResult(convergence, None, False, failures, {})
+
+    harnesses: Dict[str, HarnessDeploymentResult] = {}
+    for target in targets:
+        try:
+            copied = copy_operation(target)
+        except Exception:
+            harnesses[target.harness] = HarnessDeploymentResult(
+                status="failed",
+                reconciliation_skipped=True,
+                failure="copy_failed",
+            )
+            continue
+
+        try:
+            reconciled = reconcile_operation(target)
+        except Exception:
+            harnesses[target.harness] = HarnessDeploymentResult(
+                status="failed",
+                copied=copied,
+                failure="reconciliation_failed",
+            )
+            continue
+
+        harnesses[target.harness] = HarnessDeploymentResult(
+            status="verified", copied=copied, reconciled=reconciled
+        )
+
+    return DeploymentResult(convergence, None, True, {}, harnesses)
+
+
 def _collect_file_state(paths: Iterable[Path]) -> Dict[str, Tuple[float, int]]:
     state: Dict[str, Tuple[float, int]] = {}
     for root in paths:
@@ -1761,7 +1977,11 @@ def _compute_changes(
 
 def watch_loop(interval_seconds: float = 1.0) -> None:
     print("Starting master asset watcher for .github/{agents,skills,instructions,hooks} ...")
-    propagate_once(verbose=True)
+    print(
+        "Restart this watcher after propagator changes before migration or "
+        "release verification."
+    )
+    print(json.dumps(_convergence_payload(propagate_until_converged()), indent=2))
 
     last_state = _collect_file_state(WATCH_DIRS)
     pending_since: float | None = None
@@ -1788,12 +2008,23 @@ def watch_loop(interval_seconds: float = 1.0) -> None:
         print(f"Detected change in .github source: {sample}{more}")
 
         try:
-            propagate_once(verbose=True)
-        except Exception as exc:  # pragma: no cover - runtime guard
+            result = propagate_until_converged()
+            print(json.dumps(_convergence_payload(result), indent=2))
+        except PropagationConvergenceError as exc:  # pragma: no cover - runtime guard
             print(f"Propagation failed: {exc}", file=sys.stderr)
 
         pending_since = None
         pending_changes = []
+
+
+def _convergence_payload(result: PropagationConvergenceResult) -> Dict[str, object]:
+    return {
+        "converged": result.converged,
+        "propagation_passes": result.pass_count,
+        "changed_passes": result.changed_passes,
+        "propagation_changes": result.total_changes,
+        "verification_changes": propagation_changes(result.final_counters),
+    }
 
 
 def main() -> int:
@@ -1807,14 +2038,27 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if args.global_output is not None:
-        generate_global_hooks(args.global_output, verbose=True)
-
     if not args.once and not args.watch and args.global_output is None:
         args.once = True
 
-    if args.once:
-        propagate_once(verbose=True)
+    convergence_ran = False
+    if args.global_output is not None:
+        try:
+            result = propagate_until_converged()
+        except PropagationConvergenceError as exc:
+            print(f"Propagation failed: {exc}", file=sys.stderr)
+            return 1
+        convergence_ran = True
+        print(json.dumps(_convergence_payload(result), indent=2))
+        generate_global_hooks(args.global_output, verbose=True)
+
+    if args.once and not convergence_ran:
+        try:
+            result = propagate_until_converged()
+        except PropagationConvergenceError as exc:
+            print(f"Propagation failed: {exc}", file=sys.stderr)
+            return 1
+        print(json.dumps(_convergence_payload(result), indent=2))
 
     if args.watch:
         watch_loop()

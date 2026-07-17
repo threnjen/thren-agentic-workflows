@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -1045,6 +1046,153 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 "Injection scanner blocked tool output. guard error",
             )
             self.assertNotIn("RAW_OUTPUT_SENTINEL", completed.stdout + completed.stderr)
+
+
+class PropagationConvergenceTests(unittest.TestCase):
+    def test_convergence_requires_an_immediate_zero_change_pass(self) -> None:
+        passes = [
+            {"source_agents": 2, "hooks_source": 1, "claude_changed": 2},
+            {"source_agents": 2, "hooks_source": 1, "codex_changed": 1},
+            {"source_agents": 2, "hooks_source": 1, "claude_changed": 0},
+        ]
+
+        result = mod.propagate_until_converged(
+            max_passes=4, propagate=lambda: passes.pop(0)
+        )
+
+        self.assertTrue(result.converged)
+        self.assertEqual(result.pass_count, 3)
+        self.assertEqual(result.changed_passes, 2)
+        self.assertEqual(result.total_changes["claude_changed"], 2)
+        self.assertEqual(result.total_changes["codex_changed"], 1)
+
+    def test_convergence_rejects_invalid_bounds(self) -> None:
+        for bound in (0, -1, mod.MAX_CONVERGENCE_PASSES + 1, True):
+            with self.subTest(bound=bound), self.assertRaises(ValueError):
+                mod.propagate_until_converged(max_passes=bound, propagate=lambda: {})
+
+    def test_convergence_fails_closed_for_exception_and_malformed_result(self) -> None:
+        with self.assertRaises(mod.PropagationConvergenceError) as raised:
+            mod.propagate_until_converged(
+                max_passes=2,
+                propagate=mock.Mock(side_effect=RuntimeError("private/path")),
+            )
+        self.assertEqual(raised.exception.category, "propagation_failed")
+        self.assertNotIn("private/path", str(raised.exception))
+
+        with self.assertRaises(mod.PropagationConvergenceError) as raised:
+            mod.propagate_until_converged(
+                max_passes=2, propagate=lambda: {"claude_changed": "one"}
+            )
+        self.assertEqual(raised.exception.category, "malformed_result")
+
+    def test_convergence_exhaustion_includes_pass_count(self) -> None:
+        with self.assertRaises(mod.PropagationConvergenceError) as raised:
+            mod.propagate_until_converged(
+                max_passes=2, propagate=lambda: {"claude_changed": 1}
+            )
+        self.assertEqual(raised.exception.category, "bound_exhausted")
+        self.assertEqual(raised.exception.pass_count, 2)
+
+    def test_preflight_rejects_unsafe_destinations_before_any_copy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "home"
+            home.mkdir()
+            outside = Path(tmp) / "outside"
+            outside.mkdir()
+            (home / "linked").symlink_to(outside, target_is_directory=True)
+            targets = (
+                mod.HarnessDestination("claude", home / "claude"),
+                mod.HarnessDestination("codex", home / "linked" / "codex"),
+            )
+            copy = mock.Mock()
+
+            result = mod.deploy_after_convergence(
+                targets,
+                copy_operation=copy,
+                reconcile_operation=mock.Mock(),
+                home=home,
+                propagate=lambda: {"source_agents": 1, "claude_changed": 0},
+            )
+
+        self.assertFalse(result.preflight_succeeded)
+        self.assertEqual(result.preflight_failures["codex"], "outside_active_home")
+        copy.assert_not_called()
+
+    def test_preflight_reports_missing_parent_evidence_and_collision(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            targets = (
+                mod.HarnessDestination(
+                    "claude", home / "missing" / "claude", create_parents=False
+                ),
+                mod.HarnessDestination(
+                    "codex", home / "codex", ownership_evidence_available=False
+                ),
+                mod.HarnessDestination(
+                    "opencode", home / "opencode", collision_ready=False
+                ),
+            )
+
+            failures = mod.preflight_destinations(targets, home=home)
+
+        self.assertEqual(failures["claude"], "missing_parent_not_allowed")
+        self.assertEqual(failures["codex"], "ownership_evidence_unavailable")
+        self.assertEqual(failures["opencode"], "collision_not_ready")
+
+    def test_failed_harness_skips_only_its_reconciliation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            targets = (
+                mod.HarnessDestination("claude", home / "claude"),
+                mod.HarnessDestination("codex", home / "codex"),
+            )
+            reconciled = []
+
+            def copy(target: mod.HarnessDestination) -> int:
+                if target.harness == "codex":
+                    raise OSError("sensitive destination")
+                target.destination.mkdir()
+                return 2
+
+            result = mod.deploy_after_convergence(
+                targets,
+                copy_operation=copy,
+                reconcile_operation=lambda target: reconciled.append(target.harness) or 1,
+                home=home,
+                propagate=lambda: {"source_agents": 1, "claude_changed": 0},
+            )
+
+        self.assertEqual(result.harnesses["claude"].status, "verified")
+        self.assertEqual(result.harnesses["claude"].copied, 2)
+        self.assertFalse(result.harnesses["claude"].reconciliation_skipped)
+        self.assertEqual(result.harnesses["codex"].status, "failed")
+        self.assertTrue(result.harnesses["codex"].reconciliation_skipped)
+        self.assertEqual(reconciled, ["claude"])
+        self.assertNotIn("sensitive destination", result.harnesses["codex"].failure)
+
+    def test_global_cli_converges_before_mutating_user_output(self) -> None:
+        convergence = mock.Mock(
+            side_effect=mod.PropagationConvergenceError("bound_exhausted", 3)
+        )
+        generate = mock.Mock()
+        with mock.patch.object(sys, "argv", ["propagate", "--global-output", "/tmp/x"]), \
+             mock.patch.object(mod, "propagate_until_converged", convergence), \
+             mock.patch.object(mod, "generate_global_hooks", generate):
+            self.assertEqual(mod.main(), 1)
+        generate.assert_not_called()
+
+    def test_watcher_announces_restart_requirement(self) -> None:
+        convergence = mod.PropagationConvergenceResult(True, 1, 0, {}, {})
+        with mock.patch.object(mod, "propagate_until_converged", return_value=convergence), \
+             mock.patch.object(mod, "_collect_file_state", return_value={}), \
+             mock.patch.object(mod.time, "sleep", side_effect=KeyboardInterrupt), \
+             mock.patch("builtins.print") as printed:
+            with self.assertRaises(KeyboardInterrupt):
+                mod.watch_loop()
+        output = " ".join(str(call.args[0]) for call in printed.call_args_list)
+        self.assertIn("restart", output.lower())
+        self.assertIn("release verification", output.lower())
 
 
 class OrphanPruningTests(unittest.TestCase):
