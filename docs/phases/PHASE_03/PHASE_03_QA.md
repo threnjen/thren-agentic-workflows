@@ -1,215 +1,366 @@
-# QA Plan: Phase 05 — Phase Final Review Agent Family
+# QA Plan: Phase 03 — PR Review Agent Family
 
-> **Renumbered 2026-07-16: this phase is now Phase 03 (formerly Phase 05).** The
-> body below is preserved as the historical record from the original review and
-> still uses the Phase 05 numbering throughout. Development-fixture paths
-> (`dev/phase-final-review/fixtures/PHASE_05/`, `PHASE_05a`/`PHASE_05b`) and the
-> `05a`–`05l` agent names are unchanged and remain correct as written. See the
-> mapping table in `docs/phases/PROJECT_ROADMAP.md`.
-
-**Date:** 2026-07-15
-**Last Updated:** 2026-07-15
+**Date:** 2026-07-16
+**Last Updated:** 2026-07-16
 **Mode:** Release QA Plan
-**Scope:** Consolidated release QA for features 01–06: the Phase Final Review conventions, report templates, baseline-worktree agent, orchestrator, evaluator family 05a–05l, development fixture, readiness synthesis, history harvesting, and Claude/OpenCode/Codex propagation.
-**Environment:** Repository root /Users/jennywadkins/github_repos/github-agents-source-of-truth; Python environment .venv; an agent harness that loads the source-of-truth files under .github/agents/ and can spawn the declared 05a–05l agents. Use the code-review-graph MCP server for 05f/05g checks and the existing Security Scan/Test - Analyst delegates where requested.
-**Prerequisites:** Use the disposable fixture at dev/phase-final-review/fixtures/PHASE_05/, never the live docs/phases/PHASE_01/ or PHASE_02/ directories. Run .venv/bin/python -m pytest tests/test_propagate_master_assets.py -q and .venv/bin/python -m pytest tests/test_readiness_synthesis_agents.py -q before manual execution. The current results are 21 passed/15 subtests and 6 passed respectively. The full suite command is .venv/bin/python -m pytest tests/ -q; the current baseline is 394 passed, 2 failed, 15 subtests, with the two known failures in tests/hooks/test_hook_distribution_integration.py (propagated-guard median latency and installation-guide classification). Keep those failures recorded as baseline context.
+**Scope:** Consolidated release QA for all eight features of Phase 03 — propagator orphan pruning, retirement of the five phase-shaped evaluators, the rescoped conventions/report skills, the `05-pr-review` orchestrator, the mechanical evaluators, narrative and test health, synthesis and PR posting, and reconciliation.
+**Environment:** This repository at `/Users/jennywadkins/github_repos/github-agents-source-of-truth` for the fixture dry run; a **separate scratch consumer repo** for every live git/`gh` check (see Prerequisites).
+**Coverage Map:** `docs/phases/PHASE_03/PHASE_03_QA_COVERAGE_MAP.md`
+
+> **Rewritten 2026-07-16, not merged.** The prior document at this path was the QA plan
+> for the pre-rescope Phase Final Review family. Every checklist item it carried was
+> directed at `05c-qa-consolidator`, `05d-security-rollup`, `05e-ac-regression`,
+> `05f-seam-analyzer`, or `05i-learnings-harvester` — **all five deleted by feature
+> `02`** — or at the `dev/phase-final-review/fixtures/PHASE_05/` root that feature `08`
+> retired (13 files). Those items are not stale, they are **void**: their subjects do
+> not exist and no tester can execute them. Merging them forward would ship a checklist
+> that cannot pass. The historical record is preserved in `docs/phases/**`, which
+> feature `02` AC6 exempts from the reference sweep, and in git history.
+
+---
+
+## ⚠️ Read this before planning your session
+
+**The assembled agent family has never been run.** This is the phase's central gap and
+the reason this document exists.
+
+Feature `04` authored the orchestrator and pinned a fixture for a dry run, then deferred
+that run to feature `08`. Feature `08` could not execute it — its context had no
+agent-spawning tool, so a seven-evaluator fan-out could be neither run nor simulated. It
+recorded AC1–AC4 **NOT DONE** with routing rather than manufacturing a partial run, which
+was the correct call: a partial run would have produced below-GO evidence by
+construction.
+
+What changed is that the run is now *possible for the first time*. Every precondition
+verifies: the roster resolves 8/8, the report root migration completed, run output is
+gitignored, and the pinned fixture range checks out. It simply was never *performed*.
+
+**The recorded contract, which governs this entire plan:**
+
+> *A fixture dry-run is required release evidence; a run whose required evaluators are
+> recorded `not-run` is below-GO evidence, not a passing run.*
+
+**Eight green features are not evidence the family runs.** 582 passing tests prove the
+family is *described* correctly — they prove nothing about whether it *works*. Section 1
+below is the headline item. If you run only one thing from this document, run that.
+
+---
 
 ## Features Covered
 
 | Feature | Plan | Implementation Record | Review Record |
 |---|---|---|---|
-| 01-review-foundation | dev/feature/01-review-foundation/01-review-foundation-plan.md | dev/feature/01-review-foundation/01-review-foundation-implementation.md | dev/feature/01-review-foundation/01-review-foundation-review.md |
-| 02-final-review-orchestrator | dev/feature/02-final-review-orchestrator/02-final-review-orchestrator-plan.md | dev/feature/02-final-review-orchestrator/02-final-review-orchestrator-implementation.md | dev/feature/02-final-review-orchestrator/02-final-review-orchestrator-review.md |
-| 03-mechanical-evaluators | dev/feature/03-mechanical-evaluators/03-mechanical-evaluators-plan.md | dev/feature/03-mechanical-evaluators/03-mechanical-evaluators-implementation.md | dev/feature/03-mechanical-evaluators/03-mechanical-evaluators-review.md |
-| 04-delegating-evaluators | dev/feature/04-delegating-evaluators/04-delegating-evaluators-plan.md | dev/feature/04-delegating-evaluators/04-delegating-evaluators-implementation.md | dev/feature/04-delegating-evaluators/04-delegating-evaluators-review.md |
-| 05-deep-judgment-evaluators | dev/feature/05-deep-judgment-evaluators/05-deep-judgment-evaluators-plan.md | dev/feature/05-deep-judgment-evaluators/05-deep-judgment-evaluators-implementation.md | dev/feature/05-deep-judgment-evaluators/05-deep-judgment-evaluators-review.md |
-| 06-readiness-synthesis | dev/feature/06-readiness-synthesis/06-readiness-synthesis-plan.md | dev/feature/06-readiness-synthesis/06-readiness-synthesis-implementation.md | dev/feature/06-readiness-synthesis/06-readiness-synthesis-review.md |
+| `01-propagator-orphan-pruning` | `dev/feature/01-propagator-orphan-pruning/01-propagator-orphan-pruning-plan.md` | `…-implementation.md` | `…-review.md` |
+| `02-retired-evaluator-removal` | `dev/feature/02-retired-evaluator-removal/02-retired-evaluator-removal-plan.md` | `…-implementation.md` | `…-review.md` |
+| `03-pr-review-conventions-skills` | `dev/feature/03-pr-review-conventions-skills/03-pr-review-conventions-skills-plan.md` | `…-implementation.md` | `…-review.md` |
+| `04-pr-review-orchestrator` | `dev/feature/04-pr-review-orchestrator/04-pr-review-orchestrator-plan.md` | `…-implementation.md` | `…-review.md` |
+| `05-mechanical-evaluators` | `dev/feature/05-mechanical-evaluators/05-mechanical-evaluators-plan.md` | `…-implementation.md` | `…-review.md` |
+| `06-narrative-and-test-health` | `dev/feature/06-narrative-and-test-health/06-narrative-and-test-health-plan.md` | `…-implementation.md` | `…-review.md` |
+| `07-synthesis-and-pr-posting` | `dev/feature/07-synthesis-and-pr-posting/07-synthesis-and-pr-posting-plan.md` | `…-implementation.md` | `…-review.md` |
+| `08-retirement-reconciliation` | `dev/feature/08-retirement-reconciliation/08-retirement-reconciliation-plan.md` | `…-implementation.md` | `…-review.md` |
 
-## Coverage Map
+**Phase document:** `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`
+**Manifest:** `dev/feature/phase-03-pr-review-execution-manifest.md`
 
-- Coverage Map: docs/phases/PHASE_05/PHASE_05_QA_COVERAGE_MAP.md
+---
+
+## Prerequisites
+
+### Test runner
+
+```bash
+cd /Users/jennywadkins/github_repos/github-agents-source-of-truth
+.venv/bin/python -m pytest tests/ -q
+```
+
+The system `python3` has no pytest — use the venv binary directly. The repo's normal
+`rtk` wrapper reported a hook-integrity failure during implementation; call the venv
+directly rather than through it.
+
+### The pinned fixture
+
+`dev/pr-review/fixtures/pinned-diff-range.md` defines the base/head pair. Read it before
+the dry run — it records what each evaluator is *expected* to find, which is what turns
+"the fan-out completed" into "the fan-out worked."
+
+| Field | Value |
+|---|---|
+| Base SHA | `f5ab960e5697756538f94430327e2a68eb113822` |
+| Head SHA | `e6ff28a36293697aebf62155ae0048115c4aecca` |
+| Origin | PR **#17**, `feat/visual-verification-package` |
+| Range | **3 commits, 26 files, 1288 insertions, 0 deletions** |
+
+Confirm both SHAs are present before you start:
+
+```bash
+git rev-parse --verify f5ab960e5697756538f94430327e2a68eb113822^{commit}
+git rev-parse --verify e6ff28a36293697aebf62155ae0048115c4aecca^{commit}
+git merge-base e6ff28a36293697aebf62155ae0048115c4aecca f5ab960e5697756538f94430327e2a68eb113822
+# -> f5ab960e5697756538f94430327e2a68eb113822  (the merge-base IS the base)
+```
+
+### The scratch consumer repo — required, and never this repository
+
+Sections 6 and 7 below **must not run against this repository**. They require an unset
+`origin/HEAD`, an unauthenticated `gh`, and a branch with no PR open — states this repo
+is not in and must not be put into. Create a throwaway:
+
+```bash
+scratch=$(mktemp -d)/consumer && mkdir -p "$scratch" && cd "$scratch"
+git init -b main && git commit --allow-empty -m "base"
+git checkout -b feature/scratch
+printf 'x\n' > f.txt && git add f.txt && git commit -m "add f"
+# give it a remote WITHOUT setting origin/HEAD:
+git remote add origin https://github.com/example/does-not-exist.git
+git symbolic-ref -q --delete refs/remotes/origin/HEAD   # ensure unset
+git update-ref refs/remotes/origin/main main            # a fetchable-looking origin/main
+```
+
+Copy the propagated family into the scratch repo's agent root for the harness under test,
+or point the harness at this repo's `.github/agents/` while `cwd` is the scratch repo —
+whichever your harness supports. **What must not happen is the orchestrator deriving a
+base, correcting a base, or invoking `gh` against this repository.**
+
+### Harnesses
+
+All three must be available to complete section 9: Claude Code, OpenCode, and Codex.
+Section 5 (Codex delegation) **requires Codex specifically** — the depth limit it tests
+does not exist on the other two.
+
+### Graph MCP
+
+The `code-review-graph` MCP server must be available for the happy-path dry run
+(sections 1–4) and **disabled** for section 8.
 
 ---
 
 ## Summary of Changes
 
-Phase 05 adds three shared skills and the 05a baseline-worktree specialist,
-then adds the 05-phase-final-review orchestrator and eleven evaluator agents:
-05b, 05c, 05d, 05e, 05f, 05g, 05h, 05i, 05j, 05k, and 05l. The feature set
-also adds a copied Phase 01/02 fixture, canonical master-QA/security/AC/readiness
-report contracts, ledger and commit-message baseline selection, bounded
-partial-failure handling, fixture-only verdict write-back, and propagation to
-Claude, OpenCode, and Codex.
+Phase 03 rescopes a whole-phase review family into a branch-diff review family.
 
-The current retained dry-run artifacts are intentionally bounded evidence, not
-complete runtime proof. They show a NO-GO fixture result, preserve P2-SEC-01,
-P2-SEC-02, and P2-SEC-03 as Persisting, and record missing evaluator reports as
-not-run. A release decision must wait for the manual checks below, especially
-the live 05d delegated scan and the complete evaluator fan-out.
+**Subtraction dominates.** Feature `01` gave `scripts/propagate_master_assets.py` the
+ability to remove generated outputs whose source asset is gone — a prerequisite, not a
+cleanup, since every later feature deletes or renames a source asset. Feature `02` then
+deleted five phase-shaped evaluators. Feature `04` deleted the riskiest code in the
+phase: the two-file transactional verdict write-back with unique-match ambiguity
+detection and restore-on-second-write-failure, along with ledger reading, subphase
+discovery, the `eval:` commit-message fallback, the artifact-inventory refusal gate, and
+archive-before-overwrite.
 
-## Automated Test Coverage
+**What ships:** the `05-pr-review` orchestrator plus seven evaluators —
+`05a-baseline-worktree` (preflight; holds `execute` for `git worktree`, recorded
+unclosable), `05b-change-narrator`, `05c-artifact-sweeper`, `05d-consistency-auditor`,
+`05e-dependency-auditor`, `05f-test-health` (fan-out), and `05g-readiness-synthesizer`
+(synthesis) — with `04e-diff-security-scan` delegated as the sixth concurrent evaluator.
+Two skills (`pr-review-conventions`, `pr-review-report`) carry the shared contracts;
+`worktree-baseline` is consumed unchanged.
 
-The existing tests/test_propagate_master_assets.py is the propagation gate
-used across the feature sequence. It currently passes 21 tests and 15
-subtests, including selected Phase Final Review source discovery, Claude/
-OpenCode/Codex renderer parity, the 05d NOT RUN/NO-GO contract, orchestrator
-output presence, and propagation safety behavior. The focused
-tests/test_readiness_synthesis_agents.py adds six source/mirror contract
-tests for 05l and 05i. These tests cover static declarations and generated
-output parity; they do not prove live agent execution, delegate delivery,
-report creation, line-limited returns, graph degradation, or fixture-safe
-write-back.
+Reports land at `dev/pr-review/<base-sha-short>-<UTC-timestamp>/`. **The key is derived
+entirely from a SHA and a timestamp — no branch name reaches a filesystem path, so no
+sanitizer exists to be wrong.** The verdict is advisory: the family writes no status line
+to any document.
 
-No new automated test files were required by the manifest checklist, but the
-current tree does contain the feature-06 focused file
-tests/test_readiness_synthesis_agents.py; it is counted as automated
-coverage, not manual QA. No application source or UI changes are in scope.
+## Automated Test Coverage — what NOT to hand-test
 
-The full suite is not green for this phase baseline: 394 passed and 2 known
-pre-existing hook-distribution tests failed. Do not use those failures as
-evidence that the Phase Final Review agents passed or failed; retain them as
-release context until their owning work is addressed.
+**196 tests across eight files.** Skip all of it; it is genuinely covered:
+
+- **Pruning** across all three roots, the repaired Codex skills guard, zero-deletions-on-unmodified-repo, `claude/agents/README.md` survival, deletion counts (`test_propagate_master_assets.py`, 38 tests)
+- **Orchestrator contracts** — deleted-machinery absence, base fallback order, self-exclusion, report-root shape, fixture SHA reachability (`test_pr_review_orchestrator.py`, 42 tests)
+- **Synthesis contracts** — no-status-line, P5-SEC-02 recorded open, posting consent settings, one-way output (`test_readiness_synthesis_agents.py`, 28 tests)
+- **Evaluator rescope** — subphase-concept absence, tool grants, added-line attribution prohibition, graph NOT-RUN contract (`test_mechanical_evaluators.py` 21, `test_narrative_and_test_health_agents.py` 23)
+- **Reconciliation** — roster of seven, dangling references in three pattern forms (slug, display name, and the unhyphenated prose form), counts recounted from disk, `.gitignore` both directions, propagation idempotency (`test_retirement_reconciliation.py`, 21 tests)
+- **Skills + retirement** (`test_pr_review_skills.py` 18, `test_retired_evaluator_removal.py` 5)
+
+**Suite state: `1 failed, 582 passed, 106 subtests`.**
+
+The single failure is **PERF-01** (`test_ac9_propagated_guard_median_latency_is_below_50_ms`).
+**It is not a Phase 03 regression and is out of scope for this plan:** at phase baseline
+`ae9823a` it fails at median 54.54 ms; at HEAD 54.35 ms — statistically identical. It is
+Phase 04's already-open release blocker. Do not scope QA to it, and **never relax the
+budget to make it pass** — that was done once (PR #22, 50→90 ms) and reverted.
+
+What the tests **cannot** reach, and this plan covers: an agent actually spawning, a
+report actually appearing on disk, a prompt actually not appearing, and a network call
+actually not being made.
 
 ---
 
 ## Manual QA Checklist
 
-The checklist is grouped by integration surface. Every evaluator check below
-must use the source-of-truth agent name and the fixture root
-dev/phase-final-review/fixtures/PHASE_05/. A report path is valid only when
-it is a readable, regular, non-empty file under the current
-dev/phase-final-review/PHASE_05/ report root. A missing report is a failed
-coverage check, never a pass.
+Organized by integration surface. Sections 1–4 share a single dry run — read them
+together before starting, because you are collecting evidence for all four from one
+execution.
 
-### Fixture and Baseline Preflight
+### 1. Assembled Fixture Dry Run — THE HEADLINE ITEM
 
-**Features:** 01-review-foundation, 02-final-review-orchestrator
-
-**Covers ACs:** 01/AC3–AC5, 02/AC3–AC5
-
-**Why manual:** Worktree state, local history selection, user confirmation,
-fixture provenance, and visible preflight refusal/warning behavior require a
-real repository and agent session.
+**Features:** all eight (the integration point)
+**Covers ACs:** `08`/AC1, `04`/AC7 (actual creation), `04`/AC13, `05`/AC5, `06`/AC7, `07`/AC3
+**Why manual:** No assertion over Markdown can observe a report being created. This run
+is the first execution of the assembled family in the phase's history, and it is
+required release evidence.
 
 #### Happy Path
 
-- [ ] **Inventory the synthetic subphases and preserved security case** — From the repository root, run rg --files dev/phase-final-review/fixtures/PHASE_05 | sort; compare the five Phase 01 source files with the five PHASE_05a files and the six Phase 02 source files with the six PHASE_05b files using the filename mapping in dev/phase-final-review/fixtures/README.md and cmp. Inspect PHASE_05b_SUMMARY.md and PHASE_05b-security-scan.md. **Expected:** Exactly PHASE_05a and PHASE_05b are discoverable pseudo-subphases; all copied contents compare byte-for-byte; the optional PHASE_05b_DISCOVERY_CONTEXT.md is present; the Phase 02 summary retains its release-blocked/NO-GO content; and P2-SEC-01, P2-SEC-02, and P2-SEC-03 are present in the copied security scan.
-- [ ] **Confirm a ledger-derived baseline before fan-out** — In the agent harness, invoke 05 Phase - Final Review with phase PHASE_05, explicit fixture root dev/phase-final-review/fixtures/PHASE_05/, and ledger run eval/runs/phase-phase-final-review-2/ledger-commits.jsonl; stop after preflight and do not start evaluators. **Expected:** Preflight says baseline source: ledger, shows the first feature checkpoint and its parent (the current evidence is first feature commit 291fc8a0c437e3014a09a9a3709157d0e597f81e and suggested baseline 48d37504bf7a59d29358a512cd4183c3f0fe0996), and requests explicit confirmation of that exact commit before delegating 05a.
-- [ ] **Exercise the commit-message fallback in a disposable clone** — Run tmp=$(mktemp -d), git clone --local "$PWD" "$tmp/repo", and rm -rf "$tmp/repo/eval/runs"; invoke the same orchestrator from $tmp/repo against its copied fixture and stop after preflight. **Expected:** Preflight names baseline source: eval commit-message fallback, derives the parent of the first eval: implement ... checkpoint for the first subphase, and asks for explicit confirmation; it never silently guesses or treats the missing ledger as a clean result.
-- [ ] **Refuse an itemized missing artifact** — Copy the fixture to a temporary directory with tmp=$(mktemp -d), cp -a dev/phase-final-review/fixtures/PHASE_05 "$tmp/PHASE_05", and rm "$tmp/PHASE_05/PHASE_05a/PHASE_05a_QA.md"; invoke the orchestrator with $tmp/PHASE_05 as the explicit fixture root and stop at preflight. **Expected:** The run refuses before evaluator fan-out and prints an item beginning MISSING — PHASE_05a — that identifies the QA document category, expected path/pattern, and concrete missing-file reason.
-- [ ] **Run 05a and verify owned worktree cleanup** — Invoke Baseline Worktree with repository root /Users/jennywadkins/github_repos/github-agents-source-of-truth, baseline 48d37504bf7a59d29358a512cd4183c3f0fe0996, and a new absolute target under a temporary directory. Inspect the returned text, then tell the agent the review is complete and inspect git worktree list --porcelain. **Expected:** The agent returns an absolute path only after detached HEAD and clean-status checks, the return is no more than 10 lines and states created/reused status, and an owned worktree is removed while a reused or dirty worktree is not removed.
+- [ ] **Record the pre-run state** — Run `ls dev/pr-review/ 2>/dev/null` and `git status --porcelain`. **Expected:** `dev/pr-review/` contains only `fixtures/`; the working tree is clean. A pre-existing run directory would confound the check.
+- [ ] **Invoke the orchestrator against the pinned fixture** — With the `code-review-graph` MCP server available, invoke `05 PR - Review` with base `f5ab960e5697756538f94430327e2a68eb113822` and head `e6ff28a36293697aebf62155ae0048115c4aecca`. Answer the upfront block; confirm the suggested base or correct it to `f5ab960`. **Expected:** the run proceeds through preflight (`05a`), a six-way concurrent fan-out, and synthesis, reaching a written report without aborting.
+- [ ] **Verify exactly one run directory was created** — `ls -d dev/pr-review/*/ | grep -v fixtures`. **Expected:** exactly one directory, named `f5ab960-<UTC-YYYYMMDDTHHMMSSZ>` — a short SHA and a timestamp. **No branch name (`feat/visual-verification-package`) appears in any path component.**
+- [ ] **Verify all eight reports landed under that one directory** — `ls <run-dir>/`. **Expected:** `05a-baseline-worktree-report.md`, `05b-change-narrator-report.md`, `05c-artifact-sweeper-report.md`, `05d-consistency-auditor-report.md`, `05e-dependency-auditor-report.md`, `05f-test-health-report.md`, `05g-readiness-synthesizer-report.md`, `readiness-report.md`, **plus the `04e` diff-security report**. Each is a readable, regular, **non-empty** file. **A missing report is a failed coverage check, never a pass.**
+- [ ] **Verify no evaluator is recorded `not-run`** — Read `<run-dir>/readiness-report.md`'s `Checks Not Run` section and `<run-dir>/evaluator-status.jsonl`. **Expected:** `Checks Not Run` is empty or absent; every evaluator has a status record with a non-null report path. **Per the recorded contract, a run with any required evaluator recorded `not-run` is below-GO evidence, not a passing run — re-run after fixing the wiring rather than accepting it.**
+- [ ] **Verify each evaluator found its expected material** — Cross-check each report against the per-evaluator table in `dev/pr-review/fixtures/pinned-diff-range.md`. **Expected:** `05c` flags the `Debug.Log` artifacts in `Tests/CaptureRunner.cs` and `Editor/CreateConfigMenu.cs`; `05e` names the `com.unity.test-framework: 1.6.0` dependency in `package.json`; `05f` reports the four C# files added under `Tests/`; `05d` names Unity package conventions (`.meta` pairing, `.asmdef`, UPM layout); `04e` covers the new filesystem-writing C#. **An evaluator that reports "nothing to report" against this fixture has not worked — the fixture was chosen specifically so each finds something real.**
+- [ ] **Verify the verdict is advisory and written nowhere else** — Run `git status --porcelain docs/phases/PROJECT_ROADMAP.md docs/phases/PHASE_03/PHASE_03_SUMMARY.md`. **Expected:** both unmodified. The report file is the only verdict; no status line is written to any document on any path.
+- [ ] **Verify run output stays untracked** — `git status --porcelain dev/pr-review/`. **Expected:** no output — the run directory is gitignored while `dev/pr-review/fixtures/` remains tracked.
 
-#### Error Handling
+#### Edge Cases
 
-- [ ] **Verify the wrong-model warning ordering** — Start the orchestrator in a session using a model below the declared state-of-the-art tier and invoke it against the fixture. **Expected:** A visible model-tier warning appears before any preflight input is read or evaluator work starts; the run records the limitation as an execution condition and does not count it as a pass.
+- [ ] **Verify no misattribution of pre-existing findings** — For each finding in `05c-artifact-sweeper-report.md`, confirm the cited line is an **added** line in the range: `git diff f5ab960..e6ff28a -- <file> | grep '^+'`. **Expected:** every finding corresponds to a line the branch added. **A file the branch touched is not the same as a line the branch added** — reporting a file's pre-existing TODOs because the branch touched one line trains the reader to ignore the report.
 
-### Mechanical Evaluator Runtime
+### 2. Single-Interaction Contract
 
-**Features:** 03-mechanical-evaluators
+**Features:** `04`, `07`
+**Covers ACs:** `08`/AC2, `04`/AC2, `07`/AC10
+**Why manual:** A prompt is a runtime event. The agent body can promise one question
+block while the run asks a second one. **This is the requirement most likely to erode
+silently, one reasonable question at a time** — which is exactly why it is verified on
+the assembled system rather than per feature.
 
-**Covers ACs:** 03/AC1–AC5
+- [ ] **Count the question blocks in the section-1 run** — Review the full transcript of the dry run from invocation to written report. **Expected:** **exactly one** question block, before any evaluator work, containing (a) the model-tier warning if the active model is not state of the art, (b) the suggested base with its derivation source stated (e.g. `base source: refs/remotes/origin/HEAD`), and (c) the PR-comment choice. After that block: **no further prompt of any kind** through to the written report.
+- [ ] **Verify the base-confirmation prompt names the three failure cases** — Read the base-confirmation portion of the block. **Expected:** it names all three cases where the suggestion is actively wrong — a branch cut from another feature branch, a rebased branch, and a squash-merged base — and presents correction as first-class, not as an escape hatch.
+- [ ] **Verify the *post automatically* option states its cost** — Read the PR-comment portion of the block. **Expected:** it plainly states that *post automatically* publishes an unread verdict to collaborators, and that a posted comment is not undone by reverting the agent.
 
-**Why manual:** The graph dependency, report-writing behavior, known fixture drift,
-no-dependency result, and observed return length are runtime outcomes.
+### 3. Forced-Failure Run — Fail-Closed Semantics
 
-#### Happy Path
+**Features:** `04`, `07`
+**Covers ACs:** `08`/AC3, `04`/AC10 (behavior), `04`/AC11, `07`/AC4
+**Why manual:** Partial-failure semantics only exist at runtime. The most dangerous
+failure mode in this family is an evaluator failure that silently reads as a clean check.
 
-- [ ] **Dry-run 05g with the graph available** — After confirming the fixture baseline, run 05g-artifact-sweeper through 05 Phase - Final Review against dev/phase-final-review/fixtures/PHASE_05/; inspect dev/phase-final-review/PHASE_05/05g-artifact-sweeper-report.md and the returned summary. **Expected:** The report is a readable non-empty artifact sweep scoped to the baseline-to-final diff, the graph dead-code check is either evidenced or explicitly bounded, no unrelated repository dead code is attributed to the phase, and the return is no more than 10 lines.
-- [ ] **Dry-run 05j against the two fixture subphases** — Run 05j-consistency-auditor through the orchestrator with the same fixture and inspect 05j-consistency-auditor-report.md and its return. **Expected:** The report is non-empty, names at least one concrete Phase 01-versus-Phase 02 naming, error-handling, or repeated-pattern drift with both evidence and a canonical recommendation, and the return is no more than 10 lines.
-- [ ] **Dry-run 05k with no dependency-manifest changes** — Run 05k-dependency-auditor through the orchestrator against the fixture and inspect 05k-dependency-auditor-report.md. **Expected:** The report contains a completed no new dependencies check and a return of no more than 10 lines; any unavailable license or vulnerability evidence is listed as NOT RUN rather than represented as a clean scan.
+- [ ] **Force one fan-out evaluator to fail and re-run** — Repeat the section-1 run with one concurrent evaluator forced to fail (make `05e-dependency-auditor` unresolvable to the harness, or induce a bounded-wait timeout). **Expected:** the run **completes** and reaches a written `readiness-report.md`. The failure never aborts the run and **never becomes a passing result**.
+- [ ] **Verify the missing check is named with its reason** — Read `readiness-report.md`'s `Checks Not Run` section. **Expected:** it names the evaluator, the specific check, and a **concrete reason** — not a generic "some checks did not run."
+- [ ] **Verify the status record** — Read `<run-dir>/evaluator-status.jsonl`. **Expected:** a record for the failed evaluator naming evaluator, check, reason, and `report: null`.
+- [ ] **Verify the verdict ceiling dropped** — Read the verdict line. **Expected:** **not `GO`.** Even with no other blocker found, the maximum outcome is "no blockers found, coverage incomplete." A `GO` verdict with a non-empty `Checks Not Run` is a release blocker for this phase.
+- [ ] **Verify no new prompt appeared on the failure path** — Review the transcript. **Expected:** the evaluator failure introduced no question; the run reached the report unattended.
+- [ ] **Force the preflight evaluator to fail** — Re-run with `05a-baseline-worktree` failing. **Expected:** the run **stops**. `05a` is preflight, not a fan-out evaluator — nothing can run before the baseline exists, so its failure is the one failure that must abort. This asymmetry against the previous check is the point.
 
-#### Error Handling
+### 4. Return Discipline
 
-- [ ] **Stop the graph dependency and rerun 05g** — In a disposable agent-harness profile, disable the code-review-graph MCP server or make refactor_tool unavailable, then invoke 05g against the unchanged fixture. **Expected:** The dead-code/graph check is recorded as NOT RUN with the concrete tool failure reason, the evaluator status is not-run or incomplete, and the eventual readiness ceiling is below GO; no clean sweep is fabricated.
+**Features:** `04`, `05`, `06`
+**Covers ACs:** `08`/AC4, `04`/AC12, `05`/AC5, `06`/AC7
+**Why manual:** Observed on the run. This contract is the phase's only defense against a
+long-lived branch blowing out context.
 
-### Delegating Evaluator Runtime
+- [ ] **Count every subagent return in the section-1 transcript** — For each of `05a`, `05b`, `05c`, `05d`, `05e`, `05f`, `05g`, and `04e`, count the lines of the payload returned to the orchestrator. **Expected:** **every return is ≤10 lines**, with full detail on disk in the corresponding report. `05b-change-narrator` is the one to watch — it holds the top model tier and is most exposed to a large diff.
+- [ ] **Verify the orchestrator never read code or diffs** — Review the orchestrator's own transcript. **Expected:** it inspects path metadata and reads only structured reports under the run's report root. It never opens a source file or a diff.
 
-**Features:** 04-delegating-evaluators
+### 5. Codex Runtime Delegation — NOT statically verifiable
 
-**Covers ACs:** 04/AC1–AC4, 04/AC6
+**Features:** `06`
+**Covers ACs:** `06`/AC5, `06`/AC5b
+**Why manual:** **Codex `max_depth` defaults to 1, and a blocked spawn causes a silent
+inline fallback** — the agent does the work itself and **reports success**.
+`05f`→`test-analyst` and `05b`→per-directory readers both sit at **depth 2**. The agent
+body will correctly say "delegate" while the runtime does not. **A static assertion over
+the agent body cannot detect this**, and feature `06`'s record marks AC5b "Verification
+deferred to manual QA" rather than Done. Recorded in
+`.github/learnings/debugging-learnings.md:25–38`.
 
-**Why manual:** These checks cross agent boundaries and require observing delegated
-Security Scan/Test - Analyst responses and the resulting reports.
+**Run this on Codex specifically.** The depth limit does not exist on Claude or OpenCode,
+so a green run there proves nothing about this AC.
 
-#### Happy Path
+- [ ] **Verify `05f` actually spawns `test-analyst`** — On Codex with default settings, run `05f-test-health` through the orchestrator against the fixture range. **Inspect the runtime transcript for the child invocation — do not infer delegation from the prompt text.** **Expected:** a `test-analyst` child invocation appears in the transcript. **If the transcript shows `05f` doing coverage analysis inline while reporting success, AC5b has failed** — that is the silent fallback, and it looks exactly like a pass from the report alone.
+- [ ] **Verify `05b` spawns per-directory readers when it chunks** — Same run, inspect `05b`'s transcript. **Expected:** either per-directory reader children appear, or `05b` chunks internally without claiming to have delegated. A claim of delegation with no child invocation is the failure.
+- [ ] **Verify the depth requirement is surfaced, not silently absorbed** — Where a depth-2 spawn is blocked, check the report and status record. **Expected:** the blocked spawn is reported as a condition (NOT RUN with the depth reason), not absorbed into an inline result presented as delegated work.
+- [ ] **Raise `max_depth` to 2 and re-run** — Re-run with the depth limit raised. **Expected:** the child invocations now appear in the transcript. This confirms the depth limit — rather than agent wiring — was the cause, and distinguishes a configuration finding from a code defect.
 
-- [ ] **Dry-run 05c and inspect the consolidated walkthrough** — Run 05c-qa-consolidator through the orchestrator against the fixture and inspect master-qa.md plus 05c-qa-consolidator-report.md. **Expected:** The canonical report is readable and non-empty, every retained check appears once, superseded checks are recorded, conflicts are visible, and the current fixture baseline is consistent with 31 retained checks and three supersessions; all source manual checks remain NOT RUN unless actually executed. The evaluator return is no more than 10 lines.
-- [ ] **Dry-run 05d with the Security Scan delegate available** — Run 05d-security-rollup through the orchestrator against the fixture with the existing Security Scan agent available; inspect security-rollup.md, 05d-security-rollup-report.md, and the run-status record. **Expected:** P2-SEC-01, P2-SEC-02, and P2-SEC-03 each appear exactly once with one of the template classifications Fixed, Persisting, or Reintroduced; the delegated final-scan report/path is visible; final evidence, not absence of evidence, controls a Fixed result; and the return is no more than 10 lines.
-- [ ] **Dry-run 05h and inspect delegated health evidence** — Run 05h-test-health through the orchestrator against the fixture with Test - Analyst available; inspect 05h-test-health-report.md. **Expected:** The report has distinct coverage-delta, cross-subphase redundancy, and flake-candidate sections, explicitly says not-measurable when coverage tooling/evidence is unavailable, preserves delegate evidence paths, and the return is no more than 10 lines.
+### 6. Live Base Derivation — scratch consumer repo ONLY
 
-#### Error Handling
+**Features:** `04`
+**Covers ACs:** `04`/AC3, `04`/AC4, `04`/AC6
+**Why manual:** Requires a real repository in states this one is not in and must not be
+put into. **Never run this section against this repository.**
 
-- [ ] **Force the Test - Analyst delegate to fail** — In a disposable harness profile, make Test - Analyst unavailable or time it out and rerun 05h against the fixture. **Expected:** 05h writes a NOT RUN/incomplete result with the concrete delegate reason, the evaluator status records the missing check, and the readiness ceiling is below GO; missing analysis is never presented as healthy coverage.
+- [ ] **Verify the `origin/HEAD` → `origin/main` fallback** — In the scratch repo (with `refs/remotes/origin/HEAD` unset per Prerequisites), invoke the orchestrator and stop at the upfront block. **Expected:** the suggestion resolves to `origin/main` and the block **states the derivation source**, naming the fallback rather than presenting the guess as authoritative.
+- [ ] **Verify the `origin/master` fallback** — Delete `refs/remotes/origin/main` and add `refs/remotes/origin/master` (`git update-ref refs/remotes/origin/master main && git update-ref -d refs/remotes/origin/main`); re-invoke. **Expected:** suggestion resolves to `origin/master`, source stated.
+- [ ] **Verify the candidate-selection terminal fallback** — Remove both remote refs and re-invoke. **Expected:** the run **presents the candidate branches and requires a selection**. It does not guess, and it does not proceed without one.
+- [ ] **Verify self-exclusion** — At each fallback above, inspect the candidate set offered. **Expected:** neither the current branch (`feature/scratch`) nor its own remote-tracking ref (`origin/feature/scratch`) appears as a suggestion. Both report HEAD as their own merge-base, so a naive nearest-merge-base heuristic always picks the branch under review — yielding a diff of nothing and a run that reviews an empty change while reporting success.
+- [ ] **Verify a base correction propagates to every downstream evaluator** — Supply a base override that differs from the suggestion; let the run proceed to fan-out. **Expected:** `git merge-base HEAD <corrected-base>` is recomputed against the corrected base, and **every** evaluator receives the corrected merge-base. Confirm from each evaluator's report header, not from the orchestrator's claim. A single evaluator still holding the suggested base silently skews its findings.
 
-### Deep-Judgment Evaluator Runtime
+### 7. Live PR Posting and Consent — scratch consumer repo ONLY
 
-**Features:** 05-deep-judgment-evaluators
+**Features:** `07`
+**Covers ACs:** `07`/AC7, `07`/AC8
+**Why manual:** "No network call was made" is not assertable over Markdown. The review
+found the `gh pr comment` command guard **inert** (Issue #4) and the posting path's own
+one-way clause **unguarded** (Issue #3, its most serious finding) — both repaired, but
+the runtime behavior remains unverified.
 
-**Covers ACs:** 05/AC1–AC5
+- [ ] **Verify *never* makes no network call** — In the scratch repo, choose **never** in the upfront block and complete a run. Observe network activity (`sudo tcpdump -i any -n host api.github.com`, or a `gh` shim on `PATH` that logs and exits non-zero). **Expected:** the report is written locally and **no `gh` invocation and no network call occur on this path**.
+- [ ] **Verify *ask when ready* writes the report BEFORE prompting** — Choose **ask once the report is written**. When the prompt appears, **before answering**, check `ls -la <run-dir>/readiness-report.md` from another shell. **Expected:** the report **already exists on disk** and is complete. This is the whole design: the prompt blocks nothing because the work is already done.
+- [ ] **Verify the no-PR-open path is not an error** — With the scratch branch having no PR open, choose **post automatically** and complete the run. **Expected:** the condition is **reported alongside the local report**, the local report stands as the deliverable, the run does not fail, and **no new prompt appears**.
+- [ ] **Verify unauthenticated `gh` is not an error** — Run with `GH_TOKEN=` and `GH_CONFIG_DIR=$(mktemp -d)` so `gh auth status` fails; choose **post automatically**. **Expected:** the condition is reported alongside the local report; the run completes; the verdict is unchanged. **A posting condition never changes the verdict and never becomes an evaluator failure.**
+- [ ] **Verify output is one-way** — Review the transcript of any posting run. **Expected:** the agent never reads PR comments or any network-sourced text back in. Ingesting PR discussion is a prompt-injection surface and is out of scope for this phase.
 
-**Why manual:** Chunked narrative behavior, complete matrix cardinality, graph
-availability, and observed return payloads are not proven by static contracts.
+### 8. Graph MCP Unavailable — degradation, not silent substitution
 
-#### Happy Path
+**Features:** `05`
+**Covers ACs:** `05` graph-dependency contract, `05`/AC6
+**Why manual:** Both `05c-artifact-sweeper` and `05d-consistency-auditor` carry
+code-review-graph dependencies. Availability is a **dependency, not a fallback**: an
+unavailable graph is a NOT RUN with a reason, **never a quiet grep that reports as though
+the graph answered**.
 
-- [ ] **Dry-run 05b with bounded diff chunks** — Run 05b-change-narrator through the orchestrator against the fixture with a confirmed baseline; inspect 05b-change-narrator-report.md and the return. **Expected:** The report contains per-subphase attribution, records any shared churn hotspots, identifies the chunking boundary, does not claim a single unbounded full-diff read, and the return is no more than 10 lines.
-- [ ] **Dry-run 05e and verify all 26 AC rows** — Before running, count the checked success-criteria rows with rg -c '^- \[[ x]\] ' dev/phase-final-review/fixtures/PHASE_05/PHASE_05a/PHASE_05a_SUMMARY.md and the corresponding PHASE_05b_SUMMARY.md; add the two counts. Run 05e-ac-regression through the orchestrator and inspect ac-regression-matrix.md and the evaluator hand-off. **Expected:** The matrix has exactly 26 rows (17 from PHASE_05a plus 9 from PHASE_05b), every row has a status, manual-only criteria are INCONCLUSIVE (not-verifiable) or NOT RUN with reasons, and the return is no more than 10 lines.
-- [ ] **Run 05f with both graph operations available** — With the code-review-graph server available, run 05f-seam-analyzer through the orchestrator and inspect 05f-seam-analyzer-report.md. **Expected:** The report evidences exact get_impact_radius and get_bridge_nodes calls and ends with either concrete seam findings or the completed conclusion no seams detected; it does not silently substitute another operation, and the return is no more than 10 lines.
+- [ ] **Disable the graph and re-run `05c`** — In a disposable harness profile, disable the `code-review-graph` MCP server; run `05c-artifact-sweeper` through the orchestrator against the fixture. **Expected:** the graph-dependent check is recorded **NOT RUN with the concrete tool-unavailability reason**; the evaluator status records the missing check; the verdict ceiling drops below GO. **No clean sweep is fabricated, and no grep result is presented as a graph answer.**
+- [ ] **Disable the graph and re-run `05d`** — Same, for `05d-consistency-auditor`. **Expected:** NOT RUN for the graph-derived canonical-form check — **but note the designed partial degradation**: drift evidenced directly from the diff is **still reported**, with its recommendation marked **not-derived**. `05d` degrades partially rather than going dark. Both halves must be present: the report is not empty, and the undelivered half is labelled.
+- [ ] **Confirm `05e` is unaffected** — Run `05e-dependency-auditor` with the graph still disabled. **Expected:** it completes normally — it holds no graph dependency. If `05e` reports a graph-related NOT RUN, it has acquired a dependency its contract does not declare.
 
-#### Error Handling
+### 9. Cross-Harness Loading
 
-- [ ] **Run 05f with the graph unavailable** — Disable the code-review-graph MCP server or make either required operation unavailable, then rerun 05f against the fixture. **Expected:** The report/status identifies the exact unavailable operation or name mismatch as NOT RUN, records the follow-up, and never calls the absence of graph evidence no seams detected; the return is no more than 10 lines.
+**Features:** all eight
+**Covers ACs:** cross-cutting; `03`/AC8, `04`/AC14, `05`/AC9, `06`/AC8, `07`/AC12 (runtime half)
+**Why manual:** File parity is asserted by tests. That three different runtimes each
+*load* the family is not.
 
-### Full-Flow Synthesis and Verdict Lifecycle
+- [ ] **Load the family on Claude Code** — Start a session and confirm all eight agents resolve: `05 PR - Review`, `05a`–`05g`. **Expected:** all 8 resolve and are invocable; no unresolved-tool-name error. (A command-scoped `tools:` entry is an *unresolved tool name* and makes Claude Code refuse to launch the subagent — which is why per-agent command scoping was deleted from this phase.)
+- [ ] **Load the family on OpenCode** — Same check against `opencode/agents/`. **Expected:** all 8 load; no orphaned old-slug file shadows a renamed agent. OpenCode filenames are keyed on the **source slug** and orphan on every renumber, so this is where a missed prune surfaces.
+- [ ] **Load the family on Codex** — Same check against `codex/agents/`. **Expected:** all 8 load from their generated TOML.
+- [ ] **Verify the retired slash command is gone and its replacement is live** — On Claude, list available slash commands. **Expected:** no `phase-final-review` command; the `pr-review` command is present and points at `05 PR - Review`. **A surviving stale command is the sharpest dangling reference possible — it stays user-invocable while pointing at a deleted agent.**
+- [ ] **Verify no retired agent is loadable on any harness** — On each harness, attempt to resolve `05c-qa-consolidator`, `05d-security-rollup`, `05e-ac-regression`, `05f-seam-analyzer`, `05i-learnings-harvester`. **Expected:** none resolves on any of the three. Note `05c`–`05f` are now **live slugs belonging to different agents** — confirm the *new* agent answers (`05c` is the artifact sweeper, `05d` the consistency auditor, `05e` the dependency auditor, `05f` test health), not a surviving old one.
 
-**Features:** 02-final-review-orchestrator, 04-delegating-evaluators,
-05-deep-judgment-evaluators, 06-readiness-synthesis
+---
 
-**Covers ACs:** 02/AC6–AC7, 04/AC6, 06/AC1–AC8
+## Cross-Cutting Concerns
 
-**Why manual:** This is the cross-agent release decision path: live report
-fan-out, fail-closed synthesis, severity ordering, real-history evidence, and
-fixture-only status write-back.
+### Performance
 
-#### Happy Path
+- [ ] **Observe the fan-out's context behavior on the fixture** — During the section-1 run, watch for context pressure across the six concurrent evaluators. **Expected:** the run completes without context exhaustion. The ≤10-line return contract and reports-on-disk pattern are the only defenses here, and 26 files / 1288 insertions is a deliberately modest proxy for a long-lived branch. **If context pressure appears at this size, it is a finding** — a real PR will be larger.
 
-- [ ] **Run the complete fixture flow through 05l** — With the orchestrator, all 05a–05l evaluators, code-review-graph, Security Scan, and Test - Analyst available, run preflight through 05l against dev/phase-final-review/fixtures/PHASE_05/; verify master-qa.md, security-rollup.md, ac-regression-matrix.md, and readiness-report.md are readable non-empty files. **Expected:** All four canonical artifacts exist; the security rollup classifies P2-SEC-01..03; the AC matrix contains all 26 fixture criteria; the readiness blocking list is severity ordered; and the fixture's known High findings keep the final verdict NO-GO until remediated. Each evaluator return is no more than 10 lines.
-- [ ] **Run a forced-failure full flow** — Repeat the full flow with 05d-security-rollup forced to fail (the retained archive pattern is runs/20260715T230000Z-2/); inspect evaluator-status.jsonl and the run-specific readiness report. **Expected:** The run reaches synthesis without aborting, records 05d with status not-run and a concrete reason/report path of null, names that missing check under Checks Not Run, and returns NO-GO; even if no other blocker exists, the maximum outcome is no blockers found, coverage incomplete.
-- [ ] **Exercise fixture-only verdict write-back** — Run the completion step with write-back targets set to dev/phase-final-review/fixtures/PHASE_05/write-back/PROJECT_ROADMAP.md and dev/phase-final-review/fixtures/PHASE_05/write-back/PHASE_05_SUMMARY.md; compare the real files before and after with git diff --exit-code -- docs/phases/PROJECT_ROADMAP.md docs/phases/PHASE_05/PHASE_05_SUMMARY.md. **Expected:** Only the fixture copies receive the exact NO-GO status-line replacement; no manual edit is needed; the real roadmap and phase summary remain unchanged.
-- [ ] **Harvest a real-history learning proposal with 05i** — Run 05i-learnings-harvester against the repository's Phase 01/02 and Phase Final Review history, including 4dd01e9, eval/runs/phase-phase-final-review-2/ledger-commits.jsonl, and its ledger-events.jsonl; inspect 05i-learnings-harvester-report.md and both draft directories. **Expected:** At least one evidence-backed learning or instruction proposal exists under the current report root, cites real history/QA/ledger evidence, has the required draft structure, returns no more than 10 lines, and does not edit accepted .github/learnings/ or .github/instructions/ files.
+*PERF-01 is excluded by design — it is Phase 04's open blocker, unchanged by this phase (54.54 ms at baseline vs 54.35 ms at HEAD).*
 
-### Cross-Harness Propagation and Safety
+### Security
 
-**Features:** 01-review-foundation, 02-final-review-orchestrator,
-03-mechanical-evaluators, 04-delegating-evaluators,
-05-deep-judgment-evaluators, 06-readiness-synthesis
+- [ ] **Confirm P5-SEC-02 is recorded open, not closed by prose** — Read `05g-readiness-synthesizer.agent.md:77–85` (Trust Boundary) and `.github/learnings/cross-phase-decisions.md:88–108`. **Expected:** P5-SEC-02 is recorded **OPEN** with a named owner and routing to a future hook-/script-owning phase. It is **not** marked closed. This is correct and by design: the finding closes only by attaching a schema and deterministic reducer *in code*, and this phase ships agent Markdown. Mutation-verified — flipping the declaration to "closed" trips `test_p5_sec_02_is_recorded_open_in_the_synthesizer`. **Verify it is still open; do not attempt to close it.**
+- [ ] **Verify read-only boundaries after every run above** — After each section's runs, check `git status --porcelain .github/ scripts/ tests/ docs/`. **Expected:** no modifications. Evaluators are read-only against source; only the run's report directory changes.
+- [ ] **Verify the baseline worktree is cleaned up** — After the section-1 run, `git worktree list --porcelain`. **Expected:** no leftover worktree from `05a`, unless it was reused or dirty (in which case it is correctly left alone).
 
-**Covers ACs:** 01/AC6, 02/AC8, 03/AC6, 04/AC7, 05/AC6, 06/AC9
+### Accessibility
 
-**Why manual:** The manifest requires propagation after every feature; the
-current automated list explicitly names only a subset of the 05x agents, so
-the remaining source-to-harness naming and loading paths need a real
-cross-harness smoke check.
-
-- [ ] **Propagate and smoke-check each feature checkpoint** — At each feature checkpoint, run .venv/bin/python scripts/propagate_master_assets.py --once, then inspect claude/, opencode/, and codex/ outputs and rerun the command. Check feature 01's three skills plus 05a, feature 02's orchestrator, feature 03's 05g/05j/05k, feature 04's 05c/05d/05h, feature 05's 05b/05e/05f, and feature 06's 05i/05l. **Expected:** Every source asset is present in the appropriate Claude/OpenCode/Codex representation, delegated names resolve after z- renaming where applicable, the second propagation is a no-op, and no unrelated output changes are introduced.
-- [ ] **Verify read-only boundaries in a disposable run** — Capture the pre-run status/diff for .github/agents/, .github/skills/, scripts/, tests/, docs/phases/PROJECT_ROADMAP.md, and docs/phases/PHASE_05/PHASE_05_SUMMARY.md; run the complete fixture flow and fixture-only write-back; compare those paths afterward. **Expected:** Evaluators and synthesis do not modify source, tests, configuration, the live roadmap, or the live phase summary; only the declared report root and fixture write-back copies change.
+Not applicable — this phase ships agent Markdown and one Python script. No UI surface exists.
 
 ---
 
 ## Notes
 
-- Current retained artifacts are bounded and fail closed: the readiness report
-  is NO-GO, the final delegated Security Scan is absent, and eight evaluator
-  checks are recorded as not-run. Do not promote those artifacts to complete
-  runtime evidence.
-- P2-SEC-01, P2-SEC-02, and P2-SEC-03 must remain individually visible in the
-  security rollup and readiness blocking list. A source finding without final
-  evidence cannot be labelled Fixed.
-- The fixture's Phase 01/02 documents are copied evidence, not the Phase 05
-  product under review. Do not execute the 31 underlying Phase 01/02 manual
-  walkthrough rows as Phase 05 evaluator tests; the Phase 05 manual scope is
-  the fixture/evaluator/orchestrator integration above.
-- No frontend/UI changes exist in this phase, so no visual UI or accessibility
-  checklist is required.
-- The repository's normal rtk wrapper reported a hook-integrity failure during
-  implementation; QA commands above use the project .venv directly.
+- **Update — 2026-07-16:** Document rewritten for the rescoped Phase 03 PR Review family. The prior body targeted the pre-rescope Phase Final Review family; feature `02` deleted all five of its evaluators and feature `08` retired its 13-file fixture root, making every prior checklist item unexecutable. See the banner at the top.
+
+- **The single most important thing in this document is section 1.** Eight features passed review in isolation; nothing has run them together. Feature `08`'s own record puts it plainly: *"Do not read this feature's green suite as evidence the family runs."*
+
+- **A green suite is not a baseline for this phase.** Feature `08` reconciled 561→581 passed (exactly +20, accounted for). But the tests assert contracts over Markdown bodies — they prove the family is *described* correctly. They were never capable of proving it runs.
+
+- **Two review issues were repaired late and remain runtime-unverified** (`07` Issues #3 and #4): the posting path's one-way clause was unguarded, and the `gh pr comment` command — the mechanism AC7 rests on — could be deleted with its test green. Both fixed; section 7 is where their runtime behavior is confirmed for the first time.
+
+- **Known open, deliberately:** `07` Issue #5 (`REPORT_PATH` asserted against raw `_body()`, reintroducing wrap-coupling) and `05` Issues #4–#6 (phrasing-specific proxy guards, order-sensitive tool-list equality, hardcoded `GRAPH_DEPENDENT_EVALUATORS`). All Low, all latent rather than live, all deferred to a cleanup pass. Not QA items.
+
+- **Recorded but out of scope** (from `08`'s gaps): `04-phase-execute.agent.md:176` carries a `### Step 6: Phase Final Review` heading that actually refers to **Prod Code Review** — a name collision, not a dangling reference, in a file this phase does not own. `docs/CODEBASE_CONTEXT.md:87–88` carries two count claims ("6 orchestrators", "11 visible user-facing agents") that disagree with disk and **were already wrong at baseline** — this phase changed neither number and correctly declined to widen scope into them.
+
+- **The fixture's one recorded weakness:** the pinned range has **zero deletions**, so it is a weaker proxy for a refactor- or removal-shaped PR. This was accepted deliberately — no bounded pair in this repo's history has a dependency change *and* a test delta *and* deletions — with roster coverage weighted above shape completeness. **The fix, if a removal-shaped dry run is ever needed, is a second fixture, not a resize of this one.**
+
+- **`dev/pr-review/fixtures/` is tracked; `dev/pr-review/<sha>-<timestamp>/` is not.** Feature `04` AC10b un-ignored the fixture path (it would otherwise have been silently untracked, failing the dry run invisibly) and feature `08` removed the four dead `dev/phase-final-review/` rules. Both directions are asserted through real traversal — but if you find run output appearing in `git status`, stop and investigate rather than adding an ignore rule.
