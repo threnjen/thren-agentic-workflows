@@ -209,7 +209,7 @@ must stop the run, while an evaluator failure must not.
 | Position | Agents | When |
 |---|---|---|
 | Preflight | `05a-baseline-worktree` | Before fan-out. Its failure stops the run. |
-| Fan-out (concurrent) | `05b`, `05c`, `05d`, `05e`, `05f`, and `04e-diff-security-scan` | **Six**, concurrently, after the base is confirmed. |
+| Fan-out (concurrent) | `05b-change-narrator`, `05c-artifact-sweeper`, `05d-consistency-auditor`, `05e-dependency-auditor`, `05f-test-health`, and `04e-diff-security-scan` | **Six**, concurrently, after the base is confirmed. |
 | Synthesis | `05g-readiness-synthesizer` | Last. Consumes the others' reports and status records. |
 
 `05a` is not a fan-out evaluator: nothing can run before the baseline exists.

@@ -230,10 +230,18 @@ def test_test_health_names_its_evidence_source() -> None:
 
 def test_test_health_consumes_the_baseline_worktree_rather_than_creating_one() -> None:
     """AC6. `05a-baseline-worktree` owns the checkout. `05f` has no `execute` and
-    could not create one anyway -- but the instruction must not invite trying."""
+    could not create one anyway -- but the instruction must not invite trying.
+
+    The delegation names the agent by its *display name*, backticked, because
+    that is the only form `_build_agent_reference_map` can rewrite: it keys on
+    `agent.name`, so a slug reference propagates verbatim into roots where the
+    agent is filed as `z-baseline-worktree` and resolves to nothing. Assert the
+    backticked form -- bare "baseline worktree" also occurs in surrounding prose
+    and would make this guard inert.
+    """
     body = _prose(TEST_HEALTH)
 
-    assert "05a-baseline-worktree" in body
+    assert "`baseline worktree`" in body
     assert "do not create, switch, or remove a worktree yourself" in body
 
 

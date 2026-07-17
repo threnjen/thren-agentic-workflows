@@ -615,7 +615,9 @@ def test_roster_declares_three_positions_not_a_flat_range() -> None:
 def test_fan_out_is_six_evaluators_including_the_security_seam() -> None:
     body = _prose()
 
-    assert "04e-diff-security-scan" in body
+    # Display name, not slug: `_build_agent_reference_map` keys on `agent.name`,
+    # so only this form is rewritten to each root's identifier.
+    assert "`04e diff security scan`" in body
     assert "**six**" in body
     assert "no new security agent is authored" in body
 

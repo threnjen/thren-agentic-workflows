@@ -173,7 +173,7 @@ nothing.
 
 ### 1. Establish the baseline at the confirmed base
 
-Delegate checkout to `05a-baseline-worktree`; the orchestrator never runs git
+Delegate checkout to `z-baseline-worktree`; the orchestrator never runs git
 worktree commands itself. If the baseline agent cannot return a verified clean
 worktree at the confirmed base, record the baseline check as not run and **stop
 before evaluator fan-out**. Nothing can run before the baseline exists, so this
@@ -202,14 +202,14 @@ must stop the run, while an evaluator failure must not.
 
 | Position | Agents | When |
 |---|---|---|
-| Preflight | `05a-baseline-worktree` | Before fan-out. Its failure stops the run. |
-| Fan-out (concurrent) | `05b`, `05c`, `05d`, `05e`, `05f`, and `04e-diff-security-scan` | **Six**, concurrently, after the base is confirmed. |
-| Synthesis | `05g-readiness-synthesizer` | Last. Consumes the others' reports and status records. |
+| Preflight | `z-baseline-worktree` | Before fan-out. Its failure stops the run. |
+| Fan-out (concurrent) | `z-change-narrator`, `z-artifact-sweeper`, `z-consistency-auditor`, `z-dependency-auditor`, `z-test-health`, and `z-diff-security-scan` | **Six**, concurrently, after the base is confirmed. |
+| Synthesis | `z-readiness-synthesizer` | Last. Consumes the others' reports and status records. |
 
 `05a` is not a fan-out evaluator: nothing can run before the baseline exists.
 `05g` is not one either: it consumes the others' output.
 
-Security is delegated to the existing **`04e-diff-security-scan`**, invoked with
+Security is delegated to the existing **`z-diff-security-scan`**, invoked with
 the confirmed diff range like any other fan-out evaluator. **No new security
 agent is authored.**
 
@@ -271,7 +271,7 @@ unidentifiable report as `incomplete`, append its evaluator-status record, and
 exclude it from the passing report paths.
 
 After all available evaluator results and all `evaluator-status.jsonl` records
-are collected, invoke `05g-readiness-synthesizer` with the report paths and the
+are collected, invoke `z-readiness-synthesizer` with the report paths and the
 failure records using the top tier and the same bounded wait. Pass evaluator
 status without copying report contents, and require the readiness report's
 `Checks Not Run` section to name every evaluator, check, and reason. If `05g`

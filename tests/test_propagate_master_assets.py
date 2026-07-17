@@ -1,4 +1,5 @@
 import json
+import re
 import os
 import shutil
 import subprocess
@@ -280,6 +281,66 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 output = REPO_ROOT / relative_path
                 self.assertTrue(output.is_file(), relative_path)
                 self.assertIn(marker, output.read_text(encoding="utf-8"))
+
+    def test_no_generated_body_references_an_agent_by_unrewritten_slug(self) -> None:
+        # `_build_agent_reference_map` keys on `agent.name` -- the display name --
+        # so a source body that names a sibling by *slug* matches nothing and the
+        # rewrite silently no-ops. The slug then ships verbatim into Claude and
+        # Codex, where that agent is filed as `z-<stem>`, and the fan-out points at
+        # a file that does not exist. Nothing failed when this happened: every
+        # per-feature test verified its own agent in isolation, and no test asserted
+        # that a reference resolves in the root it lands in.
+        #
+        # A bare backticked token equal to a source slug is the signature -- but
+        # only where that root *renames* the agent. Most slugs survive unchanged
+        # (`prod-code-review` is both the slug and the Claude filename), so those
+        # references resolve and are not defects. The defect is a slug whose
+        # identifier in that root differs, which is exactly the set the rewrite was
+        # supposed to translate and didn't.
+        #
+        # Exact equality is what keeps this honest: `05b-change-narrator-report.md`
+        # (a report filename) and `.github/agents/04-phase-execute.agent.md` (a
+        # path) both contain a slug as a substring and must not trip it.
+        #
+        # `claude/agents/README.md` is hand-maintained inside a generated root -- it
+        # documents the slug-to-filename mapping on purpose and is never rewritten.
+        agents = mod.load_source_agents()
+
+        claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
+        renamed_in_claude = {
+            agent.source_slug
+            for agent in agents
+            if mod._claude_identifier_for(agent, claude_stems) != agent.source_slug
+        }
+        renamed_in_codex = {
+            agent.source_slug
+            for agent in agents
+            if mod._codex_identifier_for(agent) != agent.source_slug
+        }
+
+        renaming_roots = (
+            (REPO_ROOT / "claude" / "agents", "*.md", renamed_in_claude),
+            (REPO_ROOT / "claude" / "commands", "*.md", renamed_in_claude),
+            (REPO_ROOT / "codex" / "agents", "*.toml", renamed_in_codex),
+        )
+
+        offenders = []
+        for directory, pattern, renamed in renaming_roots:
+            for output in sorted(directory.glob(pattern)):
+                if output.name == "README.md":
+                    continue
+                text = output.read_text(encoding="utf-8")
+                for token in set(re.findall(r"`([^`\n]+)`", text)):
+                    if token in renamed:
+                        offenders.append(f"{output.relative_to(REPO_ROOT)} -> `{token}`")
+
+        self.assertEqual(
+            [],
+            sorted(offenders),
+            "generated bodies reference agents by slug; these do not resolve in a "
+            "root that files agents as `z-<stem>`. Name the sibling by its display "
+            "name in the source so the reference map can rewrite it.",
+        )
 
     def test_hook_propagation_copies_runtime_unit_and_writes_stable_version(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:

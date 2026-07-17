@@ -27,7 +27,7 @@ existing `z-test-analyst` subagent and adapting its result into a delta.
 The subject is the branch diff `<merge-base>..HEAD`. The orchestrator supplies
 the confirmed base; take it as given and never re-derive it — an evaluator that
 picks its own base reviews a different range than its siblings. For the base side,
-consume the verified baseline worktree created by `05a-baseline-worktree`; do not
+consume the verified baseline worktree created by `z-baseline-worktree`; do not
 create, switch, or remove a worktree yourself.
 
 `z-test-analyst` analyzes a suite. You report what this branch did to it. That

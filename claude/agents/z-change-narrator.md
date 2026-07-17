@@ -35,7 +35,7 @@ narrative spine comes from here, and nothing downstream reconstructs it.
 
 The subject is the branch diff `<merge-base>..HEAD`. The orchestrator supplies
 the confirmed base and the verified baseline worktree created by
-`05a-baseline-worktree`. Take the base as given and never re-derive it — an
+`z-baseline-worktree`. Take the base as given and never re-derive it — an
 evaluator that picks its own base narrates a different range than its siblings,
 and nothing downstream reconciles the two. Use that baseline worktree for every
 base-to-HEAD comparison; do not create, switch, or remove a worktree yourself.
