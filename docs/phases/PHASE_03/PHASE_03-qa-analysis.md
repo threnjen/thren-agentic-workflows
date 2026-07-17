@@ -1,255 +1,517 @@
-# QA Readiness Analysis: Phase 05 — Phase Final Review Agent Family
+# QA Readiness Analysis: Phase 03 — PR Review Agent Family
 
-> **Renumbered 2026-07-16: this phase is now Phase 03 (formerly Phase 05).** The
-> body below is preserved as the historical record from the original review and
-> still uses the Phase 05 numbering throughout. Development-fixture paths
-> (`dev/phase-final-review/fixtures/PHASE_05/`, `PHASE_05a`/`PHASE_05b`) and the
-> `05a`–`05l` agent names are unchanged and remain correct as written. See the
-> mapping table in `docs/phases/PROJECT_ROADMAP.md`.
+**Date:** 2026-07-16
+**Analyst:** prod-code-review (automated)
+**Mode:** Standard mode (`All verdicts Approved: NO` — 8/8 Approved with Reservations)
+**Verdict:** **NO-GO**
+**Documents Analyzed:** 46 (40 per-feature pipeline documents, 5 phase-level documents, 1 manifest), plus source assets, all three generated roots, the propagator, and the test suite
+**Findings:** 8 (3 blockers, 1 high, 2 medium, 2 low)
+**Diff range:** `ae9823a..HEAD` on `phase/pr-review`
 
-**Date:** 2026-07-15  
-**Analyst:** prod-code-review (automated)  
-**Mode:** Standard mode (`All verdicts Approved: NO`)  
-**Verdict:** NO-GO  
-**Documents Analyzed:** 51 named pipeline documents and evidence artifacts, plus source, generated mirrors, tests, and propagation code  
-**Findings:** 10 (3 blockers, 2 high, 4 medium, 1 low)
+> **This document supersedes the pre-rescope analysis at this path.** The prior body was
+> the QA readiness analysis for the Phase Final Review family (formerly Phase 05), whose
+> five evaluators feature `02` deleted and whose fixture root feature `08` retired. It is
+> preserved in git at `ae9823a`. Its verdict was also NO-GO; per `PROJECT_ROADMAP.md:29`
+> that NO-GO is superseded rather than repaired.
+
+---
 
 ## Readiness Verdict
 
-**NO-GO.** Phase 05 must not enter manual QA as a release-ready phase yet.
+**NO-GO.** Phase 03 must not enter manual QA as a release-ready phase.
 
-The security gate is explicitly **BLOCKED** in `docs/phases/PHASE_05/PHASE_05-security-scan.md:11-16`. Wave 4 remains blocked because the 05d Security Rollup did not obtain a delegated final Security Scan, has `report: null`, and has not produced the required P2-SEC-01..03 final-state classifications (`dev/feature/04-delegating-evaluators/04-delegating-evaluators-review.md:16,20,29,51-58`). The retained full-flow evidence also records eight evaluator checks as `not-run`, so Wave 6 AC5 remains partial and the readiness report correctly remains NO-GO (`dev/phase-final-review/PHASE_05/evaluator-status.jsonl:1-8`; `dev/feature/06-readiness-synthesis/06-readiness-synthesis-implementation.md:46,60,107-113`).
+This is not a close call and it is not a penalty for effort. The phase's own records say
+it plainly: feature `08`'s reviewer wrote *"The phase is NOT GO. AC1–AC4 are unexecuted.
+The assembled agent family has never run"* (`08-…-review.md:307`). The recorded contract
+governs — *a fixture dry-run is required release evidence; a run whose required evaluators
+are recorded `not-run` is below-GO evidence, not a passing run.* Four of feature `08`'s
+eleven ACs (`AC1`–`AC4`) are recorded **NOT DONE**, and they are precisely the four the
+other seven features were built toward.
+
+Missing required checks are a hard readiness gate. The canonical verdict is NO-GO, and
+no roadmap or summary status line may be updated on this verdict. **This analysis updated
+no status line.**
+
+The verdict would be NO-GO on the unexecuted dry run alone. During this review it became
+**over-determined**: an independent inspection of the generated roots surfaced a concrete,
+previously-unreported delegation defect (B2 below) that would break the fan-out on two of
+three harnesses — the exact class of failure the never-executed dry run exists to catch,
+found by looking where no test looks.
+
+---
 
 ## Executive Summary
 
-The document chain is complete and internally coherent about the central limitation: static contracts and bounded fixture artifacts exist, but live evaluator fan-out and delegated runtime evidence are incomplete. The final security scan is BLOCKED with 0 Critical, 9 High, 8 Medium, and 1 Low findings, including introduced Phase 05 authorization/trust-boundary risks and unresolved historical Phase 02 High findings (`docs/phases/PHASE_05/PHASE_05-security-scan.md:11-16,33-54`). The highest-risk runtime gaps are the unresolved Wave 4 05d/AC6 path and the eight missing evaluator reports carried into Wave 6 synthesis. Focused tests pass (`21` propagation tests with `15` subtests and `6` readiness-contract tests), but the full suite remains `394 passed, 2 failed, 15 subtests`, and static tests do not establish live delegate delivery, report authenticity, path containment, or write-back safety. Confidence in the QA plan is medium for static/fixture checks and low for the unresolved live orchestration and security controls.
+Phase 03 is an unusually well-documented phase whose quality of *record-keeping* is not in
+question — the QA plan and coverage map are among the strongest artifacts this pipeline has
+produced, and they name the phase's central gap themselves rather than obscuring it. The
+work is substantially complete and 54 of ~75 ACs are provably done: the roster resolves
+8/8 in source, propagation is at a verified fixed point, and the suite reproduces exactly
+as recorded (`1 failed, 582 passed, 106 subtests`), with the sole failure — PERF-01 —
+independently confirmed as **not** a Phase 03 regression.
+
+The phase is nonetheless NO-GO on three blockers. **B1:** the assembled family has never
+been run; `dev/pr-review/` contains only `fixtures/`, and `08/AC1`–`AC4` are recorded NOT
+DONE. Eight green features are not evidence the family runs — the tests assert contracts
+over Markdown bodies and prove the family is *described* correctly, never that it *works*.
+**B2 (new, not in any review, security scan, or QA document):** the orchestrator's
+propagated Claude and Codex bodies delegate to `05a`–`05g` slugs, but the agents in those
+roots are named `z-*`; the propagator's reference rewrite is a **complete no-op** on this
+orchestrator (0 rewritten references, against 9 in the working `04-phase-execute`), so the
+names the fan-out delegates to do not exist in 2 of 3 generated roots. **B3:** the open
+High `P3-SEC-01` — the newly-live prune path deletes without a canonical containment check,
+reproduced escaping the repo root — is unremediated, and the containment helper it needs
+already exists 900 lines away in the same file, unused.
+
+Highest-risk areas are, in order: the unexecuted fan-out (B1), cross-root name resolution
+(B2), and filesystem containment on the new delete path (B3). **Confidence in the QA plan's
+ability to catch remaining issues is high for runtime behavior and low for security**: its
+nine sections map 1:1 onto the manifest's checklist with nothing dropped, and section 1
+would almost certainly have caught B2 on first execution — but the plan carries **zero**
+references to `P3-SEC-01`, `P3-SEC-02`, or `REPO-SEC-06` and never cites the security scan
+at all, leaving an open High on a live deletion path invisible to the tester (F4).
+
+---
 
 ## Document Inventory
 
+All 40 per-feature documents are present; no document is missing and none is extraneous.
+
 ### Per-Feature Documents
 
-| Document | File | Source | Present | Notes |
+| Feature | plan | context | tasks | implementation | review |
+|---|---|---|---|---|---|
+| `01-propagator-orphan-pruning` | Yes | Yes | Yes | Yes | Yes |
+| `02-retired-evaluator-removal` | Yes | Yes | Yes | Yes | Yes |
+| `03-pr-review-conventions-skills` | Yes | Yes | Yes | Yes | Yes |
+| `04-pr-review-orchestrator` | Yes | Yes | Yes | Yes | Yes |
+| `05-mechanical-evaluators` | Yes | Yes | Yes | Yes | Yes |
+| `06-narrative-and-test-health` | Yes | Yes | Yes | Yes | Yes |
+| `07-synthesis-and-pr-posting` | Yes | Yes | Yes | Yes | Yes |
+| `08-retirement-reconciliation` | Yes | Yes | Yes | Yes | Yes |
+
+All eight review verdicts: **Approved with Reservations**.
+
+### Phase-Level Documents
+
+| Document | Path | Source | Present | Notes |
 |---|---|---|---|---|
-| Feature Plan | `dev/feature/01-review-foundation/01-review-foundation-plan.md` | Feature - Decomposer | Yes | Defines AC1-AC6, fixture, shared contracts, and propagation scope. |
-| Context | `dev/feature/01-review-foundation/01-review-foundation-context.md` | z-feature-plan-expander | Yes | Identifies source-of-truth skills, baseline agent, fixture, and generated mirrors. |
-| Tasks | `dev/feature/01-review-foundation/01-review-foundation-tasks.md` | z-feature-plan-expander | Yes | Task checklist for the six foundation ACs. |
-| Implementation Record | `dev/feature/01-review-foundation/01-review-foundation-implementation.md` | z-feature-implementer | Yes | Records foundation assets, fixture evidence, propagation, and known runtime limits. |
-| Review Record | `dev/feature/01-review-foundation/01-review-foundation-review.md` | z-feature-reviewer | Yes | Approved with Reservations; live 05a and full-suite concerns remain. |
-| Feature Plan | `dev/feature/02-final-review-orchestrator/02-final-review-orchestrator-plan.md` | Feature - Decomposer | Yes | Defines AC1-AC8, preflight, failure semantics, and fixture-only write-back. |
-| Context | `dev/feature/02-final-review-orchestrator/02-final-review-orchestrator-context.md` | z-feature-plan-expander | Yes | Captures orchestrator dependencies and report/status contracts. |
-| Tasks | `dev/feature/02-final-review-orchestrator/02-final-review-orchestrator-tasks.md` | z-feature-plan-expander | Yes | Task checklist for preflight, orchestration, verdict lifecycle, and propagation. |
-| Implementation Record | `dev/feature/02-final-review-orchestrator/02-final-review-orchestrator-implementation.md` | z-feature-implementer | Yes | Records orchestrator source/mirrors and bounded failure artifacts. |
-| Review Record | `dev/feature/02-final-review-orchestrator/02-final-review-orchestrator-review.md` | z-feature-reviewer | Yes | Approved with Reservations; live preflight/failure/write-back evidence remains unverified. |
-| Feature Plan | `dev/feature/03-mechanical-evaluators/03-mechanical-evaluators-plan.md` | Feature - Decomposer | Yes | Defines AC1-AC6 for 05g, 05j, and 05k. |
-| Context | `dev/feature/03-mechanical-evaluators/03-mechanical-evaluators-context.md` | z-feature-plan-expander | Yes | Captures graph, offline dependency, and report contracts. |
-| Tasks | `dev/feature/03-mechanical-evaluators/03-mechanical-evaluators-tasks.md` | z-feature-plan-expander | Yes | Task checklist for mechanical evaluator contracts and dry runs. |
-| Implementation Record | `dev/feature/03-mechanical-evaluators/03-mechanical-evaluators-implementation.md` | z-feature-implementer | Yes | Records three source agents, generated mirrors, and propagation tests. |
-| Review Record | `dev/feature/03-mechanical-evaluators/03-mechanical-evaluators-review.md` | z-feature-reviewer | Yes | Approved with Reservations; AC5 runtime dry-run evidence is open. |
-| Feature Plan | `dev/feature/04-delegating-evaluators/04-delegating-evaluators-plan.md` | Feature - Decomposer | Yes | Defines AC1-AC7 for 05c, 05d, and 05h. |
-| Context | `dev/feature/04-delegating-evaluators/04-delegating-evaluators-context.md` | z-feature-plan-expander | Yes | Captures delegate scope, status, and failure contracts. |
-| Tasks | `dev/feature/04-delegating-evaluators/04-delegating-evaluators-tasks.md` | z-feature-plan-expander | Yes | Task checklist includes delegated success and unavailable-delegate paths. |
-| Implementation Record | `dev/feature/04-delegating-evaluators/04-delegating-evaluators-implementation.md` | z-feature-implementer | Yes | Explicitly marks 05d/AC6 incomplete and reports no complete delegated scan. |
-| Review Record | `dev/feature/04-delegating-evaluators/04-delegating-evaluators-review.md` | z-feature-reviewer | Yes | **Changes Requested**; AC6 and 05h failure-path evidence remain open. |
-| Feature Plan | `dev/feature/05-deep-judgment-evaluators/05-deep-judgment-evaluators-plan.md` | Feature - Decomposer | Yes | Defines AC1-AC6 for 05b, 05e, and 05f. |
-| Context | `dev/feature/05-deep-judgment-evaluators/05-deep-judgment-evaluators-context.md` | z-feature-plan-expander | Yes | Captures chunking, AC-row, graph, and partial-failure constraints. |
-| Tasks | `dev/feature/05-deep-judgment-evaluators/05-deep-judgment-evaluators-tasks.md` | z-feature-plan-expander | Yes | Task checklist for narrative, AC matrix, seam, and propagation behavior. |
-| Implementation Record | `dev/feature/05-deep-judgment-evaluators/05-deep-judgment-evaluators-implementation.md` | z-feature-implementer | Yes | Records source/mirror assets and unverified live dry-run status. |
-| Review Record | `dev/feature/05-deep-judgment-evaluators/05-deep-judgment-evaluators-review.md` | z-feature-reviewer | Yes | Approved with Reservations; runtime reports and returns remain unverified. |
-| Feature Plan | `dev/feature/06-readiness-synthesis/06-readiness-synthesis-plan.md` | Feature - Decomposer | Yes | Defines AC1-AC9 for 05i, 05l, full-flow synthesis, and propagation. |
-| Context | `dev/feature/06-readiness-synthesis/06-readiness-synthesis-context.md` | z-feature-plan-expander | Yes | Captures readiness, history mining, draft-only, and write-back boundaries. |
-| Tasks | `dev/feature/06-readiness-synthesis/06-readiness-synthesis-tasks.md` | z-feature-plan-expander | Yes | Task checklist for synthesis, failure lifecycle, learning proposals, and propagation. |
-| Implementation Record | `dev/feature/06-readiness-synthesis/06-readiness-synthesis-implementation.md` | z-feature-implementer | Yes | Marks AC5 partial because eight evaluator checks are not run; records bounded failure artifacts. |
-| Review Record | `dev/feature/06-readiness-synthesis/06-readiness-synthesis-review.md` | z-feature-reviewer | Yes | Approved with Reservations; AC5-AC8 still need live runtime verification. |
+| QA Plan | `docs/phases/PHASE_03/PHASE_03_QA.md` | z-feature-qa-writer | Yes | Rewritten 2026-07-16 for the rescope; prior body void, not stale |
+| Coverage Map | `docs/phases/PHASE_03/PHASE_03_QA_COVERAGE_MAP.md` | z-feature-qa-writer | Yes | 54 automated / 17 manual / 6 partial |
+| Phase Summary | `docs/phases/PHASE_03/PHASE_03_SUMMARY.md` | Phase - Refiner | Yes | Status line intentionally **not** updated — correct under an unverified verdict |
+| Manifest | `dev/feature/phase-03-pr-review-execution-manifest.md` | Feature - Decomposer | Yes | 9 manual checklist items, all covered |
+| Security Scan | `docs/phases/PHASE_03/PHASE_03-security-scan.md` | security-scan | Yes | **Pass with Conditions.** Uncommitted in the working tree (F8) |
+| Discovery Context | `docs/phases/PHASE_03/PHASE_03_DISCOVERY_CONTEXT.md` | Phase - Refiner | Yes | — |
 
-No required per-feature document is missing. The six feature folders contain the expected 30-document chain.
+**Note on the output path:** this file previously held the pre-rescope analysis (a
+different phase's record). It is superseded here and recoverable at `ae9823a`.
 
-### Consolidated QA Documents
+---
 
-| Document | File | Source | Present | Notes |
-|---|---|---|---|---|
-| QA Plan | `docs/phases/PHASE_05/PHASE_05_QA.md` | z-feature-qa-writer | Yes | 24-item manual checklist, prerequisites, expected results, and known baseline. |
-| Coverage Map | `docs/phases/PHASE_05/PHASE_05_QA_COVERAGE_MAP.md` | z-feature-qa-writer | Yes | Maps all six feature AC sets and distinguishes static, automated, manual, and incomplete evidence. |
+## Independent Verification Performed
 
-### Additional Evidence Reviewed
+This agent re-derived the following from disk rather than accepting the records:
 
-| Artifact | File or location | Notes |
-|---|---|---|
-| Execution manifest | `dev/feature/phase-05-phase-final-review-execution-manifest.md` | Defines six sequential waves, verification assets, and the manifest manual checklist. |
-| Phase summary | `docs/phases/PHASE_05/PHASE_05_SUMMARY.md` | Phase-level scope and deliverable source. |
-| Security scan | `docs/phases/PHASE_05/PHASE_05-security-scan.md` | Final security verdict is **BLOCKED**; no files were modified by the scan. |
-| Canonical readiness | `dev/phase-final-review/PHASE_05/readiness-report.md` | NO-GO; retains five High blockers and incomplete evaluator coverage. |
-| Evaluator status | `dev/phase-final-review/PHASE_05/evaluator-status.jsonl` | Eight records are `not-run`, each with `report: null`. |
-| Full-flow artifact | `dev/phase-final-review/PHASE_05/dry-run-full-flow.md` | Four canonical artifacts are present but explicitly bounded/partial. |
-| Security rollup artifact | `dev/phase-final-review/PHASE_05/security-rollup.md` | Fail-closed rollup; final delegated Security Scan was not run. |
-| QA consolidation artifacts | `dev/phase-final-review/PHASE_05/master-qa.md`, `05c-qa-consolidator-report.md` | 31 retained checks, three supersessions, source manual checks NOT RUN. |
-| AC matrix | `dev/phase-final-review/PHASE_05/ac-regression-matrix.md` | 26 fixture rows: 8 PASS, 3 FAIL, 15 NOT RUN. |
-| Test health artifact | `dev/phase-final-review/PHASE_05/05h-test-health-report.md` | Coverage delta NOT-MEASURABLE; retained risk and flake sections. |
-| Learning artifact | `dev/phase-final-review/PHASE_05/05i-learnings-harvester-report.md` | Evidence-backed drafts produced without accepted-file write-back. |
-| Forced-failure archive | `dev/phase-final-review/PHASE_05/runs/20260715T230000Z-2/` | Records 05d unavailable and synthesis NO-GO. |
-| Prior failure archive | `dev/phase-final-review/PHASE_05/runs/20260715T222902Z-1/` | Preserves earlier no-thread/runtime failure evidence. |
-| Test-health analysis bundle | `dev/feature/phase-05-test-health-analysis/` | Supporting analysis bundle; not one of the six feature folders and not a missing required input. |
+| Claim | Source | Verified | Result |
+|---|---|---|---|
+| Suite state | QA plan `:174` | `pytest tests/ -q` | **Exact match** — `1 failed, 582 passed, 106 subtests` |
+| PERF-01 is the only failure | QA plan `:176` | Suite run | Confirmed; median 55.80 ms, `tests/hooks/test_hook_distribution_integration.py:223` |
+| Per-file test counts (8 files) | Coverage map `:32-41` | `--collect-only` per file | **All 8 exact** (42/38/28/23/21/21/18/5 = 196) |
+| Source roster resolves 8/8 | `08/AC5` | `ls .github/agents/05*` | Confirmed — `05-pr-review`, `05a`–`05g` |
+| Five retired agents absent | `02/AC1` | `ls` + repo-wide grep | Confirmed (residue only in tests asserting absence, and exempt `docs/**` + learnings) |
+| Fixture range | QA plan `:86-91` | `rev-parse`, `merge-base`, `diff --shortstat` | Confirmed — 3 commits, 26 files, 1288 insertions, merge-base **is** the base |
+| **Family has never run** | `08/AC1` | `ls dev/pr-review/` | **Confirmed — only `fixtures/` exists** |
+| Propagation is a fixed point | `08/AC8` | Re-ran propagator; `git status` | Confirmed — zero generated-file diff |
+| `execute` held by exactly 2 agents | Roster decision | Frontmatter sweep | Confirmed — only `05-pr-review` and `05a-baseline-worktree` |
+| `05b` lacks an `agents:` allowlist | `P3-SEC-02` | Frontmatter sweep | Confirmed — sole `agent`-holder without one; `05f` has `agents: [Test - Analyst]` |
+| `P3-SEC-01` containment gap | Security scan `:68` | Read `propagate_master_assets.py:247-286` | Confirmed — leaf-only symlink guard, no canonical containment |
+| **Claude/Codex delegation names** | — | Compared all 3 generated roots | **NEW DEFECT — B2** |
 
-The additional evidence count is 19 named artifacts/documents: the manifest, phase summary, security scan, 13 named dry-run artifacts, and the three test-health-analysis documents. Combined with the 30 feature documents and 2 QA documents, this yields the header count of 51 named pipeline documents/evidence artifacts. Fixture copies and generated harness mirrors were inspected as implementation evidence rather than counted as separate pipeline records.
-
-Unity detection found committed `*.asmdef` files under `packages/com.threnjen.visual-verification/`, so the Unity review skills were loaded as required. There is no Unity application tree (`Assets/` plus `ProjectSettings/`) and no Phase 05 C# change; the “not a Unity project” visual-verification result is therefore applicable to this phase’s product scope, while the tracked package remains a security-scan input.
+---
 
 ## Traceability Matrix
 
-`Done` below means the implementation record claims completion; `Static` means the source contract exists and was reviewed; `Artifact` means a bounded fixture artifact exists. A runtime-qualified status is not promoted to a pass when the corresponding live evaluator session was not observed.
+Condensed to ACs that are not cleanly closed. All other ACs (54 of ~75) trace Plan →
+Implementation → Code → Review → QA without gap and are omitted for brevity.
 
-| Feature | AC | Plan | Impl | Code / Artifact | Review | In Consolidated QA | Verdict |
+| Feature | AC | Plan | Impl | Code | Review | In QA | Verdict |
 |---|---|---|---|---|---|---|---|
-| 01-review-foundation | AC1 | Defined | Done | Static | Verified | `PHASE_05_QA_COVERAGE_MAP.md:18` | OK — static |
-| 01-review-foundation | AC2 | Defined | Done | Static | Verified | Coverage map:19 | OK — static |
-| 01-review-foundation | AC3 | Defined | Done | Skill exists; runtime procedure unobserved | Approved with Reservations | QA:89-93; coverage map:20 | AT RISK — manual |
-| 01-review-foundation | AC4 | Defined | Done | Agent exists; live return unobserved | Approved with Reservations | QA:93; coverage map:21 | AT RISK — manual |
-| 01-review-foundation | AC5 | Defined | Done | Fixture exists; provenance artifact present | Verified with manual caveat | QA:89; coverage map:22 | AT RISK — manual |
-| 01-review-foundation | AC6 | Defined | Done | Propagation passes, but explicit enumeration is incomplete | Review accepted propagation | QA:187; coverage map:23 | PARTIAL — manual parity still required |
-| 02-final-review-orchestrator | AC1 | Defined | Done | Static agent and mirrors | Verified | Coverage map:24 | OK — static |
-| 02-final-review-orchestrator | AC2 | Defined | Done | Static context/report contract | Verified | Coverage map:25 | OK — static |
-| 02-final-review-orchestrator | AC3 | Defined | Done | Ledger/fallback text; live preflight unobserved | Approved with Reservations | QA:90-91; coverage map:26 | AT RISK — runtime |
-| 02-final-review-orchestrator | AC4 | Defined | Done | Missing-artifact rule; live refusal unobserved | Approved with Reservations | QA:92; coverage map:27 | AT RISK — runtime |
-| 02-final-review-orchestrator | AC5 | Defined | Done | Tier/warning contract; live ordering unobserved | Approved with Reservations | QA:97; coverage map:28 | AT RISK — runtime |
-| 02-final-review-orchestrator | AC6 | Defined | Done | Bounded failure artifact; live synthesis unobserved | Approved with Reservations | QA:170; coverage map:29 | AT RISK — runtime |
-| 02-final-review-orchestrator | AC7 | Defined | Done | Fixture copies; live write-back unobserved | Approved with Reservations | QA:171,187-188; coverage map:30 | AT RISK — runtime |
-| 02-final-review-orchestrator | AC8 | Defined | Done | Propagation test passes | Verified | Coverage map:31 | OK — automated |
-| 03-mechanical-evaluators | AC1 | Defined | Done | 05g source/mirrors; no live report | Approved with Reservations | QA:110,116; coverage map:32 | AT RISK — runtime |
-| 03-mechanical-evaluators | AC2 | Defined | Done | 05j source/mirrors; no live fixture drift report | Approved with Reservations | QA:111; coverage map:33 | AT RISK — runtime |
-| 03-mechanical-evaluators | AC3 | Defined | Done | 05k source/mirrors; no live no-dependency report | Approved with Reservations | QA:112; coverage map:34 | AT RISK — runtime |
-| 03-mechanical-evaluators | AC4 | Defined | Done | Failure contracts are static; runtime unobserved | Approved with Reservations | QA:116; coverage map:35 | AT RISK — runtime |
-| 03-mechanical-evaluators | AC5 | Defined | Done | No complete orchestrator dry run | Approved with Reservations | QA:110-116; coverage map:36 | BLOCKED — runtime evidence |
-| 03-mechanical-evaluators | AC6 | Defined | Done | Propagation passes, but 05g/05j/05k are omitted from explicit test list | Review marked verified | QA:187; coverage map:37 | PARTIAL — parity gap |
-| 04-delegating-evaluators | AC1 | Defined | Done | 05c artifact present; live execution unobserved | Changes Requested | QA:129; coverage map:38 | AT RISK — runtime |
-| 04-delegating-evaluators | AC2 | Defined | Incomplete | 05d report missing; status `report: null` | Changes Requested | QA:130,169; coverage map:39 | BLOCKED — Wave 4 |
-| 04-delegating-evaluators | AC3 | Defined | Done | 05h artifact present; delegate execution unobserved | Changes Requested | QA:131; coverage map:40 | AT RISK — runtime |
-| 04-delegating-evaluators | AC4 | Defined | Partial | 05d fail-closed contract present; 05h failure unobserved | Changes Requested | QA:135; coverage map:41 | AT RISK — runtime |
-| 04-delegating-evaluators | AC5 | Defined | Done | Delegation-only source boundaries static | Changes Requested | Coverage map:42 | OK — static |
-| 04-delegating-evaluators | AC6 | Defined | Incomplete | No delegated final scan or P2 classification | Changes Requested | QA:130,169-170; coverage map:43 | BLOCKED — Wave 4 |
-| 04-delegating-evaluators | AC7 | Defined | Done | 05c/05d/05h parity tests pass | Changes Requested | QA:187; coverage map:44 | OK — automated, manual checkpoint remains |
-| 05-deep-judgment-evaluators | AC1 | Defined | Done | 05b static contract; live narrative unobserved | Approved with Reservations | QA:148; coverage map:45 | AT RISK — runtime |
-| 05-deep-judgment-evaluators | AC2 | Defined | Done | 26-row bounded matrix; live verifier fan-out unobserved | Approved with Reservations | QA:149; coverage map:46 | AT RISK — runtime |
-| 05-deep-judgment-evaluators | AC3 | Defined | Done | Graph operations named; both runtime states unobserved | Approved with Reservations | QA:150,154; coverage map:47 | AT RISK — runtime |
-| 05-deep-judgment-evaluators | AC4 | Defined | Done | Static shared contracts; report/return runtime unobserved | Approved with Reservations | QA:148-154; coverage map:48 | AT RISK — runtime |
-| 05-deep-judgment-evaluators | AC5 | Defined | Unverified | No complete 05b/05e/05f dry-run evidence | Approved with Reservations | QA:148-154; coverage map:49 | BLOCKED — runtime evidence |
-| 05-deep-judgment-evaluators | AC6 | Defined | Done | Propagation parity for 05b/05e/05f passes | Approved with Reservations | Coverage map:50 | OK — automated |
-| 06-readiness-synthesis | AC1 | Defined | Done | 05l contract and six focused tests | Approved with Reservations | Coverage map:51 | OK — static/automated |
-| 06-readiness-synthesis | AC2 | Defined | Done | Missing-check ceiling and bounded readiness artifact | Approved with Reservations | QA:170; coverage map:52 | AT RISK — live failure path |
-| 06-readiness-synthesis | AC3 | Defined | Done | 05i report/drafts and focused tests | Approved with Reservations | QA:172; coverage map:53 | AT RISK — live history run |
-| 06-readiness-synthesis | AC4 | Defined | Done | Shared contract/mirrors; live returns unobserved | Approved with Reservations | QA:172; coverage map:54 | AT RISK — runtime |
-| 06-readiness-synthesis | AC5 | Defined | Partial | Four artifacts exist; eight evaluator checks not-run | Approved with Reservations | QA:169; coverage map:55 | BLOCKED — Wave 6 |
-| 06-readiness-synthesis | AC6 | Defined | Done | Forced-failure archive; independent execution unobserved | Approved with Reservations | QA:170; coverage map:56 | AT RISK — runtime |
-| 06-readiness-synthesis | AC7 | Defined | Done | Fixture write-back copies; live mutation unobserved | Approved with Reservations | QA:171; coverage map:57 | AT RISK — runtime |
-| 06-readiness-synthesis | AC8 | Defined | Done | Draft proposals cite history; live harvest unobserved | Approved with Reservations | QA:172; coverage map:58 | AT RISK — runtime |
-| 06-readiness-synthesis | AC9 | Defined | Done | 21 propagation + 6 readiness tests pass | Approved with Reservations | QA:187; coverage map:59 | OK — automated, manual checkpoint remains |
+| `08` | **AC1** — end-to-end dry run | Defined | **NOT DONE** | N/A (runtime) | Acknowledged; reviewer: *"NOT GO"* | §1 | **BLOCKED (B1)** |
+| `08` | **AC2** — single-interaction end to end | Defined | **NOT DONE** | N/A | Acknowledged | §2 | **BLOCKED (B1)** |
+| `08` | **AC3** — forced-failure run not `GO` | Defined | **NOT DONE** | N/A | Acknowledged | §3 | **BLOCKED (B1)** |
+| `08` | **AC4** — every return ≤10 lines | Defined | **NOT DONE** | N/A | Acknowledged | §4 | **BLOCKED (B1)** |
+| `06` | AC5b — Codex depth-2 delegation | Defined | *"Verification deferred to manual QA"* | Declared only | Acknowledged | §5 | **AT RISK** — not statically verifiable |
+| `04` | AC14 — propagates; roster live on all roots | Defined | Done | **Defect** — see B2 | Passed (parity only) | §9 | **BLOCKED (B2)** |
+| `05` | AC8b — `05a` declared with `execute` | Defined | Done | Verified | Passed | — | **OPEN by design** — declared-and-unclosable, routed |
+| `01` | AC5 — never delete a non-generated file | Defined | Done | Verified (marker guard) | Passed | — | **AT RISK (B3)** — holds *inside* the root; no containment *of* the root |
+| `07` | AC6 — P5-SEC-02 closed or recorded open | Defined | Done (recorded open) | Verified | Passed | Security § | **OK — correct, not a defect** |
+| `08` | AC9 — baseline reconciled | Defined | Done (**false figure**) | N/A | **Disproved and fixed** | Notes | **OK on disk; record stale (F7)** |
 
-### Cross-Document Consistency Results
+**Manifest → QA coverage:** the manifest's 9 `## Verification Assets` checklist items map
+1:1 onto the QA plan's 9 sections. **None dropped.** Verified item by item.
 
-- Plan-to-implementation traceability exists for all 42 ACs. The records do not silently convert the key runtime gaps into passes: Feature 04 marks AC2/AC6 incomplete, Feature 06 marks AC5 partial, and the retained status/readiness artifacts are fail-closed.
-- Implementation-to-review alignment is generally sound. Feature 04 is correctly `Changes Requested` with open AC6 and 05h degradation evidence; the other five reservations consistently identify live-session limits. No review record was treated as an approval over an acknowledged Blocker.
-- The current `security-rollup.md` is not evidence that 05d ran. Feature 04’s review explicitly distinguishes the bounded rollup/failure evidence from the missing canonical 05d delegated report (`04-delegating-evaluators-review.md:16,20`), and the status file retains `report: null`.
-- The execution manifest says no new automated test files were identified (`dev/feature/phase-05-phase-final-review-execution-manifest.md:56-66`), while Feature 06 records `tests/test_readiness_synthesis_agents.py` as created and expanded (`06-readiness-synthesis-implementation.md:79-84`). The QA plan and coverage map correctly acknowledge the actual test, but the manifest remains stale.
-- Feature 03’s plan lists an agent-inventory README update while its implementation/review record says no README change was made (`03-mechanical-evaluators-review.md:33-34,49-52`). This is a low-severity documentation drift, not a missing required bundle document.
-- The full-suite counts increase chronologically from earlier feature reviews (`387/388 passed`) to the final six-test state (`394 passed`) because later focused tests were added. The final QA/security baseline is the authoritative current result: `394 passed, 2 failed, 15 subtests` (`PHASE_05_QA.md:8,61-64`; security scan:82).
-
-## Implementation Verification
-
-### Source and Generated-Asset Inspection
-
-The Phase 05 implementation is Markdown agent/skill contracts, generated Claude/OpenCode/Codex mirrors, fixture/report artifacts, the propagation script, and tests; there is no application source or UI change. The source contracts and generated mirrors are present and broadly aligned. A targeted marker scan found no introduced `TODO`, `FIXME`, `HACK`, `debugger`, or debug logging in the changed agent/source files; the only `TODO` hit is instructional text in `05g-artifact-sweeper.agent.md:30`, and the `console.log` hits in `tests/test_propagate_master_assets.py:671,724` are intentional JavaScript fixture payloads.
-
-The security scan identified material implementation risks that static feature reviews did not close:
-
-- `P5-SEC-01`: the orchestrator and 05g/05j/05k declare `execute`, and propagation maps it to Claude Bash/OpenCode bash without command/path/subprocess allowlists (`docs/phases/PHASE_05/PHASE_05-security-scan.md:37`; source examples `.github/agents/05-phase-final-review.agent.md:4`, `.github/agents/05g-artifact-sweeper.agent.md:4`, `.github/agents/05j-consistency-auditor.agent.md:4`, `.github/agents/05k-dependency-auditor.agent.md:4`).
-- `P5-SEC-02` and `P5-SEC-03`: the readiness path consumes report claims after metadata-only validation, while several agents have generic edit capability constrained only by prose (`PHASE_05-security-scan.md:38-39`).
-- `P5-SEC-04` and `REPO-SEC-06`: worktree/report roots and non-hook propagation destinations lack a single canonical no-follow containment contract (`PHASE_05-security-scan.md:40,47`; `scripts/propagate_master_assets.py:122-149`).
-- `P5-SEC-05`: 05i’s `fetch` capability is limited by prose but has no capability-level host/domain allowlist (`PHASE_05-security-scan.md:41`; `.github/agents/05i-learnings-harvester.agent.md:1-5,21-29`).
-
-### Test Verification
-
-Executed with the repository virtual environment:
-
-| Command | Result | Interpretation |
-|---|---|---|
-| `.venv/bin/python -m pytest tests/test_propagate_master_assets.py -q` | 21 passed, 15 subtests | Propagation/static parity gate passes, but explicit Phase 05 slug coverage omits 05g/05j/05k. |
-| `.venv/bin/python -m pytest tests/test_readiness_synthesis_agents.py -q` | 6 passed | 05i/05l source and mirror contract checks pass; no live runtime behavior is proven. |
-| `.venv/bin/python -m pytest tests/ -q` | 394 passed, 2 failed, 15 subtests | Two known pre-existing hook-distribution failures remain: median latency below 50 ms and all-five-harness installation-guide classification. |
-
-The two full-suite failures are `tests/hooks/test_hook_distribution_integration.py::test_ac9_propagated_guard_median_latency_is_below_50_ms` and `::test_ac7_installation_guide_classifies_all_five_harnesses`. They are recorded as pre-existing context in the QA plan and security scan, but they reduce the confidence of a clean release gate.
-
-### Deviation Analysis
-
-- Feature 06 added a focused contract-test file despite the manifest’s “None identified” entry. The deviation is documented in `06-readiness-synthesis-implementation.md:101-105` and is beneficial coverage, but the manifest should be reconciled.
-- Runtime fan-out was unavailable. The implementation and readiness artifacts explicitly preserve `not-run`, `report: null`, and NO-GO rather than fabricating evaluator reports (`06-readiness-synthesis-implementation.md:106-113`). This is an honest fail-closed deviation, not completion evidence.
-- The global `rtk` wrapper failed its hook-integrity check; equivalent read-only commands and the project virtual environment were used, as documented in the QA/security records. No source or test modification was made to bypass it.
-
-## QA Plan Quality Assessment
-
-### Strengths
-
-- **Actionability:** Most happy paths include concrete commands, fixture roots, expected files, row counts, status values, and return-length limits (`PHASE_05_QA.md:89-93,110-112,129-131,148-172`).
-- **Coverage completeness:** The coverage map accounts for every AC in all six feature plans and intentionally marks runtime-only checks as manual (`PHASE_05_QA_COVERAGE_MAP.md:14-59`).
-- **Efficiency:** Static contract and generated-parity checks are not redundantly assigned as manual tests; the 24 manual items target real harness, history, fixture, delegate, and write-back behavior (`PHASE_05_QA_COVERAGE_MAP.md:6-12`).
-- **Negative testing:** Missing artifacts, wrong model, unavailable graph, unavailable delegates, forced 05d failure, and fixture-only write-back are represented (`PHASE_05_QA.md:92,97,116,135,154,170-171`).
-- **Scope discipline:** No frontend/UI change exists, and the plan correctly excludes visual UI/accessibility work while retaining source/report-root safety checks (`PHASE_05_QA.md:201-206`).
-
-### QA Plan Gaps
-
-The failure-injection items say to “disable” MCP/refactor tooling or make a delegate unavailable, but do not specify the harness profile, configuration key, command, or deterministic setup needed to perform those actions (`PHASE_05_QA.md:97,116,135,154`). A tester may need clarification before executing those cases. The plan also checks ordinary read-only behavior but does not provide a direct live adversarial test for the new execute/edit/fetch capability risks, canonical symlink containment, or report-claim trust boundary identified by the security scan (`PHASE_05-security-scan.md:24,28,31,65-68`; `PHASE_05_QA.md:187-188`). These are medium QA-plan risks, and they cannot be waived while the security gate is BLOCKED.
+---
 
 ## Findings
 
-### Cross-Document Issues
+### Blockers
 
-| # | Finding | Severity | Documents Involved | Evidence | Recommendation |
-|---|---|---|---|---|---|
-| 1 | The phase security gate is blocked by introduced Phase 05 High findings, a worsened filesystem finding, and unresolved historical Phase 02 High findings. | Blocker | Security scan; Phase 05 source agents; historical Phase 02 scan | `docs/phases/PHASE_05/PHASE_05-security-scan.md:11-16,37-47` reports **BLOCKED**, 9 High findings, P5-SEC-01/P5-SEC-02 introduced, REPO-SEC-06 worsened, and P2-SEC-01..03 unresolved. | Remediate or formally resolve the security findings at their owning implementation/security stage, then run a fresh whole-repository final Security Scan and update the rollup before QA. |
-| 2 | Wave 4 05d/AC6 has no canonical delegated Security Scan report or P2-SEC-01..03 classifications. | Blocker | Feature 04 implementation/review; evaluator status; security rollup | `04-delegating-evaluators-review.md:16,20,29-32,51-61`; `dev/phase-final-review/PHASE_05/evaluator-status.jsonl:3`; `security-rollup.md:8,24-34`. The retry failed at runtime; status is `not-run`, `report: null`, and no final scan was claimed. | Restore the collaboration runtime, execute 05d with Security Scan available, retain the delegate report/path and status, classify all three P2 findings, and rerun Feature 04 review. |
-| 3 | Wave 6 full-flow evidence is incomplete: eight evaluator checks are `not-run`, so AC5 is partial and the final synthesis cannot establish complete coverage. | Blocker | Feature 06 implementation/review; orchestrator artifacts; QA plan | `evaluator-status.jsonl:1-8`; `readiness-report.md:7-12,29-45`; `06-readiness-synthesis-implementation.md:46,60,107-113`. | Restore runtime access and run the complete 05a–05l fixture flow, including the missing 05d delegation, then rerun the readiness synthesis and all downstream review gates. |
-| 4 | Read-only mechanical/orchestrator contracts expose `execute` and propagate it to shell-capable harnesses without runtime command/path/subprocess allowlists. | High | Features 02/03 source agents, propagation, security scan | `PHASE_05-security-scan.md:37`; `.github/agents/05-phase-final-review.agent.md:4`; `.github/agents/05g-artifact-sweeper.agent.md:4`; `.github/agents/05j-consistency-auditor.agent.md:4`; `.github/agents/05k-dependency-auditor.agent.md:4`. | Remove unnecessary execute capability; sandbox any required command with explicit allowlists and add parity assertions for every Phase 05 evaluator in every harness. |
-| 5 | The readiness/report trust boundary and generic edit/fetch capabilities rely on prose and model claims rather than independently validated, path-scoped evidence. | High | Features 02/04/06 source contracts; security scan | `PHASE_05-security-scan.md:38-41,65-68`; `.github/agents/05-phase-final-review.agent.md:190-209,229-245`; `.github/agents/05l-readiness-synthesizer.agent.md:29-63`. | Treat reports as untrusted structured input, use deterministic status/severity reduction, enforce report-root allowlists/no-follow containment, and constrain 05i fetch to approved hosts/URL patterns. |
-| 6 | Propagation regression tests omit 05g, 05j, and 05k from the explicit Phase 05 asset list and no-execute assertions. | High | Security scan; propagation test; Feature 03 review; coverage map | `tests/test_propagate_master_assets.py:86-118` lists only 05b/05c/05d/05e/05f/05h/05i/05l; `PHASE_05-security-scan.md:37`; `PHASE_05_QA_COVERAGE_MAP.md:37,66`. | Add explicit discovery, renderer-parity, and capability-boundary assertions for 05g/05j/05k across Claude, OpenCode, and Codex; rerun the propagation gate. |
-| 7 | The execution manifest’s verification asset inventory is stale: it says no new automated test file exists, while Feature 06 created `tests/test_readiness_synthesis_agents.py`. | Medium | Execution manifest; Feature 06 implementation; QA plan/coverage map | Manifest `:56-66`; `06-readiness-synthesis-implementation.md:79-84`; QA plan `:43-59`; coverage map `:63-66`. | Reconcile the manifest with the actual six-test focused suite and retain the test as automated evidence rather than manual coverage. |
-| 8 | The final full suite is not green, even though the two failures are documented as pre-existing. | Medium | QA plan; security scan; test run | `PHASE_05_QA.md:8,61-64`; `PHASE_05-security-scan.md:80-83`; current result is 394 passed, 2 failed, 15 subtests. | Keep the failures visible in release evidence, have the owning hook-distribution work address them, and do not treat the passing focused suites as a substitute for a clean repository baseline. |
-| 9 | Several QA failure-injection steps are not independently executable without harness-specific setup instructions, and the plan lacks direct live checks for the new security boundaries. | Medium | QA plan; security scan; coverage map | `PHASE_05_QA.md:97,116,135,154,187-188`; `PHASE_05-security-scan.md:24,28,31,65-68`. | Add exact disposable-profile configuration/commands for unavailable MCP/delegates/model tiers and add explicit capability, path-containment, and untrusted-report checks after remediation. |
-| 10 | Feature 03’s planned README inventory update is not reflected in its implementation record, while the manifest says every feature updates the inventory. | Low | Feature 03 plan/implementation/review; execution manifest | `03-mechanical-evaluators-review.md:33-34,49-52`; manifest `:10,20`. | Reconcile the plan and implementation record, or document why the shared inventory update was intentionally owned by another wave. |
+#### B1 — The assembled agent family has never been run *(the central gap)*
 
-### Implementation Issues
+**Severity: Blocker.** **Evidence:** `ls dev/pr-review/` returns only `fixtures/` — no run
+directory has ever existed. `08-…-implementation.md:51-54,70` records `AC1`–`AC4` **NOT
+DONE**; `08-…-review.md:307` states *"The phase is NOT GO."*
 
-The implementation issues are represented by Findings 1, 4, 5, and 6 above. No additional debug-code or source-file hygiene issue was found in the targeted marker scan. The principal implementation concern is security/runtime authorization, not syntax or generated-file parity.
+The causal chain is honest and correctly handled at every step: feature `04` authored the
+orchestrator and pinned the fixture, then deferred the dry run to `08` — correct, since
+five of eight roster agents did not exist yet. Feature `08` could not execute it: its
+context had no agent-spawning tool, so a seven-way fan-out could be neither run nor
+simulated. It recorded NOT DONE with routing **rather than manufacturing a partial run** —
+also correct, since a partial run produces below-GO evidence by construction.
 
-### QA Plan Issues
+Nothing here is a defect of judgment. But a deferred verification that never executed is
+still an unexecuted verification, and it is the one the phase is *for*. Every precondition
+now verifies for the first time (roster 8/8, fixture reachable, output gitignored,
+propagation at a fixed point) — the run is now *possible*, and simply must happen.
 
-Findings 8 and 9 are the QA-plan/release-evidence issues. The plan is materially better than the current runtime evidence: it explicitly says that missing reports fail coverage and that bounded artifacts must not be promoted to complete proof (`PHASE_05_QA.md:68-75,194-204`). It still requires harness-specific failure setup and direct security-boundary checks before it can support a confident release decision.
+**B2 is the proof of why this matters**: a defect that eight green reviews and 582 passing
+tests did not surface, sitting directly on the fan-out path, found in minutes by looking at
+what the run would actually do.
 
-## Risk Register
+**Root cause:** not attributable to a deficient agent — an environmental capability gap.
+**Route:** manual QA §1–§4 (agent-spawning context required).
+
+#### B2 — Orchestrator delegates to names that do not exist on Claude or Codex *(NEW)*
+
+**Severity: Blocker.** Not reported in any review, the security scan, or any QA document.
+
+**Evidence:**
+
+| Root | Agent names on disk | Orchestrator delegates to | Resolves? |
+|---|---|---|---|
+| `opencode/agents/` | `05a-baseline-worktree.md` … `05g-readiness-synthesizer.md` | `05a-baseline-worktree`, `05g-…` | **Yes** |
+| `claude/agents/` | `z-baseline-worktree.md`, `z-change-narrator.md`, `z-artifact-sweeper.md`, `z-consistency-auditor.md`, `z-dependency-auditor.md`, `z-test-health.md`, `z-readiness-synthesizer.md` | `05a-baseline-worktree`, `05b`–`05g`, `04e-diff-security-scan` | **No** |
+| `codex/agents/` | `z-*.toml` (`name = "z-change-narrator"`) | same | **No** |
+
+Counts of rewritten references:
+
+- `claude/commands/phase-execute.md` → **9** `z-` references (rewrite fired)
+- `claude/commands/pr-review.md` → **0** `z-` references (rewrite is a **complete no-op**)
+
+**The decisive evidence** is the same delegated agent referenced two ways. `04e Diff
+Security Scan` is propagated once, as `claude/agents/z-diff-security-scan.md`. The working
+orchestrator names it correctly (`claude/commands/phase-execute.md:165`,
+`z-diff-security-scan`); the new one does not (`claude/commands/pr-review.md:206,212`,
+`04e-diff-security-scan`). One agent, one root, two orchestrators — one resolves, one
+cannot.
+
+**Root cause:** `_rewrite_agent_references` (`scripts/propagate_master_assets.py:565-567`)
+rewrites body references using a map built by `_build_agent_reference_map` (`:554-562`),
+which is **keyed on `agent.name`** — the *display* name. The house convention, demonstrated
+by `.github/agents/04-phase-execute.agent.md:64,78,92`, is to reference subagents in the
+body by **display name** (`Feature - Implementer`) so the rewrite fires.
+`.github/agents/05-pr-review.agent.md:176,205,207,274` instead references them by **slug**
+(`05a-baseline-worktree`, `05g-readiness-synthesizer`, bare `05b`–`05f`). The display-name
+map never matches a slug, so every roster reference passes through verbatim into roots
+where the agents carry `z-` names.
+
+The orchestrator's own `agents:` frontmatter (`:5`) already carries the correct display
+names — `[Baseline Worktree, 05b Change Narrator, 05c Artifact Sweeper, …]` — so the body
+contradicts its own frontmatter.
+
+**Why no test caught it:** the suite asserts (a) body contracts against the **source**, and
+(b) file presence/parity per generated root (`test_roster_propagates_to_all_three_generated_roots`).
+**No test asserts that a name an orchestrator body delegates to resolves to an agent
+existing in the same generated root.** This is exactly the "described correctly vs actually
+runs" gap the QA plan names at `:43-45` — instantiated.
+
+**Why it is a Blocker:** it lands on the fan-out path of the phase's headline deliverable,
+on the primary harness (Claude) and on the one harness §5's delegation check *requires*
+(Codex). QA §9 would surface it; QA §1 would fail on it. OpenCode — the only harness that
+works — works only incidentally, because it keeps source slugs.
+
+**Fix (small, in source):** change the roster references in
+`.github/agents/05-pr-review.agent.md` body from slugs to the display names already in its
+own `agents:` frontmatter, then re-propagate. Recommend adding the missing invariant as a
+test: every agent name referenced in a generated orchestrator body resolves within that
+root.
+
+**Root cause stage:** `z-feature-implementer` (feature `04` source body), with a
+contributing gap in `z-feature-reviewer` (parity was verified as file presence, not name
+resolution).
+
+#### B3 — `P3-SEC-01`: prune deletion escapes the repository root — open High
+
+**Severity: Blocker (release), High (security).** **Evidence:**
+`scripts/propagate_master_assets.py:256` guards only the **leaf**
+(`if path.is_symlink() or not path.is_file(): continue`) before `path.unlink()` at `:260`.
+`:277-284` does the same before `shutil.rmtree(dest_dir)` — recursive removal. Neither
+performs a canonical containment check on the generated **root** or its parents. If a root
+is itself symlinked, `directory.is_dir()` follows it, `glob` enumerates the real target,
+leaf files there are not symlinks, and a marker-bearing file is deleted outside the repo.
+Reproduced in a sandbox per the security scan (`:76-118`). Extends `REPO-SEC-06` from
+writes to deletes; **genuinely new**, since the baseline prune was inert (0/24 matched).
+
+**The gap is sharper than the scan states:** the exact check required already exists in the
+same file. `_validate_output_directory` (`:1173-1184`) performs canonical
+`resolve().relative_to(resolved_root)` plus root-symlink rejection, and
+`_validate_nested_output_directory` (`:1187-1205`) walks intermediate components. **Neither
+prune call site (`:1444-1446`, `:1569-1581`) invokes either.** The fix is applying an
+existing in-file helper, not writing a new one.
+
+Mitigating: the marker guard (`_is_generated_output`) and the two-condition rule mean an
+attacker needs both a symlinked root and marker-bearing content — hence High, not Critical.
+
+**Root cause stage:** `z-feature-implementer` (feature `01`). **Route:** security
+remediation before release, or an explicit, owner-named accepted risk. It must not enter
+QA silently — see F4.
+
+### High
+
+#### F4 — The QA plan is blind to the phase's open security findings
+
+**Severity: High.** **Evidence:** `PHASE_03_QA.md` and `PHASE_03_QA_COVERAGE_MAP.md`
+contain **zero** occurrences of `P3-SEC-01`, `P3-SEC-02`, or `REPO-SEC-06`, and **never
+cite `PHASE_03-security-scan.md`** — the only match for "security" in the plan is the
+unrelated `04e` evaluator at `:154`. Both documents handle `P5-SEC-02` (2 mentions each)
+and `PERF-01` (2 / 1) with real care, and the plan's Security section (`:338-342`) covers
+P5-SEC-02, read-only boundaries, and worktree cleanup.
+
+So the omission is not carelessness about security generally — it is specifically that the
+two findings **this phase introduced or worsened** are absent, while the two it *inherited*
+are handled. The likely cause is ordering: the QA plan was committed at `4b856a0` and the
+security scan is still **uncommitted** in the working tree (F8), i.e. finalized afterward
+and never reconciled back.
+
+**Consequence:** a tester runs section 1's dry run and the propagation checks — exercising
+the very delete path carrying an open, reproduced High — with no indication it exists. Per
+Phase 2C, every open risk must be covered by QA or recorded as an accepted risk; this is
+neither.
+
+**Root cause stage:** `z-feature-qa-writer`. **Fix:** add a Security subsection recording
+`P3-SEC-01` (open High, routed) and `P3-SEC-02` (open Medium), in the same routed-risk
+style already used for PERF-01, and cite the scan in Prerequisites.
+
+### Medium
+
+#### F5 — `P3-SEC-02`: `05b-change-narrator` holds delegation with no allowlist
+
+**Severity: Medium.** **Evidence:** `.github/agents/05b-change-narrator.agent.md:4` —
+`tools: [agent, read, search, edit]` with **no `agents:` key**. It is the only Phase 03
+agent holding `agent` without an allowlist; `.github/agents/05f-test-health.agent.md:5`
+shows the pattern (`agents: [Test - Analyst]`). Propagates to
+`claude/agents/z-change-narrator.md:4` as `tools: … Agent …`, unconstrained. An
+unconstrained delegation grant is an indirect route to an `execute`-holding agent.
+
+Closable in **one frontmatter line** (`agents: [<the per-directory readers 05b may spawn>]`).
+Recommend closing before QA rather than routing — the cost is a line and the pattern is
+already established next door.
+
+**Root cause stage:** `z-feature-implementer` (feature `06`).
+
+#### F6 — QA §9's Claude check is not executable as written
+
+**Severity: Medium.** **Evidence:** `PHASE_03_QA.md:322` instructs: *"confirm all eight
+agents resolve: `05 PR - Review`, `05a`–`05g`."* On Claude, **none of those names exist**:
+the seven evaluators propagate as `z-*` (`claude/agents/z-change-narrator.md` etc.) and the
+orchestrator propagates not as an agent but as the slash command
+`claude/commands/pr-review.md`. A tester following the step literally finds 0 of 8 and
+cannot tell whether that is the expected `z-`/command mapping or the real defect (B2) — the
+two are indistinguishable from the instruction as written.
+
+The step is also the phase's best detector for B2, which makes fixing its wording valuable
+rather than cosmetic. §9's OpenCode line (`:323`) is correct and does note the source-slug
+keying.
+
+**Root cause stage:** `z-feature-qa-writer`.
+
+### Low
+
+#### F7 — A disproved test-count claim survives in the record and propagated into both QA documents
+
+**Severity: Low.** **Evidence:** `08-…-implementation.md:77` claims *"561→581 passed,
+exactly +20"*, with the arithmetic at `:257-272`. The reviewer independently disproved it
+(`08-…-review.md:12-18,73`): the suite was **red** at `3cd47e5` (`2 failed, 580 passed`),
+reported as `1 failed, 581 passed` from a pre-commit run never re-measured. Issue #1 (High)
+was **Fixed** and reconciled to `582` (`:64,278,293`). I measured **582** — the review is
+right.
+
+But the implementation record was **never corrected**, and the QA writer read AC9 from it
+rather than from the review, carrying the disproved figure into `PHASE_03_QA.md:356` and
+`PHASE_03_QA_COVERAGE_MAP.md:135` — each now **contradicting its own header** (`:174` and
+`:43` respectively both say 582).
+
+Cosmetic in effect — disk is correct and the QA headline figure is right. Noted because it
+is the phase's evidence-integrity pattern reaching the release documents: a falsified claim,
+caught by review, still propagating two documents downstream. It bears on how much
+confidence the static records carry on their own.
+
+**Root cause stage:** `z-feature-implementer` (record not updated post-fix) →
+`z-feature-qa-writer` (sourced AC9 from the record, not the review).
+
+#### F8 — The security scan is uncommitted
+
+**Severity: Low.** `git status` shows `docs/phases/PHASE_03/PHASE_03-security-scan.md`
+modified (+401/−81) and unstaged. The phase's sole security deliverable — carrying an open
+High — is not in the commit graph and would be lost by a clean checkout. Likely the
+proximate cause of F4. **Fix:** commit it before QA.
+
+---
+
+## Cross-Document Consistency (Phases 2A–2E)
+
+| Check | Result |
+|---|---|
+| 2A Plan → Implementation | **Pass with one gap.** Every AC traces; no scope creep, no silent drops. `08/AC1`–`AC4` are honestly recorded NOT DONE rather than quietly closed — the correct handling of B1. |
+| 2B Implementation → Review | **Pass.** No review is Approved while carrying an open Blocker. Every "Fixed" I spot-checked has a corresponding code state. **Notable inversion:** in 8/8 features the implementer's mutation-sweep claim ("0 inert guards") was disproved by the reviewer's independent sweep — including a security-relevant one-way-boundary guard (`07` Issue #3) and a guard asserting a token appearing 13 times, which could never fail (`06`). The reviews caught all of them. This is the layer working as designed, but it means **implementer self-attestation carries near-zero independent weight in this phase** — and it is why B2, which no reviewer's sweep was scoped to catch, matters. |
+| 2C Review → QA | **Fail (F4).** Runtime reservations are well covered (`07` Issues #3/#4 → §7; `06`/AC5b → §5; graph dependency → §8). Open **security** findings are not covered at all. |
+| 2D Plan → QA | **Pass.** All 9 manifest checklist items map to sections; the plan explicitly tells testers what *not* to hand-test (`:163-184`), avoiding redundant manual effort; non-goals appear as negative tests (§7 *never* = no network call; §9 no retired agent loadable). |
+| 2E Context accuracy | **Pass.** Architectural decisions held: report key derived from SHA+timestamp (no branch name reaches a path — verified in the declared shape); `execute` confined to 2 agents; `worktree-baseline` consumed unchanged. |
+
+---
+
+## QA Plan Quality Assessment (Phase 4)
+
+The QA plan is **high quality** and should be preserved through remediation, not rewritten.
+
+| Dimension | Assessment |
+|---|---|
+| Actionability | **Strong**, with one exception (F6). Nearly every item carries a concrete action, a command, and an observable expected result. Several encode *why* the naive reading fails — §6's self-exclusion rationale and §1's added-line-vs-touched-file distinction are genuinely instructive. |
+| Coverage completeness | **Strong on runtime, gap on security (F4).** 17 manual items → 9 sections, 1:1 with the manifest, none dropped. |
+| Efficiency | **Excellent.** The "what NOT to hand-test" section (`:163-184`) is exactly right and rare. |
+| Prerequisites | **Strong.** The scratch-consumer-repo setup is copy-pasteable with a stated rationale for why this repo must not be used; the venv/`rtk` note is a real, earned detail. Missing: a pointer to the security scan (F4). |
+| Error scenarios | **Excellent.** §3's asymmetry — a fan-out failure must *not* abort, an `05a` preflight failure *must* — is the sharpest test-design decision in the document. |
+| Cross-cutting | **Good.** Performance framed as context pressure with PERF-01 correctly excluded; accessibility correctly N/A. Security is the weak axis (F4). |
+
+**The plan's greatest strength is its honesty.** It leads with its own central gap
+(`:22-46`), states that 582 passing tests prove the family is *described* correctly and
+"prove nothing about whether it *works*", and records the fixture's own weakness (zero
+deletions, `:364`). This is a QA document written to find problems rather than to be passed
+— and B2 is the vindication of that framing: it was found exactly where the plan says to
+look.
+
+---
+
+## Risk Register (Phase 5)
 
 | # | Risk | Likelihood | Impact | QA Detection | Recommendation |
 |---|---|---|---|---|---|
-| 1 | Introduced or inherited security findings allow unsafe shell, report, filesystem, or injection behavior into a release gate. | High | Blocker | Yes — the security scan detects the risk; no — it is not remediated. | Resolve the BLOCKED security scan and rerun the complete final scan. |
-| 2 | 05d produces no final security classification, allowing a later synthesis run to lack authoritative P2 evidence. | Certain in current runtime | Blocker | Yes — `not-run`/`report:null` is visible. | Recover the delegate runtime and retain a canonical 05d report plus P2 classifications. |
-| 3 | Missing evaluator reports cause incomplete synthesis or hide a runtime failure behind a bounded artifact. | Certain in current run | Blocker | Yes — eight status records and readiness “Checks Not Run.” | Complete 05a–05l fan-out and rerun Wave 6. |
-| 4 | A prompt-injected artifact can reach an execute-capable evaluator/harness. | Medium | High | Partial — static scan sees the capability, but no live exploit/boundary test was run. | Remove/narrow execute and add live disposable-harness boundary checks. |
-| 5 | A malicious report can steer readiness synthesis or write-back through unvalidated model-readable claims. | Medium | High | Partial — metadata checks exist; report claims are not independently reduced. | Add strict schema, deterministic reducer, evidence validation, and path-scoped write enforcement. |
-| 6 | Omitted 05g/05j/05k parity assertions allow a capability regression to ship undetected. | Medium | High | Partial — manual propagation item can catch it; focused tests do not. | Expand automated slug/capability coverage and rerun at each feature checkpoint. |
-| 7 | Stale manifest data causes test inventory and release evidence to be misreported. | Certain | Medium | Yes — the contradiction is visible in the records. | Reconcile the manifest and final QA coverage map. |
-| 8 | Known hook-distribution failures reduce confidence in repository-wide release health. | Certain | Medium | Yes — full suite fails reproducibly. | Preserve as baseline context and route to the owning hook-distribution work. |
-| 9 | Manual failure cases cannot be reproduced consistently because harness setup is underspecified. | Medium | Medium | Partial — expected outcomes are clear, setup is not. | Add exact harness/profile steps and required delegate availability controls. |
-| 10 | Inventory/documentation drift obscures whether the shared README was updated at the intended wave. | Medium | Low | Yes — review record identifies the mismatch. | Reconcile plan, implementation, and manifest ownership. |
+| 1 | Family has never run; unknown runtime defects (B1) | **Certain** | **Blocker** | **Yes — §1 is designed for it** | Execute §1–§4 before any release claim |
+| 2 | Claude/Codex delegation fails to resolve (B2) | **High** (0 of 8 names resolve in 2 roots) | **Blocker** | Yes — §9 detects, §1 fails on it | Fix source body to display names; re-propagate; re-run §1 on Claude **and** Codex |
+| 3 | Prune deletes outside repo root (B3 / `P3-SEC-01`) | Low (needs symlinked root + marker) | **Blocker** (unrecoverable deletion) | **No** — not in the QA plan (F4) | Apply `_validate_output_directory` at both prune sites; add symlinked-root regressions |
+| 4 | Tester unaware of open security findings (F4) | **Certain** if QA proceeds as written | High | **No** — self-referential | Add a routed-risk Security subsection; cite the scan |
+| 5 | `05b` unconstrained delegation (`P3-SEC-02`) | Low | Medium | No | Close now — one frontmatter line |
+| 6 | Codex depth-2 silent inline fallback (`06`/AC5b) | **Medium** (`max_depth` defaults to 1) | High (reports success while not delegating) | **Yes — §5, from the transcript** | Run §5 on Codex specifically; never infer from prompt text |
+| 7 | §9 Claude step misread as pass/fail (F6) | Medium | Medium | Self-referential | Reword to `z-*` names + the `/pr-review` command |
+| 8 | Security scan lost from working tree (F8) | Medium | Medium | No | Commit it |
+| 9 | `05a`/orchestrator `execute` grants unclosable | Certain (by design) | Medium | N/A | **No action.** Honestly recorded and routed — see below |
+| 10 | `P5-SEC-02` remains open | Certain (by design) | High (inherited) | §Security verifies it stays open | **No action.** Correct as recorded |
+| 11 | PERF-01 fails | Certain | N/A to this phase | Excluded by design | **No action.** Not a Phase 03 regression; **do not relax the budget** |
+| 12 | Fixture has zero deletions | Certain | Low | Recorded `:364` | Accept; a second fixture if ever needed — never resize this one |
 
-## Blocking Items and Root-Cause Routing
+### Items assessed and found correct — no action
 
-1. **Blocked security gate and unresolved security findings** — The final scan is `BLOCKED`; P5-SEC-01/P5-SEC-02 are introduced High findings, REPO-SEC-06 is worsened, and P2-SEC-01..03 remain unresolved. **Root cause:** the implementation/security boundary was not sufficiently enforced and the review chain did not close the resulting risks. **Return to:** `@z-feature-implementer` for capability/path/trust-boundary remediation, followed by `@z-feature-reviewer` for a security-focused re-review; the inherited Phase 02 findings must also be resolved by their owning security implementation. **Then re-run:** propagation/parity tests, focused tests, whole-repository Security Scan, feature reviews, and this final analysis.
-2. **Wave 4 05d/AC6 runtime blocker** — The delegated Security Scan did not complete, no canonical 05d report exists, and P2-SEC-01..03 are not classified from final-state evidence. **Root cause:** implementation/runtime execution evidence is incomplete, not an ambiguity in the AC. **Return to:** `@z-feature-implementer` with the instruction to restore the collaboration runtime, execute 05d and its delegate, and retain the canonical report/status artifacts. **Then re-run:** Feature 04 review, the 05h unavailable-delegate check, the full evaluator fan-out, and Wave 6 synthesis.
-3. **Wave 6 full-flow blocker** — Eight evaluator checks remain not-run, leaving AC5 partial and preventing a complete readiness decision. **Root cause:** implementation/runtime fan-out was not available; the fail-closed behavior itself is correct. **Return to:** `@z-feature-implementer` with the instruction to run all 05a–05l evaluators against the disposable fixture and retain each report and ≤10-line return. **Then re-run:** Features 04–06 reviews, the consolidated QA checks, the security rollup, the AC matrix, readiness synthesis, and this final gate.
+Three items that could be mistaken for defects are, on examination, correctly handled. This
+agent's bias is toward finding problems; these are not problems.
+
+- **`P5-SEC-02` recorded OPEN.** Verified open, negation-tested, with a named owner and
+  routing. It closes only by rebuilding the readiness path *in code*; this phase ships agent
+  Markdown. Recording it open is the honest outcome — **correct, not a defect.**
+- **`05a` + orchestrator `execute` grants.** Narrowing was by **removal only**, and I
+  verified the result: `execute` is held by exactly two agents, and `05b`–`05g` hold no
+  shell. Per-agent command scoping is not expressible in Claude subagent frontmatter, so the
+  two residual grants are declared-and-unclosable. The question is whether that is **honestly
+  recorded** — it is: declared with justification in the agent bodies, in the security scan
+  (`:340`), and routed to a hook-owning phase in `PROJECT_ROADMAP.md:29`. **Correct.**
+- **PERF-01.** Independently confirmed not a Phase 03 regression (54.54 ms at `ae9823a` vs
+  54.35 ms at HEAD; I measured 55.80 ms at HEAD). Correctly excluded and correctly refused a
+  budget relaxation. **Correct.**
+
+---
+
+## Blocking Items — Root Cause Routing
+
+1. **B1 — The assembled family has never been run.** `08/AC1`–`AC4` NOT DONE; `dev/pr-review/`
+   holds only `fixtures/`.
+   **Root cause:** not a deficient agent — an environmental capability gap (feature `08` had
+   no agent-spawning tool). Both the deferral and the refusal to fabricate a partial run were
+   correct.
+   **Return to:** **manual QA execution** in an agent-spawning context — `PHASE_03_QA.md`
+   §1–§4, after B2 is fixed (otherwise §1 fails on B2 and re-runs are wasted).
+   **Then re-run:** this analysis, to convert `08/AC1`–`AC4` from NOT DONE to evidence-backed.
+
+2. **B2 — Orchestrator delegates to names absent from the Claude and Codex roots.**
+   **Root cause:** `.github/agents/05-pr-review.agent.md:176,205,207,274` references the
+   roster by **slug**; `_build_agent_reference_map` (`propagate_master_assets.py:554-562`)
+   keys on **display name**, so the rewrite is a no-op (0 refs vs 9 in `phase-execute`).
+   **Return to:** `@z-feature-implementer` (feature `04`) with: *"Replace the roster's slug
+   references in the `05-pr-review` body with the display names already declared in its own
+   `agents:` frontmatter (`Baseline Worktree`, `05b Change Narrator`, …, `04e Diff Security
+   Scan`), matching the `04-phase-execute` convention at `:64,78,92`. Re-propagate and verify
+   `claude/commands/pr-review.md` and the Codex roster resolve to `z-*`. Add a test asserting
+   every agent name referenced in a generated orchestrator body resolves within that root —
+   the gap that let this ship."*
+   **Then re-run:** propagation, the suite, feature `04` review, and QA §1 + §9 on Claude and
+   Codex.
+
+3. **B3 — `P3-SEC-01` open High: prune deletion escapes the repo root.**
+   **Root cause:** `z-feature-implementer` (feature `01`) — `propagate_master_assets.py:256`
+   and `:277` guard the leaf only; no canonical containment before `unlink`/`rmtree`.
+   **Return to:** `@z-feature-implementer` (feature `01`) with: *"Apply the existing in-file
+   `_validate_output_directory` (`:1173`) and `_validate_nested_output_directory` (`:1187`)
+   at both prune call sites (`:1444-1446`, `:1569-1581`) so every generated root is
+   canonically contained and no-follow before any deletion. Add symlinked-root regression
+   tests per subtree. This closes `REPO-SEC-06` on the same pass."*
+   **Alternative:** if deferred to the propagator/containment phase per the scan's
+   recommendation (`:408`), it must be an **explicit, owner-named accepted risk** recorded in
+   the QA plan — not silence (F4).
+   **Then re-run:** the suite, feature `01` review, and the security scan's containment check.
+
+**Sequencing:** fix **B2** and **B3** and **F4/F5** first, commit the security scan (F8),
+then execute QA §1–§9. Running the dry run before B2 is fixed wastes the run.
+
+---
 
 ## Recommendations
 
-1. Resolve the security scan’s BLOCKED gate and require fresh final-state evidence for every High/Critical classification before manual QA.
-2. Recover the collaboration runtime and close the Wave 4 05d/AC6 and Wave 6 eight-check runtime gaps; preserve explicit NOT RUN evidence for any remaining unavailable delegate.
-3. Remove or sandbox `execute`, enforce report-root/fixture-only path allowlists and canonical no-follow containment, and replace model-trusted report claims with validated structured evidence.
-4. Expand propagation tests to enumerate all Phase 05 agents, especially 05g/05j/05k, across all three harnesses; reconcile the execution manifest’s test inventory.
-5. Add deterministic harness setup instructions and direct security-boundary cases to the QA plan, then rerun the focused suites and record the known full-suite failures.
+Ordered by priority.
 
-## Handoff
+1. **Fix B2 before anything else** — `z-feature-implementer`. It is small (one body's
+   references), it blocks the headline QA item on 2 of 3 harnesses, and every hour of dry-run
+   effort spent before it is fixed is wasted. Add the missing name-resolution test.
+2. **Remediate or formally accept B3 (`P3-SEC-01`)** — `z-feature-implementer`. An open,
+   reproduced High on a live deletion path cannot enter QA undocumented. The helper already
+   exists in-file; prefer fixing over routing.
+3. **Reconcile the QA plan with the security scan (F4)** — `z-feature-qa-writer`. Add a
+   routed-risk Security subsection for `P3-SEC-01`/`P3-SEC-02`, in the same style already used
+   well for PERF-01, and cite the scan in Prerequisites.
+4. **Close `P3-SEC-02` (F5)** — `z-feature-implementer`. One frontmatter line; the pattern is
+   already next door in `05f`.
+5. **Commit the security scan (F8)** and **fix QA §9's Claude wording (F6)** —
+   `z-feature-qa-writer`. Both are minutes of work; F6 sharpens the step most likely to detect
+   B2.
+6. **Then execute QA §1–§9** in an agent-spawning context — §5 on **Codex specifically**, §6–§7
+   in the **scratch consumer repo only**. Treat §1 as the release gate it is.
+7. **Correct the AC9 record and its two downstream copies (F7)** — low priority, but the
+   phase's evidence-integrity pattern is the reason to close the loop rather than leave a
+   disproved number in the release documents.
+8. **Do not update any status line** until §1–§4 produce evidence. The verdict is advisory
+   and unverified; `PHASE_03_SUMMARY.md` and `PROJECT_ROADMAP.md` are correctly untouched.
 
-Manual QA should not begin as a production-readiness execution. It may use `docs/phases/PHASE_05/PHASE_05_QA.md` as the remediation verification plan after the blocking security and runtime items are resolved. The required analysis record is complete at `docs/phases/PHASE_05/PHASE_05-qa-analysis.md`.
+---
+
+## Closing Note
+
+The distribution of these findings is itself the phase's lesson. Fifty-four ACs are provably
+done, propagation is at a fixed point, the suite reproduces to the test, the roster is
+correct in source, and the two hardest security calls — `P5-SEC-02` and the unclosable
+`execute` grants — were resolved the honest way rather than the convenient one. The QA plan
+names its own central gap in its first section. This is careful work.
+
+And the family still does not run on the primary harness, because nobody ran it. B2 sat in
+plain sight in a generated file, past eight reviews and 582 passing tests, because every
+assertion in this phase checks that the family is *described* correctly and none checks that
+it *works*. The QA plan predicted this exactly — *"eight green features are not evidence the
+family runs"* — and it was right on the first look.
+
+Fix B2 and B3, reconcile the plan with the scan, then run it.

@@ -9,8 +9,9 @@ permission:
   grep: allow
   read: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
-You are the **05a-baseline-worktree** specialist for the Phase Final Review family.
+You are the **05a-baseline-worktree** specialist for the PR Review family.
 
 ## Scope
 

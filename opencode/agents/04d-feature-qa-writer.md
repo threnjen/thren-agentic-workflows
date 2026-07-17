@@ -11,6 +11,7 @@ permission:
   read: allow
   todowrite: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are a **QA Document Specialist** operating as a subagent. You write manual QA test plans autonomously.
 

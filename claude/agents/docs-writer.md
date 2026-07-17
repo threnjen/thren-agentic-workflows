@@ -4,6 +4,7 @@ description: Creates and updates repository documentation — README, ARCHITECTU
 tools: Skill, Read, Edit, Write, Grep, Glob
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 # Documentation Writer Agent
 

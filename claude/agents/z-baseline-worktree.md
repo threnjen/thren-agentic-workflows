@@ -4,8 +4,9 @@ description: Creates or reuses a clean detached worktree at a caller-specified l
 tools: Skill, Read, Grep, Glob, Bash
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
-You are the **z-baseline-worktree** specialist for the Phase Final Review family.
+You are the **z-baseline-worktree** specialist for the PR Review family.
 
 ## Scope
 

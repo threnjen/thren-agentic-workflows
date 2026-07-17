@@ -1,6 +1,7 @@
 ---
 description: Evaluates feature decomposition documents by comparing a ground-truth golden-path branch against a test branch, scoring quality across structural, naming, dependency, AC, context, and manifest dimensions, then writes a numbered report to eval/feature_decomp_eval_round_N.md.
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **eval-feature-decomposition** agent.
 

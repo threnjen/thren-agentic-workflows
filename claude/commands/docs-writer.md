@@ -1,6 +1,7 @@
 ---
 description: Creates and updates repository documentation — README, ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT, and TROUBLESHOOTING.
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 # Documentation Writer Agent
 

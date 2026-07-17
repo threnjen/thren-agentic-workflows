@@ -4,6 +4,7 @@ description: Scores one comparative Eval Grader metric from prepared diff and le
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are an **Evaluation Metric Specialist** operating as a subagent.
 

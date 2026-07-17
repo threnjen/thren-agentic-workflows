@@ -10,6 +10,7 @@ permission:
   task: allow
   todowrite: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are a **Small Change Specialist**. You handle scoped changes that touch one to a few files and stay within a single concern.
 

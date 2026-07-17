@@ -1,91 +1,411 @@
-# security-scan: phase-05-phase-final-review
+# security-scan (diff-scoped): PHASE_03 — PR Review agent family
 
-> **Renumbered 2026-07-16: this phase is now Phase 03 (formerly Phase 05).** The
-> body below is preserved as the historical record from the original review and
-> still uses the Phase 05 numbering throughout. Development-fixture paths
-> (`dev/phase-final-review/fixtures/PHASE_05/`, `PHASE_05a`/`PHASE_05b`) and the
-> `05a`–`05l` agent names are unchanged and remain correct as written. See the
-> mapping table in `docs/phases/PROJECT_ROADMAP.md`.
+> **Supersedes** the historical full-codebase scan previously at this path (Phase 05
+> numbering, revision `4484f0f`). That report is preserved in git at blob
+> `87670c68a54b91c725a18395240bda16e1d3fbc3`, retrievable with
+> `git show ae9823a:docs/phases/PHASE_03/PHASE_03-security-scan.md`. Its findings are
+> reconciled against final state in § "Reconciliation with the superseded scan".
+> This report is **diff-scoped**, not a whole-repository scan — see § "Coverage limits".
 
 ## Scan Metadata
 
-- Repository revision: `4484f0f234ee90de8cdab7eb2b0c1c4ffdfbee29` (`phase/phase-final-review-2`), scanned 2026-07-15.
-- Phase artifacts reviewed: `PHASE_05_SUMMARY.md`, `PHASE_05_QA.md`, `PHASE_05_QA_COVERAGE_MAP.md`, the execution manifest, all six feature plan/context/tasks/implementation/review records, the Phase 05 source agents and skills, tracked generated harness outputs, fixtures, tests, propagation code, and historical Phase 01/02 security reports.
-- Repository scope: all 555 tracked paths were inventoried. Security-relevant Python, Bash, JavaScript, C#, TOML, JSON, YAML, Markdown, manifests, tests, hooks, plugins, and deployment/package artifacts were reviewed. Generated mirrors were checked for permission/parity exposure and not counted as independent source findings.
-- Scope and exclusions: generated/cache/build/vendor artifacts and non-executable binary/data artifacts were excluded from independent code analysis; tracked Unity package artifacts were reviewed as committed deployment artifacts. Untracked worktree content was excluded. The worktree was not clean, but no unrelated dirty artifact was used as phase evidence.
-- No source, dependency, configuration, infrastructure, test, or generated file was modified. This report is the only requested output.
+- **Diff range**: `ae9823a..HEAD` on branch `phase/pr-review` (17 commits).
+- **Scope**: 276 changed files, +19,294 / −7,503. Composition: agent Markdown, skills,
+  generated harness mirrors (`claude/`, `codex/`, `opencode/`), pipeline records under
+  `dev/feature/01..08`, tests, and **one** substantive executable change —
+  `scripts/propagate_master_assets.py` (+231 / −58).
+- **Phase artifacts reviewed**: `PHASE_03_SUMMARY.md`, `PHASE_03_DISCOVERY_CONTEXT.md`,
+  `dev/feature/phase-03-pr-review-execution-manifest.md`, all eight feature
+  plan/context/tasks/implementation/review records, the `05*` source agents, the four
+  PR-review skills, and `.github/learnings/cross-phase-decisions.md`.
+- **Method**: static review plus **direct dynamic verification** of the propagator's
+  deletion path in isolated sandbox copies (no repository file was modified). Every
+  behavioural claim below marked "Reproduced" was executed, not inferred.
+- **No source, test, configuration, or generated file was modified.** No secret value is
+  reproduced in this report.
 
 ## Verdict
 
-- **BLOCKED**
-- Finding totals: **0 Critical, 9 High, 8 Medium, 1 Low**.
-- Phase relationship totals: **5 Introduced, 1 Worsened, 12 Pre-existing, 0 Unclear**.
-- Gate reason: `P5-SEC-01` and `P5-SEC-02` are High findings introduced by this phase. `REPO-SEC-06` is a pre-existing High filesystem weakness whose affected generated-write surface is expanded by this phase. Historical Phase 02 High findings remain visible and unresolved.
+- **Pass with Conditions**
+- Finding totals: **0 Critical, 1 High, 2 Medium, 1 Low, 1 Informational**.
+- Phase relationship totals: **1 Worsened, 1 Introduced, 1 Accepted/Routed,
+  1 Residual-by-design, 1 Verified-open.**
+- **Condition**: the single High (`P3-SEC-01`) is a containment gap on the propagator's
+  newly-live deletion path. It is a direct extension of pre-existing `REPO-SEC-06` from
+  *writes* to *deletes*, is reproducible, and requires an attacker who can already plant a
+  symlink in the repo layout. It does not block the agent family's contracts, but it
+  should be closed by the same phase that owns propagator containment.
 
-## Coverage Matrix
+---
 
-| Category | Artifact classes reviewed | Method/tool | Status | Limitations |
-|---|---|---|---|---|
-| Secrets and credentials | Tracked filenames, source, docs, fixtures, configs, package files | Redacted `git grep` heuristics; manual review | Completed with no supported live-secret finding | `gitleaks`, TruffleHog, entropy/history, and binary secret scanning unavailable; secret values were not emitted. |
-| Dependencies and supply chain | `requirements-dev.txt`, `uv.lock`, `pyproject.toml`, `.mcp.json`, `.codex/config.toml`, Unity package manifest | Manifest/lock review; `.venv/bin/python -m pip check` passed | Incomplete; finding recorded | No `pip-audit`, Safety, OSV scanner, SBOM, signature/provenance, or vulnerability database was available; no tools were installed. |
-| Application attack surface and injection | Hook payload handling, Bash analyzer, URL scanner, agent/report contracts, Unity input paths | Code/data-flow review; graph context; targeted tests; historical security evidence | Completed with findings | No live adversarial multi-harness prompt-injection or shell-bypass session was available. |
-| Authentication, authorization, and session handling | Hook rules, harness adapters, agent capabilities, report/write-back contracts | Cross-file structural review | Completed for repository controls; findings recorded | No user-facing authentication/session service exists in the tracked repository. |
-| Data protection and cryptography | Redaction, audit records, config loading, package code | Source review and historical probes | Completed; no custom-crypto finding | No cryptographic protocol implementation or live key-management environment was present. |
-| API and input-boundary defenses | Hook event schemas, WebFetch capability, JSON/config input, Unity capture config | Boundary tracing and static validation | Completed with findings | No deployed API endpoint or live network service was available. |
-| Filesystem, process, and runtime safety | Propagation script, audit writers, worktree procedure, Bash execution, Unity capture | Python AST validation, shell syntax checks, targeted propagation tests, source review | Completed with findings | Race/no-follow behavior and real harness enforcement were not live-tested. |
-| Infrastructure, CI/CD, and deployment | Hook wiring, MCP config, package manifest, tracked repository configuration | JSON/TOML validation and manual review | Partially completed; supply-chain and adapter findings recorded | No tracked CI workflow, Dockerfile, Terraform, Kubernetes, or live deployment target was present. |
-| Observability and operational security | Audit hooks, logs, status records, QA/run artifacts | Source and artifact review | Completed with findings | No production log backend, rotation, permission, or incident-response environment was available. |
-| Security architecture and cross-cutting patterns | Phase orchestration, evaluator trust flow, generated mirrors, graph architecture | Code-review graph plus cross-file review | Completed with findings | Graph has no embeddings and does not model all Markdown/report flows; live evaluator fan-out was not run. |
+## Executive summary
+
+The phase's security-relevant surface is much narrower than its file count suggests. Of 276
+changed files, exactly one has runtime behaviour: `scripts/propagate_master_assets.py`. The
+rest is Markdown whose safety properties are enforced only by test assertions over prose.
+
+Three things were checked hardest, and two came back clean:
+
+1. **The orphan-pruning guard fails closed.** Verified by execution, not reading.
+2. **The one-way PR-posting boundary is now genuinely enforced.** Feature 07's reviewer
+   caught it inert and repaired it; the repair holds.
+3. **The prune's containment does not survive a symlinked generated root.** This is the
+   High.
+
+The most notable positive result: the phase's own docstring claims the old prune "matched
+0 of 24 files for years while reading as implemented." **This was verified true** — at
+baseline `ae9823a`, 0 of 24 `codex/skills/*/SKILL.md` files matched the old `startswith`
+check. The phase's self-assessment is accurate and unflattering, which is the right
+posture. It also means the deletion capability is **genuinely new in this phase**, not a
+modification of working code — which is precisely why `P3-SEC-01` matters.
+
+---
 
 ## Findings
 
-| ID | Severity | Category | Location | Phase relationship | Evidence | Impact | Recommended remediation |
-|---|---|---|---|---|---|---|---|
-| P5-SEC-01 | High | Process/runtime authorization | `.github/agents/05-phase-final-review.agent.md:4`; `05g-artifact-sweeper.agent.md:4`; `05j-consistency-auditor.agent.md:4`; `05k-dependency-auditor.agent.md:4`; `scripts/propagate_master_assets.py:323-354` | Introduced | The orchestrator and three mechanical evaluators declare `execute`; propagation maps that capability to Claude `Bash` and OpenCode `bash`. The contracts call the mechanical work read-only, but there is no command, path, or subprocess allowlist. The propagation parity test at `tests/test_propagate_master_assets.py:86-118` omits 05g/05j/05k from its no-`execute` assertions. | Repository-controlled content or a prompt-injected artifact can induce arbitrary shell execution in the reviewer environment, including running untrusted scripts or accessing local data. | Remove `execute` from agents that do not require it; replace remaining uses with narrowly scoped, audited helpers or a sandbox enforcing command, filesystem, network, time, and resource limits. Add parity tests for every 05x agent and every generated harness. |
-| P5-SEC-02 | High | AI trust boundary / injection | `.github/agents/05l-readiness-synthesizer.agent.md:29-63`; `.github/agents/05-phase-final-review.agent.md:190-209,229-245` | Introduced | 05l reads evaluator and canonical reports as model input and derives the readiness verdict. The orchestrator validates only readable, regular, non-empty paths and status metadata; it does not parse or independently validate report claims before using the reported verdict for write-back. Report contents are not explicitly delimited or treated as untrusted data. | A malicious or compromised evaluator/report artifact can steer synthesis toward a false readiness result and, if status checks appear complete, cause the orchestrator to write an unsafe verdict into planning documents. | Treat reports as untrusted data: use a strict schema and deterministic reducer for status/severity, delimit model context, independently validate High/Critical evidence, and prevent model text from directly authorizing write-back. |
-| P5-SEC-03 | Medium | Filesystem authorization | `.github/skills/phase-final-review-conventions/SKILL.md:13-23`; `.github/agents/05c-qa-consolidator.agent.md:4`; `.github/agents/05d-security-rollup.agent.md:4`; `.github/agents/05l-readiness-synthesizer.agent.md:4` | Introduced | Review contracts grant generic `edit` capability and constrain writes by prose to a report root. No runtime path-scoped edit policy is present in the phase contracts; the existing cross-harness enforcement gap is documented as `REPO-SEC-05`. | A compromised evaluator or prompt-injected run can alter source, configuration, tests, or live planning documents rather than only its assigned report, especially in harnesses whose native guard enforcement is incomplete. | Enforce write destinations at the harness boundary, with a per-agent allowlist and deny-by-default behavior; retain only report-root writes for evaluators and fixture-only write-back for the orchestrator. |
-| P5-SEC-04 | Medium | Filesystem/worktree boundary | `.github/skills/worktree-baseline/SKILL.md:47-61`; `.github/skills/phase-final-review-conventions/SKILL.md:13-20`; `.github/agents/05-phase-final-review.agent.md:190-220` | Introduced | Report-root and baseline-target requirements are lexical/instructional. The worktree procedure creates `dirname(TARGET_PATH)` and runs `git worktree add` without checking every parent for symlinks or canonical containment. Evaluator report validation checks metadata but does not reject symlinked ancestors or require a canonical realpath under the intended root. | A pre-positioned symlink can redirect baseline creation, report reads, archive writes, or status artifacts outside the intended repository boundary. | Canonicalize and contain-check repository, worktree, report, archive, and write-back roots; reject symlinked ancestors; use no-follow/atomic file operations and revalidate immediately before every write. |
-| P5-SEC-05 | Medium | Network/input boundary | `.github/agents/05i-learnings-harvester.agent.md:4,21-29`; `scripts/propagate_master_assets.py:323-354` | Introduced | 05i receives `fetch`, rendered as Claude `WebFetch` and OpenCode `webfetch`. Its remote-history/PR restriction is prose-only; the source contract contains no host/domain allowlist or capability-level URL scope. | Prompt-injected or malformed evidence can cause access to unintended remote hosts, expose repository context through requests, or import untrusted remote content into the learning/report pipeline. | Restrict fetch to approved Git/PR hosts and read-only URL patterns at the capability layer, block redirects to unapproved hosts, minimize request context, and record fetch failures as unavailable evidence. |
-| P2-SEC-01 | High | Injection/output redaction | `.github/hooks/lib/framework.py:222-237`; `.github/hooks/scripts/injection-scanner.py:89-102`; `docs/phases/PHASE_02/PHASE_02-security-scan.md:53` | Pre-existing | The recursive redactor replaces mapping values but preserves attacker-controlled mapping keys. The historical Phase 02 report records a production-path probe showing a high-tier directive in a structured key survived the blocked replacement. | A blocked structured tool result can retain model-visible directive content in keys, weakening the primary prompt-injection containment path. | Replace blocked output with a fixed runner-valid shape and never preserve untrusted keys; add emitted-payload tests for nested mappings, lists, MCP, and native runner formats. |
-| P2-SEC-02 | High | Injection/bounded scanning | `.github/hooks/lib/injection_scanner.py:58-64,191-213,256-296`; `.github/hooks/scripts/injection-scanner.py:55-68,104-117`; `docs/phases/PHASE_02/PHASE_02-security-scan.md:54` | Pre-existing | Scanning is capped at 262,144 bytes and 32 encoded candidates. On a cap miss the entrypoint emits a warning while leaving the full raw output available. The historical report records boundary probes that placed a high-tier directive beyond each cap. | An attacker can pad output or exhaust candidate capacity so directive content reaches model context unscanned without a block or replacement. | Block/replace unassessed output or pass only the assessed prefix with a fixed marker; treat candidate-limit exhaustion as unsafe and add cap+1/candidate-limit+1 regressions. |
-| P2-SEC-03 | High | Authorization/allowlist trust | `.github/hooks/lib/injection_scanner.py:65-69,299-343`; `.github/hooks/scripts/injection-scanner.py:73-80`; `.github/hooks/config/injection-allowlist.json:2-6`; `file-access-rules.json:267-282`; historical report `PHASE_02-security-scan.md:55` | Pre-existing | The scanner recursively trusts mutable `tests/hooks/fixtures/injection` and `docs/inspiration` roots, while file-access self-protection covers hook assets/settings/plugins rather than those content roots. | A malicious branch or process can place high-tier content in an allowlisted directory and bypass scanning on subsequent reads. | Remove directory-wide bypasses; allowlist only immutable, reviewed content by digest or protect approved roots with the same enforced write-deny/integrity policy. |
-| REPO-SEC-04 | High | Shell analysis | `.github/hooks/lib/bash_analyzer.py:150-278,374-430`; `docs/hooks/bash-command-limitations.md:14-55`; historical report `PHASE_02-security-scan.md:56` | Pre-existing | The bounded analyzer does not fully interpret interpreter-mediated access, dynamic variables/substitutions, aliases/functions/sourced code, recursive searches, or several shell expansions; the limitations document records those boundaries. | Protected files or secret-shaped URL data may be reached through supported Bash operations outside the analyzer's model. | Deny ambiguous/high-risk shell forms when protected content may be reachable, or enforce filesystem/network policy below parsing with live bypass tests. |
-| REPO-SEC-05 | High | Harness authorization | `.opencode/plugins/file-access-guard.js:2-8`; `.codex/hooks.json:1-72`; historical report `PHASE_02-security-scan.md:57` | Pre-existing | The OpenCode adapter launches the Python guard but does not translate or consume its structured allow/ask/deny result as a native blocking decision. Codex equivalent enforcement lacks live support evidence. | File self-protection and URL-exfiltration decisions are not consistently enforced outside the verified Claude path. | Implement and live-test native adapters that actively cancel on deny/ask decisions for every mutation primitive; otherwise classify affected harnesses as unsupported. |
-| REPO-SEC-06 | High | Filesystem/propagation | `scripts/propagate_master_assets.py:122-149,1185-1298,1301-1418`; historical report `PHASE_02-security-scan.md:58` | Worsened | `_write_if_changed` follows symlinked parent directories. Nested containment checks are present for hook roots but not for agent, skill, profile, command, and learning destinations. Phase 05 adds eleven evaluator agents, three skills, and generated cross-harness assets that use these non-hook write paths. | A malicious or stale destination layout can redirect generated writes/deletions outside the repository and overwrite user-writable files; Phase 05 expands the affected write surface. | Apply one no-follow, canonical containment contract to every generated destination before create/write/delete operations and add symlink tests for every subtree. |
-| REPO-SEC-07 | High | Filesystem/Unity capture | `packages/com.threnjen.visual-verification/Tests/CaptureGateTest.cs:30-58`; `CaptureRunner.cs:25-29,67-84`; historical report `PHASE_02-security-scan.md:59` | Pre-existing | Consumer-controlled `outputDir` and `namePrefix` are combined into filesystem paths without canonical project-root containment or separator restrictions. | Capture configuration can write manifests or screenshots outside the intended output directory and overwrite accessible files during tests. | Require relative paths beneath an approved output root, reject traversal/rooted paths and separators in prefixes, and add containment tests. |
-| REPO-SEC-08 | Medium | Observability/filesystem | `.github/hooks/lib/framework.py:475-501`; `.github/hooks/scripts/file-access-guard.py:181-190`; historical report `PHASE_02-security-scan.md:60` | Pre-existing | Audit files are opened for append without rejecting symlinked ancestors/final targets or pinning the log to a canonical root. | A pre-positioned link can redirect redacted audit records and corrupt another user-writable file. | Use a canonical approved log root, reject symlink components, use no-follow/atomic creation where supported, and test link/replacement races. |
-| REPO-SEC-09 | Medium | Configuration integrity | `.github/hooks/lib/framework.py:281-290,336-358`; historical report `PHASE_02-security-scan.md:61` | Pre-existing | Config cache identity uses only mtime and size; a same-size metadata-preserving replacement can reuse a stale security snapshot. | Security policy changes may not take effect under adversarial or unusual filesystem replacement behavior. | Include stronger identity such as inode/change time plus a digest, or reload protected policy per invocation; add a replacement regression. |
-| REPO-SEC-10 | Medium | Availability/Unity capture | `packages/com.threnjen.visual-verification/Tests/CaptureConfig.cs:21-34`; `CaptureRunner.cs:25-40,59-79`; historical report `PHASE_02-security-scan.md:62` | Pre-existing | Capture dimensions, frame indexes/count, delta time, and output count lack practical maxima. | Malicious or mistaken configuration can cause excessive allocation or prolonged CI/developer-machine execution. | Enforce conservative resolution, frame, duration, and total-output limits before allocation or iteration. |
-| REPO-SEC-11 | Medium | Supply chain | `.mcp.json:2-10`; `.codex/config.toml:1-6`; `requirements-dev.txt:1-2`; `uv.lock:1-3`; historical report `PHASE_02-security-scan.md:63` | Pre-existing | MCP startup uses unversioned `uvx code-review-graph`; development requirements are ranged; `uv.lock` contains no resolved package set for those requirements. Phase 05 depends on graph operations in 05f/05g. | Upstream compromise or version drift can execute changed tooling in a privileged review workflow or alter security-test results. | Pin executable tool versions, lock the actual development environment with hashes/provenance, and run vulnerability checks against the resolved environment. |
-| REPO-SEC-12 | Medium | Availability/security operations | `tests/hooks/test_hook_distribution_integration.py` latency assertion; `docs/phases/PHASE_02/PHASE_02_QA.md` PERF-01; historical report `PHASE_02-security-scan.md:64` | Pre-existing | The full suite run remained failing on the propagated-guard median-latency gate; the retained QA record documents prior latency risk acceptance. | Slow controls increase timeout/availability pressure and may encourage disabling security hooks, although no direct bypass was demonstrated. | Profile startup/config loading and reduce latency while retaining the fixed gate; keep the accepted failure visible in release evidence. |
-| REPO-SEC-13 | Low | Observability/permissions | `.github/hooks/lib/framework.py:475-501`; historical report `PHASE_02-security-scan.md:65` | Pre-existing | Audit files use ordinary process-umask permissions rather than an explicit least-privilege mode. | On permissive systems, other local users may read operational metadata and repository paths. | Create logs owner-only and verify permissions after rotation/replacement. |
+| ID | Severity | Category | Evidence | Relationship | Status |
+|----|----------|----------|----------|--------------|--------|
+| P3-SEC-01 | **High** | Filesystem containment / deletion | `scripts/propagate_master_assets.py:216-247`, `:250-271` | Worsened | Open |
+| P3-SEC-02 | Medium | Delegation authorization | `.github/agents/05b-change-narrator.agent.md:4` | Introduced | Open |
+| P3-SEC-03 | Medium | Process/runtime authorization (`execute` grants) | `.github/agents/05-pr-review.agent.md:5`; `05a-baseline-worktree.agent.md:4` | Carried, narrowed | Accepted / Routed |
+| P3-SEC-04 | Low | Marker-guard residual | `scripts/propagate_master_assets.py:159-171` | Residual by design | Accepted |
+| P5-SEC-02 | High (inherited) | AI trust boundary | `.github/agents/05g-readiness-synthesizer.agent.md:77-85` | Pre-existing | **Verified recorded OPEN** |
 
-## No-Finding Categories
+---
 
-- No supported live-secret or credential finding was identified in the tracked current tree using redacted heuristics and manual review. This is not a claim that secrets are impossible; history/entropy/binary scanners were unavailable.
-- No user-facing authentication/session implementation or custom cryptographic implementation was present. Harness authorization and configuration integrity did produce findings above.
-- No tracked application API/service routes, CI workflow, Dockerfile, Terraform, Kubernetes, or other live deployment control was found. Those checks were not fully applicable, not proof of safety.
-- JSON, TOML, Python AST, and shell syntax checks completed successfully. The full test suite did not pass, as recorded below.
+### P3-SEC-01 — Prune deletion escapes the repository root through a symlinked generated root — **High, Worsened**
 
-## Cross-Cutting Risks
+**Evidence**: `_prune_orphaned_outputs` (`scripts/propagate_master_assets.py:216-247`) and
+`_prune_orphaned_skill_dirs` (`:250-271`).
 
-- The phase is an AI-controlled release gate. Generic `Bash`, `Edit`, and `WebFetch` capabilities are broader than the prose read-only/report-only contracts, and generated harness adapters do not provide equivalent enforcement.
-- The final synthesizer consumes Markdown reports as decision input, while existing scanner bypasses can leave unassessed or attacker-controlled content available to models. Missing-check fail-closed logic does not independently validate a complete report's claims.
-- Propagation has stronger safety checks for hook roots than for the non-hook generated trees that Phase 05 materially expands.
-- The Phase 05 QA artifacts explicitly record the delegated final Security Scan as absent and eight evaluator checks as not run. Static contract/parity tests do not establish live report creation, delegate delivery, graph degradation, or write-back safety.
+Both functions guard the **leaf**:
 
-## Priority Remediation Order
+- `_prune_orphaned_outputs` skips `path.is_symlink() or not path.is_file()`.
+- `_prune_orphaned_skill_dirs` skips `dest_dir.is_symlink()` and `skill_md.is_symlink()`.
 
-1. Remove/narrow Phase 05 shell and edit capabilities, sandbox any necessary commands, and enforce report-root path allowlists in every harness.
-2. Make 05l consume validated structured evidence as untrusted data; independently reduce severity/status and prohibit model text from authorizing write-back.
-3. Add canonical realpath/no-follow containment for worktrees, report archives, write-back, audit logs, and every propagation destination; close `REPO-SEC-06`.
-4. Close the inherited High injection and harness gaps (`P2-SEC-01` through `P2-SEC-03`, `REPO-SEC-04`, `REPO-SEC-05`) and Unity path escape (`REPO-SEC-07`) before release.
-5. Pin graph/development dependencies and run an available vulnerability/SBOM/provenance audit; then address audit-log integrity, configuration freshness, Unity resource limits, latency, and log permissions.
+Neither guards the **parent root**, and neither applies a canonical-realpath containment
+check before `path.unlink()` / `shutil.rmtree(dest_dir)`. If a generated root itself
+(`claude/skills`, `claude/agents`, `codex/agents`, …) is a symlink pointing outside the
+repository, `directory.is_dir()` follows it and returns `True`, `iterdir()` yields **real**
+directories outside the repo, and the leaf symlink guards never fire because those entries
+are not symlinks.
 
-## Residual Risk and Exceptions
+**Reproduced.** In an isolated sandbox with `claude/skills` symlinked to a directory
+outside the repo root, containing one marker-carrying `SKILL.md`:
 
-- `rtk` could not be used because its external hook-integrity check failed. It was not repaired or modified; equivalent raw read-only commands were used. This reduces command-output filtering, not scan scope.
-- Unavailable checks: `gitleaks`, TruffleHog, Semgrep, Bandit, `pip-audit`, Safety, OSV scanner, ShellCheck, Ruff, mypy, yamllint, and a vulnerability database/SBOM/signature scan. The global `pytest` command was unavailable, so the repository `.venv` interpreter was used.
-- Automated results: targeted propagation tests passed (21 tests, 15 subtests); readiness contract tests passed (6); full suite was 394 passed, 2 failed, 15 subtests. The two failures were the known propagated-guard median-latency assertion and installation-guide harness classification, both retained as pre-existing release context.
-- No live Claude, Codex, or OpenCode evaluator fan-out, Security Scan delegate, WebFetch policy test, Unity execution, race test, or active exploit attempt was run. The security conclusions are static/evidence-based and retain those checks as incomplete.
-- The current worktree contains unrelated tracked modifications and untracked artifacts. They were not used as phase evidence; only the requested report was created by this scan.
+```
+victim exists BEFORE: True
+victim exists AFTER : False   <- delete escaped the repo root
+skill_orphans_removed: 1
+```
+
+`shutil.rmtree` removed a tree outside the repository root. The equivalent applies to
+`_prune_orphaned_outputs` via `unlink()`.
+
+**Why "Worsened" and not "Pre-existing"**: the superseded scan recorded `REPO-SEC-06` as
+`_write_if_changed` following symlinked parent directories on non-hook destinations — a
+**write** redirection. This phase adds **deletion** on those same unprotected paths. The
+baseline prune that might have carried this risk was **inert**: verified at `ae9823a`,
+0 of 24 `codex/skills/*/SKILL.md` matched the old `startswith(GENERATED_SKILL_HEADER)`
+check, because generated Markdown opens with YAML frontmatter and the marker sits below it,
+not at byte zero. So the delete surface is live for the first time in this phase, across
+five file roots and three skill roots.
+
+**Impact**: a repository layout an attacker can influence (a planted symlink at a generated
+root) plus a marker-carrying target yields deletion of user-writable files outside the
+repository. `shutil.rmtree` makes this recursive.
+
+**Mitigating factors** (why High and not Critical): the attacker must already be able to
+write a symlink into the repo working tree — a substantial precondition that generally
+implies broader compromise. The target must also carry the generated marker at the exact
+emitter position, so arbitrary trees are not deletable. The prune is a local developer
+script, not a network-reachable or CI-privileged path.
+
+**Recommendation**: apply one no-follow, canonical containment contract —
+resolve each generated root with `Path.resolve()` and assert
+`repo_root.resolve()` is a parent — before any create/write/delete, and add symlinked-root
+regression tests for every pruned subtree. This is the same fix `REPO-SEC-06` already calls
+for; the delete path raises its priority. Route to the phase that owns propagator
+containment (`REPO-SEC-06`'s owner).
+
+---
+
+### P3-SEC-02 — `05b-change-narrator` holds the `agent` grant with no `agents:` allowlist — **Medium, Introduced**
+
+**Evidence**: `.github/agents/05b-change-narrator.agent.md:4` declares
+`tools: [agent, read, search, edit]` and **no `agents:` key**.
+
+`05b` is the only Phase 03 agent with a delegation grant and no delegation allowlist. Every
+sibling constrains its targets explicitly:
+
+- `05f-test-health.agent.md:5` — `agents: [Test - Analyst]`
+- `05-pr-review.agent.md:6` — the full explicit evaluator roster
+
+`05b`'s procedure (`:53-58`) calls for "hidden per-directory reader delegations" as a
+context-pressure valve, but names no target agent. An unconstrained `agent` grant means the
+delegation target is resolved at runtime by the model, and the roster it can reach includes
+`Baseline Worktree` — which holds `execute`. This is an **indirect** path to shell for an
+agent the phase's tool-grant posture describes as holding none.
+
+**This does not falsify the phase's roster claim**, which is about *direct* grants and is
+accurate: `05b`/`05c`/`05d`/`05e`/`05f`/`05g` hold no `execute`. It is a gap in the
+narrower sense that the phase established the right pattern (`05f`) and did not apply it
+uniformly.
+
+**Mitigating factors**: `05b:58-59` records that reader delegations sit at depth 2 and that
+Codex `agents.max_depth` defaults to 1, so the spawn is blocked by default there — and the
+agent correctly documents that a blocked spawn does not raise but silently falls back
+inline. There is no evidence of escalation intent; the prose scopes readers to a directory
+chunk with a read-only contract. Unlike the `execute` grants in `P3-SEC-03`, **this one is
+closable in Markdown today**, at the cost of one frontmatter line.
+
+**Recommendation**: add an explicit `agents:` allowlist to `05b` naming only the reader
+agent it intends to spawn (or remove the `agent` grant and rely on the documented serial
+fallback, which the procedure already specifies as acceptable). One line; no hook required.
+
+---
+
+### P3-SEC-03 — Two `execute` grants remain, declared and unclosable at this layer — **Medium, Accepted / Routed**
+
+**Evidence**: `.github/agents/05-pr-review.agent.md:5` (`tools: [agent, read, search, edit, execute]`);
+`.github/agents/05a-baseline-worktree.agent.md:4` (`tools: [read, search, execute]`).
+
+**Verified final roster** — enumerated directly from source frontmatter:
+
+| Agent | `execute`? |
+|---|---|
+| `05-pr-review` | **yes** — `git` base derivation, `gh pr comment` |
+| `05a-baseline-worktree` | **yes** — `git worktree`, no non-shell equivalent |
+| `05b`, `05c`, `05d`, `05e`, `05f`, `05g` | no |
+
+This matches the phase's stated posture exactly. The superseded scan's `P5-SEC-01` faulted
+the orchestrator **plus three mechanical evaluators** (`05g`/`05j`/`05k` under the old
+numbering) for holding `execute`. Those three are retired or narrowed; **the removals are
+real and verified**.
+
+**Assessment against the brief** — whether the residual is *honestly recorded*, not whether
+it is closable here. It is:
+
+- `PHASE_03_DISCOVERY_CONTEXT.md:116` records the mechanism precisely: Claude subagent
+  `tools:` frontmatter accepts only bare tool names; `Bash(gh:*)` is an unresolved tool
+  name and Claude Code refuses to launch the agent. No `permissions`/`allowed-tools`
+  frontmatter key exists; `permissionMode` selects prompt handling, not command scope.
+  Scoping exists only in non-per-agent settings rules or a per-agent PreToolUse hook.
+- `PROJECT_ROADMAP.md:29` states the grants "stay open, declared with justification and
+  routed to a hook-owning phase."
+- Narrowing was by **removal only**, which is the only lever available at this layer.
+
+The claim is technically correct and independently confirmed. Nothing is described as
+closed that is not closed. **No new finding**; recorded to keep the residual visible.
+
+**Recommendation**: no action in this phase. The receiving phase must implement per-agent
+PreToolUse command scoping for these two agents and close `P3-SEC-03` with a runtime test.
+
+---
+
+### P3-SEC-04 — Positional marker guard: a hand-maintained file at the exact emitter position is indistinguishable from generated output — **Low, Residual by design**
+
+**Evidence**: `_generated_marker_line_index` / `_is_generated_output`
+(`scripts/propagate_master_assets.py:159-171`, `:190-213`).
+
+The guard identifies generated output by the marker at **one** line index: line 0 for
+frontmatter-less files, else the line immediately below the closing `---`. Any
+hand-maintained file placing the marker at exactly that position would be pruned.
+
+This residual is **inherent to marker-based identification** and the chosen design is the
+best of the available options — the code documents both alternatives and why they are worse
+in opposite directions (`startswith` under-matches and is what silently disabled the prune;
+a whole-file search over-matches and would delete any README that merely quotes the
+convention). No real file hits the residual.
+
+**Verified fail-closed by execution.** Guard evaluated against every file in all five
+pruned roots at HEAD:
+
+```
+claude/agents:   28 files, UNMARKED (safe from prune) = ['README.md']
+claude/commands: 19 files, UNMARKED = []
+opencode/agents: 41 files, UNMARKED = []
+codex/agents:    41 files, UNMARKED = []
+codex/profiles:  19 files, UNMARKED = []
+```
+
+`claude/agents/README.md` — the hand-maintained file inside a generated root that AC5 exists
+to protect — is the sole unmarked file and is correctly excluded. It does not contain the
+marker string anywhere.
+
+**Adversarial sandbox test**, four cases, all correct:
+
+| Case | Expected | Result |
+|---|---|---|
+| Hand-maintained doc quoting the marker in a fenced code block | survive | **survives** |
+| Doc with frontmatter, marker quoted lower in the body | survive | **survives** |
+| Genuine stale generated orphan | pruned | **pruned** |
+| Unterminated frontmatter (index `-1`) | survive (fail closed) | **survives** |
+
+**Idempotency / fixed point**: two consecutive `propagate_once` runs in a full sandbox copy
+returned all-zero orphan counters and left `README.md` byte-identical. The prune correctly
+runs only after all emission completes (AC6), so filename resolution against on-disk stems
+cannot be perturbed by a deletion.
+
+**Recommendation**: accept. Optionally note the residual in `claude/agents/README.md` so a
+future editor does not place the marker at line 0.
+
+---
+
+### P5-SEC-02 — Readiness-report trust boundary — **Inherited High, verified recorded OPEN**
+
+Per the scan brief this is **not** re-raised as a new finding; the check is whether it is
+honestly recorded open rather than quietly closed by prose. **It is.**
+
+Confirmed at:
+
+- `.github/agents/05g-readiness-synthesizer.agent.md:77-85` — declared open in the agent.
+- `.github/learnings/cross-phase-decisions.md:88-108` — owner and routing recorded.
+- `dev/feature/phase-03-pr-review-execution-manifest.md:86` — pre-assigned to feature 07
+  and *expected to remain open*, with the instruction not to close it by firming up prose.
+- `dev/feature/07-…-implementation.md:52` — recorded OPEN, guarded by
+  `test_p5_sec_02_is_recorded_open_in_the_synthesizer`.
+- `dev/feature/08-…-review.md:222` — independently re-verified still open.
+- `PHASE_04_SUMMARY.md:68` — receiving phase acknowledges it as an open High.
+
+Feature 07's reviewer mutation-tested the **negation** (flipping the declaration from open
+to closed) and confirmed the test trips — so the record cannot silently drift to "closed"
+(`07-…-review.md:63-64`). This is the correct handling of an unclosable finding: the phase
+records it rather than redefining it to fit scope.
+
+---
+
+## Prompt-injection boundary — one-way PR posting
+
+The brief flags this as the phase's key injection boundary: nothing may read PR comments or
+network-sourced text back into the agent. **Verified enforced.**
+
+- `.github/agents/05-pr-review.agent.md:229-230` — output is one-way; never read PR
+  comments, review threads, or other network-sourced text.
+- `:345-347` — restates it on the posting path specifically: post and read nothing back; do
+  not fetch the posted comment to confirm; do not read existing comments to check whether a
+  report was already posted.
+- The only network verb is `gh pr comment --body-file <path>` (`:300`) — write-only. It
+  resolves the PR from the current branch, so no PR number is read in. Its sole return
+  consumed is the comment URL (`:324`), which is `gh`-generated, not attacker-authored
+  content.
+
+**The guard was inert and was repaired.** Feature 07's reviewer recorded this as Issue #3,
+its most serious finding (`07-…-review.md:80`): the one-way clause added at `:345-347` could
+be deleted with the test suite green, because `test_output_to_the_pull_request_is_one_way`
+pinned only feature 04's pre-existing sentence at `:229-230`. AC9 — a prompt-injection
+boundary — was unguarded on the exact path that posts. Fixed via two `_assert_once` pins
+(`07-…-review.md:102`). Related Issue #4 (High): the `gh pr comment` command itself, the
+mechanism AC7's consent gate actuates, could be deleted with the consent test green — every
+assertion covered the *choice*, none covered the thing the choice actuates. Also fixed.
+
+**Consent gating** (`:309-315`): opt-in, chosen upfront — *post automatically* /
+*ask once written* / *never*. The **never** path is specified to make no `gh` invocation and
+no network call. The choice is asked upfront rather than after work is on disk (`:57`), and
+the prompt must state the cost of *post automatically* plainly (`:47`), noting a posted
+comment cannot be unposted by reverting (`:52`). This is sound consent design.
+
+**Caveat**: enforcement is prose plus test assertions over prose. Feature 07's own reviewer
+flags AC7/AC8 as "Met (statically); **runtime unverified**" (`07-…-review.md:46-47`) and
+notes the posting path's correctness "rests entirely on prose contract assertions"
+(`:151-152`). See § "Coverage limits".
+
+---
+
+## Systemic observation — the inert-guard defect class
+
+Not a security finding, but it is the reason two High-severity boundary guards in this phase
+were non-functional, and it bears on how much assurance the Markdown-plus-tests model
+carries.
+
+Feature 07's review records the defect class recurring in **four consecutive features**
+(04: 5 inert; 06: 4 inert; 07: 5 inert), every time from the same cause, and **every time
+caught by the reviewer rather than the implementer's own sweep** — including the
+implementer's round-2 sweep that self-reported "0 inert at final state"
+(`07-…-review.md:22-26`, `:145-150`). The `_assert_once` helper is the correct structural
+fix and works; the gap is that implementers sweep the assertions they already suspect.
+
+This matters to security specifically: an inert guard on a prompt-injection boundary is
+indistinguishable from an enforced one at review time unless someone mutation-tests it. The
+phase's own conclusion is right — **the sweep must enumerate every assertion mechanically,
+not by intuition.** The propagator's `startswith` bug is the same class in code: a check
+that read as implemented and matched 0 of 24 files.
+
+---
+
+## Reconciliation with the superseded scan
+
+| Prior finding | Prior status | Final state |
+|---|---|---|
+| `P5-SEC-01` — `execute` on orchestrator + 3 mechanical evaluators; no allowlist; parity test omits `05g`/`05j`/`05k` | High, Introduced, **BLOCKED** | **Substantially reduced.** Evaluator grants removed and verified; retired agents deleted. Residual = `P3-SEC-03` (2 grants, declared/routed) + `P3-SEC-02` (05b delegation). |
+| `P5-SEC-02` — readiness-report trust boundary | High, Introduced | **Verified recorded OPEN** with owner + routing. Not closed by prose. Per brief, not re-raised. |
+| `REPO-SEC-06` — `_write_if_changed` follows symlinked parents on non-hook destinations | High, Worsened | **Still open and further worsened** → `P3-SEC-01`. Now applies to deletion, reproduced. |
+| Phase 02 `P2-SEC-01..03` | High, unresolved | **Out of diff scope.** Not re-assessed; routed to Phase 04 per `PROJECT_ROADMAP.md:29`. |
+
+The prior scan's **BLOCKED** verdict rested on `P5-SEC-01` + `P5-SEC-02` + `REPO-SEC-06` +
+unresolved Phase 02 Highs. At diff scope, `P5-SEC-01` is substantially closed, `P5-SEC-02`
+is correctly recorded open with routing, and the Phase 02 findings are explicitly Phase 04's.
+The one High this scan raises is a containment gap on a newly-live delete path with a
+significant attacker precondition. That supports **Pass with Conditions** at diff scope —
+it does **not** overturn the phase-level gate, which is a whole-repository question and the
+user's to issue by hand.
+
+---
+
+## Verified clean
+
+- **Secrets**: no hardcoded credential material in the diff. Scanned all added lines across
+  the full `ae9823a..HEAD` range for AWS keys, GitHub PATs, Slack tokens, OpenAI-style keys,
+  PEM private-key headers, and quoted credential assignments. **Zero hits in every
+  category.** No secret value is reproduced here.
+- **Retirement completeness**: `05h`–`05l` are deleted from `.github/agents/` and **zero**
+  survivors exist anywhere in the tree (filesystem-wide search). No orphaned generated
+  mirror in `claude/`, `codex/`, or `opencode/`.
+- **`.gitignore` change**: correct and consistent. The removed `dev/phase-final-review/`
+  un-ignore entries follow the family's retirement — those fixtures are deleted at HEAD
+  (0 tracked files), so no tracked path is silently untracked. The replacement correctly
+  tracks `dev/pr-review/fixtures/` while leaving run output ignored. Verified with
+  `git check-ignore`.
+- **Tests**: 150 passed + 106 subtests across the five Phase 03 test files. No new failure.
+- **Propagator repo_root parameterization**: the added `repo_root` parameters thread a caller
+  path into `load_source_agents` / `load_instruction_docs` / `propagate_once`. All call sites
+  default to the module-level `REPO_ROOT`; the parameter is test-injection scaffolding and
+  introduces no untrusted-input path (no CLI flag or env var feeds it).
+- **PERF-01**: out of scope per brief. Confirmed not a Phase 03 regression.
+
+---
+
+## Coverage limits — what this scan could NOT assess
+
+1. **Diff scope only.** This is not a whole-repository scan. Unchanged code, dependencies,
+   CI/CD, and infrastructure were not re-assessed. Phase 02's `P2-SEC-01..03` remain
+   unresolved and unexamined here.
+2. **The agent family has never been run.** The fixture dry run is an open gap, so every
+   agent-behaviour property below is **statically verified only** — asserted against
+   Markdown prose by tests over that prose, never observed at runtime:
+   - that *never* consent truly issues no syscall (no process-level evidence);
+   - that `gh pr comment` resolves the PR from the branch as documented;
+   - that the one-way boundary holds under an actual injection attempt in a real PR;
+   - that `05b`'s delegation is in fact bounded to readers at runtime (`P3-SEC-02`);
+   - that depth-2 spawn blocking behaves as `05b:58-59` documents.
+   A test asserting a sentence exists in a Markdown file is evidence about the file, not
+   about the agent's behaviour. Feature 07's reviewer reaches the same conclusion
+   independently (`07-…-review.md:46-47`, `:151-152`).
+3. **Prose-enforced contracts are unenforceable at this layer.** Read-only and no-write-back
+   constraints are model instructions, not sandbox boundaries. `edit` is granted broadly
+   across the evaluator roster and constrained only by prose — the mechanism `P5-SEC-02`
+   and the superseded scan's `P5-SEC-03` both name.
+4. **`P3-SEC-01` exploitability** was demonstrated in a constructed sandbox. Whether a
+   real attacker can plant the prerequisite symlink depends on repo-layout trust not
+   assessable from the diff.
+5. **Generated mirrors** (`claude/`, `codex/`, `opencode/`) were checked for parity and
+   orphan hygiene, not treated as independent finding sources.
+
+## Recommended actions
+
+| Priority | Action | Owner |
+|---|---|---|
+| 1 | Close `P3-SEC-01`: canonical no-follow containment on every generated root before create/write/delete; symlinked-root regression tests per subtree. Closes `REPO-SEC-06` on the same pass. | Propagator/containment phase (Phase 04 candidate) |
+| 2 | Close `P3-SEC-02`: add an explicit `agents:` allowlist to `05b`, matching the `05f` pattern. Closable now, one line. | This phase or Phase 04 |
+| 3 | Execute the fixture dry run. It is the only thing that converts limits 2 and 3 into evidence. | Phase 04 QA |
+| 4 | `P3-SEC-03` + `P5-SEC-02` close in the hook-owning phase, per existing routing. No action here. | Phase 04+ |

@@ -10,6 +10,7 @@ permission:
   grep: allow
   read: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **Instructions Evaluator** — a specialist for the Evaluate Mode of the AI Instruction File Framework.
 

@@ -318,3 +318,291 @@ history recovery.
 
 Command examples in fetch-only contracts, missing unavailable-source handling,
 or mirror tests that inspect only one harness's permission boundary.
+
+## Pattern
+
+A marker-based guard that decides whether a generated file may be deleted must key
+on the exact position the emitter writes the marker to — never on the marker
+appearing anywhere in the file, and never on a prefix check that ignores
+frontmatter. Extract that position into one helper shared by the writer and the
+guard so the two cannot drift apart.
+
+## Impact
+
+Both looser rules fail, in opposite directions. A prefix check against output that
+opens with YAML frontmatter matches nothing: the guard reads as implemented, passes
+review, and silently disables the sweep indefinitely. A whole-file search matches any
+hand-maintained document that merely quotes the marker while documenting the
+convention, deleting exactly the file the guard exists to protect.
+
+## Watch for
+
+`startswith(MARKER)` applied to frontmatter-bearing output; `MARKER in text` or
+`MARKER in text.splitlines()` used as a deletion predicate; a guard tested only for
+what it deletes and never for what it must refuse to delete; README or convention
+docs living inside a generated root.
+
+## Pattern
+
+A destructive helper is proven only by tests that bracket it from both directions:
+one that fails if the guard is removed, and one that fails if the guard is tightened
+until it matches nothing.
+
+## Impact
+
+A single-sided suite lets a guard pass for the wrong reason. An inert guard trivially
+satisfies a "deletes zero files on a clean tree" criterion while the capability it
+gates does nothing at all. Mutation-test the guard rather than asserting it.
+
+## Watch for
+
+Inert-run criteria ("a run on the unmodified repo deletes nothing") with no companion
+test proving the pruner positively identifies real generated output; deletion counters
+asserted only as zero.
+
+## Pattern
+
+A deliberately-failing tripwire that guards a time-boxed exemption must be addressed to
+the pass that will actually trip it, not the pass nominally assigned the cleanup. Verify
+which one that is by reading what the downstream work does to the exempted paths — if it
+renames or moves them, the exemption stops matching and the tripwire fires there.
+
+## Impact
+
+A tripwire addressed to a later pass than the one that trips it converts a clean hand-off
+into a red baseline for every pass in between, and each of those inherits a failing
+green-baseline gate for work it does not own. The likely outcomes are a wasted escalation
+or a suite left red on purpose — which trains implementers to ignore red. The tripwire
+itself is usually right; only its addressee is wrong, and the fix is a message edit.
+
+## Watch for
+
+Inverted assertions (`assert still_offending`) whose failure message names an owner; any
+exemption list keyed on a path that a downstream rename will invalidate; hand-off notes
+that assign cleanup to the pass that *removes the cause* rather than the pass that *first
+makes the exemption unnecessary*.
+
+## Pattern
+
+When an exemption list, a skip, or a non-goal is justified by a factual claim about the
+tree ("this directory does not exist", "this path is only planning records, no live
+wiring"), verify the claim against the tree before accepting the exemption. Do not accept
+the rationale on its own authority.
+
+## Impact
+
+Two distinct failures follow. An over-broad exemption resting on a false premise silently
+hides the very references the sweep exists to find. Worse, a non-goal justified by
+"already absent" leaves work *unowned* rather than *deferred* — deferred work has an
+inheritor, dismissed-as-nonexistent work has none, and it is invisible precisely because
+everyone believes it was already handled.
+
+## Watch for
+
+Non-goals whose justification is an assertion of absence rather than a decision to defer;
+exemption scopes broader than the rationale that justifies them (a whole tree exempted to
+cover one subtree of records); rationales phrased as sweeping claims about a directory's
+contents. Narrowing an exemption is cheap when the sweep still passes — and the passing
+sweep is itself the proof the narrowing was safe.
+
+## Pattern
+
+Deleting an orchestrator can rename a user-facing entry point it never owned. Where a
+generated artifact's name depends on whether some *other* asset references it, removing
+the last referrer reclassifies it and changes its public name. Before approving a
+deletion, ask what the deleted asset was the last declarer of.
+
+## Watch for
+
+Emission rules conditioned on a reference map (`user_invocable and name in
+referenced_names`); identifier resolution that reads on-disk state rather than deriving
+from source — it makes such changes converge only across multiple generator runs, so a
+single run proves nothing. Run the generator until every counter reads zero before
+trusting the tree, and treat "one run, looks right" as unverified.
+
+---
+
+## Pattern
+
+An evidence-shaped claim is not evidence. Implementation records increasingly cite
+"mutation-tested", "stable across N consecutive runs", or a named counter as proof. These
+carry the *form* of verification and are read as settled, but they fail re-execution often
+enough that a reviewer who accepts them is not reviewing. Re-run every cited proof against
+a clean tree at the reviewed commit. A record's claim is a hypothesis about the tree, not
+a description of it.
+
+## Impact
+
+Two defects reached a commit behind such claims in one feature: a suite reported green
+that was red, and a correct action defended by a mutation test that passes identically
+with and without the change it supposedly proved. The right action on false evidence still
+validates the wrong reasoning, which is what the next feature inherits.
+
+## Watch for
+
+Claims of a passing suite where the arithmetic reconciles to *collected* rather than
+*passed* (447 passed + 1 failed reported as "448"). Mutation tests where the mutation would
+trip an unrelated guard anyway — verify the test fails for the stated reason, and that it
+*passes* once the change under test is reverted, or it proves nothing. Dead-code deletion
+described as a behaviour change: an exemption keyed to a name that a rename already
+invalidated matches nothing, so removing it can neither widen nor narrow the sweep. Ask
+what an exemption matched *at the moment it was deleted*, not what it matched when written.
+
+---
+
+## Pattern
+
+When a sweep test goes red because a new file legitimately contains the swept token, the
+one-line fix — add the file to the exemption list — is almost always wrong. It widens the
+hole the sweep exists to close, often in the exact pass that was supposed to narrow it.
+Remove the token instead: import the canonical definition and derive the values.
+
+## Impact
+
+Exemption lists grow monotonically and are never audited. Each entry is a permanent blind
+spot bought to make one test green, and the next regression that lands inside one is
+invisible.
+
+## Watch for
+
+A guard module that declares its names are defined "once, here" while another module
+re-lists them as literals — the duplication is the defect, and the sweep failure is the
+symptom correctly reporting it. Also: when replacing literals with a derived tuple, add a
+vacuity assert (`assert derived_list`), or an empty upstream list silently neuters the
+guard while it still reports green.
+
+## Pattern
+
+A contract test that asserts a literal is present somewhere in a whole document is inert wherever that literal occurs more than once. Deleting the occurrence the test exists to protect leaves a stray occurrence elsewhere, and the assertion stays green over a broken contract. Scope every prose assertion to the section, list item, or sentence that carries the obligation — parse the structure (numbered items, `- **bullets**`, the body below a heading) and assert against it, not against the flattened document.
+
+## Impact
+
+The guard reports green while the requirement it names is gone. This is worse than no test: absence tests are usually protecting the highest-risk deleted code or the least-defended contract, and a green inert guard is what licenses the next editor to remove the real thing. Reviewers cannot detect it by reading, because the test and the contract both look correct in isolation.
+
+## Watch for
+
+The same literal appearing in a heading and in the rule beneath it; in frontmatter `description:` and again in the body; in a rule that writes a file and again in a sentence that reads it; in a ranked list and again in a worked example. Before trusting any prose-assertion module, count occurrences of every asserted literal in the normalized target — a count of two or more marks a candidate, and only a deletion mutation settles it. Fixing the one or two instances that happen to surface is not sweeping the class: this defect arrives in cohorts, because whoever wrote one presence assertion wrote all of them.
+
+## Pattern
+
+A prose assertion against a hard-wrapped document can pass or fail on where the lines happen to break rather than on what the document says. A regex spanning two words that a reflow moves onto separate lines stops matching content that is still present; an assertion that only ever matched because its phrase fit on one line is inert against the requirement it names. Normalize runs of whitespace to single spaces before asserting on a sentence, and reserve raw-text assertions for literal tokens and frontmatter, where line structure is part of the contract.
+
+## Impact
+
+The guard's verdict tracks the formatter, not the author. Reflowing a paragraph — an edit with no semantic content — silently drops the assertion or reddens a correct document. Both directions destroy trust: the first hides a broken contract, the second trains the next editor to loosen the regex until it stops biting.
+
+## Watch for
+
+Any assertion module that reads an agent body, a Markdown rule file, or any hard-wrapped prose and matches multi-word phrases. This defect arrives in cohorts — whoever wrote one line-break-sensitive regex wrote all of them. Two normalized readers (one for literals, one for sentences) is the shape that works. The normalization itself is not evidence: only a mutation sweep that breaks each contract at its own anchor proves the guards bite, and anchor drift during that sweep is the harness being wrong, not the guard.
+
+## Pattern
+
+When adjudicating whether a capability grant is genuinely required, the decisive evidence is not the strength of the justification — it is whether a sibling with the same job already operates without the grant. An existing agent doing the harder version of the work under the narrower grant settles the question that argument cannot. Look for the architectural provision first: a capability is often already supplied as an artifact by one privileged component (a path, a prepared tree, an evidence bundle), which is the non-shell equivalent that a removal bar demands be named.
+
+## Impact
+
+Grant audits stall in argument about whether some command "might be needed", and the default resolution is retention with a comment — the exact anti-pattern a removal bar exists to forbid. A single sibling precedent converts an unresolvable judgment call into a verified fact, and it usually reveals the grant was vestigial rather than load-bearing.
+
+## Watch for
+
+A family of agents where one holds a grant recorded as unclosable and the rest are assumed to need it too. Check what the privileged one hands back: if it returns a path or artifact the others merely read, the others need no grant. Conversely, when a plan asserts an agent uses a capability, verify against the prior body before building to match — a plan's claim about existing code is a hypothesis, and implementing to satisfy a false one manufactures a dependency and a failure mode that never existed. Reporting the plan's error is the correct move, not the insubordinate one.
+
+## Pattern
+
+A mutation sweep that only breaks the phrase each guard *intends* to pin will systematically miss inert guards. The blind spot is the guard whose assertion is a short phrase or single token that occurs several times in the target prose: the sweep damages the occurrence the author had in mind, the guard fires, and the guard is scored live — while the sentence that actually carries the contract can be removed or negated with the guard still green. A sweep must independently attempt to negate each load-bearing sentence, not merely damage the phrase the guard names. Negation matters more than deletion: inverting an imperative to its opposite instruction is the mutation that models the real regression, and a deletion-only sweep never tries it.
+
+## Impact
+
+The verification claim inverts. A report of "N/N killed, zero inert" is produced by a sweep that could not have detected the defect it is cited to rule out, and the guards protecting the feature's headline contract are the likeliest to be affected — headline contracts get restated in prose more often than incidental ones, so their key tokens are exactly the ones that recur. The count is honestly arrived at and worthless, and the next reviewer inherits it as settled.
+
+## Watch for
+
+Any assertion matching a short phrase against agent prose, rule files, or any document that restates its own vocabulary. Before trusting it, count occurrences of the token in the target: if greater than one, the assertion cannot fail independently and is inert regardless of what a sweep reported. A token appearing ten-plus times — a delegating agent's word for delegation, a reporting agent's word for its report — makes the assertion unconditionally true. Also watch for guards that loop over several files sharing one assertion: the token may occur once in one file and repeatedly in another, so the guard is live for one and inert for the other, and a sweep targeting either file alone scores it wrong. Anchor on the full sentence with its objects attached, or on a claim verified to occur exactly once.
+
+## Pattern
+
+When a feature adds a new path to a file that already declares the general form of a contract, a guard on the new path can be satisfied entirely by the pre-existing general statement. The guard looks live — a sweep that mutates the sentence it names does trip it — but the sentence it names belongs to the earlier feature, and the clause the new path actually depends on can be deleted with the guard still green. The new path is unguarded while the test suite reports it covered. This is distinct from the recurring multi-occurrence-token defect: here the assertion pins exactly one occurrence, and that occurrence is simply the wrong one. Ownership, not count, is what fails.
+
+A related failure in the same shape: a set of guards that all assert the *choice* a contract captures while none assert the *mechanism* the choice actuates. The command, call, or write that does the work is deletable with the whole suite green, because every assertion sits one level above it.
+
+## Impact
+
+The blast radius is the newest and least-reviewed code path, protected by the oldest and most-trusted assertion. Security boundaries are the worst case: a general prohibition declared once by an upstream feature reads as covering everything downstream, so the reviewer who confirms the boundary "is asserted" is confirming an earlier feature's work and inferring the rest. The inference is invisible in a green suite and survives into the next review as settled coverage.
+
+## Watch for
+
+Any feature that appends a section to a shared file whose earlier sections already state the contract in general terms — orchestrators, routers, and long-lived agent bodies attract this. For each guard, locate the line number of the text it pins and check which feature introduced it: if the pinned line predates the diff under review, the new path needs its own pin regardless of what the guard reports. Then ask, per acceptance criterion, which single line performs the work — delete exactly that line and confirm something fails. If the criterion's guards only cover configuration, consent, wording, or intent, the mechanism is unguarded.
+
+---
+
+## Pattern
+
+A repository-wide sweep that enumerates candidates through `git ls-files` cannot see an
+untracked file. A new test module that itself violates the sweep — most often by writing a
+retired identifier into a docstring in order to explain it — is therefore green for its
+entire authoring life and turns red at `git add`. Every local run before the commit is
+honest, reproducible, and wrong. The implementer records a green suite in good faith, and
+the failure surfaces to whoever runs the suite next on a clean checkout.
+
+The same visibility gap hides an empty directory: git tracks files, not directories, so a
+directory left behind by a test harness or a partial deletion is invisible to `git status`,
+and doubly invisible inside a gitignored tree.
+
+## Impact
+
+The recorded test baseline is false, and it is false in the direction that hides work:
+"green" when the tree is red. Because the number is arithmetic-checked against a prediction
+(`baseline + new tests = final`), an off-by-one caused by a *pre-existing* test flipping to
+failing lands inside the rounding of the reconciliation and reads as confirmation. The
+reconciliation then certifies the wrong number. Downstream stages inherit a baseline that no
+one can reproduce, and the next implementer's honest count looks like a regression they
+caused.
+
+The tempting fix is worse than the defect: adding the new file to the sweep's exemption list
+silences the guard permanently to protect a docstring. A sweep that grows an exemption every
+time it fires stops sweeping.
+
+## Watch for
+
+Never accept a reported test count that was measured before the feature's own files were
+committed. Re-run the suite on a clean tree at the implement commit — `git stash` and run —
+and compare against the record; if the numbers differ, the reported run predates a `git add`.
+Treat a passed-count reconciliation that *matches its own prediction* as unverified rather
+than confirmed: it is evidence about arithmetic, not about the tree. Reconcile against a
+measurement, and state which commit it was measured at.
+
+When a sweep fires on a test module's own text, fix the text, not the sweep — the retired
+identifier belongs in exactly one module, and any other module naming it has forked the list
+the sweep exists to keep singular. Check for empty-directory residue with `find . -type d
+-empty`, never with `git status`.
+
+---
+
+## Pattern
+
+`_assert_once`-style guards pin one load-bearing statement and fail on zero or many
+occurrences. They are the right instrument for a directive that must exist exactly once, and
+the wrong instrument for a **count claim** — or any claim that is a *class* of sentence
+rather than one sentence. A guard keyed to the corrected string (`"41 widgets"`) cannot
+match a stale restatement (`"43 widgets"`), so it verifies only the sentence someone already
+remembered to fix and is blind, by construction, to every one they missed. The guard is
+green, the surface is wrong, and the guard is specifically the one written to prevent that.
+
+## Impact
+
+Counts are restated: an inventory bullet, a prose paragraph, a directory-tree comment, a
+parenthetical. Fixing the one the reviewer read leaves the rest false while the test suite
+certifies the surface. The failure is self-concealing, because the guard's own name asserts
+the property it does not check, and it is most likely on precisely the documents where a
+count is load-bearing enough for someone to have written a guard.
+
+## Watch for
+
+For any guard asserting a derived fact about a document, ask whether the document could state
+that fact **more than once**. If so, the guard must match the claim's *shape* — a regex over
+the pattern (`(\d+) widgets`) — and read the value out of it, so every restatement is
+verified and a stale one fails. Add the inverse assertion too: at least one claim must match,
+or rewording the sentence out of existence silently disarms the guard. Mutation-test both
+directions — plant a *stale* restatement elsewhere on the surface, not just a wrong value in
+the sentence the guard names. A guard that only catches mutations to the text it quotes is
+pinning text, not verifying a fact.

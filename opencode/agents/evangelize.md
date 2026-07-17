@@ -9,6 +9,7 @@ permission:
   read: allow
   todowrite: allow
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are a cross-platform porter for source-of-truth assets under `.github/`. You synchronize relevant changes to Claude, Codex, and OpenCode outputs using platform guides.
 

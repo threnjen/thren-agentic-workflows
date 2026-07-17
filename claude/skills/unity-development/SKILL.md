@@ -2,6 +2,7 @@
 name: unity-development
 description: "Implementation and review rules for Unity C# projects. Covers runtime wiring, MonoBehaviour lifecycle, UI Toolkit pitfalls, test authenticity, bootstrap verification, and batch compilation gates. Load when: implementing or reviewing code in a Unity project (detected via Assets/ + ProjectSettings/ directories or copilot-instructions.md Unity identifier)."
 ---
+<!-- Generated from .github/skills source-of-truth. Do not edit manually. -->
 
 # Unity Development Skill
 

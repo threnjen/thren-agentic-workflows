@@ -12,6 +12,56 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import propagate_master_assets as mod
 
+# The settled PR Review evaluator roster, and each agent's exact tool grant.
+#
+# This map is the propagation-enumeration ledger. `test_pr_review_evaluator_roster
+# _is_fully_enumerated` asserts it covers every `05*` evaluator on disk, so an
+# agent can no longer be dropped from enumeration to dodge an assertion about it.
+# That is precisely how the previous gap arose: `05a`, `05g`, `05j` and `05k` were
+# all omitted from the old `expected_slugs` tuple because they held `execute` and
+# would have failed its blanket `assertNotIn("execute", ...)`. Omission was free,
+# so omission happened. It is no longer free.
+#
+# Exact lists replace that blanket assertion. A grant change is now a deliberate
+# edit here rather than a silent widening, and the two directions that assertion
+# could not express are both covered:
+#
+#   * `edit` is REQUIRED by every evaluator that writes its own report. The bodies
+#     say "read-only, never remediate", which reads as license to strip `edit` --
+#     doing so would break the report contract. Pinned here so that fails.
+#   * `execute` is DECLARED, not hidden. It survives only on `05a-baseline-worktree`,
+#     whose `git worktree` call has no non-shell equivalent; the grant is recorded
+#     as explicitly unclosable in `.github/learnings/cross-phase-decisions.md:16`.
+#     Per-agent command scoping is not expressible in Claude subagent frontmatter
+#     (`tools: Bash(gh:*)` is an unresolved tool name, not a narrower grant), so
+#     removal is the only narrowing available -- and this one cannot be removed.
+#     Listing it is the honest outcome: visible and justified beats absent.
+PR_REVIEW_EVALUATOR_TOOLS = {
+    "05a-baseline-worktree": ["read", "search", "execute"],
+    "05b-change-narrator": ["agent", "read", "search", "edit"],
+    "05c-artifact-sweeper": ["read", "search", "edit"],
+    "05d-consistency-auditor": ["read", "search", "edit"],
+    "05e-dependency-auditor": ["read", "search", "edit"],
+    "05f-test-health": ["agent", "read", "search", "edit"],
+    "05g-readiness-synthesizer": ["read", "search", "edit"],
+}
+
+
+def _discover_pr_review_evaluator_slugs() -> set:
+    """Every `05`-family evaluator on disk, read from the source of truth.
+
+    Derived rather than restated: this is what makes omission from
+    `PR_REVIEW_EVALUATOR_TOOLS` fail instead of silently narrowing coverage.
+    `05-pr-review` is the orchestrator that dispatches the roster, not a member
+    of it.
+    """
+    agents_dir = REPO_ROOT / ".github" / "agents"
+    return {
+        path.name[: -len(".agent.md")]
+        for path in agents_dir.glob("05*.agent.md")
+        if path.name != "05-pr-review.agent.md"
+    }
+
 
 class PropagateMasterAssetsTests(unittest.TestCase):
     def _make_hook_source(self, root: Path) -> Path:
@@ -84,19 +134,41 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertTrue((repo_root / "opencode" / "skills" / "demo-skill" / "SKILL.md").exists())
             self.assertTrue((repo_root / "codex" / "skills" / "demo-skill" / "SKILL.md").exists())
 
+    def test_pr_review_evaluator_roster_is_fully_enumerated(self) -> None:
+        """AC8: no evaluator may be omitted from propagation enumeration.
+
+        The enumeration gap this closes was not a typo -- it was structural. The
+        old tuple asserted `assertNotIn("execute", agent.tools)` over a
+        hand-listed roster, so the four agents holding `execute` were simply left
+        out of the list, and nothing failed. Coverage narrowed silently and the
+        grants went unexamined.
+
+        Deriving the roster from disk inverts that: adding a `05*` evaluator
+        without a tool expectation fails here, and so does deleting one without
+        removing its entry.
+        """
+        self.assertEqual(
+            set(PR_REVIEW_EVALUATOR_TOOLS), _discover_pr_review_evaluator_slugs()
+        )
+
+    def test_pr_review_evaluator_tool_grants_match_expected_lists(self) -> None:
+        """AC3/AC4/AC8b/AC8c: exact per-agent grants, not a blanket prohibition.
+
+        Replaces the old `assertNotIn("execute", agent.tools)`. Exact equality
+        catches a widening (`execute` reappearing on a sweeper) and a narrowing
+        (`edit` stripped from an agent that must write its own report) in the
+        same assertion.
+        """
+        agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
+
+        for slug, expected_tools in PR_REVIEW_EVALUATOR_TOOLS.items():
+            with self.subTest(slug=slug):
+                self.assertEqual(agents[slug].tools, expected_tools)
+
     def test_phase_review_agents_match_all_generated_harness_outputs(self) -> None:
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
         instructions = mod.load_instruction_docs()
-        expected_slugs = (
-            "05b-change-narrator",
-            "05c-qa-consolidator",
-            "05d-security-rollup",
-            "05e-ac-regression",
-            "05f-seam-analyzer",
-            "05h-test-health",
-            "05i-learnings-harvester",
-            "05l-readiness-synthesizer",
-        )
+        expected_slugs = tuple(sorted(PR_REVIEW_EVALUATOR_TOOLS))
 
         claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
         opencode_stems = mod._discover_existing_stems(mod.OPENCODE_AGENTS_DIR)
@@ -115,10 +187,8 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         for slug in expected_slugs:
             with self.subTest(slug=slug):
                 agent = agents[slug]
-                self.assertNotIn("execute", agent.tools)
-                if slug == "05d-security-rollup":
-                    self.assertIn("NO-GO", agent.body)
-                    self.assertIn("NOT RUN", agent.body)
+                # Tool grants are asserted per-agent in
+                # `test_pr_review_evaluator_tool_grants_match_expected_lists`.
                 docs = mod.applicable_instructions(agent, instructions)
 
                 claude_identifier = mod._claude_identifier_for(agent, claude_stems)
@@ -193,13 +263,16 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             codex_path.read_text(encoding="utf-8"),
         )
 
-    def test_phase_final_review_agent_is_present_in_all_harness_outputs(self) -> None:
+    def test_pr_review_agent_is_present_in_all_harness_outputs(self) -> None:
+        # Renamed from `05 Phase - Final Review` by the PR-Review rescope. The
+        # Claude output is a *command*, not an agent: this orchestrator is
+        # user-invocable.
         expected_markers = {
-            ".github/agents/05-phase-final-review.agent.md": "name: 05 Phase - Final Review",
-            "claude/commands/phase-final-review.md": "Phase Final Review Orchestrator",
-            "opencode/agents/05-phase-final-review.md": "Phase Final Review Orchestrator",
-            "codex/agents/05-phase-final-review.toml": 'name = "phase-final-review"',
-            "codex/profiles/phase-final-review.config.toml": "Phase Final Review Orchestrator",
+            ".github/agents/05-pr-review.agent.md": "name: 05 PR - Review",
+            "claude/commands/pr-review.md": "PR Review Orchestrator",
+            "opencode/agents/05-pr-review.md": "PR Review Orchestrator",
+            "codex/agents/05-pr-review.toml": 'name = "pr-review"',
+            "codex/profiles/pr-review.config.toml": "PR Review Orchestrator",
         }
 
         for relative_path, marker in expected_markers.items():
@@ -843,6 +916,336 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 "Injection scanner blocked tool output. guard error",
             )
             self.assertNotIn("RAW_OUTPUT_SENTINEL", completed.stdout + completed.stderr)
+
+
+class OrphanPruningTests(unittest.TestCase):
+    """Pruning of generated outputs whose source asset no longer exists.
+
+    Every test here runs `propagate_once(repo_root=...)` against an isolated
+    temp repo. `propagate_once` gained that parameter for exactly this reason:
+    it previously resolved every output directory from module constants bound
+    to the real `REPO_ROOT` at import time, so a prune test written the obvious
+    way would have deleted files from this repository.
+    """
+
+    def _write_source_agent(
+        self,
+        repo_root: Path,
+        slug: str,
+        name: str,
+        user_invocable: bool = False,
+    ) -> Path:
+        agents_dir = repo_root / ".github" / "agents"
+        agents_dir.mkdir(parents=True, exist_ok=True)
+        path = agents_dir / f"{slug}.agent.md"
+        path.write_text(
+            "---\n"
+            f"name: {name}\n"
+            f'description: "Fixture agent {slug}."\n'
+            "tools: [read, search]\n"
+            f"user-invocable: {'true' if user_invocable else 'false'}\n"
+            "---\n"
+            "\n"
+            f"You are the **{name}** fixture agent.\n",
+            encoding="utf-8",
+        )
+        return path
+
+    def _write_source_skill(self, repo_root: Path, skill_name: str) -> Path:
+        skill_dir = repo_root / ".github" / "skills" / skill_name
+        skill_dir.mkdir(parents=True, exist_ok=True)
+        (skill_dir / "SKILL.md").write_text(
+            f"---\nname: {skill_name}\ndescription: \"Fixture skill.\"\n---\n"
+            f"# {skill_name} body\n",
+            encoding="utf-8",
+        )
+        return skill_dir
+
+    def test_orphaned_claude_and_opencode_agents_are_pruned(self) -> None:
+        """AC1 + AC3: outputs survive their source agent's deletion today."""
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
+            doomed = self._write_source_agent(repo_root, "02-doomed", "02 Doomed")
+
+            mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            claude_orphan = repo_root / "claude" / "agents" / "z-doomed.md"
+            opencode_orphan = repo_root / "opencode" / "agents" / "02-doomed.md"
+            self.assertTrue(claude_orphan.exists(), "fixture: expected generated output")
+            self.assertTrue(opencode_orphan.exists(), "fixture: expected generated output")
+
+            doomed.unlink()
+            result = mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            self.assertFalse(claude_orphan.exists())
+            self.assertFalse(opencode_orphan.exists())
+            self.assertTrue((repo_root / "claude" / "agents" / "z-keeper.md").exists())
+            self.assertTrue((repo_root / "opencode" / "agents" / "01-keeper.md").exists())
+            self.assertEqual(result["claude_orphans_removed"], 1)
+            self.assertEqual(result["opencode_orphans_removed"], 1)
+
+    def test_hand_maintained_file_in_generated_root_survives(self) -> None:
+        """AC5: the critical guard. `claude/agents/README.md` is a real, hand-
+        maintained file living inside a pruned root. It carries no generated
+        marker and is in no expected set, so only the marker guard saves it.
+        This test must fail if that guard is removed."""
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
+            claude_agents = repo_root / "claude" / "agents"
+            claude_agents.mkdir(parents=True, exist_ok=True)
+            readme = claude_agents / "README.md"
+            readme.write_text("# Agent index\n\nHand-maintained.\n", encoding="utf-8")
+
+            result = mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            self.assertTrue(readme.exists(), "hand-maintained README.md was deleted")
+            self.assertEqual(readme.read_text(encoding="utf-8"), "# Agent index\n\nHand-maintained.\n")
+            self.assertEqual(result["claude_orphans_removed"], 0)
+
+    def test_orphaned_command_is_pruned_and_subagent_file_retained(self) -> None:
+        """AC2: an agent flipped to `user-invocable: false` loses its command
+        file but keeps its subagent file."""
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            self._write_source_agent(repo_root, "01-flipper", "01 Flipper", user_invocable=True)
+
+            mod.propagate_once(verbose=False, repo_root=repo_root)
+            command_file = repo_root / "claude" / "commands" / "flipper.md"
+            self.assertTrue(command_file.exists(), "fixture: expected a command file")
+
+            self._write_source_agent(repo_root, "01-flipper", "01 Flipper", user_invocable=False)
+            result = mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            self.assertFalse(command_file.exists())
+            # A non-invocable agent takes the `z-` prefix, so the subagent file it
+            # gains on the flip is `z-flipper.md`.
+            self.assertTrue((repo_root / "claude" / "agents" / "z-flipper.md").exists())
+            self.assertEqual(result["claude_command_orphans_removed"], 1)
+
+    def test_emission_completes_before_pruning(self) -> None:
+        """AC6: `_claude_filename_for` resolves an output name against stems
+        already on disk, so pruning before emission could rename a survivor."""
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            self._write_source_agent(repo_root, "05c-artifact-sweeper", "05c Artifact Sweeper")
+            doomed = self._write_source_agent(repo_root, "09-doomed", "09 Doomed")
+
+            mod.propagate_once(verbose=False, repo_root=repo_root)
+            survivor = repo_root / "claude" / "agents" / "z-artifact-sweeper.md"
+            self.assertTrue(survivor.exists(), "fixture: expected the z- stem")
+
+            doomed.unlink()
+            mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            self.assertTrue(survivor.exists(), "survivor lost its stem to prune ordering")
+            self.assertFalse((repo_root / "claude" / "agents" / "z-doomed.md").exists())
+            self.assertFalse((repo_root / "opencode" / "agents" / "09-doomed.md").exists())
+
+    def test_orphaned_skill_directories_are_pruned_in_all_three_roots(self) -> None:
+        """AC4: no root pruned skills before this feature. The `codex/skills/`
+        guard existed but never matched (marker sits below frontmatter, and it
+        used a prefix check); Claude and OpenCode had no prune at all."""
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            self._write_source_skill(repo_root, "keeper-skill")
+            doomed = self._write_source_skill(repo_root, "doomed-skill")
+
+            mod.propagate_once(verbose=False, repo_root=repo_root)
+            orphans = [
+                repo_root / "claude" / "skills" / "doomed-skill",
+                repo_root / "opencode" / "skills" / "doomed-skill",
+                repo_root / "codex" / "skills" / "doomed-skill",
+            ]
+            for orphan in orphans:
+                self.assertTrue(orphan.exists(), f"fixture: expected {orphan}")
+
+            shutil.rmtree(doomed)
+            mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            for orphan in orphans:
+                self.assertFalse(orphan.exists(), f"orphaned skill dir survived: {orphan}")
+            for root in ("claude", "opencode", "codex"):
+                self.assertTrue((repo_root / root / "skills" / "keeper-skill" / "SKILL.md").exists())
+
+    def test_unmarked_skill_directory_survives(self) -> None:
+        """AC5 for the skill roots: a skill directory this propagator did not
+        generate carries no marker and must never be swept."""
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            self._write_source_skill(repo_root, "keeper-skill")
+            handmade = repo_root / "claude" / "skills" / "handmade-skill"
+            handmade.mkdir(parents=True, exist_ok=True)
+            (handmade / "SKILL.md").write_text(
+                "---\nname: handmade-skill\n---\n# Hand written\n", encoding="utf-8"
+            )
+
+            mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            self.assertTrue((handmade / "SKILL.md").exists())
+
+    def test_symlinked_orphan_is_not_unlinked(self) -> None:
+        """A symlink is never something this propagator wrote. Following one
+        would reach a real tree outside the generated root."""
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
+            outside = repo_root / "outside.md"
+            outside.write_text(
+                f"---\nname: outside\n---\n{mod.GENERATED_AGENT_MARKDOWN_HEADER}\nreal file\n",
+                encoding="utf-8",
+            )
+            claude_agents = repo_root / "claude" / "agents"
+            claude_agents.mkdir(parents=True, exist_ok=True)
+            link = claude_agents / "z-linked.md"
+            link.symlink_to(outside)
+
+            mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            self.assertTrue(outside.exists(), "prune followed a symlink into a real file")
+            self.assertTrue(link.is_symlink())
+
+    def test_unreadable_orphan_is_not_deleted(self) -> None:
+        """An unreadable file is not a confirmed orphan — fail closed."""
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
+            claude_agents = repo_root / "claude" / "agents"
+            claude_agents.mkdir(parents=True, exist_ok=True)
+            unreadable = claude_agents / "z-unreadable.md"
+            unreadable.write_text("whatever\n", encoding="utf-8")
+            unreadable.chmod(0o000)
+            try:
+                mod.propagate_once(verbose=False, repo_root=repo_root)
+                self.assertTrue(unreadable.exists())
+            finally:
+                # Restore before the temp root is torn down.
+                unreadable.chmod(0o644)
+
+    def test_missing_generated_root_is_not_created_to_prune_it(self) -> None:
+        """A missing root has nothing to prune; never create one to sweep it."""
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            (repo_root / ".github" / "agents").mkdir(parents=True)
+
+            result = mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            self.assertEqual(result["claude_orphans_removed"], 0)
+            self.assertEqual(result["skill_orphans_removed"], 0)
+            self.assertFalse((repo_root / "claude" / "skills").exists())
+
+    def test_hand_maintained_file_quoting_the_marker_survives(self) -> None:
+        """AC5: the marker guard keys on the one position the emitter writes to,
+        not on the marker appearing anywhere in the file. A hand-maintained doc
+        that *quotes* the marker — e.g. `claude/agents/README.md` explaining the
+        convention in a fenced code block — is not a generated file and must not
+        be swept. A whole-file search would delete exactly the file AC5 protects.
+        """
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
+            claude_agents = repo_root / "claude" / "agents"
+            claude_agents.mkdir(parents=True, exist_ok=True)
+            readme = claude_agents / "README.md"
+            body = (
+                "# Claude Agents\n\n"
+                "Generated files in this directory carry a marker:\n\n"
+                "```markdown\n"
+                f"{mod.GENERATED_AGENT_MARKDOWN_HEADER}\n"
+                "```\n\n"
+                "This README is hand-maintained and carries no such marker.\n"
+            )
+            readme.write_text(body, encoding="utf-8")
+
+            result = mod.propagate_once(verbose=False, repo_root=repo_root)
+
+            self.assertTrue(readme.exists(), "a doc quoting the marker was deleted")
+            self.assertEqual(readme.read_text(encoding="utf-8"), body)
+            self.assertEqual(result["claude_orphans_removed"], 0)
+
+    def test_marker_guard_matches_every_real_generated_file(self) -> None:
+        """The guard must still positively identify all real generated output.
+        A guard tightened until it matches nothing would make the pruner inert
+        and pass AC7 for entirely the wrong reason."""
+        # Counts dropped when the five phase-shaped evaluators were retired:
+        # claude/agents 33 -> 27 (the five, plus `z-security-scan.md` -- Security
+        # Scan lost its spawnable subagent file once `05d` stopped declaring it as
+        # a child, and is now a user-invocable command only); opencode/agents and
+        # codex/agents 46 -> 41 (the five). Command and profile counts are
+        # unchanged: Security Scan's command was renamed, not removed.
+        roots = [
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 27),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 41),
+            (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 19),
+        ]
+        for directory, pattern, marker, expected_count in roots:
+            with self.subTest(root=directory.name):
+                matched = [
+                    p
+                    for p in sorted(directory.glob(pattern))
+                    if mod._is_generated_output(p, marker)
+                ]
+                self.assertEqual(len(matched), expected_count)
+
+        # The one remaining unmarked file in claude/agents must stay unmatched.
+        # `single-feature.md` was the other, and was deleted by
+        # `08-retirement-reconciliation`: it was a stale, unsourced duplicate of
+        # `Single Feature - Agent` that Claude Code still loaded. The marker
+        # guard could not tell it apart from this README -- both predate the
+        # marker -- so the pruner correctly failed closed on both and the call
+        # was made by hand. `tests/test_retirement_reconciliation.py::
+        # test_claude_agents_root_holds_only_the_catalogue_and_generated_output`
+        # now asserts the invariant that leaves README.md as the only exception.
+        path = mod.CLAUDE_AGENTS_DIR / "README.md"
+        if path.exists():
+            self.assertFalse(
+                mod._is_generated_output(path, mod.GENERATED_AGENT_MARKDOWN_HEADER)
+            )
+
+    def test_renumbered_mechanical_evaluators_left_no_opencode_orphans(self) -> None:
+        """AC9: OpenCode agent files key on slug, so a renumber orphans them.
+
+        Claude and Codex key on an existing stem (`z-artifact-sweeper`), which
+        survives the renumber untouched; OpenCode does not, so `05g-*.md` would
+        linger as a stale duplicate of `05c-*.md` and stay dispatchable.
+
+        Exact stems, deliberately not a `05g-*` glob: feature 07 renumbers the
+        readiness synthesizer to `05g-readiness-synthesizer`, so a glob would
+        pass today and break the moment that lands -- asserting the opposite of
+        what it means.
+        """
+        retired_stems = (
+            "05g-artifact-sweeper",
+            "05j-consistency-auditor",
+            "05k-dependency-auditor",
+        )
+        for stem in retired_stems:
+            with self.subTest(stem=stem):
+                self.assertFalse(
+                    (mod.OPENCODE_AGENTS_DIR / f"{stem}.md").exists(),
+                    f"retired OpenCode slug survived the renumber: {stem}.md",
+                )
+
+        for stem in ("05c-artifact-sweeper", "05d-consistency-auditor",
+                     "05e-dependency-auditor"):
+            with self.subTest(stem=stem):
+                self.assertTrue((mod.OPENCODE_AGENTS_DIR / f"{stem}.md").is_file())
+
+    def test_real_repository_propagation_removes_nothing(self) -> None:
+        """AC7: the pruner is proven inert against the current tree before it is
+        trusted against a changed one. This asserts on the real repository."""
+        result = mod.propagate_once(verbose=False)
+
+        self.assertEqual(result["claude_orphans_removed"], 0)
+        self.assertEqual(result["claude_command_orphans_removed"], 0)
+        self.assertEqual(result["opencode_orphans_removed"], 0)
+        self.assertEqual(result["codex_orphans_removed"], 0)
+        self.assertEqual(result["codex_profile_orphans_removed"], 0)
+        self.assertEqual(result["skill_orphans_removed"], 0)
+        self.assertTrue((mod.CLAUDE_AGENTS_DIR / "README.md").exists())
 
 
 if __name__ == "__main__":

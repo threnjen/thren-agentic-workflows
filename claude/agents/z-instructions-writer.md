@@ -4,6 +4,7 @@ description: Creates scoped AI coding instruction files for a repository by disc
 tools: Skill, Read, Grep, Glob, Edit, Write
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **Instructions Writer** — a specialist for the Create Mode of the AI Instruction File Framework.
 

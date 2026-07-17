@@ -3,7 +3,7 @@
 **Status**: Planned
 **Depends on**: Phases 01, 02 (both implemented; both release-blocked)
 **Estimated complexity**: Medium
-**Cross-references**: `docs/phases/DISCOVERY_CONTEXT.md`, `docs/phases/PHASE_01/PHASE_01-qa-analysis.md` (SEC-01, PERF-01, DOC-01), `docs/phases/PHASE_02/PHASE_02-security-scan.md` (P2-SEC-01..03), `docs/phases/PHASE_03/PHASE_03-qa-analysis.md` (Phase 03's open findings, inherited by the PR-review phase), `dev/phase-final-review/PHASE_05/z-security-scan-final.md` (F-15), `docs/hooks/prompt-injection-defense.md`, `.github/learnings/cross-phase-decisions.md`
+**Cross-references**: `docs/phases/DISCOVERY_CONTEXT.md`, `docs/phases/PHASE_01/PHASE_01-qa-analysis.md` (SEC-01, PERF-01, DOC-01), `docs/phases/PHASE_02/PHASE_02-security-scan.md` (P2-SEC-01..03), `docs/phases/PHASE_03/PHASE_03-qa-analysis.md` (Phase 03's open findings, retained by Phase 03's own rescope), `docs/phases/PHASE_03/PHASE_03_SUMMARY.md` (the PR Review rescope that retains them), `dev/phase-final-review/PHASE_05/z-security-scan-final.md` (F-15), `docs/hooks/prompt-injection-defense.md`, `.github/learnings/cross-phase-decisions.md`
 
 ## What's New
 
@@ -17,9 +17,9 @@ Convert Phases 01 and 02 from "implemented but blocked" to a verified verdict by
 
 ## Why This Phase Is Hooks-Only
 
-Phase 03 built the `05-phase-final-review` orchestrator and its `05a`–`05l` evaluator family. That family is being **rescoped into a PR-review agent** in a dedicated phase, which changes what verifying it would mean. Repairing an orchestrator that is about to be rewritten, and auditing evaluator evidence describing five agents that are about to be retired, is effort spent on code that will not exist.
+Phase 03 built the `05-phase-final-review` orchestrator and its `05a`–`05l` evaluator family. **Phase 03 has since been rescoped in place** into the `05-pr-review` family, which changes what verifying that work would mean here. Repairing an orchestrator that is about to be rewritten, and auditing evaluator evidence describing five agents that are about to be retired, is effort spent on code that will not exist.
 
-Phase 03's open findings are therefore **inherited by the PR-review phase**, not repaired here. Its verdict is a **NO-GO issued in this phase from existing evidence** — honest history, since the work happened and the surviving evaluators carry forward. This is not the agent family being abandoned; seven of its twelve evaluators are already diff-shaped and transfer directly.
+Phase 03's open findings are therefore **retained by Phase 03 and closed by its rescope**, not repaired here. Its verdict is a **NO-GO issued in this phase from existing evidence** — honest history, since the work happened and the surviving evaluators carry forward. This is not the agent family being abandoned; seven of its twelve evaluators are already diff-shaped and transfer directly.
 
 The practical effect is that this phase gets smaller and keeps a single coherent identity: **verify the hooks.** That is also the part closest to actually shipping.
 
@@ -45,12 +45,12 @@ Broad public adoption would invalidate all three — partial protection that rea
 - **Live harness QA**: execute the `NOT RUN` manual QA for Phases 01 and 02 across Claude Code, Codex, and OpenCode, recording honest per-harness support tiers.
 - **Record reconciliation**: close DOC-01's `PENDING` commit SHAs; fold the project-root hook-command anchoring into the phase record.
 - **Documentation correction**: keep statements about remediation status matched to verified reality.
-- **Phase 03 verdict**: issue a NO-GO from existing evidence, with its open findings enumerated and routed to the PR-review phase.
+- **Phase 03 verdict**: issue a NO-GO from existing evidence, with its open findings enumerated and routed back to Phase 03's rescope.
 
 ### Out of Scope
 
 - Any new hook capability, rule, or agent. This phase adds no features.
-- **The `05a`–`05l` agent family.** Its `execute` grants, its propagation-enumeration gap, its runtime evidence, and P5-SEC-02 all belong to the PR-review phase that rescopes it. Fixing capability grants on agents slated for rewrite is churn, and enumerating agents slated for retirement is worse.
+- **The `05a`–`05l` agent family.** Its `execute` grants, its propagation-enumeration gap, its runtime evidence, and P5-SEC-02 all belong to Phase 03's rescope. Fixing capability grants on agents slated for rewrite is churn, and enumerating agents slated for retirement is worse.
 - Format-on-save and completion gates, and skill enforcement.
 - Raising, relaxing, or conditionalizing what the latency budget represents in order to make PERF-01 pass. Changing *what is measured* is in scope and is a user-approved AC change (see PERF-01 below); changing *how much latency is acceptable* is not.
 - Adoption readiness: packaging, install UX, configurable friction, upgrade path. See below.
@@ -59,16 +59,16 @@ Broad public adoption would invalidate all three — partial protection that rea
 
 Making this suite fit for adoption beyond the author's circle is real work and is **not** part of this phase: a packaged install path (the deferred plugin-packaging idea in `.github/learnings/cross-phase-decisions.md`), a friction budget tunable without editing rule files, recovery and kill-switch documentation written for someone who is not the author, an upgrade path when rules change, and an install-time disclosure of Codex's partial coverage. This requires a new roadmap entry and belongs to `@project-planner`.
 
-### Inherited by the PR-Review Phase
+### Retained by Phase 03's Rescope
 
-These are real, open, and deliberately not addressed here. Each is a NO-GO input for Phase 03's verdict.
+These are real, open, and deliberately not addressed here. Each is a NO-GO input for Phase 03's verdict, and each is closed by the PR Review rescope in `docs/phases/PHASE_03/PHASE_03_SUMMARY.md` rather than by this phase.
 
 | Finding | Why it moves | Disposition |
 |---|---|---|
-| **P5-SEC-02** — the readiness path consumes report claims after metadata-only validation | Closing it requires a strict schema and deterministic status reducer. There is no code to attach that to today: the readiness path is agent Markdown. The PR-review phase rebuilds that path, so the validator arrives with the rebuild instead of being bolted onto prose. | Open High; a requirement of the phase that rescopes `05l`. |
+| **P5-SEC-02** — the readiness path consumes report claims after metadata-only validation | Closing it requires a strict schema and deterministic status reducer. There is no code to attach that to today: the readiness path is agent Markdown. Phase 03's rescope rebuilds that path as `05g-readiness-synthesizer`, so the validator arrives with the rebuild instead of being bolted onto prose. | Open High; a requirement of Phase 03's rescope. |
 | **`execute` grants on `05`, `05g`, `05j`, `05k`** | The orchestrator is being rewritten; the three sweeps are being rescoped. Grants should be set correctly when each agent is rebuilt, not fixed twice. `05k` in particular is not a simple removal — its contract permits an offline read-only audit command. | Open High; the rescope must not carry `execute` forward without justification. |
-| **`05a` unconstrained `execute`** | The propagation format maps `execute` to `Bash`/`bash` with no allowlist syntax, so a narrower grant is inexpressible. `05a` genuinely needs `git worktree`. | Accepted residual risk, re-examined when the family is rescoped. |
-| **Propagation enumeration omits `05g`/`05j`/`05k`** | The enumeration and the `execute` grants land in the same test function, and the enumeration is only correct once the roster is settled. | Open High; belongs with the rescoped roster. |
+| **`05a` unconstrained `execute`** | The propagation format maps `execute` to `Bash`/`bash` with no allowlist syntax, so a narrower grant is inexpressible today. `05a` genuinely needs `git worktree`. Phase 03's rescope adds that allowlist syntax as its first deliverable, which makes the narrow grant expressible for the first time. | Closable in Phase 03; not a residual risk once the allowlist lands. |
+| **Propagation enumeration omits `05g`/`05j`/`05k`** | The enumeration and the `execute` grants land in the same test function, and the enumeration is only correct once the roster is settled. Phase 03 settles it at seven contiguous slugs. | Open High; belongs with Phase 03's rescoped roster. |
 | **Absent curl/wget exfiltration enforcement** | Four of the 17 loosened rules describe patterns with no enforcement rule behind them. "Reinstating" means authoring rules that never existed — new capability. | Coverage gap, recorded with routing. The review still adjudicates all 17. |
 
 ## Key Deliverables
@@ -176,7 +176,7 @@ The rule cuts both ways and is not a lever. A finding is not promoted to High be
 - [ ] The project-root hook-command anchoring has a phase record describing what changed and why.
 - [ ] Documentation states no remediation as complete that is not backed by fresh evidence, across all four affected `docs/hooks/` documents, with test assertions updated in lockstep.
 - [ ] Every piece of evidence post-dates the last change to the code it covers; anything invalidated by a later change is re-run or marked stale.
-- [ ] Phase 03 has a user-issued NO-GO with its open findings enumerated and routed to the PR-review phase.
+- [ ] Phase 03 has a user-issued NO-GO with its open findings enumerated and routed back to Phase 03's rescope.
 - [ ] Each of Phases 01 and 02 has a user-issued verdict backed by evidence — GO or NO-GO, either is a valid outcome of this phase.
 
 ## QA Considerations

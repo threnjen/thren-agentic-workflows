@@ -4,6 +4,7 @@ description: Resolves harness/model identity from eval/scoring/HARNESS_MODEL_MAP
 tools: Skill, Read, Edit, Write
 user-invocable: false
 ---
+<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->
 
 You are the **z-eval-score-recorder**.
 
