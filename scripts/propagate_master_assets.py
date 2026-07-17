@@ -1875,6 +1875,10 @@ def preflight_destinations(
                 failures[target.harness] = "symlinked_parent"
                 unsafe_parent = True
                 break
+            if current.exists() and not current.is_dir():
+                failures[target.harness] = "parent_not_directory"
+                unsafe_parent = True
+                break
         if unsafe_parent:
             continue
         if not destination.parent.exists() and not target.create_parents:

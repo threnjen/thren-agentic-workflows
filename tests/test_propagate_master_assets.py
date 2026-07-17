@@ -1140,6 +1140,29 @@ class PropagationConvergenceTests(unittest.TestCase):
         self.assertEqual(failures["codex"], "ownership_evidence_unavailable")
         self.assertEqual(failures["opencode"], "collision_not_ready")
 
+    def test_preflight_rejects_non_directory_parent_before_any_copy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            blocked_parent = home / "blocked"
+            blocked_parent.write_text("not a directory", encoding="utf-8")
+            targets = (
+                mod.HarnessDestination("claude", home / "claude"),
+                mod.HarnessDestination("codex", blocked_parent / "codex"),
+            )
+            copy = mock.Mock()
+
+            result = mod.deploy_after_convergence(
+                targets,
+                copy_operation=copy,
+                reconcile_operation=mock.Mock(),
+                home=home,
+                propagate=lambda: {"source_agents": 1, "claude_changed": 0},
+            )
+
+        self.assertFalse(result.preflight_succeeded)
+        self.assertEqual(result.preflight_failures["codex"], "parent_not_directory")
+        copy.assert_not_called()
+
     def test_failed_harness_skips_only_its_reconciliation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
