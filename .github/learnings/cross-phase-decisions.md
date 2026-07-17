@@ -18,6 +18,21 @@
 
 ## Deferred Pipeline Work
 
+- **PR posting (AC7/AC8) ships verified by contract assertion only; live QA is outstanding
+  and routed to the QA stage with a scratch consumer repo.** `07-synthesis-and-pr-posting`
+  implements the auto / ask-when-ready / never consent path and the no-PR, absent-`gh`, and
+  unauthenticated-`gh` reported conditions entirely as agent Markdown. Every guard on it is
+  a static assertion that the body *declares* the contract; none observes `gh` behaving as
+  described. Two plan assumptions remain unverified by execution: that `gh pr comment`
+  resolves the PR from the current branch without a PR number, and that a readiness report
+  fits inside a GitHub comment (mitigated, not measured, by the recorded truncation
+  decision — truncate with an explicit notice, keeping Verdict, Blocking List, and
+  `Checks Not Run`). The property most needing live confirmation is *never*, whose entire
+  content is a negative: a setting that must make **no** network call cannot be proven by
+  reading prose, and silently degrading to "posted anyway" publishes a verdict to
+  collaborators that no revert can retract. Do this in a scratch repo — never against this
+  one. (Recorded 2026-07-16 by `07-synthesis-and-pr-posting`'s review.)
+
 - `04 Phase - Execute` still uses one consolidated QA-writer invocation for all features, so per-feature `eval: qa <task>` checkpoints cannot be both phase-shared and feature-local. A future phase must either move QA invocation into each feature cycle or redefine QA checkpointing as a single phase-level commit.
 - **Pre-edit file backup layer** (snapshot protected-adjacent files before Edit/Write, config-gated) was cut from Hooks Phase 01 during refinement. Candidate for the format-on-save/completion-gates phase, which owns edit-time hooks — that phase is **Phase 05** as of the 2026-07-16 renumber (it was Phase 03 when this note was written). (Recorded 2026-07-14; renumber noted 2026-07-16.)
 - **WebFetch as an exfiltration channel** is deliberately unguarded in Hooks Phase 01 (the guard blocks reading secrets in the first place). Addressed: pulled into Hooks Phase 02 scope as the WebFetch exfiltration guard deliverable (see `docs/phases/PHASE_02/PHASE_02_SUMMARY.md`). (Recorded 2026-07-14.)

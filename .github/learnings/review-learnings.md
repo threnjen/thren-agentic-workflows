@@ -518,3 +518,17 @@ The verification claim inverts. A report of "N/N killed, zero inert" is produced
 ## Watch for
 
 Any assertion matching a short phrase against agent prose, rule files, or any document that restates its own vocabulary. Before trusting it, count occurrences of the token in the target: if greater than one, the assertion cannot fail independently and is inert regardless of what a sweep reported. A token appearing ten-plus times — a delegating agent's word for delegation, a reporting agent's word for its report — makes the assertion unconditionally true. Also watch for guards that loop over several files sharing one assertion: the token may occur once in one file and repeatedly in another, so the guard is live for one and inert for the other, and a sweep targeting either file alone scores it wrong. Anchor on the full sentence with its objects attached, or on a claim verified to occur exactly once.
+
+## Pattern
+
+When a feature adds a new path to a file that already declares the general form of a contract, a guard on the new path can be satisfied entirely by the pre-existing general statement. The guard looks live — a sweep that mutates the sentence it names does trip it — but the sentence it names belongs to the earlier feature, and the clause the new path actually depends on can be deleted with the guard still green. The new path is unguarded while the test suite reports it covered. This is distinct from the recurring multi-occurrence-token defect: here the assertion pins exactly one occurrence, and that occurrence is simply the wrong one. Ownership, not count, is what fails.
+
+A related failure in the same shape: a set of guards that all assert the *choice* a contract captures while none assert the *mechanism* the choice actuates. The command, call, or write that does the work is deletable with the whole suite green, because every assertion sits one level above it.
+
+## Impact
+
+The blast radius is the newest and least-reviewed code path, protected by the oldest and most-trusted assertion. Security boundaries are the worst case: a general prohibition declared once by an upstream feature reads as covering everything downstream, so the reviewer who confirms the boundary "is asserted" is confirming an earlier feature's work and inferring the rest. The inference is invisible in a green suite and survives into the next review as settled coverage.
+
+## Watch for
+
+Any feature that appends a section to a shared file whose earlier sections already state the contract in general terms — orchestrators, routers, and long-lived agent bodies attract this. For each guard, locate the line number of the text it pins and check which feature introduced it: if the pinned line predates the diff under review, the new path needs its own pin regardless of what the guard reports. Then ask, per acceptance criterion, which single line performs the work — delete exactly that line and confirm something fails. If the criterion's guards only cover configuration, consent, wording, or intent, the mechanism is unguarded.
