@@ -324,6 +324,86 @@ def destination_inventory(
     return tuple(inventory)
 
 
+def managed_copy_inventory(
+    records: Sequence[DestinationRecord],
+) -> tuple[dict[str, str], ...]:
+    """Classify the current runtime state without following destination links."""
+    generated_roots = tuple(Path(record.source).absolute() for record in records)
+    inventory: list[dict[str, str]] = []
+    for record in records:
+        source, destination, home = _validate_record(record)
+        relative = destination.relative_to(home).as_posix()
+        source_fingerprint = hashlib.sha256(
+            json.dumps(_tree_manifest(source), sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        if not _entry_exists(destination):
+            status = "planned_replacement"
+        elif _is_link(destination):
+            status = (
+                "planned_replacement"
+                if _link_is_owned(destination, generated_roots)
+                else "collision"
+            )
+        elif not destination.is_dir() or not _metadata_entry_is_managed(destination):
+            status = "collision"
+        else:
+            source_manifest = _tree_manifest(source)
+            destination_manifest = {
+                name: value
+                for name, value in _tree_manifest(destination).items()
+                if name != MANAGED_METADATA
+            }
+            metadata = _read_metadata(destination)
+            generated_roots = tuple(Path(item.source).absolute() for item in records)
+            has_collision = any(
+                _entry_exists(destination / child.name)
+                and not _entry_is_owned(
+                    destination / child.name,
+                    child.name,
+                    metadata,
+                    generated_roots,
+                )
+                for child in source.iterdir()
+            )
+            if has_collision:
+                status = "collision"
+            elif source_manifest == destination_manifest:
+                status = "unchanged_managed_copy"
+            else:
+                status = "planned_replacement"
+        inventory.append(
+            {
+                "harness": record.harness,
+                "asset_class": record.asset_class,
+                "status": status,
+                "destination": "~/" + relative,
+                "source_fingerprint": source_fingerprint,
+            }
+        )
+
+        if destination.is_dir() and not _is_link(destination):
+            expected = {path.name for path in source.iterdir()}
+            metadata = _read_metadata(destination)
+            for path in sorted(destination.iterdir(), key=lambda item: item.name):
+                if path.name == MANAGED_METADATA or path.name in expected:
+                    continue
+                owned = _entry_is_owned(
+                    path, path.name, metadata, generated_roots
+                )
+                inventory.append(
+                    {
+                        "harness": record.harness,
+                        "asset_class": record.asset_class,
+                        "status": (
+                            "obsolete_owned_removal" if owned else "preserved_foreign"
+                        ),
+                        "destination": "~/" + path.relative_to(home).as_posix(),
+                        "source_fingerprint": source_fingerprint,
+                    }
+                )
+    return tuple(inventory)
+
+
 def _entry_exists(path: Path) -> bool:
     """Test the directory entry without following a dangling link."""
     return os.path.lexists(path)

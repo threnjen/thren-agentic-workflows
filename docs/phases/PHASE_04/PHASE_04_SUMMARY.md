@@ -187,3 +187,24 @@ Suggested feature boundaries:
 Features 2 through 5 are sequential where they touch the propagation pipeline. Feature 1 is parallel-safe until integration. Feature 6 is the phase tail.
 
 Suggested implementation shape, to be verified by Feature Decomposer against current code and tests: treat generated platform outputs as the only deployment sources, represent ownership independently from destination existence, and make destructive reconciliation conditional on a successful copy for that same harness.
+
+## Implementation Verification (2026-07-17)
+
+Phase 04 now exposes `scripts/propagate_master_assets.py --runtime-deploy
+--active-home <path> [--reviewed-inventory <sha256>] [--watcher-restarted]`. The first invocation converges
+repository outputs and emits a home-relative, content-bound inventory without runtime
+mutation. Supplying its reviewed digest with watcher-restart confirmation reruns convergence and inventory, aborts on
+drift, deploys managed copies by harness, reconciles only successful harnesses, and
+verifies regular-copy freshness and absence of managed repository links.
+
+Automated scratch-home evidence covers Claude, Codex, and OpenCode success,
+idempotency, collision and foreign-entry preservation, convergence failure before
+writes, inventory drift before writes, partial harness failure, retired interceptor
+absence, surviving scanner/framework files, and explicit RTK use. Focused verification
+at revision `3ba5caa` plus the Feature 06 worktree passed 100 focused tests and 121
+full-discovery tests.
+
+Live fresh-session evidence remains separate and unavailable: macOS `NOT RUN` (live
+home migration not authorized), Linux `NOT RUN`, native Windows `NOT RUN`, and WSL
+`NOT RUN`. Consequently this evidence is partial and does not issue a full
+cross-platform GO. Phase 01, Phase 02, and Phase 07 status ownership is unchanged.

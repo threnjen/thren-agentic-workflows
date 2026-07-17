@@ -1,4 +1,7 @@
+import json
 import os
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -652,6 +655,229 @@ class ManagedCopyReconciliationTests(unittest.TestCase):
         unconverged = propagator.PropagationConvergenceResult(False, 1, 0, {}, {})
         with self.assertRaises(propagator.PropagationConvergenceError):
             propagator.deploy_managed_copies_after_convergence(unconverged, ())
+
+
+class PhaseRuntimeOrchestrationTests(unittest.TestCase):
+    def _generated_repo(self, root: Path) -> Path:
+        repo = root / "repo"
+        for policy in deployment._ASSET_POLICIES:
+            source = repo / policy.source_relative
+            source.mkdir(parents=True, exist_ok=True)
+            (source / "asset.md").write_text(
+                "<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->\n"
+                f"{policy.harness}:{policy.asset_class}\n",
+                encoding="utf-8",
+            )
+        return repo
+
+    def _run(self, root: Path, reviewed: str | None = None, **kwargs):
+        kwargs.setdefault("watcher_restarted", reviewed is not None)
+        return propagator.run_runtime_deployment(
+            active_home=root / "home",
+            reviewed_inventory=reviewed,
+            repo_root=self._generated_repo(root),
+            environment={},
+            platform_facts=deployment.PlatformFacts("linux"),
+            propagate=lambda: {"source_agents": 1},
+            **kwargs,
+        )
+
+    def test_reviewed_scratch_home_path_deploys_all_harnesses_and_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "home").mkdir()
+            inventory = self._run(root)
+            self.assertEqual(inventory.status, "review_required")
+            self.assertIsNone(inventory.deployment)
+            self.assertEqual(inventory.stages, ("convergence", "destination_preflight", "inventory"))
+
+            first = self._run(root, inventory.inventory_digest)
+            second_inventory = self._run(root)
+            second = self._run(root, second_inventory.inventory_digest)
+
+            self.assertEqual(set(first.deployment.harnesses), {"claude", "codex", "opencode"})
+            self.assertTrue(all(item.regular_fresh for item in first.verification.values()))
+            self.assertTrue(all(item.repository_links == 0 for item in first.verification.values()))
+            self.assertTrue(all(result.status == "verified" for result in first.deployment.harnesses.values()))
+            self.assertTrue(all(result.copied + result.replaced + result.removed == 0 for result in second.deployment.harnesses.values()))
+            self.assertIn("verification", first.stages)
+            self.assertEqual(first.status, "partial")
+            self.assertTrue(all(value.startswith("NOT RUN:") for value in first.platform_evidence.values()))
+
+    def test_inventory_classifies_owned_removal_foreign_preservation_and_collision(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / "home"
+            home.mkdir()
+            repo = self._generated_repo(root)
+            destination = home / ".claude/agents"
+            destination.mkdir(parents=True)
+            (destination / "stale.md").write_text(
+                "<!-- Generated from .github/agents source-of-truth. Do not edit manually. -->\nstale\n",
+                encoding="utf-8",
+            )
+            (destination / "foreign.txt").write_text("keep", encoding="utf-8")
+            (destination / "asset.md").write_text("user collision", encoding="utf-8")
+            records = deployment.resolve_runtime_destinations(
+                repo_root=repo,
+                active_home=home,
+                environment={},
+                platform_facts=deployment.PlatformFacts("linux"),
+            )
+
+            inventory = deployment.managed_copy_inventory(records)
+            statuses = {item["status"] for item in inventory}
+
+            self.assertIn("planned_replacement", statuses)
+            self.assertIn("obsolete_owned_removal", statuses)
+            self.assertIn("preserved_foreign", statuses)
+            self.assertIn("collision", statuses)
+            self.assertTrue(all(item["destination"].startswith("~/") for item in inventory))
+            self.assertNotIn(str(home), json.dumps(inventory))
+
+    def test_material_inventory_drift_aborts_before_deploy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "home").mkdir()
+            reviewed = self._run(root)
+            real_inventory = deployment.managed_copy_inventory
+            calls = 0
+
+            def drifting(records):
+                nonlocal calls
+                calls += 1
+                result = real_inventory(records)
+                if calls == 2:
+                    return result + ({
+                        "harness": "claude",
+                        "asset_class": "agents",
+                        "status": "collision",
+                        "destination": "~/.claude/agents/drift",
+                    },)
+                return result
+
+            deployed = False
+
+            def forbidden(_records):
+                nonlocal deployed
+                deployed = True
+                raise AssertionError("deployment must not run")
+
+            with mock.patch.object(deployment, "managed_copy_inventory", side_effect=drifting):
+                result = self._run(root, reviewed.inventory_digest, deploy=forbidden)
+
+            self.assertEqual(result.status, "failed")
+            self.assertEqual(result.failure_categories, ("inventory_drift",))
+            self.assertFalse(deployed)
+
+    def test_unreviewed_or_wrong_inventory_digest_never_mutates(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / "home"
+            home.mkdir()
+            unreviewed = self._run(root)
+            wrong = self._run(root, "0" * 64)
+
+            self.assertEqual(unreviewed.failure_categories, ("inventory_review_required",))
+            self.assertEqual(wrong.failure_categories, ("inventory_drift",))
+            self.assertEqual(list(home.iterdir()), [])
+
+            valid_but_stale_watcher = self._run(
+                root, unreviewed.inventory_digest, watcher_restarted=False
+            )
+            self.assertEqual(
+                valid_but_stale_watcher.failure_categories,
+                ("watcher_restart_required",),
+            )
+            self.assertEqual(list(home.iterdir()), [])
+
+    def test_nonconverged_repository_causes_zero_runtime_writes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / "home"
+            home.mkdir()
+            with self.assertRaises(propagator.PropagationConvergenceError) as raised:
+                propagator.run_runtime_deployment(
+                    active_home=home,
+                    repo_root=self._generated_repo(root),
+                    environment={},
+                    platform_facts=deployment.PlatformFacts("linux"),
+                    propagate=lambda: {"changed": 1},
+                )
+            self.assertEqual(raised.exception.category, "bound_exhausted")
+            self.assertEqual(list(home.iterdir()), [])
+
+    def test_partial_harness_failure_is_non_go_and_preserves_success(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "home").mkdir()
+            reviewed = self._run(root)
+
+            def partial(records):
+                successful = [record for record in records if record.harness != "codex"]
+                deployed = deployment.deploy_managed_copies(successful)
+                return deployment.ManagedCopyResult({
+                    **deployed.harnesses,
+                    "codex": deployment.HarnessManagedCopyResult(
+                        status="failed", failed=1, reconciliation_skipped=True,
+                        failures=("staging_failed",),
+                    ),
+                })
+
+            result = self._run(root, reviewed.inventory_digest, deploy=partial)
+
+            self.assertEqual(result.status, "partial")
+            self.assertIn("partial_deployment", result.failure_categories)
+            self.assertEqual(result.deployment.harnesses["claude"].status, "verified")
+            self.assertEqual(result.deployment.harnesses["codex"].status, "failed")
+            self.assertTrue(result.deployment.harnesses["codex"].reconciliation_skipped)
+
+    @unittest.skipUnless(shutil.which("rtk"), "rtk executable unavailable")
+    def test_explicit_rtk_prefixed_command_remains_usable(self) -> None:
+        completed = subprocess.run(
+            [shutil.which("rtk"), "git", "status", "--short"],
+            cwd=REPO_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+
+    def test_retired_interceptors_are_absent_while_scanner_framework_remains(self) -> None:
+        retired = (
+            ".github/hooks/scripts/file-access-guard.py",
+            ".github/hooks/scripts/rtk-rewrite.sh",
+            ".github/hooks/scripts/bash-command-analyzer.py",
+            ".github/hooks/file-access-guard.json",
+        )
+        for relative in retired:
+            with self.subTest(relative=relative):
+                self.assertFalse((REPO_ROOT / relative).exists())
+        self.assertTrue((REPO_ROOT / ".github/hooks/scripts/injection-scanner.py").is_file())
+        self.assertTrue((REPO_ROOT / ".github/hooks/injection-scanner.json").is_file())
+
+    def test_runtime_cli_reports_review_required_without_deploying(self) -> None:
+        convergence = propagator.PropagationConvergenceResult(True, 1, 0, {}, {})
+        expected = propagator.RuntimeDeploymentResult(
+            status="review_required",
+            stages=("convergence", "destination_preflight", "inventory"),
+            convergence=convergence,
+            inventory=(),
+            inventory_digest="a" * 64,
+            deployment=None,
+            verification={},
+            failure_categories=("inventory_review_required",),
+            platform_evidence={"macOS": "NOT RUN: test"},
+        )
+        with mock.patch.object(propagator, "run_runtime_deployment", return_value=expected) as run:
+            with mock.patch.object(sys, "argv", ["propagate", "--runtime-deploy", "--active-home", "/tmp/scratch-home"]):
+                with mock.patch("builtins.print") as printed:
+                    exit_code = propagator.main()
+        self.assertEqual(exit_code, 2)
+        run.assert_called_once()
+        payload = json.loads(printed.call_args.args[0])
+        self.assertEqual(payload["status"], "review_required")
+        self.assertEqual(payload["inventory_digest"], "a" * 64)
 
 
 class DeploymentGuidanceTests(unittest.TestCase):

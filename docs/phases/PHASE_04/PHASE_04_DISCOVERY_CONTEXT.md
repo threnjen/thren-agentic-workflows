@@ -136,3 +136,22 @@ Phase 04 must correct the source agent first, regenerate its platform variants, 
 - Deployment supports macOS, Linux, native Windows, and WSL in the current environment only.
 - Project-local deployment, plugin packaging, and cross-environment Windows/WSL mutation are excluded.
 - Phase 01 and Phase 07 require project-level reconciliation by `project-planner`; Phase 04 does not alter their documents or status lines.
+
+## 8. Fresh Runtime Verification Evidence (2026-07-17)
+
+The discovery count of 113 author-machine links remains a historical baseline; it
+was not reused as an expected constant and no author runtime directory was read or
+mutated during automated verification.
+
+At repository revision `3ba5caa` plus the Feature 06 worktree, scratch-home integration
+classified planned replacements, unchanged managed copies, collisions, obsolete owned
+removals, and preserved foreign entries. Review was bound to a deterministic inventory
+digest and rechecked immediately before mutation. Claude, Codex, and OpenCode managed
+copies were verified as fresh regular directories with no managed repository links; a
+second reviewed deployment made zero copy, replace, or removal mutations. Injected
+partial failure remained non-GO and preserved successful harness evidence.
+
+Live evidence was not produced in this implementation session: macOS `NOT RUN` (no
+author-home migration authorized), Linux `NOT RUN` (no live Linux runner), native
+Windows `NOT RUN` (runner unavailable), and WSL `NOT RUN` (runner unavailable). Full
+cross-platform readiness therefore remains below GO.

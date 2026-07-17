@@ -21,7 +21,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Mapping, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Mapping, Sequence, Tuple, Union
 
 import runtime_deployment
 
@@ -192,6 +192,26 @@ class PropagationConvergenceError(RuntimeError):
         self.category = category
         self.pass_count = pass_count
         super().__init__(f"{category} after {pass_count} propagation pass(es)")
+
+
+@dataclass(frozen=True)
+class RuntimeVerificationResult:
+    status: str
+    regular_fresh: bool
+    repository_links: int
+
+
+@dataclass(frozen=True)
+class RuntimeDeploymentResult:
+    status: str
+    stages: tuple[str, ...]
+    convergence: PropagationConvergenceResult
+    inventory: tuple[dict[str, str], ...]
+    inventory_digest: str
+    deployment: runtime_deployment.ManagedCopyResult | None
+    verification: Mapping[str, RuntimeVerificationResult]
+    failure_categories: tuple[str, ...]
+    platform_evidence: Mapping[str, str]
 
 
 @dataclass(frozen=True)
@@ -1886,6 +1906,161 @@ def deploy_managed_copies_after_convergence(
     return runtime_deployment.deploy_managed_copies(records)
 
 
+def _runtime_inventory_digest(inventory: Sequence[Mapping[str, str]]) -> str:
+    encoded = json.dumps(tuple(inventory), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _verify_runtime_records(
+    records: Sequence[runtime_deployment.DestinationRecord],
+) -> Dict[str, RuntimeVerificationResult]:
+    grouped: Dict[str, list[runtime_deployment.DestinationRecord]] = {}
+    for record in records:
+        grouped.setdefault(record.harness, []).append(record)
+    results: Dict[str, RuntimeVerificationResult] = {}
+    for harness, harness_records in grouped.items():
+        regular_fresh = True
+        repository_links = 0
+        for record in harness_records:
+            source = Path(record.source)
+            destination = Path(record.destination)
+            if (
+                not destination.is_dir()
+                or destination.is_symlink()
+                or destination.is_junction()
+            ):
+                regular_fresh = False
+                if destination.is_symlink() or destination.is_junction():
+                    repository_links += 1
+                continue
+            try:
+                expected = tuple(source.iterdir())
+            except OSError:
+                regular_fresh = False
+                continue
+            if any(
+                not runtime_deployment._same_entry(
+                    source_entry, destination / source_entry.name
+                )
+                for source_entry in expected
+            ):
+                regular_fresh = False
+        results[harness] = RuntimeVerificationResult(
+            status="verified" if regular_fresh else "failed",
+            regular_fresh=regular_fresh,
+            repository_links=repository_links,
+        )
+    return results
+
+
+def run_runtime_deployment(
+    *,
+    active_home: Path,
+    reviewed_inventory: str | None = None,
+    watcher_restarted: bool = False,
+    repo_root: Path | None = None,
+    environment: Mapping[str, str] | None = None,
+    platform_facts: runtime_deployment.PlatformFacts | None = None,
+    propagate: Callable[[], Dict[str, int]] | None = None,
+    deploy: Callable[
+        [Sequence[runtime_deployment.DestinationRecord]],
+        runtime_deployment.ManagedCopyResult,
+    ] = runtime_deployment.deploy_managed_copies,
+) -> RuntimeDeploymentResult:
+    """Converge, inventory, deploy reviewed copies, reconcile, and verify."""
+    convergence = propagate_until_converged(
+        repo_root=repo_root, propagate=propagate
+    )
+    records = resolve_destinations_after_convergence(
+        convergence,
+        repo_root=repo_root,
+        active_home=active_home,
+        environment=environment,
+        platform_facts=platform_facts,
+    )
+    inventory = runtime_deployment.managed_copy_inventory(records)
+    digest = _runtime_inventory_digest(inventory)
+    platforms = {
+        "macOS": "NOT RUN: live home migration not authorized",
+        "Linux": "NOT RUN: live Linux runner unavailable",
+        "native Windows": "NOT RUN: native Windows runner unavailable",
+        "WSL": "NOT RUN: WSL runner unavailable",
+    }
+    base_stages = ("convergence", "destination_preflight", "inventory")
+    if reviewed_inventory != digest:
+        category = "inventory_review_required" if reviewed_inventory is None else "inventory_drift"
+        return RuntimeDeploymentResult(
+            "review_required",
+            base_stages,
+            convergence,
+            inventory,
+            digest,
+            None,
+            {},
+            (category,),
+            platforms,
+        )
+    if not watcher_restarted:
+        return RuntimeDeploymentResult(
+            "failed",
+            base_stages + ("watcher_restart_confirmation",),
+            convergence,
+            inventory,
+            digest,
+            None,
+            {},
+            ("watcher_restart_required",),
+            platforms,
+        )
+
+    # Re-inventory immediately before the first write. A changed digest fails closed.
+    current_inventory = runtime_deployment.managed_copy_inventory(records)
+    if _runtime_inventory_digest(current_inventory) != digest:
+        return RuntimeDeploymentResult(
+            "failed",
+            base_stages + ("inventory_recheck",),
+            convergence,
+            current_inventory,
+            _runtime_inventory_digest(current_inventory),
+            None,
+            {},
+            ("inventory_drift",),
+            platforms,
+        )
+
+    deployment = deploy(records)
+    verification = _verify_runtime_records(records)
+    harness_failed = any(
+        result.status != "verified" or result.collisions
+        for result in deployment.harnesses.values()
+    )
+    verification_failed = any(
+        result.status != "verified" for result in verification.values()
+    )
+    failures = []
+    if harness_failed:
+        failures.append("partial_deployment")
+    if verification_failed:
+        failures.append("runtime_verification_failed")
+    # Scratch automation is valid evidence, but all live platform rows remain NOT RUN.
+    status = (
+        "partial"
+        if failures or any(value.startswith("NOT RUN") for value in platforms.values())
+        else "go"
+    )
+    return RuntimeDeploymentResult(
+        status,
+        base_stages + ("inventory_recheck", "deployment", "reconciliation", "verification"),
+        convergence,
+        current_inventory,
+        digest,
+        deployment,
+        verification,
+        tuple(failures),
+        platforms,
+    )
+
+
 def preflight_destinations(
     destinations: Iterable[HarnessDestination], *, home: Path | None = None
 ) -> Dict[str, str]:
@@ -2078,6 +2253,43 @@ def _convergence_payload(result: PropagationConvergenceResult) -> Dict[str, obje
     }
 
 
+def _runtime_deployment_payload(result: RuntimeDeploymentResult) -> Dict[str, object]:
+    return {
+        "status": result.status,
+        "stages": result.stages,
+        "inventory": result.inventory,
+        "inventory_digest": result.inventory_digest,
+        "failure_categories": result.failure_categories,
+        "platform_evidence": result.platform_evidence,
+        "harnesses": (
+            {
+                name: {
+                    "status": harness.status,
+                    "inventoried": harness.inventoried,
+                    "copied": harness.copied,
+                    "replaced": harness.replaced,
+                    "removed": harness.removed,
+                    "unchanged": harness.unchanged,
+                    "collisions": harness.collisions,
+                    "failed": harness.failed,
+                    "reconciliation_skipped": harness.reconciliation_skipped,
+                }
+                for name, harness in result.deployment.harnesses.items()
+            }
+            if result.deployment is not None
+            else {}
+        ),
+        "verification": {
+            name: {
+                "status": verification.status,
+                "regular_fresh": verification.regular_fresh,
+                "repository_links": verification.repository_links,
+            }
+            for name, verification in result.verification.items()
+        },
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Propagate .github master assets to target platforms.")
     parser.add_argument("--once", action="store_true", help="Run one propagation pass and exit.")
@@ -2087,10 +2299,52 @@ def main() -> int:
         type=Path,
         help="Generate local user-scope hook wiring with absolute source paths.",
     )
+    parser.add_argument(
+        "--runtime-deploy",
+        action="store_true",
+        help="Converge, inventory, and deploy reviewed managed runtime copies.",
+    )
+    parser.add_argument(
+        "--active-home",
+        type=Path,
+        help="Explicit active home for --runtime-deploy.",
+    )
+    parser.add_argument(
+        "--reviewed-inventory",
+        help="SHA-256 digest emitted by a reviewed --runtime-deploy inventory.",
+    )
+    parser.add_argument(
+        "--watcher-restarted",
+        action="store_true",
+        help="Confirm stale propagation watchers were restarted before mutation.",
+    )
     args = parser.parse_args()
 
-    if not args.once and not args.watch and args.global_output is None:
+    if (
+        not args.once
+        and not args.watch
+        and args.global_output is None
+        and not args.runtime_deploy
+    ):
         args.once = True
+
+    if args.runtime_deploy:
+        if args.active_home is None:
+            parser.error("--runtime-deploy requires --active-home")
+        try:
+            runtime_result = run_runtime_deployment(
+                active_home=args.active_home,
+                reviewed_inventory=args.reviewed_inventory,
+                watcher_restarted=args.watcher_restarted,
+            )
+        except (PropagationConvergenceError, runtime_deployment.DestinationResolutionError) as exc:
+            category = getattr(exc, "category", "runtime_deployment_failed")
+            print(json.dumps({"status": "failed", "failure_categories": [category]}))
+            return 1
+        print(json.dumps(_runtime_deployment_payload(runtime_result), indent=2))
+        if runtime_result.status == "review_required":
+            return 2
+        return 0 if runtime_result.status == "go" else 1
 
     convergence_ran = False
     if args.global_output is not None:
