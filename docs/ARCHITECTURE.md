@@ -29,7 +29,7 @@ flowchart TD
     Root --> Scripts[scripts]
 
     GH --> GHAgents[41 source agent definitions]
-    GH --> GHSkills[16 skill directories]
+    GH --> GHSkills[24 skill directories]
     GH --> GHInstructions[15 instruction files]
 
     Templates --> Node[nodejs AGENTS plus STYLE_GUIDE]
@@ -78,7 +78,7 @@ This is the primary authoring surface.
 - `.github/agents/` contains 41 source agent definitions.
 - Most source agents use the `.agent.md` suffix.
 - `prod-code-review.md` is an intentional plain `.md` exception that is still loaded as an agent because the propagation script keys off frontmatter, not only filename suffixes.
-- `.github/skills/` contains 16 directory-based skills, each rooted at `SKILL.md`.
+- `.github/skills/` contains 24 directory-based skills, each rooted at `SKILL.md`.
 - `.github/instructions/` contains 15 reusable instruction files matched by `applyTo` globs.
 
 ### Generated platform outputs

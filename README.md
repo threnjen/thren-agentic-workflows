@@ -17,7 +17,7 @@ with the `.github/` source of truth and performs reviewed managed-copy deploymen
 Current inventory:
 
 - 41 source agent definitions under `.github/agents/`
-- 16 shared skills under `.github/skills/`
+- 24 shared skills under `.github/skills/`
 - 15 shared instruction files under `.github/instructions/`
 - 2 copyable language template sets under `nodejs/` and `python/`
 
@@ -44,7 +44,7 @@ Current inventory:
 │   └── *.md                          # Codex platform reference and pilot-slice history (porting guide lives in docs/porting/)
 ├── .codex/
 │   ├── config.toml                   # Repo-scoped Codex runtime config
-│   └── hooks.json
+│   └── hooks.json                  # Static hand-owned Codex notify/graph hooks (not propagated)
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── CODEBASE_CONTEXT.md
@@ -167,14 +167,18 @@ reviewed workflow; do not substitute ad hoc links or copy commands.
 
 ## Acknowledgments
 
-The hook system in this repository is an original, clean-room implementation
-written from scratch in stdlib Python. No code, pattern file, or prompt from any
-project below was copied. They are credited because surveying them shaped the
-design: which lifecycle events are worth hooking, which failure modes matter, and
-which enforcement tiers a guard needs to be useful rather than merely noisy.
-Each survey write-up lives in [docs/inspiration/](docs/inspiration/).
+This repository once carried an original, clean-room hook system written from
+scratch in stdlib Python. That hook system has since been retired; git history is
+its archival record, and a single prompt-injection scanner snapshot is retained
+under `.github/hooks/` as an explicitly defunct, unrunnable artifact that is not
+part of the product and makes no security claim. No code, pattern file, or prompt
+from any project below was ever copied. They are credited because surveying them
+shaped that former design: which lifecycle events were worth hooking, which
+failure modes mattered, and which enforcement tiers a guard needed to be useful
+rather than merely noisy. Each survey write-up lives in
+[docs/inspiration/](docs/inspiration/).
 
-Hooks in this project inspired by:
+The now-retired hook work was informed by:
 
 - **[claudekit](URL)** (carlrannaberg) — ignore-file-driven blocking of
   sensitive-file access, and the insight that a guard must parse bash commands to
