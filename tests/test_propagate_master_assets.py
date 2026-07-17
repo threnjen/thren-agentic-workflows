@@ -736,6 +736,17 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertFalse(retired.exists())
             self.assertTrue(user_owned.is_file())
 
+    def test_every_retired_regular_asset_has_explicit_ownership_hashes(self) -> None:
+        self.assertEqual(
+            set(mod.RETIRED_HOOK_ASSETS), set(mod.RETIRED_HOOK_ASSET_HASHES)
+        )
+        for relative_path, hashes in mod.RETIRED_HOOK_ASSET_HASHES.items():
+            with self.subTest(relative_path=relative_path):
+                self.assertTrue(hashes)
+                self.assertTrue(
+                    all(re.fullmatch(r"[0-9a-f]{64}", value) for value in hashes)
+                )
+
     def test_hook_regeneration_preserves_unowned_retired_name_collisions(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             tmp_root = Path(tmp_dir)

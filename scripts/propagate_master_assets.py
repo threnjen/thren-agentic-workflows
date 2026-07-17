@@ -79,8 +79,14 @@ RETIRED_HOOK_ASSETS = (
 # must survive retirement cleanup. Add hashes deliberately when retiring a
 # shipped revision instead of broadening this to filename-based deletion.
 RETIRED_HOOK_ASSET_HASHES = {
+    "bash-safety.json": {
+        "65ad357ee32f417b828b25a51d0758d21ee7d5b5a5b890c3f7a4346e58cc885b",
+    },
     "file-access-guard.json": {
         "d5b2b1a8e7b4fcbae49a62edafa08989f9ad79bd85801e1119db2fe5bb8ffbd1",
+    },
+    "protect-files.json": {
+        "086758a1b3f58e70ba16758c595636bf7191a038919e6515021a1bc5ad3e29d3",
     },
     "config/file-access-overrides.json": {
         "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
@@ -99,6 +105,15 @@ RETIRED_HOOK_ASSET_HASHES = {
     },
     "scripts/file-access-guard.py": {
         "37ee760fb6cfb18b1e622bd998ae4c6117266e941b33b44cd2ae0484d42c7d57",
+    },
+    "scripts/bash-safety.sh": {
+        "d9a71487fab1e87a54482c5daa6ae1d6e8d57513a1e80346a6764779d25b7a1f",
+    },
+    "scripts/protect-files.sh": {
+        "d40ec48ba898e6141ea22d80e756816eeb34c5f04ac63f663c4ea048661194df",
+    },
+    "scripts/protect-files.py": {
+        "b11ca42619d38f28630ea0ee1884b9430cf436b0e2a5ccf12e7635d71e68c8e2",
     },
     "scripts/rtk-rewrite.sh": {
         "37b436eb03897d49d5c66588b320357cfe2d121c1d0eb76df9ada2e7ba8f0702",
