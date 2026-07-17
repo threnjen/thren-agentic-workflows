@@ -1,11 +1,22 @@
-# Phase 04 — Release Remediation & Verification: Execution Manifest
+# Phase 07 — Release Remediation & Verification: Execution Manifest
 
-**Phase document:** `docs/phases/PHASE_04/PHASE_04_SUMMARY.md`
+> **STALE — do not execute. Re-run `@feature-decomposer` against `docs/phases/PHASE_07/PHASE_07_SUMMARY.md` before this phase runs.**
+>
+> Two independent reasons, both mechanical:
+>
+> 1. **The feature numbering collides.** This manifest assigns `07-` through `15-` on the premise that `dev/feature/` held only `01-` through `06-`. Phase 03 has since executed and consumed `07-synthesis-and-pr-posting` and `08-retirement-reconciliation`. No feature bundle from this manifest was ever created — `dev/feature/` contains `01-` through `08-`, all from Phases 01–03 — so nothing is lost by re-decomposing, and re-numbering by hand would be busywork.
+> 2. **The phase was renumbered 04 → 07.** The content is unchanged; the number is not. Phase 04 is now *Guard Accuracy & Propagation Reach* and owns none of this.
+>
+> The manifest's own B3 finding already records that the phase document's premises were partly stale at decomposition time. That is a third reason to regenerate rather than patch, and it predates both of the above.
+
+**Phase document:** `docs/phases/PHASE_07/PHASE_07_SUMMARY.md`
 **Discovery context:** `docs/phases/DISCOVERY_CONTEXT.md`
 **Branch:** `earlier_phase_cleanup` (existing; decomposed in place per user instruction)
 **Decomposed:** 2026-07-16
 
 ## Numbering Note
+
+*(Superseded — see the staleness banner above. Retained as written.)*
 
 New features start at `07-` because `dev/feature/` already contains `01-` through `06-` from Phases 01–03. Per the numbering convention, the next index is **max+1**, not gap-filling, and existing directories are never renumbered. The `0N-` prefix here encodes execution order within Phase 04 only; it is unrelated to the phase number.
 
@@ -35,14 +46,14 @@ Net: the Phase document's 7 suggested boundaries became 9 features. Deliverable 
 | Feature | Wave | Parallel Safe | Depends On | Key Files Modified | Sequential Reason |
 |---|---|---|---|---|---|
 | `07-latency-gate-calibration` | 1 | yes | none | `tests/hooks/test_hook_distribution_integration.py`, `tests/hooks/conftest.py` (verify) | n/a |
-| `08-live-qa-smoke-pass` | 1 | yes | none | `docs/phases/PHASE_04/PHASE_04-live-qa-smoke.md` [PROPOSED] (new) | n/a |
-| `09-guard-rule-security-review` | 1 | yes | none | `.github/hooks/config/file-access-rules.json` (verify), `tests/hooks/fixtures/bash/legacy-parity.json` (verify), `tests/hooks/test_file_access_guard.py` (verify), `tests/hooks/test_bash_command_analyzer.py` (verify), `docs/phases/PHASE_04/PHASE_04-guard-rule-security-review.md` [PROPOSED] (new) | n/a |
-| `10-phase-02-security-verification` | 2 | no | `09-guard-rule-security-review` | `docs/phases/PHASE_04/PHASE_04-phase-02-security-rescan.md` [PROPOSED] (new), `.github/hooks/config/file-access-rules.json` (verify), `.github/hooks/lib/framework.py` (verify), `.github/hooks/lib/injection_scanner.py` (verify), `.github/hooks/scripts/injection-scanner.py` (verify) | shares `.github/hooks/config/file-access-rules.json` with upstream `09-guard-rule-security-review` — P2-SEC-03's remediation lives in that file, so a scan run before 09 lands is stale |
+| `08-live-qa-smoke-pass` | 1 | yes | none | `docs/phases/PHASE_07/PHASE_07-live-qa-smoke.md` [PROPOSED] (new) | n/a |
+| `09-guard-rule-security-review` | 1 | yes | none | `.github/hooks/config/file-access-rules.json` (verify), `tests/hooks/fixtures/bash/legacy-parity.json` (verify), `tests/hooks/test_file_access_guard.py` (verify), `tests/hooks/test_bash_command_analyzer.py` (verify), `docs/phases/PHASE_07/PHASE_07-guard-rule-security-review.md` [PROPOSED] (new) | n/a |
+| `10-phase-02-security-verification` | 2 | no | `09-guard-rule-security-review` | `docs/phases/PHASE_07/PHASE_07-phase-02-security-rescan.md` [PROPOSED] (new), `.github/hooks/config/file-access-rules.json` (verify), `.github/hooks/lib/framework.py` (verify), `.github/hooks/lib/injection_scanner.py` (verify), `.github/hooks/scripts/injection-scanner.py` (verify) | shares `.github/hooks/config/file-access-rules.json` with upstream `09-guard-rule-security-review` — P2-SEC-03's remediation lives in that file, so a scan run before 09 lands is stale |
 | `11-phase-03-security-remediation` | 2 | yes | none | `.github/agents/05-phase-final-review.agent.md`, `.github/agents/05g-artifact-sweeper.agent.md`, `.github/agents/05j-consistency-auditor.agent.md`, `.github/agents/05k-dependency-auditor.agent.md`, `.github/agents/05a-baseline-worktree.agent.md` (verify), `.github/agents/05l-readiness-synthesizer.agent.md`, `scripts/propagate_master_assets.py`, `tests/test_readiness_synthesis_agents.py`, `tests/test_propagate_master_assets.py`, `claude/agents/` (verify), `opencode/agents/` (verify), `codex/` (verify) | n/a — file scope disjoint from `10` in the same wave |
-| `12-phase-03-runtime-completion` | 3 | yes | `11-phase-03-security-remediation` | `dev/phase-final-review/PHASE_05/evaluator-status.jsonl`, `readiness-report.md`, `ac-regression-matrix.md`, `05g-artifact-sweeper-report.md`, `docs/phases/PHASE_04/PHASE_04-phase-03-runtime-evidence.md` [PROPOSED] (new) | n/a — runtime dependency on `11`, but no shared file |
-| `13-propagation-enumeration-and-records` | 3 | no | `11-phase-03-security-remediation` | `tests/test_propagate_master_assets.py`, four `dev/feature/*/​*-implementation.md` records, `dev/feature/phase-05-phase-final-review-execution-manifest.md`, `docs/phases/PHASE_01/PHASE_01_QA_COVERAGE_MAP.md`, `docs/phases/PHASE_04/PHASE_04-anchoring-record.md` [PROPOSED] (new) | shares `tests/test_propagate_master_assets.py` with upstream `11-phase-03-security-remediation` — same test function |
-| `14-multi-harness-qa-execution` | 4 | yes | `07`, `09`, `10`, `11`, `12`, `13` | `docs/phases/PHASE_04/PHASE_04_QA.md` [PROPOSED] (new), `docs/phases/PHASE_04/PHASE_04_QA_COVERAGE_MAP.md` [PROPOSED] (new) | n/a — only feature in its wave |
-| `15-release-evidence-consolidation` | 5 | yes | `07`–`14` (all) | `docs/phases/PHASE_04/PHASE_04-release-evidence.md` [PROPOSED] (new), `docs/hooks/prompt-injection-defense.md`, `docs/hooks/installation.md`, `docs/hooks/hook-verification.md`, `docs/hooks/manual-qa.md`, `docs/phases/PROJECT_ROADMAP.md`, `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`, `docs/phases/PHASE_02/PHASE_02_SUMMARY.md`, `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `tests/hooks/test_hook_distribution_integration.py` | n/a — only feature in its wave |
+| `12-phase-03-runtime-completion` | 3 | yes | `11-phase-03-security-remediation` | `dev/phase-final-review/PHASE_05/evaluator-status.jsonl`, `readiness-report.md`, `ac-regression-matrix.md`, `05g-artifact-sweeper-report.md`, `docs/phases/PHASE_07/PHASE_07-phase-03-runtime-evidence.md` [PROPOSED] (new) | n/a — runtime dependency on `11`, but no shared file |
+| `13-propagation-enumeration-and-records` | 3 | no | `11-phase-03-security-remediation` | `tests/test_propagate_master_assets.py`, four `dev/feature/*/​*-implementation.md` records, `dev/feature/phase-05-phase-final-review-execution-manifest.md`, `docs/phases/PHASE_01/PHASE_01_QA_COVERAGE_MAP.md`, `docs/phases/PHASE_07/PHASE_07-anchoring-record.md` [PROPOSED] (new) | shares `tests/test_propagate_master_assets.py` with upstream `11-phase-03-security-remediation` — same test function |
+| `14-multi-harness-qa-execution` | 4 | yes | `07`, `09`, `10`, `11`, `12`, `13` | `docs/phases/PHASE_07/PHASE_07_QA.md` [PROPOSED] (new), `docs/phases/PHASE_07/PHASE_07_QA_COVERAGE_MAP.md` [PROPOSED] (new) | n/a — only feature in its wave |
+| `15-release-evidence-consolidation` | 5 | yes | `07`–`14` (all) | `docs/phases/PHASE_07/PHASE_07-release-evidence.md` [PROPOSED] (new), `docs/hooks/prompt-injection-defense.md`, `docs/hooks/installation.md`, `docs/hooks/hook-verification.md`, `docs/hooks/manual-qa.md`, `docs/phases/PROJECT_ROADMAP.md`, `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`, `docs/phases/PHASE_02/PHASE_02_SUMMARY.md`, `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `tests/hooks/test_hook_distribution_integration.py` | n/a — only feature in its wave |
 
 ## Dependency Graph
 

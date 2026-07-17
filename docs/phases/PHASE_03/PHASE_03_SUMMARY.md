@@ -3,7 +3,7 @@
 **Status**: Partially implemented — rescoped; the readiness/report core is built, the diff-scoped orchestration is re-planned
 **Depends on**: None (independent of the hook phases; consumes existing pipeline assets only)
 **Estimated complexity**: Medium
-**Cross-references**: `docs/phases/PHASE_03/PHASE_03_DISCOVERY_CONTEXT.md`, `docs/phases/DISCOVERY_CONTEXT.md` (§ "Phase 03 Design Notes"), `.github/learnings/cross-phase-decisions.md` (§ "PR-Review Rescope"), `docs/phases/PHASE_04/PHASE_04_SUMMARY.md` (hook remediation phase; hands this phase its `execute`-grant and P5-SEC-02 findings)
+**Cross-references**: `docs/phases/PHASE_03/PHASE_03_DISCOVERY_CONTEXT.md`, `docs/phases/DISCOVERY_CONTEXT.md` (§ "Phase 03 Design Notes"), `.github/learnings/cross-phase-decisions.md` (§ "PR-Review Rescope"), `docs/phases/PHASE_07/PHASE_07_SUMMARY.md` (hook remediation phase; hands this phase its `execute`-grant and P5-SEC-02 findings, and issues this phase's NO-GO)
 
 > **Agent numbers are pipeline positions, not phase numbers.** The `05-pr-review`
 > orchestrator and its `05a`–`05g` evaluators sit at position 5 of the working
@@ -409,7 +409,7 @@ blocking.
   for pruning, base-suggestion self-exclusion, the fallback chain, and report-root
   derivation.
 - **The test baseline is unstable.** A green local run is not a baseline: the
-  propagated-guard latency gate (PERF-01, owned by Phase 04) fails
+  propagated-guard latency gate (PERF-01, owned by Phase 07) fails
   probabilistically, and this repo has already recorded a coin flip landing heads
   as a clean baseline. Capture repeated runs before claiming a regression, and never
   relax a fixed budget to make a gate pass.

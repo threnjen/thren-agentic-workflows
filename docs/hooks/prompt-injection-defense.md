@@ -91,8 +91,8 @@ of 6 focused runs observed on 2026-07-16 and reproducing the original
 "failed two of five observed runs" finding. The guard's ~30 ms median leaves
 roughly 20 ms of headroom, so a loaded machine tips the gate over. Deployments
 whose hook command resolves `python3` through a pyenv shim will additionally pay
-the shim overhead per call. Closing PERF-01 is owned by Phase 04
-(`../phases/PHASE_04/PHASE_04_SUMMARY.md`); the fixed 50 ms budget must not be
+the shim overhead per call. Closing PERF-01 is owned by Phase 07
+(`../phases/PHASE_07/PHASE_07_SUMMARY.md`); the fixed 50 ms budget must not be
 raised to make it pass. SEC-01 intermediate-directory containment is reproduced
 green.
 
