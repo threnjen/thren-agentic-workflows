@@ -21,7 +21,9 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Mapping, Tuple, Union
+
+import runtime_deployment
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -1837,6 +1839,33 @@ def propagate_until_converged(
             total_changes[key] = total_changes.get(key, 0) + value
 
     raise PropagationConvergenceError("bound_exhausted", max_passes)
+
+
+def resolve_destinations_after_convergence(
+    convergence: PropagationConvergenceResult,
+    *,
+    repo_root: Path | None = None,
+    active_home: Path | None = None,
+    environment: Mapping[str, str] | None = None,
+    platform_facts: runtime_deployment.PlatformFacts | None = None,
+) -> tuple[runtime_deployment.DestinationRecord, ...]:
+    """Resolve runtime destinations only after the fixed-point gate succeeds."""
+    if (
+        not isinstance(convergence, PropagationConvergenceResult)
+        or not convergence.converged
+    ):
+        pass_count = (
+            convergence.pass_count
+            if isinstance(convergence, PropagationConvergenceResult)
+            else 0
+        )
+        raise PropagationConvergenceError("deployment_before_convergence", pass_count)
+    return runtime_deployment.resolve_runtime_destinations(
+        repo_root=repo_root or REPO_ROOT,
+        active_home=active_home,
+        environment=environment,
+        platform_facts=platform_facts,
+    )
 
 
 def preflight_destinations(
