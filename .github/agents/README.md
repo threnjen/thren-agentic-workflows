@@ -160,13 +160,14 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Feature - Implementer** | Phase - Execute, Audit orchestrator, Test orchestrator | Implement a feature plan using Red-Green-Refactor TDD |
 | **Feature - Reviewer** | Phase - Execute, Audit orchestrator, Test orchestrator | Review implementation, apply fixes, produce review record |
 | **Feature - QA Writer** | Phase - Execute, Audit orchestrator | Write manual QA plan for non-automatable test cases |
+| **Baseline Worktree** | 05 PR - Review | Create or reuse a clean detached worktree at a caller-specified baseline commit and return its path |
 | **05b Change Narrator** | 05 PR - Review | Build the base-to-head narrative for the diff under review and identify churn hotspots |
 | **05c Artifact Sweeper** | 05 PR - Review | Sweep the branch diff for debug artifacts, TODO/FIXME markers, and dead code added by the branch |
 | **05d Consistency Auditor** | 05 PR - Review | Compare the branch diff against established repository conventions and recommend canonical forms |
 | **05e Dependency Auditor** | 05 PR - Review | Inventory dependencies added by the branch and report supply-chain and duplication risks, offline |
 | **04e Diff Security Scan** | Phase - Execute | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
 | **Security Scan** | None — user-invocable | Perform a full-codebase security assessment and write a phase-level security report |
-| **05h Test Health** | 05 PR - Review | Delegate coverage, redundancy, and flake analysis into a test health report |
+| **05f Test Health** | 05 PR - Review | Delegate coverage, redundancy, and flake analysis into a test health report |
 | **05g Readiness Synthesizer** | 05 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |

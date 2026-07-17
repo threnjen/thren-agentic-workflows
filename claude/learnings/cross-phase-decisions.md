@@ -4,7 +4,7 @@
 
 - **Phases were renumbered 2026-07-16** so numbers match the order work actually happened: Phase Final Review (was 05) → **03**; new Release Remediation & Verification → **04**; Format-on-Save + Completion Gates (was 03) → **05**; Skill Enforcement (was 04) → **06**. Phases 01 and 02 are unchanged. Documents written before that date use the old scheme; the mapping table is in `docs/phases/PROJECT_ROADMAP.md`.
 - **Agent numbers are pipeline positions, not phase numbers.** `05-phase-final-review` and its `05a`–`05l` evaluators follow `04-phase-execute` in the pipeline; they did not renumber with the phase and must not be "corrected" to match it.
-- **Development fixtures keep legacy phase identifiers.** `dev/phase-final-review/fixtures/PHASE_05/` (pseudo-subphases `PHASE_05a`/`PHASE_05b`) and the report root `dev/phase-final-review/PHASE_05/` are synthetic identifiers pinned to recorded commit SHAs. Renaming them would invalidate the fixture contract.
+- **~~Development fixtures keep legacy phase identifiers.~~ Retired 2026-07-16 by `08-retirement-reconciliation`.** The note said `dev/phase-final-review/fixtures/PHASE_05/` (pseudo-subphases `PHASE_05a`/`PHASE_05b`) and the report root `dev/phase-final-review/PHASE_05/` were synthetic identifiers pinned to recorded commit SHAs, and that renaming them would invalidate the fixture contract. Both are gone: the report root migrated to `dev/pr-review/<base-sha-short>-<UTC-timestamp>/` (feature `07`) and the fixture tree was deleted, its replacement being `dev/pr-review/fixtures/pinned-diff-range.md`. The advice was sound and is preserved for the *new* fixture, which is likewise pinned to recorded SHAs (`f5ab960..e6ff28a`) and must not be re-pointed. The dead half is struck rather than deleted because it is the premise two later notes reasoned from.
 
 ## Release Verification
 
@@ -37,18 +37,35 @@
 - **Pre-edit file backup layer** (snapshot protected-adjacent files before Edit/Write, config-gated) was cut from Hooks Phase 01 during refinement. Candidate for the format-on-save/completion-gates phase, which owns edit-time hooks — that phase is **Phase 05** as of the 2026-07-16 renumber (it was Phase 03 when this note was written). (Recorded 2026-07-14; renumber noted 2026-07-16.)
 - **WebFetch as an exfiltration channel** is deliberately unguarded in Hooks Phase 01 (the guard blocks reading secrets in the first place). Addressed: pulled into Hooks Phase 02 scope as the WebFetch exfiltration guard deliverable (see `docs/phases/PHASE_02/PHASE_02_SUMMARY.md`). (Recorded 2026-07-14.)
 - **Plugin packaging as a distribution target**: propagation could emit a Claude Code plugin package (`${CLAUDE_PLUGIN_ROOT}`-relative hook paths) so others install the hook suite with one command, no cloning. Deferred; best revisited after the hook phases stabilize the hook set — written 2026-07-14 as "after Hooks Phases 01–03", which under the pre-renumber scheme meant **01, 02, and what is now Phase 05**. It does not mean the current Phase 03 (Phase Final Review), and Phase 04 does not unblock it. Folded into the adoption-readiness item below. (Recorded 2026-07-14; renumber ambiguity resolved 2026-07-16.)
-- **`dev/phase-final-review/fixtures/PHASE_05/` is still on disk and now has no owner.**
-  The Phase document instructs retiring both `dev/phase-final-review/fixtures/PHASE_05/`
+- **~~`dev/phase-final-review/fixtures/PHASE_05/` is still on disk and now has no owner.~~
+  Closed 2026-07-16 by `08-retirement-reconciliation`: deleted.**
+  The Phase document instructed retiring both `dev/phase-final-review/fixtures/PHASE_05/`
   and the report root `dev/phase-final-review/PHASE_05/`.
   `02-retired-evaluator-removal`'s plan listed this as a Non-Goal on the stated grounds
-  that the directory "does not exist" — that is true of the report root but **false of
-  the fixtures**, which are tracked. Because it was dismissed as absent rather than
-  deferred, no feature inherited it. It is also not a simple deletion: seven surviving
-  agents (`05` orchestrator, `05b`, `05g`, `05h`, `05j`, `05k`, `05l`) name the fixture
-  root as live wiring, and the Phase Numbering note above pins the fixtures to recorded
-  commit SHAs. Retiring them is a design decision with real blast radius, not cleanup.
-  Needs an explicit owner. (Recorded 2026-07-16 by `02-retired-evaluator-removal`'s
-  review.)
+  that the directory "does not exist" — true of the report root, **false of the
+  fixtures**, which were tracked. Because it was dismissed as absent rather than
+  deferred, no feature inherited it. That diagnosis was right and is the reusable half
+  of this entry: **a Non-Goal justified by a factual claim inherits nothing when the
+  claim is wrong — a deferral names an owner, a dismissal does not, and only one of them
+  survives being mistaken.**
+  **The blocking half of the note was itself false, and it is worth recording why it
+  survived four features.** It said seven surviving agents named the fixture root as live
+  wiring, so retiring it had "real blast radius". That conflated two different roots: the
+  seven agents declared the **report** root (`dev/phase-final-review/PHASE_0N/`), the
+  output they write; **no agent ever named the fixture root**, the input. `git grep`
+  across `.github/agents/` returns zero hits for the fixture path at every commit in this
+  phase. Feature `07` then migrated the report root to `dev/pr-review/`, so even the true
+  half stopped holding. The fixture's actual consumers were the five phase-shaped
+  evaluators feature `02` deleted, and its `PHASE_05a`/`PHASE_05b` pseudo-subphase shape
+  *is* the phase premise this rescope retired. Its replacement is
+  `dev/pr-review/fixtures/pinned-diff-range.md`.
+  **The lesson: a blast-radius claim is a factual claim and needs the same evidence as
+  any other.** This one was recorded once by a review, restated by features `04`, `06`,
+  and `07` as settled fact, and never re-derived — each restatement made it look better
+  attested while adding no evidence. A cheap `grep` refuted it at any point. **Corroboration
+  is not evidence when every corroborator is quoting the same source.** (Recorded
+  2026-07-16 by `02-retired-evaluator-removal`'s review; refuted and closed 2026-07-16 by
+  `08-retirement-reconciliation`.)
 - **The seven surviving `05x` agents still declare `dev/phase-final-review/PHASE_0N/` report
   roots** while `pr-review-conventions` now declares
   `dev/pr-review/<base-sha-short>-<UTC-…>/`. The mismatch is **intentional and temporary** —
@@ -68,6 +85,14 @@
   both directions. The **migration itself is still open** and still owned by `05`–`07`; what
   changed is that it can no longer ship half-done in silence. (Recorded 2026-07-16 by
   `04-pr-review-orchestrator`'s review.)
+  **Update: closed 2026-07-16. The migration completed and the mechanism worked.** Features
+  `05`–`07` migrated all six; the ledger set is now empty and every `05x` agent declares
+  `dev/pr-review/`. Feature `07` **converted** the guard rather than deleting it as its own
+  docstring invited: the set is frozen empty and the assertion inverted, so it no longer
+  records drift but denies it exists. That is worth keeping as the pattern — **a migration
+  ledger that deletes itself on completion takes the regression guard with it.** Emptying the
+  set is the migration; inverting the assertion is what stops the next feature quietly
+  regressing to the retired root. Verified at `08`: no `05x` body names the retired root.
 - **User-local configuration referencing the retired skill names** (`phase-final-review-conventions`,
   `phase-final-review-report`) — e.g. a personal `~/.claude/` setup — cannot be verified or
   fixed from this repository. Verified clean for `.github/`, `tests/`, `scripts/`, and all
@@ -121,6 +146,78 @@
   finding routed to a rebuild must name the capability the rebuild has to gain — otherwise
   the rebuild arrives, lacks it, and the finding silently looks overdue instead of
   correctly deferred. (Recorded 2026-07-16 by `07-synthesis-and-pr-posting`.)
+- **Per-agent command scoping. OPEN. Owner: a hook-owning phase (Phase 05 or 06); routing:
+  a per-agent `PreToolUse` hook.** This is what the phase set out to achieve and could not.
+  It is not expressible in Claude subagent frontmatter (`tools:` takes bare tool names and
+  MCP patterns; `Bash(gh:*)` is an unresolved tool name and Claude Code refuses to launch
+  the subagent), it is native only on OpenCode (`permission.bash` globs), and it does not
+  exist per-profile on Codex. Native support on one of three harnesses means building the
+  syntax would be real on OpenCode and decorative elsewhere — "partial protection that reads
+  as total protection", aimed at ourselves. **What the phase achieved instead is narrower
+  and real, and is stated that way deliberately:** `execute` was *removed* from the
+  evaluators that did not need it (feature `05`), *never added* to those that never had it
+  (feature `06`), and *retained only* where a named command has no non-shell equivalent —
+  `05a-baseline-worktree`'s `git worktree`, and the orchestrator's `git symbolic-ref`/
+  `merge-base`/`branch`. Removal is the only narrowing the target formats can express, so
+  the residue is recorded open rather than reworded into looking closed. (Recorded
+  2026-07-16 by `08-retirement-reconciliation`.)
+- **The `NO-GO` enforcement hook. OPEN. Owner: a hook-owning phase; routing: the same phase
+  that gains `PreToolUse`/`PostToolUse` capability for the PR Review path.** The readiness
+  verdict is **advisory**: `05 PR - Review` records no verdict in any document and nothing
+  blocks a merge on `NO-GO`. Making a verdict binding needs a hook, which this phase
+  excludes. Recorded so that "the reviewer said NO-GO" is not mistaken for "the NO-GO
+  stopped something". (Recorded 2026-07-16 by `08-retirement-reconciliation`.)
+- **Propagation is not idempotent across an agent-identifier reclassification. OPEN. Owner:
+  a propagator-owning feature; routing: `_claude_filename_for` / `_claude_identifier_for`
+  identifier resolution.** Both resolve identifiers against **on-disk stems**, so removing or
+  renaming a generated file changes the identifier computed on the *next* run. Feature `02`
+  needed three `--once` runs to converge after the `Security Scan` dual-use cascade; feature
+  `07` hit it again on the `05l`→`05g` rename. A single run therefore leaves a valid-looking
+  but non-converged tree. **The operational rule until it is fixed: run propagation
+  repeatedly until every change counter is zero — "I ran the propagator" is not evidence of
+  convergence.** Pinned by `tests/test_retirement_reconciliation.py::
+  test_committed_tree_is_at_a_propagation_fixed_point`, which fails on an unconverged tree,
+  so the wart can no longer ship silently even while the resolution defect stands. Not fixed
+  in `08`: changing identifier resolution is propagator surgery this feature does not own.
+  (Recorded 2026-07-16 by `02-retired-evaluator-removal`; routed 2026-07-16 by
+  `08-retirement-reconciliation`.)
+- **A hand-maintained enumeration of a set will drop the member that does not match the
+  set's naming convention, and the drop is invisible because the remainder looks complete.**
+  The evidence is a natural experiment. At the phase baseline, the agent catalogue's subagent
+  table and `expected_slugs` omitted **exactly the same four** evaluators — `05a`, `05g`,
+  `05j`, `05k` — and all four held `execute`, which looked like the explanation. It is not:
+  `expected_slugs` had a motive (omission dodged a blanket `assertNotIn("execute", ...)`),
+  but a README has no assertion to dodge. The real shared cause is **category**: those four
+  are the mechanical, tool-running evaluators — the decomposition independently named its
+  feature `05-mechanical-evaluators` after exactly that set — and `execute` is a *marker* of
+  the category, not the cause of the omission. **Two surfaces built from the same mental
+  roster inherit the same gap, and correlation between them is not corroboration.**
+  Feature `05` closed the `expected_slugs` half by deriving it from disk. Nothing derived the
+  catalogue, and the defect duly reproduced there — at `08` the catalogue still omitted `05a`
+  and still listed `05f` under its retired `05h` slug, while the tested surface stayed
+  correct. **The fix is not vigilance, it is derivation:** `tests/
+  test_retirement_reconciliation.py::test_agents_readme_roster_covers_every_pr_review
+  _evaluator_on_disk` now derives the expectation from `.github/agents/`, so cataloguing is
+  no longer optional. (Recorded 2026-07-16 by `08-retirement-reconciliation`.)
+- **The PR Review fixture dry run (`04` AC13 → `08` AC1–AC4) is STILL UNEXECUTED. OPEN.
+  Owner: the QA stage or any context that can spawn subagents; routing: run
+  `05 PR - Review` against `dev/pr-review/fixtures/pinned-diff-range.md`.** The recorded
+  blocker is gone — all eight roster names now resolve to agents on disk (verified), the
+  report-root split is closed, and the pinned range `f5ab960..e6ff28a` resolves to exactly
+  its recorded 3 commits / 26 files / 1288 insertions. **The run was not performed because
+  `08`'s implementation context has no agent-spawning tool, and a seven-evaluator fan-out
+  cannot be simulated.** Per the standing rule — *a run whose required evaluators are
+  recorded `not-run` is below-GO evidence, not a passing run* — manufacturing a partial
+  artifact would be worse than recording the gap. **This agent family has still never
+  demonstrably worked end to end**, and that remains the phase's largest open risk: eight
+  features passed review in isolation and nothing has yet run them together. (Recorded
+  2026-07-16 by `08-retirement-reconciliation`.)
+- **User-local configuration naming the retired skills** (`phase-final-review-conventions`,
+  `phase-final-review-report`) — e.g. a personal `~/.claude/` setup — cannot be verified or
+  fixed from this repository, and `08` confirms it stays open as an acknowledged, unclosable
+  assumption rather than a gap. Verified clean everywhere this repo controls: `.github/`,
+  all three generated roots, `tests/`, and `scripts/`. (Routed to `08` by
+  `03-pr-review-conventions-skills`'s review; acknowledged 2026-07-16.)
 
 ## Hook Composition
 
@@ -151,7 +248,24 @@
 - **The evaluator roster splits roughly in half, and this is what makes the rescope tractable.** Seven of twelve are already diff-shaped and transfer directly — some fit *better* than they do now: `05a-baseline-worktree` (checks out a baseline commit → the base branch), `05b-change-narrator` (narrative baseline→HEAD → the PR's diff), `05g-artifact-sweeper` (debug statements/TODOs since baseline), `05h-test-health` (coverage delta), `05j-consistency-auditor`, `05k-dependency-auditor`, `05l-readiness-synthesizer` (go/no-go → PR gate verdict). **Five are phase-shaped and are retired**: `05c-qa-consolidator` (merges *subphase* QA docs), `05d-security-rollup` (union of *subphase* findings), `05e-ac-regression` (re-verifies *every subphase's* ACs), `05f-seam-analyzer` (seams *between subphases*), `05i-learnings-harvester` (mines *pipeline review records*). A PR has no subphases and no ACs. Little working code is lost — the whole-phase flow has never successfully run against a real phase.
 - **Git cannot determine a branch's base. This is a data-model fact, not a tooling gap — do not design around an assumption that it can.** A ref is a SHA and nothing else; there is no parentage metadata anywhere. Verified 2026-07-16: `git merge-base HEAD main` works but requires already knowing the base (circular); the reflog records `branch: Created from HEAD` — the *SHA*, never the branch name — and is local-only, never cloned, and gc-pruned (90 days default), so it is absent in CI and fresh clones; `git symbolic-ref refs/remotes/origin/HEAD` is the most reliable signal but yields the repo's *default* branch rather than *this branch's* base, and is frequently unset (needs `git remote set-head origin -a`). **The chosen design is suggest-and-confirm**: infer a candidate from `origin/HEAD`, compute `merge-base`, show the implied diff scope (commit count, files touched), let the user accept or override. This matches the existing `05` preflight pattern (auto-suggest the baseline commit, user confirms) and fails safe — an unset `origin/HEAD` means asking rather than guessing. Suggestion order is `origin/HEAD` → `origin/main` → `origin/master` → present candidates for selection. Cases where inference is actively wrong and must be named in the agent: a branch cut from another feature branch (merge-base against the default silently includes the parent's work in the diff), a rebased branch, and a squash-merged base.
 - **The nearest-merge-base heuristic returns the branch under review. Exclude self and self's tracking ref explicitly.** Demonstrated 2026-07-16 on branch `repo_improvements_project` at HEAD `ae9823a`: `git merge-base HEAD main` and `git merge-base HEAD origin/main` both give `e3398c7`, but `git merge-base HEAD repo_improvements_project` and `git merge-base HEAD origin/repo_improvements_project` both give `ae9823a` — HEAD itself. **A branch is always its own nearest base, and so is its remote-tracking ref.** Any ranking over candidate branches must filter both before comparing.
-- **The rescope inherits Phase 03's open findings rather than leaving them for Phase 04.** P5-SEC-02 (readiness path consumes report claims after metadata-only validation) is the notable one: it was unclosable because the readiness path is agent Markdown with no code to attach a schema and deterministic reducer to. **The rescope rebuilds that path, so the validator arrives with the rebuild instead of being new capability bolted onto prose.** Also inherited: `execute` grants on `05`/`05g`/`05j`/`05k` (set them correctly when each agent is rebuilt, rather than fixing them twice — note `05k` is not a simple removal, its contract permits an offline read-only audit command); `05a`'s unconstrained `execute`; and the propagation-enumeration gap omitting `05g`/`05j`/`05k` (only correct once the roster is settled at seven contiguous slugs).
+- **The rescope inherits Phase 03's open findings rather than leaving them for Phase 04.** P5-SEC-02 (readiness path consumes report claims after metadata-only validation) is the notable one: it was unclosable because the readiness path is agent Markdown with no code to attach a schema and deterministic reducer to. ~~**The rescope rebuilds that path, so the validator arrives with the rebuild instead of being new capability bolted onto prose.**~~ Also inherited: `execute` grants on `05`/`05g`/`05j`/`05k` (set them correctly when each agent is rebuilt, rather than fixing them twice — note `05k` is not a simple removal, its contract permits an offline read-only audit command); `05a`'s unconstrained `execute`; and the propagation-enumeration gap omitting `05g`/`05j`/`05k` (only correct once the roster is settled at seven contiguous slugs).
+  **Correction, 2026-07-16 (`08-retirement-reconciliation`, verifying as-built): the struck
+  sentence is false, and P5-SEC-02 is still open** — see the standing entry under Deferred
+  Pipeline Work. The rescope rebuilt the readiness path **as agent Markdown**, not as code,
+  so the validator did not arrive with the rebuild and there is still nothing to attach a
+  schema or reducer to. Feature `07` recorded it open rather than tightening prose to look
+  closed. **The lesson, generalized by `07` and worth keeping: "the rebuild will bring the
+  validator" is a prediction, not a plan.** A finding routed to a future rebuild must name
+  the capability that rebuild has to gain; otherwise the rebuild lands without it, and the
+  finding reads as overdue rather than as correctly deferred.
+  **Second correction: the enumeration gap was four agents, not three — `05a`, `05g`, `05j`,
+  `05k`.** This sentence drops `05a` while the same entry discusses `05a`'s `execute` one
+  clause earlier, which is the tell: `05a` is the one evaluator whose display name carries no
+  numeric prefix (`Baseline Worktree`, not `05a Baseline Worktree`), so every roster
+  eyeballed by display name loses it silently. It was missing from `expected_slugs`, from the
+  agent catalogue, and from this very list — three surfaces, same blind spot. **A member that
+  does not match the naming convention of its own set will be dropped from every hand-built
+  enumeration of that set, and its absence will look like the set.**
 - **The propagator's missing `execute` allowlist syntax stopped being a residual risk the moment a feature needed it.** `scripts/propagate_master_assets.py:332` maps `"execute": ["Bash"]` and `:353` maps `"execute": ["bash"]`; there is no allowlist syntax, so every narrow grant — `05a`'s `git worktree`, the orchestrator's `gh` — is inexpressible and gets recorded as accepted risk instead. It sat open because nothing forced it. The opt-in PR-comment feature needs `gh`, and "grant `gh`" is mechanically "grant every shell command," which two recorded decisions prohibit. **So the allowlist became Phase 03's first deliverable, and closing it closes the `05a` and mechanical-sweep grants as a side effect.** The general lesson: a capability gap recorded as accepted risk will stay open indefinitely unless some feature's correctness depends on closing it. Look for the forcing function rather than re-recording the risk.
 - **Correction, 2026-07-16 (decomposition): the allowlist forcing function above is void — per-agent command scoping is not expressible on Claude at all, so the propagator was never the binding constraint.** Verified against current Claude Code docs: a subagent's `tools:` frontmatter accepts only bare tool names and MCP patterns; `tools: Bash(gh:*)` is not a narrower grant but an *unresolved tool name*, and Claude Code refuses to launch the subagent. Subagents have no `permissions`/`allowed-tools` key; `permissionMode` selects how prompts are handled, never which commands are allowed. Command scoping exists only in project/session-wide `settings.json` permission rules — which are not per-agent — or in a **per-agent PreToolUse hook**, which Phase 03 excludes. Harness survey: **OpenCode** supports real per-agent `permission.bash` globs (last-match-wins, so the `"*"` catch-all must come *first*, and patterns match parsed commands — `"git status"` will not match `git status --short`; use `"git status *"`); **Codex** has no per-profile command list at all (`ConfigProfile` carries only `approval_policy`, `approvals_reviewer`, `sandbox_mode`, `tools`), and its execpolicy rules are global, sandbox-escape-only, Starlark, and experimental. So native per-agent scoping exists on **one of three harnesses**. Building the syntax anyway would be real on OpenCode and decorative on Claude and Codex — the "partial protection that reads as total protection" failure recorded under adoption readiness, aimed at ourselves.
 - **The sharper correction: the `gh` grant never cost anything.** The premise was "grant `gh` = grant every shell command, which two decisions prohibit." But the orchestrator needs `git symbolic-ref`/`git merge-base`/`git branch` for base derivation, so it holds unrestricted Bash *regardless* of the PR-comment feature. Adding `gh` widens nothing. **The general lesson, and the reason this is worth recording rather than quietly fixing: "look for the forcing function rather than re-recording the risk" was good advice that found a fake one.** A forcing function is only real if the feature is actually blocked without the capability — check that the blockage exists before promoting it to Deliverable 1. Here the blockage was assumed from the propagator's source mapping without checking whether the *target* format could express the result.

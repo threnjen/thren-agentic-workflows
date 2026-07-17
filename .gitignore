@@ -3,10 +3,6 @@
 .coverage
 .generated-global-hooks/
 dev/*
-!dev/phase-final-review/
-dev/phase-final-review/*
-!dev/phase-final-review/fixtures/
-!dev/phase-final-review/fixtures/**
 # PR Review: track the pinned base/head fixture, ignore run output. The report
 # root is `dev/pr-review/<base-sha-short>-<UTC-timestamp>/`, which stays ignored
 # by `dev/pr-review/*` -- only `fixtures/` is un-ignored back in.

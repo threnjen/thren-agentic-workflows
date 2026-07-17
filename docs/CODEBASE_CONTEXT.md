@@ -86,7 +86,7 @@ scripts/
 
 - 6 orchestrators: `01 Project - Planner`, `02 Phase - Refiner`, `04 Phase - Execute`, `Audit - Code, Infra, Refactor`, `Test - Orchestrator`, `Eval - Grader`.
 - 11 visible user-facing agents: decomposer, documentation architect, debugger, evangelize, single-feature agent, prod code review, unity reviewer, web researcher, and 3 auditors (deployed separately but user-invocable).
-- 24 hidden subagents, including plan expander, implementer, reviewer, QA writer, Phase Final Review evaluators, security scan, evaluator helpers, auditors, and test helpers.
+- 22 hidden subagents, including plan expander, implementer, reviewer, QA writer, PR Review evaluators, diff security scan, evaluator helpers, auditors, and test helpers.
 
 ## Template Pack Facts
 

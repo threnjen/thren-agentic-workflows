@@ -1190,14 +1190,20 @@ class OrphanPruningTests(unittest.TestCase):
                 ]
                 self.assertEqual(len(matched), expected_count)
 
-        # The two known unmarked files in claude/agents must stay unmatched.
-        for unmarked in ("README.md", "single-feature.md"):
-            path = mod.CLAUDE_AGENTS_DIR / unmarked
-            if path.exists():
-                with self.subTest(unmarked=unmarked):
-                    self.assertFalse(
-                        mod._is_generated_output(path, mod.GENERATED_AGENT_MARKDOWN_HEADER)
-                    )
+        # The one remaining unmarked file in claude/agents must stay unmatched.
+        # `single-feature.md` was the other, and was deleted by
+        # `08-retirement-reconciliation`: it was a stale, unsourced duplicate of
+        # `Single Feature - Agent` that Claude Code still loaded. The marker
+        # guard could not tell it apart from this README -- both predate the
+        # marker -- so the pruner correctly failed closed on both and the call
+        # was made by hand. `tests/test_retirement_reconciliation.py::
+        # test_claude_agents_root_holds_only_the_catalogue_and_generated_output`
+        # now asserts the invariant that leaves README.md as the only exception.
+        path = mod.CLAUDE_AGENTS_DIR / "README.md"
+        if path.exists():
+            self.assertFalse(
+                mod._is_generated_output(path, mod.GENERATED_AGENT_MARKDOWN_HEADER)
+            )
 
     def test_renumbered_mechanical_evaluators_left_no_opencode_orphans(self) -> None:
         """AC9: OpenCode agent files key on slug, so a renumber orphans them.
