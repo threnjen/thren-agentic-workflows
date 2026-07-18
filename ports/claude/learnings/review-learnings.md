@@ -7,7 +7,7 @@ When a shell hook serializes git path lists into JSON, preserve git's safe path 
 
 ## Impact
 
-Filenames containing embedded newlines or other control characters can split into multiple JSON entries or produce invalid JSON, which corrupts downstream ledger consumers.
+Filenames containing embedded newlines or other control characters can split into multiple JSON entries or produce invalid JSON, corrupting downstream ledger consumers.
 
 ## Watch for
 
@@ -19,7 +19,7 @@ When agent instructions add ledger-event schemas with resolution fields, documen
 
 ## Impact
 
-If `resolved_attempt` and `resolved_by` are named in the schema but the write path is undocumented, agents can log failures without ever recording their resolution, which leaves downstream grading and audit steps with incomplete state.
+If resolution fields are named in the schema but the write path is undocumented, agents can log failures without ever recording their resolution, leaving downstream grading and audit steps with incomplete state.
 
 ## Watch for
 
@@ -27,99 +27,75 @@ Ledger blocks that describe only the first append, schema fields that imply a la
 
 ## Pattern
 
-When adding checkpoint-commit instructions to rerunnable authoring flows, stage every artifact mutated by that step and describe resumable scopes as created or modified, not created only.
+When adding checkpoint-commit instructions to rerunnable authoring flows, stage every artifact mutated by that step and describe resumable scopes as created *or modified*, not created only. Keep the checkpoint contract at the same scope as the artifacts it commits — do not promise per-unit checkpoint commits against consolidated outputs.
 
 ## Impact
 
-Overly narrow staging leaves setup files like `.gitignore` dirty after the checkpoint or drops edits from resumed runs, so later commits inherit unrelated changes and the checkpoint no longer represents a clean step boundary.
+Overly narrow staging leaves setup files dirty after the checkpoint or drops edits from resumed runs, so later commits inherit unrelated changes. Mixed scopes create impossible staging instructions and prevent downstream ledger consumers from mapping checkpoints back to the unit named in the commit message.
 
 ## Watch for
 
-Checkpoint text that stages only output directories while earlier numbered steps also edit repo metadata, or authoring checkpoints that refer to files created in this session when the workflow can rerun against existing files.
+Checkpoint text that stages only output directories while earlier steps also edit repo metadata; per-unit checkpoint language next to one consolidated writer invocation; checkpoints that refer to files "created in this session" when the workflow can rerun against existing files.
 
 ## Pattern
 
-When an orchestrator writes shared QA or final-review artifacts at phase scope, keep the checkpoint contract phase-scoped too; do not promise per-feature checkpoint commits against consolidated outputs.
+When agent inventory, counts, frontmatter schemas, or platform-contract rules change, update every summary surface in the same change — not just the primary catalog tables.
 
 ## Impact
 
-Mixed scopes create impossible staging instructions, force review records into traceability exceptions, and prevent downstream ledger consumers from mapping checkpoints back to the unit named in the commit message.
+Stale overview bullets, comparison tables, and architecture diagrams contradict the actual inventory or keep advertising removed keys, misleading both humans and downstream agents that bootstrap from those summaries.
 
 ## Watch for
 
-Per-feature `eval: qa <task>` or `eval: final-review <task>` language next to one shared QA writer invocation, one phase-wide prod review prompt, or staging notes that mention only consolidated phase documents.
+Top-level README intros, Mermaid labels, CODEBASE_CONTEXT count summaries, platform comparison tables, frontmatter field summaries, and any touched docs that summarize agent lists, counts, or file schemas at a glance.
 
 ## Pattern
 
-When adding a new user-facing agent, update every inventory surface that carries agent counts or summarized agent lists, not just the primary catalog tables.
+When a porting guide scopes an agent source directory using a filename glob (e.g., `*.agent.md`), verify whether the directory contains agent definitions that do not match that extension — some are plain `.md`, distinguishable from documentation only by frontmatter.
 
 ## Impact
 
-Stale overview bullets and architecture diagrams can contradict the actual agent inventory, which weakens the source-of-truth docs and can mislead downstream agents that bootstrap from those summaries.
+A guide that gates on extension alone silently excludes valid agent definitions from the porting scope, causing missed migrations invisible to reviewers who only scan for the expected extension.
 
 ## Watch for
 
-Top-level README intros, Mermaid labels, CODEBASE_CONTEXT count summaries, and any touched docs that summarize standalone agents or total agent-file counts.
+Porting guides that describe a source surface as a single glob, source directories mixing agent definitions and documentation under one parent, and any example or table that cites a single naming pattern as exhaustive.
 
 ## Pattern
 
-When agent frontmatter or platform-contract rules change, update every shared documentation table that summarizes file formats or metadata fields in the same change.
+In documentation guides that embed shell verification blocks for future-facing placeholder paths, bare `test -e` calls exit non-zero with no output, giving no indication whether failure means "not ready yet" or "misconfigured."
 
 ## Impact
 
-If summary tables lag behind the live files, source-of-truth docs can keep advertising removed keys like `model:` and mislead both humans and downstream agents about the actual contract.
+Users copy-paste the block, see no output, and cannot distinguish "source artifact doesn't exist yet" from "path is wrong — fix now."
 
 ## Watch for
 
-Platform comparison tables, frontmatter field summaries, architecture diagrams, and codebase-context bullets that describe agent-file schemas at a glance.
+Preflight blocks with bare `test -e "$PATH"` lines on documented placeholder paths; fix by adding `|| echo "not yet: <path>"` or a comment explaining expected failure.
 
 ## Pattern
 
-When a porting guide scopes an agent source directory using a filename glob (e.g., `*.agent.md`), verify whether the directory contains agent definitions that do not match that extension. Some agent files use a plain `.md` extension and are only distinguishable from documentation files by their YAML frontmatter.
+When an AC specifies a Terraform backend `key` using variable interpolation, the implementation must use a partial backend config — the key is omitted from `backend.tf` and supplied via `-backend-config="key=..."` at init time. Terraform does not support variable interpolation in backend blocks.
 
 ## Impact
 
-A guide that gates on extension alone silently excludes valid agent definitions from the porting scope, causing missed migrations that are invisible to reviewers who only scan for the expected extension.
+A reviewer comparing the AC literal text against the backend file will flag the missing key as a bug — a false positive. The plan's correctness section resolves this; check it before raising the issue.
 
 ## Watch for
 
-Porting guides that describe a source surface as `*.agent.md` or similar glob, source directories that contain both agent definitions and documentation files under the same parent, and any example or table that cites a single naming pattern as exhaustive.
+`backend.tf` files that omit `key` combined with AC text describing a parameterized key path.
 
 ## Pattern
 
-In documentation guides that embed shell verification blocks for future-facing placeholder paths, bare `test -e` calls exit non-zero with no output, giving no indication whether failure means "not ready yet" or "misconfigured." This makes copy-pasted preflight blocks appear to work when run in a shell with `set -e` disabled, silently skipping the intent.
+Scaffold placeholder comments (e.g., "Output blocks are added in a later feature when resources are defined") are never updated when the implementing feature lands.
 
 ## Impact
 
-Users following the guide copy-paste the block, see no output, and cannot distinguish between "source artifact doesn't exist yet — wait for Phase N" and "path is wrong — fix now." Silent failure obscures readiness status.
+Stale files carry misleading comments after resources exist, and useful reference outputs (resource ARNs, IDs) are silently omitted.
 
 ## Watch for
 
-Preflight code blocks with bare `test -e "$PATH"` lines where those paths are documented as future-facing placeholders; fix by adding `|| echo "not yet: <path>"` or a comment block explaining expected failure.
-
-## Pattern
-
-When an AC text specifies a Terraform backend `key` using variable interpolation (e.g., `baseline/${var.environment_slug}/...`), the implementation must use a partial backend config instead — the key is omitted from `backend.tf` and supplied via `-backend-config="key=..."` at `terraform init` time. Terraform does not support variable interpolation in backend blocks.
-
-## Impact
-
-If a reviewer compares the AC literal text against the backend file and flags the missing key as a bug, they will raise a false positive. The plan's correctness section (Section B) always resolves this ambiguity — check it before raising the issue.
-
-## Watch for
-
-Terraform `backend.tf` files that omit the `key` attribute combined with AC text that describes a parameterized key path. Verify the plan's correctness section for the explicit partial backend config decision before flagging as missing.
-
-## Pattern
-
-Scaffold placeholder comments in `outputs.tf` (e.g., "Output blocks are added in Feature N when resources are defined") are never updated when the implementing feature lands.
-
-## Impact
-
-Stale `outputs.tf` files carry misleading comments after resources are defined, and useful reference outputs (e.g., resource ARNs) are silently omitted, reducing post-apply verifiability.
-
-## Watch for
-
-`outputs.tf` files with placeholder-style comments that name a specific future feature; check whether that feature has already landed and whether any resource ARNs or IDs are worth exporting as outputs.
+Placeholder-style comments that name a specific future feature; check whether it has already landed and what is worth exporting.
 
 ## Pattern
 
@@ -127,7 +103,7 @@ When a public value type can be constructed directly as well as through a valida
 
 ## Impact
 
-Callers can bypass factory validation by invoking the value constructor directly, allowing invalid actions to reach an external runner and potentially turn a fail-closed path into an ambiguous or non-blocking result.
+Callers can bypass factory validation by invoking the constructor directly, allowing invalid actions to reach an external runner and turning a fail-closed path into an ambiguous or non-blocking result.
 
 ## Watch for
 
@@ -143,7 +119,7 @@ An interpreter startup or shell-pipeline failure can return non-zero before appl
 
 ## Watch for
 
-Audit wrappers using `set -e` or `pipefail` without an explicit non-blocking fallback, and tests that invoke only the Python or Node entrypoint rather than the actual shell wrapper.
+Audit wrappers using `set -e` or `pipefail` without an explicit non-blocking fallback, and tests that invoke only the language entrypoint rather than the actual shell wrapper.
 
 ## Pattern
 
@@ -151,7 +127,7 @@ Security matchers that compare one glob pattern with another must vary wildcard 
 
 ## Impact
 
-Single-sample glob heuristics can miss overlapping scopes such as a broad filename pattern that includes a protected extension, while a recursive rule like `protected/**` can accidentally allow the `protected` directory itself. Either gap lets scoped search or file operations reach protected targets.
+Single-sample glob heuristics miss overlapping scopes, and a recursive rule like `protected/**` can accidentally allow the `protected` directory itself.
 
 ## Watch for
 
@@ -167,7 +143,7 @@ When removing an exact encoded suffix from parsed shell tokens, use exact suffix
 
 ## Watch for
 
-`rstrip` or `lstrip` calls whose argument is intended as a whole delimiter, especially escaped newline markers, extensions, or protocol sentinels; cover nearby filenames ending in each delimiter character.
+`rstrip`/`lstrip` calls whose argument is intended as a whole delimiter; cover nearby filenames ending in each delimiter character.
 
 ## Pattern
 
@@ -175,45 +151,35 @@ Artifact propagators must validate resolved source assets and resolved destinati
 
 ## Impact
 
-A symlinked parent directory can redirect generated files outside the consumer root, while a normalized `../` command token or source symlink can reference content the deployable unit never copied. Both cases break isolation and can overwrite or disclose unrelated files.
+A symlinked parent directory can redirect generated files outside the consumer root, while a normalized `../` token or source symlink can reference content the deployable unit never copied.
 
 ## Watch for
 
-Copy loops that call `target.write_*` beneath unchecked parent directories, validators that test path prefixes before normalization, source walks that follow symlinks without a resolved-root check, and tests that cover only leaf symlink replacement.
+Copy loops writing beneath unchecked parent directories, validators that test path prefixes before normalization, source walks that follow symlinks without a resolved-root check, and tests covering only leaf symlink replacement.
 
 ## Pattern
 
-When selectively unignoring a nested fixture tree beneath a broad parent ignore
-rule, re-ignore sibling paths between the parent exception and the fixture
-exception.
+When selectively unignoring a nested fixture tree beneath a broad parent ignore rule, re-ignore sibling paths between the parent exception and the fixture exception.
 
 ## Impact
 
-Negating only the parent directory can make unrelated future artifacts
-trackable, weakening repository hygiene and the intended scope of the
-exception.
+Negating only the parent directory can make unrelated future artifacts trackable, weakening the intended scope of the exception.
 
 ## Watch for
 
-Ignore files with a broad `parent/*` rule followed immediately by
-`!parent/child/` and `!parent/child/**`, without a `parent/*` rule restoring the
-boundary.
+Ignore files with a broad `parent/*` rule followed immediately by `!parent/child/` without a rule restoring the boundary.
 
 ## Pattern
 
-When a procedural document defines conditional resource lifecycle behavior,
-make each create, reuse, recreate, and refusal branch executable in sequence.
+When a procedural document defines conditional resource lifecycle behavior, make each create, reuse, recreate, and refusal branch executable in sequence.
 
 ## Impact
 
-A policy that is described only in prose can be followed literally as an
-unconditional create or cleanup operation, causing collisions or deleting
-resources that should have been retained.
+A policy described only in prose can be followed literally as an unconditional create or cleanup, causing collisions or deleting resources that should have been retained.
 
 ## Watch for
 
-Steps that say to apply a collision policy and then show one unconditional
-create command, especially when ownership determines whether cleanup is safe.
+Steps that state a collision policy and then show one unconditional command, especially when ownership determines whether cleanup is safe.
 
 ## Pattern
 
@@ -225,7 +191,7 @@ A child can return success with a missing or empty report, or the terminal synth
 
 ## Watch for
 
-Delegation contracts that record only explicit exceptions, trust returned report paths without metadata validation, or pass a synthesizer verdict directly to status write-back without an independent missing-check gate.
+Delegation contracts that record only explicit exceptions, trust returned report paths without metadata validation, or pass a synthesizer verdict onward without an independent missing-check gate.
 
 ## Pattern
 
@@ -233,7 +199,7 @@ Diff-scoped static analyzers must require verifiable line or range attribution b
 
 ## Impact
 
-Filtering a repo-wide result only by touched file can misclassify pre-existing dead code or other findings as changes from the current phase.
+Filtering a repo-wide result only by touched file can misclassify pre-existing findings as changes from the current branch.
 
 ## Watch for
 
@@ -245,11 +211,11 @@ Read-only dependency vulnerability checks must use supplied local evidence or an
 
 ## Impact
 
-A generic audit command can fetch or update vulnerability data, violating the evaluator's no-network boundary and making the evidence path non-reproducible.
+A generic audit command can fetch or update vulnerability data, violating the no-network boundary and making the evidence path non-reproducible.
 
 ## Watch for
 
-Instructions that call an audit command read-only without stating offline behavior, commands with implicit network access, or missing-evidence paths that claim a clean vulnerability result.
+Instructions that call an audit command without stating offline behavior, commands with implicit network access, or missing-evidence paths that claim a clean result.
 
 ## Pattern
 
@@ -261,7 +227,7 @@ Unneeded shell or execution permissions weaken prompt-level read-only boundaries
 
 ## Watch for
 
-Wrapper frontmatter that grants execute access without a local execution requirement, platform-specific permission mappings, and propagation tests that verify only unrelated hooks or skills instead of the new agent outputs.
+Wrapper frontmatter granting execute without a local execution requirement, platform-specific permission mappings, and propagation tests that verify only unrelated assets instead of the new agent outputs.
 
 ## Pattern
 
@@ -273,7 +239,7 @@ A not-run marker without a visible readiness ceiling can be mistaken for neutral
 
 ## Watch for
 
-Status rows that contain `status: not-run` and `report: null` but no machine- or reader-visible verdict ceiling, especially when a child report is required for release readiness.
+Status rows with `status: not-run` and `report: null` but no reader-visible verdict ceiling, especially when a child report is required for release readiness.
 
 ## Pattern
 
@@ -285,325 +251,173 @@ If concurrent children are told only to write into a shared directory, generic f
 
 ## Watch for
 
-Delegation prompts that name a shared output directory without a unique filename template or a parent check that maps each child identifier to exactly one report artifact.
+Delegation prompts naming a shared output directory without a unique filename template, or a parent check that does not map each child identifier to exactly one report artifact.
 
 ## Pattern
 
-Propagation regression tests must cover every newly added agent output, including
-non-delegating harvesters and synthesis agents, and compare each harness render
-with the source renderer.
+Propagation regression tests must cover every newly added agent output — including non-delegating agents — and compare each harness render with the source renderer.
 
 ## Impact
 
-Hard-coded evaluator subsets or orchestrator-only smoke checks can pass while a
-new Claude, OpenCode, or Codex mirror is stale or malformed.
+Hard-coded evaluator subsets or orchestrator-only smoke checks can pass while a new Claude, OpenCode, or Codex mirror is stale or malformed.
 
 ## Watch for
 
-Expected-slug tuples that omit newly added agents, tests named for one evaluator
-family that silently exclude sibling agents, or generated outputs checked only
-for existence rather than exact renderer parity.
+Expected-slug tuples that omit newly added agents, tests named for one agent family that silently exclude siblings, or generated outputs checked only for existence rather than exact renderer parity.
 
 ## Pattern
 
-Read-only history-mining agents must keep evidence-access instructions consistent
-with their declared capabilities and explicitly handle unavailable sources.
+Read-only history-mining agents must keep evidence-access instructions consistent with their declared capabilities and explicitly handle unavailable sources.
 
 ## Impact
 
-A fetch-only agent that includes shell examples can violate its no-execute
-boundary, while a remote-only capability can be mistaken for guaranteed local
-history recovery.
+A fetch-only agent that includes shell examples can violate its no-execute boundary, while a remote-only capability can be mistaken for guaranteed local history recovery.
 
 ## Watch for
 
-Command examples in fetch-only contracts, missing unavailable-source handling,
-or mirror tests that inspect only one harness's permission boundary.
+Command examples in fetch-only contracts, missing unavailable-source handling, or mirror tests that inspect only one harness's permission boundary.
 
 ## Pattern
 
-A marker-based guard that decides whether a generated file may be deleted must key
-on the exact position the emitter writes the marker to — never on the marker
-appearing anywhere in the file, and never on a prefix check that ignores
-frontmatter. Extract that position into one helper shared by the writer and the
-guard so the two cannot drift apart.
+A marker-based guard that decides whether a generated file may be deleted must key on the exact position the emitter writes the marker to — never on the marker appearing anywhere in the file, and never on a prefix check that ignores frontmatter. Extract that position into one helper shared by the writer and the guard.
 
 ## Impact
 
-Both looser rules fail, in opposite directions. A prefix check against output that
-opens with YAML frontmatter matches nothing: the guard reads as implemented, passes
-review, and silently disables the sweep indefinitely. A whole-file search matches any
-hand-maintained document that merely quotes the marker while documenting the
-convention, deleting exactly the file the guard exists to protect.
+Both looser rules fail, in opposite directions: a prefix check against frontmatter-bearing output matches nothing and silently disables the sweep; a whole-file search matches any hand-maintained document that merely quotes the marker, deleting exactly the file the guard exists to protect.
 
 ## Watch for
 
-`startswith(MARKER)` applied to frontmatter-bearing output; `MARKER in text` or
-`MARKER in text.splitlines()` used as a deletion predicate; a guard tested only for
-what it deletes and never for what it must refuse to delete; README or convention
-docs living inside a generated root.
+`startswith(MARKER)` applied to frontmatter-bearing output; `MARKER in text` as a deletion predicate; a guard tested only for what it deletes and never for what it must refuse to delete; convention docs living inside a generated root.
 
 ## Pattern
 
-A destructive helper is proven only by tests that bracket it from both directions:
-one that fails if the guard is removed, and one that fails if the guard is tightened
-until it matches nothing.
+A destructive helper is proven only by tests that bracket it from both directions: one that fails if the guard is removed, and one that fails if the guard is tightened until it matches nothing.
 
 ## Impact
 
-A single-sided suite lets a guard pass for the wrong reason. An inert guard trivially
-satisfies a "deletes zero files on a clean tree" criterion while the capability it
-gates does nothing at all. Mutation-test the guard rather than asserting it.
+A single-sided suite lets a guard pass for the wrong reason — an inert guard trivially satisfies "deletes zero files on a clean tree" while gating nothing. Mutation-test the guard rather than asserting it.
 
 ## Watch for
 
-Inert-run criteria ("a run on the unmodified repo deletes nothing") with no companion
-test proving the pruner positively identifies real generated output; deletion counters
-asserted only as zero.
+Inert-run criteria with no companion test proving the pruner positively identifies real generated output; deletion counters asserted only as zero.
 
 ## Pattern
 
-A deliberately-failing tripwire that guards a time-boxed exemption must be addressed to
-the pass that will actually trip it, not the pass nominally assigned the cleanup. Verify
-which one that is by reading what the downstream work does to the exempted paths — if it
-renames or moves them, the exemption stops matching and the tripwire fires there.
+A deliberately-failing tripwire guarding a time-boxed exemption must be addressed to the pass that will actually trip it, not the pass nominally assigned the cleanup. Read what the downstream work does to the exempted paths — if it renames or moves them, the exemption stops matching and the tripwire fires there.
 
 ## Impact
 
-A tripwire addressed to a later pass than the one that trips it converts a clean hand-off
-into a red baseline for every pass in between, and each of those inherits a failing
-green-baseline gate for work it does not own. The likely outcomes are a wasted escalation
-or a suite left red on purpose — which trains implementers to ignore red. The tripwire
-itself is usually right; only its addressee is wrong, and the fix is a message edit.
+A tripwire addressed to a later pass than the one that trips it converts a clean hand-off into a red baseline for every pass in between, training implementers to ignore red. The tripwire is usually right; only its addressee is wrong.
 
 ## Watch for
 
-Inverted assertions (`assert still_offending`) whose failure message names an owner; any
-exemption list keyed on a path that a downstream rename will invalidate; hand-off notes
-that assign cleanup to the pass that *removes the cause* rather than the pass that *first
-makes the exemption unnecessary*.
+Inverted assertions (`assert still_offending`) whose failure message names an owner; any exemption list keyed on a path a downstream rename will invalidate.
 
 ## Pattern
 
-When an exemption list, a skip, or a non-goal is justified by a factual claim about the
-tree ("this directory does not exist", "this path is only planning records, no live
-wiring"), verify the claim against the tree before accepting the exemption. Do not accept
-the rationale on its own authority.
+When an exemption list, a skip, or a non-goal is justified by a factual claim about the tree ("this directory does not exist", "this path has no live wiring"), verify the claim against the tree before accepting it. Do not accept the rationale on its own authority.
 
 ## Impact
 
-Two distinct failures follow. An over-broad exemption resting on a false premise silently
-hides the very references the sweep exists to find. Worse, a non-goal justified by
-"already absent" leaves work *unowned* rather than *deferred* — deferred work has an
-inheritor, dismissed-as-nonexistent work has none, and it is invisible precisely because
-everyone believes it was already handled.
+An over-broad exemption resting on a false premise hides the very references the sweep exists to find. Worse, a non-goal justified by "already absent" leaves work *unowned* rather than *deferred* — deferred work has an inheritor; dismissed-as-nonexistent work has none.
 
 ## Watch for
 
-Non-goals whose justification is an assertion of absence rather than a decision to defer;
-exemption scopes broader than the rationale that justifies them (a whole tree exempted to
-cover one subtree of records); rationales phrased as sweeping claims about a directory's
-contents. Narrowing an exemption is cheap when the sweep still passes — and the passing
-sweep is itself the proof the narrowing was safe.
+Non-goals justified by an assertion of absence rather than a decision to defer; exemption scopes broader than the rationale that justifies them; rationales phrased as sweeping claims about a directory's contents. Narrowing an exemption is cheap when the sweep still passes — and the passing sweep proves the narrowing was safe.
 
 ## Pattern
 
-Deleting an orchestrator can rename a user-facing entry point it never owned. Where a
-generated artifact's name depends on whether some *other* asset references it, removing
-the last referrer reclassifies it and changes its public name. Before approving a
-deletion, ask what the deleted asset was the last declarer of.
+Deleting an orchestrator can rename a user-facing entry point it never owned. Where a generated artifact's name depends on whether some *other* asset references it, removing the last referrer reclassifies it and changes its public name.
 
 ## Watch for
 
-Emission rules conditioned on a reference map (`user_invocable and name in
-referenced_names`); identifier resolution that reads on-disk state rather than deriving
-from source — it makes such changes converge only across multiple generator runs, so a
-single run proves nothing. Run the generator until every counter reads zero before
-trusting the tree, and treat "one run, looks right" as unverified.
+Emission rules conditioned on a reference map; identifier resolution that reads on-disk state rather than deriving from source — such changes converge only across multiple generator runs. Run the generator until every counter reads zero before trusting the tree; treat "one run, looks right" as unverified.
 
 ---
 
 ## Pattern
 
-An evidence-shaped claim is not evidence. Implementation records increasingly cite
-"mutation-tested", "stable across N consecutive runs", or a named counter as proof. These
-carry the *form* of verification and are read as settled, but they fail re-execution often
-enough that a reviewer who accepts them is not reviewing. Re-run every cited proof against
-a clean tree at the reviewed commit. A record's claim is a hypothesis about the tree, not
-a description of it.
+An evidence-shaped claim is not evidence. Implementation records cite "mutation-tested", "stable across N runs", or a named counter as proof; these carry the *form* of verification but fail re-execution often enough that a reviewer who accepts them is not reviewing. Re-run every cited proof against a clean tree at the reviewed commit. A record's claim is a hypothesis about the tree, not a description of it.
 
 ## Impact
 
-Two defects reached a commit behind such claims in one feature: a suite reported green
-that was red, and a correct action defended by a mutation test that passes identically
-with and without the change it supposedly proved. The right action on false evidence still
-validates the wrong reasoning, which is what the next feature inherits.
+Defects reach commits behind such claims: suites reported green that were red, and correct actions defended by mutation tests that pass identically with and without the change they supposedly prove. The right action on false evidence still validates the wrong reasoning.
 
 ## Watch for
 
-Claims of a passing suite where the arithmetic reconciles to *collected* rather than
-*passed* (447 passed + 1 failed reported as "448"). Mutation tests where the mutation would
-trip an unrelated guard anyway — verify the test fails for the stated reason, and that it
-*passes* once the change under test is reverted, or it proves nothing. Dead-code deletion
-described as a behaviour change: an exemption keyed to a name that a rename already
-invalidated matches nothing, so removing it can neither widen nor narrow the sweep. Ask
-what an exemption matched *at the moment it was deleted*, not what it matched when written.
+Passing-suite claims where the arithmetic reconciles to *collected* rather than *passed*. Mutation tests where the mutation would trip an unrelated guard anyway — verify the test fails for the stated reason and *passes* once the change under test is reverted, or it proves nothing. Ask what an exemption matched *at the moment it was deleted*, not what it matched when written.
 
 ---
 
 ## Pattern
 
-When a sweep test goes red because a new file legitimately contains the swept token, the
-one-line fix — add the file to the exemption list — is almost always wrong. It widens the
-hole the sweep exists to close, often in the exact pass that was supposed to narrow it.
-Remove the token instead: import the canonical definition and derive the values.
+When a sweep test goes red because a new file legitimately contains the swept token, the one-line fix — add the file to the exemption list — is almost always wrong. It widens the hole the sweep exists to close. Remove the token instead: import the canonical definition and derive the values.
 
 ## Impact
 
-Exemption lists grow monotonically and are never audited. Each entry is a permanent blind
-spot bought to make one test green, and the next regression that lands inside one is
-invisible.
+Exemption lists grow monotonically and are never audited. Each entry is a permanent blind spot bought to make one test green.
 
 ## Watch for
 
-A guard module that declares its names are defined "once, here" while another module
-re-lists them as literals — the duplication is the defect, and the sweep failure is the
-symptom correctly reporting it. Also: when replacing literals with a derived tuple, add a
-vacuity assert (`assert derived_list`), or an empty upstream list silently neuters the
-guard while it still reports green.
-
-## Pattern
-
-A contract test that asserts a literal is present somewhere in a whole document is inert wherever that literal occurs more than once. Deleting the occurrence the test exists to protect leaves a stray occurrence elsewhere, and the assertion stays green over a broken contract. Scope every prose assertion to the section, list item, or sentence that carries the obligation — parse the structure (numbered items, `- **bullets**`, the body below a heading) and assert against it, not against the flattened document.
-
-## Impact
-
-The guard reports green while the requirement it names is gone. This is worse than no test: absence tests are usually protecting the highest-risk deleted code or the least-defended contract, and a green inert guard is what licenses the next editor to remove the real thing. Reviewers cannot detect it by reading, because the test and the contract both look correct in isolation.
-
-## Watch for
-
-The same literal appearing in a heading and in the rule beneath it; in frontmatter `description:` and again in the body; in a rule that writes a file and again in a sentence that reads it; in a ranked list and again in a worked example. Before trusting any prose-assertion module, count occurrences of every asserted literal in the normalized target — a count of two or more marks a candidate, and only a deletion mutation settles it. Fixing the one or two instances that happen to surface is not sweeping the class: this defect arrives in cohorts, because whoever wrote one presence assertion wrote all of them.
-
-## Pattern
-
-A prose assertion against a hard-wrapped document can pass or fail on where the lines happen to break rather than on what the document says. A regex spanning two words that a reflow moves onto separate lines stops matching content that is still present; an assertion that only ever matched because its phrase fit on one line is inert against the requirement it names. Normalize runs of whitespace to single spaces before asserting on a sentence, and reserve raw-text assertions for literal tokens and frontmatter, where line structure is part of the contract.
-
-## Impact
-
-The guard's verdict tracks the formatter, not the author. Reflowing a paragraph — an edit with no semantic content — silently drops the assertion or reddens a correct document. Both directions destroy trust: the first hides a broken contract, the second trains the next editor to loosen the regex until it stops biting.
-
-## Watch for
-
-Any assertion module that reads an agent body, a Markdown rule file, or any hard-wrapped prose and matches multi-word phrases. This defect arrives in cohorts — whoever wrote one line-break-sensitive regex wrote all of them. Two normalized readers (one for literals, one for sentences) is the shape that works. The normalization itself is not evidence: only a mutation sweep that breaks each contract at its own anchor proves the guards bite, and anchor drift during that sweep is the harness being wrong, not the guard.
-
-## Pattern
-
-When adjudicating whether a capability grant is genuinely required, the decisive evidence is not the strength of the justification — it is whether a sibling with the same job already operates without the grant. An existing agent doing the harder version of the work under the narrower grant settles the question that argument cannot. Look for the architectural provision first: a capability is often already supplied as an artifact by one privileged component (a path, a prepared tree, an evidence bundle), which is the non-shell equivalent that a removal bar demands be named.
-
-## Impact
-
-Grant audits stall in argument about whether some command "might be needed", and the default resolution is retention with a comment — the exact anti-pattern a removal bar exists to forbid. A single sibling precedent converts an unresolvable judgment call into a verified fact, and it usually reveals the grant was vestigial rather than load-bearing.
-
-## Watch for
-
-A family of agents where one holds a grant recorded as unclosable and the rest are assumed to need it too. Check what the privileged one hands back: if it returns a path or artifact the others merely read, the others need no grant. Conversely, when a plan asserts an agent uses a capability, verify against the prior body before building to match — a plan's claim about existing code is a hypothesis, and implementing to satisfy a false one manufactures a dependency and a failure mode that never existed. Reporting the plan's error is the correct move, not the insubordinate one.
-
-## Pattern
-
-A mutation sweep that only breaks the phrase each guard *intends* to pin will systematically miss inert guards. The blind spot is the guard whose assertion is a short phrase or single token that occurs several times in the target prose: the sweep damages the occurrence the author had in mind, the guard fires, and the guard is scored live — while the sentence that actually carries the contract can be removed or negated with the guard still green. A sweep must independently attempt to negate each load-bearing sentence, not merely damage the phrase the guard names. Negation matters more than deletion: inverting an imperative to its opposite instruction is the mutation that models the real regression, and a deletion-only sweep never tries it.
-
-## Impact
-
-The verification claim inverts. A report of "N/N killed, zero inert" is produced by a sweep that could not have detected the defect it is cited to rule out, and the guards protecting the feature's headline contract are the likeliest to be affected — headline contracts get restated in prose more often than incidental ones, so their key tokens are exactly the ones that recur. The count is honestly arrived at and worthless, and the next reviewer inherits it as settled.
-
-## Watch for
-
-Any assertion matching a short phrase against agent prose, rule files, or any document that restates its own vocabulary. Before trusting it, count occurrences of the token in the target: if greater than one, the assertion cannot fail independently and is inert regardless of what a sweep reported. A token appearing ten-plus times — a delegating agent's word for delegation, a reporting agent's word for its report — makes the assertion unconditionally true. Also watch for guards that loop over several files sharing one assertion: the token may occur once in one file and repeatedly in another, so the guard is live for one and inert for the other, and a sweep targeting either file alone scores it wrong. Anchor on the full sentence with its objects attached, or on a claim verified to occur exactly once.
-
-## Pattern
-
-When a feature adds a new path to a file that already declares the general form of a contract, a guard on the new path can be satisfied entirely by the pre-existing general statement. The guard looks live — a sweep that mutates the sentence it names does trip it — but the sentence it names belongs to the earlier feature, and the clause the new path actually depends on can be deleted with the guard still green. The new path is unguarded while the test suite reports it covered. This is distinct from the recurring multi-occurrence-token defect: here the assertion pins exactly one occurrence, and that occurrence is simply the wrong one. Ownership, not count, is what fails.
-
-A related failure in the same shape: a set of guards that all assert the *choice* a contract captures while none assert the *mechanism* the choice actuates. The command, call, or write that does the work is deletable with the whole suite green, because every assertion sits one level above it.
-
-## Impact
-
-The blast radius is the newest and least-reviewed code path, protected by the oldest and most-trusted assertion. Security boundaries are the worst case: a general prohibition declared once by an upstream feature reads as covering everything downstream, so the reviewer who confirms the boundary "is asserted" is confirming an earlier feature's work and inferring the rest. The inference is invisible in a green suite and survives into the next review as settled coverage.
-
-## Watch for
-
-Any feature that appends a section to a shared file whose earlier sections already state the contract in general terms — orchestrators, routers, and long-lived agent bodies attract this. For each guard, locate the line number of the text it pins and check which feature introduced it: if the pinned line predates the diff under review, the new path needs its own pin regardless of what the guard reports. Then ask, per acceptance criterion, which single line performs the work — delete exactly that line and confirm something fails. If the criterion's guards only cover configuration, consent, wording, or intent, the mechanism is unguarded.
+A guard module declaring its names are defined "once, here" while another module re-lists them as literals — the duplication is the defect, and the sweep failure is the symptom correctly reporting it. When replacing literals with a derived tuple, add a vacuity assert (`assert derived_list`), or an empty upstream list silently neuters the guard.
 
 ---
 
 ## Pattern
 
-A repository-wide sweep that enumerates candidates through `git ls-files` cannot see an
-untracked file. A new test module that itself violates the sweep — most often by writing a
-retired identifier into a docstring in order to explain it — is therefore green for its
-entire authoring life and turns red at `git add`. Every local run before the commit is
-honest, reproducible, and wrong. The implementer records a green suite in good faith, and
-the failure surfaces to whoever runs the suite next on a clean checkout.
+Prose contract guards are inert by default, in several recurring ways that all share one test: **before trusting any prose assertion, establish that it can fail independently, for the right reason, and that it is owned by the change it claims to cover.**
 
-The same visibility gap hides an empty directory: git tracks files, not directories, so a
-directory left behind by a test harness or a partial deletion is invisible to `git status`,
-and doubly invisible inside a gitignored tree.
+1. **Multi-occurrence literals.** An assertion that a literal is present somewhere in a whole document is inert wherever the literal occurs more than once — deleting the occurrence the test protects leaves a stray occurrence elsewhere. A token appearing many times (a delegating agent's word for delegation) makes the assertion unconditionally true. Anchor on the full sentence with its objects attached, or on a claim verified to occur exactly once, and scope assertions to the section or list item that carries the obligation rather than the flattened document.
+2. **Line-wrap sensitivity.** A regex spanning words that a reflow moves onto separate lines stops matching content that is still present. Normalize whitespace runs to single spaces before asserting on sentences; reserve raw-text assertions for literal tokens and frontmatter, where line structure is part of the contract.
+3. **Wrong ownership.** When a feature adds a new path to a file that already states the contract in general terms, a guard on the new path can be satisfied entirely by the pre-existing general statement — the assertion pins exactly one occurrence, but the wrong one. For each guard, check which feature introduced the pinned line; if it predates the diff under review, the new path needs its own pin. Relatedly, guards that all assert the *choice* a contract captures while none assert the *mechanism* leave the command, call, or write that does the work deletable with the whole suite green. Per acceptance criterion, delete the single line that performs the work and confirm something fails.
+4. **Count claims.** A guard keyed to the corrected string ("41 widgets") cannot match a stale restatement ("43 widgets") elsewhere on the surface. Match the claim's *shape* with a regex, read the value out of every restatement, and add the inverse assertion that at least one claim matches — or rewording the sentence out of existence silently disarms the guard.
 
 ## Impact
 
-The recorded test baseline is false, and it is false in the direction that hides work:
-"green" when the tree is red. Because the number is arithmetic-checked against a prediction
-(`baseline + new tests = final`), an off-by-one caused by a *pre-existing* test flipping to
-failing lands inside the rounding of the reconciliation and reads as confirmation. The
-reconciliation then certifies the wrong number. Downstream stages inherit a baseline that no
-one can reproduce, and the next implementer's honest count looks like a regression they
-caused.
-
-The tempting fix is worse than the defect: adding the new file to the sweep's exemption list
-silences the guard permanently to protect a docstring. A sweep that grows an exemption every
-time it fires stops sweeping.
+The guard reports green while the requirement it names is gone — worse than no test, because a green inert guard licenses the next editor to remove the real thing, and the blast radius is the newest, least-reviewed path protected by the oldest, most-trusted assertion. These defects arrive in cohorts: whoever wrote one such assertion wrote all of them, so fixing the instances that surface is not sweeping the class.
 
 ## Watch for
 
-Never accept a reported test count that was measured before the feature's own files were
-committed. Re-run the suite on a clean tree at the implement commit — `git stash` and run —
-and compare against the record; if the numbers differ, the reported run predates a `git add`.
-Treat a passed-count reconciliation that *matches its own prediction* as unverified rather
-than confirmed: it is evidence about arithmetic, not about the tree. Reconcile against a
-measurement, and state which commit it was measured at.
-
-When a sweep fires on a test module's own text, fix the text, not the sweep — the retired
-identifier belongs in exactly one module, and any other module naming it has forked the list
-the sweep exists to keep singular. Check for empty-directory residue with `find . -type d
--empty`, never with `git status`.
+Any assertion matching a short phrase against agent prose or rule files — count occurrences of every asserted literal in the normalized target first. Guards that loop over several files sharing one assertion (live for one file, inert for another). Only a deletion/negation mutation settles whether a guard bites.
 
 ---
 
 ## Pattern
 
-`_assert_once`-style guards pin one load-bearing statement and fail on zero or many
-occurrences. They are the right instrument for a directive that must exist exactly once, and
-the wrong instrument for a **count claim** — or any claim that is a *class* of sentence
-rather than one sentence. A guard keyed to the corrected string (`"41 widgets"`) cannot
-match a stale restatement (`"43 widgets"`), so it verifies only the sentence someone already
-remembered to fix and is blind, by construction, to every one they missed. The guard is
-green, the surface is wrong, and the guard is specifically the one written to prevent that.
+A mutation sweep that only breaks the phrase each guard *intends* to pin will systematically miss inert guards. The sweep must independently attempt to **negate each load-bearing sentence** — inverting an imperative to its opposite instruction models the real regression, and a deletion-only sweep never tries it.
 
 ## Impact
 
-Counts are restated: an inventory bullet, a prose paragraph, a directory-tree comment, a
-parenthetical. Fixing the one the reviewer read leaves the rest false while the test suite
-certifies the surface. The failure is self-concealing, because the guard's own name asserts
-the property it does not check, and it is most likely on precisely the documents where a
-count is load-bearing enough for someone to have written a guard.
+The verification claim inverts: "N/N killed, zero inert" is produced by a sweep that could not have detected the defect it is cited to rule out. Headline contracts are the likeliest casualties, because they get restated in prose most often, so their key tokens are exactly the ones that recur. The count is honestly arrived at and worthless.
 
 ## Watch for
 
-For any guard asserting a derived fact about a document, ask whether the document could state
-that fact **more than once**. If so, the guard must match the claim's *shape* — a regex over
-the pattern (`(\d+) widgets`) — and read the value out of it, so every restatement is
-verified and a stale one fails. Add the inverse assertion too: at least one claim must match,
-or rewording the sentence out of existence silently disarms the guard. Mutation-test both
-directions — plant a *stale* restatement elsewhere on the surface, not just a wrong value in
-the sentence the guard names. A guard that only catches mutations to the text it quotes is
-pinning text, not verifying a fact.
+Sweeps that damage only the named phrase; treat any "zero inert" claim as unverified until a negation sweep reproduces it. Anchor drift during the sweep is the harness being wrong, not the guard.
+
+---
+
+## Pattern
+
+A repository-wide sweep that enumerates candidates through `git ls-files` cannot see an untracked file. A new test module that itself violates the sweep (e.g., a retired identifier in a docstring) is green for its entire authoring life and turns red at `git add` — every local pre-commit run is honest, reproducible, and wrong. Similarly, git tracks files not directories, so empty-directory residue is invisible to `git status`.
+
+## Impact
+
+The recorded test baseline is false in the direction that hides work: "green" when the tree is red. An arithmetic-checked count reconciliation that matches its own prediction reads as confirmation while certifying the wrong number, and downstream stages inherit an unreproducible baseline.
+
+## Watch for
+
+Never accept a reported test count measured before the feature's own files were committed — re-run the suite on a clean tree at the implement commit and state which commit it was measured at. When a sweep fires on a test module's own text, fix the text, not the sweep: the identifier belongs in exactly one module. Check empty-directory residue with `find . -type d -empty`, never `git status`.
+
+---
+
+## Pattern
+
+When adjudicating whether a capability grant is genuinely required, the decisive evidence is not the strength of the justification — it is whether a sibling with the same job already operates without the grant. Look for the architectural provision first: the capability is often already supplied as an artifact by one privileged component (a path, a prepared tree, an evidence bundle), which is the non-shell equivalent a removal bar demands be named.
+
+## Impact
+
+Grant audits stall in argument about whether some command "might be needed", and the default resolution is retention with a comment — the exact anti-pattern a removal bar forbids. A single sibling precedent converts an unresolvable judgment call into a verified fact, and it usually reveals the grant was vestigial.
+
+## Watch for
+
+A family of agents where one holds a grant recorded as unclosable and the rest are assumed to need it too — check what the privileged one hands back. Conversely, when a plan asserts an agent uses a capability, verify against the prior body before building to match: a plan's claim about existing code is a hypothesis, and implementing to satisfy a false one manufactures a dependency that never existed. Reporting the plan's error is the correct move, not the insubordinate one.

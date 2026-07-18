@@ -22,6 +22,6 @@ docs/benchmarks/B001/runs/local/
 eval/runs/
 file-access-guard.ndjson
 .deploy-config.json
+dev/*
 
 .github
-dev/

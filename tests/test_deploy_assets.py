@@ -9,6 +9,7 @@ from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
+sys.path.insert(0, str(REPO_ROOT))  # deploy_agents.py lives at the repo root
 
 import asset_paths
 import deploy_agents as mod

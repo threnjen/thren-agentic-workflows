@@ -5,113 +5,89 @@
 **Problem**
 Retained eval artifacts can leak `harness` and `model` into ledgers or score history, which biases the grader and makes blind comparisons harder.
 
-**Root cause**
-The evaluation contract treated runtime identity as part of the grading evidence instead of keeping it separate from the retained artifacts.
-
 **Fix**
-Do not write runtime identity into `ledger-events.jsonl`, score history, rubric templates, or other retained grading artifacts. If comparison bookkeeping still needs harness/model, keep it outside those artifacts.
+Do not write runtime identity into `ledger-events.jsonl`, score history, rubric templates, or other retained grading artifacts. If comparison bookkeeping needs harness/model, keep it outside those artifacts.
 
 **Watch for**
 Any ledger schema, run template, or report contract that reintroduces `harness`, `model`, or similar runtime identity fields into retained evaluation evidence.
+
 ## If a fixed subprocess latency gate fails, profile interpreter resolution before the code
+
 **Problem**
-The propagated-guard 50 ms latency gate failed with medians of 84-383 ms, was risk-accepted, then silently raised to 90 ms, while the guard itself was blamed.
+A 50 ms subprocess latency gate failed with medians of 84–383 ms and the program under test was blamed.
 
 **Root cause**
-The gate invoked `python3`, which resolved through a pyenv shim — a shell script that re-resolves the interpreter on every call and alone costs ~50 ms (`python3 -c pass` is ~62 ms via shim, ~9 ms direct). The guard runtime is ~30 ms median through a resolved interpreter.
+The gate invoked bare `python3`, which resolved through a pyenv shim — a shell script that re-resolves the interpreter on every call and alone costs ~50 ms (`python3 -c pass` was ~62 ms via shim, ~9 ms direct). The program itself ran ~30 ms.
 
 **Fix**
-The gate now invokes `sys.executable` directly and passes at the original 50 ms threshold. Environment interpreter-resolution overhead is documented separately from guard cost.
+Invoke `sys.executable` directly; document environment interpreter-resolution overhead separately from program cost.
 
 **Watch for**
 Any subprocess benchmark on a pyenv/asdf machine that spawns bare `python3`/`node`/`ruby` — measure `<interpreter> -c pass` first to isolate shim cost before optimizing the program.
 
-## Hook commands with relative script paths brick sessions when cwd moves
+## If a hook command uses a relative script path, any subdirectory session is an outage
+
 **Problem**
-A `cd` into a subdirectory left the persistent shell cwd there; every subsequent tool call failed because PreToolUse hooks invoke `python3 .github/hooks/scripts/...` relative to cwd, and the fail-closed posture blocked all tools including the `cd` needed to recover.
+Generated hook wiring invoked its script via a repo-relative path. Any session whose working directory was not the repository root could not resolve the script, and the fail-closed posture then blocked every tool call — including the `cd` that would have recovered. Only a human running `cd` outside the agent could restore the session.
 
 **Root cause**
-Hook wiring uses repo-relative script paths that only resolve from the repo root.
+Claude Code and Codex both execute hook commands with the *session* working directory, not the project root. A relative path silently depends on where the session happens to be, and fail-closed turns that into a total outage.
 
-**Fix (pending)**
-Anchor hook commands with `$CLAUDE_PROJECT_DIR` or absolute paths in generated settings so hooks resolve from any cwd.
+**Fix**
+Anchor generated commands to the project root per harness — Claude: `$CLAUDE_PROJECT_DIR`; Codex: `$(git rev-parse --show-toplevel)` (no project-root variable exists); OpenCode: pin plugin `cwd` to the plugin `directory`. Source manifests stay relative; anchoring happens at emit time. The anchored form only works because these are shell-form commands — a test that executes the command without `shell=True` sees the quotes and `$VAR` literally.
 
 **Watch for**
-Generated hook/plugin wiring that assumes the repo root is the working directory; recovery requires the user to run `! cd <repo-root>` manually.
+Any hook command token that is a bare relative path, and any fail-closed guard whose failure mode is "blocks everything" rather than "blocks its own tool" — the recovery path must not itself require a blocked tool.
 
 ## Security caps must fail closed, not downgrade to warnings
+
 **Problem**
-The injection scanner treated its own scan-byte cap and encoded-candidate budget as permission to pass unassessed content with a warning (P2-SEC-02), and block redaction preserved attacker-controlled mapping keys (P2-SEC-01).
+An injection scanner treated its own scan-byte cap and encoded-candidate budget as permission to pass unassessed content with a warning, and block redaction preserved attacker-controlled mapping keys.
 
 **Root cause**
 Bounded-work limits were implemented as scan-effort limits rather than trust boundaries, and redaction tried to preserve output shape instead of replacing it.
 
 **Fix**
-Cap overflow (scan-cap or candidate-cap notices) now blocks with a fixed replacement; blocked output is replaced wholesale with a fixed runner-valid shape so no untrusted key, value, or primitive survives.
+Cap overflow blocks with a fixed replacement; blocked output is replaced wholesale with a fixed runner-valid shape so no untrusted key, value, or primitive survives.
 
 **Watch for**
 Any scanner/filter whose resource limit (bytes, candidates, depth, timeout) silently passes the unexamined remainder, and any redaction that recurses into attacker-controlled containers instead of replacing them.
 
 ## Substring-matched command rules generate constant false-positive prompts
-**Problem**
-Destructive-command `ask` rules matched fixed substrings anywhere in the Bash command text, so `npm test > /dev/null`, commit messages containing "rm -rf", `--no-truncate` flags, and `echo $PATH` all prompted for confirmation.
-
-**Root cause**
-Legacy `bash-safety.sh` patterns were ported verbatim to pass a parity gate; the planned soak-period tuning never happened. Fixed-string matchers cannot distinguish an executed command token from quoted text, option flags, or redirects to harmless devices.
-
-**Fix**
-Destructive matchers are anchored to the executed-command position (`(?:^|[;&|()])\s*(?:\S*/)?cmd\b`), device redirection exempts null/stdout/stderr/tty/zero, env-echo prompts only for credential-named variables, and lock-file rules are write-only (`"access": "write"`).
-
-**Watch for**
-Any new `bash_rules` entry using `fixed_string` for a word that can appear in ordinary text, and any read-side `ask` on files agents routinely inspect.
-
-## If a hook command uses a relative script path, any subdirectory session is an outage
 
 **Problem**
-Generated wiring invoked the guard as `python3 .github/hooks/scripts/file-access-guard.py`. Any session whose working directory was not the repository root could not resolve the script, the guard failed to launch, and the fail-closed posture then blocked every tool call — including the `cd` that would have restored the working directory. The session could only be recovered by a human running `cd` outside the agent.
+Destructive-command `ask` rules matched fixed substrings anywhere in the Bash command text, so redirects, commit messages quoting "rm -rf", option flags, and `echo $PATH` all prompted for confirmation.
 
 **Root cause**
-Claude Code and Codex both execute hook commands with the *session* working directory, not the project root. A relative path silently depends on where the session happens to be. Fail-closed turns that dependency from a degraded check into a total outage, so the blast radius is much larger than a normal missing-file bug.
+Fixed-string matchers cannot distinguish an executed command token from quoted text, option flags, or redirects to harmless devices.
 
 **Fix**
-Generated commands anchor the script path to the project root per harness, since there is no portable token: Claude uses `$CLAUDE_PROJECT_DIR`, Codex uses `$(git rev-parse --show-toplevel)` (Codex exposes no project-root variable), and OpenCode plugins pin `cwd` to the plugin `directory`. Source manifests stay relative so `_validate_hook_commands` can keep resolving them against the source tree; anchoring happens at emit time in `_project_root_hook_command`. Note the anchored form only works because these are *shell-form* commands — a test that executes the command without `shell=True` will see the quotes and `$VAR` literally.
+Anchor destructive matchers to the executed-command position (`(?:^|[;&|()])\s*(?:\S*/)?cmd\b`), exempt device redirection to null/stdout/stderr/tty/zero, prompt on env echo only for credential-named variables, and make lock-file rules write-only.
 
 **Watch for**
-Any hook command token that is a bare relative path, and any fail-closed guard whose failure mode is "blocks everything" rather than "blocks its own tool" — the recovery path must not itself require a blocked tool.
+Any command rule using a fixed string for a word that can appear in ordinary text, and any read-side `ask` on files agents routinely inspect.
 
 ## Review runtime inventory by content-bound digest, not by path list
 
 **Problem**
-An inventory containing only destination names can become stale when generated
-content or destination types change while retaining the same paths.
+An inventory containing only destination names can become stale when generated content or destination types change while retaining the same paths.
 
 **Fix**
-The Phase 04 runtime path emits home-relative classifications with generated-source
-fingerprints and binds operator review to their deterministic SHA-256 digest. It
-rebuilds that inventory immediately before mutation and fails closed on drift.
+The runtime deployment path emits home-relative classifications with generated-source fingerprints and binds operator review to their deterministic SHA-256 digest. It rebuilds the inventory immediately before mutation and fails closed on drift.
 
 **Watch for**
-Boolean confirmation flags, inventories keyed only by modification time, absolute
-home paths in normal output, or tests that treat simulated platform policy as live
-fresh-session evidence.
+Boolean confirmation flags, inventories keyed only by modification time, absolute home paths in normal output, or tests that treat simulated platform policy as live fresh-session evidence.
 
-## 2026-07-17 — Prose-guard tests match exact strings across the source's line wraps
+## Prose-guard tests match exact strings across the source's line wraps
 
 **Problem**
-Editing PR-review agent/skill prose broke `test_readiness_synthesis_agents.py` and
-`test_pr_review_orchestrator.py` even when the intended wording was present.
+Editing PR-review agent/skill prose broke `test_readiness_synthesis_agents.py` and `test_pr_review_orchestrator.py` even when the intended wording was present.
 
 **Root cause**
-These tests assert exact needle strings (`_assert_once`, `in body`) against the raw
-file text. A needle like `ask once the report is written` fails when a Markdown line
-wrap splits it as `...report\nis written`. The frontmatter `description` is also
-pinned (must contain `base commit` and `head commit`).
+These tests assert exact needle strings against raw file text, so a needle fails when a Markdown line wrap splits it across lines. Frontmatter `description` fields are also pinned.
 
 **Fix**
-Keep pinned phrases on a single unwrapped line, and when intentionally changing pinned
-wording, update the corresponding needle in the test. Retain required scope words in the
-agent description.
+Keep pinned phrases on a single unwrapped line; when intentionally changing pinned wording, update the corresponding needle in the test. Retain required scope words in agent descriptions.
 
 **Watch for**
-Any prose edit under `source_of_truth/agents/05*` or `skills/pr-review-*`: re-run both
-PR-review test modules and reflow so guarded phrases don't straddle a newline.
+Any prose edit under `source_of_truth/agents/05*` or `skills/pr-review-*`: re-run both PR-review test modules and reflow so guarded phrases don't straddle a newline.

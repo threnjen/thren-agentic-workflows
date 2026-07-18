@@ -55,6 +55,7 @@ CODEX_SKILLS_DIR = PORTS_DIR / "codex" / "skills"
 CURSOR_COMMANDS_DIR = PORTS_DIR / "cursor" / "commands"
 CURSOR_RULES_DIR = PORTS_DIR / "cursor" / "rules"
 GITHUB_PORT_DIR = PORTS_DIR / "github"
+DOT_GITHUB_DIR = REPO_ROOT / ".github"
 
 # Subdirectories mirrored verbatim to ports/github and .github. Anything else in
 # .github/ (e.g. workflows/) is never touched.
@@ -1211,6 +1212,21 @@ def _mirror_tree(source: Path, destination: Path) -> int:
 
     return changed
 
+
+def mirror_github_once() -> Dict[str, int]:
+    """Mirror the source subdirs verbatim to ports/github and .github.
+
+    Only `GITHUB_MIRRORED_SUBDIRS` are touched; anything else under the
+    destinations (e.g. `.github/workflows/`) is never enumerated or deleted.
+    """
+    changed = 0
+    for subdir in GITHUB_MIRRORED_SUBDIRS:
+        source = SOT_DIR / subdir
+        for destination_root in (GITHUB_PORT_DIR, DOT_GITHUB_DIR):
+            changed += _mirror_tree(source, destination_root / subdir)
+    return {"github_changed": changed}
+
+
 def propagate_once(verbose: bool = True) -> Dict[str, int]:
     agents = load_source_agents()
     instructions = load_instruction_docs()
@@ -1340,6 +1356,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
 
     learnings_result = propagate_learnings_once()
     cursor_rules_result = propagate_cursor_rules_once(instructions)
+    github_result = mirror_github_once()
 
     result = {
         "source_agents": len(agents),
@@ -1350,6 +1367,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         "cursor_changed": changed_cursor + cursor_rules_result["cursor_changed"],
         "skills_changed": changed_skills,
         "learnings_changed": learnings_result["learnings_changed"],
+        "github_changed": github_result["github_changed"],
         # Deletions are reported on their own keys rather than folded into the
         # `changed_*` counters, which already conflate writes with removals. This
         # follows the orphan-removal precedent: a run that
