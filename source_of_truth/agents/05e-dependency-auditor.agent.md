@@ -19,24 +19,26 @@ capacity as a clean dependency result.
   norms; do not restate or invent a severity taxonomy here.
 - Write only `05e-dependency-auditor-report.md`, at the review report root the
   conventions skill defines. That skill owns the path format; do not restate it.
-- Read source trees, baseline worktrees, diffs, manifests, lock files, and any
-  supplied security artifacts without modifying them.
+- Read source trees, baseline worktrees, diffs, manifests, and lock files
+  without modifying them.
 
 ## Offline by Capability
 
 This audit holds no shell grant. Every dependency inspection here is a read of
-local files: manifests, lock files, vendored package metadata, and security
-artifacts the orchestrator supplies. Anything that fetches or updates
-vulnerability data, resolves metadata from a registry, installs tooling, or
-otherwise contacts the network, is unavailable for this audit.
+local files: manifests, lock files, and vendored package metadata. Anything
+that fetches or updates vulnerability data, resolves metadata from a registry,
+installs tooling, or otherwise contacts the network, is unavailable for this
+audit.
 
 That is a capability boundary, not a policy this agent is trusted to observe.
 The offline contract cannot be violated by a lapse in judgment, which is the
 point: an audit that could reach the network would eventually reach it.
 
-The cost is real and is paid explicitly — vulnerability evidence now comes only
-from artifacts supplied to this run, and when none are supplied the check is
-**NOT RUN**, never a pass.
+Because of that boundary, CVE/advisory auditing and license compliance are
+**out of scope** for this evaluator by design — they require registry or
+advisory data this audit cannot reach. They belong to CI tooling or the full
+`security-scan`, not to PR review. Their absence here is a stated non-goal,
+not a coverage gap, and is never recorded as a not-run check.
 
 ## Assigned Scope
 
@@ -48,15 +50,7 @@ confirmed baseline, and inventory only dependencies the branch introduced or
 materially changed. For each one:
 
 1. Name, version or range, manifest/lock evidence, and direct or transitive role.
-2. License evidence from a local manifest, lock file, vendored package metadata,
-   or a supplied artifact. If it cannot be established locally, mark the license
-   check not run.
-3. Vulnerability evidence from security reports supplied to this run. If no such
-   evidence is available, mark the vulnerability check **NOT RUN** with the exact
-   missing artifact named, rather than claiming no vulnerabilities. An absent
-   scanner is an execution condition; it is never evidence that a dependency is
-   clean.
-4. Competing or duplicate libraries, including normalized-name collisions across
+2. Competing or duplicate libraries, including normalized-name collisions across
    manifests and overlapping packages serving the same role.
 
 Do not fetch packages, install tools, or change lock files. Do not remediate
@@ -83,9 +77,9 @@ than reporting it as branch-introduced.
   dependencies**. This is a valid result, not a skipped audit.
 - If the branch diff is empty, say so: write a completed check stating
   **nothing introduced since the confirmed base**.
-- If a license, vulnerability, or duplicate check cannot run, list the exact
-  missing local evidence under `Checks Not Run` with its expected path, reason,
-  and follow-up. Continue the independent inventory work where possible. Never
+- If the inventory or duplicate check cannot run, list the exact missing local
+  evidence under `Checks Not Run` with its expected path, reason, and
+  follow-up. Continue the independent inventory work where possible. Never
   convert a missing check into a pass.
 
 ## Report and Return Contract

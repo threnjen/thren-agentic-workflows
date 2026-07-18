@@ -196,11 +196,21 @@ class OfflineDependencyAuditTests(unittest.TestCase):
             r"contacts the network, is unavailable for this audit",
         )
 
-    def test_no_vulnerability_claim_without_evidence(self) -> None:
+    def test_cve_and_license_auditing_are_declared_out_of_scope(self) -> None:
+        """License/CVE checks were removed from `05e`: offline, they could never
+        complete and permanently capped the verdict. The body must declare them
+        out of scope by design -- not merely omit them -- so their absence reads
+        as a stated non-goal instead of a coverage gap, and must not resurrect
+        them as scope items or not-run checks."""
+        prose = _prose("05e-dependency-auditor")
         self.assertRegex(
-            _prose("05e-dependency-auditor"),
-            r"rather than claiming no vulnerabilities",
+            prose,
+            r"CVE/advisory auditing and license compliance are \*\*out of "
+            r"scope\*\*",
         )
+        self.assertRegex(prose, r"never recorded as a not-run check")
+        self.assertNotRegex(prose, r"[Ll]icense evidence")
+        self.assertNotRegex(prose, r"[Vv]ulnerability evidence")
 
     def test_the_audit_declares_no_shell_grant(self) -> None:
         """`05e` lost `execute`, so its body must not still promise to run an

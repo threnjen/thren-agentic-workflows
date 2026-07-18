@@ -97,3 +97,17 @@ Keep pinned phrases on a single unwrapped line; when intentionally changing pinn
 
 **Watch for**
 Any prose edit under `source_of_truth/agents/05*` or `skills/pr-review-*`: re-run both PR-review test modules and reflow so guarded phrases don't straddle a newline.
+
+## Never give an offline agent a required check whose evidence cannot exist locally
+
+**Problem**
+`05e-dependency-auditor` required license and CVE checks, but its offline-by-capability contract meant the evidence (registry metadata, advisory data) could never be obtained. Any branch adding a dependency recorded them as not-run, and the no-GO-with-missing-checks rule made GO permanently unreachable.
+
+**Root cause**
+A required check and a capability boundary composed into a structural dead end: the check was demanded by the verdict rules but unrunnable by design, with no pipeline step that could ever supply the evidence.
+
+**Fix**
+Removed license/CVE auditing from `05e` scope entirely and declared it an explicit non-goal in the agent body — CVE and license verification belong to CI tooling or the full `security-scan`, not PR review. Out-of-scope is stated, not silently omitted, so the absence reads as a design decision rather than a coverage gap.
+
+**Watch for**
+Any evaluator whose contract marks a check "NOT RUN when no artifact is supplied" while nothing in the pipeline produces or documents how to supply that artifact — that check will block or condition every verdict forever. Either delete the check, or build the evidence supply path; never leave a permanently unsatisfiable required check.
