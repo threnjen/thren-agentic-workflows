@@ -29,7 +29,7 @@ RETIRED_ORCHESTRATOR = (
     REPO_ROOT / "source_of_truth" / "agents" / "05-phase-final-review.agent.md"
 )
 
-FIXTURE = REPO_ROOT / "dev" / "pr-review" / "fixtures" / "pinned-diff-range.md"
+FIXTURE = REPO_ROOT / "tests" / "fixtures" / "pr-review" / "pinned-diff-range.md"
 
 # Feature 03's canonical report contract. The report root is declared there;
 # this module reads it rather than restating it.
@@ -155,12 +155,12 @@ def test_fixture_records_why_the_pair_was_chosen() -> None:
 
 
 def test_fixture_is_actually_tracked_by_git() -> None:
-    """`.gitignore:5` is `dev/*`. Without an un-ignore rule the fixture is
-    silently untracked and AC13 fails invisibly -- the file is on the
-    implementer's disk and in nobody else's clone."""
-    tracked = _git("ls-files", "dev/pr-review/fixtures/").splitlines()
+    """The fixture lives under `tests/fixtures/`, outside the gitignored `dev/`
+    tree, precisely so it cannot be silently untracked -- a fixture only on the
+    implementer's disk and in nobody else's clone fails AC13 invisibly."""
+    tracked = _git("ls-files", "tests/fixtures/pr-review/").splitlines()
 
-    assert "dev/pr-review/fixtures/pinned-diff-range.md" in tracked
+    assert "tests/fixtures/pr-review/pinned-diff-range.md" in tracked
 
 
 def test_run_output_root_stays_ignored() -> None:

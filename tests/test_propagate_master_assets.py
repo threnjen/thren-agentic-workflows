@@ -100,6 +100,34 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertTrue((repo_root / "ports" / "opencode" / "skills" / "demo-skill" / "SKILL.md").exists())
             self.assertTrue((repo_root / "ports" / "codex" / "skills" / "demo-skill" / "SKILL.md").exists())
 
+    def test_propagate_learnings_mirrors_to_claude_and_codex(self) -> None:
+        """Codex absorbs the learnings independently: nothing may plan on a
+        consumer repo's `.github/learnings/` being present, so the learnings are
+        emitted into each harness's own root and deployed from there."""
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            learnings_dir = repo_root / "source_of_truth" / "learnings"
+            learnings_dir.mkdir(parents=True, exist_ok=True)
+            (learnings_dir / "demo-learnings.md").write_text(
+                "# Demo Learnings\n\nA pattern.\n", encoding="utf-8"
+            )
+
+            result = mod.propagate_learnings_once()
+
+            self.assertEqual(result["claude_changed"], 1)
+            self.assertEqual(result["codex_changed"], 1)
+            self.assertEqual(result["learnings_changed"], 2)
+            for harness in ("claude", "codex"):
+                copy = repo_root / "ports" / harness / "learnings" / "demo-learnings.md"
+                self.assertTrue(copy.exists(), f"{harness} learnings copy missing")
+                self.assertTrue(
+                    copy.read_text(encoding="utf-8").startswith(
+                        mod.GENERATED_SKILL_HEADER.strip("\n")
+                    ),
+                    f"{harness} learnings copy is unmarked and thus unprunable",
+                )
+
     def test_pr_review_evaluator_roster_is_fully_enumerated(self) -> None:
         """AC8: no evaluator may be omitted from propagation enumeration.
 

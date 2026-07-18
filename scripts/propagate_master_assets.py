@@ -47,6 +47,7 @@ CLAUDE_AGENTS_DIR = PORTS_DIR / "claude" / "agents"
 CLAUDE_COMMANDS_DIR = PORTS_DIR / "claude" / "commands"
 CLAUDE_SKILLS_DIR = PORTS_DIR / "claude" / "skills"
 CLAUDE_LEARNINGS_DIR = PORTS_DIR / "claude" / "learnings"
+CODEX_LEARNINGS_DIR = PORTS_DIR / "codex" / "learnings"
 OPENCODE_AGENTS_DIR = PORTS_DIR / "opencode" / "agents"
 OPENCODE_SKILLS_DIR = PORTS_DIR / "opencode" / "skills"
 CODEX_AGENTS_DIR = PORTS_DIR / "codex" / "agents"
@@ -1054,26 +1055,35 @@ def propagate_skills_once() -> Dict[str, int]:
 
 def propagate_learnings_once() -> Dict[str, int]:
     if not SOT_LEARNINGS_DIR.exists():
-        return {"claude_changed": 0, "learnings_changed": 0, "learning_orphans_removed": 0}
+        return {
+            "claude_changed": 0,
+            "codex_changed": 0,
+            "learnings_changed": 0,
+            "learning_orphans_removed": 0,
+        }
 
-    CLAUDE_LEARNINGS_DIR.mkdir(parents=True, exist_ok=True)
+    # Codex gets its own copy: nothing may plan on reading `.github/learnings/`
+    # from a consumer repo, so each harness absorbs the learnings independently.
+    changed_per_root = {CLAUDE_LEARNINGS_DIR: 0, CODEX_LEARNINGS_DIR: 0}
+    orphans = 0
+    for learnings_dir in changed_per_root:
+        learnings_dir.mkdir(parents=True, exist_ok=True)
+        expected: set[Path] = set()
+        for source_file in sorted(SOT_LEARNINGS_DIR.glob("*.md")):
+            dest = learnings_dir / source_file.name
+            expected.add(dest)
+            # Marked so deploy_assets can prove ownership of the runtime copy.
+            content = _with_generated_marker(_read_text(source_file), GENERATED_SKILL_HEADER)
+            if _write_if_changed(dest, content):
+                changed_per_root[learnings_dir] += 1
+        orphans += _prune_orphaned_outputs(
+            learnings_dir, "*.md", expected, GENERATED_SKILL_HEADER
+        )
 
-    changed_claude = 0
-    expected: set[Path] = set()
-    for source_file in sorted(SOT_LEARNINGS_DIR.glob("*.md")):
-        dest = CLAUDE_LEARNINGS_DIR / source_file.name
-        expected.add(dest)
-        # Marked so deploy_assets can prove ownership of the runtime copy.
-        content = _with_generated_marker(_read_text(source_file), GENERATED_SKILL_HEADER)
-        if _write_if_changed(dest, content):
-            changed_claude += 1
-
-    orphans = _prune_orphaned_outputs(
-        CLAUDE_LEARNINGS_DIR, "*.md", expected, GENERATED_SKILL_HEADER
-    )
     return {
-        "claude_changed": changed_claude,
-        "learnings_changed": changed_claude,
+        "claude_changed": changed_per_root[CLAUDE_LEARNINGS_DIR],
+        "codex_changed": changed_per_root[CODEX_LEARNINGS_DIR],
+        "learnings_changed": sum(changed_per_root.values()),
         "learning_orphans_removed": orphans,
     }
 
@@ -1362,7 +1372,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         "source_agents": len(agents),
         "claude_changed": changed_claude + skill_result["claude_changed"] + learnings_result["claude_changed"],
         "opencode_changed": changed_opencode + skill_result["opencode_changed"],
-        "codex_changed": changed_codex + skill_result["codex_changed"],
+        "codex_changed": changed_codex + skill_result["codex_changed"] + learnings_result["codex_changed"],
         "codex_profiles_changed": changed_codex_profiles,
         "cursor_changed": changed_cursor + cursor_rules_result["cursor_changed"],
         "skills_changed": changed_skills,

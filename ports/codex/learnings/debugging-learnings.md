@@ -1,0 +1,57 @@
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
+# Debugging Learnings
+
+## If Codex Agents Can't Find Their Subagents
+
+**Problem**: An orchestrator references a subagent by name but Codex cannot spawn it, even though the TOML file exists in `codex/agents/`.
+
+**Root cause**: `~/.codex/agents/` symlinks were created under old filenames; the propagation script later renamed non-user-invocable agents to the `z-` prefix, breaking the symlinks with no replacements created.
+
+**Fix**:
+1. Remove broken symlinks: `for link in ~/.codex/agents/*.toml; do [ -L "$link" ] && [ ! -f "$(readlink "$link")" ] && rm "$link"; done`
+2. Re-create idempotently: `for toml in "$REPO_ROOT"/codex/agents/*.toml; do ln -sfn "$toml" "$HOME/.codex/agents/$(basename "$toml")"; done`
+
+**Watch for**: Codex loads agents by matching the TOML `name` field against what the orchestrator says. Both the symlink filename and the `name` value must use the propagated (`z-`-prefixed) identifier, not the original `.github/agents/` slug.
+
+## If Codex Subagent Invocations Seem To Do Nothing
+
+**Problem**: An orchestrator's instructions say to spawn a subagent but nothing happens, or the orchestrator handles the task itself.
+
+**Root cause**: Codex multi-agent spawning is native — the runtime matches the agent name string against loaded TOML `name` fields. If the agent is not loaded (missing or broken symlink), the invocation silently fails. Check `ls -la ~/.codex/agents/` for `->` targets that don't exist.
+
+**Watch for**: If the `[SUBAGENT-MODE]` invocation syntax looks right but spawning fails, the issue is almost always the agent not being loaded, not the invocation language.
+
+## If a Codex Orchestrator's Delegate Says a Subagent Tool "Is Not Exposed"
+
+**Problem**: A depth-1 agent (spawned by an orchestrator) reports its own subagent tool unavailable and does the work inline instead.
+
+**Root cause**: Codex `agents.max_depth` defaults to `1`. An orchestrator → delegate → sub-delegate chain needs depth 2, so the deepest spawn is blocked and the model falls back to inline work — output indistinguishable from real delegation.
+
+**Fix**: Add to `~/.codex/config.toml`:
+
+```toml
+[agents]
+max_depth = 2
+```
+
+**Watch for**: `max_depth = 2` is the minimum for a two-level pipeline and the recommended setting; going higher risks runaway fan-out. This is a global operator setting — no repository artifact can enforce it.
+
+## If a propagated agent delegates to a name that does not exist, check how the reference map is keyed
+
+**Problem**: A propagated orchestrator's fan-out named agents that existed nowhere in the root it shipped to — sibling references by slug survived the rewrite verbatim while the root filed those agents under different identifiers.
+
+**Root cause**: `_build_agent_reference_map` keys on `agent.name` — the *display name* — so only display-name references are rewritten to each root's identifier. A slug matches no key, so `_rewrite_agent_references` silently no-ops. The convention "reference siblings by display name" was real, load-bearing, and enforced by nothing.
+
+**Fix**: Reference siblings by backticked display name in the source — the only harness-neutral form, since each root builds its own map. Do **not** add slug keys to the reference map: it uses naive `str.replace`, so a slug key also rewrites report filenames and source paths containing the slug.
+
+**Watch for**: A rewrite that cannot fail is a rewrite that cannot be trusted. Any name-translation step that silently no-ops on a miss needs a resolution assertion downstream (`test_no_generated_body_references_an_agent_by_unrewritten_slug`). Per-feature tests will not catch this — the defect exists only in the *relationship* between a body and the root it lands in. The guard must compare against the set of agents that root actually *renames*: most slugs equal their identifier and those references are correct.
+
+## If code deletes files, validate the root before enumerating — not the leaf before unlinking
+
+**Problem**: An orphan-pruning sweep guarded every leaf it deleted (symlink check, marker check) but never checked the directory it enumerated. With a generated root itself symlinked outside the repository, every child passed all leaf checks and the sweep unlinked files outside the repo. The `rmtree` variant was worse: the marker guard read one file while the deletion was recursive.
+
+**Root cause**: Leaf-level validation answers "is this specific thing safe to delete", never "am I standing in the right place". Only the second is a containment property.
+
+**Fix**: Resolve the enumeration root and assert it is inside the target root *before* globbing; fail loudly rather than skipping. Resolution must cover the whole path — a symlinked *parent* with a real leaf directory defeats `directory.is_symlink()` while still escaping.
+
+**Watch for**: Reversibility asymmetry decides severity — a bad write is undone by re-running propagation; a bad delete is gone. The regression test must include the symlinked-parent case, and must prove both that the guard refuses *and* that the legitimate in-root sweep still prunes — a containment check that bricks the feature will be reverted by whoever hits it next.

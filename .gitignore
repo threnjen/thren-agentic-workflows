@@ -2,14 +2,11 @@
 .venv/
 .coverage
 .generated-global-hooks/
+# PR Review run output lands under `dev/pr-review/<base-sha-short>-<UTC-timestamp>/`
+# and stays ignored with the rest of dev/. The pinned base/head fixture lives at
+# `tests/fixtures/pr-review/pinned-diff-range.md`, outside dev/, so it needs no
+# carve-out here.
 dev/*
-# PR Review: track the pinned base/head fixture, ignore run output. The report
-# root is `dev/pr-review/<base-sha-short>-<UTC-timestamp>/`, which stays ignored
-# by `dev/pr-review/*` -- only `fixtures/` is un-ignored back in.
-!dev/pr-review/
-dev/pr-review/*
-!dev/pr-review/fixtures/
-!dev/pr-review/fixtures/**
 __pycache__/
 *.pyc
 
@@ -22,6 +19,5 @@ docs/benchmarks/B001/runs/local/
 eval/runs/
 file-access-guard.ndjson
 .deploy-config.json
-dev/*
 
 .github

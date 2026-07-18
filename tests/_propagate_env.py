@@ -38,6 +38,7 @@ def repo_dir_overrides(root: Path) -> dict:
         "OPENCODE_AGENTS_DIR": ports / "opencode" / "agents",
         "OPENCODE_SKILLS_DIR": ports / "opencode" / "skills",
         "CODEX_AGENTS_DIR": ports / "codex" / "agents",
+        "CODEX_LEARNINGS_DIR": ports / "codex" / "learnings",
         "CODEX_PROFILES_DIR": ports / "codex" / "profiles",
         "CODEX_SKILLS_DIR": ports / "codex" / "skills",
         "CURSOR_COMMANDS_DIR": ports / "cursor" / "commands",

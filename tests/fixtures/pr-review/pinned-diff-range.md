@@ -21,8 +21,8 @@ packaging metadata, and docs — a representative spread for the evaluator roste
 ## Usage
 
 Run `05 PR - Review` with the base and head SHAs above. Reports land under
-`dev/pr-review/<base-sha-short>-<UTC-timestamp>/`, which stays gitignored; only
-this `fixtures/` directory is tracked.
+`dev/pr-review/<base-sha-short>-<UTC-timestamp>/`, which stays gitignored; this
+fixture lives under `tests/fixtures/`, outside `dev/`, so it stays tracked.
 
 Do not re-point this fixture: tests pin both SHAs and the range's shape
 (`tests/test_pr_review_orchestrator.py`).

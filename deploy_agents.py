@@ -61,7 +61,11 @@ def harness_mappings(
     if harness == "codex":
         base = root("CODEX_HOME", ".codex")
         # codex profiles/ has no documented runtime destination and is not deployed.
-        return [(port / "agents", base / "agents"), (port / "skills", home / ".agents" / "skills")]
+        return [
+            (port / "agents", base / "agents"),
+            (port / "skills", home / ".agents" / "skills"),
+            (port / "learnings", base / "learnings"),
+        ]
     if harness == "opencode":
         base = root("OPENCODE_CONFIG_DIR", Path(".config") / "opencode")
         return [(port / sub, base / sub) for sub in ("agents", "skills")]

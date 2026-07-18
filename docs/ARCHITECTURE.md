@@ -57,7 +57,7 @@ flowchart LR
     Author[Edit source_of_truth files] --> Watcher[VS Code watch task or --once]
     Watcher --> Script[propagate_master_assets.py]
     Script --> ClaudeOut[ports/claude agents commands skills learnings]
-    Script --> CodexOut[ports/codex agents profiles skills TOML]
+    Script --> CodexOut[ports/codex agents profiles skills learnings TOML]
     Script --> OpenCodeOut[ports/opencode agents skills]
     Script --> CursorOut[ports/cursor commands rules]
     Script --> GithubPort[ports/github verbatim mirror]

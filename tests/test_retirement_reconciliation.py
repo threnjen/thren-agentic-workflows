@@ -549,7 +549,7 @@ def test_gitignore_tracks_the_pr_review_fixture_and_ignores_run_output() -> None
     commit. The temporary file is the only way to observe traversal; it lands in
     the ignored area under test and is removed unconditionally.
     """
-    fixture = "dev/pr-review/fixtures/pinned-diff-range.md"
+    fixture = "tests/fixtures/pr-review/pinned-diff-range.md"
     tracked = subprocess.run(
         ["git", "ls-files", "--error-unmatch", fixture],
         cwd=REPO_ROOT,
@@ -562,14 +562,14 @@ def test_gitignore_tracks_the_pr_review_fixture_and_ignores_run_output() -> None
 
     # The check above reads the index, which `.gitignore` cannot affect: an
     # already-tracked file stays tracked whatever the rules say. It proves the
-    # fixture is committed; it proves nothing about the un-ignore rule that lets
+    # fixture is committed; it proves nothing about whether the rules let
     # the *next* fixture file be added. Only a new path exercises that, so both
     # directions are observed the same way -- through traversal.
     assert _git_sees(
-        "dev/pr-review/fixtures/mutation-probe.md", cleanup=None
+        "tests/fixtures/pr-review/mutation-probe.md", cleanup=None
     ), (
-        "a new file under dev/pr-review/fixtures/ is ignored -- the fixture "
-        "directory's un-ignore rule is gone, so the fixture cannot be maintained"
+        "a new file under tests/fixtures/pr-review/ is ignored -- the fixture "
+        "directory has become untrackable, so the fixture cannot be maintained"
     )
     assert not _git_sees(
         "dev/pr-review/abc1234-20260716T000000Z/readiness-report.md",
@@ -739,7 +739,7 @@ def test_retired_phase_shaped_fixture_is_gone() -> None:
     fixture tree. Its actual consumers were the five phase-shaped evaluators,
     which feature `02` deleted -- and its `PHASE_05a`/`PHASE_05b` pseudo-subphase
     shape is the phase premise this whole rescope retired. Its replacement is
-    `dev/pr-review/fixtures/pinned-diff-range.md`.
+    `tests/fixtures/pr-review/pinned-diff-range.md`.
     """
     assert not (REPO_ROOT / "dev" / "phase-final-review").exists(), (
         "the phase-shaped fixture tree survives"

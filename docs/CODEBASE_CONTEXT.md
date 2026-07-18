@@ -35,7 +35,7 @@ source_of_truth/                           # THE authoring surface
   hooks/                                   # defunct injection scanner (DEFUNCT.md)
 ports/                                     # GENERATED — do not hand-edit
   claude/  {agents, commands, skills, learnings}
-  codex/   {agents, profiles, skills}      # TOML agents; profiles/ not deployed
+  codex/   {agents, profiles, skills, learnings}   # TOML agents; profiles/ not deployed
   opencode/{agents, skills}
   cursor/  {commands, rules}               # commands=*.md, rules=*.mdc
   github/  {agents, hooks, instructions, learnings, skills}   # verbatim mirror

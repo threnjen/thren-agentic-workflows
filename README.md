@@ -77,7 +77,7 @@ generated skill directory). Hand-maintained files are never touched.
 │   └── hooks/                      # Defunct prompt-injection scanner (inert)
 ├── ports/                          # Generated outputs — do not edit by hand
 │   ├── claude/                     # agents, commands, skills, learnings
-│   ├── codex/                      # agents, profiles, skills (TOML agents)
+│   ├── codex/                      # agents, profiles, skills, learnings (TOML agents)
 │   ├── opencode/                   # agents, skills
 │   ├── cursor/                     # commands, rules (.mdc)
 │   └── github/                     # verbatim mirror of the 5 source subdirs
