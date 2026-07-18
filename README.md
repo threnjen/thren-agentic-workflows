@@ -51,17 +51,6 @@ Both steps are safe by construction: a destination file is only ever overwritten
 or pruned when it positively carries a generated marker (or lives inside a
 generated skill directory). Hand-maintained files are never touched.
 
-## Current Inventory
-
-- 41 source agent definitions under `source_of_truth/agents/` (39 `*.agent.md`
-  plus `docs-writer.md` and `prod-code-review.md`, which are plain `.md` but still
-  loaded as agents)
-- 24 shared skills under `source_of_truth/skills/`
-- 15 shared instruction files under `source_of_truth/instructions/`
-- 4 learnings files under `source_of_truth/learnings/`
-- A defunct prompt-injection scanner under `source_of_truth/hooks/` (retained,
-  wired nowhere; see `source_of_truth/hooks/DEFUNCT.md`)
-
 ## Repository Structure
 
 ```text
@@ -97,20 +86,9 @@ generated skill directory). Hand-maintained files are never touched.
 └── .vscode/tasks.json              # One-shot + watch tasks for propagate and deploy
 ```
 
-## Platform Model
-
 `source_of_truth/` is the only authoring surface. Everything under `ports/` and the
-real `.github/` mirror are generated outputs.
-
-| Surface | Role | Notes |
-|---|---|---|
-| `source_of_truth/` | Source of truth | Agents, skills, instructions, learnings, hooks authored here first. |
-| `ports/claude/` | Generated output | Agents rewritten into Claude format with applicable instructions inlined; plus commands, skills, learnings. |
-| `ports/codex/` | Generated output | TOML agents; skills. `profiles/` is generated but not deployed. |
-| `ports/opencode/` | Generated output | Agents rewritten into OpenCode frontmatter/permission blocks; skills. |
-| `ports/cursor/` | Generated output | User-invocable agents → `commands/*.md`; instructions/learnings → `rules/*.mdc`. |
-| `ports/github/` | Generated mirror | Verbatim copy of the five source subdirs. |
-| `.github/` | Deployed mirror | Real mirror of `ports/github` in this repo, for GitHub Copilot. |
+real `.github/` mirror are generated outputs — the per-surface details live in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Prerequisites
 
@@ -162,7 +140,7 @@ reference and [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for failure mod
 
 ### Agent system
 
-`source_of_truth/agents/` contains 41 agent definitions following an orchestrator +
+`source_of_truth/agents/` contains 41 source agent definitions following an orchestrator +
 subagent pattern: the project planning pipeline (planner, refiner, decomposer, phase
 executor), the feature implementation pipeline (plan expander, implementer, reviewer,
 QA writer), PR Review orchestration and evaluators, evaluation agents, audit

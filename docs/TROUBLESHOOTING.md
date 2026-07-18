@@ -132,6 +132,23 @@ dangling) pointing into this repo.
 
 ### Symptom
 
+`[tools] WARNING: <name> could not be set up (...). Continuing without it` during deploy.
+
+### Cause
+
+Deploy tried to bootstrap an optional companion tool (code-review-graph or Context7)
+and the prerequisite was missing or the installer failed — for example, no `npx` on
+PATH means Node.js is not installed, so Context7 cannot be configured; no `pip`/`pipx`
+means code-review-graph cannot be installed.
+
+### Fix
+
+- The warning is non-blocking: agent assets still deployed. Install the missing
+  prerequisite (Node.js for Context7; pip or pipx for code-review-graph) and rerun
+  deploy, or pass `--skip-tools` to silence the bootstrap entirely.
+
+### Symptom
+
 A harness cannot see a deployed skill or agent.
 
 ### Cause

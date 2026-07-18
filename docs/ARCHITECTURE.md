@@ -95,6 +95,12 @@ a fail-closed skip is visible, not silent. The `github` harness is the one excep
 its mirrored tree is copied verbatim (no per-file marker), so it is treated as
 unconditionally managed within the five mirrored subdirs.
 
+Before deploying assets (unless `--skip-tools` is passed), deploy bootstraps two
+optional companion tools: code-review-graph (installed via `pip`/`pipx`, configured
+with `code-review-graph install`) and the Context7 MCP server (configured via
+`npx ctx7 setup`). Every outcome is reported; a failed bootstrap prints a warning
+with the reason and never aborts asset deployment.
+
 ## Major Components
 
 ### `source_of_truth/`
@@ -202,7 +208,10 @@ flowchart TD
 
 - Python standard library only for both scripts; no project package manifest is required.
 - VS Code task integration via `.vscode/tasks.json` for propagate (once/watch) and deploy (watch).
-- Code-review-graph MCP as a review/exploration aid (see `AGENTS.md`).
+- Code-review-graph MCP as a review/exploration aid (see `AGENTS.md`); auto-installed
+  by the deploy script when absent.
+- Context7 MCP for current library documentation; auto-configured by the deploy script
+  (requires Node.js for `npx`).
 - Claude Code, Codex, OpenCode, Cursor, and GitHub Copilot as the deployment targets.
 
 ## Design Decisions

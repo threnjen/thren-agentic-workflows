@@ -71,7 +71,13 @@ python3 deploy_agents.py --all
 python3 deploy_agents.py --list     # show harnesses and resolved destinations
 python3 deploy_agents.py --watch    # maintainer: auto-deploy on ports/ change
 python3 deploy_agents.py --no-save  # do not persist the harness selection
+python3 deploy_agents.py --skip-tools  # skip companion-tool install/config
 ```
+
+Unless `--skip-tools` is passed, deploy also bootstraps two optional companion tools:
+code-review-graph (via `pip`/`pipx`, then `code-review-graph install`) and the Context7
+MCP server (via `npx ctx7 setup`, requires Node.js). Both are best-effort — a failure
+prints a `[tools] WARNING` with the reason and never blocks asset deployment.
 
 `deploy_agents.py` lives at the repository root (not under `scripts/`). The first
 interactive run asks which harnesses you use and saves the choice to
@@ -126,8 +132,11 @@ Python regression tests live under `tests/` and cover both the transform and dep
 scripts. Run them with the environment's Python:
 
 ```bash
-.venv/bin/python -m pytest tests/
+uv run pytest tests/
 ```
+
+(`.venv/bin/python -m pytest tests/` works too; bare `python -m pytest` may fail if
+pytest is not installed in your base interpreter.)
 
 Validation sequence:
 

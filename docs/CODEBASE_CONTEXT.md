@@ -58,7 +58,9 @@ eval/ benchmarks/ packages/ tests/
 - Transform: `python3 scripts/propagate_master_assets.py --once` (default) or `--watch`.
   Runs to a fixed point via `propagate_until_converged` (max 25 passes).
 - Transform targets: `ports/{claude,codex,opencode,cursor}` plus `ports/github` and `.github/`.
-- Deploy: `python3 deploy_agents.py [--harness a,b | --all | --watch | --list | --no-save]`.
+- Deploy: `python3 deploy_agents.py [--harness a,b | --all | --watch | --list | --no-save | --skip-tools]`.
+- Deploy also bootstraps companion tools (code-review-graph via pip/pipx, Context7 via
+  `npx ctx7 setup`) unless `--skip-tools`; failures warn and never block deployment.
 - Deploy destinations:
   - claude → `$CLAUDE_CONFIG_DIR` or `~/.claude` (agents, commands, skills, learnings)
   - codex → `$CODEX_HOME` or `~/.codex` (agents) + `~/.agents/skills` (skills); profiles not deployed
@@ -98,7 +100,8 @@ eval/ benchmarks/ packages/ tests/
 ## Testing
 
 - Python regression tests under `tests/` cover both scripts.
-- Run with `.venv/bin/python -m pytest tests/` (or the runner available in your env).
+- Run with `uv run pytest tests/` (or `.venv/bin/python -m pytest tests/`); bare
+  `python -m pytest` may lack pytest.
 - `tests/_propagate_env.py` redirects the propagator's directory globals to a temp tree
   so tests never read/write the real repo.
 
