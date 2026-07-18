@@ -267,7 +267,8 @@ def test_checks_not_run_section_is_mandatory_and_names_reasons() -> None:
     )
     _assert_once(
         prose,
-        "severity-ordered Blocking List, `Checks Not Run`, Coverage and Evidence",
+        'severity-ordered "Things to Look At Before Opening" list, `Checks Not '
+        "Run`, Coverage and Evidence",
         "the template section reserving Checks Not Run",
     )
     # The classification rule, pinned whole. A loop over the bare tokens passed a
@@ -415,7 +416,7 @@ def test_posting_path_honors_the_three_upfront_consent_settings() -> None:
 
     _assert_once(
         prose,
-        "Ask how the readiness report should reach the pull request: **post "
+        "Ask how the readiness report should reach that pull request: **post "
         "automatically**, **ask once the report is written**, or **never**",
         "the upfront consent question",
     )
@@ -429,7 +430,7 @@ def test_posting_path_honors_the_three_upfront_consent_settings() -> None:
     # about the *choice*, and none about the thing the choice actuates.
     _assert_once(
         prose,
-        "gh pr comment --body-file <readiness report path>",
+        "gh pr comment --body-file <posted-view path>",
         "the single posting command",
     )
     _assert_once(
@@ -462,13 +463,13 @@ def test_ask_when_ready_writes_the_report_before_it_prompts() -> None:
 
 
 def test_auto_setting_states_the_consequence_plainly() -> None:
-    """AC7. *Auto* means a `NO-GO` with a severity-ordered blocking list appears on
-    a colleague's PR before the author has read it. The upfront prompt must say
-    that plainly rather than describe auto as a convenience."""
+    """AC7. *Auto* means a `NO-GO` with its full list appears on the author's own
+    PR, visible to anyone watching it, before the author has read it. The upfront
+    prompt must say that plainly rather than describe auto as a convenience."""
     _assert_once(
         _prose(ORCHESTRATOR),
-        "a `NO-GO` with a severity-ordered blocking list appears on a colleague's "
-        "pull request before the author has read it",
+        "a `NO-GO` with its full list appears on the author's own pull request — "
+        "visible to anyone watching it — before the author has read it",
         "the auto-posting consequence warning",
     )
 

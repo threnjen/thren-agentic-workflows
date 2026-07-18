@@ -27,26 +27,37 @@ Write to `dev/pr-review/<base-sha-short>-<UTC-YYYYMMDDTHHMMSSZ>/readiness-report
 ```markdown
 # PR Readiness Report — <BASE_SHA_SHORT>..<HEAD_SHA_SHORT>
 
-## Review Metadata
+## TL;DR
 
-- **Review date:** <YYYY-MM-DD>
-- **Base commit:** <BASE_SHA>
-- **Head commit:** <HEAD_SHA>
-- **Report root:** <REPORT_ROOT>
+<ONE_PLAIN_SENTENCE>: is this change ready to open as a PR, and if not, what
+should the author look at first? Write it the way you would say it to the
+author out loud — no jargon, no severity codes. For example: "Looks ready to
+open — just double-check the two small things below" or "Not ready yet — one
+change could break sign-in for existing users."
 
 ## Verdict
 
 **<GO / GO WITH CONDITIONS / NO-GO>**
 
-<ONE_PARAGRAPH_RATIONALE>
+<ONE_PARAGRAPH_RATIONALE_IN_PLAIN_LANGUAGE>
 
-## Blocking List
+## Things to Look At Before Opening
 
-List blockers in descending severity: Critical, High, Medium, Low.
+Most important first. Each row says, in plain words, what to check or fix —
+the evidence and severity are there to back it up, not to lead.
 
-| Priority | Severity | Blocker / condition | Evidence | Owner / action |
+| # | What to check or fix | Why it matters | Where | How serious |
 |---:|---|---|---|---|
-| 1 | <CRITICAL/HIGH/MEDIUM/LOW> | <FINDING> | <PATH:LINE> | <ACTION> |
+| 1 | <PLAIN_LANGUAGE_ACTION> | <PLAIN_WHY> | <PATH:LINE> | <CRITICAL/HIGH/MEDIUM/LOW> |
+
+## Review Metadata
+
+For the author's local record only — this section is **not** posted to the PR.
+
+- **Review date:** <YYYY-MM-DD>
+- **Base commit:** <BASE_SHA>
+- **Head commit:** <HEAD_SHA>
+- **Report root:** <REPORT_ROOT>
 
 ## Checks Not Run
 
@@ -81,7 +92,14 @@ coverage limitation is stated.
 - <ADDITIONAL_REVIEW_OR_SECURITY_RULE>
 ```
 
-The blocking list is severity-ordered, and the Checks Not Run section must name
-every missing evaluator or check. If coverage is incomplete, the report must
-state that limitation and use an outcome below GO even when no blocker was
-found; missing evidence is never an implicit clean result.
+The TL;DR always comes first and is written in plain language for the author.
+The "Things to Look At Before Opening" list is severity-ordered under the hood,
+but each row leads with the plain-language action, not the severity code. The
+Checks Not Run section must name every missing evaluator or check. If coverage
+is incomplete, the report must state that limitation and use an outcome below GO
+even when no blocker was found; missing evidence is never an implicit clean
+result.
+
+The Review Metadata section is for the author's local record and is never
+included when the report is posted to a pull request. A posted or truncated view
+keeps the TL;DR, Verdict, Things to Look At Before Opening, and Checks Not Run.

@@ -95,3 +95,24 @@ rebuilds that inventory immediately before mutation and fails closed on drift.
 Boolean confirmation flags, inventories keyed only by modification time, absolute
 home paths in normal output, or tests that treat simulated platform policy as live
 fresh-session evidence.
+
+## 2026-07-17 — Prose-guard tests match exact strings across the source's line wraps
+
+**Problem**
+Editing PR-review agent/skill prose broke `test_readiness_synthesis_agents.py` and
+`test_pr_review_orchestrator.py` even when the intended wording was present.
+
+**Root cause**
+These tests assert exact needle strings (`_assert_once`, `in body`) against the raw
+file text. A needle like `ask once the report is written` fails when a Markdown line
+wrap splits it as `...report\nis written`. The frontmatter `description` is also
+pinned (must contain `base commit` and `head commit`).
+
+**Fix**
+Keep pinned phrases on a single unwrapped line, and when intentionally changing pinned
+wording, update the corresponding needle in the test. Retain required scope words in the
+agent description.
+
+**Watch for**
+Any prose edit under `source_of_truth/agents/05*` or `skills/pr-review-*`: re-run both
+PR-review test modules and reflow so guarded phrases don't straddle a newline.

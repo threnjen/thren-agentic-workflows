@@ -67,6 +67,16 @@ Evaluator-specific reports use `<evaluator-slug>-report.md`.
 `readiness-report.md` is the canonical hand-off file for the orchestrator and
 must remain at the report root.
 
+## Tone: Write for the Author
+
+This review is a self-check the author runs before opening a PR, so the reader
+is the author of the change. Write findings in plain, natural language: say what
+to check or fix in ordinary words, and lead with that rather than a severity
+code or dense technical phrasing. Severity labels still exist for ordering and
+evidence, but they support the plain-language point — they are not the headline.
+Prefer a short, skimmable summary (a TL;DR) over exhaustive prose wherever the
+report structure allows one.
+
 ## Severity Levels
 
 Use the four levels from `auditor-conventions` consistently:
