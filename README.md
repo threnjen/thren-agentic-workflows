@@ -114,10 +114,17 @@ real `.github/` mirror are generated outputs.
 
 ## Prerequisites
 
-- `python3` (standard library only — no third-party runtime dependencies)
+- `python3` (standard library only — the repo itself has no third-party runtime
+  dependencies)
 - VS Code if you want the built-in watch tasks and Copilot agent picker
 - Optional harness tooling depending on what you deploy to: Claude Code, Codex,
   OpenCode, Cursor, or GitHub Copilot
+
+The deploy script also installs and configures two optional companion tools the
+agents make use of when present: [code-review-graph](https://github.com/tirth8205/code-review-graph)
+(via `pip`/`pipx`) and the [Context7](https://context7.com) MCP server (via
+`npx`, requires Node.js). Pass `--skip-tools` to opt out; a failed tool install
+never blocks asset deployment.
 
 There is no application to build or serve. The maintenance loop is: edit
 `source_of_truth/`, propagate, review the diff, deploy.
@@ -187,3 +194,13 @@ screenshot capture, paired with the Visual Verifier agent.
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — non-obvious failures and fixes
 - [docs/porting/README.md](docs/porting/README.md) — per-harness porting references
 - [eval/EVAL_SYSTEM_USAGE.md](eval/EVAL_SYSTEM_USAGE.md) — grader workflows and run artifacts
+
+## Acknowledgements
+
+- [code-review-graph](https://github.com/tirth8205/code-review-graph) by
+  [tirth8205](https://github.com/tirth8205) — a local-first code knowledge graph
+  (MCP + CLI) the agents use for token-efficient, structure-aware code review.
+  The deploy script installs and configures it automatically.
+- [Context7](https://context7.com) by [Upstash](https://upstash.com) — an MCP
+  server providing current, version-accurate library documentation. Also
+  auto-configured by the deploy script.

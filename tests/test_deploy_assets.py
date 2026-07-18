@@ -269,5 +269,102 @@ class ConfigAndCliTests(unittest.TestCase):
             self.assertEqual(raised.exception.code, 2)
 
 
+class EnsureCodeReviewGraphTests(unittest.TestCase):
+    def test_present_binary_makes_no_subprocess_calls(self) -> None:
+        with mock.patch.object(mod.shutil, "which", return_value="/usr/bin/code-review-graph"), \
+                mock.patch.object(mod.subprocess, "run") as run:
+            result = mod.ensure_code_review_graph()
+        self.assertEqual(result, {"status": "already-installed"})
+        run.assert_not_called()
+
+    def test_missing_binary_installs_and_configures(self) -> None:
+        # which: absent pre-install, pip present, present post-install
+        which_results = iter([None, "/usr/bin/pip", "/usr/bin/code-review-graph"])
+        with mock.patch.object(mod.shutil, "which", side_effect=lambda _n: next(which_results)), \
+                mock.patch.object(mod.subprocess, "run", return_value=mock.Mock(returncode=0)) as run:
+            result = mod.ensure_code_review_graph()
+        self.assertEqual(result["status"], "installed-and-configured")
+        commands = [call.args[0] for call in run.call_args_list]
+        self.assertIn(("pip", "install", "code-review-graph"), commands)
+        self.assertIn(["code-review-graph", "install"], commands)
+
+    def test_install_failure_is_reported_not_raised(self) -> None:
+        which_results = iter([None, "/usr/bin/pip", None, None])
+        with mock.patch.object(mod.shutil, "which", side_effect=lambda _n: next(which_results, None)), \
+                mock.patch.object(mod.subprocess, "run", return_value=mock.Mock(returncode=1)):
+            result = mod.ensure_code_review_graph()
+        self.assertEqual(result["status"], "install-failed")
+
+    def test_deploy_proceeds_when_tool_bootstrap_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(mod, "CONFIG_PATH", Path(tmp) / "config.json"), \
+                mock.patch.object(mod.sys, "argv", ["deploy_agents.py", "--harness", "claude", "--no-save"]), \
+                mock.patch.object(
+                    mod, "ensure_external_tools",
+                    return_value={"code_review_graph": {"status": "install-failed"}},
+                ), \
+                mock.patch.object(mod, "deploy", return_value={}) as deployed:
+            self.assertEqual(mod.main(), 0)
+        deployed.assert_called_once()
+
+    def test_skip_tools_flag_bypasses_bootstrap(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(mod, "CONFIG_PATH", Path(tmp) / "config.json"), \
+                mock.patch.object(
+                    mod.sys, "argv",
+                    ["deploy_agents.py", "--harness", "claude", "--no-save", "--skip-tools"],
+                ), \
+                mock.patch.object(mod, "ensure_external_tools") as tools, \
+                mock.patch.object(mod, "deploy", return_value={}):
+            self.assertEqual(mod.main(), 0)
+        tools.assert_not_called()
+
+
+class ExternalToolReportingTests(unittest.TestCase):
+    def test_unexpected_exception_becomes_a_status_not_a_crash(self) -> None:
+        with mock.patch.object(mod, "ensure_code_review_graph", side_effect=OSError("boom")), \
+                mock.patch.object(mod, "ensure_context7", return_value={"status": "already-configured"}):
+            results = mod.ensure_external_tools()
+        self.assertEqual(results["code-review-graph"]["status"], "install-failed")
+        self.assertIn("boom", results["code-review-graph"]["detail"])
+        self.assertEqual(results["context7"]["status"], "already-configured")
+
+    def test_failure_report_names_the_tool_and_reason(self) -> None:
+        import io
+        err = io.StringIO()
+        with mock.patch.object(mod.sys, "stderr", err):
+            mod.report_external_tools(
+                {"context7": {"status": "install-failed", "detail": "npx not on PATH (Node.js required)"}}
+            )
+        output = err.getvalue()
+        self.assertIn("context7", output)
+        self.assertIn("npx not on PATH (Node.js required)", output)
+        self.assertIn("deployment is unaffected", output)
+
+
+class EnsureContext7Tests(unittest.TestCase):
+    def test_existing_config_makes_no_subprocess_calls(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / ".claude.json").write_text('{"mcpServers": {"context7": {}}}', encoding="utf-8")
+            with mock.patch.object(mod.subprocess, "run") as run:
+                result = mod.ensure_context7(home=Path(tmp))
+        self.assertEqual(result, {"status": "already-configured"})
+        run.assert_not_called()
+
+    def test_missing_config_runs_ctx7_setup(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(mod.shutil, "which", return_value="/usr/bin/npx"), \
+                mock.patch.object(mod.subprocess, "run", return_value=mock.Mock(returncode=0)) as run:
+            result = mod.ensure_context7(home=Path(tmp))
+        self.assertEqual(result["status"], "installed-and-configured")
+        self.assertEqual(run.call_args.args[0], ["npx", "ctx7", "setup"])
+
+    def test_missing_npx_is_reported_not_raised(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(mod.shutil, "which", return_value=None):
+            result = mod.ensure_context7(home=Path(tmp))
+        self.assertEqual(result["status"], "install-failed")
+
+
 if __name__ == "__main__":
     unittest.main()

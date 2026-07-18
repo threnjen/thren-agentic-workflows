@@ -23,6 +23,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List, Mapping, Tuple
@@ -174,6 +176,83 @@ def deploy_harness(
     return result
 
 
+def ensure_code_review_graph() -> Dict[str, str]:
+    """Install and configure code-review-graph (tirth8205/code-review-graph) if absent.
+
+    The agents lean on its MCP knowledge graph, but asset deployment must never
+    depend on it: every failure path returns a status instead of raising.
+    """
+    if shutil.which("code-review-graph"):
+        return {"status": "already-installed"}
+
+    installed = False
+    for installer in (("pip", "install", "code-review-graph"), ("pipx", "install", "code-review-graph")):
+        if not shutil.which(installer[0]):
+            continue
+        if subprocess.run(installer).returncode == 0:
+            installed = True
+            break
+    if not installed:
+        return {"status": "install-failed", "detail": "pip and pipx both unavailable or failed"}
+    if not shutil.which("code-review-graph"):
+        return {"status": "install-failed", "detail": "installed but binary not on PATH"}
+
+    if subprocess.run(["code-review-graph", "install"]).returncode != 0:
+        return {"status": "configure-failed", "detail": "'code-review-graph install' returned nonzero"}
+    return {"status": "installed-and-configured"}
+
+
+def ensure_context7(*, home: Path | None = None) -> Dict[str, str]:
+    """Configure the Context7 MCP server (context7.com) if not already present.
+
+    Presence is probed in Claude Code's config (`~/.claude.json`), the one
+    registry `npx ctx7 setup` always writes when Claude Code is detected. As
+    with the graph tool, every failure path returns a status instead of raising.
+    """
+    home = Path(home).expanduser() if home else Path.home()
+    try:
+        if "context7" in (home / ".claude.json").read_text(encoding="utf-8"):
+            return {"status": "already-configured"}
+    except OSError:
+        pass
+
+    if not shutil.which("npx"):
+        return {"status": "install-failed", "detail": "npx not on PATH (Node.js required)"}
+    if subprocess.run(["npx", "ctx7", "setup"]).returncode != 0:
+        return {"status": "configure-failed", "detail": "'npx ctx7 setup' returned nonzero"}
+    return {"status": "installed-and-configured"}
+
+
+def ensure_external_tools() -> Dict[str, Dict[str, str]]:
+    """Bootstrap each companion tool; no outcome here may abort deployment."""
+    results: Dict[str, Dict[str, str]] = {}
+    for name, bootstrap in (
+        ("code-review-graph", ensure_code_review_graph),
+        ("context7", ensure_context7),
+    ):
+        try:
+            results[name] = bootstrap()
+        except Exception as exc:  # noqa: BLE001 — deployment must survive any tool failure
+            results[name] = {"status": "install-failed", "detail": str(exc)}
+    return results
+
+
+def report_external_tools(results: Dict[str, Dict[str, str]]) -> None:
+    for name, result in results.items():
+        status = result.get("status", "")
+        if status in ("already-installed", "already-configured"):
+            print(f"[tools] {name}: already set up")
+        elif status == "installed-and-configured":
+            print(f"[tools] {name}: installed and configured")
+        else:
+            detail = result.get("detail", "unknown error")
+            print(
+                f"[tools] WARNING: {name} could not be set up ({detail}). "
+                f"Continuing without it — agent deployment is unaffected.",
+                file=sys.stderr,
+            )
+
+
 def deploy(
     harnesses: List[str],
     *,
@@ -257,6 +336,11 @@ def main() -> int:
     parser.add_argument("--watch", action="store_true", help="Watch ports/ and auto-deploy on changes.")
     parser.add_argument("--list", action="store_true", help="Show harnesses and resolved destinations.")
     parser.add_argument("--no-save", action="store_true", help="Do not persist the harness selection.")
+    parser.add_argument(
+        "--skip-tools",
+        action="store_true",
+        help="Do not install/configure external tools (code-review-graph, Context7).",
+    )
     args = parser.parse_args()
 
     if args.list:
@@ -282,6 +366,9 @@ def main() -> int:
 
     if not args.no_save:
         save_config(selected, CONFIG_PATH)
+
+    if not args.skip_tools:
+        report_external_tools(ensure_external_tools())
 
     if args.watch:
         watch(selected)
