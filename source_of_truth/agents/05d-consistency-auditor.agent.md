@@ -49,7 +49,10 @@ finding in its own right.
 
 Report drift only where the branch **added** the drifting line. Verifiable
 added-line attribution is the requirement; touched-file filtering alone is
-insufficient. A file the branch touched is not a file the branch wrote: its
+insufficient. Read added-line ranges from the orchestrator-supplied
+`range.diff` and `changed-files.txt` under the report root — this evaluator has
+no git access, so those files are the authoritative attribution source. A file
+the branch touched is not a file the branch wrote: its
 existing conventions are the baseline this audit measures against, and reporting
 them back as findings inverts the job. If added-line attribution cannot be
 verified for a candidate, record it under `Checks Not Run` with a concrete reason
@@ -63,15 +66,15 @@ with the code-review-graph MCP tools — `semantic_search_nodes` and `query_grap
 are the repository's documented means of finding comparable code, and a
 recommendation is only as good as the prior art it was derived from.
 
-The graph is an availability dependency, not a preference. If the graph server is
-unavailable, record the canonical-form derivation as **NOT RUN** with the
-concrete error, and state that the verdict ceiling drops accordingly. A text
-search finds a form that *resembles* the concern; it does not establish that the
-form is the prevailing one, which is the only thing that makes a recommendation
-canonical rather than a preference. Never silently degrade the derivation to a
-grep and report the result as though the graph answered it. Drift evidenced
-directly from the diff may still be reported, with its canonical recommendation
-marked not derived.
+The graph is preferred, not required — MCP tools are frequently unreachable
+from subagent sessions. If the graph server is unavailable, derive the
+candidate canonical form from a text-search survey of comparable code instead,
+and label the derivation explicitly as **text-search fallback (not
+graph-verified)**: a grep establishes that a form exists, not that it prevails,
+so a fallback recommendation is a candidate form, never presented as though the
+graph confirmed it. Drift evidenced directly from the diff is always
+reportable, with its canonical recommendation marked not derived when no
+derivation was possible at all.
 
 ## Failure and Empty-Diff Semantics
 

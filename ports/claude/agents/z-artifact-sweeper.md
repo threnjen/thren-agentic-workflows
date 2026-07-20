@@ -48,7 +48,9 @@ to a 900-line file did not introduce that file's twelve pre-existing `TODO`s.
 Reporting them is not thoroughness — it is noise that trains the reader to skim
 the report, and a report nobody reads blocks nothing.
 
-Use the diff's added-line ranges. When a matched line is not inside one, compare
+Use the diff's added-line ranges, read from the orchestrator-supplied
+`range.diff` and `changed-files.txt` under the report root — this evaluator has
+no git access, so those files are the authoritative attribution source. When a matched line is not inside one, compare
 it against the baseline before reporting it as introduced. If added-line
 attribution cannot be verified for a candidate, record it under `Checks Not Run`
 with a concrete reason rather than reporting it as branch-introduced. Do not
@@ -62,13 +64,16 @@ results carry no attribution on their own: report one only when its path and lin
 or range map to an added-line range in the branch diff. Never treat all dead code
 in a touched file as introduced.
 
-The graph is an availability dependency, not a preference. If the graph server or
-`refactor_tool` is unavailable, record the dead-code check as **NOT RUN** with the
-concrete error, and state that the verdict ceiling drops accordingly. Do not
-substitute a text search and report the result as though the graph answered it —
-never silently degrade a graph check into a grep. If line or range attribution is
-missing and cannot be verified, the dead-code check is likewise **NOT RUN**, not a
-clean result.
+The graph is preferred, not required — MCP tools are frequently unreachable from
+subagent sessions. If the graph server or `refactor_tool` is unavailable, fall
+back to a text-search sweep: for symbols the diff adds, search the current tree
+for references outside their own definition. Label the check's method
+explicitly as **text-search fallback (not graph-verified)** in the report — a
+fallback result is a best-effort finding set, never presented as though the
+graph answered it, and its unverified reach is named in `Checks Not Run`. If
+line or range attribution is missing and cannot be verified for a candidate,
+that candidate is recorded under `Checks Not Run`, not reported as a clean
+result.
 
 ## Failure and Empty-Diff Semantics
 

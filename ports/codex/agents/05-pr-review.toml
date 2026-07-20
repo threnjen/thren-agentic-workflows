@@ -185,7 +185,28 @@ worktree at the confirmed base, record the baseline check as not run and **stop
 before evaluator fan-out**. Nothing can run before the baseline exists, so this
 failure — unlike an evaluator failure — aborts the run.
 
-### 2. Confirm model-tier assignment
+### 2. Materialize diff artifacts
+
+Fan-out evaluators run without shell or git access, and MCP graph tools may be
+unreachable from their sessions. They cannot enumerate the diff themselves, so
+the orchestrator materializes it for them, into the report root, before fan-out:
+
+- `changed-files.txt` — `git diff --name-status <base>..<head>` redirected to
+  the file.
+- `range.diff` — `git diff <base>..<head>` redirected to the file, the
+  added-line attribution source for every evaluator.
+
+Generate both by shell redirection only; the orchestrator never reads either
+file. Producing a diff for evaluators to consume does not violate the
+no-reading-diffs boundary — opening one does. If either command fails, stop
+before fan-out with the concrete error, as with a baseline failure.
+
+Every fan-out invocation must include: the confirmed diff range, the absolute
+baseline worktree path from `05a`, and the absolute paths of both diff
+artifacts. An evaluator invoked without these inputs fails for lack of them and
+wastes the run.
+
+### 3. Confirm model-tier assignment
 
 Restate the model-tier warning state from the block, confirm the mapping below,
 and include the mapping in each evaluator's invocation prompt. A lower model
@@ -222,7 +243,9 @@ agent is authored.**
 ## Context and Return Contracts
 
 The orchestrator may inspect directory names, declared paths, and file metadata
-to perform preflight. It must never open code or diffs. Evaluators receive the
+to perform preflight, and may generate the preflight diff artifacts by shell
+redirection. It must never open code or diffs — generating a diff file for
+evaluators is permitted; reading one is not. Evaluators receive the
 paths and the confirmed diff range they need and may perform their assigned
 read-only analysis; the orchestrator consumes their structured report paths and
 concise return statuses only.
@@ -239,7 +262,9 @@ Use this invocation shape for every evaluator:
 
 > `[SUBAGENT-MODE] Perform <CHECK> for the diff range <BASE_SHA>..<HEAD_SHA>.
 > Load pr-review-conventions and use the pr-review-report template when
-> applicable. Read only the assigned inputs: <REPORT_PATHS_AND_BASELINE>. Write
+> applicable. Read only the assigned inputs: the changed-file list at
+> <CHANGED_FILES_PATH>, the unified diff at <RANGE_DIFF_PATH>, the read-only
+> baseline worktree at <BASELINE_WORKTREE_PATH>, and <REPORT_PATHS>. Write
 > the report to <REPORT_PATH>. Use model tier <TIER>. If the check cannot run,
 > hangs, or fails, do not claim success: return no report or an incomplete
 > report and state the concrete reason. Return no more than 10 lines: report

@@ -49,7 +49,12 @@ not a coverage gap, and is never recorded as a not-run check.
 ## Assigned Scope
 
 The subject is the branch diff `<merge-base>..HEAD`. The orchestrator supplies
-the confirmed base; take it as given and never re-derive it.
+the confirmed base; take it as given and never re-derive it. This evaluator has
+no git access: added-line attribution comes from the orchestrator-supplied
+`range.diff` and `changed-files.txt` under the report root, and baseline
+comparison from the supplied baseline worktree path — read that worktree with
+direct absolute-path `Read` calls (temp-directory worktrees may not resolve
+through glob-based discovery).
 
 Compare dependency manifests and lock files in the current tree against the
 confirmed baseline, and inventory only dependencies the branch introduced or
