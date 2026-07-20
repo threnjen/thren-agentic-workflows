@@ -14,7 +14,7 @@ reachable from `main`, so the range resolves in every clone of this repository.
 The pair implied by the orchestrator's base-derivation evidence
 (`e3398c7..ae9823a`) is 242 files and ~27k insertions — a whole-phase diff.
 Dry-running seven evaluators against that is slow, costly, and a poor proxy for
-a PR. This range is the `visual-verification` UPM package landing
+a PR. This range is the `com.threnjen.visual-verification` UPM package landing
 (v0.1.0 → v0.2.1): PR-sized, additive, self-contained, and touching code,
 packaging metadata, and docs — a representative spread for the evaluator roster.
 

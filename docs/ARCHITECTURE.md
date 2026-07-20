@@ -30,7 +30,7 @@ flowchart TD
     Root --> Docs[docs and porting guides]
     Root --> Eval[eval grader system]
     Root --> Bench[benchmarks model data]
-    Root --> Pkg[packages visual-verification UPM]
+    Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
     SOT --> Agents[41 agent definitions]
@@ -154,7 +154,7 @@ used by both scripts' watch modes.
 - `docs/` — architecture, setup, troubleshooting, porting guides, and inspiration write-ups.
 - `eval/` — the agent evaluation grader system, rubrics, hook templates, and run artifacts.
 - `benchmarks/` — model cost/performance benchmark data and charts.
-- `packages/visual-verification/` — a Unity UPM package for deterministic
+- `packages/com.threnjen.visual-verification/` — a Unity UPM package for deterministic
   screenshot capture, paired with the Visual Verifier agent.
 
 ## Agent System Shape

@@ -122,16 +122,16 @@ defect (invisible/miscolored output, broken scene wiring, blank frames) that com
 passes unit tests, and passes static review, yet renders nothing usable. Run it only when ALL
 of the following hold; otherwise skip it and record the stated reason:
 
-- `is-unity-project: yes` (from Step 2). If `no`, record `visual-verification: not a Unity project` and skip.
-- A visual-verification capture config exists under the detected Unity project's `Assets/` (`Assets/VisualVerification/capture-config.json`, or `game/Assets/VisualVerification/capture-config.json` for a nested layout), or at the path named by the `VISUAL_VERIFICATION_CONFIG` environment variable. **If it is absent, bootstrap it rather than skipping** — the pack and its capture package are bundled, so a Unity View phase with visual ACs should not silently opt out. The implementer normally wires this while building the view (see the `unity-development` skill → Visual Verification Wiring); if it did not, perform the minimal wiring yourself before running the gate: ensure the companion capture package is in `Packages/manifest.json` + `testables` (default URL/tag from the `unity-development` skill), and write a `capture-config.json` whose scene entry is the scene this phase renders (from the phase document / implementation records), with an early and a later capture frame. Only if the scene under test genuinely cannot be determined, record `visual-verification: not configured` and skip.
-- The phase has visual/rendering acceptance criteria in its phase document (e.g. on-screen colors, layout, bars, bounds, sprites). If the phase has none, record `visual-verification: no visual ACs` and skip.
+- `is-unity-project: yes` (from Step 2). If `no`, record `com.threnjen.visual-verification: not a Unity project` and skip.
+- A com.threnjen.visual-verification capture config exists under the detected Unity project's `Assets/` (`Assets/VisualVerification/capture-config.json`, or `game/Assets/VisualVerification/capture-config.json` for a nested layout), or at the path named by the `VISUAL_VERIFICATION_CONFIG` environment variable. **If it is absent, bootstrap it rather than skipping** — the pack and its capture package are bundled, so a Unity View phase with visual ACs should not silently opt out. The implementer normally wires this while building the view (see the `unity-development` skill → Visual Verification Wiring); if it did not, perform the minimal wiring yourself before running the gate: ensure the companion capture package is in `Packages/manifest.json` + `testables` (default URL/tag from the `unity-development` skill), and write a `capture-config.json` whose scene entry is the scene this phase renders (from the phase document / implementation records), with an early and a later capture frame. Only if the scene under test genuinely cannot be determined, record `com.threnjen.visual-verification: not configured` and skip.
+- The phase has visual/rendering acceptance criteria in its phase document (e.g. on-screen colors, layout, bars, bounds, sprites). If the phase has none, record `com.threnjen.visual-verification: no visual ACs` and skip.
 
 When all three hold, Spawn a **visual-verifier** subagent:
 
-> "[SUBAGENT-MODE] Run the visual verification gate for phase [phase-name]. Visual acceptance criteria from the phase document: [list each visual AC verbatim]. Capture config path: [resolved path]. Produce the deterministic screenshots via the repository's documented visual-verification run, then assess each visual AC against the rendered frames. Write the report to `docs/phases/[phase-name]/[phase-name]-visual-verification.md` and return a verdict (`Pass` | `Fail` | `Unverified`) with per-AC results and the artifact paths."
+> "[SUBAGENT-MODE] Run the visual verification gate for phase [phase-name]. Visual acceptance criteria from the phase document: [list each visual AC verbatim]. Capture config path: [resolved path]. Produce the deterministic screenshots via the repository's documented com.threnjen.visual-verification run, then assess each visual AC against the rendered frames. Write the report to `docs/phases/[phase-name]/[phase-name]-com.threnjen.visual-verification.md` and return a verdict (`Pass` | `Fail` | `Unverified`) with per-AC results and the artifact paths."
 
 After the subagent returns:
-- Record the verdict as `visual-verification: Pass | Fail | Unverified`.
+- Record the verdict as `com.threnjen.visual-verification: Pass | Fail | Unverified`.
 - **On `Fail`, remediate once** — the same bounded retry the review loop uses for "Changes Requested". Re-spawn the z-feature-implementer responsible for the rendering with the visual-verifier's per-AC findings and the rendered frames, then re-run the visual-verifier on the same config. Retry **at most once**. If still `Fail` after the retry, record the final verdict and proceed — the blocker is escalated to Step 5, not silently dropped. Use this implementer prompt:
   > "[SUBAGENT-MODE] The visual verification gate failed for phase [phase-name]. Failing visual acceptance criteria, and what the rendered frames actually show: [paste the visual-verifier's per-AC findings]. Rendered frames: [artifact paths]. Fix the rendering so these acceptance criteria are met. Do NOT edit the capture config or the visual ACs to force a pass — fix what is on screen. Return what you changed."
   - Do not retry `Unverified` (the capture could not run, or the images were not assessable — a setup/tooling problem, not a rendering one). Record it and proceed.
@@ -153,7 +153,7 @@ Spawn a **z-feature-qa-writer** subagent:
 After the subagent returns:
 - Verify the QA document exists at the determined path
 - Verify the coverage map exists at the determined path
-- Stage only the consolidated QA outputs and any phase-level pipeline documents updated by this step. Do not stage feature-local source files or files from unrelated feature directories. Do not stage the Step 3 visual-verification report (`docs/phases/[phase-name]/[phase-name]-visual-verification.md`) here — it belongs to the Step 5 final-review checkpoint. Commit this checkpoint once with the exact message `eval: qa`.
+- Stage only the consolidated QA outputs and any phase-level pipeline documents updated by this step. Do not stage feature-local source files or files from unrelated feature directories. Do not stage the Step 3 com.threnjen.visual-verification report (`docs/phases/[phase-name]/[phase-name]-com.threnjen.visual-verification.md`) here — it belongs to the Step 5 final-review checkpoint. Commit this checkpoint once with the exact message `eval: qa`.
 
 ### Step 5: Diff Security Review
 
@@ -172,7 +172,7 @@ After the z-diff-security-scan subagent returns:
 
 ### Step 6: Phase Final Review
 
-Spawn a **prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected in Step 2 Phase B, plus the `visual-verification` verdict from Step 3 (or its skip reason) as runtime evidence.
+Spawn a **prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected in Step 2 Phase B, plus the `com.threnjen.visual-verification` verdict from Step 3 (or its skip reason) as runtime evidence.
 
 **If QA was generated and all verdicts Approved:**
 

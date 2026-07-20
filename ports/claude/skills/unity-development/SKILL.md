@@ -257,7 +257,7 @@ Run via `-batchmode -executeMethod <Type>.<Method> -quit`, then confirm the asse
 For a View feature whose phase has visual acceptance criteria, set up its visual test the same
 way you set up unit tests for logic — it is part of "done," not an afterthought. The capture
 mechanism is config-driven (a generic PlayMode capture package, e.g.
-`visual-verification`), so "writing the visual test" means wiring the project to run
+`com.threnjen.visual-verification`), so "writing the visual test" means wiring the project to run
 it, not authoring per-feature test code:
 
 1. **Ensure the capture package is a dependency — default to the bundled companion.** This agent
@@ -268,14 +268,14 @@ it, not authoring per-feature test code:
    ```jsonc
    {
      "dependencies": {
-       "visual-verification": "https://github.com/threnjen/thren-agentic-workflows.git?path=/packages/visual-verification#visual-verification/v0.2.1"
+       "com.threnjen.visual-verification": "https://github.com/threnjen/thren-agentic-workflows.git?path=/packages/com.threnjen.visual-verification#com.threnjen.visual-verification/v0.2.1"
        // …existing dependencies…
      },
-     "testables": [ "visual-verification" ]
+     "testables": [ "com.threnjen.visual-verification" ]
    }
    ```
    If the project documents a different capture package (a fork, or a newer tag), use that instead.
-   This is the single source for the default — bump the pinned `visual-verification/vX.Y.Z` tag here
+   This is the single source for the default — bump the pinned `com.threnjen.visual-verification/vX.Y.Z` tag here
    when the companion package releases. (The default resolves only if the companion repo is reachable
    from the consuming machine; for private forks, document the override.)
 2. **Create or update the capture config.** Ensure `Assets/VisualVerification/capture-config.json`

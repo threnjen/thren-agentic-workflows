@@ -38,7 +38,7 @@ there are genuinely no visual ACs, stop and return `Unverified — no visual acc
 The capture run is project-specific; do not hardcode it. Discover the documented command:
 
 1. Read the capture config to learn the scene(s), capture frames, resolution, and `outputDir`.
-2. Find the repository's documented visual-verification / PlayMode capture command — check
+2. Find the repository's documented com.threnjen.visual-verification / PlayMode capture command — check
    `CLAUDE.md`, `.github/copilot-instructions.md`, `README.md`, and project docs, and prefer
    that command as written. For Unity it is a `-runTests -testPlatform PlayMode` invocation.
    Apply two correctness checks to whatever you find, because both failures make the run
@@ -52,7 +52,7 @@ The capture run is project-specific; do not hardcode it. Discover the documented
    rather than giving up (the capture package is the pack's bundled companion, so the invocation
    shape is known). Resolve the editor path in this order, stopping at the first hit:
    1. The `VISUAL_VERIFICATION_UNITY` environment variable (a machine-wide editor path), if set.
-   2. A machine-local override file `dev/visual-verification.local.json` containing
+   2. A machine-local override file `dev/com.threnjen.visual-verification.local.json` containing
       `{ "unityEditorPath": "…" }`, if present.
    3. Derive from the project's Unity version in `ProjectSettings/ProjectVersion.txt` plus the Unity
       Hub layout — both the default location (`…/Hub/Editor/<version>/Editor/Unity.exe`) **and** any
@@ -68,7 +68,7 @@ The capture run is project-specific; do not hardcode it. Discover the documented
    "This is a Unity project but no Unity editor / Hub install was found (checked: [paths]). What is
    the full path to the Unity `<version>` editor?" (In non-interactive subagent mode, return that as
    a blocking request rather than guessing.) When the user supplies the path, **save it once** to
-   `dev/visual-verification.local.json` and ensure that file is listed in `.gitignore` — the path is
+   `dev/com.threnjen.visual-verification.local.json` and ensure that file is listed in `.gitignore` — the path is
    machine-specific and must never be committed — then proceed. Subsequent runs read it from step 2
    without asking. Only return `Unverified — Unity editor not found` if no path can be obtained.
    Never fabricate a result.
@@ -115,7 +115,7 @@ animating" from endpoints alone; find the frame that reveals the behavior. Use t
 
 ## Step 4 — Write the report
 
-Write `docs/phases/[phase-name]/[phase-name]-visual-verification.md`:
+Write `docs/phases/[phase-name]/[phase-name]-com.threnjen.visual-verification.md`:
 
 ```
 # Visual Verification — [phase-name]

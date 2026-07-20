@@ -81,7 +81,7 @@ generated skill directory). Hand-maintained files are never touched.
 │                                   # TROUBLESHOOTING, porting/, inspiration/
 ├── eval/                           # Agent evaluation grader system and run artifacts
 ├── benchmarks/                     # Model cost/performance benchmark data
-├── packages/                       # Distributable UPM package (visual-verification)
+├── packages/                       # Distributable UPM package (com.threnjen.visual-verification)
 ├── tests/                          # Python regression tests for both scripts
 └── .vscode/tasks.json              # One-shot + watch tasks for propagate and deploy
 ```
@@ -160,7 +160,7 @@ cross-cutting learnings that propagate as learnings/rules.
 
 ### Distributable package
 
-`packages/visual-verification/` is a Unity UPM package for deterministic
+`packages/com.threnjen.visual-verification/` is a Unity UPM package for deterministic
 screenshot capture, paired with the Visual Verifier agent.
 
 ## Related Documentation

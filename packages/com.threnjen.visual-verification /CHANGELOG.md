@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `visual-verification` are documented here.
+All notable changes to `com.threnjen.visual-verification` are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.2.1]
