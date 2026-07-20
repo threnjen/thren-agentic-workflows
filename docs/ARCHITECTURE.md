@@ -154,7 +154,7 @@ used by both scripts' watch modes.
 - `docs/` — architecture, setup, troubleshooting, porting guides, and inspiration write-ups.
 - `eval/` — the agent evaluation grader system, rubrics, hook templates, and run artifacts.
 - `benchmarks/` — model cost/performance benchmark data and charts.
-- `packages/com.threnjen.visual-verification/` — a Unity UPM package for deterministic
+- `packages/visual-verification/` — a Unity UPM package for deterministic
   screenshot capture, paired with the Visual Verifier agent.
 
 ## Agent System Shape

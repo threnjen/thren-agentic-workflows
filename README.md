@@ -160,7 +160,7 @@ cross-cutting learnings that propagate as learnings/rules.
 
 ### Distributable package
 
-`packages/com.threnjen.visual-verification/` is a Unity UPM package for deterministic
+`packages/visual-verification/` is a Unity UPM package for deterministic
 screenshot capture, paired with the Visual Verifier agent.
 
 ## Related Documentation

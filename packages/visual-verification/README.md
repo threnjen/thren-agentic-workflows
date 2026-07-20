@@ -33,10 +33,10 @@ Add to the consuming project's `Packages/manifest.json`:
 ```jsonc
 {
   "dependencies": {
-    "com.threnjen.visual-verification":
-      "https://github.com/threnjen/thren-agentic-workflows.git?path=/packages/com.threnjen.visual-verification#visual-verification/v0.2.1"
+    "visual-verification":
+      "https://github.com/threnjen/thren-agentic-workflows.git?path=/packages/visual-verification#visual-verification/v0.2.1"
   },
-  "testables": [ "com.threnjen.visual-verification" ]
+  "testables": [ "visual-verification" ]
 }
 ```
 
