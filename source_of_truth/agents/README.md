@@ -135,10 +135,13 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **04 Phase - Execute** | Orchestrate full phase execution from a prepared manifest and feature bundles |
 | **05 PR - Review** | Orchestrate a readiness review of the diff between a base commit and a head commit |
 | **05 Eval - Grader** | Score a completed phase run from ledger files plus a rubric YAML and write a structured report |
+| **Eval - Feature Decomposition** | Score a feature-decomposition run against a golden-path branch across structural, naming, dependency, AC, context, and manifest dimensions |
 | **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
+| **Instructions Manager** | Create or evaluate AI coding instruction files — routes to Instructions - Writer or Instructions - Evaluator |
 | **Single Feature - Agent** | Handle small, focused changes with a proposal + explicit permission gate before implementation |
 | **Debugger** | Diagnose and fix frontend or backend application errors |
 | **Docs Writer** | Create or update repo documentation; also spawned automatically by orchestrators after pipeline completion |
+| **Security Scan** | Full-codebase security assessment writing a phase-level report (secrets, dependencies, infra, CI/CD, config) |
 | **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
 | **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
 | **Unity Reviewer** | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
@@ -155,6 +158,9 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Auditor - Infra** | Audit orchestrator | Audit Dockerfiles, CI/CD pipelines, IaC templates, and config files |
 | **Auditor - Refactor** | Audit orchestrator | Audit codebase structure, module organization, and architecture |
 | **Eval - Metric Grader** | Eval - Grader | Score one comparative metric from prepared diff and ledger evidence |
+| **Eval - Score Recorder** | Eval - Grader | Resolve harness/model identity, compute the weighted score, and append one row to the score history |
+| **Instructions - Writer** | Instructions Manager | Draft scoped `.instructions.md` files for a repository |
+| **Instructions - Evaluator** | Instructions Manager | A/B evaluate whether instruction-file changes improve or regress |
 | **Feature - Plan Expander** | Feature - Decomposer | Generate context and tasks files from existing plan files |
 | **Feature - Implementer** | Phase - Execute, Audit orchestrator, Test orchestrator | Implement a feature plan using Red-Green-Refactor TDD |
 | **Feature - Reviewer** | Phase - Execute, Audit orchestrator, Test orchestrator | Review implementation, apply fixes, produce review record |
@@ -165,7 +171,6 @@ These agents are not visible in the picker. They run automatically as part of or
 | **05d Consistency Auditor** | 05 PR - Review | Compare the branch diff against established repository conventions and recommend canonical forms |
 | **05e Dependency Auditor** | 05 PR - Review | Inventory dependencies added by the branch and report supply-chain and duplication risks, offline |
 | **04e Diff Security Scan** | Phase - Execute | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
-| **Security Scan** | None — user-invocable | Perform a full-codebase security assessment and write a phase-level security report |
 | **05f Test Health** | 05 PR - Review | Delegate coverage, redundancy, and flake analysis into a test health report |
 | **05g Readiness Synthesizer** | 05 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
@@ -211,6 +216,15 @@ These agents are not visible in the picker. They run automatically as part of or
 **Prod Code Review** (document-only — does not modify code)
 > Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Can be spawned standalone or automatically by the orchestrator.
 
+**Security Scan** (document-only — does not modify code)
+> Performs an evidence-based, full-codebase security assessment across all tracked, security-relevant repository artifacts. Writes a phase-level report covering secrets, dependencies, application attack surface, authentication, data protection, runtime safety, infrastructure, CI/CD, observability, and cross-cutting security patterns. It redacts sensitive values and distinguishes phase regressions from pre-existing release risks. (Distinct from the hidden **04e Diff Security Scan**, which only covers a single pass's diff.)
+
+**Instructions Manager** (router — delegates to subagents)
+> Give it a request to create or assess AI coding instruction files (`.github/instructions/`, `copilot-instructions.md`, `.cursorrules`, `CLAUDE.md`, or equivalent). It routes to the **Instructions - Writer** to draft new scoped instruction sets, or to the **Instructions - Evaluator** to A/B-test whether proposed instruction changes are improvements or regressions.
+
+**Eval - Feature Decomposition** (document-only — does not write code)
+> Give it a golden-path branch and a test branch. It scores the test branch's feature-decomposition documents against the golden path across structural, naming, dependency, AC, context, and manifest dimensions, and writes a numbered report to `eval/feature_decomp_eval_round_N.md`.
+
 **Web Researcher** (read-only — uses fetch and web search)
 > Give it a problem or topic. Searches across GitHub issues, Stack Overflow, Reddit, forums, and docs. Produces two deliverable documents saved to `dev/research/[topic-name]/`: a full structured findings report (`[topic-name]-report.md`) with inline numbered citations and a References table, and an executive summary (`[topic-name]-summary.md`) with priority recommendations and key reference links. Every factual claim traces back to a numbered citation. Sources older than 2 years are flagged with ⚠️.
 
@@ -235,8 +249,6 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **04e Diff Security Scan** *(subagent of Phase - Execute)* — Performs a diff-scoped security review of only the files changed by an implementation pass (from an implementation record's "Files Changed" table or a git diff range), plus their immediate security-relevant context. Writes a compact report with verdict, findings, and the categories not assessable at diff scope. It does not replace the full-codebase Security Scan.
 
-**Security Scan** *(standalone; user-invocable)* — Performs an evidence-based security assessment across all tracked, security-relevant repository artifacts. Writes a phase-level report that covers secrets, dependencies, application attack surface, authentication, data protection, runtime safety, infrastructure, CI/CD, observability, and cross-cutting security patterns. It redacts sensitive values and distinguishes phase regressions from pre-existing release risks.
-
 **Auditor - Code** *(subagent of Audit orchestrator)* — Audits every source file for cleanup, bugs, security, type hints, readability, DRY, and consistency. Produces a structured report.
 
 **Auditor - Infra** *(subagent of Audit orchestrator)* — Evaluates Dockerfiles, CI/CD pipelines, IaC templates, and config files for security, best practices, and operational risk.
@@ -244,6 +256,12 @@ These agents are not visible in the picker. They run automatically as part of or
 **Auditor - Refactor** *(subagent of Audit orchestrator)* — Evaluates codebase-level organization: module structure, dependency graphs, component decomposition, coupling, cohesion, and separation of concerns.
 
 **Eval - Metric Grader** *(subagent of Eval - Grader)* — Scores one comparative metric at a time from prepared diff artifacts, rubric context, and ledger evidence. Returns a normalized `1-10` score, evidence summary, and confidence back to the parent grader.
+
+**Eval - Score Recorder** *(subagent of Eval - Grader)* — Resolves harness/model identity from `eval/scoring/HARNESS_MODEL_MAPPINGS.md`, computes the weighted overall score with step-by-step verification, and appends a single additive-only row to the persistent score history. Spawned only after the parent grader's score report is fully written.
+
+**Instructions - Writer** *(subagent of Instructions Manager)* — Discovers a repository's domains and non-obvious rules and drafts scoped `.instructions.md` files following the AI Instruction File Framework.
+
+**Instructions - Evaluator** *(subagent of Instructions Manager)* — Evaluates whether changes to instruction files are improvements or regressions using blind A/B testing, rule classification, 3-run stability scoring, and rule-quality analysis. Reads the BEFORE state automatically from git history.
 
 **Test - Analyst** *(subagent of Test orchestrator)* — Classifies tests by value, flags redundancy and over-mocking, and writes a categorized inventory with a staged reduction plan.
 

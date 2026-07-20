@@ -1,177 +1,111 @@
 # thren-agentic-workflows
 
-A ready-to-use library of AI development agents, skills, and instructions that work
-across Claude, Codex, OpenCode, Cursor, and GitHub Copilot. Everything is authored once
-under `source_of_truth/`, transformed into per-harness variants under `ports/`, and
-deployed into the real config directories each harness reads.
+A ready-to-use library of AI development agents that work across Claude, Codex,
+OpenCode, Cursor, and GitHub Copilot. Install once and you get a full software
+development workflow — planning, implementation, review, testing, auditing, and
+docs — driven by a handful of agents you talk to directly.
 
 ## Get Started
 
-If you just want to use these agents in your own harness, install them with one command
-from the repository root:
+Install the agents into your own harness with one command from the repository root:
 
 ```bash
 python3 deploy_agents.py
 ```
 
-The first run asks which harnesses you use (Claude, Codex, OpenCode, Cursor, GitHub) and
-remembers your choice. It only writes files this system generated — your hand-maintained
-config is never touched.
+The first run asks which harnesses you use (Claude, Codex, OpenCode, Cursor, GitHub)
+and remembers your choice. It only writes files this system generated — your
+hand-maintained config is never touched.
 
 **→ See [INSTALLATION.md](INSTALLATION.md) for full installation instructions, options,
 and destinations.**
 
 ## What You Get
 
-- **41 agents** — a full project workflow (planner, refiner, decomposer, phase executor),
-  a feature implementation pipeline (implementer, reviewer, QA writer), PR review, audit
-  orchestrators, test operations, and standalone helpers (docs writer, debugger, web
-  researcher, and more).
-- **24 skills** — directory-based capabilities agents load on demand.
-- **15 instruction files** and **4 learnings files** — cross-cutting guidance applied by
-  file-glob matching.
+You interact with a small set of **primary agents**. Each one can drive a fleet of
+automated helpers behind the scenes, so you stay focused on a few entry points.
 
-Only the destinations differ per harness; the agents behave the same everywhere.
+### Core project workflow
+
+A numbered pipeline you step through for building a project end to end:
+
+| Step | Agent | You do |
+|------|-------|--------|
+| 1 | **Project - Planner** | Describe your project → get a phased roadmap |
+| 2 | **Phase - Refiner** | Refine and stress-test one phase |
+| 3 | **Feature - Decomposer** | Break the phase into ready-to-build features |
+| 4 | **Phase - Execute** | Kick off — implementation, review, and QA run hands-free |
+| 5 | **PR - Review** | Get a plain-language readiness report on your diff |
+
+You drive steps 1–3; **Phase - Execute** runs the rest automatically and reports back.
+
+### On-demand specialists
+
+Reach for these individually, whenever you need them — no pipeline required:
+
+- **Single Feature - Agent** — a small, scoped change with an approval gate before it edits
+- **Debugger** — diagnose and fix a frontend or backend error
+- **Docs Writer** — create or update your repo's documentation
+- **Web Researcher** — research a topic and produce a cited findings report
+- **Audit - Code, Infra, Refactor** — health-check your code, infra, or structure
+- **Test - Orchestrator** — analyze, write, or fix your test suite
+- **Prod Code Review** — a final GO / NO-GO readiness gate
+- **Security Scan** — a full-codebase security assessment
+- **Unity Reviewer** / **Visual Verifier** — review Unity C# and verify what actually renders
+- **Eval - Grader** / **Instructions Manager** — score agent runs and manage AI instruction files
+
+Behind these, a set of automated subagents and on-demand skills do the detailed work —
+you never invoke them directly. For the complete catalog and how the pipeline flows,
+see [source_of_truth/agents/README.md](source_of_truth/agents/README.md).
 
 ## How It Works
 
-The repository has two jobs, handled by two scripts:
+For users there are two steps, and the tool handles both:
 
-1. **Transform** — `scripts/propagate_master_assets.py` reads `source_of_truth/`
-   and regenerates platform-specific variants under `ports/{claude,codex,opencode,cursor}`.
-   It also mirrors the source verbatim to `ports/github` and to a real `.github/`
-   directory at the repository root (so GitHub Copilot reads the same source). This step
-   is for maintainers editing the agents; end users can skip it.
-2. **Deploy** — `deploy_agents.py` copies the generated `ports/` outputs out to the
-   real user-level config directories each harness reads (`~/.claude`, `~/.codex`,
-   `~/.config/opencode`, `~/.cursor`), and mirrors the `github` port into this
-   repo's `.github/`. This is the step end users run.
+1. **Pick your harnesses** — the first run of `deploy_agents.py` asks which tools you
+   use and saves the choice.
+2. **Deploy** — it copies the agents into the real config directories each harness reads
+   (`~/.claude`, `~/.codex`, `~/.config/opencode`, `~/.cursor`, and this repo's `.github/`
+   for Copilot).
 
-Both steps are safe by construction: a destination file is only ever overwritten
-or pruned when it positively carries a generated marker (or lives inside a
-generated skill directory). Hand-maintained files are never touched.
-
-## Repository Structure
-
-```text
-.
-├── AGENTS.md                       # Repo-specific code-review-graph MCP guidance
-├── INSTALLATION.md                 # How to deploy the agents into your harness
-├── README.md
-├── source_of_truth/                # THE authoring surface — edit here
-│   ├── agents/                     # 41 agent definitions + README (agent catalog)
-│   ├── skills/                     # 24 skill directories, each rooted at SKILL.md
-│   ├── instructions/               # 15 instruction files matched by applyTo globs
-│   ├── learnings/                  # 4 shared learnings files
-│   └── hooks/                      # Defunct prompt-injection scanner (inert)
-├── ports/                          # Generated outputs — do not edit by hand
-│   ├── claude/                     # agents, commands, skills, learnings
-│   ├── codex/                      # agents, profiles, skills, learnings (TOML agents)
-│   ├── opencode/                   # agents, skills
-│   ├── cursor/                     # commands, rules (.mdc)
-│   └── github/                     # verbatim mirror of the 5 source subdirs
-├── .github/                        # Real mirror of ports/github (for Copilot)
-├── scripts/
-│   ├── propagate_master_assets.py  # Transform: source_of_truth/ -> ports/ + .github/
-│   ├── asset_paths.py              # Shared markers + poll-watch primitives
-│   ├── extract_pdfs.py             # Utility
-│   └── setup-hook-symlinks.sh      # Utility
-├── deploy_agents.py                # Deploy: ports/ -> real harness config dirs
-├── docs/                           # ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT,
-│                                   # TROUBLESHOOTING, porting/, inspiration/
-├── eval/                           # Agent evaluation grader system and run artifacts
-├── benchmarks/                     # Model cost/performance benchmark data
-├── packages/                       # Distributable UPM package (com.threnjen.visual-verification)
-├── tests/                          # Python regression tests for both scripts
-└── .vscode/tasks.json              # One-shot + watch tasks for propagate and deploy
-```
-
-`source_of_truth/` is the only authoring surface. Everything under `ports/` and the
-real `.github/` mirror are generated outputs — the per-surface details live in
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Deploy is safe by construction: a destination file is only ever overwritten or removed
+when it positively carries a generated marker (or lives inside a generated skill
+directory). Hand-maintained files are never touched. Re-run `deploy_agents.py` anytime
+to pull the latest.
 
 ## Prerequisites
 
-- `python3` (standard library only — the repo itself has no third-party runtime
-  dependencies)
-- VS Code if you want the built-in watch tasks and Copilot agent picker
+- `python3` (standard library only — no third-party runtime dependencies)
 - Optional harness tooling depending on what you deploy to: Claude Code, Codex,
   OpenCode, Cursor, or GitHub Copilot
+- VS Code if you want the Copilot agent picker
 
-The deploy script also installs and configures two optional companion tools the
-agents make use of when present: [code-review-graph](https://github.com/tirth8205/code-review-graph)
-(via `pip`/`pipx`) and the [Context7](https://context7.com) MCP server (via
-`npx`, requires Node.js). Pass `--skip-tools` to opt out; a failed tool install
-never blocks asset deployment.
+The deploy script also installs and configures two optional companion tools the agents
+use when present: [code-review-graph](https://github.com/tirth8205/code-review-graph)
+(via `pip`/`pipx`) and the [Context7](https://context7.com) MCP server (via `npx`,
+requires Node.js). Pass `--skip-tools` to opt out; a failed tool install never blocks
+asset deployment.
 
-There is no application to build or serve. The maintenance loop is: edit
-`source_of_truth/`, propagate, review the diff, deploy.
-
-## Common Workflows
-
-### Deploy the agents to your real harness directories (users)
+## Deploy Commands
 
 ```bash
-python3 deploy_agents.py            # use saved selection, or prompt (tty) and save
+python3 deploy_agents.py                    # use saved selection, or prompt (tty) and save
 python3 deploy_agents.py --harness claude,cursor
 python3 deploy_agents.py --all
-python3 deploy_agents.py --list     # show harnesses and resolved destinations
+python3 deploy_agents.py --list             # show harnesses and resolved destinations
 ```
 
-The first interactive run asks which harnesses you use and saves the choice to
-`.deploy-config.json` (gitignored). Subsequent runs are just `python3 deploy_agents.py`.
-Full details are in [INSTALLATION.md](INSTALLATION.md).
-
-### Regenerate ports/ and .github/ from source (maintainers)
-
-```bash
-python3 scripts/propagate_master_assets.py --once
-```
-
-Runs one propagation pass to a fixed point (converges, then exits). Run this only if you
-have edited files under `source_of_truth/`. In VS Code the equivalent task is
-`propagate: master assets (once)`. The background task `watch: propagate master assets`
-starts on folder open and re-propagates on every save under `source_of_truth/`.
-
-See [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) for the full command
-reference and [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for failure modes.
-
-## Key Contents
-
-### Agent system
-
-`source_of_truth/agents/` contains 40 source agent definitions following an orchestrator +
-subagent pattern: the project planning pipeline (planner, refiner, decomposer, phase
-executor), the feature implementation pipeline (plan expander, implementer, reviewer,
-QA writer), PR Review orchestration and evaluators, evaluation agents, audit
-orchestrators (code, infra, refactor), test operations, and standalone utility agents
-(docs writer, debugger, single-feature agent, prod code review, unity
-reviewer, web researcher). See
-[source_of_truth/agents/README.md](source_of_truth/agents/README.md) for the full
-catalog and pipeline flow.
-
-### Shared skills, instructions, and learnings
-
-`source_of_truth/skills/` holds directory-based skills (each rooted at `SKILL.md`)
-that agents load on demand. `source_of_truth/instructions/` holds instruction files
-matched by `applyTo` globs — consumed directly by Copilot and transformed into inline
-guidance or Cursor rules for other harnesses. `source_of_truth/learnings/` holds
-cross-cutting learnings that propagate as learnings/rules.
-
-### Distributable package
-
-`packages/com.threnjen.visual-verification/` is a Unity UPM package for deterministic
-screenshot capture, paired with the Visual Verifier agent.
+The first interactive run saves your choice to `.deploy-config.json` (gitignored);
+subsequent runs are just `python3 deploy_agents.py`. Full details are in
+[INSTALLATION.md](INSTALLATION.md).
 
 ## Related Documentation
 
 - [INSTALLATION.md](INSTALLATION.md) — how to deploy the agents into your harness
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — components and the transform/deploy flow
-- [docs/CODEBASE_CONTEXT.md](docs/CODEBASE_CONTEXT.md) — AI-oriented quick orientation
-- [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) — setup, commands, testing
-- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — non-obvious failures and fixes
-- [docs/porting/README.md](docs/porting/README.md) — per-harness porting references
-- [eval/EVAL_SYSTEM_USAGE.md](eval/EVAL_SYSTEM_USAGE.md) — grader workflows and run artifacts
+- [source_of_truth/agents/README.md](source_of_truth/agents/README.md) — the full agent
+  catalog and pipeline flow
+- [CONTRIBUTING.md](CONTRIBUTING.md) — for maintainers and contributors: how the repo is
+  authored, transformed, and laid out
 
 ## Acknowledgements
 
