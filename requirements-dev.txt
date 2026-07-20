@@ -1,2 +1,0 @@
-pytest>=9.0,<10
-pytest-cov>=7.0,<8
