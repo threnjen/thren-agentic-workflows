@@ -21,3 +21,7 @@ file-access-guard.ndjson
 .deploy-config.json
 
 .github
+tests/*
+uv.lock
+requirements*.txt
+pyproject.toml
