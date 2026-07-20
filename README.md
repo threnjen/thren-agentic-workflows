@@ -140,12 +140,12 @@ reference and [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for failure mod
 
 ### Agent system
 
-`source_of_truth/agents/` contains 41 source agent definitions following an orchestrator +
+`source_of_truth/agents/` contains 40 source agent definitions following an orchestrator +
 subagent pattern: the project planning pipeline (planner, refiner, decomposer, phase
 executor), the feature implementation pipeline (plan expander, implementer, reviewer,
 QA writer), PR Review orchestration and evaluators, evaluation agents, audit
 orchestrators (code, infra, refactor), test operations, and standalone utility agents
-(docs writer, debugger, evangelize, single-feature agent, prod code review, unity
+(docs writer, debugger, single-feature agent, prod code review, unity
 reviewer, web researcher). See
 [source_of_truth/agents/README.md](source_of_truth/agents/README.md) for the full
 catalog and pipeline flow.

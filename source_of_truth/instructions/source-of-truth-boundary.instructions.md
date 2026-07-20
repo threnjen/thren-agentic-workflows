@@ -1,5 +1,5 @@
 ---
-description: "Constrains agent/instruction/skill work in this repo to the source_of_truth/ authoring surfaces and treats ports/ and generated local outputs (.github/, claude/, opencode/, codex/) as downstream unless Evangelize is doing intentional porting."
+description: "Constrains agent/instruction/skill work in this repo to the source_of_truth/ authoring surfaces and treats ports/ and generated local outputs (.github/, claude/, opencode/, codex/) as downstream."
 applyTo: "source_of_truth/agents/**"
 ---
 
@@ -30,8 +30,4 @@ For those tasks, treat these directories as downstream/generated or platform-spe
 - If you need to verify propagation behavior, inspect downstream files only after the `source_of_truth/` change is complete and the propagation script has run.
 - The test suite (`tests/test_propagate_master_assets.py`) fails when source and generated outputs drift; a sync failure means "rerun propagation," not "edit the output."
 
-## Exception
-
-The **Evangelize** agent is the explicit exception. When the assigned role is Evangelize, it may read and update `ports/` platform outputs on purpose as part of porting or synchronization work.
-
-Outside Evangelize, only touch those downstream directories when the user explicitly asks for propagation debugging or output verification, and even then keep `source_of_truth/` as the change source.
+Only touch those downstream directories when the user explicitly asks for propagation debugging or output verification, and even then keep `source_of_truth/` as the change source.

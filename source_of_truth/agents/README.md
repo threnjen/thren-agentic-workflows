@@ -137,7 +137,6 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **05 Eval - Grader** | Score a completed phase run from ledger files plus a rubric YAML and write a structured report |
 | **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
 | **Single Feature - Agent** | Handle small, focused changes with a proposal + explicit permission gate before implementation |
-| **Evangelize** | Port changed source-of-truth assets (agents, instructions, skills) into Claude, Codex, and OpenCode outputs using platform guides |
 | **Debugger** | Diagnose and fix frontend or backend application errors |
 | **Docs Writer** | Create or update repo documentation; also spawned automatically by orchestrators after pipeline completion |
 | **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
@@ -202,9 +201,6 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Single Feature - Agent** (direct implementation path)
 > Handles small-scope changes (typically up to a few files) without full pipeline artifacts. It investigates, proposes a focused plan, asks for explicit permission before implementation, executes minimal changes, and verifies results. When scope expands, it recommends switching to **04 Phase - Execute**.
-
-**Evangelize** (automation agent — cross-platform sync)
-> Give it a source in `.github/agents/`, `.github/instructions/`, or `.github/skills/` and it updates or creates the corresponding generated outputs for Claude, Codex, and OpenCode. If no source is provided, it auto-discovers changed source-of-truth files from git diff. It applies each platform's porting guide, maps tools/permissions, embeds applicable instruction intent, preserves established filename aliases, and returns a concise per-platform sync report.
 
 **Test - Orchestrator** (orchestrator — delegates to subagents)
 > Asks which test operation to run (ANALYZE, WRITE, or FIX), delegates to the appropriate test subagent, and presents results. Optionally drives remediation of findings through the Feature - Implementer → Feature - Reviewer pipeline. After remediation, updates documentation via the Docs Writer.
@@ -313,7 +309,6 @@ Not everything needs a pipeline. These agents work well on their own:
 
 - **Audit - Code, Infra, Refactor** — Run anytime for a code, infrastructure, or structural health check
 - **Single Feature - Agent** — Implement a focused change with an explicit approval gate and minimal churn
-- **Evangelize** — Synchronize changed source-of-truth assets (agents, instructions, skills) to Claude, Codex, and OpenCode generated targets
 - **05 Eval - Grader** — Score a completed `phase/*` run against a rubric and preserve a Markdown score report under `eval/runs/<phase-slug>/`
 - **Test - Orchestrator** — Analyze, write, or fix tests on demand
 - **Prod Code Review** — Point at any `dev/feature/[0N-task-name]/` folder for an independent readiness check
