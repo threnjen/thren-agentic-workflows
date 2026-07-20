@@ -19,6 +19,26 @@ python3 deploy_agents.py --list                     # show resolved destinations
 python3 deploy_agents.py --skip-tools               # skip companion-tool setup
 ```
 
+## Baseline Instructions
+
+Alongside the agent assets, deploy renders a per-harness baseline instructions file from
+`source_of_truth/baseline/baseline-instructions.md`, substituting your machine's real
+home paths at deploy time (so it works unchanged on Mac, Windows, or Linux):
+
+| Harness | Baseline destination |
+|---|---|
+| claude | `~/.claude/CLAUDE.md` (respects `CLAUDE_CONFIG_DIR`) |
+| codex | `~/.codex/AGENTS.md` (respects `CODEX_HOME`) |
+| opencode | `~/.config/opencode/AGENTS.md` (respects `OPENCODE_CONFIG_DIR`) |
+| cursor | `~/.cursor/rules/baseline-instructions.mdc` (an `alwaysApply` rule) |
+| github | `<repo>/.github/copilot-instructions.md` |
+
+The baseline contains three sections — Context7 usage, code-review-graph usage, and
+agent/skill discovery — each wrapped in HTML sentinel comments (for example
+`<!-- context7 -->`). Deploy only replaces content between matching sentinels (or
+appends a missing section); everything else in the file is yours and is never touched.
+Re-running deploy is idempotent and reports the file as `unchanged`.
+
 ## Companion Tools
 
 Unless `--skip-tools` is passed, deploy also installs and configures two optional
@@ -38,6 +58,10 @@ regenerate the outputs:
 ```bash
 python3 scripts/propagate_master_assets.py --once
 ```
+
+**GitHub Copilot users**: the github harness deploys into this repo's own `.github/`;
+to use the agents from another project, open this repo in your VS Code workspace
+alongside that project — see [docs/COPILOT_SETUP.md](docs/COPILOT_SETUP.md).
 
 See [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) for the full command reference
 and destination table, and [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for failure

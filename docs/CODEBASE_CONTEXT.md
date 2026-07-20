@@ -33,6 +33,7 @@ source_of_truth/                           # THE authoring surface
   instructions/                            # 15 applyTo-glob instruction files
   learnings/                               # 4 learnings files
   hooks/                                   # defunct injection scanner (DEFUNCT.md)
+  baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
   claude/  {agents, commands, skills, learnings}
   codex/   {agents, profiles, skills, learnings}   # TOML agents; profiles/ not deployed
@@ -45,7 +46,7 @@ scripts/
   asset_paths.py                           # shared markers + poll_watch
   extract_pdfs.py, setup-hook-symlinks.sh  # utilities
 deploy_agents.py                           # deploy entry point (root, not scripts/)
-docs/ ARCHITECTURE.md CODEBASE_CONTEXT.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
+docs/ ARCHITECTURE.md CODEBASE_CONTEXT.md COPILOT_SETUP.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
 docs/porting/ docs/inspiration/
 eval/ benchmarks/ packages/ tests/
 .deploy-config.json                        # gitignored; saved harness selection
@@ -68,6 +69,21 @@ eval/ benchmarks/ packages/ tests/
   - cursor → `~/.cursor` (commands, rules)
   - github → `<repo>/.github` (verbatim mirror of the 5 subdirs)
 - Deploy selection persists to `.deploy-config.json` (gitignored) unless `--no-save`.
+- Deploy also splices a baseline instructions file per harness (`deploy_baseline`),
+  rendered from `source_of_truth/baseline/baseline-instructions.md` with real home
+  paths substituted at deploy time (no OS branching — `Path.home()` handles it):
+  - claude → `<claude config dir>/CLAUDE.md`
+  - codex → `<CODEX_HOME>/AGENTS.md`
+  - opencode → `<OPENCODE_CONFIG_DIR>/AGENTS.md`
+  - cursor → `~/.cursor/rules/baseline-instructions.mdc` (`alwaysApply: true` frontmatter)
+  - github → `<repo>/.github/copilot-instructions.md` (a `.github/AGENTS.md` would only
+    scope to files under `.github/`)
+- Baseline splice model: three sections delimited by sentinel comments
+  (`<!-- context7 -->`, `<!-- code-review-graph -->`, `<!-- agent-discovery -->`);
+  only sentinel blocks are replaced/appended, content outside them is never touched;
+  idempotent (second run → `unchanged`); every failure returns a status, never raises.
+- The cursor baseline `.mdc` deliberately carries NO generated marker so the
+  `~/.cursor/rules` prune pass treats it as foreign and leaves it alone.
 
 ## Important Script Facts
 

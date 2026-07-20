@@ -149,6 +149,25 @@ means code-review-graph cannot be installed.
 
 ### Symptom
 
+The baseline `CLAUDE.md`/`AGENTS.md` contains a duplicate section, or a stale section
+deploy does not update.
+
+### Cause
+
+Deploy only manages content between matching sentinel comments (`<!-- context7 -->`,
+`<!-- code-review-graph -->`, `<!-- agent-discovery -->`). A hand-written copy of the
+same guidance outside sentinels (for example, an old unsentineled discovery section) is
+foreign content and is deliberately left alone, so it coexists with the managed block.
+
+### Fix
+
+- Delete the unsentineled duplicate by hand and rerun deploy; the sentinel-wrapped
+  version is refreshed automatically.
+- If the same guidance also lives in a separate rules file (for example an old
+  `~/.claude/rules/context7.md`), delete that file to avoid double-loading.
+
+### Symptom
+
 A harness cannot see a deployed skill or agent.
 
 ### Cause

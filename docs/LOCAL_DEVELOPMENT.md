@@ -95,6 +95,23 @@ out with a usage hint rather than guessing.
 | cursor | `~/.cursor` | — | commands, rules |
 | github | `<repo>/.github` | — | verbatim mirror of the 5 source subdirs |
 
+After the asset copy, deploy also splices a baseline instructions file per harness,
+rendered from `source_of_truth/baseline/baseline-instructions.md` with the machine's
+real home paths substituted at deploy time:
+
+| Harness | Baseline destination |
+|---|---|
+| claude | `<claude config dir>/CLAUDE.md` |
+| codex | `<CODEX_HOME>/AGENTS.md` |
+| opencode | `<OPENCODE_CONFIG_DIR>/AGENTS.md` |
+| cursor | `~/.cursor/rules/baseline-instructions.mdc` (`alwaysApply` rule) |
+| github | `<repo>/.github/copilot-instructions.md` |
+
+Only the three sentinel-delimited sections (`<!-- context7 -->`,
+`<!-- code-review-graph -->`, `<!-- agent-discovery -->`) are replaced or appended;
+content outside the sentinels is never touched, and a repeat run reports `unchanged`.
+The result appears under a `baseline` key in the per-harness deploy output.
+
 Deploy only ever overwrites or prunes files this system wrote (identified by a generated
 marker, or membership in a marked skill directory). A hand-placed file at a destination
 is left alone and reported under `skipped_paths` in the run output — delete it by hand if

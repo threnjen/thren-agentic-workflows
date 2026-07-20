@@ -37,7 +37,7 @@ A numbered pipeline you step through for building a project end to end:
 | 4 | **Phase - Execute** | Kick off — implementation, review, and QA run hands-free |
 | 5 | **PR - Review** | Get a plain-language readiness report on your diff |
 
-You drive steps 1–3; **Phase - Execute** runs the rest automatically and reports back.
+You drive these steps in order.
 
 ### On-demand specialists
 
@@ -73,6 +73,13 @@ when it positively carries a generated marker (or lives inside a generated skill
 directory). Hand-maintained files are never touched. Re-run `deploy_agents.py` anytime
 to pull the latest.
 
+Deploy also maintains a **baseline instructions file** per harness — `CLAUDE.md` for
+Claude, `AGENTS.md` for Codex and OpenCode, an always-applied rule for Cursor, and
+`.github/copilot-instructions.md` for Copilot. It carries three managed sections
+(Context7 usage, code-review-graph usage, and agent/skill discovery) wrapped in HTML
+sentinel comments; deploy splices only those sections, so anything you write outside
+them in the same file is preserved.
+
 ## Prerequisites
 
 - `python3` (standard library only — no third-party runtime dependencies)
@@ -102,6 +109,8 @@ subsequent runs are just `python3 deploy_agents.py`. Full details are in
 ## Related Documentation
 
 - [INSTALLATION.md](INSTALLATION.md) — how to deploy the agents into your harness
+- [docs/COPILOT_SETUP.md](docs/COPILOT_SETUP.md) — using the agents with GitHub Copilot
+  (open this repo in your VS Code workspace alongside your project)
 - [source_of_truth/agents/README.md](source_of_truth/agents/README.md) — the full agent
   catalog and pipeline flow
 - [CONTRIBUTING.md](CONTRIBUTING.md) — for maintainers and contributors: how the repo is

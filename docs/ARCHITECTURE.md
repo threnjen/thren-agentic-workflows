@@ -79,6 +79,7 @@ default when no flag is passed) and `--watch` use the same transformation logic.
 ```mermaid
 flowchart LR
     Ports[ports/<harness>] --> Deploy[deploy_agents.py]
+    Baseline[source_of_truth/baseline template] --> Deploy
     Config[.deploy-config.json selection] --> Deploy
     Deploy --> Claude[~/.claude]
     Deploy --> Codex[~/.codex + ~/.agents/skills]
@@ -94,6 +95,20 @@ foreign and never touched — they are surfaced under `skipped_paths` in the run
 a fail-closed skip is visible, not silent. The `github` harness is the one exception:
 its mirrored tree is copied verbatim (no per-file marker), so it is treated as
 unconditionally managed within the five mirrored subdirs.
+
+After the asset copy, deploy renders a per-harness **baseline instructions file** from
+`source_of_truth/baseline/baseline-instructions.md`. The template holds three sections
+wrapped in HTML sentinel comments (`<!-- context7 -->`, `<!-- code-review-graph -->`,
+`<!-- agent-discovery -->`); placeholders for harness name and agent/skill paths are
+substituted at deploy time using the machine's real home directory, so no OS branching
+is needed. Deploy splices each sentinel-delimited section into the destination —
+replacing an existing block in place or appending a missing one — and never touches
+content outside the sentinels, so a hand-maintained `CLAUDE.md`/`AGENTS.md` keeps its
+own content. Destinations: `CLAUDE.md` under the Claude config dir, `AGENTS.md` under
+the Codex and OpenCode config dirs, an `alwaysApply` rule at
+`~/.cursor/rules/baseline-instructions.mdc` for Cursor (deliberately unmarked so the
+rules prune pass treats it as foreign), and `.github/copilot-instructions.md` for the
+github harness (a `.github/AGENTS.md` would only scope to files under `.github/`).
 
 Before deploying assets (unless `--skip-tools` is passed), deploy bootstraps two
 optional companion tools: code-review-graph (installed via `pip`/`pipx`, configured
@@ -115,6 +130,9 @@ The only authoring surface.
 - `learnings/` — 4 cross-cutting learnings files.
 - `hooks/` — a defunct prompt-injection scanner, retained but wired nowhere. See
   `source_of_truth/hooks/DEFUNCT.md`.
+- `baseline/` — `baseline-instructions.md`, the sentinel-sectioned baseline
+  instructions template rendered per harness at deploy time (not propagated to
+  `ports/`, since it needs the deployed machine's real paths).
 
 ### Generated outputs (`ports/`)
 
