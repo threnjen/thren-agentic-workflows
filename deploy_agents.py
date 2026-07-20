@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -34,6 +35,15 @@ from scripts.asset_paths import PORTS_DIR, REPO_ROOT, file_has_generated_marker,
 CONFIG_PATH = REPO_ROOT / ".deploy-config.json"
 
 HARNESSES = ("claude", "codex", "opencode", "cursor", "github")
+
+# Baseline user-global instructions (CLAUDE.md / AGENTS.md / Cursor rule).
+# Rendered at deploy time so the discovery paths reflect this machine's real
+# home directory, then spliced into the destination file between sentinel
+# comments — content outside the sentinels is never touched.
+BASELINE_TEMPLATE = REPO_ROOT / "source_of_truth" / "baseline" / "baseline-instructions.md"
+BASELINE_SECTIONS = ("context7", "code-review-graph", "agent-discovery")
+# Cursor has no user-global AGENTS.md; its native global channel is a rule file.
+CURSOR_BASELINE_FRONTMATTER = "---\nalwaysApply: true\n---\n\n"
 
 # The github "harness" deploys into this repository, not the home directory: it
 # mirrors ports/github verbatim into .github/ so GitHub-side tooling reads the
@@ -176,6 +186,142 @@ def deploy_harness(
     return result
 
 
+def baseline_destination(
+    harness: str,
+    *,
+    home: Path | None = None,
+    environ: Mapping[str, str] | None = None,
+) -> Path | None:
+    """User-global instructions file for one harness; None when it has none."""
+    home = Path(home).expanduser() if home else Path.home()
+    environ = os.environ if environ is None else environ
+
+    def root(env_var: str, default: str | Path) -> Path:
+        raw = environ.get(env_var, "")
+        return Path(raw).expanduser() if raw else home / default
+
+    if harness == "claude":
+        return root("CLAUDE_CONFIG_DIR", ".claude") / "CLAUDE.md"
+    if harness == "codex":
+        return root("CODEX_HOME", ".codex") / "AGENTS.md"
+    if harness == "opencode":
+        return root("OPENCODE_CONFIG_DIR", Path(".config") / "opencode") / "AGENTS.md"
+    if harness == "cursor":
+        return home / ".cursor" / "rules" / "baseline-instructions.mdc"
+    if harness == "github":
+        # Copilot's repo-wide instructions file; .github/AGENTS.md would only
+        # scope to files under .github/ (nearest-file precedence).
+        return REPO_ROOT / ".github" / "copilot-instructions.md"
+    return None
+
+
+def _baseline_substitutions(
+    harness: str,
+    *,
+    home: Path,
+    environ: Mapping[str, str],
+) -> Dict[str, str]:
+    """Placeholder values for the agent-discovery section, per harness."""
+    if harness == "github":
+        # Copilot's cloud agent runs inside the repository; discovery paths are
+        # repo-relative and there is no user-global location.
+        return {
+            "{harness_title}": "Copilot",
+            "{agent_paths}": "1. The repository's `.github/agents/`",
+            "{skill_paths}": "1. The repository's `.github/skills/`",
+        }
+    dests = dict(
+        (source.name, dest) for source, dest in harness_mappings(harness, home=home, environ=environ)
+    )
+    project_dirs = {
+        "claude": (".claude/agents", ".claude/skills"),
+        "codex": (".codex/agents", ".agents/skills"),
+        "opencode": (".opencode/agents", ".opencode/skills"),
+        "cursor": (".cursor/commands", ".cursor/rules"),
+    }[harness]
+    agent_global = dests.get("agents") or dests.get("commands")
+    skill_global = dests.get("skills") or dests.get("rules")
+
+    def numbered(project_dir: str, global_dir: Path) -> str:
+        return f"1. The project's `{project_dir}`\n2. `{global_dir}`"
+
+    return {
+        "{harness_title}": harness.capitalize(),
+        "{agent_paths}": numbered(project_dirs[0], agent_global),
+        "{skill_paths}": numbered(project_dirs[1], skill_global),
+    }
+
+
+def _parse_baseline_sections(template: str) -> Dict[str, str]:
+    """Extract each sentinel-delimited section body from the template."""
+    sections: Dict[str, str] = {}
+    for name in BASELINE_SECTIONS:
+        sentinel = f"<!-- {name} -->"
+        match = re.search(re.escape(sentinel) + r"\n(.*?)" + re.escape(sentinel), template, re.DOTALL)
+        if match:
+            sections[name] = match.group(1).strip("\n")
+    return sections
+
+
+def _splice_section(existing: str, name: str, body: str) -> str:
+    """Replace the sentinel-delimited section in `existing`, or append it."""
+    sentinel = f"<!-- {name} -->"
+    block = f"{sentinel}\n{body}\n{sentinel}"
+    pattern = re.compile(re.escape(sentinel) + r"\n?.*?" + re.escape(sentinel), re.DOTALL)
+    if pattern.search(existing):
+        return pattern.sub(lambda _match: block, existing, count=1)
+    if existing and not existing.endswith("\n"):
+        existing += "\n"
+    separator = "\n" if existing else ""
+    return f"{existing}{separator}{block}\n"
+
+
+def deploy_baseline(
+    harness: str,
+    *,
+    home: Path | None = None,
+    environ: Mapping[str, str] | None = None,
+) -> Dict[str, str]:
+    """Splice the rendered baseline sections into the harness's global file."""
+    home = Path(home).expanduser() if home else Path.home()
+    environ = os.environ if environ is None else environ
+
+    dest = baseline_destination(harness, home=home, environ=environ)
+    if dest is None:
+        return {"status": "not-applicable"}
+    try:
+        template = BASELINE_TEMPLATE.read_text(encoding="utf-8")
+    except OSError as exc:
+        return {"status": "failed", "detail": f"cannot read template: {exc}"}
+
+    substitutions = _baseline_substitutions(harness, home=home, environ=environ)
+    sections = _parse_baseline_sections(template)
+    if dest.is_symlink():
+        return {"status": "skipped", "detail": f"{dest} is a symlink"}
+    try:
+        existing = dest.read_text(encoding="utf-8") if dest.is_file() else ""
+    except OSError as exc:
+        return {"status": "failed", "detail": str(exc)}
+
+    created = not dest.is_file()
+    updated = existing
+    if created and harness == "cursor":
+        updated = CURSOR_BASELINE_FRONTMATTER
+    for name, body in sections.items():
+        for placeholder, value in substitutions.items():
+            body = body.replace(placeholder, value)
+        updated = _splice_section(updated, name, body)
+
+    if updated == existing:
+        return {"status": "unchanged", "path": str(dest)}
+    try:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(updated, encoding="utf-8")
+    except OSError as exc:
+        return {"status": "failed", "detail": str(exc)}
+    return {"status": "created" if created else "updated", "path": str(dest)}
+
+
 def ensure_code_review_graph() -> Dict[str, str]:
     """Install and configure code-review-graph (tirth8205/code-review-graph) if absent.
 
@@ -260,7 +406,12 @@ def deploy(
     environ: Mapping[str, str] | None = None,
     verbose: bool = True,
 ) -> Dict[str, Dict[str, object]]:
-    results = {name: deploy_harness(name, home=home, environ=environ) for name in harnesses}
+    results: Dict[str, Dict[str, object]] = {}
+    for name in harnesses:
+        results[name] = deploy_harness(name, home=home, environ=environ)
+        baseline = deploy_baseline(name, home=home, environ=environ)
+        if baseline["status"] != "not-applicable":
+            results[name]["baseline"] = baseline
     if verbose:
         print(json.dumps(results, indent=2))
     return results
@@ -310,6 +461,9 @@ def list_harnesses(selected: List[str]) -> None:
         print(f"{mark} {name}")
         for source_root, dest_root in harness_mappings(name):
             print(f"    {source_root.relative_to(REPO_ROOT)} -> {dest_root}")
+        baseline = baseline_destination(name)
+        if baseline is not None:
+            print(f"    {BASELINE_TEMPLATE.relative_to(REPO_ROOT)} -> {baseline}")
     if selected:
         print(f"\nSaved selection: {', '.join(selected)}")
     else:
