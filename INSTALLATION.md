@@ -39,6 +39,23 @@ agent/skill discovery — each wrapped in HTML sentinel comments (for example
 appends a missing section); everything else in the file is yours and is never touched.
 Re-running deploy is idempotent and reports the file as `unchanged`.
 
+## Using Named Agents in Codex
+
+After deploying the Codex harness, request the agent in the prompt:
+
+```bash
+codex '@feature-decomposer decompose Phase 08a into execution-ready feature bundles'
+```
+
+The `@feature-decomposer` text activates the installed agent-designator router;
+it is not a Codex CLI option. A natural-language request such as `Act as the
+feature-decomposer ...` works as well.
+
+Do not use `codex -p feature-decomposer` to select an agent. Codex defines
+`-p`/`--profile` as configuration-profile selection, so that command starts the
+ordinary session with a profile layer rather than adopting the feature
+decomposer workflow.
+
 ## Companion Tools
 
 Unless `--skip-tools` is passed, deploy also installs and configures two optional

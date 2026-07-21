@@ -2,10 +2,9 @@
 
 This guide maps the repository's `.github/` source-of-truth surfaces into Codex-native targets. It is an authoring guide for future conversion work, not a runtime install recipe.
 
-Use this guide with the following repository-owned references:
-
-- `codex/CODEX_PLATFORM_REFERENCE.md` for verified Codex behavior, discovery rules, and runtime locations.
-- `codex/README.md` for the repository-owned Codex source area and the distinction between `codex/` and live runtime paths.
+Use this guide with [the architecture overview](../ARCHITECTURE.md) and
+[codebase context](../CODEBASE_CONTEXT.md) for the current generated and runtime
+locations.
 
 ## Core Rule
 
@@ -23,14 +22,18 @@ For this repository, that means future AGENTS source should be authored under th
 
 ## Repository-Owned Landing Zone
 
-Porting work for this phase starts in the repository-owned `codex/` area described in `codex/README.md`.
+Codex authoring starts in `source_of_truth/`; generated Codex assets land under
+`ports/codex/`.
 
-Use that area for:
+Use the source-of-truth area for:
 
 - Mapping docs such as this guide.
-- Future source material that may later produce global AGENTS content, custom-agent TOML files, or skill directories.
+- Agent, instruction, and skill material that produces custom-agent TOML files,
+  baseline instructions, or skill directories.
 
-Do not use this guide to justify writing directly into runtime locations such as `.codex/`, `~/.codex/`, `.agents/skills`, or `$HOME/.agents/skills/`. Those are installation or discovery surfaces, not the source-of-truth authoring area for this phase.
+Do not use this guide to justify writing directly into runtime locations such as
+`.codex/`, `~/.codex/`, or `.agents/skills`. Those are installation or discovery
+surfaces, not source-of-truth authoring locations.
 
 ## Instructions: `.github/instructions/` -> Global AGENTS And Agent `developer_instructions`
 
@@ -99,7 +102,12 @@ The TOML `name` field must be a kebab-case slug derived from the source agent fi
 
 Codex has no verified hide mechanism that keeps subagents out of the frontend agent picker. In this repository, any source agent with `user-invocable: false` must therefore be renamed with a `z-` prefix in the generated Codex artifact so it sorts to the bottom and clearly signals internal-only usage.
 
-When a user addresses a Codex custom agent by name or role, that selected agent is already the active role. Codex uses natural language to select agents — the `@agent-name` designator is a GitHub Copilot convention and does **not** work in Codex CLI. Ported `developer_instructions` for user-invocable agents must therefore tell the agent to begin work as that role immediately, not to call the same role again as a subagent on first action.
+When a user addresses a Codex custom agent by name or role, the agent-designator
+router loads that role into the current session. The `@agent-name` token is
+prompt text interpreted by this repository's routing skill, not a native CLI
+flag. Natural-language requests such as `Act as feature-decomposer` are
+equivalent. The CLI `-p`/`--profile` option only selects a configuration profile
+and must not be documented as agent selection.
 
 ### Transformation Rules
 
@@ -112,14 +120,16 @@ When a user addresses a Codex custom agent by name or role, that selected agent 
 7. Rewrite source agent references in `developer_instructions` to the generated Codex agent names. Use the Codex runtime name, not the GitHub display name, so references such as internal subagents resolve to names like `z-feature-reviewer` instead of `Feature - Reviewer`.
 8. Serialize `developer_instructions` as TOML-safe text. Prefer multiline literal strings for markdown-heavy content so backticks, fenced code blocks, and backslashes are preserved without escape bugs. If the body cannot be represented safely as a multiline literal string, fall back to a fully escaped TOML basic string rather than hand-escaping fragments.
 9. For source agents with `user-invocable: false`, emit the generated Codex artifact with a `z-` prefix in both the installed filename and the TOML `name` field. This is a naming convention, not a true hide flag, and exists because Codex currently lacks a verified hidden-subagent surface in this repo.
-10. Keep repository-owned source material in `codex/` until a later feature defines the exact generated or installed layout.
+10. Keep authored material in `source_of_truth/`; regenerate `ports/codex/` with
+    `python3 scripts/propagate_master_assets.py --once`.
 
 ### Major Non-Portable Differences From Markdown Agent Manifests
 
 | GitHub source model | Codex model | Porting implication |
 |---|---|---|
 | Markdown `.agent.md` manifest | TOML custom-agent file | Requires field-based rewrite |
-| User addresses a Codex agent by name or role | Selected agent is already the active role | Generated `developer_instructions` must begin in-role and must not self-spawn the same role as a subagent |
+| User names an agent in prompt text | Router adopts that role in the active session | Generated `developer_instructions` must begin in-role and must not self-spawn the same role as a subagent |
+| `-p` / `--profile` | Configuration layering only | Never document it as an agent selector |
 | Instruction loading via `.github/instructions/` | `developer_instructions` field inside agent TOML | Relevant instructions must be embedded or rewritten |
 | `user-invocable: false` hidden subagent intent | `z-`-prefixed filename and TOML `name` | Treat as a visibility hint because no Codex hide flag is verified here |
 | GitHub-specific metadata and tool assumptions | Codex-specific optional fields and runtime behavior | Unsupported behavior must be classified explicitly |
@@ -175,7 +185,7 @@ The verified Codex structure is:
 2. Generate `SKILL.md` with proper YAML frontmatter (`name` matching the directory name, `description` from source). Codex rejects any `SKILL.md` that does not start with a `---`-delimited frontmatter block.
 3. Preserve the intent and reusable workflow guidance from the source `SKILL.md` body.
 4. Carry forward supporting files only when they are meaningful in the Codex skill model.
-5. Keep repository-owned skill source material under `codex/` until a later feature defines an exact authoring layout for generated or installed skill copies.
+5. Keep repository-owned skill source material under `source_of_truth/skills/`.
 6. Map final installed skills to Codex runtime discovery roots such as `.agents/skills` or `$HOME/.agents/skills/` only after the authoring-to-install flow is defined.
 
 ### How This Differs From The Current Master Skill Structure
@@ -223,8 +233,10 @@ Use this table before porting any source asset.
 
 1. Identify which `.github/` surface owns the source artifact.
 2. Route the artifact using the mapping rules in this document rather than by filename similarity.
-3. Confirm the repository-owned source landing zone under `codex/README.md` before creating any new authored artifacts.
-4. Use `codex/CODEX_PLATFORM_REFERENCE.md` to verify the Codex runtime destination and file model.
+3. Confirm the repository-owned source landing zone under `source_of_truth/`
+   before creating any new authored artifacts.
+4. Verify current Codex CLI behavior against official documentation before
+   changing runtime or invocation guidance.
 5. Classify each piece of content as portable, transformed, or non-portable before writing any Codex copy.
 6. If one source asset maps to both global AGENTS guidance and custom-agent `developer_instructions`, split it deliberately and document the split.
 

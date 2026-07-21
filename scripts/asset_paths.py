@@ -18,7 +18,7 @@ PORTS_DIR = REPO_ROOT / "ports"
 
 GENERATED_AGENT_HEADER = "# Generated from source_of_truth/agents. Do not edit manually."
 # Markdown counterpart to GENERATED_AGENT_HEADER. That constant is a TOML comment,
-# correct for codex agents/profiles *.toml but rendered as an H1 heading by Markdown,
+# correct for Codex agent *.toml files but rendered as an H1 heading by Markdown,
 # so it cannot be reused for Markdown outputs.
 GENERATED_AGENT_MARKDOWN_HEADER = "<!-- Generated from source_of_truth/agents. Do not edit manually. -->"
 GENERATED_SKILL_HEADER = "<!-- Generated from source_of_truth/skills. Do not edit manually. -->\n"

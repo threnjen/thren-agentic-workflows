@@ -51,6 +51,8 @@ CODEX_LEARNINGS_DIR = PORTS_DIR / "codex" / "learnings"
 OPENCODE_AGENTS_DIR = PORTS_DIR / "opencode" / "agents"
 OPENCODE_SKILLS_DIR = PORTS_DIR / "opencode" / "skills"
 CODEX_AGENTS_DIR = PORTS_DIR / "codex" / "agents"
+# Legacy generated profiles are retained as a cleanup root only. Codex CLI
+# profiles are configuration layers, not custom-agent entry points.
 CODEX_PROFILES_DIR = PORTS_DIR / "codex" / "profiles"
 CODEX_SKILLS_DIR = PORTS_DIR / "codex" / "skills"
 CURSOR_COMMANDS_DIR = PORTS_DIR / "cursor" / "commands"
@@ -877,44 +879,6 @@ def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc], reference
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _inject_codex_profile_instruction(agent: SourceAgent, body: str) -> str:
-    """Adoption clause for profile output: the session adopts this role inline."""
-    identifier = _codex_identifier_for(agent)
-    clause = (
-        f"You are now operating as **{agent.name}** directly in this session. "
-        "Adopt this role and carry out the work yourself — "
-        f"do not spawn `{identifier}` as a subagent to handle this. "
-        "Delegate only to distinct child agents when this workflow explicitly calls for them."
-    )
-    return _insert_clause_after_intro(body, clause)
-
-
-def render_codex_profile(agent: SourceAgent, docs: List[InstructionDoc], reference_map: Dict[str, str]) -> str:
-    """Render a Codex profile TOML for direct invocation with `codex --profile <name>`.
-
-    Profile TOMLs set developer_instructions as a config-layer key so the session
-    adopts the agent role from the first turn. Use alongside the custom agent TOML
-    (which handles subagent spawning) — both files are generated for user-invocable agents.
-    """
-    combined = agent.body.strip()
-    appendix = _build_instruction_appendix(agent, docs)
-    if appendix:
-        combined = f"{combined}\n\n{appendix.strip()}"
-
-    combined = _rewrite_agent_references(combined, reference_map, preserve_at_sign=False)
-    combined = _rewrite_codex_invocation_language(combined)
-    combined = _inject_codex_profile_instruction(agent, combined)
-    combined = _inject_codex_todo_override(agent, combined)
-
-    lines = [
-        GENERATED_AGENT_HEADER,
-        "developer_instructions = ",
-    ]
-    lines[-1] += _render_toml_string(combined)[0]
-    lines.extend(_render_toml_string(combined)[1:])
-    return "\n".join(lines).rstrip() + "\n"
-
-
 def _validate_output_directory(directory: Path) -> None:
     """Reject generated-output directories that resolve outside the target root."""
     resolved_root = REPO_ROOT.resolve()
@@ -1263,13 +1227,11 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     changed_claude = 0
     changed_opencode = 0
     changed_codex = 0
-    changed_codex_profiles = 0
     changed_cursor = 0
     expected_claude_files: set[Path] = set()
     expected_claude_command_files: set[Path] = set()
     expected_opencode_files: set[Path] = set()
     expected_codex_files: set[Path] = set()
-    expected_codex_profile_files: set[Path] = set()
     expected_cursor_command_files: set[Path] = set()
 
     for agent in agents:
@@ -1324,12 +1286,6 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         if _write_if_changed(codex_file, render_codex_agent(agent, docs, codex_reference_map)):
             changed_codex += 1
 
-        if agent.user_invocable:
-            codex_profile_file = CODEX_PROFILES_DIR / f"{_codex_identifier_for(agent)}.config.toml"
-            expected_codex_profile_files.add(codex_profile_file)
-            if _write_if_changed(codex_profile_file, render_codex_profile(agent, docs, codex_reference_map)):
-                changed_codex_profiles += 1
-
     # Every prune runs only after all emission above has completed. `_claude_filename_for`
     # and `_opencode_filename_for` resolve an output name against the stems already on
     # disk, so deleting first could hand a survivor a different filename (AC6).
@@ -1348,10 +1304,12 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     codex_orphans = _prune_orphaned_outputs(
         CODEX_AGENTS_DIR, "*.toml", expected_codex_files, GENERATED_AGENT_HEADER
     )
+    # Retire the old generated config profiles. They were never deployed by the
+    # current installer and incorrectly implied that --profile selected an agent.
     codex_profile_orphans = _prune_orphaned_outputs(
         CODEX_PROFILES_DIR,
         "*.config.toml",
-        expected_codex_profile_files,
+        set(),
         GENERATED_AGENT_HEADER,
     )
     cursor_command_orphans = _prune_orphaned_outputs(
@@ -1373,7 +1331,6 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         "claude_changed": changed_claude + skill_result["claude_changed"] + learnings_result["claude_changed"],
         "opencode_changed": changed_opencode + skill_result["opencode_changed"],
         "codex_changed": changed_codex + skill_result["codex_changed"] + learnings_result["codex_changed"],
-        "codex_profiles_changed": changed_codex_profiles,
         "cursor_changed": changed_cursor + cursor_rules_result["cursor_changed"],
         "skills_changed": changed_skills,
         "learnings_changed": learnings_result["learnings_changed"],

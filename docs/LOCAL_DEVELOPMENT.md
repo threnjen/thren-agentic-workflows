@@ -90,7 +90,7 @@ out with a usage hint rather than guessing.
 | Harness | Destination (default) | Env override | Subdirs |
 |---|---|---|---|
 | claude | `~/.claude` | `CLAUDE_CONFIG_DIR` | agents, commands, skills, learnings |
-| codex | `~/.codex` + `~/.agents/skills` | `CODEX_HOME` | agents; skills (profiles not deployed) |
+| codex | `~/.codex` + `~/.agents/skills` | `CODEX_HOME` | agents; skills |
 | opencode | `~/.config/opencode` | `OPENCODE_CONFIG_DIR` | agents, skills |
 | cursor | `~/.cursor` | — | commands, rules |
 | github | `<repo>/.github` | — | verbatim mirror of the 5 source subdirs |

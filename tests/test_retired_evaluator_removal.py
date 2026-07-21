@@ -128,7 +128,6 @@ def test_security_scan_survives_and_still_propagates() -> None:
         REPO_ROOT / "ports" / "claude" / "commands" / "security-scan.md",
         REPO_ROOT / "ports" / "opencode" / "agents" / "security-scan.md",
         REPO_ROOT / "ports" / "codex" / "agents" / "security-scan.toml",
-        REPO_ROOT / "ports" / "codex" / "profiles" / "security-scan.config.toml",
     ):
         assert output.exists(), f"Security Scan stopped propagating to {output}"
 

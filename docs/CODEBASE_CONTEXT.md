@@ -36,7 +36,7 @@ source_of_truth/                           # THE authoring surface
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
   claude/  {agents, commands, skills, learnings}
-  codex/   {agents, profiles, skills, learnings}   # TOML agents; profiles/ not deployed
+  codex/   {agents, skills, learnings}             # TOML agents
   opencode/{agents, skills}
   cursor/  {commands, rules}               # commands=*.md, rules=*.mdc
   github/  {agents, hooks, instructions, learnings, skills}   # verbatim mirror
@@ -64,7 +64,7 @@ eval/ benchmarks/ packages/ tests/
   `npx ctx7 setup`) unless `--skip-tools`; failures warn and never block deployment.
 - Deploy destinations:
   - claude → `$CLAUDE_CONFIG_DIR` or `~/.claude` (agents, commands, skills, learnings)
-  - codex → `$CODEX_HOME` or `~/.codex` (agents) + `~/.agents/skills` (skills); profiles not deployed
+  - codex → `$CODEX_HOME` or `~/.codex` (agents) + `~/.agents/skills` (skills)
   - opencode → `$OPENCODE_CONFIG_DIR` or `~/.config/opencode` (agents, skills)
   - cursor → `~/.cursor` (commands, rules)
   - github → `<repo>/.github` (verbatim mirror of the 5 subdirs)

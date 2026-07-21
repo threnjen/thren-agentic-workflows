@@ -20,6 +20,19 @@ hand-maintained config is never touched.
 **→ See [INSTALLATION.md](INSTALLATION.md) for full installation instructions, options,
 and destinations.**
 
+### Invoke a named agent in Codex
+
+Put the agent name in the prompt. The `@name` form is a repository routing
+convention, so it works after these assets are deployed:
+
+```bash
+codex '@feature-decomposer decompose Phase 08a into execution-ready feature bundles'
+```
+
+You can also say `Act as the feature-decomposer ...` in plain language. Do not
+use `codex -p feature-decomposer`: `-p`/`--profile` selects a Codex configuration
+profile and does not select a custom agent.
+
 ## What You Get
 
 You interact with a small set of **primary agents**. Each one can drive a fleet of

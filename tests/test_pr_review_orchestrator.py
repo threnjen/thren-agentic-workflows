@@ -250,7 +250,6 @@ def test_renamed_orchestrator_reaches_all_three_generated_roots() -> None:
         "ports/claude/commands/pr-review.md": "PR Review Orchestrator",
         "ports/opencode/agents/05-pr-review.md": "PR Review Orchestrator",
         "ports/codex/agents/05-pr-review.toml": 'name = "pr-review"',
-        "ports/codex/profiles/pr-review.config.toml": "PR Review Orchestrator",
     }
 
     for relative_path, marker in expected_markers.items():
@@ -269,7 +268,6 @@ def test_stale_generated_outputs_are_absent_from_every_root() -> None:
         "claude/commands/phase-final-review.md",
         "opencode/agents/05-phase-final-review.md",
         "codex/agents/05-phase-final-review.toml",
-        "codex/profiles/phase-final-review.config.toml",
     )
 
     for relative_path in stale:

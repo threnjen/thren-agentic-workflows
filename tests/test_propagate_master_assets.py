@@ -268,7 +268,6 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             "ports/claude/commands/pr-review.md": "PR Review Orchestrator",
             "ports/opencode/agents/05-pr-review.md": "PR Review Orchestrator",
             "ports/codex/agents/05-pr-review.toml": 'name = "pr-review"',
-            "ports/codex/profiles/pr-review.config.toml": "PR Review Orchestrator",
         }
 
         for relative_path, marker in expected_markers.items():
@@ -744,20 +743,20 @@ class OrphanPruningTests(unittest.TestCase):
         # claude/agents 33 -> 27 (the five, plus `z-security-scan.md` -- Security
         # Scan lost its spawnable subagent file once `05d` stopped declaring it as
         # a child, and is now a user-invocable command only); opencode/agents and
-        # codex/agents 46 -> 41 (the five). Command and profile counts are
-        # unchanged: Security Scan's command was renamed, not removed.
+        # codex/agents 46 -> 41 (the five). Command counts are unchanged:
+        # Security Scan's command was renamed, not removed.
         # Evangelize retirement dropped one file from each user-invocable
-        # surface (claude command, opencode agent, codex agent, codex profile);
+        # surface (claude command, opencode agent, codex agent);
         # claude/agents is unchanged because it had no spawnable subagent file.
         # The `qa` agent added one file to each user-invocable surface (claude
-        # command, opencode agent, codex agent, codex profile); claude/agents is
+        # command, opencode agent, codex agent); claude/agents is
         # unchanged because `qa` declares no subagent children.
         roots = [
             (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 27),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
             (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
             (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 41),
-            (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 19),
+            (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:
             with self.subTest(root=directory.name):

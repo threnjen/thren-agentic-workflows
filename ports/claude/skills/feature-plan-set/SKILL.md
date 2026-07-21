@@ -8,6 +8,11 @@ description: "Write feature plan documents for implementation. Use when: decompo
 
 The three-file plan convention: `-plan.md` is produced by the Feature - Decomposer; `-context.md` and `-tasks.md` are produced by the 04a-feature-plan-expander. All three files are consumed by 04b-feature-implementer, 04c-feature-reviewer, 04d-feature-qa-writer, and orchestrators.
 
+For a phase-decomposition request, producing `-plan.md` files does not finish
+the request. The Feature - Decomposer must invoke the plan expanders, verify all
+three files in every bundle, write and validate the manifest, and complete its
+commit gate in the same uninterrupted workflow.
+
 When decomposing a phase, the Feature - Decomposer must also produce the phase-level execution manifest at `dev/feature/[phase-name]-execution-manifest.md`. This manifest is not part of any single feature bundle; it is the schedule and dependency contract consumed by Phase - Execute.
 
 ## File Structure
