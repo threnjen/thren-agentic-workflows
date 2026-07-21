@@ -1,7 +1,7 @@
 ---
 name: z-artifact-sweeper
 description: Finds debug artifacts, temporary markers, and dead code added by a branch.
-tools: Skill, Read, Grep, Glob, Edit, Write
+tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
@@ -49,8 +49,14 @@ Reporting them is not thoroughness — it is noise that trains the reader to ski
 the report, and a report nobody reads blocks nothing.
 
 Use the diff's added-line ranges, read from the orchestrator-supplied
-`range.diff` and `changed-files.txt` under the report root — this evaluator has
-no git access, so those files are the authoritative attribution source. When a matched line is not inside one, compare
+`range.diff` and `changed-files.txt` under the report root — those files are
+the preferred attribution source. If either is missing, generate the
+equivalent yourself with read-only git commands scoped to the confirmed range
+(`git diff <base>..<head>`, `git diff --name-status <base>..<head>`) and note
+in the report that attribution was self-generated because the orchestrator
+artifacts were absent. Shell access exists for this fallback only: read-only
+git inspection of the confirmed range — never state-changing commands
+(checkout, commit, install, formatters). When a matched line is not inside one, compare
 it against the baseline before reporting it as introduced. If added-line
 attribution cannot be verified for a candidate, record it under `Checks Not Run`
 with a concrete reason rather than reporting it as branch-introduced. Do not

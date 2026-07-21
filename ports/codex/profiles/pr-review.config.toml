@@ -185,9 +185,11 @@ failure — unlike an evaluator failure — aborts the run.
 
 ### 2. Materialize diff artifacts
 
-Fan-out evaluators run without shell or git access, and MCP graph tools may be
-unreachable from their sessions. They cannot enumerate the diff themselves, so
-the orchestrator materializes it for them, into the report root, before fan-out:
+Most fan-out evaluators run without shell or git access, and MCP graph tools
+may be unreachable from their sessions; the ones with shell access are only
+permitted read-only git as a fallback. The materialized artifacts are the
+authoritative attribution source for all of them, so the orchestrator writes
+them into the report root before fan-out:
 
 - `changed-files.txt` — `git diff --name-status <base>..<head>` redirected to
   the file.

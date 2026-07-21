@@ -1,7 +1,7 @@
 ---
 name: 05d Consistency Auditor
 description: "Detects convention drift introduced by a branch and recommends canonical forms."
-tools: [read, search, edit]
+tools: [read, search, edit, execute]
 user-invocable: false
 ---
 
@@ -50,8 +50,14 @@ finding in its own right.
 Report drift only where the branch **added** the drifting line. Verifiable
 added-line attribution is the requirement; touched-file filtering alone is
 insufficient. Read added-line ranges from the orchestrator-supplied
-`range.diff` and `changed-files.txt` under the report root — this evaluator has
-no git access, so those files are the authoritative attribution source. A file
+`range.diff` and `changed-files.txt` under the report root — those files are
+the preferred attribution source. If either is missing, generate the
+equivalent yourself with read-only git commands scoped to the confirmed range
+(`git diff <base>..<head>`, `git diff --name-status <base>..<head>`) and note
+in the report that attribution was self-generated because the orchestrator
+artifacts were absent. Shell access exists for this fallback only: read-only
+git inspection of the confirmed range — never state-changing commands
+(checkout, commit, install, formatters). A file
 the branch touched is not a file the branch wrote: its
 existing conventions are the baseline this audit measures against, and reporting
 them back as findings inverts the job. If added-line attribution cannot be
