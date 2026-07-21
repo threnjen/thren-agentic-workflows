@@ -55,7 +55,8 @@ Reach for these individually, whenever you need them — no pipeline required:
 - **Eval - Grader** / **Instructions Manager** — score agent runs and manage AI instruction files
 
 Behind these, a set of automated subagents and on-demand skills do the detailed work —
-you never invoke them directly. For the complete catalog and how the pipeline flows,
+you never invoke them directly. The library ships 40 source agent definitions in
+`source_of_truth/agents/`. For the complete catalog and how the pipeline flows,
 see [source_of_truth/agents/README.md](source_of_truth/agents/README.md).
 
 ## How It Works

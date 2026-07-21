@@ -60,8 +60,8 @@ max_depth = 2
 
 **Problem**: PR Review fan-out evaluators (artifact sweeper, consistency auditor) reported permission-style failures — they could not attribute added lines because the orchestrator never materialized `range.diff`/`changed-files.txt` for them, though the source contracts said it should.
 
-**Root cause**: The pipeline has two hops — `source_of_truth/ -> ports/` (propagation) and `ports/ -> live harness config dirs` (deployment). The second hop's script (`deploy_assets.py`) was documented in both scripts' headers but never written, so installed copies under `~/.claude/` silently went stale after every propagation. The agent definitions themselves were correct; the runtime was executing an old orchestrator prompt.
+**Root cause**: The pipeline has two hops — `source_of_truth/ -> ports/` (propagation, `scripts/propagate_master_assets.py`) and `ports/ -> live harness config dirs` (deployment, root-level `deploy_agents.py`). The second hop simply had not been run after the latest propagation, so installed copies under `~/.claude/` were executing an old orchestrator prompt. The agent definitions themselves were correct.
 
-**Fix**: Added `scripts/deploy_assets.py` (ports/claude → ~/.claude with generated-marker ownership: only overwrite/prune marked files, skip unmarked with a conflict warning; `--watch` and `--dry-run` supported). Run it after propagation.
+**Fix**: Re-ran deployment so `~/.claude/` matches `ports/claude/`. Run `python3 deploy_agents.py` after every propagation (or leave `--watch` running).
 
 **Watch for**: When a subagent misbehaves in a way the source contract explicitly forbids, diff the installed copy against the generated port output before editing any source. A restricted-tool agent (no shell/git) failing on "missing" inputs usually means its orchestrator — not the agent — is stale or skipped a materialization step.
