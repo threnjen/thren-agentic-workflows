@@ -26,7 +26,7 @@ INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
     README.md                              # full agent catalog and pipeline docs
-    *.agent.md                             # 38, plus the two plain .md agents below (40 total definitions)
+    *.agent.md                             # 39, plus the two plain .md agents below (41 total definitions)
     docs-writer.md                         # plain .md agent (loaded by frontmatter)
     prod-code-review.md                    # plain .md agent (loaded by frontmatter)
   skills/                                  # 24 skill dirs, each rooted at SKILL.md

@@ -749,12 +749,15 @@ class OrphanPruningTests(unittest.TestCase):
         # Evangelize retirement dropped one file from each user-invocable
         # surface (claude command, opencode agent, codex agent, codex profile);
         # claude/agents is unchanged because it had no spawnable subagent file.
+        # The `qa` agent added one file to each user-invocable surface (claude
+        # command, opencode agent, codex agent, codex profile); claude/agents is
+        # unchanged because `qa` declares no subagent children.
         roots = [
             (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 27),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 18),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 40),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 40),
-            (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 18),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 41),
+            (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 19),
         ]
         for directory, pattern, marker, expected_count in roots:
             with self.subTest(root=directory.name):
