@@ -54,3 +54,13 @@ max_depth = 2
 **Fix**: Resolve the enumeration root and assert it is inside the target root *before* globbing; fail loudly rather than skipping. Resolution must cover the whole path — a symlinked *parent* with a real leaf directory defeats `directory.is_symlink()` while still escaping.
 
 **Watch for**: Reversibility asymmetry decides severity — a bad write is undone by re-running propagation; a bad delete is gone. The regression test must include the symlinked-parent case, and must prove both that the guard refuses *and* that the legitimate in-root sweep still prunes — a containment check that bricks the feature will be reverted by whoever hits it next.
+
+## If agents fail with "missing permissions" or missing input artifacts, check the deployed copy's age before the agent contract
+
+**Problem**: PR Review fan-out evaluators (artifact sweeper, consistency auditor) reported permission-style failures — they could not attribute added lines because the orchestrator never materialized `range.diff`/`changed-files.txt` for them, though the source contracts said it should.
+
+**Root cause**: The pipeline has two hops — `source_of_truth/ -> ports/` (propagation) and `ports/ -> live harness config dirs` (deployment). The second hop's script (`deploy_assets.py`) was documented in both scripts' headers but never written, so installed copies under `~/.claude/` silently went stale after every propagation. The agent definitions themselves were correct; the runtime was executing an old orchestrator prompt.
+
+**Fix**: Added `scripts/deploy_assets.py` (ports/claude → ~/.claude with generated-marker ownership: only overwrite/prune marked files, skip unmarked with a conflict warning; `--watch` and `--dry-run` supported). Run it after propagation.
+
+**Watch for**: When a subagent misbehaves in a way the source contract explicitly forbids, diff the installed copy against the generated port output before editing any source. A restricted-tool agent (no shell/git) failing on "missing" inputs usually means its orchestrator — not the agent — is stale or skipped a materialization step.
