@@ -198,7 +198,7 @@ Follow the shared `remediation-ledger-contract` instruction before review work b
 
 Reviewer-specific rules:
 
-- Log a `remediation-request` row on entry to any correction pass prompted by failing tests, QA findings, review feedback, or explicit fix instructions. Do not wait for a final `Changes Requested` verdict before recording the turn.
+- Log a `remediation-request` row on entry to any correction pass prompted by failing tests, qa findings, review feedback, or explicit fix instructions. Do not wait for a final `Changes Requested` verdict before recording the turn.
 - Use `stage: "review"`, `detected_by: "reviewer"`, and default `severity: "medium"` unless the evidence clearly supports another level.
 - Use `human_intervention_required: false` for normal review and remediation loops. Set it to `true` only when you actually need a manual user decision or missing user-provided input to proceed.
 - Do not write a row for a clean approval-only pass with no incoming remediation request and no newly discovered review issue.
@@ -340,7 +340,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | QA plan for a single feature |
+| `-qa.md` | z-feature-qa-writer (per-feature mode) | qa plan for a single feature |
 | `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
@@ -350,16 +350,16 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated QA Documents
+## Consolidated qa Documents
 
-In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
+In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
-| Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
+| qa Plan | `docs/phases/[phase-name]/[phase-name]_qa.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| Coverage Map | `docs/phases/[phase-name]/[phase-name]_qa_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary
 

@@ -30,13 +30,17 @@ Follow the shared `remediation-ledger-contract` instruction before diagnosis or 
 
 debugger-specific rules:
 
-- Treat every user prompt that reports a bug, stack trace, failing test or build output, QA failure, or explicit request to fix or debug as a remediation turn.
+- Treat every user prompt that reports a bug, stack trace, failing test or build output, qa failure, or explicit request to fix or debug as a remediation turn.
 - Write the initial row on entry to that turn with `stage: "debug"`, `detected_by: "user-discovered"`, and `event_kind: "remediation-request"`.
 - Set `human_intervention_required: true` on that initial row because the run required a user-reported correction pass.
 - Use the user-provided failure signal as the primary `evidence` text.
 - If `task_slug` cannot be inferred, use `unscoped` instead of skipping the write.
 - If you uncover a second, distinct issue during diagnosis, append another row with `event_kind: "discovered-failure"` instead of overwriting the original request row.
 - After every append, verify that the row exists by reading back the file tail or searching for the new `event_id`. If verification fails, say so explicitly instead of assuming the ledger was updated.
+
+### Step 1b — Phase Doc Sync Gate
+
+Detect whether the repository has a `docs/phases/` directory. If it does, **load the `phase-doc-sync` skill** before applying fixes: any fix that alters what a phase delivers or how it behaves is not complete until the affected `PHASE_0N_SUMMARY.md` and `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` in legacy repos) entries are updated as baseline truth, per that skill's contract.
 
 ### Step 2 — Diagnose
 
@@ -133,7 +137,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | QA plan for a single feature |
+| `-qa.md` | z-feature-qa-writer (per-feature mode) | qa plan for a single feature |
 | `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
@@ -143,16 +147,16 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated QA Documents
+## Consolidated qa Documents
 
-In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
+In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
-| Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
+| qa Plan | `docs/phases/[phase-name]/[phase-name]_qa.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| Coverage Map | `docs/phases/[phase-name]/[phase-name]_qa_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary
 

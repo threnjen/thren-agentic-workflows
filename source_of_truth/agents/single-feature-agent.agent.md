@@ -29,6 +29,10 @@ Understand request scope and impact:
 
 **Scope check**: If touching >5 files or multiple unrelated modules, warn the user — see Scope Guardrail below.
 
+### Phase Doc Sync Gate
+
+Detect whether the repository has a `docs/phases/` directory. If it does, **load the `phase-doc-sync` skill** before implementing, and treat its documentation-reconciliation contract as part of the change's scope: any fix or tweak that alters what a phase delivers or how it behaves is not complete until the affected `PHASE_0N_SUMMARY.md` and `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` in legacy repos) entries are updated as baseline truth. Phase-doc updates made under this gate do not count against the 5-file scope guardrail.
+
 ### Unity Detection and Review Gate
 
 Before proposing implementation, detect whether this is a Unity project: a `game/Assets` directory, OR both `Assets/` and `ProjectSettings/` directories at the repository root (the standard Unity layout).

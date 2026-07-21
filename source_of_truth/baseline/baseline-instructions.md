@@ -32,6 +32,19 @@ Fall back to file search and reading files only when the graph doesn't cover
 what you need or the graph tools are unavailable in the session.
 <!-- code-review-graph -->
 
+<!-- phase-doc-sync -->
+## Phase Document Sync
+
+When working in a repository that has a `docs/phases/` directory, or when the
+user references a phase QA doc, a `_QA.md` checklist, QA failures, or asks for
+fixes/tweaks/small updates during phase work: load the `phase-doc-sync` skill
+before making code changes and follow its documentation-reconciliation
+contract. Any change that alters what a phase delivers or how it behaves is
+not complete until the affected `PHASE_0N_SUMMARY.md` and `PROJECT_ROADMAP.md`
+(or `PHASES_OVERVIEW.md` in legacy repos) entries are updated as baseline
+truth — rewritten in place with no change-log framing.
+<!-- phase-doc-sync -->
+
 <!-- agent-discovery -->
 ## Custom Agent and Skill Discovery
 

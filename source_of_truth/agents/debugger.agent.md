@@ -38,6 +38,10 @@ Debugger-specific rules:
 - If you uncover a second, distinct issue during diagnosis, append another row with `event_kind: "discovered-failure"` instead of overwriting the original request row.
 - After every append, verify that the row exists by reading back the file tail or searching for the new `event_id`. If verification fails, say so explicitly instead of assuming the ledger was updated.
 
+### Step 1b — Phase Doc Sync Gate
+
+Detect whether the repository has a `docs/phases/` directory. If it does, **load the `phase-doc-sync` skill** before applying fixes: any fix that alters what a phase delivers or how it behaves is not complete until the affected `PHASE_0N_SUMMARY.md` and `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` in legacy repos) entries are updated as baseline truth, per that skill's contract.
+
 ### Step 2 — Diagnose
 
 - **Frontend runtime errors**: Use the browser-tools MCP to take screenshots and examine console logs. After taking screenshots, check `./screenshots/` for saved images
