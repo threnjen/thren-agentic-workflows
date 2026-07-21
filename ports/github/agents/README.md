@@ -172,6 +172,7 @@ These agents are not visible in the picker. They run automatically as part of or
 | **05e Dependency Auditor** | 05 PR - Review | Inventory dependencies added by the branch and report supply-chain and duplication risks, offline |
 | **04e Diff Security Scan** | Phase - Execute | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
 | **05f Test Health** | 05 PR - Review | Delegate coverage, redundancy, and flake analysis into a test health report |
+| **05h Cleanliness Auditor** | 05 PR - Review | Evaluate the cleanliness of branch-added code and recommend specific cleanup categories when non-passing |
 | **05g Readiness Synthesizer** | 05 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |

@@ -42,6 +42,7 @@ PR_REVIEW_ROSTER = (
     "05e-dependency-auditor",
     "05f-test-health",
     "05g-readiness-synthesizer",
+    "05h-cleanliness-auditor",
 )
 DELEGATED_SECURITY_SCAN_SLUG = "04e-diff-security-scan"
 
@@ -177,11 +178,11 @@ def _source_agent_slugs() -> set[str]:
 # ---------------------------------------------------------------------------
 
 
-def test_pr_review_roster_is_exactly_seven_contiguous_agents() -> None:
+def test_pr_review_roster_is_exactly_eight_contiguous_agents() -> None:
     """AC5. `05a`-`05g` exist, contiguous, with nothing above `05g`.
 
     Derived from disk rather than restated: the roster is whatever `.github/
-    agents/` holds, and this asserts that set equals the settled seven. An
+    agents/` holds, and this asserts that set equals the settled eight. An
     eighth evaluator appearing, or one of the seven vanishing, both fail.
     """
     on_disk = {
@@ -190,7 +191,7 @@ def test_pr_review_roster_is_exactly_seven_contiguous_agents() -> None:
         if slug.startswith("05") and slug != PR_REVIEW_ORCHESTRATOR_SLUG
     }
     assert on_disk == set(PR_REVIEW_ROSTER), (
-        "the PR Review roster drifted from the settled seven: "
+        "the PR Review roster drifted from the settled eight: "
         f"unexpected={sorted(on_disk - set(PR_REVIEW_ROSTER))}, "
         f"missing={sorted(set(PR_REVIEW_ROSTER) - on_disk)}"
     )

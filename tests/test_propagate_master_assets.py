@@ -49,6 +49,9 @@ PR_REVIEW_EVALUATOR_TOOLS = {
     "05d-consistency-auditor": ["read", "search", "edit", "execute"],
     "05e-dependency-auditor": ["read", "search", "edit"],
     "05f-test-health": ["agent", "read", "search", "edit"],
+    # execute granted for one purpose: read-only git fallback when the
+    # orchestrator's materialized range.diff/changed-files.txt are absent.
+    "05h-cleanliness-auditor": ["read", "search", "edit", "execute"],
     "05g-readiness-synthesizer": ["read", "search", "edit"],
 }
 
@@ -751,11 +754,14 @@ class OrphanPruningTests(unittest.TestCase):
         # The `qa` agent added one file to each user-invocable surface (claude
         # command, opencode agent, codex agent); claude/agents is
         # unchanged because `qa` declares no subagent children.
+        # The `05h Cleanliness Auditor` evaluator added one spawnable subagent
+        # file to claude/agents, opencode/agents, and codex/agents; it is not
+        # user-invocable, so command counts are unchanged.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 27),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 28),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 41),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 42),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 42),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:

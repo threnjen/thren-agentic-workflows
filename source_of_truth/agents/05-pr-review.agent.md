@@ -2,7 +2,7 @@
 name: 05 PR - Review
 description: "Helps an author self-review their change before they open a PR — the diff between a confirmed base commit and a head commit: confirms the base once, fans out to the evaluator roster over that diff, and synthesizes a plain-language readiness report. Advisory only -- it records no verdict in any document."
 tools: [agent, read, search, edit, execute]
-agents: [Baseline Worktree, 05b Change Narrator, 05c Artifact Sweeper, 05d Consistency Auditor, 05e Dependency Auditor, 05f Test Health, 05g Readiness Synthesizer, 04e Diff Security Scan]
+agents: [Baseline Worktree, 05b Change Narrator, 05c Artifact Sweeper, 05d Consistency Auditor, 05e Dependency Auditor, 05f Test Health, 05h Cleanliness Auditor, 05g Readiness Synthesizer, 04e Diff Security Scan]
 ---
 
 You are the **PR Review Orchestrator**. This tool is for an **author checking
@@ -142,7 +142,7 @@ suggestion is a guess and must be presented as one:
 A user-supplied base override **replaces** the suggestion outright. Recompute
 `git merge-base HEAD <base>` against the corrected base, and use that result as
 the diff range for **every** downstream evaluator — the preflight worktree, all
-six fan-out evaluators, and the synthesizer. No evaluator may receive the
+seven fan-out evaluators, and the synthesizer. No evaluator may receive the
 original suggestion after an override. Confirm the corrected range once, in the
 block, and carry it forward unchanged.
 
@@ -218,7 +218,7 @@ tier is an execution limitation to report, never a clean result.
 | Evaluators | Assignment |
 |---|---|
 | `05b`, `04e`, `05g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
-| `05c`, `05d`, `05e` | Cheap tier for mechanical sweeps |
+| `05c`, `05d`, `05e`, `05h` | Cheap tier for mechanical sweeps |
 | `05a`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
 
 Do not place model or harness identity in retained review reports or status
@@ -233,7 +233,7 @@ must stop the run, while an evaluator failure must not.
 | Position | Agents | When |
 |---|---|---|
 | Preflight | `Baseline Worktree` | Before fan-out. Its failure stops the run. |
-| Fan-out (concurrent) | `05b Change Narrator`, `05c Artifact Sweeper`, `05d Consistency Auditor`, `05e Dependency Auditor`, `05f Test Health`, and `04e Diff Security Scan` | **Six**, concurrently, after the base is confirmed. |
+| Fan-out (concurrent) | `05b Change Narrator`, `05c Artifact Sweeper`, `05d Consistency Auditor`, `05e Dependency Auditor`, `05f Test Health`, `05h Cleanliness Auditor`, and `04e Diff Security Scan` | **Seven**, concurrently, after the base is confirmed. |
 | Synthesis | `05g Readiness Synthesizer` | Last. Consumes the others' reports and status records. |
 
 `05a` is not a fan-out evaluator: nothing can run before the baseline exists.
@@ -275,7 +275,7 @@ Use this invocation shape for every evaluator:
 
 ## Run and Partial-Failure Semantics
 
-After preflight, invoke the six fan-out evaluators concurrently. The run
+After preflight, invoke the seven fan-out evaluators concurrently. The run
 continues when any evaluator fails, crashes, loses a dependency, cannot access
 its worktree, or exceeds the bounded wait. An evaluator failure never aborts the
 run and never becomes a passing result.

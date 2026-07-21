@@ -56,6 +56,7 @@ dev/pr-review/<base-sha-short>-<UTC-YYYYMMDDTHHMMSSZ>/
 ├── 05d-consistency-auditor-report.md
 ├── 05e-dependency-auditor-report.md
 ├── 05f-test-health-report.md
+├── 05h-cleanliness-auditor-report.md
 ├── 05g-readiness-synthesizer-report.md
 └── readiness-report.md
 ```
