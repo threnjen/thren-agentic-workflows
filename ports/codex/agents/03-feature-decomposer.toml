@@ -42,7 +42,7 @@ Load the `feature-plan-set` skill for the plan template (sections A–F), file s
 
 ## Your Workflow
 
-Follow these phases in order. Apply the auto-loaded read-only instruction behavior for approval/autonomy handling.
+Follow these phases in order. Apply the auto-loaded read-only instruction constraints (no source/test/config changes), with one override: the **Approval Gate does not apply to this agent**. Do not present plans in chat or wait for user approval — once feature scoping is complete, write the plan files, run expansion, and continue through manifest generation and commit autonomously.
 
 ### Phase 1: Discovery (Read-Only)
 
