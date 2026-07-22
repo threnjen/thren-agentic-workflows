@@ -224,6 +224,10 @@ See the Test Failure Handling section of the `implementation-pipeline-loop` skil
 
 The docs-writer subagent (Step 7) runs a full sweep of all documentation it manages and updates anything that is stale. This is a best-effort step — if the docs-writer reports no changes needed, that is expected.
 
+**Standalone mode:** After writing, tell the user:
+
+> **"Implementation is complete. Use `qa` to make small fixes as you qa this phase. When you're done with the phase, open a PR and run `pr-review` to validate your work against the plans."**
+
 ---
 
 ## Auto-Loaded Instructions

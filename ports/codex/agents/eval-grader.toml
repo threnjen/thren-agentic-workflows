@@ -358,7 +358,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
 | `-qa.md` | z-feature-qa-writer (per-feature mode) | qa plan for a single feature |
 | `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
-| `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
+| `-qa-analysis.md` | z-prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-research-specialist | Full structured audit findings or research findings with citations |
 | `-summary.md` | Auditor subagents, web-research-specialist | Executive summary with priority actions or recommendations |
 

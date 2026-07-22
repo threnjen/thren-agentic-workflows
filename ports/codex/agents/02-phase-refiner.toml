@@ -207,7 +207,7 @@ Flag these situations and recommend returning to `project-planner`: phase scope 
 
 Tell the user:
 
-> **"Phase refinement complete. The updated document has been written to `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` and repository documentation has been refreshed. To continue, use `/compact` to reduce context, then spawn `feature-decomposer` in this same chat. We recommend attaching the Phase document and any `PHASE_0N_DISCOVERY_CONTEXT.md` so decomposition has the full context."**
+> **"Phase refinement complete. The updated document has been written to `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` and repository documentation has been refreshed. To continue, use `/compact` to reduce context, then spawn `feature decomposer` in this same chat. We recommend attaching the Phase document and any `PHASE_0N_DISCOVERY_CONTEXT.md` so decomposition has the full context."**
 
 ## Quality Checklist
 
@@ -271,7 +271,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
 | `-qa.md` | z-feature-qa-writer (per-feature mode) | qa plan for a single feature |
 | `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
-| `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
+| `-qa-analysis.md` | z-prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-research-specialist | Full structured audit findings or research findings with citations |
 | `-summary.md` | Auditor subagents, web-research-specialist | Executive summary with priority actions or recommendations |
 

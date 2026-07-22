@@ -147,7 +147,7 @@ After the user confirms the planning documents are final for this session, stage
 
 After writing each phase document, tell the user:
 
-> **"Phase document written to `docs/phases/`. To refine this phase, use `/compact` to reduce context, then spawn `@phase-refiner` in this same chat. We recommend attaching the Phase document (e.g., `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`) and any `DISCOVERY_CONTEXT.md` so the refiner has full context. Once you've completed executing phase 1, return here to write the next phase."**
+> **"Phase document written to `docs/phases/`. To refine this phase, use `/compact` to reduce context, then spawn `phase refiner` in this same chat. We recommend attaching the Phase document (e.g., `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`) and any `DISCOVERY_CONTEXT.md` so the refiner has full context. Once you've completed executing phase 1, return here to write the next phase."**
 
 When the user returns after completing a phase, detect the next unwritten `PHASE_0N_SUMMARY.md` and continue writing incrementally.
 

@@ -169,12 +169,12 @@ After the z-diff-security-scan subagent returns:
 - Verify `docs/phases/[phase-name]/[phase-name]-security-scan.md` exists.
 - Record the verdict as `security-scan: Pass | Pass with Conditions | Blocked`.
 - If the verdict is `Blocked`, set `all-approved: no` so Step 6 (Prod Review) runs in standard mode.
-- Do not automatically remediate security findings. prod-code-review determines the final GO / GO WITH CONDITIONS / NO-GO decision.
+- Do not automatically remediate security findings. z-prod-code-review determines the final GO / GO WITH CONDITIONS / NO-GO decision.
 - Do NOT emit a separate `eval:` commit for this step. Stage the report with the Step 6 final-review checkpoint.
 
 ### Step 6: Phase Final Review
 
-Spawn a **prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected in Step 2 Phase B, plus the `com.threnjen.visual-verification` verdict from Step 3 (or its skip reason) as runtime evidence.
+Spawn a **z-prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected in Step 2 Phase B, plus the `com.threnjen.visual-verification` verdict from Step 3 (or its skip reason) as runtime evidence.
 
 **If qa was generated and all verdicts Approved:**
 
@@ -192,7 +192,7 @@ Spawn a **prod-code-review** subagent. Build the prompt from the applicable temp
 >
 > Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Visual verification: [Pass | Fail | Unverified | skip reason]. Security scan: `[security report path]` ([Pass | Pass with Conditions | Blocked]). All verdicts Approved: NO — use standard mode."
 
-After the prod-code-review subagent returns, stage only the final review artifact, the security scan report, and any phase-level pipeline documents updated by this step, then commit them with the exact message `eval: final-review`.
+After the z-prod-code-review subagent returns, stage only the final review artifact, the security scan report, and any phase-level pipeline documents updated by this step, then commit them with the exact message `eval: final-review`.
 
 ### Step 7: Report to User
 
@@ -216,6 +216,10 @@ See the Test Failure Handling section of the `implementation-pipeline-loop` skil
 ### Documentation Drift
 
 The docs-writer subagent (Step 7) runs a full sweep of all documentation it manages and updates anything that is stale. This is a best-effort step — if the docs-writer reports no changes needed, that is expected.
+
+**Standalone mode:** After writing, tell the user:
+
+> **"Implementation is complete. Use `qa` to make small fixes as you qa this phase. When you're done with the phase, open a PR and run `pr-review` to validate your work against the plans."**
 
 ## Auto-Loaded Instructions
 
@@ -254,7 +258,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
 | `-qa.md` | z-feature-qa-writer (per-feature mode) | qa plan for a single feature |
 | `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
-| `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
+| `-qa-analysis.md` | z-prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-research-specialist | Full structured audit findings or research findings with citations |
 | `-summary.md` | Auditor subagents, web-research-specialist | Executive summary with priority actions or recommendations |
 
