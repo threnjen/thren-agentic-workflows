@@ -300,7 +300,7 @@ The stage format (including Stage 0 for test prerequisites) is defined in the `f
 
    Label a wave `parallel` when all features in it are `parallel_safe: yes`. Label it `sequential` when any feature in it is `parallel_safe: no`.
 
-**Standalone mode:** Present the decomposition and plan summaries for user review. After writing, tell the user:
+**Standalone mode:** After writing, tell the user:
 
 > **"Execution-ready feature bundles written to `dev/feature/[0N-task-name]/` and the schedule manifest written to `dev/feature/[phase-name]-execution-manifest.md`. You can now hand these to `@04-phase-execute` for automated implementation. When you're done, run `@prod-code-review` to validate your work against the plans."**
 
