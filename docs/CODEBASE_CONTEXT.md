@@ -12,7 +12,7 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 52 source agent definitions in `source_of_truth/agents/` (50 `*.agent.md` + `docs-writer.md` + `prod-code-review.md`), of which 32 hidden subagents (`user-invocable: false`) and 20 user-invocable.
+- 52 source agent definitions in `source_of_truth/agents/` (50 `*.agent.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 32 hidden subagents (`user-invocable: false`) and 20 user-invocable.
 - 29 skills in `source_of_truth/skills/`.
 - 16 instructions in `source_of_truth/instructions/`.
 - 4 learnings in `source_of_truth/learnings/`.
@@ -28,7 +28,7 @@ source_of_truth/                           # THE authoring surface
     README.md                              # full agent catalog and pipeline docs
     *.agent.md                             # 50, plus the two plain .md agents below (52 total definitions)
     docs-writer.md                         # plain .md agent (loaded by frontmatter)
-    prod-code-review.md                    # plain .md agent (loaded by frontmatter)
+    04f-prod-code-review.md                # plain .md agent (loaded by frontmatter)
   skills/                                  # 29 skill dirs, each rooted at SKILL.md
   instructions/                            # 16 applyTo-glob instruction files
   learnings/                               # 4 learnings files
@@ -128,6 +128,6 @@ eval/ benchmarks/ packages/ tests/
 - Do not assume filename parity across platforms; aliases and `z-` prefixes are intentional.
 - Do not reference removed surfaces: `nodejs/`, `python/`, `HARNESS_SETUP.md`, `.mcp.json`,
   `codex/README.md`, and `scripts/runtime_deployment.py` no longer exist.
-- Do not treat `prod-code-review.md` or `docs-writer.md` as non-agent content just because
+- Do not treat `04f-prod-code-review.md` or `docs-writer.md` as non-agent content just because
   they lack the `.agent.md` suffix.
 - Do not document a root `dev/` beyond `dev/pr-review/` (its fixtures are tracked; run output is gitignored).

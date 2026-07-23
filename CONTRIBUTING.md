@@ -31,13 +31,13 @@ directory). Hand-maintained files are never touched.
 
 ## What's in the Repo
 
-- **40 agent definitions** in `source_of_truth/agents/` (38 `*.agent.md` plus the plain
-  `docs-writer.md` and `prod-code-review.md`), of which **18 are user-invocable** and
-  **22 are hidden subagents** (`user-invocable: false`) that orchestrators spawn
+- **52 agent definitions** in `source_of_truth/agents/` (50 `*.agent.md` plus the plain
+  `docs-writer.md` and `04f-prod-code-review.md`), of which **20 are user-invocable** and
+  **32 are hidden subagents** (`user-invocable: false`) that orchestrators spawn
   automatically.
-- **24 skills** — directory-based capabilities agents load on demand, each rooted at
+- **29 skills** — directory-based capabilities agents load on demand, each rooted at
   `SKILL.md`.
-- **15 instruction files** and **4 learnings files** — cross-cutting guidance applied by
+- **16 instruction files** and **4 learnings files** — cross-cutting guidance applied by
   `applyTo` file-glob matching.
 
 Only the destinations differ per harness; the agents behave the same everywhere.
