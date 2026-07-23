@@ -80,7 +80,7 @@ resolved inputs in the working-state file.
 
 Spawn **engagement-01-prepare** with the config, unchanged from its own
 definition — it owns validation gates, the qa gate (each repository's
-completed QA_AUTOMATED/QA_USER package, halting to send the user to the
+completed AUTOMATED_QA/USER_QA package, halting to send the user to the
 **qa-bootstrap** when incomplete) and the workspace's
 `deliverables/qa-appendix.md`, analysis-branch setup, graph builds, and
 baseline snapshots. It spawns nothing; documentation is produced in
@@ -199,8 +199,8 @@ In **per-feature mode**, qa documents are produced per-feature inside the featur
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_qa.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
-| Coverage Map | `docs/phases/[phase-name]/[phase-name]_qa_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
+| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary
 

@@ -579,8 +579,15 @@ def _rewrite_agent_references(text: str, reference_map: Dict[str, str], preserve
     rewritten = text
     for source_name, identifier in sorted(reference_map.items(), key=lambda item: len(item[0]), reverse=True):
         at_replacement = f"@{identifier}" if preserve_at_sign else identifier
+        # Replace @agent-name references (always safe)
         rewritten = rewritten.replace(f"@{source_name}", at_replacement)
-        rewritten = rewritten.replace(source_name, identifier)
+
+        # For bare references, use word boundaries to avoid partial matches.
+        # E.g., don't replace "QA" in "AUTOMATED_QA" when looking for agent "QA".
+        # Match: " QA " (space-delimited), "**QA**" (bold), "- QA" (list), etc.
+        # But NOT: "AUTOMATED_QA", "qa-bootstrap", compound identifiers.
+        pattern = r"(?<![A-Za-z0-9_-])(" + re.escape(source_name) + r")(?![A-Za-z0-9_-])"
+        rewritten = re.sub(pattern, identifier, rewritten)
     return rewritten
 
 

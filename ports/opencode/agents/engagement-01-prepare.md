@@ -64,9 +64,9 @@ Wait for their confirmation before preparing anything.
 ## Preflight 3: qa Gate and qa Appendix
 
 **Upgraded side (required).** Every upgraded repository must carry a completed qa package:
-`docs/QA_AUTOMATED.md` whose top `VERDICT:` line reads `PASS` or `FAIL`
+`docs/AUTOMATED_QA.md` whose top `VERDICT:` line reads `PASS` or `FAIL`
 (read only that line — `VERDICT: NOT RUN` or no verdict line means the
-automated qa was never executed), and `docs/QA_USER.md`. If any piece is
+automated qa was never executed), and `docs/USER_QA.md`. If any piece is
 missing or the automated qa was never run, halt for that repository's pairs
 and tell the user to run
 the **qa-bootstrap** for it (that agent generates both documents and
@@ -74,11 +74,11 @@ executes the automated runbook) — you do not spawn it. A recorded FAIL
 verdict is a blocker: surface it and continue only after the user reviews
 the qa results and confirms.
 
-QA_USER must also be **executed**, not just written: its checks are Markdown
+USER_QA must also be **executed**, not just written: its checks are Markdown
 checkboxes, checked (`- [x]`) as the tester completes them. Count unchecked
-boxes mechanically (e.g. `grep -c '\[ \]' docs/QA_USER.md`) — any count
+boxes mechanically (e.g. `grep -c '\[ \]' docs/USER_QA.md`) — any count
 above zero means manual qa is incomplete: halt for that repository's pairs
-and tell the user to finish and check off QA_USER before re-running.
+and tell the user to finish and check off USER_QA before re-running.
 
 **Original side (optional).** Original/legacy repositories may lack qa docs (docs
 do not exist or are incomplete) — this is not a blocker. Record the original
@@ -89,8 +89,8 @@ side has; original gaps are evidence, not failures.
 Once every **upgraded** repository passes the gate, write the client-facing qa appendix
 at `deliverables/qa-appendix.md` in the engagement workspace (root per the
 `engagement-workspace` skill): one section per repository containing its
-QA_USER acceptance checklist (if present), followed by a summary of its automated qa run
-covering targets QA_USER marks agent-only. For original sides without qa docs, note
+USER_QA acceptance checklist (if present), followed by a summary of its automated qa run
+covering targets USER_QA marks agent-only. For original sides without qa docs, note
 their absence. Client voice per the
 `engagement-client-voice` skill; no secrets, no internal paths. This is the
 one workspace document you write; the workspace itself already exists —
@@ -205,7 +205,7 @@ Stop and report **which side** and **what failed** for exactly these:
 
 - A configured path or branch does not exist (surfaced by validation).
 - An **upgraded** repository failing the qa gate (missing qa documents, no recorded
-  verdict, unchecked QA_USER boxes, or an unconfirmed FAIL verdict). Missing
+  verdict, unchecked USER_QA boxes, or an unconfirmed FAIL verdict). Missing
   or incomplete qa on an **original** repository does not halt preparation.
 - A branch-pair repository has a dirty working tree — creating worktrees
   from a dirty state risks contaminating the analysis.
@@ -228,7 +228,7 @@ each re-run produced — a silent no-op is not an acceptable report.
 Return a compact table covering every side of every pair: pair name, side
 role, analysis-branch status, graph status (built / NOT RUN with
 reason), baseline snapshot path, artifact locations (local paths only),
-per-repo qa-gate status with the qa appendix path, and
+per-repo QA-gate status with the qa appendix path, and
 the three analysis-branch invariant assertions with their evidence (recorded
 HEAD SHAs). Nothing in this report contains engagement file contents.
 
@@ -287,8 +287,8 @@ In **per-feature mode**, qa documents are produced per-feature inside the featur
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_qa.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
-| Coverage Map | `docs/phases/[phase-name]/[phase-name]_qa_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
+| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary
 
