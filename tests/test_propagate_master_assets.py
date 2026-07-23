@@ -789,11 +789,15 @@ class OrphanPruningTests(unittest.TestCase):
         # over spawning the audit agents directly (one-deep nesting): claude
         # agents 38 -> 37, opencode and codex agents 52 -> 51. Claude commands
         # recounted from disk at 19. Counts recounted from disk.
+        # `Engagement - Introduced Issues` was retired when its report folded
+        # into the Security Narrative's internal security-delta document:
+        # claude agents 37 -> 36, opencode and codex agents 51 -> 50. Claude
+        # commands unchanged (not user-invocable). Counts recounted from disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 37),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 36),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 51),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 51),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 50),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 50),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:

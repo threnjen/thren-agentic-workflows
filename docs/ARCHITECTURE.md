@@ -225,7 +225,7 @@ flowchart TD
     EvalGrader --> EvalScore[Eval - Score Recorder]
 
     EngagementOrchestrator --> EngagementPrepare
-    EngagementOrchestrator --> EngagementSubs[Engagement subagents: Delta Synthesizer, Security Narrative, Introduced Issues, Pricing Researcher, Narrative Writer, Compliance Writer, Gap Reviewer]
+    EngagementOrchestrator --> EngagementSubs[Engagement subagents: Delta Synthesizer, Security Narrative, Pricing Researcher, Narrative Writer, Compliance Writer, Gap Reviewer]
     EngagementOrchestrator --> DocsWriter
 ```
 
@@ -240,8 +240,8 @@ A separate engagement flow sits outside the phase pipeline:
   Engagement - Prepare first (reused unchanged), keeps on-disk working state in a
   per-engagement workspace (`engagement-workspace` skill), and drives the per-pair
   analysis stages via hidden subagents — comparative audit runs, delta synthesis with
-  SOW-exclusion routing, the client-facing security narrative, the internal
-  introduced-issues report, cited pricing research, narrative/spec documents, the SOW
+  SOW-exclusion routing, the client-facing security narrative with its internal
+  security-delta report, cited pricing research, narrative/spec documents, the SOW
   compliance walkthrough, and a schema-defined package manifest
   (`engagement-package-manifest` skill) plus a client-perspective gap review. Output
   is markdown + manifest; PDF assembly happens outside the tool.

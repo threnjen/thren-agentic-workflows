@@ -69,9 +69,11 @@ Standing entries first, then per-pair expansions:
 2. Orchestrator working-state/run record — `engagement-state.md`
 3. Gap-review report — `internal/gap-review.md` (standing entry: expected
    even before the gap review runs)
-4. Introduced-issues report (per pair) — `internal/<p>/introduced-issues.md`
-5. SOW-exclusions partition (per pair) — `pairs/<p>/exclusions-partition.md`
-6. Raw audit reports (per pair, per side, per dimension) —
+4. Remediation recommendations (per pair) —
+   `internal/<p>/remediation-recommendations.md`
+5. Security-delta report (per pair) — `internal/<p>/security-delta.md`
+6. SOW-exclusions partition (per pair) — `pairs/<p>/exclusions-partition.md`
+7. Raw audit reports (per pair, per side, per dimension) —
    `pairs/<p>/<side>/audits/<dimension>/` for sides `original`/`upgraded` and
    dimensions security/code/dependencies/infra. Canonical filenames, identical
    on both sides, no pair or side prefixes: `<dimension>-report.md` and
@@ -80,7 +82,7 @@ Standing entries first, then per-pair expansions:
    when it contains that dimension's report. Every dimension is mandatory —
    an empty dimension directory is a `missing` row (a pipeline defect to
    surface), never omitted
-7. Phase 01 baseline snapshots (per pair, per side) —
+8. Phase 01 baseline snapshots (per pair, per side) —
    `pairs/<p>/<side>/engagement-baseline-snapshot.md`. Snapshots originate on
    each side's analysis branch; the manifest-writing step copies each into
    the workspace at this path (metadata only — the snapshot contains no

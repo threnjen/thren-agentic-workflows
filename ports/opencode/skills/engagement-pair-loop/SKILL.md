@@ -88,23 +88,33 @@ pair, skip the spawns and reuse the existing verified pointers. A single
 side may be re-run alone — its artifacts overwrite in place; the other
 side's entry is untouched.
 
-## Stage B: Delta & Security Synthesis
+## Stage B: Delta
 
-Runs once Stage A is complete for both sides. Spawn in order, each with
+Runs once Stage A is complete for both sides. Spawn with
 the pair name, workspace root, and report pointers:
 
-1. **Engagement - Delta Synthesizer** — also pass the pair's `mode` and the
-   SOW path (or "none configured"). Record its document pointers, the
-   exclusions-partition pointer, and any missing-SOW or user-review flags in
-   the working-state entry.
-2. **Engagement - Security Narrative** — also pass the SOW path and the
-   exclusions-partition pointer from step 1.
-3. **Engagement - Introduced Issues** — internal-only output. If it reports
-   findings, surface the fix-and-re-run flow to the user: after engineer
-   fixes, re-run that side's audits (one-side re-run above), then re-run
-   this stage before finalizing client-facing artifacts.
+**Engagement - Delta Synthesizer** — also pass the pair's `mode` and the
+SOW path (or "none configured"). Record its document pointers, the
+exclusions-partition and remediation-recommendations pointers, and any
+missing-SOW or user-review flags in the working-state entry; surface a
+non-empty remediation list to the user alongside step 3's
+fix-and-re-run flow.
 
-## Stage C: Cloud/Cost Analysis
+
+## Stage C: Security Synthesis
+
+Runs once Stage B is complete for both sides. Spawn with
+the pair name, workspace root, and report pointers:
+
+**Engagement - Security Narrative** — also pass the SOW path and the
+exclusions-partition pointer. Record its document pointers,
+including the internal security-delta report. If the security delta's
+Introduced section is non-empty, surface the fix-and-re-run flow to the
+user: after engineer fixes, re-run that side's audits (one-side re-run
+above), then re-run this stage before finalizing client-facing
+artifacts.
+
+## Stage D: Cloud/Cost Analysis
 
 Spawn **Engagement - Pricing Researcher** with the pair name, workspace
 root, and dependency/infra report pointers. It is the **only** agent
@@ -112,7 +122,7 @@ permitted internet access during an engagement run; every other subagent
 operates offline against local evidence. Record its document pointer and any
 NOT RESEARCHED status.
 
-## Stage D: Narrative & Specification Documents
+## Stage E: Narrative & Specification Documents
 
 Spawn **Engagement - Narrative Writer** with the pair name, the pair's
 `mode`, the workspace root, and pointers to each side's docs-writer set and
