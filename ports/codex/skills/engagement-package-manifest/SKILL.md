@@ -76,9 +76,9 @@ Standing entries first, then per-pair expansions:
    on both sides, no pair or side prefixes: `<dimension>-report.md` and
    `<dimension>-summary.md` (security: `security-scan-report.md` /
    `security-scan-summary.md`). One row per dimension directory, `present`
-   when it contains that dimension's report. A dimension NOT RUN writes **no
-   files** — it is a `missing` row annotated NOT RUN, never omitted and never
-   stubbed on disk
+   when it contains that dimension's report. Every dimension is mandatory —
+   an empty dimension directory is a `missing` row (a pipeline defect to
+   surface), never omitted
 7. Phase 01 baseline snapshots (per pair, per side) —
    `pairs/<p>/<side>/engagement-baseline-snapshot.md`. Snapshots originate on
    each side's analysis branch; the manifest-writing step copies each into

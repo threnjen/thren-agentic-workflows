@@ -135,7 +135,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **04 Phase - Execute** | Orchestrate full phase execution from a prepared manifest and feature bundles |
 | **05 PR - Review** | Orchestrate a readiness review of the diff between a base commit and a head commit |
 | **05 Eval - Grader** | Score a completed phase run from ledger files plus a rubric YAML and write a structured report |
-| **06 Engagement - Prepare** | Prepare a client engagement for comparison analysis — validate the engagement config, then ensure fresh docs, a code graph, and a baseline snapshot per side on local analysis branches |
+| **06 Engagement - Prepare** | Prepare a client engagement for comparison analysis — validate the engagement config, then ensure an analysis branch, a code graph, and a baseline snapshot per side |
 | **Engagement - Orchestrator** | Run a client engagement end to end from its configuration — preparation, then per-pair analysis stages through compliance, manifest, and gap review, all via subagents |
 | **Eval - Feature Decomposition** | Score a feature-decomposition run against a golden-path branch across structural, naming, dependency, AC, context, and manifest dimensions |
 | **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
@@ -211,8 +211,8 @@ These agents are not visible in the picker. They run automatically as part of or
 **Eval - Grader** (user-facing — standalone scorer)
 > Give it a rubric YAML path plus three branch names: clean base, source-of-truth golden path, and branch to evaluate. The rubric should follow the grader schema documented in the agent, with `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` as the seed example. The grader materializes clean-base->golden and clean-base->evaluated diffs, reads `eval/runs/<phase-slug>/ledger-commits.jsonl` and `eval/runs/<phase-slug>/ledger-events.jsonl`, correlates semantic events onto the commit timeline by SHA association, preserves remediation-turn metadata such as `event_kind` and `related_event_id` when present, supports both feature-level and AC-level commit cadence, fans out one parallel `Eval - Metric Grader` subagent per comparative review metric, keeps exact ledger-derived metrics in the parent grader, produces both a rubric verdict and a comparative scorecard, and appends normalized `1-10` scores to the persistent additive markdown history file at `eval/EVAL_GRADER_SCORE_HISTORY.md`.
 
-**06 Engagement - Prepare** (orchestrator — delegates to Docs Writer; never modifies engagement source)
-> Give it an engagement configuration file path (schema in the `engagement-configuration` skill). After validation and a roster confirmation gate, it prepares every side of every declared comparison pair: role-scoped documentation (via Docs Writer), an incremental code graph build, and a SHA-pinned internal baseline snapshot — all on a local, never-pushed analysis branch in each engagement repo. Idempotent: re-runs skip fresh docs, still rebuild the graph, and report skips explicitly. See the `engagement-preparation-runbook` skill for the full operating procedure.
+**06 Engagement - Prepare** (spawns no agents; never modifies engagement source)
+> Give it an engagement configuration file path (schema in the `engagement-configuration` skill). After validation and a roster confirmation gate, it prepares every side of every declared comparison pair: a local, never-pushed analysis branch, an incremental code graph build, and a SHA-pinned internal baseline snapshot. Documentation is produced later by the engagement orchestrator's evidence stage. Idempotent: re-runs rebuild the graph and re-emit snapshots identically. See the `engagement-preparation-runbook` skill for the full operating procedure.
 
 **Engagement - Orchestrator** (orchestrator — delegates to the engagement subagents)
 > Give it an engagement configuration file path. It spawns Engagement - Prepare unchanged, then drives each comparison pair through comparative audit runs, delta and security synthesis, cloud/cost analysis, and narrative/specification documents, finishing the engagement with the SOW compliance walkthrough, verification summary, package manifest, and client-perspective gap review. It holds only statuses and artifact pointers, maintains `engagement-state.md` as its run record, and resumes from it on restart.
@@ -279,7 +279,7 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Instructions - Evaluator** *(subagent of Instructions Manager)* — Evaluates whether changes to instruction files are improvements or regressions using blind A/B testing, rule classification, 3-run stability scoring, and rule-quality analysis. Reads the BEFORE state automatically from git history.
 
-**Engagement - Delta Synthesizer** *(subagent of Engagement - Orchestrator)* — Consumes both sides' report sets to produce the business-framed delta report, owns the single-point SOW-exclusions partition, and writes the audit-trail proof checklist. NOT RUN dimensions flow through as asymmetric evidence, never deltas.
+**Engagement - Delta Synthesizer** *(subagent of Engagement - Orchestrator)* — Consumes both sides' report sets to produce the business-framed delta report, owns the single-point SOW-exclusions partition, and writes the audit-trail proof checklist.
 
 **Engagement - Security Narrative** *(subagent of Engagement - Orchestrator)* — Writes the four-section client-facing security narrative (posture, repaired, out-of-scope, residual) with every original-side finding classified exactly once, consuming the exclusions partition rather than re-deriving it.
 
@@ -289,7 +289,7 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Engagement - Narrative Writer** *(subagent of Engagement - Orchestrator)* — Writes the three per-pair narrative documents (business design, intended-behavior specification, before/after workflow narratives) from analysis-branch docs and graphs, framed by the pair's value-story mode.
 
-**Engagement - Compliance Writer** *(subagent of Engagement - Orchestrator)* — Walks every SOW acceptance criterion against retained on-disk artifacts (NOT RUN cited as NOT VERIFIED, never a pass), writes the verification summary with its functional-preservation statement, and assembles the package manifest per the `engagement-package-manifest` schema.
+**Engagement - Compliance Writer** *(subagent of Engagement - Orchestrator)* — Walks every SOW acceptance criterion against retained on-disk artifacts, writes the verification summary with its functional-preservation statement, and assembles the package manifest per the `engagement-package-manifest` schema.
 
 **Engagement - Gap Reviewer** *(subagent of Engagement - Orchestrator)* — Reviews the complete deliverable set from the client's perspective using the manifest as its completeness checklist and unconditionally emits `internal/gap-review.md`, even when no gaps are found.
 

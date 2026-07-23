@@ -226,7 +226,7 @@ flowchart TD
 
     EngagementOrchestrator --> EngagementPrepare
     EngagementOrchestrator --> EngagementSubs[Engagement subagents: Delta Synthesizer, Security Narrative, Introduced Issues, Pricing Researcher, Narrative Writer, Compliance Writer, Gap Reviewer]
-    EngagementPrepare --> DocsWriter
+    EngagementOrchestrator --> DocsWriter
 ```
 
 A separate engagement flow sits outside the phase pipeline:

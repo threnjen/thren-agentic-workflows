@@ -21,8 +21,7 @@ client would:
   never explain it away.
 - **Client questions**: for each client-facing document, ask "what would the
   client still ask after reading this?" — unanswered business questions,
-  unexplained figures, claims without cited evidence, NOT RUN / NOT VERIFIED
-  items left without plain-language framing.
+  unexplained figures, claims without cited evidence.
 - **Consistency**: contradictions between documents (figures, claims,
   framing) are gaps.
 - **Layout conformance**: per the `engagement-workspace` skill — a document

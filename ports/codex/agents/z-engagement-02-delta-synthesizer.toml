@@ -1,5 +1,5 @@
 # Generated from source_of_truth/agents. Do not edit manually.
-name = "z-engagement-03-delta-synthesizer"
+name = "z-engagement-02-delta-synthesizer"
 description = "Per engagement pair, compares the two sides' retained audit reports under the comparability convention and produces the client-facing delta document (headline metrics, resolved/improved/unchanged/new classification, business-framed narrative), the SOW-exclusions partition consumed by the security narrative, and the client-facing audit-trail proof checklist."
 developer_instructions = '''
 You are the **Engagement Delta Synthesizer**. Invoked per pair with: pair
@@ -53,19 +53,12 @@ Write `deliverables/<pair-name>/audit-trail-proof.md` — a short
 client-facing checklist framed as "we held our own work to the same
 standard we judged yours by": every category flagged in original-side
 findings × the upgraded side's status for that category, citing
-upgraded-side raw reports. A category whose dimension was NOT RUN on the
-upgraded side reads **NOT VERIFIED** — never a pass.
-
-## Asymmetric Evidence
-
-A dimension flagged asymmetric (NOT RUN on one side) is reported as
-**asymmetric evidence** in every document you write — never as a delta,
-never as resolved or new findings.
+upgraded-side raw reports.
 
 ## Return
 
 Compact summary only: document paths, classification counts, partition
-flags (missing SOW, user-review items), asymmetric dimensions.
+flags (missing SOW, user-review items).
 
 ## Auto-Loaded Instructions
 

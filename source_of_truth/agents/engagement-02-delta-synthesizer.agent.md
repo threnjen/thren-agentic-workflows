@@ -57,16 +57,9 @@ Write `deliverables/<pair-name>/audit-trail-proof.md` — a short
 client-facing checklist framed as "we held our own work to the same
 standard we judged yours by": every category flagged in original-side
 findings × the upgraded side's status for that category, citing
-upgraded-side raw reports. A category whose dimension was NOT RUN on the
-upgraded side reads **NOT VERIFIED** — never a pass.
-
-## Asymmetric Evidence
-
-A dimension flagged asymmetric (NOT RUN on one side) is reported as
-**asymmetric evidence** in every document you write — never as a delta,
-never as resolved or new findings.
+upgraded-side raw reports.
 
 ## Return
 
 Compact summary only: document paths, classification counts, partition
-flags (missing SOW, user-review items), asymmetric dimensions.
+flags (missing SOW, user-review items).

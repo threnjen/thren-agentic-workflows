@@ -21,8 +21,6 @@ hardcoded, assumed, or reconstructed from memory. Walk each criterion in
 order, citing evidence exclusively from retained on-disk artifacts (by
 path). Evidence rules:
 
-- A dimension NOT RUN upstream is cited as **NOT RUN / NOT VERIFIED** —
-  never presented as a pass.
 - A criterion with no supporting artifact is recorded as unevidenced, not
   inferred satisfied.
 - No SOW configured: the walkthrough is a short document recording the

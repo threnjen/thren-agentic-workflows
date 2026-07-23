@@ -1,8 +1,13 @@
 ---
-name: z-engagement-03-delta-synthesizer
-description: Per engagement pair, compares the two sides' retained audit reports under the comparability convention and produces the client-facing delta document (headline metrics, resolved/improved/unchanged/new classification, business-framed narrative), the SOW-exclusions partition consumed by the security narrative, and the client-facing audit-trail proof checklist.
-tools: Skill, Read, Grep, Glob, Edit, Write
-user-invocable: false
+description: "Per engagement pair, compares the two sides' retained audit reports under the comparability convention and produces the client-facing delta document (headline metrics, resolved/improved/unchanged/new classification, business-framed narrative), the SOW-exclusions partition consumed by the security narrative, and the client-facing audit-trail proof checklist."
+model: deepseek/deepseek-v4-pro
+mode: subagent
+hidden: true
+permission:
+  edit: allow
+  glob: allow
+  grep: allow
+  read: allow
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 
@@ -57,19 +62,12 @@ Write `deliverables/<pair-name>/audit-trail-proof.md` — a short
 client-facing checklist framed as "we held our own work to the same
 standard we judged yours by": every category flagged in original-side
 findings × the upgraded side's status for that category, citing
-upgraded-side raw reports. A category whose dimension was NOT RUN on the
-upgraded side reads **NOT VERIFIED** — never a pass.
-
-## Asymmetric Evidence
-
-A dimension flagged asymmetric (NOT RUN on one side) is reported as
-**asymmetric evidence** in every document you write — never as a delta,
-never as resolved or new findings.
+upgraded-side raw reports.
 
 ## Return
 
 Compact summary only: document paths, classification counts, partition
-flags (missing SOW, user-review items), asymmetric dimensions.
+flags (missing SOW, user-review items).
 
 ---
 
@@ -104,12 +102,12 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | Suffix | Producer | Content |
 |--------|----------|---------|
 | `-plan.md` | Feature - Decomposer | Plan with stages and acceptance criteria |
-| `-context.md` | z-feature-plan-expander | Key files, decisions, constraints |
-| `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
-| `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
-| `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | qa plan for a single feature |
-| `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
+| `-context.md` | 04a-feature-plan-expander | Key files, decisions, constraints |
+| `-tasks.md` | 04a-feature-plan-expander | Ordered checklist of work items |
+| `-implementation.md` | 04b-feature-implementer | Files changed, AC traceability, test results |
+| `-review.md` | 04c-feature-reviewer | Verdict, issues found, fixes applied |
+| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-coverage-map-qa.md` | 04d-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
 | `-summary.md` | Auditor subagents, web-researcher | Executive summary with priority actions or recommendations |

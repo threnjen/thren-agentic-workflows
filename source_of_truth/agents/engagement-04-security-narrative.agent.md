@@ -34,10 +34,6 @@ classified, it is residual, flagged for user review. Zero original-side
 security findings → still emit sections 2–4 with honest empty-state
 statements (e.g., "no findings required repair"), never omit them.
 
-If the security dimension was NOT RUN on either side, state it as
-asymmetric evidence — never infer repair or residual status from the
-missing side.
-
 ## Return
 
 Compact summary only: document path and repaired / out-of-scope / residual

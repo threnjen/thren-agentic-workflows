@@ -28,8 +28,6 @@ client-deliverable audience banner per `engagement-workspace`), business-framed:
 - Every quantified figure cites its source and retrieval date.
 - A figure found without a source or date stays qualitative.
 - Changes that cannot be quantified are described qualitatively.
-- A dependency/infra dimension NOT RUN on one side is reported as
-  asymmetric evidence — never presented as a cost delta.
 
 ## Offline Fallback
 

@@ -30,9 +30,6 @@ could not have seen the finding (different tooling coverage, dimension
 gaps), label it **"new or newly-visible"** — never assert it was
 introduced.
 
-If the upgraded side's security scan was NOT RUN, the report states NOT
-RUN with the reason — never an empty "no introduced issues" claim.
-
 ## Fix Flow
 
 State this flow in the report: engineer fixes the findings → re-run the
@@ -43,7 +40,7 @@ paths this document consumed so staleness is detectable.
 ## Return
 
 Compact summary only: document path, finding count (introduced vs. new or
-newly-visible), or NOT RUN status.
+newly-visible).
 
 ---
 

@@ -13,8 +13,10 @@ pointers — the detailed rules live in the assets it references:
 - **Config contract**: the `engagement-configuration` skill (schema,
   validation rules, canonical field vocabulary).
 - **Orchestrator**: the **06 Engagement - Prepare** agent
-  (`06-engagement-prepare.agent.md`) — docs scope by role, graph build,
-  baseline snapshot, analysis-branch convention, fail-fast policy.
+  (`06-engagement-prepare.agent.md`) — graph build, baseline snapshot,
+  analysis-branch convention, fail-fast policy. It spawns no agents;
+  documentation is produced later by the engagement orchestrator's
+  evidence stage (`engagement-pair-loop` skill, Stage A).
 
 Where behavior is described below, the referenced asset is the source of
 truth.
@@ -57,17 +59,14 @@ Invoke the **06 Engagement - Prepare** agent. The run proceeds in this order
    what was expected.
 2. **Confirm** — the orchestrator shows the full pair/side roster and waits
    for your confirmation before creating any analysis branch.
-3. **Prepare each side** of each pair: docs regenerated (always) → graph
-   build (always) → internal baseline snapshot → record.
+3. **Prepare each side** of each pair: analysis branch/worktree setup →
+   graph build (always) → internal baseline snapshot → record.
 
 ## Step 4: What a Successful Run Produces, Per Side
 
 For every side of every pair, on that side's local, never-pushed analysis
 branch:
 
-- **Documentation scoped by role** — the full Docs Writer set for
-  `upgraded` sides; at minimum README, ARCHITECTURE, and CODEBASE_CONTEXT,
-  marked as internal analysis artifacts, for `original` sides.
 - **A built code graph** — parse-based, with language coverage and gaps
   recorded as known limitations (never gated on).
 - **A SHA-pinned internal baseline snapshot** — committed on the analysis
@@ -102,8 +101,6 @@ difference is a defect in the run — stop and diagnose before proceeding.
 
 Re-running the orchestrator on a prepared engagement is safe:
 
-- **Docs are regenerated every run** — freshness by construction, no
-  staleness heuristics.
 - **The graph build always runs** — it is incremental and cheap.
 - **Analysis branches and worktrees are reused**, never recreated; an
   existing analysis branch is not an error.
@@ -120,9 +117,8 @@ and the cause (full enumeration in the agent's Fail Fast section):
 |---------|--------------|------------|
 | Config validation error | Specific error naming the pair, field, and expectation; nothing is prepared | Fix the config; re-run |
 | Dirty working tree in a branch-pair repo | Run stops naming the repo | Commit/stash/clean the repo; re-run |
-| Docs Writer failure on a side | Side reported failed, with a list of what was produced (committed to the analysis branch) | Re-run — the side is regenerated in full |
 | Graph build failure on a side | Run stops naming the side and the cause | Diagnose the build error; re-run |
 | Graph tooling unavailable (code-review-graph MCP server not in session) | **Not a failure** — the side's graph status is recorded **NOT RUN** with the reason; the run continues | Connect the code-review-graph MCP server; re-run |
 
-Missing docs and missing graphs are never failures — they are the work the
-orchestrator exists to do.
+Missing graphs are never failures — they are the work the orchestrator
+exists to do.

@@ -11,9 +11,26 @@ boundaries (client-code security, analysis-branch invariants, compact
 handoff), and every result is recorded in the pair's working-state entry as
 status plus artifact pointers only.
 
-## Stage A: Prepare Base Reports
+## Stage A: Prepare All Evidence
 
-For each side of the pair, spawn each listed agent **unchanged from its own
+Stage A produces **every evidence artifact the rest of the workflow
+consumes**, then validates the full set before any later stage runs.
+Subagent nesting is one deep: the orchestrator spawns every agent below
+itself; no child spawns further agents.
+
+### A1: Documentation
+
+For each side, spawn **Docs Writer** against the side's analysis-branch
+checkout at the side's revision, on every invocation — no staleness check,
+no skip. Scope by role: `upgraded` sides get the full document set per Docs
+Writer's own applicability assessment; `original` sides get at minimum
+README, ARCHITECTURE, and CODEBASE_CONTEXT, each headed as an internal
+analysis artifact. Commit the produced docs onto the side's analysis
+branch; record the docs-set pointer.
+
+### A2: Comparative Audits
+
+For each side, spawn each listed agent **unchanged from its own
 definition** — no added grants, no altered scope — against the side's
 analysis-branch checkout:
 
@@ -33,29 +50,41 @@ return its report file pointers.
 **All four dimensions are mandatory on every side.** A scan with no
 findings is a complete scan with an empty findings table — it still writes
 its reports. An agent returning without its reports, or claiming a
-dimension could not be scanned, is a failed spawn: re-run it with the
-blocker named until it completes. No dimension is ever skipped, waived, or
+dimension could not be scanned, is a failed spawn: re-run it once with the
+blocker named. If it still returns incomplete, this is a FAIL FAST report to the user and stops the pipeline. 
+No dimension is ever skipped, waived, or
 recorded as anything but complete or failed.
 
-Then verify each returned report mechanically (no content reading beyond
-the first line): the file exists non-empty at its exact canonical path and
-name, and opens with the internal audience banner per the
-`engagement-workspace` skill. A report that fails any check — wrong name,
-wrong path, empty, missing banner — is a stage failure for that dimension:
-re-run that dimension's audit with the correction named; never rename or
-edit files to compensate.
+### A3: Evidence Validation Gate
 
-Record the per-dimension statuses (complete / failed with cause) and
-verified pointers in the side's working-state entry. Status reflects
-execution, not verdict — a retained report is `complete` regardless of its
-conclusions (BLOCKED, NO-GO, critical findings). The stage is complete
-only when all four dimensions are `complete` on both sides; a side with a
-persistently failing dimension fails the pair per the orchestrator's
-fail-fast rule — never proceed to Stage B on partial evidence.
+Verify mechanically (existence and first-line checks only — never read
+content) that every artifact the later stages consume exists for **both
+sides**:
 
-For a side whose (repo, revision) was already scanned under another pair,
-skip the audit spawns and reuse the existing verified pointers. A single
-side may be re-run alone — its reports overwrite in place; the other
+- analysis branch, code graph, and baseline snapshot (from preparation;
+  re-confirm on disk, do not trust the report)
+- the side's docs set from A1
+- all eight audit files from A2 — `<dimension>-report.md` and
+  `<dimension>-summary.md` per dimension, each non-empty at its exact
+  canonical path and name and opening with the internal audience banner
+  per the `engagement-workspace` skill
+
+An artifact that fails any check — absent, wrong name, wrong path, empty,
+missing banner — is a stage failure for its producing step: re-run that
+step with the correction named; never rename, stub, or edit files to
+compensate.
+
+Record per-side statuses (complete / failed with cause) and verified
+pointers in the working-state entry. Status reflects execution, not
+verdict — a retained report is `complete` regardless of its conclusions
+(BLOCKED, NO-GO, critical findings). Stage A is complete only when every
+checklist item above is verified on both sides; a side with a persistently
+failing artifact fails the pair per the orchestrator's fail-fast rule —
+no later stage ever runs on partial evidence.
+
+For a side whose (repo, revision) already passed this gate under another
+pair, skip the spawns and reuse the existing verified pointers. A single
+side may be re-run alone — its artifacts overwrite in place; the other
 side's entry is untouched.
 
 ## Stage B: Delta & Security Synthesis
