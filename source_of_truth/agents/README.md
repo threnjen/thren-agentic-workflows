@@ -176,7 +176,6 @@ These agents are not visible in the picker. They run automatically as part of or
 | **05f Test Health** | 05 PR - Review | Delegate coverage, redundancy, and flake analysis into a test health report |
 | **05h Cleanliness Auditor** | 05 PR - Review | Evaluate the cleanliness of branch-added code and recommend specific cleanup categories when non-passing |
 | **05g Readiness Synthesizer** | 05 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
-| **Engagement - Audit Runner** | Engagement - Orchestrator | Run the four audit dimensions on one side of a comparison pair and retain raw reports in the workspace |
 | **Engagement - Delta Synthesizer** | Engagement - Orchestrator | Produce the client-facing delta report, the SOW-exclusions partition, and the audit-trail proof for a pair |
 | **Engagement - Security Narrative** | Engagement - Orchestrator | Write the four-section client-facing security narrative from the pair's reports and exclusions partition |
 | **Engagement - Introduced Issues** | Engagement - Orchestrator | Report upgraded-side security findings with no original-side counterpart, internal-only, for engineer fix-and-re-run |
@@ -279,8 +278,6 @@ These agents are not visible in the picker. They run automatically as part of or
 **Instructions - Writer** *(subagent of Instructions Manager)* — Discovers a repository's domains and non-obvious rules and drafts scoped `.instructions.md` files following the AI Instruction File Framework.
 
 **Instructions - Evaluator** *(subagent of Instructions Manager)* — Evaluates whether changes to instruction files are improvements or regressions using blind A/B testing, rule classification, 3-run stability scoring, and rule-quality analysis. Reads the BEFORE state automatically from git history.
-
-**Engagement - Audit Runner** *(subagent of Engagement - Orchestrator)* — Parameterized by pair, side, and dimension set; spawns the existing audit agents unchanged (security, code, dependencies, infra) on a side's analysis-branch checkout and retains raw reports at `pairs/<pair>/<side>/audits/<dimension>/`. Supports one-side re-runs that overwrite in place.
 
 **Engagement - Delta Synthesizer** *(subagent of Engagement - Orchestrator)* — Consumes both sides' report sets to produce the business-framed delta report, owns the single-point SOW-exclusions partition, and writes the audit-trail proof checklist. NOT RUN dimensions flow through as asymmetric evidence, never deltas.
 

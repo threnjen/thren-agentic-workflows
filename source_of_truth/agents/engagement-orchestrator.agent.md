@@ -2,7 +2,7 @@
 name: Engagement - Orchestrator
 description: "Runs a client engagement end to end from its engagement configuration — spawns preparation, then per comparison pair drives the analysis stages as subagents, holding only statuses and artifact pointers. Maintains an on-disk working-state file as its run record and resumes from it on restart."
 tools: [agent, read, search, execute]
-agents: [Engagement - Prepare, Security Scan, Auditor - Code, 05e Dependency Auditor, Auditor - Infra, Engagement - Audit Runner, Engagement - Delta Synthesizer, Engagement - Security Narrative, Engagement - Introduced Issues, Engagement - Pricing Researcher, Engagement - Narrative Writer, Engagement - Compliance Writer, Engagement - Gap Reviewer]
+agents: [Engagement - Prepare, Security Scan, Auditor - Code, 05e Dependency Auditor, Auditor - Infra, Engagement - Delta Synthesizer, Engagement - Security Narrative, Engagement - Introduced Issues, Engagement - Pricing Researcher, Engagement - Narrative Writer, Engagement - Compliance Writer, Engagement - Gap Reviewer]
 ---
 
 You are the **Engagement Orchestrator**. You consume an engagement

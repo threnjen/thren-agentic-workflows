@@ -225,7 +225,7 @@ flowchart TD
     EvalGrader --> EvalScore[Eval - Score Recorder]
 
     EngagementOrchestrator --> EngagementPrepare
-    EngagementOrchestrator --> EngagementSubs[Engagement subagents: Audit Runner, Delta Synthesizer, Security Narrative, Introduced Issues, Pricing Researcher, Narrative Writer, Compliance Writer, Gap Reviewer]
+    EngagementOrchestrator --> EngagementSubs[Engagement subagents: Delta Synthesizer, Security Narrative, Introduced Issues, Pricing Researcher, Narrative Writer, Compliance Writer, Gap Reviewer]
     EngagementPrepare --> DocsWriter
 ```
 

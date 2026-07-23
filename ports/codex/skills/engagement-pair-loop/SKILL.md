@@ -11,12 +11,9 @@ boundaries (client-code security, analysis-branch invariants, compact
 handoff), and every result is recorded in the pair's working-state entry as
 status plus artifact pointers only.
 
-## Stage A: Comparative Audit Runs
+## Stage A: Prepare Base Reports
 
-Subagent nesting is **one deep**: the orchestrator spawns every audit agent
-itself; no child spawns further agents.
-
-For each side of the pair, spawn each audit agent **unchanged from its own
+For each side of the pair, spawn each listed agent **unchanged from its own
 definition** — no added grants, no altered scope — against the side's
 analysis-branch checkout:
 
@@ -31,28 +28,39 @@ Each spawn carries the standing boundaries and directs the agent to write
 its reports under
 `<workspace-root>/pairs/<pair-name>/<side-role>/audits/<dimension>/` using
 the canonical filenames from the `engagement-package-manifest` skill, and to
-return its report file pointers. A dimension whose required evidence is
-unavailable is NOT RUN with the reason — no files written, never a pass.
+return its report file pointers.
 
-Then spawn **Engagement - Audit Runner** once per side with the pair name,
-side role, workspace root, and the collected per-dimension statuses and file
-pointers. It verifies and normalizes the retained reports without spawning
-anything; record its returned per-dimension statuses and report pointers in
-the side's working-state entry.
+**All four dimensions are mandatory on every side.** A scan with no
+findings is a complete scan with an empty findings table — it still writes
+its reports. An agent returning without its reports, or claiming a
+dimension could not be scanned, is a failed spawn: re-run it with the
+blocker named until it completes. No dimension is ever skipped, waived, or
+recorded as anything but complete or failed.
+
+Then verify each returned report mechanically (no content reading beyond
+the first line): the file exists non-empty at its exact canonical path and
+name, and opens with the internal audience banner per the
+`engagement-workspace` skill. A report that fails any check — wrong name,
+wrong path, empty, missing banner — is a stage failure for that dimension:
+re-run that dimension's audit with the correction named; never rename or
+edit files to compensate.
+
+Record the per-dimension statuses (complete / failed with cause) and
+verified pointers in the side's working-state entry. Status reflects
+execution, not verdict — a retained report is `complete` regardless of its
+conclusions (BLOCKED, NO-GO, critical findings). The stage is complete
+only when all four dimensions are `complete` on both sides; a side with a
+persistently failing dimension fails the pair per the orchestrator's
+fail-fast rule — never proceed to Stage B on partial evidence.
 
 For a side whose (repo, revision) was already scanned under another pair,
-skip the audit spawns and pass the existing report pointers to the Audit
-Runner for reuse. A single side may be re-run alone — its reports overwrite
-in place; the other side's entry is untouched.
-
-If a dimension is NOT RUN on one side but complete on the other, mark that
-dimension **asymmetric evidence** in the pair's working-state entry — it is
-never presented as a delta.
+skip the audit spawns and reuse the existing verified pointers. A single
+side may be re-run alone — its reports overwrite in place; the other
+side's entry is untouched.
 
 ## Stage B: Delta & Security Synthesis
 
-Runs once both sides' audit reports exist (a NOT RUN dimension does not
-block — it flows through as asymmetric evidence). Spawn in order, each with
+Runs once Stage A is complete for both sides. Spawn in order, each with
 the pair name, workspace root, and report pointers:
 
 1. **Engagement - Delta Synthesizer** — also pass the pair's `mode` and the
