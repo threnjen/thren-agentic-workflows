@@ -133,23 +133,21 @@ number of pairs — never assume a count), in this exact order:
 ### Step 1: Graph build
 
 Build or refresh the side's code graph on **every invocation** — the build
-is incremental and cheap.
+is incremental and cheap. Use the `code-review-graph build` CLI directly in the
+side's checkout/worktree, not MCP tools (faster).
 
-- Invoke `build_or_update_graph_tool` on the side's checkout/worktree at the
-  side's revision. For branch pairs, each side's worktree gets its own build
+- `cd` to the side's checkout/worktree at the side's revision and run
+  `code-review-graph build`. For branch pairs, each side's worktree gets its own build
   — one graph per (repo, revision), never one shared graph.
-- First use `list_repos_tool` to see which repos/graphs the server already
-  knows, so you know whether this is a fresh build or an incremental update.
-- Graph building is parse-based (Tree-sitter) — a side never needs to
-  compile. Unparseable or unsupported files are simply not graphed; record
-  each graph's language coverage and gaps as known limitations. There is no
-  coverage threshold and no quality gate.
-- **Graph build failure** is unresolvable: fail fast naming the side and
-  cause.
-- **Graph tooling unavailability** (no code-review-graph MCP server in the
-  session) is not a failure: record the side's graph status as **NOT RUN**
-  with the reason and continue — never silently fall back to file scans.
-  Connecting the server and re-running fills the gap.
+- Capture the exit code and output. Graph building is parse-based (Tree-sitter)
+  — a side never needs to compile. Unparseable or unsupported files are simply
+  not graphed; record each graph's language coverage and gaps as known limitations.
+  There is no coverage threshold and no quality gate.
+- **Graph build failure** (non-zero exit code): fail fast naming the side and
+  the error output.
+- **Graph CLI unavailable** (command not found): record the side's graph status
+  as **NOT RUN** with the reason and continue. Installing the CLI and re-running
+  fills the gap.
 
 ### Step 1a: Internal baseline snapshot
 
