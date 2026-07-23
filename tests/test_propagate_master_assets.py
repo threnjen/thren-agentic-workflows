@@ -762,11 +762,34 @@ class OrphanPruningTests(unittest.TestCase):
         # opencode/agents and codex/agents 42 -> 43; claude/agents is unchanged
         # (its only child, Docs Writer, already had a file). Counts recounted
         # from disk (`ls ports/<harness>/agents`), not incremented from memory.
+        # The `Engagement - Orchestrator` (user-invocable) added one file to
+        # each user-invocable surface: claude commands 19 -> 20, opencode/agents
+        # and codex/agents 43 -> 44. It also declares `Engagement - Prepare` as
+        # a child, giving Prepare its first spawnable subagent file:
+        # claude/agents 28 -> 29. Counts recounted from disk.
+        # The `Engagement - Audit Runner` (hidden subagent) added one file to
+        # opencode/agents and codex/agents: 44 -> 45; claude commands unchanged
+        # (not user-invocable). claude/agents 29 -> 31: the runner's own
+        # spawnable file plus a first spawnable file for its child
+        # `Security Scan`. Counts recounted from disk.
+        # The four delta/security synthesis subagents (Delta Synthesizer,
+        # Security Narrative, Introduced Issues, Pricing Researcher — all
+        # hidden) added four files each to claude/agents (31 -> 35),
+        # opencode/agents and codex/agents (45 -> 49); claude commands
+        # unchanged (not user-invocable). Counts recounted from disk.
+        # The `Engagement - Narrative Writer` (hidden subagent) added one file
+        # to claude/agents (35 -> 36), opencode/agents and codex/agents
+        # (49 -> 50); claude commands unchanged (not user-invocable). Counts
+        # recounted from disk.
+        # The `Engagement - Compliance Writer` and `Engagement - Gap Reviewer`
+        # (both hidden subagents) added two files each to claude/agents
+        # (36 -> 38), opencode/agents and codex/agents (50 -> 52); claude
+        # commands unchanged (not user-invocable). Counts recounted from disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 28),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 43),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 43),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 38),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 20),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 52),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 52),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:

@@ -51,6 +51,7 @@ Each entry in `pairs` is one comparison and has:
 | `original` | yes | The side representing the original codebase |
 | `upgraded` | yes | The side representing the upgraded codebase |
 | `repo_path` | branch pairs only | Path to the single repository whose branches are compared |
+| `mode` | no | Value story for the pair: `modernization` (pure modernization) or `modernized-and-improved` (modernization plus improvements). **Defaults to `modernization` when absent** — existing configs without it remain valid |
 
 Exactly one side is `original` and exactly one side is `upgraded` — the role
 is expressed by which key the side sits under, so a pair with both roles
@@ -85,6 +86,7 @@ pairs:
       path: repos/service-api-legacy
     upgraded:
       path: /abs/path/service-api-v2  # absolute paths are also accepted
+    mode: modernized-and-improved     # optional; omitted -> modernization
 
   - name: web-frontend                # a branch pair: two branches of one repo
     type: branch
@@ -116,6 +118,7 @@ and what was expected:
 | Branch pair: `repo_path` resolves to a repository | `pair '<name>': repo_path '<value>' does not resolve (expected an existing repository directory)` |
 | Branch pair: each side's `branch` exists in the repository | `pair '<name>': <original|upgraded>.branch '<value>' does not exist in '<repo_path>' (expected an existing branch)` |
 | Branch pair: the two branches are not the same ref | `pair '<name>': original.branch and upgraded.branch name the same ref (expected two distinct branches)` |
+| `mode`, when present, is `modernization` or `modernized-and-improved` | `pair '<name>': mode '<value>' (expected 'modernization' or 'modernized-and-improved')` |
 
 Explicitly allowed (do not over-validate):
 

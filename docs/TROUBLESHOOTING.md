@@ -78,7 +78,7 @@ checking for `name` and `description`, not strictly by extension.
 ### Fix
 
 - Verify the file has frontmatter with `name` and `description`.
-- Do not rename `prod-code-review.md` or `docs-writer.md` just because they lack
+- Do not rename `04f-prod-code-review.md` or `docs-writer.md` just because they lack
   `.agent.md`; they are intentionally part of the source set.
 
 ## Deploy

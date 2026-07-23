@@ -92,3 +92,7 @@ These are scope-independent — they are about not reporting an absence of evide
 ## Harness Hook Support (verified from primary sources 2026-07-17)
 
 All three harnesses support user-global hooks. Claude Code: `~/.claude/settings.json`. OpenCode: global config/plugin dir. Codex: `~/.codex/hooks.json` / `[hooks]` in `~/.codex/config.toml`, additive merge with repo layers. Codex caveats: per-hook hash-based trust (regeneration requires re-trust via `/hooks`, so upgrades are non-silent), only "simple" `unified_exec` shell calls intercepted, `codex exec` repo-hook dispatch bug (#26383/#26452), minimum version ~v0.123, enterprise `allow_managed_hooks_only` can suppress everything. Research report: `dev/research/codex-hooks-mechanism/`.
+
+## Engagement Comparative Audits (feature 15 → 16)
+
+- **Dependency dimension reuses the diff-scoped `05e Dependency Auditor` unchanged.** Its definition assumes a branch diff against a confirmed baseline and pins its report filename/path via PR-review conventions; the engagement runner overrides the path and supplies a full-side checkout by parent instruction only. Before feature 16 consumes dependency reports, phase QA must confirm the agent produces a usable full-side inventory in this mode — modifying the auditor was a declared non-goal of feature 15.
