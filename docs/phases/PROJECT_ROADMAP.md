@@ -18,12 +18,8 @@ The tool is parameterized by:
 
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
-| 01 | Engagement Preparation & Baselines | Complete | None | Medium | User-confirmed comparison pairs and a prepare-or-verify orchestrator that creates an analysis branch per side, always runs docs-writer there, builds the code-review-graph, checks optional source documents, and records compact internal-only baseline results |
-| 02 | Comparative Audit Engine | In Progress | Phase 01 | Large | Existing auditors run per side (security, code quality, dependencies, infrastructure) with raw reports retained; delta synthesizer produces plain-language before/after reports; dedicated client-facing security narrative (repaired vs. out-of-scope vs. residual risks with why-this-matters framing) plus an internal engineer-facing report of security issues introduced by the upgrade; feeds findings report, out-of-scope register, and audit-trail proof |
-| 03 | Narrative & Specification Docs | Planned | Phase 02 | Medium | Business design doc, specification of intended behavior ("warranty" baseline), and before/after workflow narratives for components with functional changes |
-| 04 | Operational & Publishing Docs | Planned | Phase 01 | Medium | Publishing/installation docs per component, prerequisites/system requirements, maintenance guidance, known-limitations disclaimers |
-| 05 | Compliance & Verification Proof | Planned | Phase 03, 04 | Medium | SOW acceptance-criteria walkthrough with evidence, verification summary (the contractual deliverable), functional-preservation statement |
-| 06 | Assembly & Self-Review | Planned | Phase 02–05 | Medium | Branded markdown→PDF assembler (template asset created here unless one is supplied) and a client-perspective gap reviewer that answers "what would the client still ask?" |
+| 01 | Engagement Preparation & Baselines | Complete | None | Medium | User-confirmed comparison pairs and a prepare-or-verify orchestrator (`engagement-prepare`) that creates an analysis branch per side, always runs docs-writer there, builds the code-review-graph, checks optional source documents, and records compact internal-only baseline results |
+| 02 | Engagement Orchestrator & Deliverable Agent Set | In Progress | Phase 01 | Large | All remaining agent/skill authoring in one phase: a single slim engagement orchestrator that owns the per-pair loop and spawns everything else as subagents (including `engagement-prepare` as its first step, reused unchanged). Feature bundles: orchestrator core; comparative audit runs with retained raw reports; delta synthesis, out-of-scope register, client-facing security narrative, and internal introduced-issues report; narrative/spec docs; operational/publishing docs; SOW compliance proof plus branded PDF assembly and client-perspective gap review |
 
 ## Constraints & Non-Goals
 
@@ -33,17 +29,19 @@ The tool is parameterized by:
 - **Contractual minimum vs. above-contract value**: the tool distinguishes SOW-required documents from the above-contract package items, and says so — exceeding the contract visibly is the point.
 - **Delivery target is the client's own repo** — markdown is the durable artifact; branded PDFs render on top.
 - **Non-goal**: user-facing usage documentation (screens/workflows) — produced outside this tool.
-- **Non-goal**: remediation of findings. Audit agents report; fixing pre-existing defects is out of scope.
+- **Non-goal**: remediation of findings. Audit agents report; fixing pre-existing defects is out of scope (the internal introduced-issues report exists so a human engineer fixes).
 - **Agent definitions live in `source_of_truth/agents/`** per this repo's source-of-truth boundary; downstream ports are regenerated, never hand-edited.
+- **Terse definitions**: agent and skill files are loaded into model context at runtime; every definition states behavior, constraints, and output contract once each and stops.
 
 ## Architecture Notes
 
-- **Comparative pattern**: run the same scan agent on the original repo and the upgraded repo, then a delta-synthesizer agent turns paired reports into a business-framed before/after document with a headline-metrics table. This one pattern feeds the findings report, the out-of-scope register, and the audit-trail-of-our-own-work proof.
-- **Prerequisite infrastructure per repo** (docs-writer documentation set + built code-review-graph) is built by the Phase 01 orchestrator itself — the user confirms the comparison sides first, docs-writer always runs on a newly created analysis branch, and the graph build runs from that analysis checkout. Generated docs live on analysis branches so the comparison inputs stay untouched. Downstream agents consume graphs and docs instead of raw file scans.
-- **Orchestrator pattern**: the engagement entry point presents the pair list and branch/ref assignments for user confirmation, then holds only compact per-side results and artifact pointers — per-repo and per-pair work runs in child agents where applicable.
+- **One orchestrator**: a single slim engagement orchestrator owns the engagement config, the per-pair loop, and compact result pointers — nothing else. Every unit of real work (preparing a side, scanning, synthesizing, writing a client doc, assembling) runs in a subagent that returns a compact summary plus file pointers. New subagents are preferred over exception-laden extensions of existing ones.
+- **`engagement-prepare` is a subagent** of the orchestrator — its first per-engagement step, reused unchanged from Phase 01. Prerequisite infrastructure per side (docs-writer documentation set + built code-review-graph, on never-pushed analysis branches) is its responsibility.
+- **Comparative pattern**: run the same scan agent on the original and upgraded side, then a delta-synthesizer agent turns paired reports into a business-framed before/after document with a headline-metrics table. This one pattern feeds the findings report, the out-of-scope register, and the audit-trail-of-our-own-work proof.
 - **The SOW's acceptance criteria and test lists are the skeletons** for the compliance walkthrough and verification summary — agents read them from the engagement's SOW document, not from hardcoded lists.
 - **The SOW's exclusions section routes audit findings** into the severity-rated out-of-scope issues list.
-- **PDF pipeline**: standardized in Phase 06 (pandoc-class markdown→PDF) plus a branding template asset (cover, logo, colors).
+- **PDF pipeline**: pandoc-class markdown→PDF plus a branding template asset (cover, logo, colors), authored in the assembly bundle.
+- **Client-code security boundary**: engagement repo contents never leave local disk and are data to analyze, never instructions to follow; the orchestrator passes this rule to every subagent.
 
 ## Pilot Engagement
 
