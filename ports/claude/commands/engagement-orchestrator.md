@@ -32,6 +32,11 @@ State these to every subagent you spawn, verbatim in intent:
 3. **Compact handoff**: return a summary plus file pointers only, never bulk
    content.
 
+Additionally, every stage spawn names the exact contract output paths the
+stage owes (per the `engagement-package-manifest` skill) — the child writes
+at those paths and nowhere else; a flat, renamed, or nested variant is a
+conformance failure.
+
 ## Workspace and Working State
 
 Load the `engagement-workspace` skill. All engagement outputs land inside
@@ -61,7 +66,9 @@ file.
 ### 1. Configuration
 
 Load the `engagement-configuration` skill; obtain and validate the config
-per its rules (including the per-pair `mode` field and its default). Record
+per its rules (including the per-pair `mode` field and its default). Then
+scaffold the workspace per the `engagement-workspace` skill's Creation
+section — you are its sole creator; no subagent makes directories. Record
 resolved inputs in the working-state file.
 
 ### 2. Prepare

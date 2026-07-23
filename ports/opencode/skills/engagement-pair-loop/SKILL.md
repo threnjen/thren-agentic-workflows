@@ -13,7 +13,6 @@ handoff), and every result is recorded in the pair's working-state entry as
 status plus artifact pointers only. Agent names below are source names —
 spawn each via its deployed identifier in the current harness (hidden
 subagents deploy with a `z-` prefix).
-
 ## Stage A: Prepare All Evidence
 
 Stage A produces **every evidence artifact the rest of the workflow

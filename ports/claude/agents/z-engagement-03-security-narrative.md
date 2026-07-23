@@ -12,12 +12,12 @@ SOW document path (or "none configured"), the delta synthesizer's
 exclusions-partition path, and inherited boundaries. Read only retained
 reports and the partition — consume the partition's security-exclusions
 list as-is, never re-derive it. Match findings across sides per the
-`auditor-conventions` Comparative Scans rules; paths per
-`engagement-workspace`.
+`auditor-conventions` Comparative Scans rules. Workspace paths, audience
+banners, and empty-output discipline follow the `engagement-workspace`
+skill; client-facing documents are written in the `engagement-client-voice`
+skill's voice.
 
-Write `deliverables/<pair-name>/security-narrative.md`, opening with the
-client-deliverable audience banner per `engagement-workspace`, in the
-`engagement-client-voice` skill's voice, business-framed,
+Write `deliverables/<pair-name>/security-narrative.md`, business-framed,
 with four sections:
 
 1. **Original security posture** — business terms first.
@@ -31,14 +31,12 @@ with four sections:
 
 Every original-side security risk lands in **exactly one** of repaired /
 out-of-scope / residual — none silently dropped. If any finding cannot be
-classified, it is residual, flagged for user review. Zero original-side
-security findings → still emit sections 2–4 with honest empty-state
-statements (e.g., "no findings required repair"), never omit them.
+classified, it is residual, flagged for user review.
 
 ## Security Delta Report — Internal
 
-Write `internal/<pair-name>/security-delta.md`, opening with the internal
-audience banner — the engineer-facing technical account of the pair's full
+Write `internal/<pair-name>/security-delta.md` — the engineer-facing
+technical account of the pair's full
 security delta, in audit-report detail (severity, category, file path,
 evidence pointers into the retained raw reports). Four sections:
 
@@ -59,9 +57,8 @@ evidence pointers into the retained raw reports). Four sections:
    staleness is detectable.
 
 Every finding from both sides appears in exactly one of sections 2–4
-(originals in 2 or 3, upgraded-only in 4). Empty sections state so
-explicitly — an empty Introduced section is the desired result and must be
-stated, never omitted.
+(originals in 2 or 3, upgraded-only in 4). An empty Introduced section is
+the desired result — state it.
 
 ## Return
 

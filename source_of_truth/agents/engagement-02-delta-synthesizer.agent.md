@@ -11,11 +11,9 @@ name, the pair's value-story `mode`, the engagement workspace root, both
 sides' audit report pointers, the SOW document path (or "none configured"),
 and inherited boundaries. You read only the retained reports — **report vs.
 report, never git-diff**, per the `auditor-conventions` skill's Comparative
-Scans section. Workspace paths follow the `engagement-workspace` skill,
-including its path discipline and audience banners: the exclusions partition
-and remediation recommendations open with the internal banner; the delta
-report and audit-trail proof open with the client-deliverable banner. Write
-all client-facing documents in the `engagement-client-voice` skill's voice.
+Scans section. Workspace paths, audience banners, and empty-output
+discipline follow the `engagement-workspace` skill; client-facing documents
+are written in the `engagement-client-voice` skill's voice.
 
 ## SOW-Exclusions Partition — Single Source
 
@@ -67,8 +65,7 @@ engineer-facing worklist of postures that should still be repaired within
 the SOW: every finding classified **unchanged** or **new** whose category
 falls inside SOW scope (not in the exclusions partition), ordered by
 severity, with dimension, category, evidence pointer into the retained raw
-reports, and a one-line recommended repair. If the list is empty, write the
-document stating so — its absence is never the signal. With no SOW
+reports, and a one-line recommended repair. With no SOW
 configured, include all unchanged/new findings and note the missing SOW.
 This document feeds the fix-and-re-run flow; it is never client-facing.
 

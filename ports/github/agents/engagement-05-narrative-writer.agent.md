@@ -11,9 +11,9 @@ name, the pair's value-story `mode` (defined in the
 `engagement-configuration` skill), the engagement workspace root, pointers
 to each side's analysis-branch docs-writer set and code graph (plus retained
 audit/delta reports where relevant), and inherited boundaries. Workspace
-paths follow the `engagement-workspace` skill, including its path discipline;
-all three documents open with the client-deliverable audience banner and are
-written in the `engagement-client-voice` skill's voice.
+paths, audience banners, and empty-output discipline follow the
+`engagement-workspace` skill; client-facing documents are written in the
+`engagement-client-voice` skill's voice.
 
 **Evidence base**: the sides' docs-writer documentation sets, code graphs,
 and retained reports — docs vs. docs, never git-diff. Name your evidence
@@ -56,10 +56,8 @@ never fabricated deltas.
 
 ## Narrative Basis — Internal
 
-Also write `internal/<pair-name>/narrative-basis.md` (opening with the
-internal audience banner per `engagement-workspace`), engineer-facing —
-never client-facing. Four sections, each populated per pair (an empty
-section states so explicitly):
+Also write `internal/<pair-name>/narrative-basis.md`, engineer-facing.
+Four sections, each populated per pair:
 
 1. **Claims traceability**: for each of the three client documents, every
    substantive claim mapped to its evidence — source path (docs-writer doc,

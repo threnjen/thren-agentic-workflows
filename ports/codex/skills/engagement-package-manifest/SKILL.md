@@ -44,7 +44,11 @@ set — both modes expect the same entries.
 
 ### Client-Facing (ordered)
 
-Per pair `<p>`:
+First, per engagement:
+
+0. Package table of contents — `deliverables/table-of-contents.md`
+
+Then per pair `<p>`:
 
 1. Business design — `deliverables/<p>/business-design.md`
 2. Before/after workflow narratives — `deliverables/<p>/workflow-narratives.md`
@@ -59,6 +63,19 @@ proof grouped among them:
 7. SOW compliance walkthrough — `deliverables/sow-compliance-walkthrough.md`
 8. Audit-trail proof (per pair) — `deliverables/<p>/audit-trail-proof.md`
 9. Verification summary — `deliverables/verification-summary.md`
+
+## Package Table of Contents
+
+`deliverables/table-of-contents.md` is the client package's assembly order —
+the downstream design step builds the final client deliverable by reading
+it top to bottom, so every engagement's package opens in the identical
+order. The manifest assembler writes it from the derived client-facing
+expected entries above, in exactly that order (excluding itself): one row
+per document — order number, document title, workspace-root-relative path,
+and pair name (or "engagement-wide"). It lists every expected client
+document whether or not it is present on disk; present/missing lives in the
+manifest, never here. It is client-facing (client-deliverable banner) and
+contains no internal entries.
 
 ### Technical / Internal (ordered)
 

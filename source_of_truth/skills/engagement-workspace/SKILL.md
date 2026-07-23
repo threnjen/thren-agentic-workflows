@@ -1,6 +1,6 @@
 ---
 name: engagement-workspace
-description: "Layout contract for an engagement's output workspace — the single per-engagement root outside every client repository where all engagement outputs land (client-facing docs, internal artifacts, raw reports, manifest, working-state file) — plus the working-state file shape. Use when: writing or locating any engagement output, maintaining or resuming from the working-state file, or resolving manifest paths."
+description: "Layout contract for an engagement's output workspace — the single per-engagement root outside every client repository where all engagement outputs land (client-facing docs, internal artifacts, manifest, working-state file) — plus the working-state file shape. Use when: writing or locating any engagement output, maintaining or resuming from the working-state file, or resolving manifest paths."
 ---
 
 # Engagement Workspace
@@ -29,8 +29,7 @@ this root.
   manifest.md                  # deliverables manifest (produced by a later stage)
   deliverables/                # client-facing documents
   internal/                    # internal-only artifacts (never client-facing)
-  raw/                         # raw subagent reports, unedited
-  notes/                       # optional temporary working notes
+  notes/                       # optional working notes — created on first use, never scaffolded
   pairs/<pair-name>/
     original/                  # per-side outputs for the pair's original side
     upgraded/                  # per-side outputs for the pair's upgraded side
@@ -38,6 +37,19 @@ this root.
 
 Pair folders are named by the config pair `name`. Pair-level (cross-side)
 outputs sit directly in `pairs/<pair-name>/`.
+
+## Creation — Orchestrator-Owned Scaffold
+
+The orchestrator creates the workspace: once config validation resolves the
+pair roster, it scaffolds the root, `deliverables/`, `internal/`, `pairs/`,
+and every per-pair directory the contract paths require —
+`deliverables/<pair-name>/`, `internal/<pair-name>/`,
+`pairs/<pair-name>/<side>/audits/<dimension>/` — before any stage spawns.
+No other agent creates directories: every contract path's parent already
+exists, so a write that would need a new directory is off-contract by
+definition — the stage stops and reports the path rather than creating it.
+Scaffolding is idempotent (`mkdir -p` semantics); a directory that exists
+but is not in this layout is reported, never adopted.
 
 ## Path Discipline — Deterministic Output
 
@@ -51,8 +63,10 @@ outputs sit directly in `pairs/<pair-name>/`.
 - Resolve every write as an absolute path against the workspace root you
   were passed — never against the current working directory. A file landing
   outside the workspace root is a defect.
+- An owed document or section with nothing to report is still written,
+  stating its empty state plainly — absence is never the signal.
 - Audience is fixed by directory: `deliverables/` is client-facing;
-  `internal/`, `raw/`, `pairs/`, `notes/`, and the root-level state/manifest
+  `internal/`, `pairs/`, `notes/`, and the root-level state/manifest
   files are internal. A stage never reclassifies a document by relocating it.
 
 ## Audience Banner — Required First Line
