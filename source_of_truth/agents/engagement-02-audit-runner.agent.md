@@ -65,6 +65,11 @@ with the reason** — never reported as a pass, never silently skipped:
 ## Return
 
 Return a compact summary only — per dimension: status (complete / failed
-with cause / NOT RUN with reason) plus report pointers. Flag any dimension
+with cause / NOT RUN with reason) plus report pointers. **Status reflects
+execution, not verdict**: a dimension that produced its report is
+`complete` regardless of what the report concludes (BLOCKED, NO-GO,
+critical findings — all still `complete`). `failed` means only that the
+auditor could not produce its report. Never map a report's verdict onto
+the status. Flag any dimension
 NOT RUN so the caller can mark it **asymmetric evidence** for the pair if
 the other side ran it. Never return report content.

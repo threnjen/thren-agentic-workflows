@@ -149,7 +149,13 @@ failed pairs are reported as-is; their gaps flow into the manifest as
 
 Stop a pair and record it failed — naming the pair, side, and cause — on:
 config validation failure (whole run), preparation failure for a side,
-entry-check failure for a side, or any stage subagent reporting failure.
+entry-check failure for a side, or any stage subagent reporting that it
+could not do its work. **A subagent failure is an execution failure only** —
+the child could not produce its artifact. Audit verdicts are evidence, not
+failures: a security scan reporting BLOCKED, an infra audit reporting
+NO-GO, or any report full of critical findings is a *complete* stage whose
+findings flow into synthesis as comparison data. This engagement gathers
+and compares evidence; it never gates on release readiness.
 A failed pair never blocks the other pairs.
 
 ---
