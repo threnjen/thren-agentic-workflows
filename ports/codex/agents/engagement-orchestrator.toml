@@ -50,6 +50,16 @@ sole observability surface and final run record.
 from its recorded statuses — redo only sides not recorded complete. A silent
 restart-from-zero is wrong.
 
+## Conformance Check — After Every Stage
+
+After each stage subagent returns, verify (existence checks only — never
+read content) that every artifact it owes exists at its exact contract path
+per the `engagement-workspace` and `engagement-package-manifest` skills. An
+artifact at a different path, under a different name or casing, duplicated,
+or outside the workspace root is a stage failure: re-run the stage with the
+correction named. Never record an off-contract pointer in the working-state
+file.
+
 ## Run Flow
 
 ### 1. Configuration

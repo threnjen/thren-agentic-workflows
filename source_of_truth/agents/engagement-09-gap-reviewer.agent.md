@@ -25,6 +25,9 @@ client would:
   items left without plain-language framing.
 - **Consistency**: contradictions between documents (figures, claims,
   framing) are gaps.
+- **Layout conformance**: per the `engagement-workspace` skill — a document
+  at a non-contract path, a duplicate copy, a file outside the workspace
+  root, or a missing/mismatched audience banner is a gap.
 
 ## Report — Always Emitted
 

@@ -20,7 +20,8 @@ list as-is, never re-derive it. Match findings across sides per the
 `auditor-conventions` Comparative Scans rules; paths per
 `engagement-workspace`.
 
-Write `deliverables/<pair-name>/security-narrative.md`, business-framed,
+Write `deliverables/<pair-name>/security-narrative.md`, opening with the
+client-deliverable audience banner per `engagement-workspace`, business-framed,
 with four sections:
 
 1. **Original security posture** — business terms first.

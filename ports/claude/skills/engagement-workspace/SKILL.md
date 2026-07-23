@@ -34,9 +34,33 @@ engagement-workspace/
 ```
 
 Pair folders are named by the config pair `name`. Pair-level (cross-side)
-outputs sit directly in `pairs/<pair-name>/`. Whether a given artifact is
-client-facing (`deliverables/`), internal (`internal/`), or raw (`raw/`) is
-decided by the stage that produces it.
+outputs sit directly in `pairs/<pair-name>/`.
+
+## Path Discipline — Deterministic Output
+
+- Every document exists at **exactly one path**: the contract path named by
+  the producing stage's definition (client-facing paths are enumerated in
+  the `engagement-package-manifest` skill). Never write working copies,
+  duplicates, or a document under an alternate name or directory.
+- Filenames are **lowercase kebab-case**, exactly as the contract states —
+  never UPPER_SNAKE variants, never pair-name prefixes the contract doesn't
+  specify.
+- Resolve every write as an absolute path against the workspace root you
+  were passed — never against the current working directory. A file landing
+  outside the workspace root is a defect.
+- Audience is fixed by directory: `deliverables/` is client-facing;
+  `internal/`, `raw/`, `pairs/`, `notes/`, and the root-level state/manifest
+  files are internal. A stage never reclassifies a document by relocating it.
+
+## Audience Banner — Required First Line
+
+Every markdown output opens with exactly one of:
+
+- `> **AUDIENCE: CLIENT DELIVERABLE** — hand off to design for client PDF.`
+- `> **AUDIENCE: INTERNAL** — pre-delivery check; never client-facing.`
+
+The banner must agree with the file's directory (client banner only under
+`deliverables/`).
 
 ## Working-State File
 

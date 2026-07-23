@@ -32,15 +32,21 @@ instead of raw full-file sweeps, prefer that.
 ## Report Retention
 
 Direct each auditor to write its reports under
-`<workspace-root>/pairs/<pair-name>/<side-role>/audits/<dimension>/`,
-keeping the auditor's natural `-report.md` / `-summary.md` filenames.
-Every raw report is retained on disk as an internal artifact — nothing
-here is client-facing.
+`<workspace-root>/pairs/<pair-name>/<side-role>/audits/<dimension>/`, using
+the canonical filenames from the `engagement-package-manifest` skill:
+`<dimension>-report.md` / `<dimension>-summary.md` (security:
+`security-scan-report.md` / `security-scan-summary.md`) — identical on both
+sides, no pair or side prefixes. If an auditor wrote a different name,
+rename to canonical before returning. Every raw report is retained on disk
+as an internal artifact — nothing here is client-facing; each opens with the
+internal audience banner per the `engagement-workspace` skill.
 
 ## NOT RUN — Never a Pass
 
 A dimension whose required evidence is unavailable is recorded **NOT RUN
-with the reason** — never reported as a pass, never silently skipped:
+with the reason** — never reported as a pass, never silently skipped. A NOT
+RUN dimension writes **no files** — no stub report or summary; the status
+you return is the record:
 
 - Dependency vulnerability evidence must be supplied offline (local
   manifests, lock files, pre-fetched advisory data); no network access is

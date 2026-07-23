@@ -11,7 +11,10 @@ name, the pair's value-story `mode`, the engagement workspace root, both
 sides' audit report pointers, the SOW document path (or "none configured"),
 and inherited boundaries. You read only the retained reports — **report vs.
 report, never git-diff**, per the `auditor-conventions` skill's Comparative
-Scans section. Workspace paths follow the `engagement-workspace` skill.
+Scans section. Workspace paths follow the `engagement-workspace` skill,
+including its path discipline and audience banners: the exclusions partition
+opens with the internal banner; the delta report and audit-trail proof open
+with the client-deliverable banner.
 
 ## SOW-Exclusions Partition — Single Source
 

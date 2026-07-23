@@ -8,7 +8,9 @@ inherited boundaries. Match findings across sides per the
 `auditor-conventions` Comparative Scans security rules; paths per
 `engagement-workspace`.
 
-Write `internal/<pair-name>/introduced-issues.md`, opening with the header:
+Write `internal/<pair-name>/introduced-issues.md` — that exact path, per the
+`engagement-workspace` path discipline — opening with the internal audience
+banner followed by the header:
 
 > **INTERNAL — ENGINEERING ONLY. Never client-facing.**
 

@@ -26,7 +26,9 @@ Every entry is one table row:
 
 **Present/missing detection** (stated once, applied to every row): a row is
 `present` only if the file exists at its path with non-empty content;
-otherwise `missing`. Nothing suppresses a `missing` row — the expected-entry
+otherwise `missing`. The check is **mechanical** — stat each path on disk at
+manifest-write time; never fill the column from memory or from stage
+statuses. Nothing suppresses a `missing` row — the expected-entry
 list comes from the derivation below, never from what happens to be on disk.
 
 **Contract status**: `SOW-required` when the engagement's SOW/deliverables
@@ -71,9 +73,13 @@ Standing entries first, then per-pair expansions:
 5. SOW-exclusions partition (per pair) — `pairs/<p>/exclusions-partition.md`
 6. Raw audit reports (per pair, per side, per dimension) —
    `pairs/<p>/<side>/audits/<dimension>/` for sides `original`/`upgraded` and
-   dimensions security/code/dependencies/infra; one row per dimension
-   directory, `present` when it contains that dimension's report (a dimension
-   NOT RUN is a `missing` row annotated NOT RUN, never omitted)
+   dimensions security/code/dependencies/infra. Canonical filenames, identical
+   on both sides, no pair or side prefixes: `<dimension>-report.md` and
+   `<dimension>-summary.md` (security: `security-scan-report.md` /
+   `security-scan-summary.md`). One row per dimension directory, `present`
+   when it contains that dimension's report. A dimension NOT RUN writes **no
+   files** — it is a `missing` row annotated NOT RUN, never omitted and never
+   stubbed on disk
 7. Phase 01 baseline snapshots (per pair, per side) —
    `pairs/<p>/<side>/engagement-baseline-snapshot.md`. Snapshots originate on
    each side's analysis branch; the manifest-writing step copies each into
