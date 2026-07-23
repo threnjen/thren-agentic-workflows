@@ -48,12 +48,12 @@ specific error (naming the pair, the field, and what was expected). Nothing
 is prepared against a partially valid config. Missing docs or graphs are
 never validation failures — they are the work below.
 
-## Preflight 2: Confirmation Gate
+## Preflight 2: Log the Roster
 
-After validation succeeds and before any analysis branch is created, show the
-user the full roster: each pair by `name` and `type`, each side with its role
+After validation succeeds and before any analysis branch is created, log the
+full roster: each pair by `name` and `type`, each side with its role
 (`original` / `upgraded`) and resolved path (and branch, for branch pairs).
-Wait for their confirmation before preparing anything.
+Then proceed directly with preparation — no confirmation gate.
 
 ## Preflight 3: qa Gate and qa Appendix
 
