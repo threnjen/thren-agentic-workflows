@@ -32,7 +32,7 @@
 Phase 01 built the engagement preparation toolchain as agent/skill definitions:
 
 - **Feature 10** — `engagement-configuration` skill: config schema (unbounded comparison pairs, repo or branch type, `original`/`upgraded` roles), canonical field vocabulary, 11 validation rules with specific named error templates, fail-fast-before-work semantics, config location convention.
-- **Feature 11** — `06-engagement-prepare.agent.md` orchestrator: config load/validation, user confirmation gate, per-side prepare-or-verify loop (docs → graph → record), commit-timestamp staleness rule, role-scoped docs sets, analysis-branch convention with three invariants (no source modified, byte-identical original/main history, analysis branch never pushed), delegation hard rule, fail-fast on unresolvables only, idempotent re-run.
+- **Feature 11** — `06-engagement-prepare.agent.md` orchestrator: config gathering (user-supplied path or interactive path collection)/validation, user confirmation gate, per-side prepare loop (docs → graph → record) with an unconditional docs-writer pass on every run, role-scoped docs sets, analysis-branch convention with three invariants (no source modified, byte-identical original/main history, analysis branch never pushed), delegation hard rule, fail-fast on unresolvables only, idempotent re-run.
 - **Feature 12** — filled the agent's Step 2/2a integration points: unconditional incremental graph build (`build_or_update_graph_tool`, Tree-sitter, no quality gate) and the internal baseline snapshot (SHA-pinned, internal-only labeled, stored on the analysis branch, `list_graph_stats_tool` stats).
 - **Feature 13** — `engagement-preparation-runbook` skill (declare → record SHAs → invoke → verify → re-run/failure table), catalog/count reconciliation (agents README, CODEBASE_CONTEXT, marker-guard test constants), and the pilot validation stage — deferred NOT RUN.
 
@@ -64,7 +64,7 @@ Single integration surface: the entire checklist is one end-to-end pilot engagem
 #### Happy Path — Check 1: unprepared engagement fully prepared
 
 - [ ] **Record pre-run SHAs** — For each engagement repo run `git -C <repo> rev-parse <original-or-main-branch>` and save the output (runbook Step 2). **Expected:** One SHA per branch recorded before any orchestrator activity.
-- [ ] **Invoke the orchestrator on the unprepared engagement** — In a Claude Code session, invoke **06 Engagement - Prepare** with the config path. **Expected:** The config validates, then a confirmation gate displays every pair/side and waits for your confirmation before any analysis branch is created.
+- [ ] **Invoke the orchestrator on the unprepared engagement** — In a Claude Code session, invoke **06 Engagement - Prepare** — supply the config path, or answer its questions and let it write the config. **Expected:** The config validates, then a confirmation gate displays every pair/side and waits for your confirmation before any analysis branch is created.
 - [ ] **Confirm and let the run complete** — Approve the gate. **Expected:** The run completes with no further user intervention; the final report covers every side of every pair with status + pointers (no full analysis text inlined — compact per-side results only, per the delegation hard rule).
 - [ ] **Verify role-scoped docs per side** — On each side's analysis branch (`git -C <repo> log engagement-analysis --stat` or checkout), inspect the generated docs. **Expected:** `upgraded` sides carry the full docs-writer set; `original` sides carry at minimum README/ARCHITECTURE/CODEBASE_CONTEXT, marked as internal analysis artifacts.
 - [ ] **Verify a graph exists per side** — Ask the session to call `list_repos_tool` on the code-review-graph server. **Expected:** Each side's directory/revision appears as a built graph; the final report records graph stats per side (or an explicit NOT RUN with reason if the server was unavailable — never a silent fallback).
@@ -75,7 +75,7 @@ Single integration surface: the entire checklist is one end-to-end pilot engagem
 
 **Covers ACs:** 11/AC4, 11/AC9, 12/AC1, 13/AC5(b)
 
-- [ ] **Re-run the orchestrator unchanged** — Immediately re-invoke **06 Engagement - Prepare** with the same config, no repo changes. **Expected:** Docs regeneration is skipped on every side (staleness check passes), the incremental graph build still runs on every side, and the final report explicitly lists each skip — no errors from the pre-existing analysis branches.
+- [ ] **Re-run the orchestrator unchanged** — Immediately re-invoke **06 Engagement - Prepare** with the same config, no repo changes. **Expected:** Docs are regenerated on every side (docs-writer always runs — no staleness skip), the incremental graph build runs on every side, snapshots re-emit at the same SHAs, and the run reuses the pre-existing analysis branches without error.
 
 #### Check 3 (Error Handling): deliberately bad config path
 

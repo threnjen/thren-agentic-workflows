@@ -8,7 +8,8 @@ A reusable agent set that produces a branded, PDF-assembled client deliverable p
 
 The tool is parameterized by:
 
-- **Repo pairs**: one or more (original repo, upgraded repo) pairs, kept as separate repositories with separate histories
+- **Comparison pairs**: one or more pairs, each either (original repo, upgraded repo) as separate repositories or (branch A, branch B) of a single repository — any number of pairs, declared by the user in an engagement configuration
+- **Repository access**: local checkouts of every declared repo/branch — the tool presents the configured sides for user confirmation, then prepares them itself (analysis branch, docs-writer pass, and code-review-graph build per side)
 - **SOW / contract document**: authoritative scope, deliverables, exclusions, and acceptance criteria
 - **Deliverables spec**: the internal list of package items promised to the client
 - **Branding template asset**: cover, logo, colors for PDF rendering
@@ -17,7 +18,7 @@ The tool is parameterized by:
 
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
-| 01 | Repo Preparation & Baselines | Planned | None | Medium | Prerequisite pass over every engagement repo: docs-writer documentation set, code-review-graph builds, and baseline verification so downstream comparison agents have uniform inputs |
+| 01 | Engagement Preparation & Baselines | Planned | None | Medium | User-confirmed comparison pairs and a prepare-or-verify orchestrator that creates an analysis branch per side, always runs docs-writer there, builds the code-review-graph, checks optional source documents, and records compact internal-only baseline results |
 | 02 | Comparative Audit Engine | Planned | Phase 01 | Large | Dual-repo scan agents (security, code quality, dependencies) plus a delta synthesizer producing plain-language before/after reports; feeds findings report, out-of-scope register, and audit-trail proof |
 | 03 | Narrative & Specification Docs | Planned | Phase 02 | Medium | Business design doc, specification of intended behavior ("warranty" baseline), and before/after workflow narratives for components with functional changes |
 | 04 | Operational & Publishing Docs | Planned | Phase 01 | Medium | Publishing/installation docs per component, prerequisites/system requirements, maintenance guidance, known-limitations disclaimers |
@@ -38,7 +39,8 @@ The tool is parameterized by:
 ## Architecture Notes
 
 - **Comparative pattern**: run the same scan agent on the original repo and the upgraded repo, then a delta-synthesizer agent turns paired reports into a business-framed before/after document with a headline-metrics table. This one pattern feeds the findings report, the out-of-scope register, and the audit-trail-of-our-own-work proof.
-- **Prerequisite infrastructure per repo** (Phase 01): docs-writer documentation set + built code-review-graph. Downstream agents consume graphs and docs instead of raw file scans.
+- **Prerequisite infrastructure per repo** (docs-writer documentation set + built code-review-graph) is built by the Phase 01 orchestrator itself — the user confirms the comparison sides first, docs-writer always runs on a newly created analysis branch, and the graph build runs from that analysis checkout. Generated docs live on analysis branches so the comparison inputs stay untouched. Downstream agents consume graphs and docs instead of raw file scans.
+- **Orchestrator pattern**: the engagement entry point presents the pair list and branch/ref assignments for user confirmation, then holds only compact per-side results and artifact pointers — per-repo and per-pair work runs in child agents where applicable.
 - **The SOW's acceptance criteria and test lists are the skeletons** for the compliance walkthrough and verification summary — agents read them from the engagement's SOW document, not from hardcoded lists.
 - **The SOW's exclusions section routes audit findings** into the severity-rated out-of-scope issues list.
 - **PDF pipeline**: standardized in Phase 06 (pandoc-class markdown→PDF) plus a branding template asset (cover, logo, colors).

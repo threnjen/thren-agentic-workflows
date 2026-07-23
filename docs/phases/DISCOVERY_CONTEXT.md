@@ -43,7 +43,10 @@ Plus: executive summary, branded PDF assembly, and a pre-handoff client-perspect
 - **PDF pipeline**: none exists; to be standardized in the assembly phase. Copper Forge branding template asset needed (existence unconfirmed — open question).
 - **Delivery to the client's own repo**; repo permanence is the client's responsibility.
 - User docs (usage/screens) produced by the team separately — excluded from this agent set.
-- **Prerequisites before any comparison** (user-directed): full docs-writer pass and built code-review-graph on each of the four repos.
+- **Prerequisites before any comparison** (user-directed): full docs-writer pass and built code-review-graph on each engagement repo. The **orchestrator runs these itself** after showing the configured pairings and receiving user confirmation: it creates an analysis branch per side, always runs docs-writer there, and rebuilds the graph from that checkout. Generated docs go on an analysis branch per repo.
+- **Recommended source documents are optional**: the orchestrator checks for them, reports anything missing, and pauses for user confirmation before continuing; missing inputs are recorded for downstream phases.
+- **Pairings are user-declared** in an engagement configuration; pairs may be separate repos or two branches of one repo. The pilot uses two repo pairs (four repos).
+- **Baseline metrics are internal-only** pipeline inputs (pinned to commit SHA); client-facing figures come from the audit and compliance phases, per the deliverables spec's AC-focused, non-technical orientation.
 
 ## Open Questions
 

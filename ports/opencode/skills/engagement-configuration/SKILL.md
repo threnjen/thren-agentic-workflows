@@ -18,15 +18,13 @@ orchestrator performs by following the rules in this skill.
 
 ## Config Location Convention
 
-The config is a single YAML file whose path is **supplied by the user** when
-an engagement workflow is invoked. By convention it is named
+The config is a single YAML file. By convention it is named
 `engagement.yaml` and lives at the root of the engagement's working
-directory, but the orchestrator must accept any user-supplied path and must
-not search for a config the user did not point at.
-
-Decision record: a user-supplied path was chosen over a fixed discovery
-location because engagements live outside this repository and their layout
-is not ours to dictate; the filename convention is advisory only.
+directory, but any path works. The user may point the orchestrator at an
+existing config, or simply answer the orchestrator's questions (pair paths,
+branches, roles, SOW and deliverables-spec paths) and let it write the file
+for them. The orchestrator never scans the filesystem for a config nobody
+pointed at.
 
 ## Schema
 
@@ -126,9 +124,8 @@ Explicitly allowed (do not over-validate):
 
 ## Not Validation Failures
 
-Missing or stale supporting artifacts are **not** config validation
-failures. In particular: missing or out-of-date documentation for a declared
-repository, and missing or stale code graphs, do not fail validation. They
-are **prepare-or-verify work** for the preparation orchestrator, which
-builds or refreshes them after the config validates. Validation covers only
-the config's own declarations (paths, branches, roles, structure).
+Missing supporting artifacts — documentation or code graphs for a declared
+repository — are **not** config validation failures. They are work for the
+preparation orchestrator, which regenerates them after the config validates.
+Validation covers only the config's own declarations (paths, branches,
+roles, structure).
