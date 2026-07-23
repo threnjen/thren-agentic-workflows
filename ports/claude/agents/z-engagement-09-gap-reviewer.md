@@ -1,5 +1,5 @@
 ---
-name: z-engagement-09-gap-reviewer
+name: z-engagement-07-gap-reviewer
 description: Per engagement, reviews the complete markdown deliverable set from the client's perspective — 'what would the client still ask?' — using the package manifest as its completeness checklist, and always emits an internal gap-review report.
 tools: Skill, Read, Grep, Glob, Edit, Write
 user-invocable: false

@@ -14,7 +14,8 @@ report, never git-diff**, per the `auditor-conventions` skill's Comparative
 Scans section. Workspace paths follow the `engagement-workspace` skill,
 including its path discipline and audience banners: the exclusions partition
 and remediation recommendations open with the internal banner; the delta
-report and audit-trail proof open with the client-deliverable banner.
+report and audit-trail proof open with the client-deliverable banner. Write
+all client-facing documents in the `engagement-client-voice` skill's voice.
 
 ## SOW-Exclusions Partition — Single Source
 

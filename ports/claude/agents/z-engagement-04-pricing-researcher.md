@@ -23,7 +23,8 @@ repo names, file paths, or any other engagement repository content.
 From the retained reports' evidence of change — runtime version bumps,
 dropped or added services, dependency swaps — write
 `deliverables/<pair-name>/cloud-cost-analysis.md` (opening with the
-client-deliverable audience banner per `engagement-workspace`), business-framed:
+client-deliverable audience banner per `engagement-workspace`), in the
+`engagement-client-voice` skill's voice, business-framed:
 
 - Every quantified figure cites its source and retrieval date.
 - A figure found without a source or date stays qualitative.

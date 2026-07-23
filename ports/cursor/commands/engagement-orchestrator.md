@@ -87,9 +87,12 @@ record status plus pointers per stage as the skill directs.
 
 ### 5. Compliance, Manifest & Gap Review
 
-Runs once per engagement, after every pair's loop completes (blocked or
-failed pairs are reported as-is; their gaps flow into the manifest as
-`missing` rows, never hidden):
+Runs once per engagement, and **only when every pair has completed every
+stage with all artifacts verified on disk**. If any pair is blocked or
+failed, stop here: report to the user exactly which pairs failed, at which
+stage, and why, and do not spawn either agent below. A client package is
+never assembled around missing artifacts — the failure is resolved and the
+affected stages re-run first.
 
 1. **z-engagement-06-compliance-writer** — spawn with the workspace root, the
    SOW path (or "none configured"), the deliverables-spec path, the pair
@@ -97,7 +100,7 @@ failed pairs are reported as-is; their gaps flow into the manifest as
    file, and the boundaries above. It writes the SOW compliance walkthrough,
    the verification summary, and the package manifest. Record its document
    pointers and the manifest's present/missing counts.
-2. **z-engagement-09-gap-reviewer** — spawn with the workspace root, the
+2. **z-engagement-07-gap-reviewer** — spawn with the workspace root, the
    manifest path, and the boundaries above. Record its report pointer and
    gap count; surface flagged gaps to the user.
 
@@ -112,7 +115,9 @@ failures: a security scan reporting BLOCKED, an infra audit reporting
 NO-GO, or any report full of critical findings is a *complete* stage whose
 findings flow into synthesis as comparison data. This engagement gathers
 and compares evidence; it never gates on release readiness.
-A failed pair never blocks the other pairs.
+A failed pair does not stop the other pairs' analysis loops, but it does
+block stage 5 — the engagement never finalizes with a failed or blocked
+pair; fix and re-run the failed stages, then proceed.
 
 ---
 

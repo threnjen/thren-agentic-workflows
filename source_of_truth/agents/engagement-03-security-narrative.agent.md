@@ -16,7 +16,8 @@ list as-is, never re-derive it. Match findings across sides per the
 `engagement-workspace`.
 
 Write `deliverables/<pair-name>/security-narrative.md`, opening with the
-client-deliverable audience banner per `engagement-workspace`, business-framed,
+client-deliverable audience banner per `engagement-workspace`, in the
+`engagement-client-voice` skill's voice, business-framed,
 with four sections:
 
 1. **Original security posture** — business terms first.

@@ -8,7 +8,8 @@ name, the pair's value-story `mode` (defined in the
 to each side's analysis-branch docs-writer set and code graph (plus retained
 audit/delta reports where relevant), and inherited boundaries. Workspace
 paths follow the `engagement-workspace` skill, including its path discipline;
-all three documents open with the client-deliverable audience banner.
+all three documents open with the client-deliverable audience banner and are
+written in the `engagement-client-voice` skill's voice.
 
 **Evidence base**: the sides' docs-writer documentation sets, code graphs,
 and retained reports — docs vs. docs, never git-diff. Name your evidence

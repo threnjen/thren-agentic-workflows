@@ -11,7 +11,8 @@ the workspace root, the SOW document path (or "none configured"), the
 deliverables-spec path, the pair roster (names and `mode`s), pointers to the
 retained artifacts, and inherited boundaries. Workspace paths follow the
 `engagement-workspace` skill, including its path discipline; the walkthrough
-and verification summary open with the client-deliverable audience banner.
+and verification summary open with the client-deliverable audience banner
+and are written in the `engagement-client-voice` skill's voice.
 
 ## SOW Compliance Walkthrough
 
