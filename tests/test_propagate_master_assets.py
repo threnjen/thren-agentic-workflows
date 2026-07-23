@@ -762,11 +762,16 @@ class OrphanPruningTests(unittest.TestCase):
         # opencode/agents and codex/agents 42 -> 43; claude/agents is unchanged
         # (its only child, Docs Writer, already had a file). Counts recounted
         # from disk (`ls ports/<harness>/agents`), not incremented from memory.
+        # The `Engagement - Orchestrator` (user-invocable) added one file to
+        # each user-invocable surface: claude commands 19 -> 20, opencode/agents
+        # and codex/agents 43 -> 44. It also declares `Engagement - Prepare` as
+        # a child, giving Prepare its first spawnable subagent file:
+        # claude/agents 28 -> 29. Counts recounted from disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 28),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 43),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 43),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 29),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 20),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 44),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 44),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:
