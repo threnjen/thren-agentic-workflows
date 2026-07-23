@@ -129,21 +129,80 @@ exists and is fresh:
 
 ### Step 2: Graph build
 
-<!-- INTEGRATION POINT — feature 12 (12-graph-baseline-capture) authors this
-section: code-review-graph build via `build_or_update_graph_tool`
-[PROPOSED - name TBD] on the side's directory/branch, plus the baseline
-snapshot capture. Until then, the contract this loop guarantees is: the
-graph build runs on EVERY side on EVERY run (it is incremental and cheap),
-even when Step 1 skipped docs generation. If the graph tooling is
-unavailable, record the side's graph status as "NOT RUN" with the reason —
-never silently fall back to file scans. -->
+Build or refresh the side's code graph on **every invocation** — the build
+is incremental and cheap, so freshness is by construction, never by a
+staleness heuristic. The graph build runs even when Step 1 skipped docs
+generation.
+
+- Invoke `build_or_update_graph_tool` on the side's checkout/worktree
+  directory at the side's revision. For **branch pairs**, each side's
+  worktree gets its own graph build — one graph per (repo, revision), never
+  one shared graph for both branches.
+- Before building, use `list_repos_tool` to see which repos/graphs the
+  code-review-graph server already knows about — this verifies whether the
+  side's graph exists (multi-repo support) and whether the build will be a
+  fresh build or an incremental update.
+- Graph building is **parse-based (Tree-sitter)**: a side never needs to
+  compile to be graphed. Files in unsupported or unparseable languages are
+  simply not graphed; record each graph's language coverage and its gaps as
+  **known limitations** in the side's record. There is **no minimum
+  coverage threshold and no quality gate** — gaps are recorded, never
+  failed on.
+- **Graph build failure** on a side is an unresolvable problem: fail fast
+  naming the side and the cause, per the Fail Fast section below.
+- **Graph tooling unavailability** (the code-review-graph MCP server is not
+  available in the session) is not a failure: record the side's graph
+  status as **"NOT RUN"** with the reason, and continue — never silently
+  fall back to file scans. Availability is restored by connecting the
+  code-review-graph MCP server to the session and re-running preparation;
+  the re-run's unconditional build fills the gap.
+
+### Step 2a: Internal baseline snapshot
+
+After a successful graph build, capture one **baseline snapshot** for the
+side. The snapshot record shape is defined once, here, and applied
+identically to **both sides of every pair** — the two sides of a pair must
+be measured the same way. Fields (using the engagement-configuration
+skill's vocabulary — pair `name`, `type`, side role `original` /
+`upgraded`, `path` / `repo_path` + `branch`):
+
+| Field | Content |
+|-------|---------|
+| Pair `name` and `type` | From the engagement config |
+| Side role | `original` or `upgraded` |
+| Location | The side's `path` (repo pairs) or `repo_path` + `branch` (branch pairs) |
+| **Commit SHA + branch** | The exact revision every figure below was measured at — **a snapshot without a commit SHA is invalid** |
+| Size/dependency snapshot | File count, total lines, and declared dependency names from the side's manifest files (no source content) |
+| Graph stats | Output of `list_graph_stats_tool` for the side's graph |
+| Languages | Languages present, graph language coverage, and coverage gaps (the known limitations from Step 2) |
+
+Snapshot rules:
+
+- **Internal-only label**: the snapshot artifact itself carries a header
+  stating it is *internal-only, not client-facing* — client-facing figures
+  come from Phase 2/5 outputs, never from this snapshot.
+- **Storage**: the snapshot is committed to the side's **analysis branch**
+  (co-located with the side's docs artifacts, per the Analysis-Branch
+  Convention) as `engagement-baseline-snapshot.md` at the branch root
+  [PROPOSED - filename TBD]; its path is recorded in the side's per-side
+  result pointers.
+- **Branch pairs**: one snapshot per worktree/revision, disambiguated by
+  branch + SHA — never one snapshot for the shared repo.
+- **Re-run on an unchanged side**: the incremental build reports no
+  changes; **re-emit** the snapshot with the same SHA (chosen over
+  re-verify as the simpler procedure — the emit is deterministic, so an
+  unchanged side yields an identical artifact).
+- No pair-count assumptions and no client-facing framing anywhere in the
+  snapshot fields.
+- The snapshot contains repo metadata only (sizes, dependency names,
+  languages, SHAs) — never source content.
 
 ### Step 3: Record
 
 Append the side's compact result to the run record: what was generated,
 what was skipped (and why), what failed (and why), and the local paths where
-each artifact lives (docs location on the analysis branch, graph/baseline
-location per feature 12's section). This per-side record is the run's
+each artifact lives (docs location on the analysis branch, graph status and
+baseline snapshot path per Step 2/2a). This per-side record is the run's
 observability surface.
 
 Sides may be prepared sequentially or in parallel; do not require every side
@@ -174,8 +233,8 @@ unresolvable problems:
   stop.
 - **Docs Writer failure** on a side (after recording partial output per the
   loop above).
-- **Graph build failure** on a side (feature 12's section defines the
-  failure signal).
+- **Graph build failure** on a side (a `build_or_update_graph_tool` error
+  per Step 2).
 
 Explicitly **not** failures:
 
@@ -201,7 +260,8 @@ Re-running on a prepared, unchanged engagement is safe and cheap:
 
 Return to the user a compact table covering **every side of every pair**:
 pair name, side role, docs status (generated / skipped-fresh / failed),
-graph status (per feature 12's section, including any "NOT RUN" gaps),
+graph status (built / NOT RUN with reason, per Step 2, plus baseline
+snapshot path per Step 2a),
 artifact locations (local paths only), and the three analysis-branch
 invariant assertions with their evidence (recorded HEAD SHAs). Nothing in
 this report contains engagement file contents.
