@@ -94,7 +94,7 @@ Runs once per engagement, after every pair's loop completes (blocked or
 failed pairs are reported as-is; their gaps flow into the manifest as
 `missing` rows, never hidden):
 
-1. **z-engagement-08-compliance-writer** — spawn with the workspace root, the
+1. **z-engagement-06-compliance-writer** — spawn with the workspace root, the
    SOW path (or "none configured"), the deliverables-spec path, the pair
    roster with `mode`s, retained-artifact pointers from the working-state
    file, and the boundaries above. It writes the SOW compliance walkthrough,

@@ -179,7 +179,7 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Engagement - Delta Synthesizer** | Engagement - Orchestrator | Produce the client-facing delta report, the SOW-exclusions partition, the audit-trail proof, and the internal remediation recommendations for a pair |
 | **Engagement - Security Narrative** | Engagement - Orchestrator | Write the four-section client-facing security narrative and the internal engineer-facing security-delta report from the pair's reports and exclusions partition |
 | **Engagement - Pricing Researcher** | Engagement - Orchestrator | Turn scan/dependency change evidence into cited cloud/cost claims via live pricing research, plus an internal cost-basis report (sole web-granted engagement agent) |
-| **Engagement - Narrative Writer** | Engagement - Orchestrator | Write the business design document, intended-behavior specification, and before/after workflow narratives for a pair |
+| **Engagement - Narrative Writer** | Engagement - Orchestrator | Write the business design document, intended-behavior specification, and before/after workflow narratives for a pair, plus the internal narrative-basis report |
 | **Engagement - Compliance Writer** | Engagement - Orchestrator | Walk SOW acceptance criteria against retained artifacts; write the compliance walkthrough, verification summary, and package manifest |
 | **Engagement - Gap Reviewer** | Engagement - Orchestrator | Review the deliverable set from the client's perspective against the manifest; always emit the internal gap-review report |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
@@ -285,7 +285,7 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Engagement - Pricing Researcher** *(subagent of Engagement - Orchestrator)* — The only web-granted engagement agent; researches live pricing for evidenced infrastructure/dependency changes with strict query hygiene (no client content in queries), cites source and retrieval date per figure, and degrades to NOT RESEARCHED offline. Also writes the internal cost-basis report — per-figure sources and calculations plus the verbatim query-hygiene audit trail.
 
-**Engagement - Narrative Writer** *(subagent of Engagement - Orchestrator)* — Writes the three per-pair narrative documents (business design, intended-behavior specification, before/after workflow narratives) from analysis-branch docs and graphs, framed by the pair's value-story mode.
+**Engagement - Narrative Writer** *(subagent of Engagement - Orchestrator)* — Writes the three per-pair narrative documents (business design, intended-behavior specification, before/after workflow narratives) from analysis-branch docs and graphs, framed by the pair's value-story mode. Also writes the internal narrative-basis report: claims traceability, a warranty risk register (verified vs. assumed spec statements), framing discrepancies, and evidence gaps.
 
 **Engagement - Compliance Writer** *(subagent of Engagement - Orchestrator)* — Walks every SOW acceptance criterion against retained on-disk artifacts, writes the verification summary with its functional-preservation statement, and assembles the package manifest per the `engagement-package-manifest` schema.
 

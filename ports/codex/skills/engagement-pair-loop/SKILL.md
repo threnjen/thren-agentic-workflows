@@ -126,5 +126,8 @@ NOT RESEARCHED status.
 
 Spawn **Engagement - Narrative Writer** with the pair name, the pair's
 `mode`, the workspace root, and pointers to each side's docs-writer set and
-code graph (plus retained report pointers where available). Record its three
-document pointers in the working-state entry.
+code graph (plus retained report pointers where available). Record its four
+document pointers, including the internal narrative-basis report. If that
+report's framing-discrepancies section is non-empty, surface it to the user
+before the compliance stage — a client narrative contradicted by evidence
+must be resolved before delivery.

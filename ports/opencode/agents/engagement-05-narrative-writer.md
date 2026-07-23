@@ -1,5 +1,5 @@
 ---
-description: "Per engagement pair, produces the three client-facing narrative documents — the business design document, the intended-behavior specification (the warranty baseline), and the before/after workflow narratives — from analysis-branch docs and graphs, framed by the pair's value-story mode."
+description: "Per engagement pair, produces the three client-facing narrative documents — the business design document, the intended-behavior specification (the warranty baseline), and the before/after workflow narratives — from analysis-branch docs and graphs, framed by the pair's value-story mode. Also writes the internal narrative-basis report: claims traceability, warranty risk register, framing discrepancies, and evidence gaps."
 model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
@@ -58,10 +58,38 @@ intentional changes are narrated as delivered value. A pair with no
 identifiable functional changes gets an honest statement to that effect,
 never fabricated deltas.
 
+## Narrative Basis — Internal
+
+Also write `internal/<pair-name>/narrative-basis.md` (opening with the
+internal audience banner per `engagement-workspace`), engineer-facing —
+never client-facing. Four sections, each populated per pair (an empty
+section states so explicitly):
+
+1. **Claims traceability**: for each of the three client documents, every
+   substantive claim mapped to its evidence — source path (docs-writer doc,
+   graph query, retained report) and what in it supports the claim. A claim
+   with no evidence pointer must not appear in the client document; list any
+   removed on that ground.
+2. **Warranty risk register**: every intended-behavior-spec statement
+   classified **verified** (evidence observed, cite it) or **assumed**
+   (stated from docs/config without observation), with, per assumed item,
+   what check would close it. This is the pre-delivery review surface for
+   the warranty baseline — an assumed behavior the client later disputes is
+   our exposure.
+3. **Framing discrepancies**: evidence that strains the pair's `mode`
+   framing — e.g., functional deltas observed under `modernization` (which
+   promises "nothing changed"), or claimed improvements under
+   `modernized-and-improved` lacking evidence. Each with its evidence
+   pointer and a recommended resolution (re-scope the framing, escalate to
+   the user, or amend the narrative).
+4. **Evidence gaps**: absent or thin sources encountered, what each forced
+   the narratives to omit or soften, and what would fill the gap.
+
 ## Return
 
-Compact summary only: the three document paths, evidence sources used, and
-any absent-source or no-delta notes.
+Compact summary only: all four document paths, evidence sources used, any
+absent-source or no-delta notes, and counts of assumed warranty items and
+framing discrepancies (zero called out explicitly).
 
 ---
 

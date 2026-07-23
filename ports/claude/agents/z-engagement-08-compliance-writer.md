@@ -1,5 +1,5 @@
 ---
-name: z-engagement-08-compliance-writer
+name: z-engagement-06-compliance-writer
 description: Per engagement, walks every SOW acceptance criterion against the retained artifacts, writes the SOW compliance walkthrough and the verification summary (the contractual deliverable, with the functional-preservation statement), and assembles the package manifest per its schema.
 tools: Skill, Read, Grep, Glob, Edit, Write
 user-invocable: false
