@@ -1,6 +1,6 @@
 ---
 name: Engagement - Prepare
-description: "Prepares a client engagement for comparison analysis — gathers and validates the engagement configuration, enforces the QA gate (each repository's completed AUTOMATED_QA/USER_QA package) and writes the workspace's client-facing QA appendix, then for each side of each comparison pair sets up a local, never-pushed analysis branch, builds a current code graph, and captures a baseline snapshot. Spawns no agents; documentation is produced by the orchestrator's evidence stage. Reports per-side what was produced and where it lives."
+description: "Prepares a client engagement for comparison analysis — gathers and validates the engagement configuration, enforces the QA gate (upgraded repository's completed AUTOMATED_QA/USER_QA package; original side optional) and writes the workspace's client-facing QA appendix, then for each side of each comparison pair sets up a local, never-pushed analysis branch, builds a current code graph, and captures a baseline snapshot. Spawns no agents; documentation is produced by the orchestrator's evidence stage. Reports per-side what was produced and where it lives."
 tools: [read, edit, search, execute]
 
 user-invocable: false
@@ -57,7 +57,7 @@ Wait for their confirmation before preparing anything.
 
 ## Preflight 3: QA Gate and QA Appendix
 
-Every repository in the roster must carry a completed QA package:
+**Upgraded side (required).** Every upgraded repository must carry a completed QA package:
 `docs/AUTOMATED_QA.md` whose top `VERDICT:` line reads `PASS` or `FAIL`
 (read only that line — `VERDICT: NOT RUN` or no verdict line means the
 automated QA was never executed), and `docs/USER_QA.md`. If any piece is
@@ -74,11 +74,18 @@ boxes mechanically (e.g. `grep -c '\[ \]' docs/USER_QA.md`) — any count
 above zero means manual QA is incomplete: halt for that repository's pairs
 and tell the user to finish and check off USER_QA before re-running.
 
-Once every repository passes the gate, write the client-facing QA appendix
+**Original side (optional).** Original/legacy repositories may lack QA docs (docs
+do not exist or are incomplete) — this is not a blocker. Record the original
+side's QA status (present with verdict, present but incomplete, or absent) in
+your report, noting it in the QA appendix. The comparison shows what the upgraded
+side has; original gaps are evidence, not failures.
+
+Once every **upgraded** repository passes the gate, write the client-facing QA appendix
 at `deliverables/qa-appendix.md` in the engagement workspace (root per the
 `engagement-workspace` skill): one section per repository containing its
-USER_QA acceptance checklist, followed by a summary of its automated QA run
-covering targets USER_QA marks agent-only. Client voice per the
+USER_QA acceptance checklist (if present), followed by a summary of its automated QA run
+covering targets USER_QA marks agent-only. For original sides without QA docs, note
+their absence. Client voice per the
 `engagement-client-voice` skill; no secrets, no internal paths. This is the
 one workspace document you write; the workspace itself already exists —
 never create it.
@@ -191,15 +198,17 @@ deduplicated ones.
 Stop and report **which side** and **what failed** for exactly these:
 
 - A configured path or branch does not exist (surfaced by validation).
-- A repository failing the QA gate (missing QA documents, no recorded
-  verdict, unchecked USER_QA boxes, or an unconfirmed FAIL verdict).
+- An **upgraded** repository failing the QA gate (missing QA documents, no recorded
+  verdict, unchecked USER_QA boxes, or an unconfirmed FAIL verdict). Missing
+  or incomplete QA on an **original** repository does not halt preparation.
 - A branch-pair repository has a dirty working tree — creating worktrees
   from a dirty state risks contaminating the analysis.
 - Graph build failure on a side.
 
 Explicitly **not** failures: missing graphs (that is the work), an
-analysis branch that already exists (reuse it), and graph tooling
-unavailability (record NOT RUN and continue).
+analysis branch that already exists (reuse it), graph tooling
+unavailability (record NOT RUN and continue), and missing/incomplete QA
+documents on an original side.
 
 ## Idempotency
 
