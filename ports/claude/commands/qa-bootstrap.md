@@ -29,8 +29,8 @@ Confirm the assembled input set with the user before spawning.
 
 Spawn **z-qa-doc-generator** with every gathered input and output paths
 (defaults per the `qa-generation` skill). Verify mechanically before
-proceeding: both documents exist at their stated paths; AUTOMATED_qa has
-exactly one `VERDICT:` line at the top, reading `VERDICT: NOT RUN`; USER_qa
+proceeding: both documents exist at their stated paths; QA_AUTOMATED has
+exactly one `VERDICT:` line at the top, reading `VERDICT: NOT RUN`; QA_USER
 follows the skill's check template (contains `- [ ]` boxes, all unchecked).
 Any miss is a generation failure — re-spawn the generator naming the exact
 defect. Then report the generator's summary (check counts, preserved
@@ -38,7 +38,7 @@ questions, traceability rows, blocked items) to the user.
 
 ## Phase 3 — Run automated qa
 
-Spawn **z-qa-runner** with the repository root, the AUTOMATED_qa path, an
+Spawn **z-qa-runner** with the repository root, the QA_AUTOMATED path, an
 evidence directory outside the source tree, and any approved environment
 inputs. Verify the runbook's Run results section now records per-check
 statuses and a `FINAL VALIDATION` verdict, and that the top `VERDICT:` line
@@ -51,7 +51,7 @@ orchestration failure — report it faithfully.
 
 Final summary: both qa document paths, check counts, the automated
 validation verdict with decisive reason, evidence directory, and any
-blocked items needing user action — USER_qa execution is always the user's
+blocked items needing user action — QA_USER execution is always the user's
 remaining manual work.
 
 ---
