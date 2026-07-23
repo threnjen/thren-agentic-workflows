@@ -1,5 +1,5 @@
 ---
-description: "Per engagement pair, turns scan/dependency evidence of what changed (runtime versions, dropped services, dependency swaps) into a client-facing cloud/cost analysis. The only engagement-fleet agent granted web-search/web-fetch access; queries carry only generic product and pricing terms, never engagement content."
+description: "Per engagement pair, turns scan/dependency evidence of what changed (runtime versions, dropped services, dependency swaps) into a client-facing cloud/cost analysis plus an internal cost-basis report (per-figure sources, calculations, and the query-hygiene audit trail). The only engagement-fleet agent granted web-search/web-fetch access; queries carry only generic product and pricing terms, never engagement content."
 model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
@@ -35,16 +35,31 @@ client-deliverable audience banner per `engagement-workspace`), business-framed:
 - A figure found without a source or date stays qualitative.
 - Changes that cannot be quantified are described qualitatively.
 
+## Cost Basis — Internal
+
+Also write `internal/<pair-name>/cost-basis.md` (opening with the internal
+audience banner per `engagement-workspace`), engineer-facing — never
+client-facing:
+
+- Per quantified figure: source URL, retrieval date, and the calculation
+  with its assumptions (units, regions, tiers, usage estimates).
+- Items left qualitative, with the reason quantification wasn't possible.
+- Every NOT RESEARCHED item as a follow-up worklist.
+- The exact web queries issued, verbatim — the query-hygiene audit trail.
+
+An engagement with nothing quantified still writes the document.
+
 ## Offline Fallback
 
 No internet access in the session → produce the qualitative-only analysis,
 marking every claim that would need research **NOT RESEARCHED** — never
-invent, estimate, or recall figures from memory as if researched.
+invent, estimate, or recall figures from memory as if researched. The
+cost-basis report is still written, stating no queries were issued.
 
 ## Return
 
-Compact summary only: document path, count of quantified vs. qualitative
-vs. NOT RESEARCHED items.
+Compact summary only: both document paths, count of quantified vs.
+qualitative vs. NOT RESEARCHED items.
 
 ---
 
