@@ -45,25 +45,26 @@ set — both modes expect the same entries.
 
 ### Client-Facing (ordered)
 
-First, per engagement:
+Client documents are **engagement-level**: one fixed set regardless of pair
+count, each covering every pair holistically with one per-repo section per
+pair (single-pair engagements keep the identical shape). All paths are flat
+under `deliverables/`:
 
 0. Package table of contents — `deliverables/table-of-contents.md`
-
-Then per pair `<p>`:
-
-1. Business design — `deliverables/<p>/business-design.md`
-2. Before/after workflow narratives — `deliverables/<p>/workflow-narratives.md`
-3. Delta report — `deliverables/<p>/delta-report.md`
-4. Security narrative — `deliverables/<p>/security-narrative.md`
-5. Cloud/cost analysis — `deliverables/<p>/cloud-cost-analysis.md`
-6. Intended-behavior specification — `deliverables/<p>/intended-behavior-spec.md`
-
-Then the compliance materials, per engagement, with each pair's audit-trail
-proof grouped among them:
-
+1. Business design — `deliverables/business-design.md`
+2. Before/after workflow narratives — `deliverables/workflow-narratives.md`
+3. Delta report — `deliverables/delta-report.md`
+4. Security narrative — `deliverables/security-narrative.md`
+5. Cloud/cost analysis — `deliverables/cloud-cost-analysis.md`
+6. Intended-behavior specification — `deliverables/intended-behavior-spec.md`
 7. SOW compliance walkthrough — `deliverables/sow-compliance-walkthrough.md`
-8. Audit-trail proof (per pair) — `deliverables/<p>/audit-trail-proof.md`
+8. Audit-trail proof — `deliverables/audit-trail-proof.md`
 9. Verification summary — `deliverables/verification-summary.md`
+
+Metrics in holistic documents are reported **per pair**; an engagement-wide
+roll-up appears only when no repository is shared across pairs — otherwise
+the roll-up is omitted with a one-line note (never double-count a shared
+repo's findings).
 
 ## Package Table of Contents
 
@@ -72,8 +73,8 @@ the downstream design step builds the final client deliverable by reading
 it top to bottom, so every engagement's package opens in the identical
 order. The manifest assembler writes it from the derived client-facing
 expected entries above, in exactly that order (excluding itself): one row
-per document — order number, document title, workspace-root-relative path,
-and pair name (or "engagement-wide"). It lists every expected client
+per document — order number, document title, and workspace-root-relative
+path. It lists every expected client
 document whether or not it is present on disk; present/missing lives in the
 manifest, never here. It is client-facing (client-deliverable banner) and
 contains no internal entries.

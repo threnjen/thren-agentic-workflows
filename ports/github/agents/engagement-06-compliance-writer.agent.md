@@ -30,11 +30,11 @@ path). Evidence rules:
 ## Verification Summary
 
 Write `deliverables/verification-summary.md` — the contractual deliverable.
-It contains the **functional-preservation statement**, referencing each
-pair's intended-behavior specification
-(`deliverables/<pair-name>/intended-behavior-spec.md`) as the warranty
-baseline, plus a compact statement of what was verified, at what standard,
-and what remains NOT VERIFIED.
+It contains the **functional-preservation statement**, referencing the
+engagement's intended-behavior specification
+(`deliverables/intended-behavior-spec.md`) as the warranty baseline, plus
+a compact statement of what was verified, at what standard, and what
+remains NOT VERIFIED.
 
 ## Compliance Basis — Internal
 

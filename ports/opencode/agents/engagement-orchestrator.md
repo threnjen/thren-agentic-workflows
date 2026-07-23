@@ -93,13 +93,15 @@ and what is missing (branch, graph, or both), mark that pair blocked in the
 working-state file, and do not proceed for that pair — other pairs continue.
 This check is this paragraph; there is no preflight tool.
 
-### 4. Per-Pair Loop
+### 4. Analysis Stages
 
-Load the `engagement-pair-loop` skill. For each pair in the config — any
-number; never assume a count, and repos deduplicated across pairs are
-prepared once but get a result entry per pair — run the skill's stages in
-order, spawning each stage as a subagent with the boundaries above, and
-record status plus pointers per stage as the skill directs.
+Load the `engagement-pair-loop` skill. Run its Stage A for each pair in
+the config — any number; never assume a count, and repos deduplicated
+across pairs are prepared once but get a result entry per pair. Once every
+pair's Stage A is complete, run its engagement-level synthesis stages B–E
+once, in order. Spawn each stage as a subagent with the boundaries above
+and record status plus pointers as the skill directs; a failed pair blocks
+all synthesis stages until resolved.
 
 ### 5. Compliance, Manifest & Gap Review
 

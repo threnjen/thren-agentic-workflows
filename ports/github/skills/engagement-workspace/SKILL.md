@@ -43,8 +43,9 @@ outputs sit directly in `pairs/<pair-name>/`.
 The orchestrator creates the workspace: once config validation resolves the
 pair roster, it scaffolds the root, `deliverables/`, `internal/`, `pairs/`,
 and every per-pair directory the contract paths require —
-`deliverables/<pair-name>/`, `internal/<pair-name>/`,
-`pairs/<pair-name>/<side>/audits/<dimension>/` — before any stage spawns.
+`internal/<pair-name>/`, `pairs/<pair-name>/<side>/audits/<dimension>/` —
+before any stage spawns. `deliverables/` is flat: client documents are
+engagement-level, never per-pair subdirectories.
 No other agent creates directories: every contract path's parent already
 exists, so a write that would need a new directory is off-contract by
 definition — the stage stops and reports the path rather than creating it.

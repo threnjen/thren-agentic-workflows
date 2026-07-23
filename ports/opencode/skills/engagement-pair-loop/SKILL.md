@@ -1,18 +1,22 @@
 ---
 name: engagement-pair-loop
-description: "Standard per-pair analysis loop used by the engagement orchestrator. Defines the Comparative Audits → Delta & Security Synthesis → Cloud/Cost → Narrative stage cycle, including spawn inputs, ordering, and working-state recording. Use when: driving the analysis stages for one engagement comparison pair."
+description: "Standard analysis flow used by the engagement orchestrator: the per-pair evidence stage (docs + comparative audits + validation gate), then the engagement-level synthesis stages (Delta → Security → Cloud/Cost → Narrative) that produce the single holistic client-facing document set. Defines spawn inputs, ordering, gating, and working-state recording. Use when: driving the analysis stages of an engagement."
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 
 # Engagement Pair Loop
 
-The stage cycle the engagement orchestrator runs for each comparison pair.
-Stages run in order; every spawn carries the orchestrator's standing
-boundaries (client-code security, analysis-branch invariants, compact
-handoff), and every result is recorded in the pair's working-state entry as
-status plus artifact pointers only. Agent names below are source names —
-spawn each via its deployed identifier in the current harness (hidden
-subagents deploy with a `z-` prefix).
+Two granularities, in order: **Stage A runs per pair** and produces the
+per-pair evidence; **Stages B–E run once per engagement**, after every
+pair's Stage A is complete, and produce the single holistic client-facing
+document set (flat `deliverables/` paths, one per-repo section per pair)
+plus each stage's per-pair internal basis documents. Every spawn carries
+the orchestrator's standing boundaries (client-code security,
+analysis-branch invariants, compact handoff); Stage A results are recorded
+in the pair's working-state entry, Stage B–E results in engagement-level
+entries — status plus artifact pointers only. Agent names below are source
+names — spawn each via its deployed identifier in the current harness
+(hidden subagents deploy with a `z-` prefix).
 ## Stage A: Prepare All Evidence
 
 Stage A produces **every evidence artifact the rest of the workflow
@@ -89,47 +93,52 @@ pair, skip the spawns and reuse the existing verified pointers. A single
 side may be re-run alone — its artifacts overwrite in place; the other
 side's entry is untouched.
 
-## Stage B: Delta
+## Stages B–E: Engagement-Level Synthesis
 
-Runs once Stage A is complete for both sides. Spawn with
-the pair name, workspace root, and report pointers:
+Each stage below runs **once per engagement**, in order, and only when
+**every pair** has completed Stage A — holistic client documents are never
+written around a missing or blocked pair; a failed pair blocks all
+synthesis until resolved. Every spawn carries the full pair roster (names,
+`mode`s), the workspace root, the SOW path (or "none configured"), and
+every pair's relevant report pointers. Each stage writes one client
+document set at flat `deliverables/` paths with a per-repo section per
+pair, plus its per-pair internal basis documents.
 
-Spawn **Engagement - Delta Synthesizer** — also pass the pair's `mode` and the
-SOW path (or "none configured"). Record its document pointers, the
+**Re-run invalidation**: any Stage A re-run (either side of any pair)
+invalidates all Stage B–E outputs — after the re-run passes the A3 gate,
+re-run stages B–E in full before finalizing.
+
+### Stage B: Delta
+
+Spawn **Engagement - Delta Synthesizer** with every pair's audit report
+pointers. Record its client document pointers, each pair's
 exclusions-partition and remediation-recommendations pointers, and any
-missing-SOW or user-review flags in the working-state entry; surface a
-non-empty remediation list to the user alongside step 3's
-fix-and-re-run flow.
+missing-SOW or user-review flags; surface a non-empty remediation list to
+the user alongside Stage C's fix-and-re-run flow.
 
+### Stage C: Security Synthesis
 
-## Stage C: Security Synthesis
+Spawn **Engagement - Security Narrative** with every pair's security report
+and exclusions-partition pointers. Record its client document pointer and
+each pair's internal security-delta report pointer. If any pair's
+security-delta Introduced section is non-empty, surface the fix-and-re-run
+flow to the user: after engineer fixes, re-run that side's audits (one-side
+re-run above), then re-run stages B–E per the invalidation rule.
 
-Runs once Stage B is complete for both sides. Spawn with
-the pair name, workspace root, and report pointers:
+### Stage D: Cloud/Cost Analysis
 
-Spawn **Engagement - Security Narrative** — also pass the SOW path and the
-exclusions-partition pointer. Record its document pointers,
-including the internal security-delta report. If the security delta's
-Introduced section is non-empty, surface the fix-and-re-run flow to the
-user: after engineer fixes, re-run that side's audits (one-side re-run
-above), then re-run this stage before finalizing client-facing
-artifacts.
+Spawn **Engagement - Pricing Researcher** with every pair's dependency/infra
+report pointers. It is the **only** agent permitted internet access during
+an engagement run; every other subagent operates offline against local
+evidence. Record the client cloud/cost-analysis pointer, each pair's
+internal cost-basis pointer, and any NOT RESEARCHED status.
 
-## Stage D: Cloud/Cost Analysis
+### Stage E: Narrative & Specification Documents
 
-Spawn **Engagement - Pricing Researcher** with the pair name, workspace
-root, and dependency/infra report pointers. It is the **only** agent
-permitted internet access during an engagement run; every other subagent
-operates offline against local evidence. Record both document pointers —
-the client cloud/cost analysis and the internal cost-basis report — and any
-NOT RESEARCHED status.
-
-## Stage E: Narrative & Specification Documents
-
-Spawn **Engagement - Narrative Writer** with the pair name, the pair's
-`mode`, the workspace root, and pointers to each side's docs-writer set and
-code graph (plus retained report pointers where available). Record its four
-document pointers, including the internal narrative-basis report. If that
-report's framing-discrepancies section is non-empty, surface it to the user
-before the compliance stage — a client narrative contradicted by evidence
-must be resolved before delivery.
+Spawn **Engagement - Narrative Writer** with pointers to every side's
+docs-writer set and code graph (plus retained report pointers where
+available). Record its three client document pointers and each pair's
+internal narrative-basis pointer. If any narrative-basis
+framing-discrepancies section is non-empty, surface it to the user before
+the compliance stage — a client narrative contradicted by evidence must be
+resolved before delivery.
