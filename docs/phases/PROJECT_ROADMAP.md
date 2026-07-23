@@ -19,7 +19,7 @@ The tool is parameterized by:
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
 | 01 | Engagement Preparation & Baselines | Complete | None | Medium | User-confirmed comparison pairs and a prepare-or-verify orchestrator that creates an analysis branch per side, always runs docs-writer there, builds the code-review-graph, checks optional source documents, and records compact internal-only baseline results |
-| 02 | Comparative Audit Engine | In Progress | Phase 01 | Large | Dual-repo scan agents (security, code quality, dependencies, infrastructure) plus a delta synthesizer producing plain-language before/after reports; feeds findings report, out-of-scope register, and audit-trail proof |
+| 02 | Comparative Audit Engine | In Progress | Phase 01 | Large | Existing auditors run per side (security, code quality, dependencies, infrastructure) with raw reports retained; delta synthesizer produces plain-language before/after reports; dedicated client-facing security narrative (repaired vs. out-of-scope vs. residual risks with why-this-matters framing) plus an internal engineer-facing report of security issues introduced by the upgrade; feeds findings report, out-of-scope register, and audit-trail proof |
 | 03 | Narrative & Specification Docs | Planned | Phase 02 | Medium | Business design doc, specification of intended behavior ("warranty" baseline), and before/after workflow narratives for components with functional changes |
 | 04 | Operational & Publishing Docs | Planned | Phase 01 | Medium | Publishing/installation docs per component, prerequisites/system requirements, maintenance guidance, known-limitations disclaimers |
 | 05 | Compliance & Verification Proof | Planned | Phase 03, 04 | Medium | SOW acceptance-criteria walkthrough with evidence, verification summary (the contractual deliverable), functional-preservation statement |
@@ -48,3 +48,5 @@ The tool is parameterized by:
 ## Pilot Engagement
 
 The first engagement this tool will run against is documented in `DISCOVERY_CONTEXT.md` (four repos — two pairs — plus SOW and internal deliverables spec). Phase documents stay engagement-agnostic; engagement specifics live only in the discovery context.
+
+The pilot-validation run is **not a project deliverable** (removed by user direction, 2026-07-22): no phase's completion is gated on a validation run against the pilot engagement, and pilot-run obligations formerly attached to Phase 01 (including `[PROPOSED]` marker resolution) are not treated as unmet gates by downstream phases. The pilot remains the first intended target engagement.
