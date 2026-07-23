@@ -757,11 +757,16 @@ class OrphanPruningTests(unittest.TestCase):
         # The `05h Cleanliness Auditor` evaluator added one spawnable subagent
         # file to claude/agents, opencode/agents, and codex/agents; it is not
         # user-invocable, so command counts are unchanged.
+        # The `06 Engagement - Prepare` orchestrator (user-invocable) added one
+        # file to each user-invocable surface: claude commands 18 -> 19,
+        # opencode/agents and codex/agents 42 -> 43; claude/agents is unchanged
+        # (its only child, Docs Writer, already had a file). Counts recounted
+        # from disk (`ls ports/<harness>/agents`), not incremented from memory.
         roots = [
             (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 28),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 42),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 42),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 43),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 43),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:
