@@ -59,6 +59,9 @@ under `deliverables/`:
 7. SOW compliance walkthrough — `deliverables/sow-compliance-walkthrough.md`
 8. Audit-trail proof — `deliverables/audit-trail-proof.md`
 9. Verification summary — `deliverables/verification-summary.md`
+10. QA appendix — `deliverables/qa-appendix.md` (one section per repository:
+   its USER_QA acceptance checklist plus an automated-QA run summary for
+   agent-only targets; written by Engagement - Prepare at its QA gate)
 
 Metrics in holistic documents are reported **per pair**; an engagement-wide
 roll-up appears only when no repository is shared across pairs — otherwise

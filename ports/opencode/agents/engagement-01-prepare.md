@@ -1,10 +1,11 @@
 ---
-description: "Prepares a client engagement for comparison analysis — gathers and validates the engagement configuration, then for each side of each comparison pair sets up a local, never-pushed analysis branch, builds a current code graph, and captures a baseline snapshot. Spawns no agents; documentation is produced by the orchestrator's evidence stage. Reports per-side what was produced and where it lives."
+description: "Prepares a client engagement for comparison analysis — gathers and validates the engagement configuration, enforces the QA gate (each repository's completed AUTOMATED_QA/USER_QA package) and writes the workspace's client-facing QA appendix, then for each side of each comparison pair sets up a local, never-pushed analysis branch, builds a current code graph, and captures a baseline snapshot. Spawns no agents; documentation is produced by the orchestrator's evidence stage. Reports per-side what was produced and where it lives."
 model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:
   bash: allow
+  edit: allow
   glob: allow
   grep: allow
   read: allow
@@ -59,6 +60,34 @@ After validation succeeds and before any analysis branch is created, show the
 user the full roster: each pair by `name` and `type`, each side with its role
 (`original` / `upgraded`) and resolved path (and branch, for branch pairs).
 Wait for their confirmation before preparing anything.
+
+## Preflight 3: qa Gate and qa Appendix
+
+Every repository in the roster must carry a completed qa package:
+`docs/AUTOMATED_qa.md` whose top `VERDICT:` line reads `PASS` or `FAIL`
+(read only that line — `VERDICT: NOT RUN` or no verdict line means the
+automated qa was never executed), and `docs/USER_qa.md`. If any piece is
+missing or the automated qa was never run, halt for that repository's pairs
+and tell the user to run
+the **qa-bootstrap** for it (that agent generates both documents and
+executes the automated runbook) — you do not spawn it. A recorded FAIL
+verdict is a blocker: surface it and continue only after the user reviews
+the qa results and confirms.
+
+USER_qa must also be **executed**, not just written: its checks are Markdown
+checkboxes, checked (`- [x]`) as the tester completes them. Count unchecked
+boxes mechanically (e.g. `grep -c '\[ \]' docs/USER_qa.md`) — any count
+above zero means manual qa is incomplete: halt for that repository's pairs
+and tell the user to finish and check off USER_qa before re-running.
+
+Once every repository passes the gate, write the client-facing qa appendix
+at `deliverables/qa-appendix.md` in the engagement workspace (root per the
+`engagement-workspace` skill): one section per repository containing its
+USER_qa acceptance checklist, followed by a summary of its automated qa run
+covering targets USER_qa marks agent-only. Client voice per the
+`engagement-client-voice` skill; no secrets, no internal paths. This is the
+one workspace document you write; the workspace itself already exists —
+never create it.
 
 ## Hard Rule: Context Budget
 
@@ -168,6 +197,8 @@ deduplicated ones.
 Stop and report **which side** and **what failed** for exactly these:
 
 - A configured path or branch does not exist (surfaced by validation).
+- A repository failing the qa gate (missing qa documents, no recorded
+  verdict, unchecked USER_qa boxes, or an unconfirmed FAIL verdict).
 - A branch-pair repository has a dirty working tree — creating worktrees
   from a dirty state risks contaminating the analysis.
 - Graph build failure on a side.
@@ -187,7 +218,8 @@ each re-run produced — a silent no-op is not an acceptable report.
 
 Return a compact table covering every side of every pair: pair name, side
 role, analysis-branch status, graph status (built / NOT RUN with
-reason), baseline snapshot path, artifact locations (local paths only), and
+reason), baseline snapshot path, artifact locations (local paths only),
+per-repo qa-gate status with the qa appendix path, and
 the three analysis-branch invariant assertions with their evidence (recorded
 HEAD SHAs). Nothing in this report contains engagement file contents.
 

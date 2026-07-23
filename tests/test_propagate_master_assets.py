@@ -797,11 +797,15 @@ class OrphanPruningTests(unittest.TestCase):
         # the Compliance Writer) added one file to claude/agents (36 -> 37),
         # opencode/agents and codex/agents (50 -> 51); claude commands
         # unchanged (not user-invocable). Counts recounted from disk.
+        # The QA bootstrap trio (`QA - Bootstrapper` plus hidden `QA - Doc
+        # Generator` and `QA - Runner`) added: claude agents 37 -> 39, claude
+        # commands 19 -> 20, opencode and codex agents 51 -> 54. Counts
+        # recounted from disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 37),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 51),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 51),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 39),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 20),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 54),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 54),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:

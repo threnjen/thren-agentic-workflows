@@ -71,7 +71,7 @@ Reach for these individually, whenever you need them — no pipeline required:
   repos for comparison analysis
 
 Behind these, a set of automated subagents and on-demand skills do the detailed work —
-you never invoke them directly. The library ships 51 source agent definitions in
+you never invoke them directly. The library ships 54 source agent definitions in
 `source_of_truth/agents/`. For the complete catalog and how the pipeline flows,
 see [source_of_truth/agents/README.md](source_of_truth/agents/README.md).
 

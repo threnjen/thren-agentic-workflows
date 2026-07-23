@@ -74,10 +74,13 @@ resolved inputs in the working-state file.
 ### 2. Prepare
 
 Spawn **engagement-01-prepare** with the config, unchanged from its own
-definition — it owns validation gates, analysis-branch setup, graph builds,
-and baseline snapshots. It spawns nothing; documentation is produced in
+definition — it owns validation gates, the qa gate (each repository's
+completed AUTOMATED_qa/USER_qa package, halting to send the user to the
+**qa-bootstrap** when incomplete) and the workspace's
+`deliverables/qa-appendix.md`, analysis-branch setup, graph builds, and
+baseline snapshots. It spawns nothing; documentation is produced in
 Stage A of the pair loop. Consume its compact final report; record per-side
-preparation status and pointers.
+preparation status, the qa appendix pointer, and pointers.
 
 ### 3. Entry Check
 
