@@ -13,7 +13,7 @@ Quick-reference for AI agents working in this repository.
 ## Current Counts
 
 - 44 source agent definitions in `source_of_truth/agents/` (42 `*.agent.md` + `docs-writer.md` + `prod-code-review.md`), of which 24 hidden subagents (`user-invocable: false`) and 20 user-invocable.
-- 27 skills in `source_of_truth/skills/`.
+- 28 skills in `source_of_truth/skills/`.
 - 16 instructions in `source_of_truth/instructions/`.
 - 4 learnings in `source_of_truth/learnings/`.
 - 1 defunct hook artifact set in `source_of_truth/hooks/`.
@@ -29,7 +29,7 @@ source_of_truth/                           # THE authoring surface
     *.agent.md                             # 42, plus the two plain .md agents below (44 total definitions)
     docs-writer.md                         # plain .md agent (loaded by frontmatter)
     prod-code-review.md                    # plain .md agent (loaded by frontmatter)
-  skills/                                  # 27 skill dirs, each rooted at SKILL.md
+  skills/                                  # 28 skill dirs, each rooted at SKILL.md
   instructions/                            # 16 applyTo-glob instruction files
   learnings/                               # 4 learnings files
   hooks/                                   # defunct injection scanner (DEFUNCT.md)
