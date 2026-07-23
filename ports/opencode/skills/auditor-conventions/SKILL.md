@@ -26,9 +26,16 @@ Your output is a report document saved to `dev/[audit-name]/`:
 
 Present your findings in chat first, then write the deliverables.
 
+**Subagent return contract**: when invoked as a subagent, after writing the
+deliverables return a compact summary only — the report and summary file
+paths, findings-by-severity totals, and status — never bulk report content.
+The caller may override the output directory and filenames in the spawn
+prompt; write to the paths it names.
+
 ## Scope Determination
 
-When spawnd, determine scope with the user:
+When spawnd, determine scope with the user — or, when invoked as a subagent
+with scope stated in the spawn prompt, take that scope as-is without asking:
 - **Full codebase** — All in-scope files (default if unspecified)
 - **Specific files/directories** — As specified by the user
 - **Single file or module** — Deep audit of one area
