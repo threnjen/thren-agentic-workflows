@@ -18,8 +18,8 @@ The tool is parameterized by:
 
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
-| 01 | Engagement Preparation & Baselines | Planned | None | Medium | User-confirmed comparison pairs and a prepare-or-verify orchestrator that creates an analysis branch per side, always runs docs-writer there, builds the code-review-graph, checks optional source documents, and records compact internal-only baseline results |
-| 02 | Comparative Audit Engine | Planned | Phase 01 | Large | Dual-repo scan agents (security, code quality, dependencies) plus a delta synthesizer producing plain-language before/after reports; feeds findings report, out-of-scope register, and audit-trail proof |
+| 01 | Engagement Preparation & Baselines | Complete | None | Medium | User-confirmed comparison pairs and a prepare-or-verify orchestrator that creates an analysis branch per side, always runs docs-writer there, builds the code-review-graph, checks optional source documents, and records compact internal-only baseline results |
+| 02 | Comparative Audit Engine | In Progress | Phase 01 | Large | Dual-repo scan agents (security, code quality, dependencies, infrastructure) plus a delta synthesizer producing plain-language before/after reports; feeds findings report, out-of-scope register, and audit-trail proof |
 | 03 | Narrative & Specification Docs | Planned | Phase 02 | Medium | Business design doc, specification of intended behavior ("warranty" baseline), and before/after workflow narratives for components with functional changes |
 | 04 | Operational & Publishing Docs | Planned | Phase 01 | Medium | Publishing/installation docs per component, prerequisites/system requirements, maintenance guidance, known-limitations disclaimers |
 | 05 | Compliance & Verification Proof | Planned | Phase 03, 04 | Medium | SOW acceptance-criteria walkthrough with evidence, verification summary (the contractual deliverable), functional-preservation statement |
