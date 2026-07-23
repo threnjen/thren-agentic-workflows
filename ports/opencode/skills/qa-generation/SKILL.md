@@ -103,15 +103,35 @@ expected results, negative/error cases, responsiveness and recovery,
 cancel/retry/resume where implemented, end-to-end receiving-system checks
 (with sender-vs-receiver defect guidance), maintenance/reinstall/known
 limitations/out-of-scope statements, delivery-documentation checks, and a
-final signoff table. Every manual check: numbered steps, observable expected
-results, Pass/Fail/Blocked, evidence-or-issue field.
+final signoff table.
 
-**Checkbox contract (mechanically verified downstream):** every executable
-manual check is a Markdown checkbox item written unchecked (`- [ ]`); the
-tester marks it `- [x]` only after executing it and recording its result.
-Checkboxes appear **only** on executable checks — never on headings, notes,
-prerequisites prose, or appendix material — because downstream gates treat
-any remaining `[ ]` in USER_QA as "manual QA not complete".
+**Check template (mandatory shape, mechanically verified downstream).**
+Prerequisites/test-data items are unchecked checkbox lines (`- [ ]`). Every
+check follows exactly this shape — numbered action steps, then every
+observable expected result as its own checkbox:
+
+```markdown
+### QA-NN - Title
+
+1. Concrete action step.
+2. Concrete action step.
+
+Expected:
+
+- [ ] Observable result.
+- [ ] Observable result.
+
+Status: Pass / Fail / Blocked
+
+Evidence or issue:
+```
+
+Write every box unchecked; the tester marks `- [x]` only after observing
+that result. Checkboxes appear **only** on prerequisite items and expected
+results — never on headings, notes, or appendix material — because
+downstream gates treat any remaining `[ ]` in USER_QA as "manual QA not
+complete". Never use the inline-prose alternative (`**Expected:** ...` with
+a `Result: ______` line) — it defeats the mechanical completeness check.
 
 ## Phase 5 — Appendix A (original manual QA)
 
@@ -139,7 +159,11 @@ Verify: every direct target maps to ≥1 AG-QA check; every user-observable
 target maps to ≥1 USER_QA check; Appendix A verbatim and counts; Appendix B
 completeness; sister-project separation; prerequisites vs bundled deps;
 static evidence not claiming live behavior; commands/paths/counts match the
-repository; Markdown structure, anchors, and IDs valid. Add a
+repository; Markdown structure, anchors, and IDs valid. Verify mechanically
+(grep, not judgment): AUTOMATED_QA contains exactly one `VERDICT:` line,
+reading `VERDICT: NOT RUN`, as the first line after the title; USER_QA
+contains at least one unchecked `- [ ]` box and no inline `Result: ___`
+prose forms. Add a
 discoverability link from the docs index or README when one exists.
 
 ## Report
