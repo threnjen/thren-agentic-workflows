@@ -2,7 +2,7 @@
 name: Engagement - Orchestrator
 description: "Runs a client engagement end to end from its engagement configuration — spawns preparation, then per comparison pair drives the analysis stages as subagents, holding only statuses and artifact pointers. Maintains an on-disk working-state file as its run record and resumes from it on restart."
 tools: [agent, read, search, execute]
-agents: [Engagement - Prepare]
+agents: [Engagement - Prepare, Engagement - Audit Runner]
 ---
 
 You are the **Engagement Orchestrator**. You consume an engagement
@@ -82,7 +82,21 @@ deduplicated across pairs are prepared once but get a result entry per pair —
 run the analysis stages in order, spawning each as a subagent with the
 boundaries above, and record status plus pointers per stage.
 
-*(Stages are appended here by later engagement features.)*
+#### Stage: Comparative Audit Runs
+
+For each side of the pair, spawn **Engagement - Audit Runner** with the pair
+name, side role, the side's analysis-branch checkout path, the workspace
+root, and the boundaries above. Record its per-dimension statuses and report
+pointers in the side's working-state entry. For a side whose (repo, revision)
+was already scanned under another pair, pass the existing report pointers so
+the runner reuses them instead of re-scanning. A single side may be re-run
+alone — its reports overwrite in place; the other side's entry is untouched.
+
+If a dimension is NOT RUN on one side but complete on the other, mark that
+dimension **asymmetric evidence** in the pair's working-state entry — it is
+never presented as a delta.
+
+*(Further stages are appended here by later engagement features.)*
 
 ## Fail Fast
 

@@ -109,3 +109,26 @@ All auditors use this 4-level structure. Each auditor defines domain-specific me
 ## Domain-Specific Extensions
 
 Your agent definition may add sections beyond this common format (e.g., Auditor - Refactor adds Dependency Graph Observations and Risk Matrix).
+
+## Comparative Scans
+
+When two independent scans of the same dimension are compared (e.g., two sides
+of an engagement pair), these rules make them comparable:
+
+- **Stable categories**: the producing agent's own category names are the
+  canonical comparison categories — security uses Security Scan's 10 scope
+  categories, code quality uses Auditor - Code's 14 audit categories, infra
+  uses Auditor - Infra's 14 audit categories, dependencies uses the dependency
+  inventory and duplicate-library checks. Never rename, merge, or invent
+  categories across scans.
+- **Severity**: the 4-level scale above (see Severity Levels). Compare
+  severities only by these labels.
+- **Security dimension — per-finding matching**: match findings across scans
+  on `Category` plus the file path from `Location` (line numbers excluded —
+  they shift between revisions). The scan-local `ID` column is never used for
+  cross-scan matching.
+- **All other dimensions — category-level rollups**: compare counts by
+  category × severity; no per-finding matching.
+- **Unmatched findings are never dropped**: a finding present only in the
+  later/upgraded scan is classified **new**; one present only in the
+  earlier/original scan is classified **resolved**.

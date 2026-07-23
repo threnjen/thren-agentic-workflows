@@ -767,11 +767,16 @@ class OrphanPruningTests(unittest.TestCase):
         # and codex/agents 43 -> 44. It also declares `Engagement - Prepare` as
         # a child, giving Prepare its first spawnable subagent file:
         # claude/agents 28 -> 29. Counts recounted from disk.
+        # The `Engagement - Audit Runner` (hidden subagent) added one file to
+        # opencode/agents and codex/agents: 44 -> 45; claude commands unchanged
+        # (not user-invocable). claude/agents 29 -> 31: the runner's own
+        # spawnable file plus a first spawnable file for its child
+        # `Security Scan`. Counts recounted from disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 29),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 31),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 20),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 44),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 44),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 45),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 45),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:
