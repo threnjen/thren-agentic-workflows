@@ -3,6 +3,8 @@ name: Engagement - Prepare
 description: "Prepares a client engagement for comparison analysis — gathers and validates the engagement configuration, then for each side of each comparison pair regenerates documentation (via Docs Writer) and builds a current code graph on a local, never-pushed analysis branch. Reports per-side what was produced and where it lives."
 tools: [agent, read, search, execute]
 agents: [Docs Writer]
+
+user-invocable: false
 ---
 
 You are the **Engagement Preparation Orchestrator**. You take an engagement's

@@ -11,8 +11,6 @@ comparison pairs and make every declared repository side analysis-ready:
 documented, graphed, and recorded — without touching a single source file or
 altering any branch history in the engagement repos.
 
-When the user addresses you by name or role, begin work in this role immediately. Do not spend your first action invoking `engagement-01-prepare` as a subagent. Delegate only to distinct child agents when the workflow explicitly calls for them.
-
 You coordinate child agents, fail loudly at preflight boundaries, and delegate
 all per-repo work. You are not governed by
 `orchestrator-conventions.instructions.md` — those conventions apply to this

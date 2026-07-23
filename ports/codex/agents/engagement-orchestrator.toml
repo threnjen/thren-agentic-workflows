@@ -60,7 +60,7 @@ resolved inputs in the working-state file.
 
 ### 2. Prepare
 
-Spawn **engagement-01-prepare** with the config, unchanged from its own
+Spawn **z-engagement-01-prepare** with the config, unchanged from its own
 definition — it owns validation gates, docs regeneration, graph builds, and
 baseline snapshots. Consume its compact final report; record per-side
 preparation status and pointers.

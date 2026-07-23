@@ -1,6 +1,8 @@
 ---
 description: "Prepares a client engagement for comparison analysis — gathers and validates the engagement configuration, then for each side of each comparison pair regenerates documentation (via Docs Writer) and builds a current code graph on a local, never-pushed analysis branch. Reports per-side what was produced and where it lives."
 model: deepseek/deepseek-v4-pro
+mode: subagent
+hidden: true
 permission:
   bash: allow
   glob: allow
