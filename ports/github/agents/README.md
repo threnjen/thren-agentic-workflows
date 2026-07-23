@@ -135,6 +135,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **04 Phase - Execute** | Orchestrate full phase execution from a prepared manifest and feature bundles |
 | **05 PR - Review** | Orchestrate a readiness review of the diff between a base commit and a head commit |
 | **05 Eval - Grader** | Score a completed phase run from ledger files plus a rubric YAML and write a structured report |
+| **06 Engagement - Prepare** | Prepare a client engagement for comparison analysis — validate the engagement config, then ensure fresh docs, a code graph, and a baseline snapshot per side on local analysis branches |
 | **Eval - Feature Decomposition** | Score a feature-decomposition run against a golden-path branch across structural, naming, dependency, AC, context, and manifest dimensions |
 | **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
 | **Instructions Manager** | Create or evaluate AI coding instruction files — routes to Instructions - Writer or Instructions - Evaluator |
@@ -201,6 +202,9 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Eval - Grader** (user-facing — standalone scorer)
 > Give it a rubric YAML path plus three branch names: clean base, source-of-truth golden path, and branch to evaluate. The rubric should follow the grader schema documented in the agent, with `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` as the seed example. The grader materializes clean-base->golden and clean-base->evaluated diffs, reads `eval/runs/<phase-slug>/ledger-commits.jsonl` and `eval/runs/<phase-slug>/ledger-events.jsonl`, correlates semantic events onto the commit timeline by SHA association, preserves remediation-turn metadata such as `event_kind` and `related_event_id` when present, supports both feature-level and AC-level commit cadence, fans out one parallel `Eval - Metric Grader` subagent per comparative review metric, keeps exact ledger-derived metrics in the parent grader, produces both a rubric verdict and a comparative scorecard, and appends normalized `1-10` scores to the persistent additive markdown history file at `eval/EVAL_GRADER_SCORE_HISTORY.md`.
+
+**06 Engagement - Prepare** (orchestrator — delegates to Docs Writer; never modifies engagement source)
+> Give it an engagement configuration file path (schema in the `engagement-configuration` skill). After validation and a roster confirmation gate, it prepares every side of every declared comparison pair: role-scoped documentation (via Docs Writer), an incremental code graph build, and a SHA-pinned internal baseline snapshot — all on a local, never-pushed analysis branch in each engagement repo. Idempotent: re-runs skip fresh docs, still rebuild the graph, and report skips explicitly. See the `engagement-preparation-runbook` skill for the full operating procedure.
 
 **Audit - Code, Infra, Refactor** (orchestrator — delegates to subagents)
 > Asks which audit type to run (CODE, INFRA, or REFACTOR), delegates to the appropriate auditor subagent, and presents findings. Optionally drives automated remediation by converting audit findings into task plans and running them through the Feature - Implementer → Feature - Reviewer → Feature - QA Writer pipeline. After remediation, updates documentation via the Docs Writer.

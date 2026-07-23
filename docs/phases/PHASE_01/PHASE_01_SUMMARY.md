@@ -1,82 +1,91 @@
-# Phase 1: Repo Preparation & Baselines
+# Phase 1: Engagement Preparation & Baselines
 
 **Status**: Planned
 **Depends on**: None
 **Estimated complexity**: Medium
-**Cross-references**: `docs/phases/DISCOVERY_CONTEXT.md` (pilot engagement context, repo inventory, source documents)
+**Cross-references**: `docs/phases/DISCOVERY_CONTEXT.md` (pilot engagement context, source documents)
 
 ## What's New
 
-Before any comparison or audit document can be produced for a client deliverable package, every engagement repository (each original/upgraded pair) must be brought to a uniform, analyzable state. This phase runs the existing docs-writer agent over each repo to produce a complete documentation set, builds a code-review-graph for each repo, and verifies baselines — so every downstream agent works from graphs and docs rather than raw file scans, and comparisons are apples-to-apples.
+Before any comparison or audit document can be produced for a client deliverable package, every comparison side must be prepared from the repository branch or ref the user has supplied. This phase adds the engagement entry point: the user declares the comparison pairs, confirms that the displayed sides and roles are intentional, and the orchestrator creates an analysis branch for each side, runs `docs-writer` there, builds a code-review graph, and records compact internal baseline results.
 
 ## Objective
 
-Establish identical analysis infrastructure (documentation set + knowledge graph + verified baseline) across all engagement repos so the Phase 2 comparative audit engine has uniform, trustworthy inputs — as a repeatable procedure, not a one-off.
+Give the tool a confirmed, repeatable starting state for any engagement: user-declared comparison pairs, analysis branches prepared from those checkouts, documentation and graphs produced per side, and internal baseline results ready for downstream phases.
 
 ## Scope
 
 ### In Scope
 
-- Locate and record the local paths, roles, and pairing of the engagement repos in `DISCOVERY_CONTEXT.md` (pilot: two pairs, four repos)
-- docs-writer pass on each repo: README, ARCHITECTURE, CODEBASE_CONTEXT, and (upgraded repos only) LOCAL_DEVELOPMENT and TROUBLESHOOTING
-- code-review-graph build for each repo, with coverage verified (node/edge/file counts recorded, primary-language parsing confirmed)
-- Baseline verification: confirm each repo is complete and scannable (original repos need not build; they must be readable and representative)
-- A repo-preparation runbook agent or skill defining this prep as a repeatable procedure (runs again if repos change, and for future engagements)
-- Record baseline metrics per repo (LOC, project count, dependency count, graph stats) — these become the "before" numbers in every downstream report
+- **Engagement configuration**: a schema/convention by which the user declares the engagement's comparison pairs. Each pair is either (original repo, upgraded repo) or (branch A, branch B) of a single repo. Any number of pairs. The configuration supplies paths to checkouts already on the branches or refs to compare, roles (original/upgraded side), and optional pointers to the SOW and deliverables-spec documents.
+- **Preparation preflight and confirmation**: inspect the declared paths and current branches/refs, display each pair and side with its role, and ask the user to confirm that the planned comparison is correct before any analysis branch is created.
+- **Analysis branches and documentation preparation**: create a new analysis branch from each confirmed comparison side, then always run the existing `docs-writer` agent on that analysis branch. `docs-writer` determines which applicable repository documents to create or update.
+- **Graph preparation**: change into each analysis-branch checkout and run `code-review-graph build`; record the compact result and where the graph and related artifacts live.
+- **Optional source-document check**: check whether the configured SOW, deliverables spec, and other recommended source documents are present. Missing documents are reported to the user for confirmation before preparation continues; they are not treated as an automatic failure, and the omission is recorded for downstream phases.
+- **Internal baseline snapshot** (explicitly *not* client-facing): per side of each pair, a compact record of the confirmed source branch/ref, analysis branch, documentation result, graph result, graph stats, and language coverage. Pipeline input for Phase 2; no client document is generated from it.
+- **Preparation runbook**: the whole procedure captured as a repeatable `source_of_truth/` asset for future engagements.
 
 ### Out of Scope
 
 - Any comparison, audit, or delta document (Phase 2)
-- Any client-facing document content
-- Modifying source code in any engagement repo — this phase is strictly read-and-annotate
+- Any client-facing document content — baseline results are internal only; client-facing figures come from later phases
+- Modifying source code in any engagement repo — generated documentation on an analysis branch is the only intended repository write
+- Quality gates on documentation or graph coverage — whatever `docs-writer` and the graph produce is accepted; coverage gaps are recorded as-is
 - User-facing usage documentation (produced outside this tool)
 
 ## Key Deliverables
 
 | # | Deliverable | Description | Likely Features |
 |---|-------------|-------------|-----------------|
-| 1 | Repo inventory record | Local paths, roles, and pairing of the engagement repos, recorded in `DISCOVERY_CONTEXT.md` | discovery/inventory |
-| 2 | Documentation sets (per repo) | docs-writer output per repo (reduced set for original repos: README, ARCHITECTURE, CODEBASE_CONTEXT) | docs-writer orchestration |
-| 3 | Knowledge graphs (per repo) | Built code-review-graph per repo with recorded stats and confirmed language coverage | graph builds, verification |
-| 4 | Baseline metrics report | Per-repo metrics table (LOC, projects, dependencies, graph stats) — the canonical "before/after" input numbers | metrics collection |
-| 5 | Repo-prep runbook | Repeatable procedure (agent or skill in `source_of_truth/`) for re-running prep when repos change or a new engagement starts | agent/skill authoring |
+| 1 | Engagement configuration schema | How the user declares pairs, paths, roles, and optional source-document pointers | config convention |
+| 2 | Preparation preflight and confirmation | Display of the configured sides, branches/refs, and roles with explicit user confirmation before preparation | preflight, confirmation |
+| 3 | Source-document presence check | Compact inventory of recommended source documents, with a confirmation prompt when items are missing | source-document check |
+| 4 | Analysis branches and documentation preparation | New analysis branch per confirmed side and an unconditional `docs-writer` pass on that branch | branch preparation, docs-writer integration |
+| 5 | Graph builds and internal baseline snapshot | Per-side graph build, graph stats/language coverage, and compact internal handoff record | graph builds, baseline capture |
+| 6 | Preparation runbook | Repeatable procedure in `source_of_truth/` | runbook authoring |
 
 ## Technical Context
 
-- Existing agents to reuse, not rebuild: `docs-writer` (README/ARCHITECTURE/CODEBASE_CONTEXT/LOCAL_DEVELOPMENT/TROUBLESHOOTING) and the `code-review-graph` MCP server (`build_or_update_graph_tool`, `list_graph_stats_tool`, `list_repos_tool` for multi-repo support).
-- Any new agent or skill definitions belong in `source_of_truth/agents/` / `source_of_truth/skills/`, propagated via `scripts/propagate_master_assets.py` — never hand-edit `ports/` or `.github/`.
-- Graph building is parse-based (Tree-sitter), not compile-based — original repos on legacy frameworks do not need to build to be graphed. Verify graph language coverage for each engagement's stack and record any gaps (e.g., config files, secondary languages) as known limitations.
-- The original repos represent the pre-engagement state and must not be modified; if docs-writer output cannot be committed into them, write their docs to a sibling analysis directory and record the location in `DISCOVERY_CONTEXT.md`.
-- Pilot engagement specifics (repo identities, stack: C#/.NET plus JavaScript front-end assets) are in `DISCOVERY_CONTEXT.md`.
+- Reused, not rebuilt: the existing `docs-writer` agent and the `code-review-graph` MCP/server tooling. The orchestrator establishes the analysis branch and working directory before invoking `docs-writer`; the existing agent decides which documentation is applicable.
+- Graph building is parse-based (Tree-sitter), not compile-based — original/legacy repos do not need to build to be graphed. The orchestrator runs `code-review-graph build` from the intended analysis-branch directory and records the result and any reported coverage gaps.
+- The user supplies the comparison checkouts and confirms the displayed pairings; Phase 01 does not infer branch intent from repository history or external workflow state.
+- Any new agent or skill definitions belong in `source_of_truth/agents/` / `source_of_truth/skills/`, propagated via `scripts/propagate_master_assets.py` — never hand-edit `ports/` or `.github/`. Run propagation to a fixed point (re-run until change counters are zero).
+- Pilot engagement specifics (repo identities, pairings, stack) are in `docs/phases/DISCOVERY_CONTEXT.md` — phase assets stay engagement-agnostic and read pairings from the engagement configuration.
 
 ## Dependencies & Risks
 
-- **Dependency**: local access to all engagement repos (pilot paths currently unrecorded — first task).
-- **Risk**: original repos may not restore/build cleanly with modern tooling. Mitigation: prep requires readability, not buildability.
-- **Risk**: docs-writer output for the original repos could be mistaken for deliverable content. Mitigation: mark original-repo docs as internal analysis artifacts; they exist to feed the audit engine, not the client package.
-- **Risk**: graph coverage gaps could silently weaken later comparisons. Mitigation: deliverable 3 explicitly records coverage stats and gaps; Phase 2 agents fall back to file scans where the graph is thin.
+- **Dependency**: local access to every declared repo/branch and user confirmation of the displayed comparison plan. Mitigation: show all sides, roles, and branches/refs before creating analysis branches.
+- **Risk**: the user confirms an incomplete or incorrect pairing. Mitigation: make the preflight inventory explicit and require confirmation before preparation starts; downstream artifacts retain the confirmed mapping.
+- **Risk**: recommended source documents are missing. Mitigation: report the missing items, ask the user whether to continue, and record the omission for downstream phases rather than silently proceeding.
+- **Risk**: repository state contamination. Mitigation: generated documentation is written on analysis branches created from the confirmed comparison sides; comparison branches remain the source inputs.
+- **Risk**: graph command or `docs-writer` failure on one side. Mitigation: stop and report the exact side, command/agent, and failure result so the user can correct the input or environment.
+- **Risk**: many pairs make the orchestrator's context too large. Mitigation: return compact per-side results and artifact pointers rather than full repository analysis.
 
 ## Success Criteria
 
-- [ ] All engagement repo paths recorded in `DISCOVERY_CONTEXT.md` with role and pairing
-- [ ] Each repo has a docs-writer documentation set (full set for upgraded repos; README/ARCHITECTURE/CODEBASE_CONTEXT minimum for original repos)
-- [ ] Each repo has a built code-review-graph with recorded node/edge/file counts and confirmed primary-language coverage
-- [ ] Baseline metrics table exists covering all engagement repos with consistent metric definitions
-- [ ] Repo-prep runbook exists in `source_of_truth/` and has been validated by the actual prep run on the pilot engagement
-- [ ] No source file in any engagement repo was modified
+- [ ] Engagement configuration supports N comparison pairs and records each side's path, branch/ref, role, and optional source-document pointers
+- [ ] Before preparation, the orchestrator displays the configured pairings and receives explicit user confirmation that the branches/refs and original/upgraded roles are intended
+- [ ] For every confirmed side, the orchestrator creates an analysis branch and always runs `docs-writer` on that branch
+- [ ] For every confirmed side, the orchestrator runs `code-review-graph build` from the analysis-branch directory and records the result, graph stats, and language coverage
+- [ ] When recommended source documents are missing, the orchestrator reports them and obtains confirmation before continuing; the missing items remain visible in the internal result
+- [ ] Internal baseline snapshot exists per side, records the confirmed comparison source and analysis artifacts, and is labeled not-client-facing
+- [ ] Comparison branches are not modified and no product source code is changed
+- [ ] Preparation runbook exists in `source_of_truth/` and has been validated by an actual run on the pilot engagement
 
 ## QA Considerations
 
 - No frontend/UI changes — no manual QA docs required.
-- Verification is artifact-based: spot-check docs accuracy against each repo, and confirm graph stats are sane (non-zero nodes/edges, file count near repo file count).
+- Verification is artifact- and interaction-based: run the orchestrator against the pilot engagement, confirm the pairing review step, exercise the missing-source-document confirmation path, verify the analysis branches contain the documentation output, verify graph-build results for every side, and run with a deliberately bad path or branch to confirm the specific failure report.
 
 ## Notes for Feature - Decomposer
 
-Suggested feature boundaries (4):
+Suggested feature boundaries (6):
 
-1. **Repo inventory & baseline verification** — locate repos, confirm readability/representativeness, record pairing and metrics definitions.
-2. **Documentation pass orchestration** — run docs-writer across the engagement repos with per-repo scope (full vs. reduced set), handling the original-repo write-location decision.
-3. **Graph builds & coverage verification** — build all graphs, record stats, document coverage gaps.
-4. **Repo-prep runbook authoring** — capture the whole procedure as a repeatable `source_of_truth/` asset, informed by what features 1–3 actually encountered.
+1. **Engagement configuration** — pair declaration, side paths, branch/ref display, roles, and optional source-document pointers.
+2. **Preparation preflight and user confirmation** — resolve the declared sides, present the full comparison plan, and pause until the user confirms it.
+3. **Optional source-document presence check** — inventory recommended documents, prompt when any are absent, and pass the confirmed result downstream.
+4. **Analysis branches and `docs-writer` integration** — create an analysis branch from each confirmed side and always run `docs-writer` on that branch.
+5. **Graph builds and baseline capture** — run `code-review-graph build` in each analysis-branch directory and record compact internal results.
+6. **Preparation runbook authoring** — capture the repeatable procedure as a `source_of_truth/` asset after the preparation flow has been exercised.
 
-Features 2 and 3 are independent of each other but both depend on 1; feature 4 comes last. Keep the original-repo immutability constraint explicit in every feature's acceptance criteria.
+Hard constraints for every feature's acceptance criteria: the user confirms the comparison plan before preparation; `docs-writer` runs on the analysis branch for every side; the graph build runs from each analysis-branch directory; optional source documents may be missing only after explicit user confirmation; and client-facing documents remain out of scope.
