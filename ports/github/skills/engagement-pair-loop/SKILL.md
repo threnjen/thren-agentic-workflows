@@ -9,7 +9,9 @@ The stage cycle the engagement orchestrator runs for each comparison pair.
 Stages run in order; every spawn carries the orchestrator's standing
 boundaries (client-code security, analysis-branch invariants, compact
 handoff), and every result is recorded in the pair's working-state entry as
-status plus artifact pointers only.
+status plus artifact pointers only. Agent names below are source names —
+spawn each via its deployed identifier in the current harness (hidden
+subagents deploy with a `z-` prefix).
 
 ## Stage A: Prepare All Evidence
 

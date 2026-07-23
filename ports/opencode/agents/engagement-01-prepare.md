@@ -79,8 +79,7 @@ engagement repo, named `engagement-analysis`:
   side's repository, branched from that side's current HEAD.
 - **Branch pairs** (`type: branch`): one checkout or `git worktree` per side
   at that side's branch, so docs-writer and the graph build each see the
-  right revision; each worktree gets its own analysis branch
-  (e.g., `engagement-analysis/<branch-name>` [PROPOSED - name TBD]).
+  right revision; each worktree gets its own analysis branch. Use `engagement-analysis/<branch-name>`.
 - The orchestrator's evidence stage later writes docs to these working
   trees and commits them onto the analysis branch you create here.
 

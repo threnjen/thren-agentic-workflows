@@ -11,16 +11,20 @@ these paths, they do not restate them.
 
 ## Root
 
-By convention the root is `engagement-workspace/`, a sibling of the
-engagement config file (i.e., at the root of the engagement's working
-directory). Any location works provided it is **outside every client
-repository**. No agent writes deliverables into a client repo; every
-manifest path must resolve inside this root.
+The standard root is `<repo-name>-engagement/`, a **sibling of the client
+repository** — e.g., analyzing `ssx-surface-capture` puts every output in
+`ssx-surface-capture-engagement/` next to it. `<repo-name>` is the upgraded
+side's repository directory name (branch pairs: the `repo_path` directory
+name); a multi-pair engagement uses the first pair's upgraded repository and
+still gets exactly one root. A user-specified root overrides the standard,
+but it must always be **outside every client repository**. No agent writes
+deliverables into a client repo; every manifest path must resolve inside
+this root.
 
 ## Layout
 
 ```
-engagement-workspace/
+<repo-name>-engagement/
   engagement-state.md          # working-state file (shape below)
   manifest.md                  # deliverables manifest (produced by a later stage)
   deliverables/                # client-facing documents

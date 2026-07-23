@@ -793,11 +793,15 @@ class OrphanPruningTests(unittest.TestCase):
         # into the Security Narrative's internal security-delta document:
         # claude agents 37 -> 36, opencode and codex agents 51 -> 50. Claude
         # commands unchanged (not user-invocable). Counts recounted from disk.
+        # The `Engagement - Manifest Assembler` (hidden subagent, split out of
+        # the Compliance Writer) added one file to claude/agents (36 -> 37),
+        # opencode/agents and codex/agents (50 -> 51); claude commands
+        # unchanged (not user-invocable). Counts recounted from disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 36),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 37),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 50),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 50),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 51),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 51),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:

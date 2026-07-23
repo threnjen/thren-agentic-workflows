@@ -180,7 +180,8 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Engagement - Security Narrative** | Engagement - Orchestrator | Write the four-section client-facing security narrative and the internal engineer-facing security-delta report from the pair's reports and exclusions partition |
 | **Engagement - Pricing Researcher** | Engagement - Orchestrator | Turn scan/dependency change evidence into cited cloud/cost claims via live pricing research, plus an internal cost-basis report (sole web-granted engagement agent) |
 | **Engagement - Narrative Writer** | Engagement - Orchestrator | Write the business design document, intended-behavior specification, and before/after workflow narratives for a pair, plus the internal narrative-basis report |
-| **Engagement - Compliance Writer** | Engagement - Orchestrator | Walk SOW acceptance criteria against retained artifacts; write the compliance walkthrough, verification summary, and package manifest |
+| **Engagement - Compliance Writer** | Engagement - Orchestrator | Walk SOW acceptance criteria against retained artifacts; write the compliance walkthrough, verification summary, and internal compliance-basis report |
+| **Engagement - Manifest Assembler** | Engagement - Orchestrator | Assemble the package manifest per its schema, evaluating every row's present/missing status from disk, plus the internal manifest-basis report |
 | **Engagement - Gap Reviewer** | Engagement - Orchestrator | Review the deliverable set from the client's perspective against the manifest; always emit the internal gap-review report |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
@@ -287,7 +288,9 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Engagement - Narrative Writer** *(subagent of Engagement - Orchestrator)* — Writes the three per-pair narrative documents (business design, intended-behavior specification, before/after workflow narratives) from analysis-branch docs and graphs, framed by the pair's value-story mode. Also writes the internal narrative-basis report: claims traceability, a warranty risk register (verified vs. assumed spec statements), framing discrepancies, and evidence gaps.
 
-**Engagement - Compliance Writer** *(subagent of Engagement - Orchestrator)* — Walks every SOW acceptance criterion against retained on-disk artifacts, writes the verification summary with its functional-preservation statement, and assembles the package manifest per the `engagement-package-manifest` schema.
+**Engagement - Compliance Writer** *(subagent of Engagement - Orchestrator)* — Walks every SOW acceptance criterion against retained on-disk artifacts and writes the compliance walkthrough and the verification summary with its functional-preservation statement, plus the internal compliance-basis report (per-criterion evidence map, verification standards, NOT VERIFIED reasons).
+
+**Engagement - Manifest Assembler** *(subagent of Engagement - Orchestrator)* — Assembles the package manifest per the `engagement-package-manifest` schema, evaluating every row's present/missing status from disk as an independent check on the writing agents, plus the internal manifest-basis report (per-row determination notes and the report-vs-disk discrepancy audit trail), then hands the manifest to the gap review.
 
 **Engagement - Gap Reviewer** *(subagent of Engagement - Orchestrator)* — Reviews the complete deliverable set from the client's perspective using the manifest as its completeness checklist and unconditionally emits `internal/gap-review.md`, even when no gaps are found.
 

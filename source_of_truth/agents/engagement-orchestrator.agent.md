@@ -2,7 +2,7 @@
 name: Engagement - Orchestrator
 description: "Runs a client engagement end to end from its engagement configuration — spawns preparation, then per comparison pair drives the analysis stages as subagents, holding only statuses and artifact pointers. Maintains an on-disk working-state file as its run record and resumes from it on restart."
 tools: [agent, read, search, execute]
-agents: [Engagement - Prepare, Docs Writer, Security Scan, Auditor - Code, 05e Dependency Auditor, Auditor - Infra, Engagement - Delta Synthesizer, Engagement - Security Narrative, Engagement - Pricing Researcher, Engagement - Narrative Writer, Engagement - Compliance Writer, Engagement - Gap Reviewer]
+agents: [Engagement - Prepare, Docs Writer, Security Scan, Auditor - Code, 05e Dependency Auditor, Auditor - Infra, Engagement - Delta Synthesizer, Engagement - Security Narrative, Engagement - Pricing Researcher, Engagement - Narrative Writer, Engagement - Compliance Writer, Engagement - Manifest Assembler, Engagement - Gap Reviewer]
 ---
 
 You are the **Engagement Orchestrator**. You consume an engagement
@@ -94,17 +94,21 @@ record status plus pointers per stage as the skill directs.
 Runs once per engagement, and **only when every pair has completed every
 stage with all artifacts verified on disk**. If any pair is blocked or
 failed, stop here: report to the user exactly which pairs failed, at which
-stage, and why, and do not spawn either agent below. A client package is
+stage, and why, and do not spawn any agent below. A client package is
 never assembled around missing artifacts — the failure is resolved and the
 affected stages re-run first.
 
 1. **Engagement - Compliance Writer** — spawn with the workspace root, the
    SOW path (or "none configured"), the deliverables-spec path, the pair
    roster with `mode`s, retained-artifact pointers from the working-state
-   file, and the boundaries above. It writes the SOW compliance walkthrough,
-   the verification summary, and the package manifest. Record its document
-   pointers and the manifest's present/missing counts.
-2. **Engagement - Gap Reviewer** — spawn with the workspace root, the
+   file, and the boundaries above. It writes the SOW compliance walkthrough
+   and the verification summary. Record its document pointers.
+2. **Engagement - Manifest Assembler** — spawn after the compliance writer
+   completes, with the same inputs. It assembles `manifest.md` per the
+   `engagement-package-manifest` schema. Record the manifest path and its
+   present/missing counts; any `missing` row stops the run here — resolve
+   it and re-run before the gap review.
+3. **Engagement - Gap Reviewer** — spawn with the workspace root, the
    manifest path, and the boundaries above. Record its report pointer and
    gap count; surface flagged gaps to the user.
 

@@ -30,11 +30,17 @@ client would:
 
 ## Report — Always Emitted
 
-Write `internal/gap-review.md` **unconditionally** — it is a standing
+Write `internal/gap-review.md` **unconditionally** (opening with the
+internal audience banner per `engagement-workspace`) — it is a standing
 technical-section manifest entry. With nothing to report, the document
 honestly states that the review ran, what was checked, and that no gaps were
-found — never skip the file. Each gap names the document, the gap, and the
-client question it leaves open.
+found — never skip the file. Two sections:
+
+1. **Coverage record**: every manifest row with reviewed/not-reviewed and,
+   for any not reviewed, why — so the review's own completeness is
+   auditable, not asserted.
+2. **Gaps**: each names the document, the gap, the client question it leaves
+   open, and the evidence pointer (the passage or absence that exposes it).
 
 ## Return
 

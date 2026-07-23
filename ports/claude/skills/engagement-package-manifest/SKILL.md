@@ -69,13 +69,16 @@ Standing entries first, then per-pair expansions:
 2. Orchestrator working-state/run record — `engagement-state.md`
 3. Gap-review report — `internal/gap-review.md` (standing entry: expected
    even before the gap review runs)
-4. Remediation recommendations (per pair) —
+4. Compliance-basis report — `internal/compliance-basis.md`
+5. Manifest-basis report — `internal/manifest-basis.md` (standing entry:
+   written by the manifest assembler alongside this document)
+6. Remediation recommendations (per pair) —
    `internal/<p>/remediation-recommendations.md`
-5. Security-delta report (per pair) — `internal/<p>/security-delta.md`
-6. Cost-basis report (per pair) — `internal/<p>/cost-basis.md`
-7. Narrative-basis report (per pair) — `internal/<p>/narrative-basis.md`
-8. SOW-exclusions partition (per pair) — `pairs/<p>/exclusions-partition.md`
-9. Raw audit reports (per pair, per side, per dimension) —
+7. Security-delta report (per pair) — `internal/<p>/security-delta.md`
+8. Cost-basis report (per pair) — `internal/<p>/cost-basis.md`
+9. Narrative-basis report (per pair) — `internal/<p>/narrative-basis.md`
+10. SOW-exclusions partition (per pair) — `pairs/<p>/exclusions-partition.md`
+11. Raw audit reports (per pair, per side, per dimension) —
    `pairs/<p>/<side>/audits/<dimension>/` for sides `original`/`upgraded` and
    dimensions security/code/dependencies/infra. Canonical filenames, identical
    on both sides, no pair or side prefixes: `<dimension>-report.md` and
@@ -84,7 +87,7 @@ Standing entries first, then per-pair expansions:
    when it contains that dimension's report. Every dimension is mandatory —
    an empty dimension directory is a `missing` row (a pipeline defect to
    surface), never omitted
-10. Phase 01 baseline snapshots (per pair, per side) —
+12. Phase 01 baseline snapshots (per pair, per side) —
    `pairs/<p>/<side>/engagement-baseline-snapshot.md`. Snapshots originate on
    each side's analysis branch; the manifest-writing step copies each into
    the workspace at this path (metadata only — the snapshot contains no

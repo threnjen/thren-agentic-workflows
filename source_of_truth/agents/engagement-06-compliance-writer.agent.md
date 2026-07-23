@@ -1,6 +1,6 @@
 ---
 name: Engagement - Compliance Writer
-description: "Per engagement, walks every SOW acceptance criterion against the retained artifacts, writes the SOW compliance walkthrough and the verification summary (the contractual deliverable, with the functional-preservation statement), and assembles the package manifest per its schema."
+description: "Per engagement, walks every SOW acceptance criterion against the retained artifacts and writes the SOW compliance walkthrough and the verification summary (the contractual deliverable, with the functional-preservation statement). Also writes the internal compliance-basis report: per-criterion evidence map, verification standards, and NOT VERIFIED reasons."
 tools: [read, search, edit]
 
 user-invocable: false
@@ -36,17 +36,21 @@ pair's intended-behavior specification
 baseline, plus a compact statement of what was verified, at what standard,
 and what remains NOT VERIFIED.
 
-## Package Manifest
+## Compliance Basis — Internal
 
-Load the `engagement-package-manifest` skill and write `manifest.md` at the
-workspace root per its schema: derive the expected entries from the pair
-roster, evaluate each row's present/missing status and contract status
-against the SOW/deliverables spec, and copy each side's baseline snapshot
-into the workspace where the schema requires it. Never omit or suppress a
-`missing` row.
+Also write `internal/compliance-basis.md` (opening with the internal
+audience banner per `engagement-workspace`), engineer-facing — never
+client-facing:
+
+- Per SOW criterion: the artifact paths consulted, what in each supports or
+  fails to support the criterion, and the resulting walkthrough verdict —
+  the evidence map behind every walkthrough statement.
+- Per verification-summary claim: the standard it was verified at and its
+  evidence pointer; every NOT VERIFIED item with the reason and what check
+  would close it.
+- Ambiguous criteria and judgment calls, with the reading chosen and why.
 
 ## Return
 
-Compact summary only: the three document paths, the manifest's
-present/missing counts per section, and any missing-SOW or unevidenced-
-criterion flags.
+Compact summary only: the three document paths and any missing-SOW or
+unevidenced-criterion flags.
