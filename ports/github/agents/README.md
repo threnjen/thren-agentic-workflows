@@ -136,6 +136,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **05 PR - Review** | Orchestrate a readiness review of the diff between a base commit and a head commit |
 | **05 Eval - Grader** | Score a completed phase run from ledger files plus a rubric YAML and write a structured report |
 | **06 Engagement - Prepare** | Prepare a client engagement for comparison analysis — validate the engagement config, then ensure fresh docs, a code graph, and a baseline snapshot per side on local analysis branches |
+| **Engagement - Orchestrator** | Run a client engagement end to end from its configuration — preparation, then per-pair analysis stages through compliance, manifest, and gap review, all via subagents |
 | **Eval - Feature Decomposition** | Score a feature-decomposition run against a golden-path branch across structural, naming, dependency, AC, context, and manifest dimensions |
 | **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
 | **Instructions Manager** | Create or evaluate AI coding instruction files — routes to Instructions - Writer or Instructions - Evaluator |
@@ -175,6 +176,14 @@ These agents are not visible in the picker. They run automatically as part of or
 | **05f Test Health** | 05 PR - Review | Delegate coverage, redundancy, and flake analysis into a test health report |
 | **05h Cleanliness Auditor** | 05 PR - Review | Evaluate the cleanliness of branch-added code and recommend specific cleanup categories when non-passing |
 | **05g Readiness Synthesizer** | 05 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
+| **Engagement - Audit Runner** | Engagement - Orchestrator | Run the four audit dimensions on one side of a comparison pair and retain raw reports in the workspace |
+| **Engagement - Delta Synthesizer** | Engagement - Orchestrator | Produce the client-facing delta report, the SOW-exclusions partition, and the audit-trail proof for a pair |
+| **Engagement - Security Narrative** | Engagement - Orchestrator | Write the four-section client-facing security narrative from the pair's reports and exclusions partition |
+| **Engagement - Introduced Issues** | Engagement - Orchestrator | Report upgraded-side security findings with no original-side counterpart, internal-only, for engineer fix-and-re-run |
+| **Engagement - Pricing Researcher** | Engagement - Orchestrator | Turn scan/dependency change evidence into cited cloud/cost claims via live pricing research (sole web-granted engagement agent) |
+| **Engagement - Narrative Writer** | Engagement - Orchestrator | Write the business design document, intended-behavior specification, and before/after workflow narratives for a pair |
+| **Engagement - Compliance Writer** | Engagement - Orchestrator | Walk SOW acceptance criteria against retained artifacts; write the compliance walkthrough, verification summary, and package manifest |
+| **Engagement - Gap Reviewer** | Engagement - Orchestrator | Review the deliverable set from the client's perspective against the manifest; always emit the internal gap-review report |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
 | **Test - Writer** | Test orchestrator | Bootstrap a test suite from scratch for untested code |
@@ -205,6 +214,9 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **06 Engagement - Prepare** (orchestrator — delegates to Docs Writer; never modifies engagement source)
 > Give it an engagement configuration file path (schema in the `engagement-configuration` skill). After validation and a roster confirmation gate, it prepares every side of every declared comparison pair: role-scoped documentation (via Docs Writer), an incremental code graph build, and a SHA-pinned internal baseline snapshot — all on a local, never-pushed analysis branch in each engagement repo. Idempotent: re-runs skip fresh docs, still rebuild the graph, and report skips explicitly. See the `engagement-preparation-runbook` skill for the full operating procedure.
+
+**Engagement - Orchestrator** (orchestrator — delegates to the engagement subagents)
+> Give it an engagement configuration file path. It spawns Engagement - Prepare unchanged, then drives each comparison pair through comparative audit runs, delta and security synthesis, cloud/cost analysis, and narrative/specification documents, finishing the engagement with the SOW compliance walkthrough, verification summary, package manifest, and client-perspective gap review. It holds only statuses and artifact pointers, maintains `engagement-state.md` as its run record, and resumes from it on restart.
 
 **Audit - Code, Infra, Refactor** (orchestrator — delegates to subagents)
 > Asks which audit type to run (CODE, INFRA, or REFACTOR), delegates to the appropriate auditor subagent, and presents findings. Optionally drives automated remediation by converting audit findings into task plans and running them through the Feature - Implementer → Feature - Reviewer → Feature - QA Writer pipeline. After remediation, updates documentation via the Docs Writer.
@@ -267,6 +279,22 @@ These agents are not visible in the picker. They run automatically as part of or
 **Instructions - Writer** *(subagent of Instructions Manager)* — Discovers a repository's domains and non-obvious rules and drafts scoped `.instructions.md` files following the AI Instruction File Framework.
 
 **Instructions - Evaluator** *(subagent of Instructions Manager)* — Evaluates whether changes to instruction files are improvements or regressions using blind A/B testing, rule classification, 3-run stability scoring, and rule-quality analysis. Reads the BEFORE state automatically from git history.
+
+**Engagement - Audit Runner** *(subagent of Engagement - Orchestrator)* — Parameterized by pair, side, and dimension set; spawns the existing audit agents unchanged (security, code, dependencies, infra) on a side's analysis-branch checkout and retains raw reports at `pairs/<pair>/<side>/audits/<dimension>/`. Supports one-side re-runs that overwrite in place.
+
+**Engagement - Delta Synthesizer** *(subagent of Engagement - Orchestrator)* — Consumes both sides' report sets to produce the business-framed delta report, owns the single-point SOW-exclusions partition, and writes the audit-trail proof checklist. NOT RUN dimensions flow through as asymmetric evidence, never deltas.
+
+**Engagement - Security Narrative** *(subagent of Engagement - Orchestrator)* — Writes the four-section client-facing security narrative (posture, repaired, out-of-scope, residual) with every original-side finding classified exactly once, consuming the exclusions partition rather than re-deriving it.
+
+**Engagement - Introduced Issues** *(subagent of Engagement - Orchestrator)* — Reports upgraded-side security findings with no original-side counterpart in full technical detail, internal-only, labeling visibility-ambiguous findings "new or newly-visible" and documenting the fix-and-re-run flow.
+
+**Engagement - Pricing Researcher** *(subagent of Engagement - Orchestrator)* — The only web-granted engagement agent; researches live pricing for evidenced infrastructure/dependency changes with strict query hygiene (no client content in queries), cites source and retrieval date per figure, and degrades to NOT RESEARCHED offline.
+
+**Engagement - Narrative Writer** *(subagent of Engagement - Orchestrator)* — Writes the three per-pair narrative documents (business design, intended-behavior specification, before/after workflow narratives) from analysis-branch docs and graphs, framed by the pair's value-story mode.
+
+**Engagement - Compliance Writer** *(subagent of Engagement - Orchestrator)* — Walks every SOW acceptance criterion against retained on-disk artifacts (NOT RUN cited as NOT VERIFIED, never a pass), writes the verification summary with its functional-preservation statement, and assembles the package manifest per the `engagement-package-manifest` schema.
+
+**Engagement - Gap Reviewer** *(subagent of Engagement - Orchestrator)* — Reviews the complete deliverable set from the client's perspective using the manifest as its completeness checklist and unconditionally emits `internal/gap-review.md`, even when no gaps are found.
 
 **Test - Analyst** *(subagent of Test orchestrator)* — Classifies tests by value, flags redundancy and over-mocking, and writes a categorized inventory with a staged reduction plan.
 
