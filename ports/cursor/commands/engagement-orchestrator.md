@@ -92,6 +92,31 @@ If a dimension is NOT RUN on one side but complete on the other, mark that
 dimension **asymmetric evidence** in the pair's working-state entry — it is
 never presented as a delta.
 
+#### Stage: Delta & Security Synthesis
+
+Runs once both sides' audit reports exist (a NOT RUN dimension does not
+block — it flows through as asymmetric evidence). Spawn in order, each with
+the pair name, workspace root, report pointers, and the boundaries above:
+
+1. **z-engagement-delta-synthesizer** — also pass the pair's `mode` and the
+   SOW path (or "none configured"). Record its document pointers, the
+   exclusions-partition pointer, and any missing-SOW or user-review flags in
+   the working-state entry.
+2. **z-engagement-security-narrative** — also pass the SOW path and the
+   exclusions-partition pointer from step 1.
+3. **z-engagement-introduced-issues** — internal-only output. If it reports
+   findings, surface the fix-and-re-run flow to the user: after engineer
+   fixes, re-run that side's audits (one-side re-run above), then re-run
+   this stage before finalizing client-facing artifacts.
+
+#### Stage: Cloud/Cost Analysis
+
+Spawn **z-engagement-pricing-researcher** with the pair name, workspace
+root, dependency/infra report pointers, and the boundaries above. It is the
+**only** agent permitted internet access during an engagement run; every
+other subagent operates offline against local evidence. Record its document
+pointer and any NOT RESEARCHED status.
+
 *(Further stages are appended here by later engagement features.)*
 
 ## Fail Fast
