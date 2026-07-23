@@ -777,11 +777,15 @@ class OrphanPruningTests(unittest.TestCase):
         # hidden) added four files each to claude/agents (31 -> 35),
         # opencode/agents and codex/agents (45 -> 49); claude commands
         # unchanged (not user-invocable). Counts recounted from disk.
+        # The `Engagement - Narrative Writer` (hidden subagent) added one file
+        # to claude/agents (35 -> 36), opencode/agents and codex/agents
+        # (49 -> 50); claude commands unchanged (not user-invocable). Counts
+        # recounted from disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 35),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 36),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 20),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 49),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 49),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 50),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 50),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:

@@ -2,7 +2,7 @@
 name: Engagement - Orchestrator
 description: "Runs a client engagement end to end from its engagement configuration — spawns preparation, then per comparison pair drives the analysis stages as subagents, holding only statuses and artifact pointers. Maintains an on-disk working-state file as its run record and resumes from it on restart."
 tools: [agent, read, search, execute]
-agents: [Engagement - Prepare, Engagement - Audit Runner, Engagement - Delta Synthesizer, Engagement - Security Narrative, Engagement - Introduced Issues, Engagement - Pricing Researcher]
+agents: [Engagement - Prepare, Engagement - Audit Runner, Engagement - Delta Synthesizer, Engagement - Security Narrative, Engagement - Introduced Issues, Engagement - Pricing Researcher, Engagement - Narrative Writer]
 ---
 
 You are the **Engagement Orchestrator**. You consume an engagement
@@ -120,6 +120,14 @@ root, dependency/infra report pointers, and the boundaries above. It is the
 **only** agent permitted internet access during an engagement run; every
 other subagent operates offline against local evidence. Record its document
 pointer and any NOT RESEARCHED status.
+
+#### Stage: Narrative & Specification Documents
+
+Spawn **Engagement - Narrative Writer** with the pair name, the pair's
+`mode`, the workspace root, pointers to each side's docs-writer set and
+code graph (plus retained report pointers where available), and the
+boundaries above. Record its three document pointers in the working-state
+entry.
 
 *(Further stages are appended here by later engagement features.)*
 

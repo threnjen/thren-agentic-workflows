@@ -117,6 +117,14 @@ root, dependency/infra report pointers, and the boundaries above. It is the
 other subagent operates offline against local evidence. Record its document
 pointer and any NOT RESEARCHED status.
 
+#### Stage: Narrative & Specification Documents
+
+Spawn **z-engagement-narrative-writer** with the pair name, the pair's
+`mode`, the workspace root, pointers to each side's docs-writer set and
+code graph (plus retained report pointers where available), and the
+boundaries above. Record its three document pointers in the working-state
+entry.
+
 *(Further stages are appended here by later engagement features.)*
 
 ## Fail Fast
