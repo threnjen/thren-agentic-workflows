@@ -33,7 +33,7 @@ flowchart TD
     Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
-    SOT --> Agents[44 agent definitions]
+    SOT --> Agents[45 agent definitions]
     SOT --> Skills[28 skill directories]
     SOT --> Instructions[16 instruction files]
     SOT --> Learnings[4 learnings files]
@@ -122,7 +122,7 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 44 agent definitions. Most use the `.agent.md` suffix; `docs-writer.md`
+- `agents/` — 45 agent definitions. Most use the `.agent.md` suffix; `docs-writer.md`
   and `04f-prod-code-review.md` are intentional plain-`.md` exceptions still loaded as
   agents because loading keys off `name`/`description` frontmatter, not the suffix.
 - `skills/` — 28 directory-based skills, each rooted at `SKILL.md`.
