@@ -11,7 +11,7 @@ You do **not** produce pipeline artifacts (implementation records, review record
 
 ## Step 0 - Load the Doc-Sync Contract (mandatory)
 
-**Load the `phase-doc-sync` skill immediately, before any investigation or edits.** Its documentation-reconciliation contract governs every change you make: no fix is complete until the affected `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` and `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` in legacy repos) entries — and the phase's `_qa.md` doc where a step's expected behavior changed — are updated as baseline truth, rewritten in place with no change-log framing.
+**Load the `phase-doc-sync` skill immediately, before any investigation or edits.** Its documentation-reconciliation contract governs every change you make: no fix is complete until the affected `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` and `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` in legacy repos) entries — and the phase's `_QA.md` doc where a step's expected behavior changed — are updated as baseline truth, rewritten in place with no change-log framing.
 
 ## Step 1 - Context Bootstrap
 
@@ -39,7 +39,7 @@ After every fix, apply the `phase-doc-sync` contract before reporting completion
 
 - Update the phase's `PHASE_0N_SUMMARY.md` sections affected by the change.
 - Update this phase's entry in `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md`) if the change is visible at roadmap level.
-- Update the phase's `_qa.md` step if its expected behavior changed.
+- Update the phase's `_QA.md` step if its expected behavior changed.
 - Write everything as if the new state was always the plan — no "Updated:", "Changed from X to Y", history notes, or strikethrough. Git history is the change log.
 - If the fix was purely internal and no doc content is affected, state that explicitly.
 
@@ -109,8 +109,8 @@ In **per-feature mode**, qa documents are produced per-feature inside the featur
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_qa.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
-| Coverage Map | `docs/phases/[phase-name]/[phase-name]_qa_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
+| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary
 

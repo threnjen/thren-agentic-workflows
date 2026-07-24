@@ -135,6 +135,8 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **04 Phase - Execute** | Orchestrate full phase execution from a prepared manifest and feature bundles |
 | **05 PR - Review** | Orchestrate a readiness review of the diff between a base commit and a head commit |
 | **05 Eval - Grader** | Score a completed phase run from ledger files plus a rubric YAML and write a structured report |
+| **06 Engagement - Prepare** | Prepare a client engagement for comparison analysis — validate the engagement config, then ensure an analysis branch, a code graph, and a baseline snapshot per side |
+| **Engagement - Orchestrator** | Run a client engagement end to end from its configuration — preparation, then per-pair analysis stages through compliance, manifest, and gap review, all via subagents |
 | **Eval - Feature Decomposition** | Score a feature-decomposition run against a golden-path branch across structural, naming, dependency, AC, context, and manifest dimensions |
 | **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
 | **Instructions Manager** | Create or evaluate AI coding instruction files — routes to Instructions - Writer or Instructions - Evaluator |
@@ -143,6 +145,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **Docs Writer** | Create or update repo documentation; also spawned automatically by orchestrators after pipeline completion |
 | **Security Scan** | Full-codebase security assessment writing a phase-level report (secrets, dependencies, infra, CI/CD, config) |
 | **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
+| **QA - Bootstrapper** | Bootstrap a repository's QA package — generate QA_AUTOMATED and QA_USER from available starter inputs, run the automated runbook, and stamp pass/fail results |
 | **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
 | **Unity Reviewer** | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
 | **Visual Verifier** | Produce deterministic runtime screenshots and assess them against a phase's visual acceptance criteria (does it actually render?) |
@@ -165,6 +168,8 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Feature - Implementer** | Phase - Execute, Audit orchestrator, Test orchestrator | Implement a feature plan using Red-Green-Refactor TDD |
 | **Feature - Reviewer** | Phase - Execute, Audit orchestrator, Test orchestrator | Review implementation, apply fixes, produce review record |
 | **Feature - QA Writer** | Phase - Execute, Audit orchestrator | Write manual QA plan for non-automatable test cases |
+| **QA - Doc Generator** | QA - Bootstrapper | Generate the QA_AUTOMATED runbook and QA_USER checklist from repository, manual QA, and acceptance inputs |
+| **QA - Runner** | QA - Bootstrapper | Execute the QA_AUTOMATED runbook and all test suites, then record binary pass/fail results into the runbook |
 | **Baseline Worktree** | 05 PR - Review | Create or reuse a clean detached worktree at a caller-specified baseline commit and return its path |
 | **05b Change Narrator** | 05 PR - Review | Build the base-to-head narrative for the diff under review and identify churn hotspots |
 | **05c Artifact Sweeper** | 05 PR - Review | Sweep the branch diff for debug artifacts, TODO/FIXME markers, and dead code added by the branch |
@@ -174,6 +179,13 @@ These agents are not visible in the picker. They run automatically as part of or
 | **05f Test Health** | 05 PR - Review | Delegate coverage, redundancy, and flake analysis into a test health report |
 | **05h Cleanliness Auditor** | 05 PR - Review | Evaluate the cleanliness of branch-added code and recommend specific cleanup categories when non-passing |
 | **05g Readiness Synthesizer** | 05 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
+| **Engagement - Delta Synthesizer** | Engagement - Orchestrator | Produce the client-facing findings report, the SOW-exclusions partition, and the internal remediation recommendations for a pair |
+| **Engagement - Security Narrative** | Engagement - Orchestrator | Write the four-section client-facing security narrative and the internal engineer-facing security-delta report from the pair's reports and exclusions partition |
+| **Engagement - Pricing Researcher** | Engagement - Orchestrator | Turn scan/dependency change evidence into cited cloud/cost claims via live pricing research, plus an internal cost-basis report (sole web-granted engagement agent) |
+| **Engagement - Narrative Writer** | Engagement - Orchestrator | Write the business design document, intended-behavior specification, and before/after workflow narratives for a pair, plus the internal narrative-basis report |
+| **Engagement - Compliance Writer** | Engagement - Orchestrator | Walk SOW acceptance criteria against retained artifacts; write the compliance walkthrough, verification summary, and internal compliance-basis report |
+| **Engagement - Manifest Assembler** | Engagement - Orchestrator | Assemble the package manifest per its schema, evaluating every row's present/missing status from disk, plus the internal manifest-basis report |
+| **Engagement - Gap Reviewer** | Engagement - Orchestrator | Review the deliverable set from the client's perspective against the manifest; always emit the internal gap-review report |
 | **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
 | **Test - Writer** | Test orchestrator | Bootstrap a test suite from scratch for untested code |
@@ -201,6 +213,12 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Eval - Grader** (user-facing — standalone scorer)
 > Give it a rubric YAML path plus three branch names: clean base, source-of-truth golden path, and branch to evaluate. The rubric should follow the grader schema documented in the agent, with `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` as the seed example. The grader materializes clean-base->golden and clean-base->evaluated diffs, reads `eval/runs/<phase-slug>/ledger-commits.jsonl` and `eval/runs/<phase-slug>/ledger-events.jsonl`, correlates semantic events onto the commit timeline by SHA association, preserves remediation-turn metadata such as `event_kind` and `related_event_id` when present, supports both feature-level and AC-level commit cadence, fans out one parallel `Eval - Metric Grader` subagent per comparative review metric, keeps exact ledger-derived metrics in the parent grader, produces both a rubric verdict and a comparative scorecard, and appends normalized `1-10` scores to the persistent additive markdown history file at `eval/EVAL_GRADER_SCORE_HISTORY.md`.
+
+**06 Engagement - Prepare** (spawns no agents; never modifies engagement source)
+> Give it an engagement configuration file path (schema in the `engagement-configuration` skill). After validation and a roster confirmation gate, it prepares every side of every declared comparison pair: a local, never-pushed analysis branch, an incremental code graph build, and a SHA-pinned internal baseline snapshot. Documentation is produced later by the engagement orchestrator's evidence stage. Idempotent: re-runs rebuild the graph and re-emit snapshots identically. See the `engagement-preparation-runbook` skill for the full operating procedure.
+
+**Engagement - Orchestrator** (orchestrator — delegates to the engagement subagents)
+> Give it an engagement configuration file path. It spawns Engagement - Prepare unchanged, then drives each comparison pair through comparative audit runs, delta and security synthesis, cloud/cost analysis, and narrative/specification documents, finishing the engagement with the SOW compliance walkthrough, verification summary, package manifest, and client-perspective gap review. It holds only statuses and artifact pointers, maintains `engagement-state.md` as its run record, and resumes from it on restart.
 
 **Audit - Code, Infra, Refactor** (orchestrator — delegates to subagents)
 > Asks which audit type to run (CODE, INFRA, or REFACTOR), delegates to the appropriate auditor subagent, and presents findings. Optionally drives automated remediation by converting audit findings into task plans and running them through the Feature - Implementer → Feature - Reviewer → Feature - QA Writer pipeline. After remediation, updates documentation via the Docs Writer.
@@ -263,6 +281,21 @@ These agents are not visible in the picker. They run automatically as part of or
 **Instructions - Writer** *(subagent of Instructions Manager)* — Discovers a repository's domains and non-obvious rules and drafts scoped `.instructions.md` files following the AI Instruction File Framework.
 
 **Instructions - Evaluator** *(subagent of Instructions Manager)* — Evaluates whether changes to instruction files are improvements or regressions using blind A/B testing, rule classification, 3-run stability scoring, and rule-quality analysis. Reads the BEFORE state automatically from git history.
+
+**Engagement - Delta Synthesizer** *(subagent of Engagement - Orchestrator)* — Consumes both sides' report sets to produce the plain-language findings report (with the how-we-checked-our-own-work appendix), owns the single-point SOW-exclusions partition, and emits the internal remediation-recommendations worklist of in-SOW-scope postures still open on the upgraded side.
+
+**Engagement - Security Narrative** *(subagent of Engagement - Orchestrator)* — Writes the four-section client-facing security narrative (posture, repaired, out-of-scope, residual) with every original-side finding classified exactly once, consuming the exclusions partition rather than re-deriving it. Also writes the internal engineer-facing security-delta report (original / fixed / unfixed / introduced) verifying the upgrade added no new security issues.
+
+
+**Engagement - Pricing Researcher** *(subagent of Engagement - Orchestrator)* — The only web-granted engagement agent; researches live pricing for evidenced infrastructure/dependency changes with strict query hygiene (no client content in queries), cites source and retrieval date per figure, and degrades to NOT RESEARCHED offline. Also writes the internal cost-basis report — per-figure sources and calculations plus the verbatim query-hygiene audit trail.
+
+**Engagement - Narrative Writer** *(subagent of Engagement - Orchestrator)* — Writes the three per-pair narrative documents (business design, intended-behavior specification, before/after workflow narratives) from analysis-branch docs and graphs, framed by the pair's value-story mode. Also writes the internal narrative-basis report: claims traceability, a warranty risk register (verified vs. assumed spec statements), framing discrepancies, and evidence gaps.
+
+**Engagement - Compliance Writer** *(subagent of Engagement - Orchestrator)* — Walks every SOW acceptance criterion against retained on-disk artifacts and writes the compliance walkthrough and the verification summary with its functional-preservation statement, plus the internal compliance-basis report (per-criterion evidence map, verification standards, NOT VERIFIED reasons).
+
+**Engagement - Manifest Assembler** *(subagent of Engagement - Orchestrator)* — Assembles the package manifest per the `engagement-package-manifest` schema, evaluating every row's present/missing status from disk as an independent check on the writing agents, plus the internal manifest-basis report (per-row determination notes and the report-vs-disk discrepancy audit trail), then hands the manifest to the gap review.
+
+**Engagement - Gap Reviewer** *(subagent of Engagement - Orchestrator)* — Reviews the complete deliverable set from the client's perspective using the manifest as its completeness checklist and unconditionally emits `internal/gap-review.md`, even when no gaps are found.
 
 **Test - Analyst** *(subagent of Test orchestrator)* — Classifies tests by value, flags redundancy and over-mocking, and writes a categorized inventory with a staged reduction plan.
 

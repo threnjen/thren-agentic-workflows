@@ -12,9 +12,9 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 42 source agent definitions in `source_of_truth/agents/` (40 `*.agent.md` + `docs-writer.md` + `prod-code-review.md`), of which 23 hidden subagents (`user-invocable: false`) and 19 user-invocable.
-- 24 skills in `source_of_truth/skills/`.
-- 15 instructions in `source_of_truth/instructions/`.
+- 54 source agent definitions in `source_of_truth/agents/` (52 `*.agent.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 34 hidden subagents (`user-invocable: false`) and 20 user-invocable.
+- 30 skills in `source_of_truth/skills/`.
+- 16 instructions in `source_of_truth/instructions/`.
 - 4 learnings in `source_of_truth/learnings/`.
 - 1 defunct hook artifact set in `source_of_truth/hooks/`.
 
@@ -26,11 +26,11 @@ INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
     README.md                              # full agent catalog and pipeline docs
-    *.agent.md                             # 40, plus the two plain .md agents below (42 total definitions)
+    *.agent.md                             # 52, plus the two plain .md agents below (54 total definitions)
     docs-writer.md                         # plain .md agent (loaded by frontmatter)
-    prod-code-review.md                    # plain .md agent (loaded by frontmatter)
-  skills/                                  # 24 skill dirs, each rooted at SKILL.md
-  instructions/                            # 15 applyTo-glob instruction files
+    04f-prod-code-review.md                # plain .md agent (loaded by frontmatter)
+  skills/                                  # 29 skill dirs, each rooted at SKILL.md
+  instructions/                            # 16 applyTo-glob instruction files
   learnings/                               # 4 learnings files
   hooks/                                   # defunct injection scanner (DEFUNCT.md)
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
@@ -128,6 +128,6 @@ eval/ benchmarks/ packages/ tests/
 - Do not assume filename parity across platforms; aliases and `z-` prefixes are intentional.
 - Do not reference removed surfaces: `nodejs/`, `python/`, `HARNESS_SETUP.md`, `.mcp.json`,
   `codex/README.md`, and `scripts/runtime_deployment.py` no longer exist.
-- Do not treat `prod-code-review.md` or `docs-writer.md` as non-agent content just because
+- Do not treat `04f-prod-code-review.md` or `docs-writer.md` as non-agent content just because
   they lack the `.agent.md` suffix.
 - Do not document a root `dev/` beyond `dev/pr-review/` (its fixtures are tracked; run output is gitignored).

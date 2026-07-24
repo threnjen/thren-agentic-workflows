@@ -33,9 +33,9 @@ flowchart TD
     Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
-    SOT --> Agents[40 agent definitions]
-    SOT --> Skills[24 skill directories]
-    SOT --> Instructions[15 instruction files]
+    SOT --> Agents[49 agent definitions]
+    SOT --> Skills[28 skill directories]
+    SOT --> Instructions[16 instruction files]
     SOT --> Learnings[4 learnings files]
     SOT --> Hooks[defunct injection scanner]
 
@@ -122,11 +122,11 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 40 agent definitions. Most use the `.agent.md` suffix; `docs-writer.md`
-  and `prod-code-review.md` are intentional plain-`.md` exceptions still loaded as
+- `agents/` — 49 agent definitions. Most use the `.agent.md` suffix; `docs-writer.md`
+  and `04f-prod-code-review.md` are intentional plain-`.md` exceptions still loaded as
   agents because loading keys off `name`/`description` frontmatter, not the suffix.
-- `skills/` — 24 directory-based skills, each rooted at `SKILL.md`.
-- `instructions/` — 15 instruction files matched by `applyTo` globs.
+- `skills/` — 28 directory-based skills, each rooted at `SKILL.md`.
+- `instructions/` — 16 instruction files matched by `applyTo` globs.
 - `learnings/` — 4 cross-cutting learnings files.
 - `hooks/` — a defunct prompt-injection scanner, retained but wired nowhere. See
   `source_of_truth/hooks/DEFUNCT.md`.
@@ -191,6 +191,9 @@ flowchart TD
     Test[Test - Orchestrator]
     ProdReview[Prod Code Review]
     EvalGrader[Eval - Grader]
+    EngagementOrchestrator[Engagement - Orchestrator]
+    EngagementPrepare[06 Engagement - Prepare]
+    DocsWriter[Docs Writer]
 
     PlanExpander[04a Feature - Plan Expander]
     Implementer[04b Feature - Implementer]
@@ -220,7 +223,28 @@ flowchart TD
     EvalGrader --> EvalDecomp[Eval - Decomposition]
     EvalGrader --> EvalMetric[Eval - Metric Grader]
     EvalGrader --> EvalScore[Eval - Score Recorder]
+
+    EngagementOrchestrator --> EngagementPrepare
+    EngagementOrchestrator --> EngagementSubs[Engagement subagents: Delta Synthesizer, Security Narrative, Pricing Researcher, Narrative Writer, Compliance Writer, Gap Reviewer]
+    EngagementOrchestrator --> DocsWriter
 ```
+
+A separate engagement flow sits outside the phase pipeline:
+
+- **06 Engagement - Prepare** loads an engagement configuration (validated by the
+  `engagement-configuration` skill), then for each declared repository side ensures
+  fresh documentation (delegating to Docs Writer) and a current code graph plus a
+  baseline snapshot on a local, never-pushed analysis branch. Its operator procedure
+  lives in the `engagement-preparation-runbook` skill.
+- **Engagement - Orchestrator** runs a client engagement end to end: it invokes
+  Engagement - Prepare first (reused unchanged), keeps on-disk working state in a
+  per-engagement workspace (`engagement-workspace` skill), and drives the per-pair
+  analysis stages via hidden subagents — comparative audit runs, delta synthesis with
+  SOW-exclusion routing, the client-facing security narrative with its internal
+  security-delta report, cited pricing research, narrative/spec documents, the SOW
+  compliance walkthrough, and a schema-defined package manifest
+  (`engagement-package-manifest` skill) plus a client-perspective gap review. Output
+  is markdown + manifest; PDF assembly happens outside the tool.
 
 ## External Dependencies And Integrations
 

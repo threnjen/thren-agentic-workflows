@@ -25,9 +25,16 @@ Your output is a report document saved to `dev/[audit-name]/`:
 
 Present your findings in chat first, then write the deliverables.
 
+**Subagent return contract**: when invoked as a subagent, after writing the
+deliverables return a compact summary only — the report and summary file
+paths, findings-by-severity totals, and status — never bulk report content.
+The caller may override the output directory and filenames in the spawn
+prompt; write to the paths it names.
+
 ## Scope Determination
 
-When spawnd, determine scope with the user:
+When spawnd, determine scope with the user — or, when invoked as a subagent
+with scope stated in the spawn prompt, take that scope as-is without asking:
 - **Full codebase** — All in-scope files (default if unspecified)
 - **Specific files/directories** — As specified by the user
 - **Single file or module** — Deep audit of one area
@@ -108,3 +115,33 @@ All auditors use this 4-level structure. Each auditor defines domain-specific me
 ## Domain-Specific Extensions
 
 Your agent definition may add sections beyond this common format (e.g., Auditor - Refactor adds Dependency Graph Observations and Risk Matrix).
+
+## Comparative Scans
+
+When two independent scans of the same dimension are compared (e.g., two sides
+of an engagement pair), these rules make them comparable:
+
+- **Stable categories**: the producing agent's own category names are the
+  canonical comparison categories — security uses Security Scan's 10 scope
+  categories, code quality uses Auditor - Code's 14 audit categories, infra
+  uses Auditor - Infra's 14 audit categories, dependencies uses the dependency
+  inventory and duplicate-library checks. Never rename, merge, or invent
+  categories across scans.
+- **Severity**: the 4-level scale above (see Severity Levels). Compare
+  severities only by these labels.
+- **Security dimension — posture first, then issue identity**: the headline
+  comparison is posture-level — counts by category × severity on each side,
+  the before/after of the security results themselves. Per-finding matching
+  then substantiates it: two findings match when they are the **same
+  underlying issue**, judged from category, description, and evidence; a
+  matching file path from `Location` is corroborating evidence, never the
+  key — code moves in refactors and rewrites, and line numbers shift between
+  revisions. The scan-local `ID` column is never used for cross-scan
+  matching. An original finding that can be neither confidently matched nor
+  confidently ruled out is treated as possibly persisting (unfixed),
+  flagged for review — never silently counted as fixed.
+- **All other dimensions — category-level rollups**: compare counts by
+  category × severity; no per-finding matching.
+- **Unmatched findings are never dropped**: a finding present only in the
+  later/upgraded scan is classified **new**; one present only in the
+  earlier/original scan is classified **resolved**.

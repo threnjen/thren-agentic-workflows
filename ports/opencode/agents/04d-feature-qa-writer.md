@@ -32,8 +32,8 @@ The orchestrator provides:
    - `[0N-task-name]-implementation.md`
    - `[0N-task-name]-review.md`
    - Source code and tests referenced by the implementation record
-2. **qa output path** — Where to write the consolidated qa document (e.g., `docs/phases/[phase-name]/[phase-name]_qa.md` or `dev/feature/[phase-name]-qa.md`)
-3. **Coverage map output path** — Where to write the consolidated coverage map (e.g., `docs/phases/[phase-name]/[phase-name]_qa_COVERAGE_MAP.md` or `dev/feature/[phase-name]-coverage-map-qa.md`)
+2. **qa output path** — Where to write the consolidated qa document (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/feature/[phase-name]-qa.md`)
+3. **Coverage map output path** — Where to write the consolidated coverage map (e.g., `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` or `dev/feature/[phase-name]-coverage-map-qa.md`)
 
 ## What Requires Manual qa
 
@@ -285,8 +285,8 @@ In **per-feature mode**, qa documents are produced per-feature inside the featur
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_qa.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
-| Coverage Map | `docs/phases/[phase-name]/[phase-name]_qa_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
+| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary
 
