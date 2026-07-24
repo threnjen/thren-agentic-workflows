@@ -71,7 +71,7 @@ resolved inputs in the working-state file.
 
 Spawn **engagement-01-prepare** with the config, unchanged from its own
 definition — it owns validation gates, the qa gate (each repository's
-completed AUTOMATED_QA/USER_QA package, halting to send the user to the
+completed QA_AUTOMATED/QA_USER package, halting to send the user to the
 **qa-bootstrap** when incomplete) and the workspace's
 `deliverables/qa-appendix.md`, analysis-branch setup, graph builds, and
 baseline snapshots. It spawns nothing; documentation is produced in

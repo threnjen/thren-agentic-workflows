@@ -1,6 +1,6 @@
 ---
 name: Engagement - Prepare
-description: "Prepares a client engagement for comparison analysis — gathers and validates the engagement configuration, enforces the QA gate (upgraded repository's completed AUTOMATED_QA/USER_QA package; original side optional) and writes the workspace's client-facing QA appendix, then for each side of each comparison pair sets up a local, never-pushed analysis branch, builds a current code graph, and captures a baseline snapshot. Spawns no agents; documentation is produced by the orchestrator's evidence stage. Reports per-side what was produced and where it lives."
+description: "Prepares a client engagement for comparison analysis — gathers and validates the engagement configuration, enforces the QA gate (upgraded repository's completed QA_AUTOMATED/QA_USER package; original side optional) and writes the workspace's client-facing QA appendix, then for each side of each comparison pair sets up a local, never-pushed analysis branch, builds a current code graph, and captures a baseline snapshot. Spawns no agents; documentation is produced by the orchestrator's evidence stage. Reports per-side what was produced and where it lives."
 tools: [read, edit, search, execute]
 
 user-invocable: false
@@ -58,9 +58,9 @@ Then proceed directly with preparation — no confirmation gate.
 ## Preflight 3: QA Gate and QA Appendix
 
 **Upgraded side (required).** Every upgraded repository must carry a completed QA package:
-`docs/AUTOMATED_QA.md` whose top `VERDICT:` line reads `PASS` or `FAIL`
+`docs/QA_AUTOMATED.md` whose top `VERDICT:` line reads `PASS` or `FAIL`
 (read only that line — `VERDICT: NOT RUN` or no verdict line means the
-automated QA was never executed), and `docs/USER_QA.md`. If any piece is
+automated QA was never executed), and `docs/QA_USER.md`. If any piece is
 missing or the automated QA was never run, halt for that repository's pairs
 and tell the user to run
 the **QA - Bootstrapper** for it (that agent generates both documents and
@@ -68,11 +68,11 @@ executes the automated runbook) — you do not spawn it. A recorded FAIL
 verdict is a blocker: surface it and continue only after the user reviews
 the QA results and confirms.
 
-USER_QA must also be **executed**, not just written: its checks are Markdown
+QA_USER must also be **executed**, not just written: its checks are Markdown
 checkboxes, checked (`- [x]`) as the tester completes them. Count unchecked
-boxes mechanically (e.g. `grep -c '\[ \]' docs/USER_QA.md`) — any count
+boxes mechanically (e.g. `grep -c '\[ \]' docs/QA_USER.md`) — any count
 above zero means manual QA is incomplete: halt for that repository's pairs
-and tell the user to finish and check off USER_QA before re-running.
+and tell the user to finish and check off QA_USER before re-running.
 
 **Original side (optional).** Original/legacy repositories may lack QA docs (docs
 do not exist or are incomplete) — this is not a blocker. Record the original
@@ -83,8 +83,8 @@ side has; original gaps are evidence, not failures.
 Once every **upgraded** repository passes the gate, write the client-facing QA appendix
 at `deliverables/qa-appendix.md` in the engagement workspace (root per the
 `engagement-workspace` skill): one section per repository containing its
-USER_QA acceptance checklist (if present), followed by a summary of its automated QA run
-covering targets USER_QA marks agent-only. For original sides without QA docs, note
+QA_USER acceptance checklist (if present), followed by a summary of its automated QA run
+covering targets QA_USER marks agent-only. For original sides without QA docs, note
 their absence. Client voice per the
 `engagement-client-voice` skill; no secrets, no internal paths. This is the
 one workspace document you write; the workspace itself already exists —
@@ -197,7 +197,7 @@ Stop and report **which side** and **what failed** for exactly these:
 
 - A configured path or branch does not exist (surfaced by validation).
 - An **upgraded** repository failing the QA gate (missing QA documents, no recorded
-  verdict, unchecked USER_QA boxes, or an unconfirmed FAIL verdict). Missing
+  verdict, unchecked QA_USER boxes, or an unconfirmed FAIL verdict). Missing
   or incomplete QA on an **original** repository does not halt preparation.
 - A branch-pair repository has a dirty working tree — creating worktrees
   from a dirty state risks contaminating the analysis.

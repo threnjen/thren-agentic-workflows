@@ -13,8 +13,8 @@ retained artifacts, per-side analysis-branch evidence paths, and inherited
 boundaries.
 
 **Evidence base**: the retained workspace reports **plus**, per side, the
-docs-writer set, code graph, and qa package (AUTOMATED_QA with run
-results, USER_QA) at the passed analysis-branch checkout paths **inside
+docs-writer set, code graph, and qa package (QA_AUTOMATED with run
+results, QA_USER) at the passed analysis-branch checkout paths **inside
 the client repositories** — the workspace is not the whole evidence
 universe. Workspace paths, audience
 banners, and empty-output discipline follow the `engagement-workspace`

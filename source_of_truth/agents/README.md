@@ -145,7 +145,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **Docs Writer** | Create or update repo documentation; also spawned automatically by orchestrators after pipeline completion |
 | **Security Scan** | Full-codebase security assessment writing a phase-level report (secrets, dependencies, infra, CI/CD, config) |
 | **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
-| **QA - Bootstrapper** | Bootstrap a repository's QA package — generate AUTOMATED_QA and USER_QA from available starter inputs, run the automated runbook, and stamp pass/fail results |
+| **QA - Bootstrapper** | Bootstrap a repository's QA package — generate QA_AUTOMATED and QA_USER from available starter inputs, run the automated runbook, and stamp pass/fail results |
 | **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
 | **Unity Reviewer** | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
 | **Visual Verifier** | Produce deterministic runtime screenshots and assess them against a phase's visual acceptance criteria (does it actually render?) |
@@ -168,8 +168,8 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Feature - Implementer** | Phase - Execute, Audit orchestrator, Test orchestrator | Implement a feature plan using Red-Green-Refactor TDD |
 | **Feature - Reviewer** | Phase - Execute, Audit orchestrator, Test orchestrator | Review implementation, apply fixes, produce review record |
 | **Feature - QA Writer** | Phase - Execute, Audit orchestrator | Write manual QA plan for non-automatable test cases |
-| **QA - Doc Generator** | QA - Bootstrapper | Generate the AUTOMATED_QA runbook and USER_QA checklist from repository, manual QA, and acceptance inputs |
-| **QA - Runner** | QA - Bootstrapper | Execute the AUTOMATED_QA runbook and all test suites, then record binary pass/fail results into the runbook |
+| **QA - Doc Generator** | QA - Bootstrapper | Generate the QA_AUTOMATED runbook and QA_USER checklist from repository, manual QA, and acceptance inputs |
+| **QA - Runner** | QA - Bootstrapper | Execute the QA_AUTOMATED runbook and all test suites, then record binary pass/fail results into the runbook |
 | **Baseline Worktree** | 05 PR - Review | Create or reuse a clean detached worktree at a caller-specified baseline commit and return its path |
 | **05b Change Narrator** | 05 PR - Review | Build the base-to-head narrative for the diff under review and identify churn hotspots |
 | **05c Artifact Sweeper** | 05 PR - Review | Sweep the branch diff for debug artifacts, TODO/FIXME markers, and dead code added by the branch |

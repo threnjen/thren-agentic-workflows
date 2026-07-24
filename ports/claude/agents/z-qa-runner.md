@@ -1,6 +1,6 @@
 ---
 name: z-qa-runner
-description: Executes a repository's AUTOMATED_QA runbook end to end — every runbook check plus every discovered test suite, strict binary PASS/FAIL mapping, captured evidence — and records per-check results and the overall verdict back into the runbook's Run results section, per the qa-run skill.
+description: Executes a repository's QA_AUTOMATED runbook end to end — every runbook check plus every discovered test suite, strict binary PASS/FAIL mapping, captured evidence — and records per-check results and the overall verdict back into the runbook's Run results section, per the qa-run skill.
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
 user-invocable: false
 ---

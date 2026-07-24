@@ -1,6 +1,6 @@
 ---
 name: qa-generation
-description: "Contract for generating a repository's two complementary QA documents — `docs/AUTOMATED_QA.md` (evidence-producing technical runbook for an agent or release engineer) and `docs/USER_QA.md` (plain-language manual acceptance checklist for an operator or client) — from the repository plus optional manual QA, SOW/contract, and plan acceptance inputs. Use when: writing or updating either QA document."
+description: "Contract for generating a repository's two complementary QA documents — `docs/QA_AUTOMATED.md` (evidence-producing technical runbook for an agent or release engineer) and `docs/QA_USER.md` (plain-language manual acceptance checklist for an operator or client) — from the repository plus optional manual QA, SOW/contract, and plan acceptance inputs. Use when: writing or updating either QA document."
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 
@@ -9,14 +9,14 @@ description: "Contract for generating a repository's two complementary QA docume
 Produce two documents for one repository, from whatever inputs were supplied
 (all optional except the repository root): existing user QA, manual QA
 writeups, acceptance inputs (SOW, plans, deliverables specs, pasted ACs), and
-scope notes. Default outputs: `docs/AUTOMATED_QA.md` and `docs/USER_QA.md`;
+scope notes. Default outputs: `docs/QA_AUTOMATED.md` and `docs/QA_USER.md`;
 when an existing user-facing QA path is supplied, update that file in place
-instead of creating `USER_QA.md`.
+instead of creating `QA_USER.md`.
 
 **Audience separation is absolute.** Source inspection, dependency audits,
 build commands, automated tests, packaging, and security checks belong in
-AUTOMATED_QA. Observable installation and product workflows belong in
-USER_QA. Never merge the audiences or force symmetry.
+QA_AUTOMATED. Observable installation and product workflows belong in
+QA_USER. Never merge the audiences or force symmetry.
 
 ## Operating rules
 
@@ -51,7 +51,7 @@ source IDs (`MANUAL-00N`, `SOW-00N`, `PLAN-00N`, `REPO-00N`). Per target
 record: exact source wording; direct-repo vs sister-project vs excluded/
 conditional/unresolved; evidence type needed (static, automated, packaging,
 manual, live integration); implemented behavior and existing evidence; the
-planned AUTOMATED_QA check; the planned USER_QA check or why agent-only.
+planned QA_AUTOMATED check; the planned QA_USER check or why agent-only.
 
 Source hierarchy: signed SOW/contract ACs > approved plan/phase ACs > client
 deliverables spec > existing manual QA > repository-derived evidence. Never
@@ -63,7 +63,7 @@ gate for this repository — cross-system handoff stays an integration
 checkpoint. Without SOW/plan inputs, label targets repository-derived; never
 invent contract terms.
 
-## Phase 3 — AUTOMATED_QA
+## Phase 3 — QA_AUTOMATED
 
 The document's **first line after the title** is a machine-readable verdict
 line, exactly `VERDICT: NOT RUN` at generation time. An execution run
@@ -91,7 +91,7 @@ classify blockers or cross-system failures. Include a **Run results** section
 (initially "not yet run") where an execution run records per-check status and
 the overall result.
 
-## Phase 4 — USER_QA
+## Phase 4 — QA_USER
 
 Executable by a non-developer: plain-language purpose and scope; product vs
 sister-system distinction; Pass/Fail/Blocked definitions; a test record
@@ -129,14 +129,14 @@ Evidence or issue:
 Write every box unchecked; the tester marks `- [x]` only after observing
 that result. Checkboxes appear **only** on prerequisite items and expected
 results — never on headings, notes, or appendix material — because
-downstream gates treat any remaining `[ ]` in USER_QA as "manual QA not
+downstream gates treat any remaining `[ ]` in QA_USER as "manual QA not
 complete". Never use the inline-prose alternative (`**Expected:** ...` with
 a `Result: ______` line) — it defeats the mechanical completeness check.
 
 ## Phase 5 — Appendix A (original manual QA)
 
 When any original manual QA writeup exists, append "Appendix A - Original
-manual QA checklist" to USER_QA reproducing every original heading and
+manual QA checklist" to QA_USER reproducing every original heading and
 question verbatim in original order — no silent fixes — followed by labeled
 notes for any legacy wording whose active expectation was corrected. Original
 and appendix question counts must match exactly. Omit only when no original
@@ -144,10 +144,10 @@ writeup exists.
 
 ## Phase 6 — Appendix B (target traceability)
 
-Append "Appendix B - QA target traceability" to USER_QA: one row per atomic
+Append "Appendix B - QA target traceability" to QA_USER: one row per atomic
 manual target and per directly applicable SOW/plan criterion, columns
-`Target ID | Source | Original target | Scope | AUTOMATED_QA coverage |
-USER_QA coverage`, linking to exact check headings via stable relative
+`Target ID | Source | Original target | Scope | QA_AUTOMATED coverage |
+QA_USER coverage`, linking to exact check headings via stable relative
 anchors. Use "Agent-only" for non-user-observable targets, "Integration
 boundary" for cross-system handoffs, "N/A - sister project" only with a
 reason. No grouping of unrelated targets, no blank cells, no "covered
@@ -156,19 +156,19 @@ elsewhere".
 ## Phase 7 — Cross-check
 
 Verify: every direct target maps to ≥1 AG-QA check; every user-observable
-target maps to ≥1 USER_QA check; Appendix A verbatim and counts; Appendix B
+target maps to ≥1 QA_USER check; Appendix A verbatim and counts; Appendix B
 completeness; sister-project separation; prerequisites vs bundled deps;
 static evidence not claiming live behavior; commands/paths/counts match the
 repository; Markdown structure, anchors, and IDs valid. Verify mechanically
-(grep, not judgment): AUTOMATED_QA contains exactly one `VERDICT:` line,
-reading `VERDICT: NOT RUN`, as the first line after the title; USER_QA
+(grep, not judgment): QA_AUTOMATED contains exactly one `VERDICT:` line,
+reading `VERDICT: NOT RUN`, as the first line after the title; QA_USER
 contains at least one unchecked `- [ ]` box and no inline `Result: ___`
 prose forms. Add a
 discoverability link from the docs index or README when one exists.
 
 ## Report
 
-Return: both output paths; AG-QA and USER_QA check counts; preserved original
+Return: both output paths; AG-QA and QA_USER check counts; preserved original
 question count; traceability row count; the most important scope separation
 or corrected legacy expectation; validation performed; any check blocked by a
 missing source, platform, credential, or environment. Never claim the product

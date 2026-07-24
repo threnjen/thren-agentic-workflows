@@ -1,6 +1,6 @@
 ---
 name: qa-run
-description: "Contract for executing a repository's automated QA runbook (`docs/AUTOMATED_QA.md`): read-only validation run over every runbook check plus every independently discovered test suite, strict binary PASS/FAIL status mapping, captured evidence, and one evidence-backed validation report ending in a single FINAL VALIDATION line. Use when: running or auditing an automated QA validation pass."
+description: "Contract for executing a repository's automated QA runbook (`docs/QA_AUTOMATED.md`): read-only validation run over every runbook check plus every independently discovered test suite, strict binary PASS/FAIL status mapping, captured evidence, and one evidence-backed validation report ending in a single FINAL VALIDATION line. Use when: running or auditing an automated QA validation pass."
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 
@@ -9,7 +9,7 @@ description: "Contract for executing a repository's automated QA runbook (`docs/
 Execute the complete automated QA runbook and every test suite in the
 repository; produce one evidence-backed validation report with a binary PASS
 or FAIL for every check, every suite, and the run overall. Inputs: repository
-root, runbook path (default `docs/AUTOMATED_QA.md`), evidence directory
+root, runbook path (default `docs/QA_AUTOMATED.md`), evidence directory
 (default a new untracked directory outside the source tree), and optional
 approved non-production environment, credentials access method, and extra
 test commands.
