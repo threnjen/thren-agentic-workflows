@@ -113,7 +113,9 @@ affected stages re-run first.
 1. **Engagement - Compliance Writer** — spawn with the workspace root, the
    SOW path (or "none configured"), the deliverables-spec path, the pair
    roster with `mode`s, retained-artifact pointers from the working-state
-   file, and the boundaries above. It writes the SOW compliance walkthrough
+   file, the A3-verified per-side concrete paths (analysis-branch checkout
+   path, docs-set paths, code-graph pointer, QA-package paths — the
+   evidence inside the client repos), and the boundaries above. It writes the SOW compliance walkthrough
    and the verification summary. Record its document pointers.
 2. **Engagement - Manifest Assembler** — spawn after the compliance writer
    completes, with the same inputs. It assembles `manifest.md` per the

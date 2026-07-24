@@ -1,5 +1,5 @@
 ---
-description: "Per engagement, compares each pair's two sides' retained audit reports under the comparability convention and produces the engagement's client-facing delta document (headline metrics, resolved/improved/unchanged/new classification, business-framed narrative) and audit-trail proof checklist, plus per pair the SOW-exclusions partition consumed by the security narrative and the internal remediation-recommendations report of in-SOW-scope postures still open on the upgraded side."
+description: "Per engagement, compares each pair's two sides' retained audit reports under the comparability convention and produces the engagement's client-facing findings report (plain-language narrative with resolved/improved/unchanged/new classification, metrics and the how-we-checked-our-own-work checklist in appendices), plus per pair the SOW-exclusions partition consumed by the security narrative and the internal remediation-recommendations report of in-SOW-scope postures still open on the upgraded side."
 model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
@@ -41,52 +41,67 @@ it. Write one per pair to `pairs/<pair-name>/exclusions-partition.md`
 No finding is silently dropped: every original-side finding appears in
 exactly one of findings / security-excluded / other-excluded.
 
-## Delta Document
+## Findings Report
 
 Write `deliverables/delta-report.md` — the engagement's client-facing
-findings report, one per-repo section per pair:
+findings report, one per-repo section per pair. The contract path is fixed,
+but the document's title and prose use plain language — never the word
+"delta" (e.g., title it "Findings: before and after the upgrade").
+Narrative carries the body; tables are the exception, not the structure —
+at most one small summary table per pair in the body, everything denser in
+the appendices.
 
-1. **Headline-metrics tables**: per pair, per dimension, counts by
-   category × severity for each side, per the comparability convention.
-   An engagement-wide roll-up appears only when no repository is shared
-   across pairs (never double-count a shared repo); otherwise omit it with
-   a one-line note.
-2. **Classification**: every compared finding, in every pair, is resolved /
-   improved / unchanged / new.
-3. **Narrative**: plain language, leading with business meaning. Frame each
+1. **Narrative**: plain language, leading with business meaning. Frame each
    repo section through its pair's `mode` — under an intentional-change
    mode, expected differences are the delivered value, never framed as
    regression; with mixed modes, the executive summary states the split
    plainly.
-4. **Out of scope under the SOW**: each partition's non-security
+2. **Classification**: every compared finding, in every pair, is resolved /
+   improved / unchanged / new — each term explained in plain words at first
+   use. Body shows one summary table per pair (counts per classification);
+   the finding-level detail goes to the appendices.
+3. **Out of scope under the SOW**: each partition's non-security
    exclusions, severity-rated. Security exclusions belong to the security
    narrative, not here.
-5. **Appendices**: technical evidence, citing the retained raw reports by
-   path.
-
-## Audit-Trail Proof
-
-Write `deliverables/audit-trail-proof.md` — a short client-facing
-checklist, one per-repo section per pair, framed as "we held our own work
-to the same standard we judged yours by": every category flagged in that
-pair's original-side findings × the upgraded side's status for that
-category, citing upgraded-side raw reports.
+4. **Appendices**: (a) full metrics — per pair, per dimension, counts by
+   category × severity for each side, per the comparability convention; an
+   engagement-wide roll-up appears only when no repository is shared across
+   pairs (never double-count a shared repo), otherwise omitted with a
+   one-line note; (b) **How we checked our own work** — per pair, framed as
+   "we held our own work to the same standard we judged yours by": every
+   category flagged in that pair's original-side findings × the upgraded
+   side's status for that category; (c) technical evidence, citing the
+   retained raw reports by path.
 
 ## Remediation Recommendations — Internal, Per Pair
 
 Write one per pair, `internal/<pair-name>/remediation-recommendations.md` — the
 engineer-facing worklist of postures that should still be repaired within
-the SOW: every finding classified **unchanged** or **new** whose category
-falls inside SOW scope (not in the exclusions partition), ordered by
-severity, with dimension, category, evidence pointer into the retained raw
-reports, and a one-line recommended repair. With no SOW
-configured, include all unchanged/new findings and note the missing SOW.
-This document feeds the fix-and-re-run flow; it is never client-facing.
+the SOW. Classify every finding marked **unchanged** or **new** against the
+SOW's **positive scope** (its contracted work and acceptance criteria —
+absence from the exclusions list is not inclusion):
+
+- **in-scope** — the SOW's own language covers the category; quote or cite
+  that language per item. These are the worklist.
+- **scope-unclear** — plausibly covered but not clearly; on the worklist,
+  flagged for user review, with the ambiguity named.
+- **out-of-scope** — not covered by the SOW's positive scope; listed in a
+  separate closing section as counts per category with evidence pointers,
+  never as worklist items.
+
+The document opens with the classification counts, so an inflated worklist
+is visible at a glance. Worklist items are ordered by severity, each with
+dimension, category, SOW citation (or ambiguity note), evidence pointer
+into the retained raw reports, and a one-line recommended repair. With no
+SOW configured, all unchanged/new findings go on the worklist with the
+missing SOW noted. This document feeds the fix-and-re-run flow; it is
+never client-facing.
 
 ## Return
 
 Compact summary only: document paths, per-pair classification counts,
-remediation item counts, partition flags (missing SOW, user-review items).
+remediation counts per scope class (in-scope / scope-unclear /
+out-of-scope), partition flags (missing SOW, user-review items).
 
 ---
 

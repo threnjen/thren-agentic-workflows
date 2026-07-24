@@ -130,10 +130,17 @@ of an engagement pair), these rules make them comparable:
   categories across scans.
 - **Severity**: the 4-level scale above (see Severity Levels). Compare
   severities only by these labels.
-- **Security dimension — per-finding matching**: match findings across scans
-  on `Category` plus the file path from `Location` (line numbers excluded —
-  they shift between revisions). The scan-local `ID` column is never used for
-  cross-scan matching.
+- **Security dimension — posture first, then issue identity**: the headline
+  comparison is posture-level — counts by category × severity on each side,
+  the before/after of the security results themselves. Per-finding matching
+  then substantiates it: two findings match when they are the **same
+  underlying issue**, judged from category, description, and evidence; a
+  matching file path from `Location` is corroborating evidence, never the
+  key — code moves in refactors and rewrites, and line numbers shift between
+  revisions. The scan-local `ID` column is never used for cross-scan
+  matching. An original finding that can be neither confidently matched nor
+  confidently ruled out is treated as possibly persisting (unfixed),
+  flagged for review — never silently counted as fixed.
 - **All other dimensions — category-level rollups**: compare counts by
   category × severity; no per-finding matching.
 - **Unmatched findings are never dropped**: a finding present only in the

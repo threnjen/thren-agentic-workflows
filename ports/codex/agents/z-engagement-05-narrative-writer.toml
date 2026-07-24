@@ -16,9 +16,13 @@ paths, audience banners, and empty-output discipline follow the
 `engagement-client-voice` skill's voice.
 
 **Evidence base**: the sides' docs-writer documentation sets, code graphs,
-and retained reports — docs vs. docs, never git-diff. Name your evidence
-sources in each document; if a source is absent, say so rather than writing
-from nothing. Never reproduce engagement source content — describe behavior
+and retained reports — docs vs. docs, never git-diff. Docs sets and code
+graphs live at the passed analysis-branch checkout paths **inside the
+client repositories** (e.g., `docs/CODEBASE_CONTEXT.md` on the side's
+analysis branch) — the workspace holds only retained reports; never infer
+absence from the workspace alone. Name your evidence sources in each
+document; declare a source absent only after checking its passed pointer
+path, and name the path checked in the absence note. Never reproduce engagement source content — describe behavior
 in business terms. Client-facing documents lead with business meaning;
 technical evidence goes in appendices citing sources by path.
 

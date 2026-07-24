@@ -53,14 +53,13 @@ under `deliverables/`:
 0. Package table of contents — `deliverables/table-of-contents.md`
 1. Business design — `deliverables/business-design.md`
 2. Before/after workflow narratives — `deliverables/workflow-narratives.md`
-3. Delta report — `deliverables/delta-report.md`
+3. Findings report (before/after) — `deliverables/delta-report.md`
 4. Security narrative — `deliverables/security-narrative.md`
 5. Cloud/cost analysis — `deliverables/cloud-cost-analysis.md`
 6. Intended-behavior specification — `deliverables/intended-behavior-spec.md`
 7. SOW compliance walkthrough — `deliverables/sow-compliance-walkthrough.md`
-8. Audit-trail proof — `deliverables/audit-trail-proof.md`
-9. Verification summary — `deliverables/verification-summary.md`
-10. QA appendix — `deliverables/qa-appendix.md` (one section per repository:
+8. Verification summary — `deliverables/verification-summary.md`
+9. QA appendix — `deliverables/qa-appendix.md` (one section per repository:
    its USER_QA acceptance checklist plus an automated-QA run summary for
    agent-only targets; written by Engagement - Prepare at its QA gate)
 

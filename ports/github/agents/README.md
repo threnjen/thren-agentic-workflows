@@ -179,7 +179,7 @@ These agents are not visible in the picker. They run automatically as part of or
 | **05f Test Health** | 05 PR - Review | Delegate coverage, redundancy, and flake analysis into a test health report |
 | **05h Cleanliness Auditor** | 05 PR - Review | Evaluate the cleanliness of branch-added code and recommend specific cleanup categories when non-passing |
 | **05g Readiness Synthesizer** | 05 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
-| **Engagement - Delta Synthesizer** | Engagement - Orchestrator | Produce the client-facing delta report, the SOW-exclusions partition, the audit-trail proof, and the internal remediation recommendations for a pair |
+| **Engagement - Delta Synthesizer** | Engagement - Orchestrator | Produce the client-facing findings report, the SOW-exclusions partition, and the internal remediation recommendations for a pair |
 | **Engagement - Security Narrative** | Engagement - Orchestrator | Write the four-section client-facing security narrative and the internal engineer-facing security-delta report from the pair's reports and exclusions partition |
 | **Engagement - Pricing Researcher** | Engagement - Orchestrator | Turn scan/dependency change evidence into cited cloud/cost claims via live pricing research, plus an internal cost-basis report (sole web-granted engagement agent) |
 | **Engagement - Narrative Writer** | Engagement - Orchestrator | Write the business design document, intended-behavior specification, and before/after workflow narratives for a pair, plus the internal narrative-basis report |
@@ -282,7 +282,7 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Instructions - Evaluator** *(subagent of Instructions Manager)* — Evaluates whether changes to instruction files are improvements or regressions using blind A/B testing, rule classification, 3-run stability scoring, and rule-quality analysis. Reads the BEFORE state automatically from git history.
 
-**Engagement - Delta Synthesizer** *(subagent of Engagement - Orchestrator)* — Consumes both sides' report sets to produce the business-framed delta report, owns the single-point SOW-exclusions partition, writes the audit-trail proof checklist, and emits the internal remediation-recommendations worklist of in-SOW-scope postures still open on the upgraded side.
+**Engagement - Delta Synthesizer** *(subagent of Engagement - Orchestrator)* — Consumes both sides' report sets to produce the plain-language findings report (with the how-we-checked-our-own-work appendix), owns the single-point SOW-exclusions partition, and emits the internal remediation-recommendations worklist of in-SOW-scope postures still open on the upgraded side.
 
 **Engagement - Security Narrative** *(subagent of Engagement - Orchestrator)* — Writes the four-section client-facing security narrative (posture, repaired, out-of-scope, residual) with every original-side finding classified exactly once, consuming the exclusions partition rather than re-deriving it. Also writes the internal engineer-facing security-delta report (original / fixed / unfixed / introduced) verifying the upgrade added no new security issues.
 

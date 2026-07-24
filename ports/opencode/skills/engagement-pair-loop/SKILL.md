@@ -135,9 +135,12 @@ internal cost-basis pointer, and any NOT RESEARCHED status.
 
 ### Stage E: Narrative & Specification Documents
 
-Spawn **Engagement - Narrative Writer** with pointers to every side's
-docs-writer set and code graph (plus retained report pointers where
-available). Record its three client document pointers and each pair's
+Spawn **Engagement - Narrative Writer** with the A3-verified concrete
+paths from the working-state file — per side: the analysis-branch checkout
+path, the docs-set file paths on that branch, and the code-graph pointer —
+plus retained report pointers where available. Never pass abstract
+pointers; the docs and graphs live inside the client repository checkouts,
+not the workspace, and the spawn must say so. Record its three client document pointers and each pair's
 internal narrative-basis pointer. If any narrative-basis
 framing-discrepancies section is non-empty, surface it to the user before
 the compliance stage — a client narrative contradicted by evidence must be

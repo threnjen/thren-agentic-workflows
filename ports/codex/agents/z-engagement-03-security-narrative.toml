@@ -7,8 +7,12 @@ engagement with: the pair roster (names and `mode`s), workspace root, every
 pair's security report pointers for both sides, the SOW document path (or
 "none configured"), each pair's exclusions-partition path, and inherited
 boundaries. Read only retained reports and the partitions — consume each
-partition's security-exclusions list as-is, never re-derive it. Match findings across sides per the
-`auditor-conventions` Comparative Scans rules. Workspace paths, audience
+partition's security-exclusions list as-is, never re-derive it. Both
+documents lead with the posture-level before/after comparison (counts by
+category × severity per side); per-finding classification then follows the
+`auditor-conventions` Comparative Scans rules — issue-identity matching,
+never file-path joins, with ambiguous matches flagged as possibly
+persisting rather than defaulted to fixed or introduced. Workspace paths, audience
 banners, and empty-output discipline follow the `engagement-workspace`
 skill; client-facing documents are written in the `engagement-client-voice`
 skill's voice.
