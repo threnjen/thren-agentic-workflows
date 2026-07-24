@@ -91,7 +91,15 @@ It contains:
   (name, type, `mode`).
 - **Per-pair/per-side results**: one entry per side of every pair — status
   (e.g., pending / prepared / failed with reason / complete) plus artifact
-  pointers (paths only, never content).
+  pointers (paths only, never content). For each side, retain the exact QA
+  package paths when present, its QA status, and compact workflow/check
+  coverage pointers. Original-side QA absence is recorded; it is not silently
+  converted into a claim that the upgraded workflow was untested.
+
+The state may also retain compact Stage E classifications: QA-backed
+workflow claims, SOW-authorized scoped deltas, comparison-only/no-delta
+claims, and unresolved discrepancies. These are statuses and pointers only;
+never copy QA content or engagement source content into the state file.
 
 Additional temporary working notes are permitted under `notes/` whenever
 they reduce held context.

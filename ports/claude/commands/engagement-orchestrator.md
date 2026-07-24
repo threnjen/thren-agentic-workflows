@@ -47,6 +47,12 @@ as the run progresses: resolved inputs after config validation, then each
 per-pair/per-side status and pointers as results arrive. It is the run's
 sole observability surface and final run record.
 
+For every side, retain the exact qa package paths (`QA_AUTOMATED.md` and
+`QA_USER.md` when present), the recorded qa status, and compact coverage
+metadata returned by preparation. Do not reduce qa evidence to the client
+qa appendix or to an overall PASS/FAIL label; later stages need the source
+paths and the checks that cover each claimed workflow.
+
 **On start, check for an existing working-state file.** If found, resume
 from its recorded statuses — redo only sides not recorded complete. A silent
 restart-from-zero is wrong.
@@ -80,7 +86,8 @@ completed QA_AUTOMATED/QA_USER package, halting to send the user to the
 `deliverables/qa-appendix.md`, analysis-branch setup, graph builds, and
 baseline snapshots. It spawns nothing; documentation is produced in
 Stage A of the pair loop. Consume its compact final report; record per-side
-preparation status, the qa appendix pointer, and pointers.
+preparation status, exact qa package paths, compact workflow/check coverage,
+the qa appendix pointer, and the remaining artifact pointers.
 
 ### 3. Entry Check
 
@@ -110,13 +117,23 @@ stage, and why, and do not spawn any agent below. A client package is
 never assembled around missing artifacts — the failure is resolved and the
 affected stages re-run first.
 
+Do not treat a statement such as “no identifiable delta” as a blocker by
+itself. Before Stage 5, Stage E must classify each such workflow as either
+QA-backed on the upgraded side, comparison-only, or still unverified, and
+must classify every mode-straining change as either explicitly authorized by
+the SOW or unresolved. An explicit SOW exception is an approved scoped delta,
+not an unresolved framing discrepancy. Only an unresolved discrepancy or an
+unverified required behavior blocks Stage 5.
+
 1. **z-engagement-06-compliance-writer** — spawn with the workspace root, the
    SOW path (or "none configured"), the deliverables-spec path, the pair
    roster with `mode`s, retained-artifact pointers from the working-state
    file, the A3-verified per-side concrete paths (analysis-branch checkout
-   path, docs-set paths, code-graph pointer, QA-package paths — the
-   evidence inside the client repos), and the boundaries above. It writes the SOW compliance walkthrough
-   and the verification summary. Record its document pointers.
+   path, docs-set paths, code-graph pointer, exact qa package paths and
+   check-coverage pointers — the evidence inside the client repos), the
+   Stage E qa/scope classifications, and the boundaries above. It writes the
+   SOW compliance walkthrough and the verification summary. Record its
+   document pointers.
 2. **z-engagement-07-manifest-assembler** — spawn after the compliance writer
    completes, with the same inputs. It assembles `manifest.md` per the
    `engagement-package-manifest` schema. Record the manifest path and its

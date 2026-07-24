@@ -138,10 +138,32 @@ internal cost-basis pointer, and any NOT RESEARCHED status.
 Spawn **Engagement - Narrative Writer** with the A3-verified concrete
 paths from the working-state file — per side: the analysis-branch checkout
 path, the docs-set file paths on that branch, and the code-graph pointer —
-plus retained report pointers where available. Never pass abstract
-pointers; the docs and graphs live inside the client repository checkouts,
-not the workspace, and the spawn must say so. Record its three client document pointers and each pair's
-internal narrative-basis pointer. If any narrative-basis
-framing-discrepancies section is non-empty, surface it to the user before
-the compliance stage — a client narrative contradicted by evidence must be
-resolved before delivery.
+plus the exact `QA_AUTOMATED.md` and `QA_USER.md` paths, QA run-result/check
+coverage pointers, the SOW/contract path, and retained report pointers where
+available. Never pass abstract pointers; the docs, graphs, and QA packages
+live at the passed paths inside the client repository checkouts, not the
+workspace, and the spawn must say so.
+
+Before drafting, the writer builds a compact evidence map for every primary
+workflow: original/upgraded comparison sources, exact QA check IDs and
+statuses for the upgraded side, and the SOW criterion or explicit scope
+exception that governs it. A completed PASS on an exact QA check is direct
+evidence that the upgraded behavior was observed at that QA standard. It is
+not, by itself, proof that the original side behaved identically; when
+original QA is absent, preserve that asymmetry in the wording. “No
+identifiable delta” means no behavioral delta was established by the
+comparison evidence; it never means no source-code changes and never means
+that QA was absent.
+
+An intentional change expressly authorized by the SOW is an approved scoped
+delta under any pair mode. It must be narrated as such and must not be
+reported as an unresolved framing discrepancy. Only a change outside the
+SOW, or a required behavior whose evidence and scope cannot be established,
+remains a framing discrepancy.
+
+Record its three client document pointers and each pair's internal
+narrative-basis pointer. The return must include compact counts/pointers for
+QA-backed workflows, SOW-authorized deltas, comparison-only claims, and
+unresolved discrepancies. If any unresolved framing discrepancy remains,
+surface it to the user before the compliance stage — a client narrative
+contradicted by evidence must be resolved before delivery.

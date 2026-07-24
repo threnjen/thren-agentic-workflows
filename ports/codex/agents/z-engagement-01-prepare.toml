@@ -84,7 +84,11 @@ covering targets QA_USER marks agent-only. For original sides without qa docs, n
 their absence. Client voice per the
 `engagement-client-voice` skill; no secrets, no internal paths. This is the
 one workspace document you write; the workspace itself already exists —
-never create it.
+never create it. The appendix is a presentation artifact, not a replacement
+for the source qa package: retain and report the exact `QA_AUTOMATED.md` and
+`QA_USER.md` paths plus the check IDs/statuses that cover the repository's
+primary workflows. A generic repository-level PASS without those mappings
+must not be handed to later synthesis stages as workflow evidence.
 
 ## Hard Rule: Context Budget
 
@@ -216,7 +220,8 @@ each re-run produced — a silent no-op is not an acceptable report.
 Return a compact table covering every side of every pair: pair name, side
 role, analysis-branch status, graph status (built / NOT RUN with
 reason), baseline snapshot path, artifact locations (local paths only),
-per-repo QA-gate status with the qa appendix path, and
+exact QA_AUTOMATED and QA_USER paths, per-repo QA-gate status, compact
+workflow/check coverage pointers, the qa appendix path, and
 the three analysis-branch invariant assertions with their evidence (recorded
 HEAD SHAs). Nothing in this report contains engagement file contents.
 
