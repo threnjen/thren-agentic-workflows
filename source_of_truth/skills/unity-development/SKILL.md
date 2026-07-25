@@ -155,6 +155,22 @@ This bug has recurred multiple times. It is the single most common UI Toolkit mi
 - When a Unity test becomes obsolete because production behavior changed, update or retire it in the same feature and document the reason. Leave no orphaned or silently broken tests behind.
 - For controller, UI Toolkit, or scene-wiring changes, include the corresponding test assembly and test root builder files in the planned scope and explicitly note whether each needs test updates.
 
+## Test Execution
+
+Unity Test Framework is the authoritative runner. Compilation success and focused harnesses are not test execution — see the `test-execution-evidence` instruction.
+
+```bash
+Unity -runTests -projectPath <path> -testPlatform EditMode|PlayMode -testResults <results.xml>
+```
+
+- `-batchmode` is optional. Omit it to run against the Editor UI; add it for headless runs.
+- **Affected-suite runs use `-testFilter`** — a semicolon-separated list of full test names or a regex, negation supported. Scope it to the suites exercising the changed symbol. Gate runs (wave boundary, phase end) are unfiltered.
+- Write results under `dev/test-results/`.
+
+**Editor lock.** If `Temp/UnityLockfile` exists or the Editor is open on the project, do NOT launch a CLI run — it will fight the running Editor. Report `not-executed: editor lock` and ask the user to run the suite. Never force it.
+
+**Reading the results XML.** Root `<test-run total= passed= failed=>` gives the counts; failing test names come from `<test-case result="Failed">`. A run reporting zero tests discovered is `not-executed`.
+
 ## Test Authenticity Rules
 
 ### Don't Mock Framework Types with Simplified Stand-ins

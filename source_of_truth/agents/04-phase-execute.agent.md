@@ -53,7 +53,7 @@ Execute waves in numeric wave order according to the execution schedule from the
 Record each reviewer's verdict as it returns:
 - `[0N-task-name]`: Approved | Approved with Reservations | Changes Requested
 
-After ALL waves complete, determine: are all recorded verdicts Approved or Approved with Reservations? Store as `all-approved: yes/no` — it controls Prod Review mode in Step 5. (The visual verification verdict from Step 3, if that step runs, also feeds `all-approved`.)
+After ALL waves complete, determine: are all recorded verdicts Approved or Approved with Reservations? Store as `all-approved: yes/no` — it controls Prod Review mode in Step 5. (The Step 2.5 wave test gate, and the visual verification verdict from Step 3 if that step runs, also feed `all-approved`.)
 
 ---
 
@@ -63,7 +63,7 @@ For each feature in the wave (in numeric prefix order), complete the full cycle 
 
 **A. Implement** — spawn **Feature - Implementer** once for the full feature:
 
-> "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Return a summary of what was implemented and test results."
+> "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Run the affected suites from these manifest verification assets: [verification-assets extracted from manifest, or `not provided`]. Return a summary of what was implemented, the test-execution status with its results artifact path, and test results."
 
 Wait for the implementer to return.
 
@@ -91,7 +91,7 @@ Then spawn **Feature - Reviewer** per Steps B–C from the `implementation-pipel
 
 spawn one **Feature - Implementer** per feature in the wave, all at the same time:
 
-> "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Return a summary of what was implemented and test results."
+> "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Run the affected suites from these manifest verification assets: [verification-assets extracted from manifest, or `not provided`]. Return a summary of what was implemented, the test-execution status with its results artifact path, and test results."
 
 Wait for ALL implementers to return before proceeding.
 
@@ -117,6 +117,19 @@ For each feature in the wave (in numeric prefix order):
 3. Mark the feature complete in the todo list.
 
 Because parallel-safe features have disjoint file scopes, sequential commits within the wave will not conflict.
+
+### Step 2.5: Wave Test Gate
+
+Run this at the end of every wave, before starting the next one. It is the gate that catches a late feature breaking an earlier feature's tests — the class of defect no per-feature review can see, because the broken tests belong to files outside the current feature's scope.
+
+1. Run the integrated suite for the wave: the union of every feature's affected suites plus the manifest's `## Verification Assets`. On the final wave, run the suite unfiltered. For Unity, use the command and `-testFilter` scoping in the `unity-development` skill (Test Execution).
+2. Read the results artifact and record `wave-[N] test-execution: executed-green | executed-failing | not-executed (<reason>)`.
+3. **On `executed-failing`, remediate once.** Re-spawn the **Feature - Implementer** owning the failing behavior with the failing test names, then re-run the gate. Retry at most once. If still failing, record the final status and proceed — the blocker escalates to Step 6.
+   > "[SUBAGENT-MODE] The wave test gate failed for phase [phase-name]. Failing tests: [names and assertion messages]. Results artifact: [path]. These failures are in suites outside your feature's Files Changed table — a contract you changed broke callers written before it. Fix the production code or update the affected fixtures so these tests pass. Do NOT delete, skip, or weaken tests to force a pass. Return what you changed."
+4. **On `not-executed`, do not proceed silently.** Report the reason to the user and ask them to run the suite, then resume from their results artifact. This is the one point where the pipeline waits on a human rather than accumulating unverified work.
+5. If the final status for any wave is not `executed-green`, set `all-approved: no`.
+
+Do NOT emit a separate `eval:` commit for this step.
 
 ### Step 3: Visual Verification Gate (conditional)
 
@@ -183,7 +196,7 @@ spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Visual verification: [Pass | skip reason]. Security scan: `[security report path]` ([Pass | Pass with Conditions]). All verdicts Approved: YES — use fast-track mode."
+> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-wave status and results artifact paths from Step 2.5]. Visual verification: [Pass | skip reason]. Security scan: `[security report path]` ([Pass | Pass with Conditions]). All verdicts Approved: YES — use fast-track mode."
 
 **If QA was generated and any verdict was not Approved:**
 
@@ -191,7 +204,7 @@ spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Visual verification: [Pass | Fail | Unverified | skip reason]. Security scan: `[security report path]` ([Pass | Pass with Conditions | Blocked]). All verdicts Approved: NO — use standard mode."
+> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-wave status and results artifact paths from Step 2.5]. Visual verification: [Pass | Fail | Unverified | skip reason]. Security scan: `[security report path]` ([Pass | Pass with Conditions | Blocked]). All verdicts Approved: NO — use standard mode."
 
 After the Prod Code Review subagent returns, stage only the final review artifact, the security scan report, and any phase-level pipeline documents updated by this step, then commit them with the exact message `eval: final-review`.
 
@@ -201,6 +214,9 @@ Present results using the Pipeline Completion Report format from the auto-loaded
 - Scope label: **Phase**
 - Items label: **Features completed**
 - Include the QA document path and security scan report path
+- Include the final test-execution status and results artifact path
+
+Do not report the phase as implementation-complete unless the final gate is `executed-green`. If it is `executed-failing` or `not-executed`, say so plainly and name what remains — an unrun suite is not a completed phase.
 
 ### Step 8: Update Documentation
 
@@ -212,7 +228,7 @@ Follow the Post-Loop: Documentation Update section from the `implementation-pipe
 
 ### Test Failures
 
-See the Test Failure Handling section of the `implementation-pipeline-loop` skill.
+See the Test Execution Gate section of the `implementation-pipeline-loop` skill for per-feature handling, and Step 2.5 above for the wave-level gate.
 
 ### Documentation Drift
 

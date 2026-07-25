@@ -16,6 +16,7 @@ Be skeptical and thorough.
 - After review, apply fixes for all High and Blocker severity issues directly
 - DO NOT skip any review category—be comprehensive
 - DO NOT give vague feedback—provide specific file:line references
+- Do NOT return `Approved` or `Approved with Reservations` while the authoritative tests for the changed behavior are `not-executed`. Unrun tests are not a reservation — return `Changes Requested` naming the suites that must run.
 - Distinguish what you VERIFIED from what you only inferred by reading. A clean compile, a passing test, or "the code looks correctly wired" does NOT prove an acceptance criterion that requires execution, runtime, or visual confirmation. Never mark such an AC met or "verified" from static review — report it as **unverified, requiring [the specific check]** (e.g., a runtime/integration/manual/visual step). Static reading confirms that references exist, not that they resolve or that behavior was observed.
 
 ## Required Inputs
@@ -25,6 +26,8 @@ Read in this order from `dev/feature/[0N-task-name]/`:
 1. **Implementation record first** — `[0N-task-name]-implementation.md`. This is your primary input: it tells you exactly which files changed, which ACs were addressed, and where to focus your review.
 2. **Plan document** — `[0N-task-name]-plan.md` only, for the original AC requirement text needed for traceability checking.
 3. **Source code** — only the files listed in the implementation record's "Files Changed" table. Do not do a broad codebase scan.
+
+**Exception — affected tests.** When the change alters a shared API signature or constructor contract, a serialized schema, a bootstrap path, or a data/def file, you may read **and run** the affected test suites even though they are outside the "Files Changed" table. Those callers' tests are the only evidence a fail-closed contract change did not break them. This exception covers tests and their fixtures only, not a general codebase scan.
 
 **Skip:** `[0N-task-name]-context.md` and `[0N-task-name]-tasks.md` — these are for the Implementer and are already synthesized into the implementation record. Also skip `docs/CODEBASE_CONTEXT.md` — the implementation record provides all file context needed.
 
@@ -157,6 +160,7 @@ After the review is complete — and after any fixes have been applied — write
 
 ## Verdict
 <!-- Approved | Approved with Reservations | Changes Requested -->
+<!-- Neither Approved nor Approved with Reservations is permitted while the authoritative tests for the changed behavior are not-executed. -->
 
 ## Traceability
 

@@ -75,6 +75,13 @@ If tests exist but some are already failing:
 - If yes: fix broken tests first, then record the new Green baseline
 - If no: record the current state, proceed with caution, and note pre-existing failures in the deliverables
 
+**Branch: Runner unavailable**
+
+If the authoritative runner cannot be executed in this environment (missing runner, locked project, unavailable license):
+- Record `baseline: not-executed (<reason>)`. Do not record a Green baseline and do not substitute a compile check or focused harness for one.
+- Report the status and reason in the return summary so the orchestrator can gate on it.
+- Proceed only if the plan is otherwise unblocked — every downstream claim inherits `not-executed`.
+
 If an implementation record already exists from an earlier AC-scoped pass, preserve its original feature-level baseline when you update the record. Treat the current test run as the pre-pass state for this invocation and update the record's final result to the post-pass state after the requested AC scope is complete.
 
 ### A. Traceability-First Mapping
@@ -94,6 +101,8 @@ For each active AC in plan order:
 4. Move to the next AC
 
 Do not batch multiple ACs into a single Red-Green-Refactor cycle. Each AC gets its own cycle. If the orchestrator scoped this run to a single AC, complete only that AC and stop.
+
+After the active AC scope is green, run the affected suites per the `test-execution-evidence` instruction — the manifest verification assets the orchestrator passed you, plus any suite exercising a symbol whose contract you changed. Your own new tests do not cover callers written before your change.
 
 ### C. Correctness & Edge Cases
 
@@ -180,6 +189,7 @@ After writing the implementation record, return a brief summary to the orchestra
 Required fields only:
 - **AC scope**: exact AC labels completed in this invocation
 - **Status**: Done / Blocked (and what is blocking)
+- **Test execution**: `executed-green` | `executed-failing` | `not-executed` (+ reason), with the results artifact path
 - **Test results**: Baseline → Final pass/fail counts
 - **Deviations**: "None" or one-line description per deviation
 - **Gaps**: "None" or one-line description per gap

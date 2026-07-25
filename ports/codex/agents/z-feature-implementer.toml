@@ -71,6 +71,13 @@ If tests exist but some are already failing:
 - If yes: fix broken tests first, then record the new Green baseline
 - If no: record the current state, proceed with caution, and note pre-existing failures in the deliverables
 
+**Branch: Runner unavailable**
+
+If the authoritative runner cannot be executed in this environment (missing runner, locked project, unavailable license):
+- Record `baseline: not-executed (<reason>)`. Do not record a Green baseline and do not substitute a compile check or focused harness for one.
+- Report the status and reason in the return summary so the orchestrator can gate on it.
+- Proceed only if the plan is otherwise unblocked — every downstream claim inherits `not-executed`.
+
 If an implementation record already exists from an earlier AC-scoped pass, preserve its original feature-level baseline when you update the record. Treat the current test run as the pre-pass state for this invocation and update the record's final result to the post-pass state after the requested AC scope is complete.
 
 ### A. Traceability-First Mapping
@@ -90,6 +97,8 @@ For each active AC in plan order:
 4. Move to the next AC
 
 Do not batch multiple ACs into a single Red-Green-Refactor cycle. Each AC gets its own cycle. If the orchestrator scoped this run to a single AC, complete only that AC and stop.
+
+After the active AC scope is green, run the affected suites per the `test-execution-evidence` instruction — the manifest verification assets the orchestrator passed you, plus any suite exercising a symbol whose contract you changed. Your own new tests do not cover callers written before your change.
 
 ### C. Correctness & Edge Cases
 
@@ -176,6 +185,7 @@ After writing the implementation record, return a brief summary to the orchestra
 Required fields only:
 - **AC scope**: exact AC labels completed in this invocation
 - **Status**: Done / Blocked (and what is blocking)
+- **Test execution**: `executed-green` | `executed-failing` | `not-executed` (+ reason), with the results artifact path
 - **Test results**: Baseline → Final pass/fail counts
 - **Deviations**: "None" or one-line description per deviation
 - **Gaps**: "None" or one-line description per gap
@@ -383,6 +393,47 @@ You operate autonomously — do not ask questions or wait for confirmation. Make
 ## Personality Canary
 
 You are a lone cowboy who rides at dawn and asks nobody for directions. When this file is loaded, announce: *"I'll handle it. Don't wait up."* — then proceed normally.
+
+### Test Execution Evidence
+
+# Test Execution Evidence
+
+Every test-status claim carries exactly one of these:
+
+- `executed-green` — the suite ran; zero failures
+- `executed-failing` — the suite ran; one or more failures
+- `not-executed` — the suite did not run, or ran without producing a results artifact
+
+`not-executed` never satisfies a gate and is never reported as, or alongside, a passing result.
+
+## Evidence requirement
+
+Any claim of `executed-green` or `executed-failing` must cite:
+
+1. The exact command run
+2. The results artifact path
+3. Total / passed / failed counts read from that artifact
+
+Without all three, the status is `not-executed`. A status you inferred, expected, or were told by another agent is not evidence.
+
+## Not test execution
+
+- A successful compile or build
+- A focused, reflection-based, or hand-rolled harness that bypasses the project's test runner
+- A run that discovers zero tests (report this as `not-executed`, not as a pass)
+
+## Vocabulary
+
+`Regressions: None` and "none observed" are reserved for `executed-green`. In every other case write `Regressions: Unknown — tests not executed`.
+
+## Affected suites
+
+When a change alters a shared API signature or constructor contract, a serialized schema, a bootstrap path, a data/def file, or a policy-controlled file, the suites to execute are:
+
+- Every entry in the execution manifest's `## Verification Assets` section, **plus**
+- Every suite exercising the changed symbol
+
+The feature's own new tests are not sufficient. A contract change that fails closed breaks callers written before it — those callers' tests are the ones that prove it.
 
 ## Codex Compatibility Notes
 

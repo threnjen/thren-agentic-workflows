@@ -41,10 +41,14 @@ Use exact rubric or plan criterion IDs when available. If a commit SHA is not kn
 |------|-------------|--------------|--------|
 
 ## Test Results
+- **Execution**: executed-green | executed-failing | not-executed (+ reason)
+- **Command**: [exact command run]
+- **Results artifact**: [path]
 - **Baseline**: [X passed, Y failed] (before implementation)
 - **Final**: [X passed, Y failed] (after implementation)
 - **New tests added**: [count]
-- **Regressions**: None | [describe]
+- **Affected suites run**: [list] | None
+- **Regressions**: None | [describe] | Unknown — tests not executed
 
 ## Deviations from Plan
 <!-- "None" or list -->
@@ -64,3 +68,4 @@ Additional requirements:
 - `Evidence Paths` should point to concrete source, test, or artifact locations that a grader can search locally.
 - `Implement Commit SHA` and `Review Commit SHA` may start as `PENDING`, but the columns must exist so later pipeline stages can fill them in.
 - Keep the `Acceptance Criteria Status` section aligned with the coverage matrix rather than inventing a second source of truth.
+- `Regressions: None` requires `Execution: executed-green`. Anything else records `Unknown — tests not executed`. See the `test-execution-evidence` instruction.

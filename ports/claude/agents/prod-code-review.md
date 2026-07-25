@@ -139,9 +139,13 @@ Go beyond the documents — read the actual code.
 
 #### 3B. Test Verification
 
+Both modes require a results artifact — the exact command, the results file, and total/passed/failed counts read from it. A compile check, a focused harness, a run discovering zero tests, or a reported summary with no artifact behind it is **not executed**, and unexecuted tests are a High finding, never a pass.
+
 **Standard mode:** Run the test suite, compare test counts to the implementation record, read test files to verify they test claimed behavior, check for brittle tests, identify ACs lacking tests.
 
 **Fast-track mode:** Run the test suite and verify all tests pass. Compare the count to the implementation record. Do not re-read test files — the Feature Reviewer has already assessed test quality.
+
+Cross-check each implementation record's `Regressions` field: `None` is only credible against `Execution: executed-green`. Flag any record claiming "none observed" without an artifact.
 
 #### 3C. Deviation Analysis
 

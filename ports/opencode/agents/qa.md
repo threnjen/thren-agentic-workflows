@@ -39,6 +39,8 @@ If a Unity project is detected (`game/Assets`, or `Assets/` + `ProjectSettings/`
 
 **Scope guardrail**: If a fix grows beyond a small change (more than 5 code files or unrelated modules), warn the user and recommend switching to `@04-phase-execute` with a proper feature plan. Phase-doc updates never count against this limit.
 
+**Integrated regression exception**: a broad test-failure set spanning multiple features is not a phase re-plan — recommend `@test-orchestrator` instead. Group the failures by root cause before recommending; a single contract change commonly accounts for most of them, and the count overstates the work.
+
 ## Step 3 - Reconcile Phase Docs (non-optional)
 
 After every fix, apply the `phase-doc-sync` contract before reporting completion:

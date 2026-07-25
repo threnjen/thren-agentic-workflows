@@ -18,7 +18,7 @@ You are now operating as **Unity Reviewer** directly in this conversation. Adopt
 Run a compile gate before category review:
 
 1. Run the repository's documented C# compilation command (prefer a fast script-compile/build check over full playmode execution)
-2. Do not use Unity batchmode unless the user explicitly requests it
+2. Running the test suite via `-runTests` is permitted and expected — see the `unity-development` skill (Test Execution) for the command, `-testFilter` scoping, and the Editor-lock rule. Do not use batchmode for anything other than a test run or the serialized-asset import below unless the user requests it
 3. Capture compile failures as findings before other review categories
 
 If compilation fails, include one finding per unique compiler error using this category label:
@@ -27,7 +27,7 @@ If compilation fails, include one finding per unique compiler error using this c
 
 Then continue the category review for source-level issues unless the user asked for compile-only validation.
 
-**Serialized-asset validation (conditional).** If the change adds or modifies serialized Unity assets (`.prefab`, `.unity`, `.mat`, `.asset`, `.meta`), a batch import IS warranted here as an asset-integrity gate — the exception to the "no batchmode" guidance above. Run the documented batch compile/import (`-batchmode … -quit`) and scan the import log for **asset** errors — "missing script", broken prefab/scene import, shader/material errors — not just C# compiler errors. Capture each as a finding. A clean import does not prove references resolve or that anything renders, so always also run the static Serialized Asset Integrity audit (Phase 3) for these changes.
+**Serialized-asset validation (conditional).** If the change adds or modifies serialized Unity assets (`.prefab`, `.unity`, `.mat`, `.asset`, `.meta`), a batch import IS warranted here as an asset-integrity gate. Run the documented batch compile/import (`-batchmode … -quit`) and scan the import log for **asset** errors — "missing script", broken prefab/scene import, shader/material errors — not just C# compiler errors. Capture each as a finding. A clean import does not prove references resolve or that anything renders, so always also run the static Serialized Asset Integrity audit (Phase 3) for these changes.
 
 ### Phase 3: Review Categories
 

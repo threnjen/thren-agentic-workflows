@@ -25,7 +25,7 @@ After the subagent returns:
 
 spawn the **z-feature-reviewer** subagent:
 
-> "[SUBAGENT-MODE] Review the implementation at `[plan-path]`. Read the plan files and implementation record, review all changed code, apply fixes for any issues found, and write the review record to `[plan-path]/[task-name]-review.md`. Return the verdict and a summary of issues found and fixes applied."
+> "[SUBAGENT-MODE] Review the implementation at `[plan-path]`. Read the plan files and implementation record, review all changed code, apply fixes for any issues found, and write the review record to `[plan-path]/[task-name]-review.md`. Manifest verification assets — run these affected suites if the change touches a shared contract: [verification-assets, or `not provided`]. Return the verdict, the test-execution status with its results artifact path, and a summary of issues found and fixes applied."
 
 After the subagent returns:
 - Verify `[plan-path]/[task-name]-review.md` exists
@@ -89,11 +89,15 @@ Update the todo list to mark this task as completed. Proceed to the next task.
 - `[plan-path]` is the directory containing the task's plan files (e.g., `dev/feature/[0N-task-name]/` or `dev/[audit-name]/[task-name]/`)
 - `[task-name]` is the kebab-case identifier for the task, matching the plan file prefix (including the `0N-` numeric prefix for feature directories)
 
-## Test Failure Handling
+## Test Execution Gate
 
-If the Implementer reports test failures:
-1. The Reviewer subagent will catch this and request fixes
-2. If tests still fail after the review cycle, the final review (if present) will flag it as a blocker
+After Step B, read the Implementer's and Reviewer's reported test-execution status. Statuses are defined in the `test-execution-evidence` instruction.
+
+- **`executed-green`** → proceed to Step B2.
+- **`executed-failing`** → re-spawn the Implementer with the failing test names, then re-spawn the Reviewer. Retry once. If still failing, record it as a blocking status and proceed — the final review surfaces it.
+- **`not-executed`** → do NOT treat this as green. Record `test-execution: not-executed (<reason>)` for the task and report it to the orchestrator as a blocking status. A task with unrun tests cannot be reported complete.
+
+Carry the per-task status forward: the orchestrator gates its wave and phase completion on it.
 
 ## Post-Loop: Documentation Update
 
