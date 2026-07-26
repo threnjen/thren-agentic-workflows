@@ -64,7 +64,12 @@ prefixes for hidden (non-user-invocable) Claude and Codex subagents.
 
 - Expect these aliases: `docs-writer` → `docs-writer`, `web-research-specialist` →
   `web-researcher`, `audit-code-or-infra` → `audit-code-infra-refactor`.
-- Expect non-user-invocable agents to become `z-*` files in Claude and Codex outputs.
+- Expect non-user-invocable agents to become `z-*` files in Claude and Codex outputs, with
+  one exception: the emitter reuses a pre-existing generated stem when one exists, so
+  `04f-prod-code-review` stays `prod-code-review.md` in `ports/claude/agents`.
+- Expect a user-invocable agent to *also* get a subagent file when an orchestrator declares
+  it as a child (Docs Writer, Web Researcher, Unity Reviewer, Visual Verifier). That is why
+  `ports/claude/agents` and `ports/claude/commands` hold different counts.
 
 ### Symptom
 
@@ -200,13 +205,55 @@ docs as a set.
 
 ### Symptom
 
-Docs mention `nodejs/`, `python/`, `HARNESS_SETUP.md`, `.mcp.json`, `codex/README.md`, or
+`test_retirement_reconciliation.py` fails with `disk holds N, but the surface still
+claims M`.
+
+### Cause
+
+You added or removed agents, skills, or instructions, and a count claim in `README.md`,
+`CONTRIBUTING.md`, or `docs/CODEBASE_CONTEXT.md` still states the old number. The guards
+read the real count from disk and compare.
+
+### Fix
+
+- Recount from disk — do not arithmetic a new number out of the old one. Counts appear in
+  more than one place per file (prose *and* a directory tree), and the guards check all of
+  them.
+- Per-harness port counts also live in the comment block and `roots` list of
+  `test_marker_guard_matches_every_real_generated_file`; update both together.
+
+### Symptom
+
+`test_eval_grader_retirement.py` fails with `ledger instrumentation reappeared`.
+
+### Cause
+
+Something under `source_of_truth/` referenced `ledger-events.jsonl`, `eval/runs/`,
+`remediation-ledger-contract`, or another archived-grader token. The eval-grader system was
+retired precisely because that instrumentation loaded into context on nearly every coding
+task.
+
+### Fix
+
+- Remove the reference. Nothing consumes those files — the grader lives in `eval/deprecated/`
+  and no agent writes ledgers any more.
+- If you genuinely want ledger capture back, make it opt-in per run rather than an
+  always-applied instruction, and read `eval/deprecated/README.md` first.
+- If the file is a historical record rather than live wiring, add its directory to
+  `EXEMPT_PREFIXES` in that test — with a comment saying why.
+
+### Symptom
+
+Docs mention `nodejs/`, `python/`, `HARNESS_SETUP.md`, `.mcp.json`, `codex/README.md`,
+`scripts/setup-hook-symlinks.sh`, `source_of_truth/hooks/`, or
 `scripts/runtime_deployment.py`.
 
 ### Cause
 
-Those surfaces were removed in the `source_of_truth/`/`ports/` restructure. Older docs
-referenced the previous `.github/` → `claude/`/`codex/`/`opencode/` layout.
+Those surfaces were removed. Most went in the `source_of_truth/`/`ports/` restructure, which
+older docs describe as a `.github/` → `claude/`/`codex/`/`opencode/` layout. The hook
+installer and `source_of_truth/hooks/` went with the retired prompt-injection scanner —
+the script called a `--global-output` flag `propagate_master_assets.py` no longer accepts.
 
 ### Fix
 

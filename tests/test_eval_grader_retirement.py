@@ -92,6 +92,8 @@ EXEMPT_FILES = (
     # run output from being committed. Deleting the line would surface every
     # local run directory as a commit candidate.
     ".gitignore",
+    # Documents this guard, including the token names it fires on.
+    "docs/TROUBLESHOOTING.md",
 )
 
 

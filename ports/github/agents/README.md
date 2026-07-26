@@ -6,43 +6,40 @@ Specialized agents for structured software development workflows. The core workf
 
 ## How to Use an Agent
 
-### 1. Open GitHub Copilot Chat
+These agents deploy to Claude Code, Codex, OpenCode, Cursor, and GitHub Copilot. How you reach one depends on the harness:
 
-Open the Copilot Chat panel in VS Code (`Ctrl+Shift+I` / `Cmd+Shift+I`, or click the Copilot icon in the sidebar).
+| Harness | How to invoke |
+|---------|---------------|
+| Claude Code | `/agent-name` slash command, or ask for the agent by name |
+| Cursor | `/agent-name` slash command |
+| GitHub Copilot | Agent picker dropdown at the top of the Copilot Chat panel in VS Code |
+| Codex | Name the agent in the prompt: `codex '@feature-decomposer ...'` |
+| OpenCode | Name the agent in the prompt |
 
-### 2. Select an agent
+Only the 16 user-facing agents are reachable this way. The rest are spawned by orchestrators.
 
-At the top of the chat panel, click the **agent picker** dropdown. Select the agent you want — for example, **01 Project - Planner**.
-
-### 3. Give it context and a prompt
-
-Write your request in the chat input. Be specific about what you want.
-
-### 4. Review the output
-
-Each agent produces structured output — plan documents, implementation summaries, review tables, audit reports, etc.
+Be specific in your request. Each agent produces structured output — plan documents, implementation summaries, review tables, audit reports.
 
 ---
 
-## The Project Pipeline (3 user steps)
+## The Project Pipeline (4 user steps)
 
-The core development workflow. **You interact with steps 1–3. Everything else is automated.**
+The core development workflow. **You drive steps 1–4. Everything after that is automated.**
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  YOU                                                            │
 │                                                                 │
-│  Step 1: 01 Project - Planner    → Phase documents              │
-│  Step 2: 02 Phase - Refiner      → Refined phase document       │
-│  Step 3: 04 Phase - Execute      → Hands-free from here ──┐    │
-│                                                             │    │
-└─────────────────────────────────────────────────────────────│────┘
-                                                              │
-┌─────────────────────────────────────────────────────────────│────┐
-│  AUTOMATED (subagents)                                      │    │
-│                                                             ▼    │
-│  Feature - Decomposer  → Numbered plan sets (01-, 02-, ...)      │
-│                                                                   │
+│  Step 1: 01 Project - Planner     → Phase documents             │
+│  Step 2: 02 Phase - Refiner       → Refined phase document      │
+│  Step 3: 03 Feature - Decomposer  → Plan bundles + manifest     │
+│  Step 4: 04 Phase - Execute       → Hands-free from here ──┐    │
+│                                                            │    │
+└────────────────────────────────────────────────────────────│────┘
+                                                             │
+┌────────────────────────────────────────────────────────────│────┐
+│  AUTOMATED (subagents)                                     │    │
+│                                                            ▼    │
 │  BATCH MODE (all features, one branch):                           │
 │  ┌──────────────────────────────────────────────┐                │
 │  │  FOR EACH FEATURE (in 0N order):             │                │
@@ -85,13 +82,21 @@ Interactive — you iterate with the planner to define phases and milestones.
 
 Interactive — you iterate to probe edge cases, dependencies, and decomposition readiness.
 
-### Step 3: Execute the Phase
+### Step 3: Decompose the Phase
+
+| Agent | Prompt | Output |
+|-------|--------|--------|
+| **03 Feature - Decomposer** | "Decompose this phase" + attach refined phase doc | Feature bundles in `dev/feature/[0N-task-name]/` + execution manifest |
+
+Required before Step 4 — `04 Phase - Execute` fails immediately if these artifacts are missing rather than generating them itself. It asks for approval before writing.
+
+### Step 4: Execute the Phase
 
 | Agent | Prompt | Output |
 |-------|--------|--------|
 | **04 Phase - Execute** | "Execute this phase" + attach refined phase doc | All features implemented, reviewed, QA'd |
 
-**Hands-free from here.** `04 Phase - Execute` expects `03 Feature - Decomposer` to have already prepared the feature bundles and execution manifest. Once those files exist, the orchestrator automatically:
+**Hands-free from here.** Reading the bundles Step 3 produced, the orchestrator automatically:
 
 1. Reads `dev/feature/[phase-name]-execution-manifest.md`
 2. Verifies each listed feature has `-plan.md`, `-context.md`, and `-tasks.md`
@@ -112,20 +117,20 @@ Prefer to write your own code? Use the planning agents, then implement yourself:
 ```
 Step 1: 01 Project - Planner       → Phase documents
 Step 2: 02 Phase - Refiner          → Refined phase document
-Step 3: 03 Feature - Decomposer     → Feature bundles + execution manifest (optional)
+Step 3: 03 Feature - Decomposer     → Feature bundles + execution manifest (optional here)
 Step 4: (you write the code from the plans)
 Step 5: 05 PR - Review              → Readiness report on what you wrote
 ```
 
 The refined Phase document from Step 2 contains detailed scope, requirements, and acceptance criteria — enough to implement directly. When you're ready for validation, run **05 PR - Review** to get a readiness verdict on your diff.
 
-**Tip:** For structured feature decomposition without automated execution, use **03 Feature - Decomposer** directly — it creates numbered feature bundles in `dev/feature/[0N-task-name]/` plus `dev/feature/[phase-name]-execution-manifest.md`. Or launch **04 Phase - Execute** after those artifacts exist to run the automated implementation pipeline.
+**Tip:** Decomposition is optional on this path — the refined Phase document alone is often enough. Run **03 Feature - Decomposer** anyway if you want the work broken into numbered bundles to work through by hand.
 
 ---
 
 ## Available Agents
 
-### User-Facing (in agent picker)
+### User-Facing (directly invocable)
 
 | Agent | Purpose |
 |-------|---------|
@@ -148,9 +153,9 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 
 ### Hidden Subagents
 
-These agents are not visible in the picker. They run automatically as part of orchestrator pipelines with `user-invocable: false`.
+Not directly invocable in any harness. They carry `user-invocable: false` and run only when an orchestrator spawns them; Claude and Codex prefix their generated files `z-`.
 
-| Agent | spawned By | Purpose |
+| Agent | Spawned By | Purpose |
 |-------|------------|---------|
 | **Auditor - Code** | Audit orchestrator | Comprehensive code quality, security, and health audit |
 | **Auditor - Infra** | Audit orchestrator | Audit Dockerfiles, CI/CD pipelines, IaC templates, and config files |
@@ -204,7 +209,7 @@ These agents are not visible in the picker. They run automatically as part of or
 > Give it a refined Phase document or describe a feature. It scans the codebase, decomposes the work into independent features, writes a structured `-plan.md` file for each to `dev/feature/[0N-task-name]/`, spawns the Plan Expander to generate companion `-context.md` and `-tasks.md` files, and writes `dev/feature/[phase-name]-execution-manifest.md` as the execution schedule. In standalone mode, it asks for approval before writing.
 
 **04 Phase - Execute** (orchestrator — delegates to subagents)
-> Give it a refined Phase document after 03 has already prepared the feature bundles. It reads `dev/feature/[phase-name]-execution-manifest.md`, verifies each listed feature has `-plan.md`, `-context.md`, and `-tasks.md`, and fails immediately if those prepared artifacts are missing. When the bundle set is complete, it implements features by manifest wave order, then runs consolidated QA and Final Review.
+> Give it a refined Phase document after 03 has already prepared the feature bundles. It reads `dev/feature/[phase-name]-execution-manifest.md`, verifies each listed feature has `-plan.md`, `-context.md`, and `-tasks.md`, and fails immediately if those prepared artifacts are missing. When the bundle set is complete, it implements features by manifest wave order, then runs consolidated QA, the diff security scan, and Prod Code Review.
 
 **05 PR - Review** (orchestrator — delegates to evaluators)
 > Give it a pull request. In a single upfront interaction it confirms the base commit (suggest-and-confirm — git cannot derive a branch's base), warns on a below-par model tier, and asks how the report should reach the PR. It then fans out the PR Review evaluators and returns a readiness verdict without reading code or diffs itself. Advisory only: it records no verdict in any document.
@@ -222,7 +227,7 @@ These agents are not visible in the picker. They run automatically as part of or
 > Asks which test operation to run (ANALYZE, WRITE, or FIX), delegates to the appropriate test subagent, and presents results. Optionally drives remediation of findings through the Feature - Implementer → Feature - Reviewer pipeline. After remediation, updates documentation via the Docs Writer.
 
 **Debugger** (full tool access — reads and writes code)
-> Give it an error message or description — frontend or backend. Triages the issue, classifies it (build-time, runtime, database, dependency, etc.), logs a remediation-turn ledger row on `phase/*` branches before diagnosis when you bring it a bug report or failing output, investigates, and applies minimal targeted fixes. Handles both frontend (TypeScript, React, build tools) and backend (Node.js, Python, databases, auth) errors.
+> Give it an error message or description — frontend or backend. Triages the issue, classifies it (build-time, runtime, database, dependency, etc.), investigates, and applies minimal targeted fixes. On repos with `docs/phases/`, it also syncs the affected phase documents so they stay baseline-truth. Handles both frontend (TypeScript, React, build tools) and backend (Node.js, Python, databases, auth) errors.
 
 **QA - Bootstrapper** (orchestrator — delegates to subagents)
 > Point it at a repository that has no QA package. It spawns **QA - Doc Generator** to write the `QA_AUTOMATED` technical runbook and the `QA_USER` manual acceptance checklist from the repository plus any starter inputs (existing manual QA notes, an SOW or contract, plan acceptance criteria), then spawns **QA - Runner** to execute the runbook end to end and stamp binary pass/fail results back into it.
@@ -281,7 +286,6 @@ These agents are not visible in the picker. They run automatically as part of or
 **Client Deliverable - Delta Synthesizer** *(subagent of Client Deliverable)* — Consumes both sides' report sets to produce the plain-language findings report (with the how-we-checked-our-own-work appendix), owns the single-point SOW-exclusions partition, and emits the internal remediation-recommendations worklist of in-SOW-scope postures still open on the upgraded side.
 
 **Client Deliverable - Security Narrative** *(subagent of Client Deliverable)* — Writes the four-section client-facing security narrative (posture, repaired, out-of-scope, residual) with every original-side finding classified exactly once, consuming the exclusions partition rather than re-deriving it. Also writes the internal engineer-facing security-delta report (original / fixed / unfixed / introduced) verifying the upgrade added no new security issues.
-
 
 **Client Deliverable - Pricing Researcher** *(subagent of Client Deliverable)* — The only web-granted engagement agent; researches live pricing for evidenced infrastructure/dependency changes with strict query hygiene (no client content in queries), cites source and retrieval date per figure, and degrades to NOT RESEARCHED offline. Also writes the internal cost-basis report — per-figure sources and calculations plus the verbatim query-hygiene audit trail.
 
@@ -439,9 +443,9 @@ Each selected audit type gets its own tree and its own delta; code and infra fin
 
 ---
 
-## VS Code Settings
+## VS Code / Copilot Settings
 
-The orchestrator uses subagents. Ensure these settings are configured:
+Copilot-specific. Other harnesses need no equivalent configuration.
 
 - **`chat.subagents.allowInvocationsFromSubagents`**: Leave at `false` (default) — subagents don't need to spawn further subagents.
 - The orchestrator's `agents:` frontmatter restricts which subagents it can spawn, preventing unintended delegation.
@@ -450,35 +454,35 @@ The orchestrator uses subagents. Ensure these settings are configured:
 
 ## Skills and Instructions
 
-Agents reference **skills** (`.github/skills/<name>/SKILL.md`) for shared templates and formats that would otherwise be duplicated. Skills are loaded on demand when an agent's instructions say "Load the `<name>` skill."
+Agents reference **skills** (`source_of_truth/skills/<name>/SKILL.md`) for shared templates and formats that would otherwise be duplicated. Skills are loaded on demand when an agent's instructions say "Load the `<name>` skill."
 
-See [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md#skills) for the full skills inventory.
+**Instructions** (`source_of_truth/instructions/*.instructions.md`) inject cross-cutting conventions into agents automatically via `applyTo` glob patterns. Agent-targeted instructions are inlined into the generated agents at propagation time, so they cost no separate lookup at runtime.
 
-**Instructions** (`.github/instructions/*.instructions.md`) inject cross-cutting conventions into agents automatically via `applyTo` glob patterns.
-
-See [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md#instructions) for the full instructions inventory.
+Both are authored under `source_of_truth/` and propagated per harness. See [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for the transform model.
 
 ---
 
-## Adding Agents to Another Project
+## Using These Agents in Your Own Projects
 
-Each agent file is standalone. To use these agents in a different repository:
+The agents deploy **user-level**, not per-repository — install once and they are available in every project you open.
 
-1. Create a `.github/agents/` directory in the target repo.
-2. Copy the agent `.md` files you want into that directory.
-3. That's it — VS Code will discover them automatically.
+```bash
+python3 deploy_agents.py
+```
 
-For the project pipeline, copy all files including the hidden subagents. For standalone use, copy only the agents you need.
+This copies the generated per-harness outputs into the real config directories each harness reads (`~/.claude`, `~/.codex`, `~/.config/opencode`, `~/.cursor`) and mirrors the Copilot port into this repo's `.github/`. See [INSTALLATION.md](../../INSTALLATION.md).
+
+Do not hand-copy files out of `ports/` or `.github/` — both are generated. Edit `source_of_truth/`, propagate, then deploy.
 
 ---
 
 ## Integration Notes
 
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
-- **Self-contained**: Each agent file works standalone — just copy the `.md` file into any project's `.github/agents/` directory.
+- **Self-contained**: Each generated agent file is complete on its own — applicable instruction content is inlined at propagation time rather than referenced.
 - **Orchestrators**: **04 Phase - Execute**, **05 PR - Review**, **Audit - Code, Infra, Refactor, Security**, **Test - Orchestrator**, **QA - Bootstrapper**, **Instructions Manager**, and **Client Deliverable** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
-- **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned by Phase - Execute, Audit, and Test orchestrators at the end of the pipeline to update stale documentation (it remains user-invocable for standalone use as well).
-- **Dual-use agents**: **03 Feature - Decomposer** is user-facing for standalone plan creation and also spawned by **04 Phase - Execute** when plans are missing. **Docs Writer** is user-facing and also spawned by all three orchestrators.
+- **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned at the end of the Phase - Execute, Audit, Test, and Client Deliverable pipelines to update stale documentation, and by the Planner and Refiner when critical docs are missing (it remains user-invocable for standalone use as well). **Unity Reviewer** and **Visual Verifier** are spawned by Phase - Execute on Unity phases.
+- **Dual-use agents**: four agents are user-invocable *and* declared as children by an orchestrator, so they emit both a slash command and a spawnable subagent file — **Docs Writer** (Planner, Refiner, Phase - Execute, Audit, Test, Client Deliverable), **Web Researcher** (Planner, Refiner, Debugger), **Unity Reviewer** (Phase - Execute, Single Feature - Agent), and **Visual Verifier** (Phase - Execute). **03 Feature - Decomposer** is not among them: Phase - Execute fails on missing bundles rather than spawning the decomposer.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
 - **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Security**, **Auditor - Delta**, **Auditor - Remediation Research**, and **Test - Analyst** do not modify code. They analyze and report only.
 - **Approval-gated agents**: **01 Project - Planner**, **02 Phase - Refiner**, and **03 Feature - Decomposer** always present findings and ask for explicit approval before creating files. They also check for missing critical documentation (`README.md`, `docs/CODEBASE_CONTEXT.md`) and recommend running the **Docs Writer** before continuing. The **Audit** and **Test** orchestrators ask before proceeding to the remediation phase.
