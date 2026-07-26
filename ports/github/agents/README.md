@@ -22,9 +22,9 @@ Be specific in your request. Each agent produces structured output — plan docu
 
 ---
 
-## The Project Pipeline (4 user steps)
+## The Project Pipeline (5 user steps)
 
-The core development workflow. **You drive steps 1–4. Everything after that is automated.**
+The core development workflow. **You drive steps 1–4, step 4 runs hands-free to a verdict, and step 5 is your own pre-PR self-review.**
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -35,6 +35,8 @@ The core development workflow. **You drive steps 1–4. Everything after that is
 │  Step 3: 03 Feature - Decomposer  → Plan bundles + manifest     │
 │  Step 4: 04 Phase - Execute       → Hands-free from here ──┐    │
 │                                                            │    │
+│  Step 5: 05 PR - Review           → Self-review before PR  │    │
+│          (after the automated run reports back)            │    │
 └────────────────────────────────────────────────────────────│────┘
                                                              │
 ┌────────────────────────────────────────────────────────────│────┐
@@ -109,6 +111,19 @@ Required before Step 4 — `04 Phase - Execute` fails immediately if these artif
 7. Runs the **Prod Code Review** with the security report
 8. Reports the verdict back to you
 9. Runs the **Docs Writer** to update any stale documentation
+
+### Step 5: Self-Review Before Opening the PR
+
+| Agent | Prompt | Output |
+|-------|--------|--------|
+| **05 PR - Review** | "Review my change before I open the PR" | Readiness report on the diff between a confirmed base and head commit |
+
+Asks its three questions once — model tier, the base commit, and whether to post the
+report to an already-open draft PR — then runs its evaluator roster over that diff and
+hands back a plain-language readiness report. Advisory only: it changes no code and
+records no verdict in any document. Distinct from the automated **Prod Code Review**
+gate inside Step 4, which validates the phase's pipeline records; this reviews the diff
+you are about to publish.
 
 ### Manual Implementation Path
 
