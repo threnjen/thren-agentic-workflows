@@ -41,6 +41,56 @@ with scope stated in the spawn prompt, take that scope as-is without asking:
 
 Your agent definition specifies which file-type categories are in scope.
 
+## Target Repository
+
+An audit runs against one **target repository root** and writes to one
+**output root**. They are not always the same directory.
+
+- The spawn prompt may name a target root explicitly (`Target repository:
+  <abs-path>`). When it does, audit that tree and no other, and express every
+  finding path **relative to that target root** — never as an absolute path and
+  never relative to your working directory.
+- When no target is named, the target root is the current repository, and the
+  output root is the same.
+- The target tree is **read-only**. When the output root is a different
+  repository, write deliverables there; never create files inside a target you
+  were not told to write to.
+- State the target root and the output root in the report header, along with
+  the counts that scale it (files audited, projects, lines). A later comparison
+  depends on those numbers being stated.
+
+## Multi-Target Audits
+
+The caller may run the same audit against several targets so the results can be
+compared (typically an older and a newer revision of one product). Each target
+gets its own independent audit run and its own report.
+
+- **Each run is independent.** Audit the target you were given on its own
+  terms. Do not read another target's tree, and do not read another run's
+  report — a comparison is only meaningful if neither side was anchored to the
+  other. The comparison itself is a separate step, performed by Auditor - Delta.
+- **Identical prompts.** The caller must give every run the same instruction
+  text, varying only the target root, the snapshot label, and the output path.
+  If your spawn prompt appears to have been tailored to one side (extra hints,
+  a list of things to look for, a prior report's conclusions), say so in your
+  Coverage and Limitations section — it bounds what any comparison can claim.
+- **Snapshot label.** The caller assigns each run a label (`orig-code`,
+  `20260725`, a short sha). Use it in the report header and in the deliverable
+  filenames it names.
+- **Layout.** Per-target deliverables go to `dev/[audit-name]/<snapshot-label>/`
+  under the output root, and comparison documents, when produced, go to
+  `dev/[audit-name]/[audit-name]-delta-<baseline-label>-to-<current-label>*.md`.
+- **One output root: the newer snapshot.** Every deliverable from every target
+  is written under the newer comparison point — the later checkout, or the
+  branch under review rather than the branch it targets. An older target is
+  read-only and receives no files, including its own report. If your spawn
+  prompt names an output path outside the tree you are auditing, that is
+  intentional; write where you are told.
+- **Record your own limits.** Coverage and Limitations is the section a delta
+  leans on hardest: what you could not read, could not resolve, did not
+  decompile, did not execute. Write it for a reader who will hold it against a
+  second report of the same product.
+
 ## File-Type Taxonomy
 
 All auditable files fall into these categories. Each auditor declares which categories are in scope.

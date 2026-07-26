@@ -801,11 +801,20 @@ class OrphanPruningTests(unittest.TestCase):
         # Generator` and `QA - Runner`) added: claude agents 37 -> 39, claude
         # commands 19 -> 20, opencode and codex agents 51 -> 54. Counts
         # recounted from disk.
+        # `Auditor - Delta` (hidden subagent of the Audit orchestrator, which
+        # compares two audit reports into a delta document) added one file to
+        # claude agents (39 -> 40) and opencode/codex agents (54 -> 55); claude
+        # commands unchanged (not user-invocable). Counts recounted from disk.
+        # `Auditor - Remediation Research` (hidden subagent of the Audit
+        # orchestrator, which researches fixes for a delta's open items) added
+        # one file to claude agents (40 -> 41) and opencode/codex agents
+        # (55 -> 56); claude commands unchanged (not user-invocable). Counts
+        # recounted from disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 39),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 20),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 54),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 54),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 56),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 56),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:

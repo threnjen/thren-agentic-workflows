@@ -160,6 +160,8 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Auditor - Code** | Audit orchestrator | Comprehensive code quality, security, and health audit |
 | **Auditor - Infra** | Audit orchestrator | Audit Dockerfiles, CI/CD pipelines, IaC templates, and config files |
 | **Auditor - Refactor** | Audit orchestrator | Audit codebase structure, module organization, and architecture |
+| **Auditor - Delta** | Audit orchestrator | Compare two audit reports of the same product and produce a reconciled delta document plus an open-items queue |
+| **Auditor - Remediation Research** | Audit orchestrator | Research fixes for the new and transformed findings in a delta's open-items queue |
 | **Eval - Metric Grader** | Eval - Grader | Score one comparative metric from prepared diff and ledger evidence |
 | **Eval - Score Recorder** | Eval - Grader | Resolve harness/model identity, compute the weighted score, and append one row to the score history |
 | **Instructions - Writer** | Instructions Manager | Draft scoped `.instructions.md` files for a repository |
@@ -273,6 +275,10 @@ These agents are not visible in the picker. They run automatically as part of or
 **Auditor - Infra** *(subagent of Audit orchestrator)* — Evaluates Dockerfiles, CI/CD pipelines, IaC templates, and config files for security, best practices, and operational risk.
 
 **Auditor - Refactor** *(subagent of Audit orchestrator)* — Evaluates codebase-level organization: module structure, dependency graphs, component decomposition, coupling, cohesion, and separation of concerns.
+
+**Auditor - Delta** *(subagent of Audit orchestrator)* — Compares two completed audit reports of the same product — a baseline snapshot and a current one — and produces a delta document classifying every finding as resolved, improved, unchanged, transformed, unverified, or new, with the counts reconciled against both reports, plus a standalone open-items queue holding only the new and transformed findings. Raises no findings of its own.
+
+**Auditor - Remediation Research** *(subagent of Audit orchestrator)* — Reads a delta's open-items queue plus the current snapshot's audit report and summary, and produces a researched fix proposal per item: root cause, approach, trade-offs, dependencies, and a named verification step. Proposes only — writes no code.
 
 **Eval - Metric Grader** *(subagent of Eval - Grader)* — Scores one comparative metric at a time from prepared diff artifacts, rubric context, and ledger evidence. Returns a normalized `1-10` score, evidence summary, and confidence back to the parent grader.
 
@@ -416,6 +422,25 @@ dev/[audit-name]/
 └── [audit-name]-summary.md          # Executive summary with priority actions
 ```
 
+A multi-target audit (two checkouts, or two branches) keeps each snapshot in its own labelled directory and adds a delta from **Auditor - Delta**:
+
+```
+dev/[audit-name]/
+├── <baseline-label>/                # e.g. orig-code/, main/
+│   ├── [audit-name]-report.md
+│   └── [audit-name]-summary.md
+├── <current-label>/                 # e.g. 20260725/, feature-branch/
+│   ├── [audit-name]-report.md
+│   └── [audit-name]-summary.md
+├── [audit-name]-delta-<baseline-label>-to-<current-label>.md
+├── [audit-name]-delta-<baseline-label>-to-<current-label>-open-items.md
+└── [audit-name]-delta-<baseline-label>-to-<current-label>-fix-research.md
+```
+
+The open-items queue holds only the new and transformed findings and is the scoped input to **Auditor - Remediation Research**, which writes the optional fix-research document.
+
+Each selected audit type gets its own tree and its own delta; code and infra findings are never merged into one document.
+
 ---
 
 ## VS Code Settings
@@ -459,7 +484,7 @@ For the project pipeline, copy all files including the hidden subagents. For sta
 - **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned by Phase - Execute, Audit, and Test orchestrators at the end of the pipeline to update stale documentation (it remains user-invocable for standalone use as well).
 - **Dual-use agents**: **03 Feature - Decomposer** is user-facing for standalone plan creation and also spawned by **04 Phase - Execute** when plans are missing. **Docs Writer** is user-facing and also spawned by all three orchestrators.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
-- **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, and **Test - Analyst** do not modify code. They analyze and report only.
+- **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Delta**, **Auditor - Remediation Research**, and **Test - Analyst** do not modify code. They analyze and report only.
 - **Approval-gated agents**: **01 Project - Planner**, **02 Phase - Refiner**, and **03 Feature - Decomposer** always present findings and ask for explicit approval before creating files. They also check for missing critical documentation (`README.md`, `docs/CODEBASE_CONTEXT.md`) and recommend running the **Docs Writer** before continuing. The **Audit** and **Test** orchestrators ask before proceeding to the remediation phase.
 - **Code-writing agents**: **Debugger**, **Test - Writer**, **Test - Fixer**, **Feature - Implementer**, and **Feature - Reviewer** have full tool access to create and modify files.
 - **Prod Code Review** does not modify code — it analyzes and reports only, producing a GO / NO-GO verdict.

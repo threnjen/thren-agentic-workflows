@@ -60,7 +60,8 @@ Reach for these individually, whenever you need them — no pipeline required:
 - **Debugger** — diagnose and fix a frontend or backend error
 - **Docs Writer** — create or update your repo's documentation
 - **Web Researcher** — research a topic and produce a cited findings report
-- **Audit - Code, Infra, Refactor** — health-check your code, infra, or structure
+- **Audit - Code, Infra, Refactor** — health-check your code, infra, or structure; audit
+  two repos or two branches and get a reconciled delta of what changed between them
 - **Test - Orchestrator** — analyze, write, or fix your test suite
 - **Prod Code Review** — a final GO / NO-GO readiness gate
 - **Security Scan** — a full-codebase security assessment
@@ -71,7 +72,7 @@ Reach for these individually, whenever you need them — no pipeline required:
   repos for comparison analysis
 
 Behind these, a set of automated subagents and on-demand skills do the detailed work —
-you never invoke them directly. The library ships 54 source agent definitions in
+you never invoke them directly. The library ships 56 source agent definitions in
 `source_of_truth/agents/`. For the complete catalog and how the pipeline flows,
 see [source_of_truth/agents/README.md](source_of_truth/agents/README.md).
 

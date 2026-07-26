@@ -215,6 +215,8 @@ flowchart TD
     Audit --> AuditorCode[Auditor - Code]
     Audit --> AuditorInfra[Auditor - Infra]
     Audit --> AuditorRefactor[Auditor - Refactor]
+    Audit --> AuditorDelta[Auditor - Delta]
+    Audit --> AuditorFixes[Auditor - Remediation Research]
 
     Test --> TestAnalyst[Test - Analyst]
     Test --> TestWriter[Test - Writer]
@@ -228,6 +230,20 @@ flowchart TD
     EngagementOrchestrator --> EngagementSubs[Engagement subagents: Delta Synthesizer, Security Narrative, Pricing Researcher, Narrative Writer, Compliance Writer, Gap Reviewer]
     EngagementOrchestrator --> DocsWriter
 ```
+
+The audit orchestrator runs a matrix of audit types by targets. A target is a
+directory or a git ref; ref targets are materialized as detached read-only
+worktrees via the `worktree-baseline` skill. Every auditor in a multi-target run
+receives identical prompt text, varying only the target root, snapshot label,
+and output path — comparability depends on it, and no auditor reads another
+target's tree or report.
+
+When two targets are compared, **Auditor - Delta** produces a reconciled delta
+per audit type (`audit-delta-report` skill) plus a standalone open-items queue of
+only the NEW and TRANSFORMED findings. **Auditor - Remediation Research** then
+optionally researches fixes for that queue. All deliverables — both snapshots'
+reports, the delta, the queue, the fix research — are written under the newer
+comparison point; the baseline is read-only and receives no files.
 
 A separate engagement flow sits outside the phase pipeline:
 
