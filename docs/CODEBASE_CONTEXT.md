@@ -14,7 +14,7 @@ Quick-reference for AI agents working in this repository.
 
 - 55 source agent definitions in `source_of_truth/agents/` (52 `*.agent.md` + `auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 37 hidden subagents (`user-invocable: false`) and 18 user-invocable.
 - 34 skills in `source_of_truth/skills/`.
-- 16 instructions in `source_of_truth/instructions/`.
+- 17 instructions in `source_of_truth/instructions/`.
 - 4 learnings in `source_of_truth/learnings/`.
 - 1 defunct hook artifact set in `source_of_truth/hooks/`.
 
@@ -31,7 +31,7 @@ source_of_truth/                           # THE authoring surface
     docs-writer.md                         # plain .md agent (loaded by frontmatter)
     04f-prod-code-review.md                # plain .md agent (loaded by frontmatter)
   skills/                                  # 34 skill dirs, each rooted at SKILL.md
-  instructions/                            # 16 applyTo-glob instruction files
+  instructions/                            # 17 applyTo-glob instruction files
   learnings/                               # 4 learnings files
   hooks/                                   # defunct injection scanner (DEFUNCT.md)
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
@@ -106,7 +106,16 @@ eval/ benchmarks/ packages/ tests/
 - Known filename aliases: `docs-writer` → `docs-writer`, `web-research-specialist` →
   `web-researcher`, `audit-code-or-infra` → `audit-code-infra-refactor` (legacy: the
   source file is now `auditor.md`, which emits under its own name).
-- Hidden (non-user-invocable) subagents become `z-*` in Claude and Codex outputs.
+- Hidden (non-user-invocable) subagents become `z-*` in Claude and Codex outputs, except
+  where a pre-existing generated stem is reused: `04f-prod-code-review` stays
+  `prod-code-review.md` in `ports/claude/agents` for that reason.
+- Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
+  plus a subagent file only if an orchestrator names it as a child (dual-use). So
+  `ports/claude/agents` = 37 hidden + 4 dual-use (docs-writer, unity-reviewer,
+  visual-verifier, web-researcher) = 41, while `ports/claude/commands` = 18.
+- Codex and OpenCode emit all 55 agents; only Claude and Cursor split commands out.
+- `ports/cursor/rules` = 4 learnings + the `remediation-ledger-contract` instruction (5
+  files); agent-targeted instructions are excluded because they ship inside the agents.
 
 ## Platform Surface Rules
 

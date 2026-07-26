@@ -114,10 +114,10 @@ Step 1: 01 Project - Planner       → Phase documents
 Step 2: 02 Phase - Refiner          → Refined phase document
 Step 3: 03 Feature - Decomposer     → Feature bundles + execution manifest (optional)
 Step 4: (you write the code from the plans)
-Step 5: Prod Code Review        → Validates your code against the plans
+Step 5: 05 PR - Review              → Readiness report on what you wrote
 ```
 
-The refined Phase document from Step 2 contains detailed scope, requirements, and acceptance criteria — enough to implement directly. When you're ready for validation, run **Prod Code Review** to check your work against the plan.
+The refined Phase document from Step 2 contains detailed scope, requirements, and acceptance criteria — enough to implement directly. When you're ready for validation, run **05 PR - Review** to get a readiness verdict on your diff.
 
 **Tip:** For structured feature decomposition without automated execution, use **03 Feature - Decomposer** directly — it creates numbered feature bundles in `dev/feature/[0N-task-name]/` plus `dev/feature/[phase-name]-execution-manifest.md`. Or launch **04 Phase - Execute** after those artifacts exist to run the automated implementation pipeline.
 
@@ -142,7 +142,6 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **Single Feature - Agent** | Handle small, focused changes with a proposal + explicit permission gate before implementation |
 | **Debugger** | Diagnose and fix frontend or backend application errors |
 | **Docs Writer** | Create or update repo documentation; also spawned automatically by orchestrators after pipeline completion |
-| **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
 | **QA - Bootstrapper** | Bootstrap a repository's QA package — generate QA_AUTOMATED and QA_USER from available starter inputs, run the automated runbook, and stamp pass/fail results |
 | **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
 | **Unity Reviewer** | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
@@ -177,6 +176,7 @@ These agents are not visible in the picker. They run automatically as part of or
 | **05d Consistency Auditor** | 05 PR - Review | Compare the branch diff against established repository conventions and recommend canonical forms |
 | **05e Dependency Auditor** | 05 PR - Review | Inventory dependencies added by the branch and report supply-chain and duplication risks, offline |
 | **04e Diff Security Scan** | Phase - Execute | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
+| **Prod Code Review** | Phase - Execute, Audit orchestrator | Final pre-production readiness gate — cross-validate every pipeline document in a phase and produce a GO / NO-GO verdict |
 | **05f Test Health** | 05 PR - Review | Delegate coverage, redundancy, and flake analysis into a test health report |
 | **05h Cleanliness Auditor** | 05 PR - Review | Evaluate the cleanliness of branch-added code and recommend specific cleanup categories when non-passing |
 | **05g Readiness Synthesizer** | 05 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
@@ -231,8 +231,8 @@ These agents are not visible in the picker. They run automatically as part of or
 **Debugger** (full tool access — reads and writes code)
 > Give it an error message or description — frontend or backend. Triages the issue, classifies it (build-time, runtime, database, dependency, etc.), logs a remediation-turn ledger row on `phase/*` branches before diagnosis when you bring it a bug report or failing output, investigates, and applies minimal targeted fixes. Handles both frontend (TypeScript, React, build tools) and backend (Node.js, Python, databases, auth) errors.
 
-**Prod Code Review** (document-only — does not modify code)
-> Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Can be spawned standalone or automatically by the orchestrator.
+**QA - Bootstrapper** (orchestrator — delegates to subagents)
+> Point it at a repository that has no QA package. It spawns **QA - Doc Generator** to write the `QA_AUTOMATED` technical runbook and the `QA_USER` manual acceptance checklist from the repository plus any starter inputs (existing manual QA notes, an SOW or contract, plan acceptance criteria), then spawns **QA - Runner** to execute the runbook end to end and stamp binary pass/fail results back into it.
 
 **Instructions Manager** (router — delegates to subagents)
 > Give it a request to create or assess AI coding instruction files (`.github/instructions/`, `copilot-instructions.md`, `.cursorrules`, `CLAUDE.md`, or equivalent). It routes to the **Instructions - Writer** to draft new scoped instruction sets, or to the **Instructions - Evaluator** to A/B-test whether proposed instruction changes are improvements or regressions.
@@ -263,6 +263,12 @@ These agents are not visible in the picker. They run automatically as part of or
 **Feature - QA Writer** *(subagent of Phase - Execute, Audit orchestrator)* — In batch mode: reads all pipeline docs from every feature in a phase and writes a single consolidated QA plan. In per-feature mode: reads pipeline docs from a single feature and writes QA plan and coverage map to that feature's directory.
 
 **04e Diff Security Scan** *(subagent of Phase - Execute)* — Performs a diff-scoped security review of only the files changed by an implementation pass (from an implementation record's "Files Changed" table or a git diff range), plus their immediate security-relevant context. Writes a compact report with verdict, findings, and the categories not assessable at diff scope. It does not replace the full-codebase Auditor - Security scan.
+
+**Prod Code Review** *(subagent of Phase - Execute and the Audit orchestrator)* — Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Pipeline-internal only (`user-invocable: false`): orchestrators spawn it as the automated gate at the end of a phase. For an on-demand readiness check of your own, use **05 PR - Review** instead.
+
+**QA - Doc Generator** *(subagent of QA - Bootstrapper)* — Generates the `QA_AUTOMATED` runbook and the `QA_USER` manual acceptance checklist from the repository plus optional manual-QA, SOW/contract, and plan-acceptance inputs, per the `qa-generation` skill.
+
+**QA - Runner** *(subagent of QA - Bootstrapper)* — Executes the `QA_AUTOMATED` runbook end to end — every runbook check plus every discovered test suite — with strict binary PASS/FAIL mapping and captured evidence, recording per-check results and the overall verdict back into the runbook's Run results section, per the `qa-run` skill.
 
 **Auditor - Code** *(subagent of Audit orchestrator)* — Audits every source file for cleanup, bugs, security, type hints, readability, DRY, and consistency. Produces a structured report.
 
@@ -373,7 +379,8 @@ Not everything needs a pipeline. These agents work well on their own:
 - **Single Feature - Agent** — Implement a focused change with an explicit approval gate and minimal churn
 - **05 Eval - Grader** — Score a completed `phase/*` run against a rubric and preserve a Markdown score report under `eval/runs/<phase-slug>/`
 - **Test - Orchestrator** — Analyze, write, or fix tests on demand
-- **Prod Code Review** — Point at any `dev/feature/[0N-task-name]/` folder for an independent readiness check
+- **05 PR - Review** — Get a readiness verdict on any diff, without running a pipeline first
+- **QA - Bootstrapper** — Generate a repository's QA_AUTOMATED and QA_USER package and run it
 - **Debugger** — Fix a specific frontend or backend error without a full pipeline
 - **Unity Reviewer** — Review Unity C# code for architecture, performance, and pitfalls
 - **Visual Verifier** — Screenshot a rendering phase and judge it against its visual acceptance criteria
@@ -484,7 +491,7 @@ For the project pipeline, copy all files including the hidden subagents. For sta
 
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each agent file works standalone — just copy the `.md` file into any project's `.github/agents/` directory.
-- **Four orchestrators**: **04 Phase - Execute**, **05 PR - Review**, **Audit - Code, Infra, Refactor, Security**, and **Test - Orchestrator** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
+- **Orchestrators**: **04 Phase - Execute**, **05 PR - Review**, **Audit - Code, Infra, Refactor, Security**, **Test - Orchestrator**, **QA - Bootstrapper**, **Instructions Manager**, **05 Eval - Grader**, and **Client Deliverable** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
 - **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned by Phase - Execute, Audit, and Test orchestrators at the end of the pipeline to update stale documentation (it remains user-invocable for standalone use as well).
 - **Dual-use agents**: **03 Feature - Decomposer** is user-facing for standalone plan creation and also spawned by **04 Phase - Execute** when plans are missing. **Docs Writer** is user-facing and also spawned by all three orchestrators.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.

@@ -64,7 +64,7 @@ Reach for these individually, whenever you need them — no pipeline required:
   security posture; audit two repos or two branches and get a reconciled delta of what changed
   between them
 - **Test - Orchestrator** — analyze, write, or fix your test suite
-- **Prod Code Review** — a final GO / NO-GO readiness gate
+- **QA - Bootstrapper** — generate a repo's QA_AUTOMATED and QA_USER package, then run it
 - **Unity Reviewer** / **Visual Verifier** — review Unity C# and verify what actually renders
 - **Eval - Grader** / **Instructions Manager** — score agent runs and manage AI instruction files
 - **Client Deliverable** — run a client engagement end to end (comparative audits, client

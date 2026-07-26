@@ -33,9 +33,9 @@ flowchart TD
     Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
-    SOT --> Agents[49 agent definitions]
-    SOT --> Skills[28 skill directories]
-    SOT --> Instructions[16 instruction files]
+    SOT --> Agents[55 agent definitions]
+    SOT --> Skills[34 skill directories]
+    SOT --> Instructions[17 instruction files]
     SOT --> Learnings[4 learnings files]
     SOT --> Hooks[defunct injection scanner]
 
@@ -122,11 +122,12 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 49 agent definitions. Most use the `.agent.md` suffix; `docs-writer.md`
-  and `04f-prod-code-review.md` are intentional plain-`.md` exceptions still loaded as
-  agents because loading keys off `name`/`description` frontmatter, not the suffix.
-- `skills/` — 28 directory-based skills, each rooted at `SKILL.md`.
-- `instructions/` — 16 instruction files matched by `applyTo` globs.
+- `agents/` — 55 agent definitions (18 user-invocable, 37 hidden subagents). Most use
+  the `.agent.md` suffix; `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`
+  are intentional plain-`.md` exceptions still loaded as agents because loading keys off
+  `name`/`description` frontmatter, not the suffix.
+- `skills/` — 34 directory-based skills, each rooted at `SKILL.md`.
+- `instructions/` — 17 instruction files matched by `applyTo` globs.
 - `learnings/` — 4 cross-cutting learnings files.
 - `hooks/` — a defunct prompt-injection scanner, retained but wired nowhere. See
   `source_of_truth/hooks/DEFUNCT.md`.
@@ -142,6 +143,12 @@ platform-specific transformations:
 - tool declarations are remapped per platform
 - agent references are rewritten to the correct generated identifiers
 - hidden subagents gain `z-` naming for Claude and Codex outputs
+- Claude emission splits by invocability: a hidden agent emits a subagent file only; a
+  user-invocable agent emits a slash command, **plus** a subagent file when some
+  orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
+  it. That is why `ports/claude/agents` (41) and `ports/claude/commands` (18) differ:
+  37 hidden subagents plus the four dual-use agents (Docs Writer, Unity Reviewer,
+  Visual Verifier, Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
   support `instructions/` directly
 - Cursor: user-invocable agents become `commands/*.md`; instructions and learnings
@@ -223,12 +230,11 @@ flowchart TD
     Test --> TestWriter[Test - Writer]
     Test --> TestFixer[Test - Fixer]
 
-    EvalGrader --> EvalDecomp[Eval - Decomposition]
     EvalGrader --> EvalMetric[Eval - Metric Grader]
     EvalGrader --> EvalScore[Eval - Score Recorder]
 
     ClientDeliverable --> ClientDeliverablePrepare
-    ClientDeliverable --> EngagementSubs[Engagement subagents: Delta Synthesizer, Security Narrative, Pricing Researcher, Narrative Writer, Compliance Writer, Gap Reviewer]
+    ClientDeliverable --> ClientDeliverableSubs[Client Deliverable subagents: Delta Synthesizer, Security Narrative, Pricing Researcher, Narrative Writer, Compliance Writer, Manifest Assembler, Gap Reviewer]
     ClientDeliverable --> DocsWriter
 ```
 

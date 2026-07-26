@@ -51,9 +51,9 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ├── README.md                       # User-facing overview
 ├── CONTRIBUTING.md                 # This file
 ├── source_of_truth/                # THE authoring surface — edit here
-│   ├── agents/                     # 40 agent definitions + README (agent catalog)
-│   ├── skills/                     # 24 skill directories, each rooted at SKILL.md
-│   ├── instructions/               # 15 instruction files matched by applyTo globs
+│   ├── agents/                     # 55 agent definitions + README (agent catalog)
+│   ├── skills/                     # 34 skill directories, each rooted at SKILL.md
+│   ├── instructions/               # 17 instruction files matched by applyTo globs
 │   ├── learnings/                  # 4 shared learnings files
 │   └── hooks/                      # Defunct prompt-injection scanner (inert)
 ├── ports/                          # Generated outputs — do not edit by hand
@@ -104,9 +104,11 @@ outputs drift; a sync failure means "rerun propagation," not "edit the output."
 `source_of_truth/agents/` follows an orchestrator + subagent pattern: the project
 planning pipeline (planner, refiner, decomposer, phase executor), the feature
 implementation pipeline (plan expander, implementer, reviewer, QA writer), PR Review
-orchestration and evaluators, evaluation agents, audit orchestrators (code, infra,
-refactor), test operations, and standalone utility agents (docs writer, debugger,
-single-feature agent, prod code review, unity reviewer, web researcher). See
+orchestration and evaluators, evaluation agents, the audit orchestrator and its auditors
+(code, infra, refactor, security, delta, remediation research), the Client Deliverable
+engagement fleet, QA bootstrapping, test operations, and standalone utility agents
+(docs writer, debugger, single-feature agent, unity reviewer, visual verifier, web
+researcher). See
 [source_of_truth/agents/README.md](source_of_truth/agents/README.md) for the full catalog
 and pipeline flow.
 
