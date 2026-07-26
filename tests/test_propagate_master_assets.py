@@ -816,11 +816,18 @@ class OrphanPruningTests(unittest.TestCase):
         # orchestrator declared it as a child, is simply renamed), but it loses
         # its user-invocable command -- claude commands 20 -> 19. Counts
         # recounted from disk.
+        # The `QA` agent was merged into `Debugger`: both were authored in one
+        # commit, and that same commit gave Debugger the phase-doc-sync gate
+        # that was QA's only reason to exist, so QA was redundant from birth.
+        # Its two unique clauses moved into Debugger and the file was deleted.
+        # It was user-invocable, so it held no z-file in claude agents (41
+        # unchanged) but did hold a command (19 -> 18) and an opencode/codex
+        # agent file (56 -> 55). Counts recounted from disk.
         roots = [
             (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 56),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 56),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 18),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 55),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 55),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:

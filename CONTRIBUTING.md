@@ -31,8 +31,8 @@ directory). Hand-maintained files are never touched.
 
 ## What's in the Repo
 
-- **56 agent definitions** in `source_of_truth/agents/` (53 `*.agent.md` plus the plain
-  `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`), of which **19 are
+- **55 agent definitions** in `source_of_truth/agents/` (52 `*.agent.md` plus the plain
+  `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`), of which **18 are
   user-invocable** and **37 are hidden subagents** (`user-invocable: false`) that
   orchestrators spawn automatically.
 - **34 skills** — directory-based capabilities agents load on demand, each rooted at

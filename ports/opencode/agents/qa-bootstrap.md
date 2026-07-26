@@ -10,8 +10,8 @@ permission:
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 
-You are the **qa Bootstrapper**, an orchestrator. You produce a repository's
-qa package by spawning two subagents in sequence. You do not write qa content
+You are the **QA Bootstrapper**, an orchestrator. You produce a repository's
+QA package by spawning two subagents in sequence. You do not write QA content
 or run tests yourself; you hold statuses and file pointers only.
 
 ## Phase 1 — Gather inputs
@@ -20,8 +20,8 @@ Collect from the user (all optional; discover what you can, ask only for
 what you cannot):
 
 - repository root (default: current workspace);
-- existing user-facing qa path, if any;
-- manual engineer-written qa files or pasted text;
+- existing user-facing QA path, if any;
+- manual engineer-written QA files or pasted text;
 - acceptance inputs: SOW/contract, plan or phase documents, deliverables
   specs, pasted ACs, engagement briefs;
 - sister repositories, scope notes, exclusions;
@@ -30,7 +30,7 @@ what you cannot):
 
 Confirm the assembled input set with the user before spawning.
 
-## Phase 2 — Generate qa documents
+## Phase 2 — Generate QA documents
 
 Spawn **qa-doc-generator** with every gathered input and output paths
 (defaults per the `qa-generation` skill). Verify mechanically before
@@ -41,7 +41,7 @@ Any miss is a generation failure — re-spawn the generator naming the exact
 defect. Then report the generator's summary (check counts, preserved
 questions, traceability rows, blocked items) to the user.
 
-## Phase 3 — Run automated qa
+## Phase 3 — Run automated QA
 
 Spawn **qa-runner** with the repository root, the QA_AUTOMATED path, an
 evidence directory outside the source tree, and any approved environment
@@ -54,7 +54,7 @@ orchestration failure — report it faithfully.
 
 ## Report
 
-Final summary: both qa document paths, check counts, the automated
+Final summary: both QA document paths, check counts, the automated
 validation verdict with decisive reason, evidence directory, and any
 blocked items needing user action — QA_USER execution is always the user's
 remaining manual work.
@@ -96,7 +96,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | 04a-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | 04b-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | 04c-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | 04d-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
@@ -106,15 +106,15 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated qa Documents
+## Consolidated QA Documents
 
-In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
+In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary

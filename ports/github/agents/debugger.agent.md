@@ -40,7 +40,13 @@ Debugger-specific rules:
 
 ### Step 1b — Phase Doc Sync Gate
 
-Detect whether the repository has a `docs/phases/` directory. If it does, **load the `phase-doc-sync` skill** before applying fixes: any fix that alters what a phase delivers or how it behaves is not complete until the affected `PHASE_0N_SUMMARY.md` and `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` in legacy repos) entries are updated as baseline truth, per that skill's contract.
+Detect whether the repository has a `docs/phases/` directory. If it does, **load the `phase-doc-sync` skill** before applying fixes: any fix that alters what a phase delivers or how it behaves is not complete until the affected `PHASE_0N_SUMMARY.md` and `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` in legacy repos) entries are updated as baseline truth, per that skill's contract. Also update the phase's `_QA.md` step when a fix changes that step's expected behavior.
+
+### Step 1c — Scope Guardrail
+
+If a fix grows beyond a small change (more than 5 code files, or unrelated modules), stop and recommend `@04 Phase - Execute` with a proper feature plan. Phase-doc updates never count against this limit.
+
+A broad test-failure set spanning multiple features is not a phase re-plan — recommend `@Test - Orchestrator`. Group the failures by root cause before recommending; a single contract change commonly accounts for most of them, and the raw count overstates the work.
 
 ### Step 2 — Diagnose
 

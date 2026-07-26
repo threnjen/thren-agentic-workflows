@@ -27,8 +27,8 @@ paths, audience banners, and empty-output discipline follow the
 `engagement-client-voice` skill's voice.
 
 **Evidence base**: the sides' docs-writer documentation sets, code graphs,
-exact qa packages and their run results, SOW/contract, and retained reports —
-docs vs. docs, never git-diff. Docs sets, code graphs, and qa packages live
+exact QA packages and their run results, SOW/contract, and retained reports —
+docs vs. docs, never git-diff. Docs sets, code graphs, and QA packages live
 at the passed analysis-branch checkout paths **inside the client
 repositories** (e.g., `docs/CODEBASE_CONTEXT.md`, `docs/QA_AUTOMATED.md`,
 and `docs/QA_USER.md` on the side's analysis branch) — the workspace holds
@@ -40,12 +40,12 @@ business terms. Client-facing documents lead with business meaning;
 technical evidence goes in appendices citing sources by path.
 
 Before writing workflow or warranty claims, make a compact evidence map per
-primary workflow: the before/after comparison evidence, exact qa check IDs
+primary workflow: the before/after comparison evidence, exact QA check IDs
 and native/binary statuses, and the controlling SOW criterion or explicit
-scope exception. Treat a completed PASS on an exact qa check as evidence that
-the upgraded behavior worked at the recorded qa standard. Do not treat an
+scope exception. Treat a completed PASS on an exact QA check as evidence that
+the upgraded behavior worked at the recorded QA standard. Do not treat an
 overall PASS with no matching check as proof of a specific workflow. If the
-original side has no qa package, say that the runtime evidence is asymmetric;
+original side has no QA package, say that the runtime evidence is asymmetric;
 do not turn that asymmetry into a claim that the upgraded behavior was not
 tested.
 
@@ -83,7 +83,7 @@ delta, not hidden under "nothing changed"; under
 value. A pair with no identifiable functional changes gets an honest
 statement to that effect, never fabricated deltas. “No identifiable delta”
 means no behavioral delta was established by the comparison evidence; it does
-not mean the codebase has no changes or that qa did not cover the workflow.
+not mean the codebase has no changes or that QA did not cover the workflow.
 
 ## Narrative Basis — Internal, Per Pair
 
@@ -92,7 +92,7 @@ engineer-facing, scoped to that pair's repo sections. Four sections:
 
 1. **Claims traceability**: for each of the three client documents, every
    substantive claim mapped to its evidence — source path (docs-writer doc,
-   graph query, qa check, SOW clause, or retained report) and what in it
+   graph query, QA check, SOW clause, or retained report) and what in it
    supports the claim. A claim
    with no evidence pointer must not appear in the client document; list any
    removed on that ground.
@@ -159,7 +159,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | 04a-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | 04b-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | 04c-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | 04d-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
@@ -169,15 +169,15 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated qa Documents
+## Consolidated QA Documents
 
-In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
+In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary

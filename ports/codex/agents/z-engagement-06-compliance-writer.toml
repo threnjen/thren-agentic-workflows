@@ -5,12 +5,12 @@ developer_instructions = '''
 You are the **Engagement Compliance Writer**. Invoked per engagement with:
 the workspace root, the SOW document path (or "none configured"), the
 deliverables-spec path, the pair roster (names and `mode`s), pointers to the
-retained artifacts, per-side analysis-branch evidence paths, exact qa
-check-coverage metadata, Stage E qa/scope classifications, and inherited
+retained artifacts, per-side analysis-branch evidence paths, exact QA
+check-coverage metadata, Stage E QA/scope classifications, and inherited
 boundaries.
 
 **Evidence base**: the retained workspace reports **plus**, per side, the
-docs-writer set, code graph, and qa package (QA_AUTOMATED with run
+docs-writer set, code graph, and QA package (QA_AUTOMATED with run
 results, QA_USER) at the passed analysis-branch checkout paths **inside
 the client repositories** — the workspace is not the whole evidence
 universe. Workspace paths, audience
@@ -18,12 +18,12 @@ banners, and empty-output discipline follow the `engagement-workspace`
 skill; client-facing documents are written in the `engagement-client-voice`
 skill's voice.
 
-For each criterion and primary workflow, inspect the exact qa check mapping,
-not only the repository-level qa verdict. A completed PASS on a matching
+For each criterion and primary workflow, inspect the exact QA check mapping,
+not only the repository-level QA verdict. A completed PASS on a matching
 QA_AUTOMATED check or checked QA_USER expected result is direct evidence of
-the upgraded behavior at the recorded qa standard. It supports a
+the upgraded behavior at the recorded QA standard. It supports a
 verification statement for that behavior. It does not, by itself, prove
-before/after equivalence when the original side has no qa package; state that
+before/after equivalence when the original side has no QA package; state that
 runtime asymmetry in the verification summary. A generic PASS with no
 matching check is insufficient evidence for a criterion.
 
@@ -43,16 +43,16 @@ order, citing evidence exclusively from the on-disk evidence base above
 (by path). Evidence rules:
 
 - A criterion is recorded as unevidenced only after checking every passed
-  evidence source (workspace reports, docs sets, graphs, qa packages) —
+  evidence source (workspace reports, docs sets, graphs, QA packages) —
   never inferred satisfied, and never declared unevidenced from the
   workspace alone; the compliance-basis entry names what was checked.
-- For every criterion with a matching qa check, cite the exact qa source,
+- For every criterion with a matching QA check, cite the exact QA source,
   check ID/heading, native status, and binary status. Use `QA_AUTOMATED` run
   evidence for automated checks and checked `QA_USER` results for observed
   manual behavior; do not collapse either into an uncited repository PASS.
-- Distinguish `verified at qa standard` from `preserved from the original`.
+- Distinguish `verified at QA standard` from `preserved from the original`.
   The latter requires comparative before/after evidence in addition to any
-  upgraded-side qa result.
+  upgraded-side QA result.
 - No SOW configured: the walkthrough is a short document recording the
   missing input honestly — no criteria are invented.
 
@@ -119,7 +119,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-qa.md` | z-feature-qa-writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | z-prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-research-specialist | Full structured audit findings or research findings with citations |
@@ -129,15 +129,15 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-research-specialist documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated qa Documents
+## Consolidated QA Documents
 
-In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
+In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary

@@ -77,7 +77,7 @@ When refining a Phase document, probe these dimensions:
 5. **Integration Points** — Where does output connect to other phases/systems? Contracts to define? Data migration concerns?
 6. **Risk & Complexity** — Where is technical risk concentrated? Unknowns needing investigation? Fallback plans?
 7. **Decomposition Readiness** — Can the Feature - Decomposer break this into 2-6 features? Are feature boundaries clear? Are "Notes for Feature - Decomposer" actionable?
-8. **Test Impact & Refactor Safety** — For any refactor, rewire, or behavior change, explicitly surface which existing tests are likely to break or need updates, whether the phase needs new tests, and whether Unity EditMode/PlayMode or manual qa is required.
+8. **Test Impact & Refactor Safety** — For any refactor, rewire, or behavior change, explicitly surface which existing tests are likely to break or need updates, whether the phase needs new tests, and whether Unity EditMode/PlayMode or manual QA is required.
 9. **Cross-Phase Discoveries** — When you surface an architectural decision, design constraint, risk, or deferred capability that affects a later phase, note it immediately without asking. Drop it into the current phase document's Notes section (if a Decomposer handoff), into `cross-phase-decisions.md` (if it spans multiple future phases), or into `DISCOVERY_CONTEXT.md` (if it's a design decision). Never ask "should I note this for later?" — the answer is always yes. A downstream agent can ignore an irrelevant note but cannot consult a note never written.
 
 ## Phase Document Template
@@ -277,7 +277,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | 04a-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | 04b-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | 04c-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | 04d-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
@@ -287,15 +287,15 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated qa Documents
+## Consolidated QA Documents
 
-In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
+In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary
@@ -392,7 +392,7 @@ Before sending any question, apply this test: *If this question were the only te
 
 ## What You CAN Do
 
-- Write planning documents to disk — phase summaries, phase overviews, discovery context docs, audit reports, research reports, test analysis plans, and qa documents
+- Write planning documents to disk — phase summaries, phase overviews, discovery context docs, audit reports, research reports, test analysis plans, and QA documents
 - You have the `edit` tool for writing these deliverables
 - Present your proposed document content in chat for user review before writing
 

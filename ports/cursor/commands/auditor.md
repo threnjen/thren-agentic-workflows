@@ -5,7 +5,7 @@ You are now operating as **Audit - Code, Infra, Refactor, Security** directly in
 
 The default run audits **one target**: the current repository, one report set per selected type. Only when the user names two revisions or two checkouts of the same product does the run become multi-target — see [Multi-Target Runs](#multi-target-runs), which adds a comparison step that answers "what did this rewrite actually fix?"
 
-You do NOT perform audits, write code, write reviews, or write qa plans yourself. You coordinate subagents that do.
+You do NOT perform audits, write code, write reviews, or write QA plans yourself. You coordinate subagents that do.
 
 ## Workflow
 
@@ -72,7 +72,7 @@ After presenting the audit results, ask the user:
 
 > **Would you like me to implement the fixes?**
 >
-> I'll create task files from the audit findings and run each through the implementation, review, and qa pipeline.
+> I'll create task files from the audit findings and run each through the implementation, review, and QA pipeline.
 
 If the user declines, stop here — the audit deliverables are complete. Otherwise proceed.
 
@@ -97,11 +97,11 @@ For **each task** (in priority order from the audit), run the implementation pip
 
 Load the `implementation-pipeline-loop` skill and execute Steps A through D for each task, using `dev/[audit-name]/[task-name]/` as the `[plan-path]` and `[task-name]` as the task identifier.
 
-### Phase 8: Consolidated qa
+### Phase 8: Consolidated QA
 
 After ALL tasks are implemented and reviewed, spawn the **z-feature-qa-writer** subagent:
 
-> "Write a consolidated release qa plan covering ALL tasks in this audit remediation. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following task folders: [list all dev/[audit-name]/[task-name]/ paths]. Write the consolidated qa plan to `dev/[audit-name]/[audit-name]-qa.md` and the coverage map to `dev/[audit-name]/[audit-name]-coverage-map-qa.md`. If the qa file already exists, merge new coverage into it. Return a summary of what manual qa is needed across all tasks."
+> "Write a consolidated release QA plan covering ALL tasks in this audit remediation. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following task folders: [list all dev/[audit-name]/[task-name]/ paths]. Write the consolidated QA plan to `dev/[audit-name]/[audit-name]-qa.md` and the coverage map to `dev/[audit-name]/[audit-name]-coverage-map-qa.md`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all tasks."
 
 After it returns, verify both documents exist.
 
@@ -109,14 +109,14 @@ After it returns, verify both documents exist.
 
 spawn the **prod-code-review** subagent:
 
-> "Perform the final pre-production readiness analysis for the audit remediation. The following task folders contain all pipeline documents: [list all dev/[audit-name]/[task-name]/ paths]. The consolidated qa plan is at `dev/[audit-name]/[audit-name]-qa.md`. Cross-validate all documents, verify implementations, run tests, and evaluate qa plan completeness. Write the analysis to `dev/[audit-name]/[audit-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
+> "Perform the final pre-production readiness analysis for the audit remediation. The following task folders contain all pipeline documents: [list all dev/[audit-name]/[task-name]/ paths]. The consolidated QA plan is at `dev/[audit-name]/[audit-name]-qa.md`. Cross-validate all documents, verify implementations, run tests, and evaluate QA plan completeness. Write the analysis to `dev/[audit-name]/[audit-name]-qa-analysis.md`. Return the verdict (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."
 
 ### Phase 10: Report to User
 
 Present results using the Pipeline Completion Report format from the auto-loaded orchestrator conventions. Use these field labels:
 - Scope label: **Audit**
 - Items label: **Tasks completed**
-- Include the qa document path: `dev/[audit-name]/[audit-name]-qa.md`
+- Include the QA document path: `dev/[audit-name]/[audit-name]-qa.md`
 
 ### Phase 11: Update Documentation
 
@@ -278,7 +278,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-qa.md` | z-feature-qa-writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
@@ -288,15 +288,15 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated qa Documents
+## Consolidated QA Documents
 
-In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
+In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary

@@ -47,10 +47,10 @@ as the run progresses: resolved inputs after config validation, then each
 per-pair/per-side status and pointers as results arrive. It is the run's
 sole observability surface and final run record.
 
-For every side, retain the exact qa package paths (`QA_AUTOMATED.md` and
-`QA_USER.md` when present), the recorded qa status, and compact coverage
-metadata returned by preparation. Do not reduce qa evidence to the client
-qa appendix or to an overall PASS/FAIL label; later stages need the source
+For every side, retain the exact QA package paths (`QA_AUTOMATED.md` and
+`QA_USER.md` when present), the recorded QA status, and compact coverage
+metadata returned by preparation. Do not reduce QA evidence to the client
+QA appendix or to an overall PASS/FAIL label; later stages need the source
 paths and the checks that cover each claimed workflow.
 
 **On start, check for an existing working-state file.** If found, resume
@@ -80,14 +80,14 @@ resolved inputs in the working-state file.
 ### 2. Prepare
 
 Spawn **engagement-01-prepare** with the config, unchanged from its own
-definition — it owns validation gates, the qa gate (each repository's
+definition — it owns validation gates, the QA gate (each repository's
 completed QA_AUTOMATED/QA_USER package, halting to send the user to the
 **qa-bootstrap** when incomplete) and the workspace's
 `deliverables/qa-appendix.md`, analysis-branch setup, graph builds, and
 baseline snapshots. It spawns nothing; documentation is produced in
 Stage A of the pair loop. Consume its compact final report; record per-side
-preparation status, exact qa package paths, compact workflow/check coverage,
-the qa appendix pointer, and the remaining artifact pointers.
+preparation status, exact QA package paths, compact workflow/check coverage,
+the QA appendix pointer, and the remaining artifact pointers.
 
 ### 3. Entry Check
 
@@ -129,9 +129,9 @@ unverified required behavior blocks Stage 5.
    SOW path (or "none configured"), the deliverables-spec path, the pair
    roster with `mode`s, retained-artifact pointers from the working-state
    file, the A3-verified per-side concrete paths (analysis-branch checkout
-   path, docs-set paths, code-graph pointer, exact qa package paths and
+   path, docs-set paths, code-graph pointer, exact QA package paths and
    check-coverage pointers — the evidence inside the client repos), the
-   Stage E qa/scope classifications, and the boundaries above. It writes the
+   Stage E QA/scope classifications, and the boundaries above. It writes the
    SOW compliance walkthrough and the verification summary. Record its
    document pointers.
 2. **z-engagement-07-manifest-assembler** — spawn after the compliance writer
@@ -195,7 +195,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-qa.md` | z-feature-qa-writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
@@ -205,15 +205,15 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated qa Documents
+## Consolidated QA Documents
 
-In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
+In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary

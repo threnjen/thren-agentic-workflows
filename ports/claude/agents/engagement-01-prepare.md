@@ -55,41 +55,41 @@ full roster: each pair by `name` and `type`, each side with its role
 (`original` / `upgraded`) and resolved path (and branch, for branch pairs).
 Then proceed directly with preparation — no confirmation gate.
 
-## Preflight 3: qa Gate and qa Appendix
+## Preflight 3: QA Gate and QA Appendix
 
-**Upgraded side (required).** Every upgraded repository must carry a completed qa package:
+**Upgraded side (required).** Every upgraded repository must carry a completed QA package:
 `docs/QA_AUTOMATED.md` whose top `VERDICT:` line reads `PASS` or `FAIL`
 (read only that line — `VERDICT: NOT RUN` or no verdict line means the
-automated qa was never executed), and `docs/QA_USER.md`. If any piece is
-missing or the automated qa was never run, halt for that repository's pairs
+automated QA was never executed), and `docs/QA_USER.md`. If any piece is
+missing or the automated QA was never run, halt for that repository's pairs
 and tell the user to run
 the **qa-bootstrap** for it (that agent generates both documents and
 executes the automated runbook) — you do not spawn it. A recorded FAIL
 verdict is a blocker: surface it and continue only after the user reviews
-the qa results and confirms.
+the QA results and confirms.
 
 QA_USER must also be **executed**, not just written: its checks are Markdown
 checkboxes, checked (`- [x]`) as the tester completes them. Count unchecked
 boxes mechanically (e.g. `grep -c '\[ \]' docs/QA_USER.md`) — any count
-above zero means manual qa is incomplete: halt for that repository's pairs
+above zero means manual QA is incomplete: halt for that repository's pairs
 and tell the user to finish and check off QA_USER before re-running.
 
-**Original side (optional).** Original/legacy repositories may lack qa docs (docs
+**Original side (optional).** Original/legacy repositories may lack QA docs (docs
 do not exist or are incomplete) — this is not a blocker. Record the original
-side's qa status (present with verdict, present but incomplete, or absent) in
-your report, noting it in the qa appendix. The comparison shows what the upgraded
+side's QA status (present with verdict, present but incomplete, or absent) in
+your report, noting it in the QA appendix. The comparison shows what the upgraded
 side has; original gaps are evidence, not failures.
 
-Once every **upgraded** repository passes the gate, write the client-facing qa appendix
+Once every **upgraded** repository passes the gate, write the client-facing QA appendix
 at `deliverables/qa-appendix.md` in the engagement workspace (root per the
 `engagement-workspace` skill): one section per repository containing its
-QA_USER acceptance checklist (if present), followed by a summary of its automated qa run
-covering targets QA_USER marks agent-only. For original sides without qa docs, note
+QA_USER acceptance checklist (if present), followed by a summary of its automated QA run
+covering targets QA_USER marks agent-only. For original sides without QA docs, note
 their absence. Client voice per the
 `engagement-client-voice` skill; no secrets, no internal paths. This is the
 one workspace document you write; the workspace itself already exists —
 never create it. The appendix is a presentation artifact, not a replacement
-for the source qa package: retain and report the exact `QA_AUTOMATED.md` and
+for the source QA package: retain and report the exact `QA_AUTOMATED.md` and
 `QA_USER.md` paths plus the check IDs/statuses that cover the repository's
 primary workflows. A generic repository-level PASS without those mappings
 must not be handed to later synthesis stages as workflow evidence.
@@ -200,16 +200,16 @@ deduplicated ones.
 Stop and report **which side** and **what failed** for exactly these:
 
 - A configured path or branch does not exist (surfaced by validation).
-- An **upgraded** repository failing the qa gate (missing qa documents, no recorded
+- An **upgraded** repository failing the QA gate (missing QA documents, no recorded
   verdict, unchecked QA_USER boxes, or an unconfirmed FAIL verdict). Missing
-  or incomplete qa on an **original** repository does not halt preparation.
+  or incomplete QA on an **original** repository does not halt preparation.
 - A branch-pair repository has a dirty working tree — creating worktrees
   from a dirty state risks contaminating the analysis.
 - Graph build failure on a side.
 
 Explicitly **not** failures: missing graphs (that is the work), an
 analysis branch that already exists (reuse it), graph tooling
-unavailability (record NOT RUN and continue), and missing/incomplete qa
+unavailability (record NOT RUN and continue), and missing/incomplete QA
 documents on an original side.
 
 ## Idempotency
@@ -225,7 +225,7 @@ Return a compact table covering every side of every pair: pair name, side
 role, analysis-branch status, graph status (built / NOT RUN with
 reason), baseline snapshot path, artifact locations (local paths only),
 exact QA_AUTOMATED and QA_USER paths, per-repo QA-gate status, compact
-workflow/check coverage pointers, the qa appendix path, and
+workflow/check coverage pointers, the QA appendix path, and
 the three analysis-branch invariant assertions with their evidence (recorded
 HEAD SHAs). Nothing in this report contains engagement file contents.
 
@@ -266,7 +266,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-qa.md` | z-feature-qa-writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
@@ -276,15 +276,15 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated qa Documents
+## Consolidated QA Documents
 
-In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
+In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary

@@ -19,9 +19,9 @@ You are the **upstream planner**. Your output feeds into `phase-refiner`, then i
 ```
 Project - Planner (you)       Phase - Refiner               Feature - Decomposer            Phase - Execute (orchestrator)
 ─────────────────────         ────────────────────────────   ──────────────────────────────   ────────────────────────────────
-PHASE_01_SUMMARY.md        →  Refined PHASE_01_SUMMARY.md →  dev/feature/ plan files       →  Implementation + qa + docs
-PHASE_02_SUMMARY.md        →  Refined PHASE_02_SUMMARY.md →  dev/feature/ plan files       →  Implementation + qa + docs
-PHASE_03_SUMMARY.md        →  Refined PHASE_03_SUMMARY.md →  dev/feature/ plan files       →  Implementation + qa + docs
+PHASE_01_SUMMARY.md        →  Refined PHASE_01_SUMMARY.md →  dev/feature/ plan files       →  Implementation + QA + docs
+PHASE_02_SUMMARY.md        →  Refined PHASE_02_SUMMARY.md →  dev/feature/ plan files       →  Implementation + QA + docs
+PHASE_03_SUMMARY.md        →  Refined PHASE_03_SUMMARY.md →  dev/feature/ plan files       →  Implementation + QA + docs
 ```
 
 Each phase document must be **self-contained** — readable in a fresh context with zero prior conversation history. The Phase - Refiner agent should be able to take a single phase document and iterate on it to deepen understanding before Phase - Execute automates the full implementation cycle.
@@ -111,7 +111,7 @@ Use this procedure:
 
 1. **Check existing phase documents** — Scan `docs/phases/` to see which `PHASE_0N_SUMMARY.md` files already exist on disk
 2. **Write or regenerate `PROJECT_ROADMAP.md`** — Always regenerate this file on each run to keep the roadmap in sync with any changes to project scope or priorities
-3. **Write or update `DISCOVERY_CONTEXT.md`** — If any additional context was gathered during Discovery or Clarification (additional folders/projects, web research, user-provided docs), write it to `docs/phases/DISCOVERY_CONTEXT.md`. If the file already exists, update it with any new context from this session. Skip this step only if no additional context was gathered beyond what's in the codebase itself. When the phase includes refactors, rewires, or behavior changes, also note likely test impact, affected test suites, and any Unity EditMode/PlayMode (If a Unity project) or manual qa needs in the phase document.
+3. **Write or update `DISCOVERY_CONTEXT.md`** — If any additional context was gathered during Discovery or Clarification (additional folders/projects, web research, user-provided docs), write it to `docs/phases/DISCOVERY_CONTEXT.md`. If the file already exists, update it with any new context from this session. Skip this step only if no additional context was gathered beyond what's in the codebase itself. When the phase includes refactors, rewires, or behavior changes, also note likely test impact, affected test suites, and any Unity EditMode/PlayMode (If a Unity project) or manual QA needs in the phase document.
 4. **On first run, write only `PHASE_01`** — If no phase summaries exist yet, write only `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`
 5. **On return runs, write only the next single phase after completion of the prior one** — If `PHASE_01` is complete and the user has returned, write only `PHASE_02`; if `PHASE_02` is complete and the user has returned, write only `PHASE_03`; and so on
 6. **Do not skip ahead** — Never write multiple new `PHASE_0N` summaries in one run
@@ -128,8 +128,8 @@ After the user confirms the planning documents are final for this session, stage
 - **Update status** in `PROJECT_ROADMAP.md` as phases progress (Planned → In Progress → Complete)
 - **Archive completed phases** — do not delete phase docs; update their status to Complete
 - **Cross-reference** related repos when a project spans frontend and backend (link to counterpart phase docs)
-- When a phase includes frontend/UI changes, note that **qa manual test documents are required** (the Phase - Execute orchestrator handles this automatically via the z-feature-qa-writer subagent)
-- For pure backend phases, recommend qa docs when API contracts change, integration behavior changes, or changes affect user-visible behavior through the frontend
+- When a phase includes frontend/UI changes, note that **QA manual test documents are required** (the Phase - Execute orchestrator handles this automatically via the z-feature-qa-writer subagent)
+- For pure backend phases, recommend QA docs when API contracts change, integration behavior changes, or changes affect user-visible behavior through the frontend
 
 ## Principles for Good Phase Boundaries
 
@@ -206,7 +206,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-qa.md` | z-feature-qa-writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | z-prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-research-specialist | Full structured audit findings or research findings with citations |
@@ -216,15 +216,15 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-research-specialist documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated qa Documents
+## Consolidated QA Documents
 
-In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
+In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary
@@ -321,7 +321,7 @@ Before sending any question, apply this test: *If this question were the only te
 
 ## What You CAN Do
 
-- Write planning documents to disk — phase summaries, phase overviews, discovery context docs, audit reports, research reports, test analysis plans, and qa documents
+- Write planning documents to disk — phase summaries, phase overviews, discovery context docs, audit reports, research reports, test analysis plans, and QA documents
 - You have the `edit` tool for writing these deliverables
 - Present your proposed document content in chat for user review before writing
 
