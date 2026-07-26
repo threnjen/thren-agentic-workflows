@@ -37,7 +37,7 @@ point: an audit that could reach the network would eventually reach it.
 Because of that boundary, CVE/advisory auditing and license compliance are
 **out of scope** for this evaluator by design — they require registry or
 advisory data this audit cannot reach. They belong to CI tooling or the full
-`security-scan`, not to PR review. Their absence here is a stated non-goal,
+`Auditor - Security` scan, not to PR review. Their absence here is a stated non-goal,
 not a coverage gap, and is never recorded as a not-run check.
 
 ## Assigned Scope

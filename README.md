@@ -60,11 +60,11 @@ Reach for these individually, whenever you need them — no pipeline required:
 - **Debugger** — diagnose and fix a frontend or backend error
 - **Docs Writer** — create or update your repo's documentation
 - **Web Researcher** — research a topic and produce a cited findings report
-- **Audit - Code, Infra, Refactor** — health-check your code, infra, or structure; audit
-  two repos or two branches and get a reconciled delta of what changed between them
+- **Audit - Code, Infra, Refactor, Security** — health-check your code, infra, structure, or
+  security posture; audit two repos or two branches and get a reconciled delta of what changed
+  between them
 - **Test - Orchestrator** — analyze, write, or fix your test suite
 - **Prod Code Review** — a final GO / NO-GO readiness gate
-- **Security Scan** — a full-codebase security assessment
 - **Unity Reviewer** / **Visual Verifier** — review Unity C# and verify what actually renders
 - **Eval - Grader** / **Instructions Manager** — score agent runs and manage AI instruction files
 - **Engagement - Orchestrator** / **Engagement - Prepare** — run a client engagement end to

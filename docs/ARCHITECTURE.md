@@ -187,7 +187,7 @@ flowchart TD
     Refiner[02 Phase - Refiner]
     Decomposer[03 Feature - Decomposer]
     PhaseExecute[04 Phase - Execute]
-    Audit[Audit - Code, Infra, Refactor]
+    Audit[Audit - Code, Infra, Refactor, Security]
     Test[Test - Orchestrator]
     ProdReview[Prod Code Review]
     EvalGrader[Eval - Grader]
@@ -215,6 +215,7 @@ flowchart TD
     Audit --> AuditorCode[Auditor - Code]
     Audit --> AuditorInfra[Auditor - Infra]
     Audit --> AuditorRefactor[Auditor - Refactor]
+    Audit --> AuditorSecurity[Auditor - Security]
     Audit --> AuditorDelta[Auditor - Delta]
     Audit --> AuditorFixes[Auditor - Remediation Research]
 

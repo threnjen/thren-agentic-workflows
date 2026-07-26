@@ -41,7 +41,7 @@ analysis-branch checkout:
 
 | Dimension | Agent |
 |-----------|-------|
-| security | Security Scan (full codebase) |
+| security | Auditor - Security (full codebase) |
 | code | Auditor - Code |
 | dependencies | 05e Dependency Auditor |
 | infra | Auditor - Infra |

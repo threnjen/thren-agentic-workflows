@@ -138,12 +138,11 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **06 Engagement - Prepare** | Prepare a client engagement for comparison analysis — validate the engagement config, then ensure an analysis branch, a code graph, and a baseline snapshot per side |
 | **Engagement - Orchestrator** | Run a client engagement end to end from its configuration — preparation, then per-pair analysis stages through compliance, manifest, and gap review, all via subagents |
 | **Eval - Feature Decomposition** | Score a feature-decomposition run against a golden-path branch across structural, naming, dependency, AC, context, and manifest dimensions |
-| **Audit - Code, Infra, Refactor** | Orchestrate code, infrastructure, or structural audits with optional automated fix pipeline |
+| **Audit - Code, Infra, Refactor, Security** | Orchestrate code, infrastructure, structural, or security audits — one repository, or two with a reconciled delta — with optional automated fix pipeline |
 | **Instructions Manager** | Create or evaluate AI coding instruction files — routes to Instructions - Writer or Instructions - Evaluator |
 | **Single Feature - Agent** | Handle small, focused changes with a proposal + explicit permission gate before implementation |
 | **Debugger** | Diagnose and fix frontend or backend application errors |
 | **Docs Writer** | Create or update repo documentation; also spawned automatically by orchestrators after pipeline completion |
-| **Security Scan** | Full-codebase security assessment writing a phase-level report (secrets, dependencies, infra, CI/CD, config) |
 | **Prod Code Review** | Final pre-production readiness gate (also usable standalone) |
 | **QA - Bootstrapper** | Bootstrap a repository's QA package — generate QA_AUTOMATED and QA_USER from available starter inputs, run the automated runbook, and stamp pass/fail results |
 | **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
@@ -160,6 +159,7 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Auditor - Code** | Audit orchestrator | Comprehensive code quality, security, and health audit |
 | **Auditor - Infra** | Audit orchestrator | Audit Dockerfiles, CI/CD pipelines, IaC templates, and config files |
 | **Auditor - Refactor** | Audit orchestrator | Audit codebase structure, module organization, and architecture |
+| **Auditor - Security** | Audit orchestrator, Engagement - Orchestrator | Full-codebase security audit across secrets, dependencies, attack surface, auth, data protection, runtime safety, infra/CI-CD, and observability |
 | **Auditor - Delta** | Audit orchestrator | Compare two audit reports of the same product and produce a reconciled delta document plus an open-items queue |
 | **Auditor - Remediation Research** | Audit orchestrator | Research fixes for the new and transformed findings in a delta's open-items queue |
 | **Eval - Metric Grader** | Eval - Grader | Score one comparative metric from prepared diff and ledger evidence |
@@ -222,8 +222,8 @@ These agents are not visible in the picker. They run automatically as part of or
 **Engagement - Orchestrator** (orchestrator — delegates to the engagement subagents)
 > Give it an engagement configuration file path. It spawns Engagement - Prepare unchanged, then drives each comparison pair through comparative audit runs, delta and security synthesis, cloud/cost analysis, and narrative/specification documents, finishing the engagement with the SOW compliance walkthrough, verification summary, package manifest, and client-perspective gap review. It holds only statuses and artifact pointers, maintains `engagement-state.md` as its run record, and resumes from it on restart.
 
-**Audit - Code, Infra, Refactor** (orchestrator — delegates to subagents)
-> Asks which audit type to run (CODE, INFRA, or REFACTOR), delegates to the appropriate auditor subagent, and presents findings. Optionally drives automated remediation by converting audit findings into task plans and running them through the Feature - Implementer → Feature - Reviewer → Feature - QA Writer pipeline. After remediation, updates documentation via the Docs Writer.
+**Audit - Code, Infra, Refactor, Security** (orchestrator — delegates to subagents)
+> Asks which audit type to run (CODE, INFRA, REFACTOR, or SECURITY — multi-select), delegates to the appropriate auditor subagents, and presents findings. When the user names two checkouts or two branches, it audits each independently and produces a reconciled delta. Optionally drives automated remediation by converting audit findings into task plans and running them through the Feature - Implementer → Feature - Reviewer → Feature - QA Writer pipeline. After remediation, updates documentation via the Docs Writer.
 
 **Single Feature - Agent** (direct implementation path)
 > Handles small-scope changes (typically up to a few files) without full pipeline artifacts. It investigates, proposes a focused plan, asks for explicit permission before implementation, executes minimal changes, and verifies results. When scope expands, it recommends switching to **04 Phase - Execute**.
@@ -236,9 +236,6 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Prod Code Review** (document-only — does not modify code)
 > Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Can be spawned standalone or automatically by the orchestrator.
-
-**Security Scan** (document-only — does not modify code)
-> Performs an evidence-based, full-codebase security assessment across all tracked, security-relevant repository artifacts. Writes a phase-level report covering secrets, dependencies, application attack surface, authentication, data protection, runtime safety, infrastructure, CI/CD, observability, and cross-cutting security patterns. It redacts sensitive values and distinguishes phase regressions from pre-existing release risks. (Distinct from the hidden **04e Diff Security Scan**, which only covers a single pass's diff.)
 
 **Instructions Manager** (router — delegates to subagents)
 > Give it a request to create or assess AI coding instruction files (`.github/instructions/`, `copilot-instructions.md`, `.cursorrules`, `CLAUDE.md`, or equivalent). It routes to the **Instructions - Writer** to draft new scoped instruction sets, or to the **Instructions - Evaluator** to A/B-test whether proposed instruction changes are improvements or regressions.
@@ -268,13 +265,15 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Feature - QA Writer** *(subagent of Phase - Execute, Audit orchestrator)* — In batch mode: reads all pipeline docs from every feature in a phase and writes a single consolidated QA plan. In per-feature mode: reads pipeline docs from a single feature and writes QA plan and coverage map to that feature's directory.
 
-**04e Diff Security Scan** *(subagent of Phase - Execute)* — Performs a diff-scoped security review of only the files changed by an implementation pass (from an implementation record's "Files Changed" table or a git diff range), plus their immediate security-relevant context. Writes a compact report with verdict, findings, and the categories not assessable at diff scope. It does not replace the full-codebase Security Scan.
+**04e Diff Security Scan** *(subagent of Phase - Execute)* — Performs a diff-scoped security review of only the files changed by an implementation pass (from an implementation record's "Files Changed" table or a git diff range), plus their immediate security-relevant context. Writes a compact report with verdict, findings, and the categories not assessable at diff scope. It does not replace the full-codebase Auditor - Security scan.
 
 **Auditor - Code** *(subagent of Audit orchestrator)* — Audits every source file for cleanup, bugs, security, type hints, readability, DRY, and consistency. Produces a structured report.
 
 **Auditor - Infra** *(subagent of Audit orchestrator)* — Evaluates Dockerfiles, CI/CD pipelines, IaC templates, and config files for security, best practices, and operational risk.
 
 **Auditor - Refactor** *(subagent of Audit orchestrator)* — Evaluates codebase-level organization: module structure, dependency graphs, component decomposition, coupling, cohesion, and separation of concerns.
+
+**Auditor - Security** *(subagent of Audit orchestrator and Engagement - Orchestrator)* — Audits every in-scope file against ten fixed security categories: secrets, dependencies and supply chain, attack surface and injection, authentication and authorization, data protection and cryptography, API and input boundaries, filesystem/process/runtime safety, infrastructure and CI/CD, observability, and cross-cutting security architecture. Redacts every secret value, records each category as assessed-clean or not-assessed so the two are never confused, and produces a structured report plus executive summary. (Distinct from the hidden **04e Diff Security Scan**, which only covers a single pass's diff.)
 
 **Auditor - Delta** *(subagent of Audit orchestrator)* — Compares two completed audit reports of the same product — a baseline snapshot and a current one — and produces a delta document classifying every finding as resolved, improved, unchanged, transformed, unverified, or new, with the counts reconciled against both reports, plus a standalone open-items queue holding only the new and transformed findings. Raises no findings of its own.
 
@@ -319,7 +318,7 @@ The **Audit** and **Test** orchestrators handle most multi-step workflows intern
 
 | Step | Agent | Prompt |
 |------|-------|--------|
-| 1 | **Audit - Code, Infra, Refactor** | "Audit the codebase" → select CODE, accept remediation |
+| 1 | **Audit - Code, Infra, Refactor, Security** | "Audit the codebase" → select CODE, accept remediation |
 
 The audit orchestrator runs the code audit, presents findings, and offers to implement fixes automatically through the feature pipeline.
 
@@ -327,7 +326,7 @@ The audit orchestrator runs the code audit, presents findings, and offers to imp
 
 | Step | Agent | Prompt |
 |------|-------|--------|
-| 1 | **Audit - Code, Infra, Refactor** | "Audit the codebase" → select REFACTOR, accept remediation |
+| 1 | **Audit - Code, Infra, Refactor, Security** | "Audit the codebase" → select REFACTOR, accept remediation |
 
 The audit orchestrator runs the structural audit, presents findings, and offers to implement fixes automatically through the feature pipeline.
 
@@ -350,14 +349,20 @@ The test orchestrator handles analysis, writing, and fixing. It can optionally d
 
 | Step | Agent | Prompt |
 |------|-------|--------|
-| 1 | **Audit - Code, Infra, Refactor** | "Audit the codebase" (optional — for context gathering) |
+| 1 | **Audit - Code, Infra, Refactor, Security** | "Audit the codebase" (optional — for context gathering) |
 | 2 | **Docs Writer** | "Create documentation for the repo" |
 
 ### Infrastructure Audit & Remediation
 
 | Step | Agent | Prompt |
 |------|-------|--------|
-| 1 | **Audit - Code, Infra, Refactor** | "Audit the codebase" → select INFRA, accept remediation |
+| 1 | **Audit - Code, Infra, Refactor, Security** | "Audit the codebase" → select INFRA, accept remediation |
+
+### Security Audit & Remediation
+
+| Step | Agent | Prompt |
+|------|-------|--------|
+| 1 | **Audit - Code, Infra, Refactor, Security** | "Audit the codebase" → select SECURITY, accept remediation |
 
 ---
 
@@ -365,7 +370,7 @@ The test orchestrator handles analysis, writing, and fixing. It can optionally d
 
 Not everything needs a pipeline. These agents work well on their own:
 
-- **Audit - Code, Infra, Refactor** — Run anytime for a code, infrastructure, or structural health check
+- **Audit - Code, Infra, Refactor, Security** — Run anytime for a code, infrastructure, structural, or security health check
 - **Single Feature - Agent** — Implement a focused change with an explicit approval gate and minimal churn
 - **05 Eval - Grader** — Score a completed `phase/*` run against a rubric and preserve a Markdown score report under `eval/runs/<phase-slug>/`
 - **Test - Orchestrator** — Analyze, write, or fix tests on demand
@@ -414,7 +419,7 @@ The **Prod Code Review** writes its readiness analysis to:
 dev/[phase-name]-qa-analysis.md      # GO/NO-GO verdict, traceability matrix, risk register (batch mode)
 ```
 
-Audit agents (**Auditor - Code**, **Auditor - Infra**) produce reports in:
+Audit agents (**Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Security**) produce reports in:
 
 ```
 dev/[audit-name]/
@@ -480,11 +485,11 @@ For the project pipeline, copy all files including the hidden subagents. For sta
 
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each agent file works standalone — just copy the `.md` file into any project's `.github/agents/` directory.
-- **Four orchestrators**: **04 Phase - Execute**, **05 PR - Review**, **Audit - Code, Infra, Refactor**, and **Test - Orchestrator** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
+- **Four orchestrators**: **04 Phase - Execute**, **05 PR - Review**, **Audit - Code, Infra, Refactor, Security**, and **Test - Orchestrator** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
 - **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned by Phase - Execute, Audit, and Test orchestrators at the end of the pipeline to update stale documentation (it remains user-invocable for standalone use as well).
 - **Dual-use agents**: **03 Feature - Decomposer** is user-facing for standalone plan creation and also spawned by **04 Phase - Execute** when plans are missing. **Docs Writer** is user-facing and also spawned by all three orchestrators.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
-- **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Delta**, **Auditor - Remediation Research**, and **Test - Analyst** do not modify code. They analyze and report only.
+- **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Security**, **Auditor - Delta**, **Auditor - Remediation Research**, and **Test - Analyst** do not modify code. They analyze and report only.
 - **Approval-gated agents**: **01 Project - Planner**, **02 Phase - Refiner**, and **03 Feature - Decomposer** always present findings and ask for explicit approval before creating files. They also check for missing critical documentation (`README.md`, `docs/CODEBASE_CONTEXT.md`) and recommend running the **Docs Writer** before continuing. The **Audit** and **Test** orchestrators ask before proceeding to the remediation phase.
 - **Code-writing agents**: **Debugger**, **Test - Writer**, **Test - Fixer**, **Feature - Implementer**, and **Feature - Reviewer** have full tool access to create and modify files.
 - **Prod Code Review** does not modify code — it analyzes and reports only, producing a GO / NO-GO verdict.

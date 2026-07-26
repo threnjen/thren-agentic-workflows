@@ -810,9 +810,15 @@ class OrphanPruningTests(unittest.TestCase):
         # one file to claude agents (40 -> 41) and opencode/codex agents
         # (55 -> 56); claude commands unchanged (not user-invocable). Counts
         # recounted from disk.
+        # `Security Scan` was folded into `Auditor - Security`, a hidden
+        # sibling of the Code/Infra/Refactor auditors: the agent surfaces are
+        # unchanged (its spawnable file, held because the Engagement
+        # orchestrator declared it as a child, is simply renamed), but it loses
+        # its user-invocable command -- claude commands 20 -> 19. Counts
+        # recounted from disk.
         roots = [
             (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 20),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 19),
             (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 56),
             (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 56),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),

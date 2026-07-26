@@ -110,30 +110,36 @@ def test_retired_agents_are_absent_from_every_generated_root() -> None:
             assert not output.exists(), f"retired generated output survived: {output}"
 
 
-def test_security_scan_survives_and_still_propagates() -> None:
-    """AC5: `Security Scan` outlives its retired `05d` parent.
+def test_security_capability_survives_as_an_auditor_subagent() -> None:
+    """AC5: the full-codebase security capability outlives its retired `05d` parent.
 
     It is general-purpose and separately referenced; the diff-scoped check the
     rollup wrapped is delegated to `04e-diff-security-scan`, a different agent.
     Deleting it by association would remove working capability.
 
-    Losing its only parent made it standalone rather than dead: it is
-    user-invocable, so it keeps a slash command on every platform. It correctly
-    loses its Claude *spawnable subagent* file (`claude/agents/z-security-scan.md`),
-    because after `05d` no agent declares it as a child.
+    Losing `05d` first made it standalone. It was then folded into the auditor
+    family as `Auditor - Security`, a hidden sibling of Code/Infra/Refactor
+    declared as a child by both the audit and engagement orchestrators. So the
+    shape inverts: it gains a spawnable subagent file on every platform and
+    correctly loses its user-invocable slash command.
     """
-    assert (REPO_ROOT / "source_of_truth" / "agents" / "security-scan.agent.md").exists()
+    assert (REPO_ROOT / "source_of_truth" / "agents" / "auditor-security.agent.md").exists()
+    assert not (REPO_ROOT / "source_of_truth" / "agents" / "security-scan.agent.md").exists(), (
+        "the standalone Security Scan agent was folded into Auditor - Security; "
+        "two agents owning full-codebase security scanning is the state this "
+        "consolidation removed"
+    )
 
     for output in (
-        REPO_ROOT / "ports" / "claude" / "commands" / "security-scan.md",
-        REPO_ROOT / "ports" / "opencode" / "agents" / "security-scan.md",
-        REPO_ROOT / "ports" / "codex" / "agents" / "security-scan.toml",
+        REPO_ROOT / "ports" / "claude" / "agents" / "z-auditor-security.md",
+        REPO_ROOT / "ports" / "opencode" / "agents" / "auditor-security.md",
+        REPO_ROOT / "ports" / "codex" / "agents" / "z-auditor-security.toml",
     ):
-        assert output.exists(), f"Security Scan stopped propagating to {output}"
+        assert output.exists(), f"Auditor - Security stopped propagating to {output}"
 
-    assert not (REPO_ROOT / "ports" / "claude" / "agents" / "z-security-scan.md").exists(), (
-        "no agent declares Security Scan as a child, so it must not keep a "
-        "spawnable subagent file"
+    assert not (REPO_ROOT / "ports" / "claude" / "commands" / "security-scan.md").exists(), (
+        "Auditor - Security is user-invocable: false, so it must not keep a "
+        "slash command"
     )
 
 

@@ -1,5 +1,5 @@
 ---
-description: "Performs a diff-scoped security scan of only the files changed by an implementation pass, plus their immediate security-relevant context. Writes a compact security report with evidence, severity, and diff-scope limitations. Does not replace the full-codebase Security Scan."
+description: "Performs a diff-scoped security scan of only the files changed by an implementation pass, plus their immediate security-relevant context. Writes a compact security report with evidence, severity, and diff-scope limitations. Does not replace the full-codebase Auditor - Security scan."
 model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
@@ -11,7 +11,7 @@ permission:
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 
-You are a **Diff-Scoped Security Reviewer**. Your job is to perform an evidence-based security review of ONLY the files changed by a specific implementation pass. You are a changed-files reviewer, NOT a phase-level gate, and you do not replace the full-codebase `security-scan` agent.
+You are a **Diff-Scoped Security Reviewer**. Your job is to perform an evidence-based security review of ONLY the files changed by a specific implementation pass. You are a changed-files reviewer, NOT a phase-level gate, and you do not replace the full-codebase `auditor-security` agent.
 
 ## Required Inputs
 
