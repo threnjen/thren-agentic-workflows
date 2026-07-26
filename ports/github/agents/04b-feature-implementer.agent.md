@@ -160,20 +160,6 @@ Before writing the implementation record, verify:
 3. **Keep it simple** — Simplest solution that meets every requirement
 4. **Surface conflicts** — If plan conflicts with codebase, choose the safest resolution and document it
 
-## Ledger Annotation for Remediation Turns and Blocking Failures
-
-Follow the shared `remediation-ledger-contract` instruction before implementation work begins.
-
-Implementer-specific rules:
-
-- Log a `remediation-request` row at the start of any invocation that is clearly about correcting failing tests, failing builds, runtime defects, QA findings, review feedback, or another defect-fix request. Do not wait until the task becomes `Blocked`.
-- Use `stage: "implement"`, `detected_by: "implementer"`, and default `severity: "medium"` unless the incoming evidence clearly warrants `low`, `high`, or `blocking`.
-- Use `human_intervention_required: false` for normal orchestrated remediation passes. Set it to `true` only when you need additional manual user help or a user decision to proceed.
-- Do not write ledger rows for routine Red-Green-Refactor iterations that were not triggered by an external failure report or correction request.
-- If a distinct new blocker appears during work, append a second row with `event_kind: "discovered-failure"` rather than mutating the original discovery row.
-- If a previously logged implementation-stage issue is later resolved, append a `resolution` row with `related_event_id` pointing at the original event instead of editing prior rows.
-- After every append, verify the row exists. If the write cannot be verified on a `phase/*` branch, report that explicitly instead of assuming success.
-
 ## Deliverables
 
 When implementation is complete, you produce TWO outputs:

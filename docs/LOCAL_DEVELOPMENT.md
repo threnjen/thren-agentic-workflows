@@ -27,7 +27,7 @@ If you use VS Code, open the repository root. The workspace defines three tasks 
 
 ## The Maintenance Loop
 
-1. Edit source-of-truth files under `source_of_truth/{agents,skills,instructions,learnings,hooks}`.
+1. Edit source-of-truth files under `source_of_truth/{agents,skills,instructions,learnings}`.
 2. Transform: regenerate `ports/` and `.github/` from source.
 3. Review the resulting diff before committing.
 4. Deploy (optional): copy the generated outputs to your real harness directories.
@@ -51,13 +51,12 @@ JSON convergence summary; a second run reporting zero changes confirms a fixed p
 python3 scripts/propagate_master_assets.py --watch
 ```
 
-Watch mode monitors the five source directories and re-propagates when files change:
+Watch mode monitors the source directories and re-propagates when files change:
 
 - `source_of_truth/agents/`
 - `source_of_truth/skills/`
 - `source_of_truth/instructions/`
 - `source_of_truth/learnings/`
-- `source_of_truth/hooks/`
 
 It rewrites `ports/{claude,codex,opencode,cursor}`, plus `ports/github` and the real
 `.github/` mirror.
@@ -93,7 +92,7 @@ out with a usage hint rather than guessing.
 | codex | `~/.codex` + `~/.agents/skills` | `CODEX_HOME` | agents; skills |
 | opencode | `~/.config/opencode` | `OPENCODE_CONFIG_DIR` | agents, skills |
 | cursor | `~/.cursor` | — | commands, rules |
-| github | `<repo>/.github` | — | verbatim mirror of the 5 source subdirs |
+| github | `<repo>/.github` | — | verbatim mirror of the source subdirs |
 
 After the asset copy, deploy also splices a baseline instructions file per harness,
 rendered from `source_of_truth/baseline/baseline-instructions.md` with the machine's
@@ -134,7 +133,7 @@ automatically when the folder opens unless you disable task auto-run.
 
 - Run the one-shot transform if the watcher is not already running.
 - Confirm the expected updates appear under `ports/{claude,opencode,codex,cursor}` and,
-  for the five mirrored subdirs, under `ports/github` and `.github/`.
+  for the mirrored subdirs, under `ports/github` and `.github/`.
 - Check that filenames match platform conventions, including aliases and `z-` prefixes.
 
 ### After editing documentation
@@ -175,4 +174,4 @@ Interpretation guidance:
 ## Related References
 
 - [docs/porting/README.md](porting/README.md) — per-harness porting guides and tool mapping.
-- [eval/EVAL_SYSTEM_USAGE.md](../eval/EVAL_SYSTEM_USAGE.md) — the agent evaluation grader system.
+- [eval/deprecated/README.md](../eval/deprecated/README.md) — the archived eval-grader system.

@@ -8,35 +8,11 @@ alwaysApply: false
 
 ## Pattern
 
-When a shell hook serializes git path lists into JSON, preserve git's safe path encoding instead of collapsing `-z` output into newline-delimited text before iteration.
-
-## Impact
-
-Filenames containing embedded newlines or other control characters can split into multiple JSON entries or produce invalid JSON, corrupting downstream ledger consumers.
-
-## Watch for
-
-`git ... -z | tr '\0' '\n'`, here-doc loops over path lists, or `json_escape` helpers that only escape quotes and backslashes.
-
-## Pattern
-
-When agent instructions add ledger-event schemas with resolution fields, document both the initial failure write and the follow-up append-on-resolution path in the source-of-truth file and every mirrored copy.
-
-## Impact
-
-If resolution fields are named in the schema but the write path is undocumented, agents can log failures without ever recording their resolution, leaving downstream grading and audit steps with incomplete state.
-
-## Watch for
-
-Ledger blocks that describe only the first append, schema fields that imply a later lifecycle transition without matching instructions, or parity updates that copy the schema but omit the resolution behavior.
-
-## Pattern
-
 When adding checkpoint-commit instructions to rerunnable authoring flows, stage every artifact mutated by that step and describe resumable scopes as created *or modified*, not created only. Keep the checkpoint contract at the same scope as the artifacts it commits — do not promise per-unit checkpoint commits against consolidated outputs.
 
 ## Impact
 
-Overly narrow staging leaves setup files dirty after the checkpoint or drops edits from resumed runs, so later commits inherit unrelated changes. Mixed scopes create impossible staging instructions and prevent downstream ledger consumers from mapping checkpoints back to the unit named in the commit message.
+Overly narrow staging leaves setup files dirty after the checkpoint or drops edits from resumed runs, so later commits inherit unrelated changes. Mixed scopes create impossible staging instructions and make it impossible to map a checkpoint back to the unit named in its commit message.
 
 ## Watch for
 

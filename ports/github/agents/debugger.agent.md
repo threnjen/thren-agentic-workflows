@@ -24,25 +24,11 @@ Before diving in, classify the error by examining:
   - *Backend*: Startup failure (missing config, bad imports, port conflicts), runtime exception (unhandled errors during request processing), database-related (connection refused, query failures, migrations), dependency-related (missing packages, version conflicts), environment-related (missing env vars, wrong runtime version, permissions)
   - *Full-stack*: API contract mismatches, serialization issues, auth flow failures, CORS
 
-### Step 1a — Log Remediation Turns on Phase Branches
-
-Follow the shared `remediation-ledger-contract` instruction before diagnosis or edits.
-
-Debugger-specific rules:
-
-- Treat every user prompt that reports a bug, stack trace, failing test or build output, QA failure, or explicit request to fix or debug as a remediation turn.
-- Write the initial row on entry to that turn with `stage: "debug"`, `detected_by: "user-discovered"`, and `event_kind: "remediation-request"`.
-- Set `human_intervention_required: true` on that initial row because the run required a user-reported correction pass.
-- Use the user-provided failure signal as the primary `evidence` text.
-- If `task_slug` cannot be inferred, use `unscoped` instead of skipping the write.
-- If you uncover a second, distinct issue during diagnosis, append another row with `event_kind: "discovered-failure"` instead of overwriting the original request row.
-- After every append, verify that the row exists by reading back the file tail or searching for the new `event_id`. If verification fails, say so explicitly instead of assuming the ledger was updated.
-
-### Step 1b — Phase Doc Sync Gate
+### Step 1a — Phase Doc Sync Gate
 
 Detect whether the repository has a `docs/phases/` directory. If it does, **load the `phase-doc-sync` skill** before applying fixes: any fix that alters what a phase delivers or how it behaves is not complete until the affected `PHASE_0N_SUMMARY.md` and `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` in legacy repos) entries are updated as baseline truth, per that skill's contract. Also update the phase's `_QA.md` step when a fix changes that step's expected behavior.
 
-### Step 1c — Scope Guardrail
+### Step 1b — Scope Guardrail
 
 If a fix grows beyond a small change (more than 5 code files, or unrelated modules), stop and recommend `@04 Phase - Execute` with a proper feature plan. Phase-doc updates never count against this limit.
 

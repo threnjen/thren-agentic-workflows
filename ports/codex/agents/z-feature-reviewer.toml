@@ -192,21 +192,6 @@ After the review is complete — and after any fixes have been applied — write
 
 ## Update Review Learnings
 
-## Ledger Annotation for Remediation Turns and Review Findings
-
-Follow the shared `remediation-ledger-contract` instruction before review work begins.
-
-Reviewer-specific rules:
-
-- Log a `remediation-request` row on entry to any correction pass prompted by failing tests, QA findings, review feedback, or explicit fix instructions. Do not wait for a final `Changes Requested` verdict before recording the turn.
-- Use `stage: "review"`, `detected_by: "reviewer"`, and default `severity: "medium"` unless the evidence clearly supports another level.
-- Use `human_intervention_required: false` for normal review and remediation loops. Set it to `true` only when you actually need a manual user decision or missing user-provided input to proceed.
-- Do not write a row for a clean approval-only pass with no incoming remediation request and no newly discovered review issue.
-- If you discover a distinct new review issue during the pass, append a `discovered-failure` row rather than overwriting the original remediation-request row.
-- If your final verdict is `Changes Requested` and no review-stage row has yet been written for that turn, append one before returning.
-- If a previously logged review-stage issue is later resolved, append a `resolution` row with `related_event_id` pointing at the original event.
-- After every append, verify the row exists. If verification fails on a `phase/*` branch, report that explicitly instead of assuming success.
-
 After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append an entry to `.github/learnings/review-learnings.md` as a durable, reusable rule — no dates or feature-specific references. Follow the existing format: Pattern, Impact, Watch for.
 
 Also check for **decisions that affect future phases** (deferred work, documented deviations, scope gaps). If found, append them to `.github/learnings/cross-phase-decisions.md` under the appropriate section. Follow the existing format and categorization.

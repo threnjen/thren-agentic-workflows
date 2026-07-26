@@ -1,5 +1,11 @@
 # Evaluation System Usage Guide
 
+> **Archived.** This system no longer runs. The grader agents, its skills, and the
+> post-commit hook were moved to `eval/deprecated/`, and the instrumentation that
+> produced the ledgers it reads was removed from the pipeline agents. Nothing below
+> is currently wired up. See [`deprecated/README.md`](deprecated/README.md) for why,
+> and what reactivating would require. Kept as a description of how the system worked.
+
 This guide explains how to run the phase evaluation system end-to-end once your pipeline and ledgers are in place.
 
 ## What This System Scores

@@ -58,6 +58,6 @@ Both stages are safe by construction: a destination file is only overwritten or 
 
 ### Other areas
 
-- `eval/` — agent-run grading system and artifacts (see `eval/EVAL_SYSTEM_USAGE.md`)
+- `eval/` — past benchmark run artifacts; `eval/deprecated/` holds the archived eval-grader system (see `eval/deprecated/README.md`)
 - `packages/com.threnjen.visual-verification/` — Unity UPM package paired with the Visual Verifier agent
 - `docs/` — ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT, TROUBLESHOOTING, porting references; keep counts/paths in these aligned with README and CONTRIBUTING when editing docs

@@ -829,11 +829,18 @@ class OrphanPruningTests(unittest.TestCase):
         # this log keep the old names because they record what was true when
         # written. A rename is 1:1, so every count below is unchanged; the
         # propagation pass pruned the nine stale generated files as orphans.
+        # The eval-grader system was archived to `eval/deprecated/` (outside
+        # `source_of_truth/`, so propagation no longer sees it): `Eval - Grader`
+        # and `Eval - Feature Decomposition` were user-invocable and held no
+        # spawnable file, so claude commands 18 -> 16; `Eval - Metric Grader`
+        # and `Eval - Score Recorder` were hidden, so claude agents 41 -> 39.
+        # All four left opencode/codex agents 55 -> 51. Counts recounted from
+        # disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 18),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 55),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 55),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 39),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 16),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 51),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 51),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:

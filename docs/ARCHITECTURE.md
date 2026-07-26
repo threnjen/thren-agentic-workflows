@@ -5,7 +5,7 @@
 This repository is organized around one authoring surface and a two-stage pipeline:
 
 - `source_of_truth/` is the master source for agent definitions, skills, instructions,
-  learnings, and hooks.
+  and learnings.
 - `ports/{claude,codex,opencode,cursor,github}` are generated outputs.
 - `.github/` at the repo root is a real, deployed mirror of `ports/github`.
 - `docs/`, `eval/`, `benchmarks/`, and `packages/` are supporting material.
@@ -28,16 +28,15 @@ flowchart TD
     Root --> Ports[ports generated outputs]
     Root --> DotGithub[.github deployed mirror]
     Root --> Docs[docs and porting guides]
-    Root --> Eval[eval grader system]
+    Root --> Eval[eval past benchmark artifacts]
     Root --> Bench[benchmarks model data]
     Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
-    SOT --> Agents[55 agent definitions]
-    SOT --> Skills[34 skill directories]
-    SOT --> Instructions[17 instruction files]
+    SOT --> Agents[51 agent definitions]
+    SOT --> Skills[32 skill directories]
+    SOT --> Instructions[16 instruction files]
     SOT --> Learnings[4 learnings files]
-    SOT --> Hooks[defunct injection scanner]
 
     Scripts --> Propagate[propagate_master_assets.py]
     Scripts --> Shared[asset_paths.py]
@@ -69,8 +68,8 @@ until a pass makes zero changes (max 25 passes). Each pass rewrites agents per p
 regenerates skills and learnings, emits Cursor commands and rules, and mirrors the five
 source subdirs to `ports/github` and `.github/`.
 
-The watcher in `.vscode/tasks.json` starts on folder open and monitors the five source
-directories (`agents`, `skills`, `instructions`, `learnings`, `hooks`). `--once` (the
+The watcher in `.vscode/tasks.json` starts on folder open and monitors the source
+directories (`agents`, `skills`, `instructions`, `learnings`). `--once` (the
 default when no flag is passed) and `--watch` use the same transformation logic.
 
 ### Stage 2 — Deploy (deploy_agents.py)
@@ -94,7 +93,7 @@ generated marker (or lives inside a marked skill directory). Files without a mar
 foreign and never touched — they are surfaced under `skipped_paths` in the run output so
 a fail-closed skip is visible, not silent. The `github` harness is the one exception:
 its mirrored tree is copied verbatim (no per-file marker), so it is treated as
-unconditionally managed within the five mirrored subdirs.
+unconditionally managed within the mirrored subdirs.
 
 After the asset copy, deploy renders a per-harness **baseline instructions file** from
 `source_of_truth/baseline/baseline-instructions.md`. The template holds three sections
@@ -122,15 +121,13 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 55 agent definitions (18 user-invocable, 37 hidden subagents). Most use
+- `agents/` — 51 agent definitions (16 user-invocable, 35 hidden subagents). Most use
   the `.agent.md` suffix; `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`
   are intentional plain-`.md` exceptions still loaded as agents because loading keys off
   `name`/`description` frontmatter, not the suffix.
-- `skills/` — 34 directory-based skills, each rooted at `SKILL.md`.
-- `instructions/` — 17 instruction files matched by `applyTo` globs.
+- `skills/` — 32 directory-based skills, each rooted at `SKILL.md`.
+- `instructions/` — 16 instruction files matched by `applyTo` globs.
 - `learnings/` — 4 cross-cutting learnings files.
-- `hooks/` — a defunct prompt-injection scanner, retained but wired nowhere. See
-  `source_of_truth/hooks/DEFUNCT.md`.
 - `baseline/` — `baseline-instructions.md`, the sentinel-sectioned baseline
   instructions template rendered per harness at deploy time (not propagated to
   `ports/`, since it needs the deployed machine's real paths).
@@ -146,8 +143,8 @@ platform-specific transformations:
 - Claude emission splits by invocability: a hidden agent emits a subagent file only; a
   user-invocable agent emits a slash command, **plus** a subagent file when some
   orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
-  it. That is why `ports/claude/agents` (41) and `ports/claude/commands` (18) differ:
-  37 hidden subagents plus the four dual-use agents (Docs Writer, Unity Reviewer,
+  it. That is why `ports/claude/agents` (39) and `ports/claude/commands` (16) differ:
+  35 hidden subagents plus the four dual-use agents (Docs Writer, Unity Reviewer,
   Visual Verifier, Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
   support `instructions/` directly
@@ -161,9 +158,9 @@ Known filename aliases preserved during propagation: `docs-writer` → `docs-wri
 
 ### The `.github/` mirror
 
-`ports/github` is a verbatim copy of the five mirrored source subdirs, and `.github/`
-at the repo root is a real deployed copy of it. Only the five mirrored subdirs
-(`agents`, `hooks`, `instructions`, `learnings`, `skills`) are touched — anything else
+`ports/github` is a verbatim copy of the mirrored source subdirs, and `.github/`
+at the repo root is a real deployed copy of it. Only the mirrored subdirs
+(`agents`, `instructions`, `learnings`, `skills`) are touched — anything else
 in `.github/` (for example a future `workflows/`) is left alone.
 
 ### Shared module (`scripts/asset_paths.py`)
@@ -177,7 +174,8 @@ used by both scripts' watch modes.
 ### Supporting material
 
 - `docs/` — architecture, setup, troubleshooting, porting guides, and inspiration write-ups.
-- `eval/` — the agent evaluation grader system, rubrics, hook templates, and run artifacts.
+- `eval/` — past benchmark run artifacts and rubrics. `eval/deprecated/` holds the
+  archived eval-grader agents, skills, and commit hook; see its README.
 - `benchmarks/` — model cost/performance benchmark data and charts.
 - `packages/com.threnjen.visual-verification/` — a Unity UPM package for deterministic
   screenshot capture, paired with the Visual Verifier agent.
@@ -197,7 +195,6 @@ flowchart TD
     Audit[Audit - Code, Infra, Refactor, Security]
     Test[Test - Orchestrator]
     ProdReview[Prod Code Review]
-    EvalGrader[Eval - Grader]
     ClientDeliverable[Client Deliverable]
     ClientDeliverablePrepare[Client Deliverable - Prepare]
     DocsWriter[Docs Writer]
@@ -229,9 +226,6 @@ flowchart TD
     Test --> TestAnalyst[Test - Analyst]
     Test --> TestWriter[Test - Writer]
     Test --> TestFixer[Test - Fixer]
-
-    EvalGrader --> EvalMetric[Eval - Metric Grader]
-    EvalGrader --> EvalScore[Eval - Score Recorder]
 
     ClientDeliverable --> ClientDeliverablePrepare
     ClientDeliverable --> ClientDeliverableSubs[Client Deliverable subagents: Delta Synthesizer, Security Narrative, Pricing Researcher, Narrative Writer, Compliance Writer, Manifest Assembler, Gap Reviewer]

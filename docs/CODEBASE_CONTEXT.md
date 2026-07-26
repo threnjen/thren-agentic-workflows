@@ -12,11 +12,10 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 55 source agent definitions in `source_of_truth/agents/` (52 `*.agent.md` + `auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 37 hidden subagents (`user-invocable: false`) and 18 user-invocable.
-- 34 skills in `source_of_truth/skills/`.
-- 17 instructions in `source_of_truth/instructions/`.
+- 51 source agent definitions in `source_of_truth/agents/` (48 `*.agent.md` + `auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 35 hidden subagents (`user-invocable: false`) and 16 user-invocable.
+- 32 skills in `source_of_truth/skills/`.
+- 16 instructions in `source_of_truth/instructions/`.
 - 4 learnings in `source_of_truth/learnings/`.
-- 1 defunct hook artifact set in `source_of_truth/hooks/`.
 
 ## Key Paths
 
@@ -26,37 +25,37 @@ INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
     README.md                              # full agent catalog and pipeline docs
-    *.agent.md                             # 52, plus the three plain .md agents below (55 total definitions)
+    *.agent.md                             # 48, plus the three plain .md agents below (51 total definitions)
     auditor.md                             # plain .md agent (audit orchestrator)
     docs-writer.md                         # plain .md agent (loaded by frontmatter)
     04f-prod-code-review.md                # plain .md agent (loaded by frontmatter)
-  skills/                                  # 34 skill dirs, each rooted at SKILL.md
-  instructions/                            # 17 applyTo-glob instruction files
+  skills/                                  # 32 skill dirs, each rooted at SKILL.md
+  instructions/                            # 16 applyTo-glob instruction files
   learnings/                               # 4 learnings files
-  hooks/                                   # defunct injection scanner (DEFUNCT.md)
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
   claude/  {agents, commands, skills, learnings}
   codex/   {agents, skills, learnings}             # TOML agents
   opencode/{agents, skills}
   cursor/  {commands, rules}               # commands=*.md, rules=*.mdc
-  github/  {agents, hooks, instructions, learnings, skills}   # verbatim mirror
+  github/  {agents, instructions, learnings, skills}          # verbatim mirror
 .github/                                   # real deployed mirror of ports/github
 scripts/
   propagate_master_assets.py               # transform entry point (--once | --watch)
   asset_paths.py                           # shared markers + poll_watch
-  extract_pdfs.py, setup-hook-symlinks.sh  # utilities
+  extract_pdfs.py                          # utility
 deploy_agents.py                           # deploy entry point (root, not scripts/)
 docs/ ARCHITECTURE.md CODEBASE_CONTEXT.md COPILOT_SETUP.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
 docs/porting/ docs/inspiration/
-eval/ benchmarks/ packages/ tests/
+eval/                                      # past benchmark artifacts; deprecated/ = archived grader
+benchmarks/ packages/ tests/
 .deploy-config.json                        # gitignored; saved harness selection
 .vscode/tasks.json                         # propagate once/watch + deploy watch
 ```
 
 ## Pipeline Model
 
-- Edit `source_of_truth/{agents,skills,instructions,learnings,hooks}` first.
+- Edit `source_of_truth/{agents,skills,instructions,learnings}` first.
 - Transform: `python3 scripts/propagate_master_assets.py --once` (default) or `--watch`.
   Runs to a fixed point via `propagate_until_converged` (max 25 passes).
 - Transform targets: `ports/{claude,codex,opencode,cursor}` plus `ports/github` and `.github/`.
@@ -68,7 +67,7 @@ eval/ benchmarks/ packages/ tests/
   - codex → `$CODEX_HOME` or `~/.codex` (agents) + `~/.agents/skills` (skills)
   - opencode → `$OPENCODE_CONFIG_DIR` or `~/.config/opencode` (agents, skills)
   - cursor → `~/.cursor` (commands, rules)
-  - github → `<repo>/.github` (verbatim mirror of the 5 subdirs)
+  - github → `<repo>/.github` (verbatim mirror of the mirrored subdirs)
 - Deploy selection persists to `.deploy-config.json` (gitignored) unless `--no-save`.
 - Deploy also splices a baseline instructions file per harness (`deploy_baseline`),
   rendered from `source_of_truth/baseline/baseline-instructions.md` with real home
@@ -99,7 +98,7 @@ eval/ benchmarks/ packages/ tests/
 - Skill auxiliary files carry no marker of their own; the whole skill dir is owned via
   its marked `SKILL.md`.
 - The `github` harness is a verbatim mirror: its files carry no marker and are treated
-  as unconditionally managed within the 5 mirrored subdirs.
+  as unconditionally managed within the mirrored subdirs.
 - Deploy heals debris from the old symlink deployment: destination roots that are
   symlinks pointing into this repo (or dangling) are unlinked and replaced with real
   dirs; foreign symlinks are left alone and skipped.
@@ -111,11 +110,11 @@ eval/ benchmarks/ packages/ tests/
   `prod-code-review.md` in `ports/claude/agents` for that reason.
 - Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
   plus a subagent file only if an orchestrator names it as a child (dual-use). So
-  `ports/claude/agents` = 37 hidden + 4 dual-use (docs-writer, unity-reviewer,
-  visual-verifier, web-researcher) = 41, while `ports/claude/commands` = 18.
-- Codex and OpenCode emit all 55 agents; only Claude and Cursor split commands out.
-- `ports/cursor/rules` = 4 learnings + the `remediation-ledger-contract` instruction (5
-  files); agent-targeted instructions are excluded because they ship inside the agents.
+  `ports/claude/agents` = 35 hidden + 4 dual-use (docs-writer, unity-reviewer,
+  visual-verifier, web-researcher) = 39, while `ports/claude/commands` = 16.
+- Codex and OpenCode emit all 51 agents; only Claude and Cursor split commands out.
+- `ports/cursor/rules` = the 4 learnings only; agent-targeted instructions are excluded
+  because they ship inside the agents.
 
 ## Platform Surface Rules
 

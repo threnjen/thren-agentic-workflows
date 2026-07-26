@@ -134,9 +134,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **03 Feature - Decomposer** | Break a phase into features, prepare execution-ready bundles, and write the execution manifest |
 | **04 Phase - Execute** | Orchestrate full phase execution from a prepared manifest and feature bundles |
 | **05 PR - Review** | Orchestrate a readiness review of the diff between a base commit and a head commit |
-| **05 Eval - Grader** | Score a completed phase run from ledger files plus a rubric YAML and write a structured report |
 | **Client Deliverable** | Run a client engagement end to end from its configuration — preparation, then per-pair analysis stages through compliance, manifest, and gap review, all via subagents |
-| **Eval - Feature Decomposition** | Score a feature-decomposition run against a golden-path branch across structural, naming, dependency, AC, context, and manifest dimensions |
 | **Audit - Code, Infra, Refactor, Security** | Orchestrate code, infrastructure, structural, or security audits — one repository, or two with a reconciled delta — with optional automated fix pipeline |
 | **Instructions Manager** | Create or evaluate AI coding instruction files — routes to Instructions - Writer or Instructions - Evaluator |
 | **Single Feature - Agent** | Handle small, focused changes with a proposal + explicit permission gate before implementation |
@@ -160,8 +158,6 @@ These agents are not visible in the picker. They run automatically as part of or
 | **Auditor - Security** | Audit orchestrator, Client Deliverable | Full-codebase security audit across secrets, dependencies, attack surface, auth, data protection, runtime safety, infra/CI-CD, and observability |
 | **Auditor - Delta** | Audit orchestrator | Compare two audit reports of the same product and produce a reconciled delta document plus an open-items queue |
 | **Auditor - Remediation Research** | Audit orchestrator | Research fixes for the new and transformed findings in a delta's open-items queue |
-| **Eval - Metric Grader** | Eval - Grader | Score one comparative metric from prepared diff and ledger evidence |
-| **Eval - Score Recorder** | Eval - Grader | Resolve harness/model identity, compute the weighted score, and append one row to the score history |
 | **Instructions - Writer** | Instructions Manager | Draft scoped `.instructions.md` files for a repository |
 | **Instructions - Evaluator** | Instructions Manager | A/B evaluate whether instruction-file changes improve or regress |
 | **Feature - Plan Expander** | Feature - Decomposer | Generate context and tasks files from existing plan files |
@@ -213,9 +209,6 @@ These agents are not visible in the picker. They run automatically as part of or
 **05 PR - Review** (orchestrator — delegates to evaluators)
 > Give it a pull request. In a single upfront interaction it confirms the base commit (suggest-and-confirm — git cannot derive a branch's base), warns on a below-par model tier, and asks how the report should reach the PR. It then fans out the PR Review evaluators and returns a readiness verdict without reading code or diffs itself. Advisory only: it records no verdict in any document.
 
-**Eval - Grader** (user-facing — standalone scorer)
-> Give it a rubric YAML path plus three branch names: clean base, source-of-truth golden path, and branch to evaluate. The rubric should follow the grader schema documented in the agent, with `eval/rubrics/phase-eval-infrastructure-foundation.example.yaml` as the seed example. The grader materializes clean-base->golden and clean-base->evaluated diffs, reads `eval/runs/<phase-slug>/ledger-commits.jsonl` and `eval/runs/<phase-slug>/ledger-events.jsonl`, correlates semantic events onto the commit timeline by SHA association, preserves remediation-turn metadata such as `event_kind` and `related_event_id` when present, supports both feature-level and AC-level commit cadence, fans out one parallel `Eval - Metric Grader` subagent per comparative review metric, keeps exact ledger-derived metrics in the parent grader, produces both a rubric verdict and a comparative scorecard, and appends normalized `1-10` scores to the persistent additive markdown history file at `eval/EVAL_GRADER_SCORE_HISTORY.md`.
-
 **Client Deliverable** (orchestrator — delegates to the engagement subagents)
 > Give it an engagement configuration file path. It spawns Client Deliverable - Prepare unchanged, then drives each comparison pair through comparative audit runs, delta and security synthesis, cloud/cost analysis, and narrative/specification documents, finishing the engagement with the SOW compliance walkthrough, verification summary, package manifest, and client-perspective gap review. It holds only statuses and artifact pointers, maintains `engagement-state.md` as its run record, and resumes from it on restart.
 
@@ -236,9 +229,6 @@ These agents are not visible in the picker. They run automatically as part of or
 
 **Instructions Manager** (router — delegates to subagents)
 > Give it a request to create or assess AI coding instruction files (`.github/instructions/`, `copilot-instructions.md`, `.cursorrules`, `CLAUDE.md`, or equivalent). It routes to the **Instructions - Writer** to draft new scoped instruction sets, or to the **Instructions - Evaluator** to A/B-test whether proposed instruction changes are improvements or regressions.
-
-**Eval - Feature Decomposition** (document-only — does not write code)
-> Give it a golden-path branch and a test branch. It scores the test branch's feature-decomposition documents against the golden path across structural, naming, dependency, AC, context, and manifest dimensions, and writes a numbered report to `eval/feature_decomp_eval_round_N.md`.
 
 **Web Researcher** (read-only — uses fetch and web search)
 > Give it a problem or topic. Searches across GitHub issues, Stack Overflow, Reddit, forums, and docs. Produces two deliverable documents saved to `dev/research/[topic-name]/`: a full structured findings report (`[topic-name]-report.md`) with inline numbered citations and a References table, and an executive summary (`[topic-name]-summary.md`) with priority recommendations and key reference links. Every factual claim traces back to a numbered citation. Sources older than 2 years are flagged with ⚠️.
@@ -281,10 +271,6 @@ These agents are not visible in the picker. They run automatically as part of or
 **Auditor - Delta** *(subagent of Audit orchestrator)* — Compares two completed audit reports of the same product — a baseline snapshot and a current one — and produces a delta document classifying every finding as resolved, improved, unchanged, transformed, unverified, or new, with the counts reconciled against both reports, plus a standalone open-items queue holding only the new and transformed findings. Raises no findings of its own.
 
 **Auditor - Remediation Research** *(subagent of Audit orchestrator)* — Reads a delta's open-items queue plus the current snapshot's audit report and summary, and produces a researched fix proposal per item: root cause, approach, trade-offs, dependencies, and a named verification step. Proposes only — writes no code.
-
-**Eval - Metric Grader** *(subagent of Eval - Grader)* — Scores one comparative metric at a time from prepared diff artifacts, rubric context, and ledger evidence. Returns a normalized `1-10` score, evidence summary, and confidence back to the parent grader.
-
-**Eval - Score Recorder** *(subagent of Eval - Grader)* — Resolves harness/model identity from `eval/scoring/HARNESS_MODEL_MAPPINGS.md`, computes the weighted overall score with step-by-step verification, and appends a single additive-only row to the persistent score history. Spawned only after the parent grader's score report is fully written.
 
 **Instructions - Writer** *(subagent of Instructions Manager)* — Discovers a repository's domains and non-obvious rules and drafts scoped `.instructions.md` files following the AI Instruction File Framework.
 
@@ -377,7 +363,6 @@ Not everything needs a pipeline. These agents work well on their own:
 
 - **Audit - Code, Infra, Refactor, Security** — Run anytime for a code, infrastructure, structural, or security health check
 - **Single Feature - Agent** — Implement a focused change with an explicit approval gate and minimal churn
-- **05 Eval - Grader** — Score a completed `phase/*` run against a rubric and preserve a Markdown score report under `eval/runs/<phase-slug>/`
 - **Test - Orchestrator** — Analyze, write, or fix tests on demand
 - **05 PR - Review** — Get a readiness verdict on any diff, without running a pipeline first
 - **QA - Bootstrapper** — Generate a repository's QA_AUTOMATED and QA_USER package and run it
@@ -491,7 +476,7 @@ For the project pipeline, copy all files including the hidden subagents. For sta
 
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each agent file works standalone — just copy the `.md` file into any project's `.github/agents/` directory.
-- **Orchestrators**: **04 Phase - Execute**, **05 PR - Review**, **Audit - Code, Infra, Refactor, Security**, **Test - Orchestrator**, **QA - Bootstrapper**, **Instructions Manager**, **05 Eval - Grader**, and **Client Deliverable** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
+- **Orchestrators**: **04 Phase - Execute**, **05 PR - Review**, **Audit - Code, Infra, Refactor, Security**, **Test - Orchestrator**, **QA - Bootstrapper**, **Instructions Manager**, and **Client Deliverable** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
 - **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned by Phase - Execute, Audit, and Test orchestrators at the end of the pipeline to update stale documentation (it remains user-invocable for standalone use as well).
 - **Dual-use agents**: **03 Feature - Decomposer** is user-facing for standalone plan creation and also spawned by **04 Phase - Execute** when plans are missing. **Docs Writer** is user-facing and also spawned by all three orchestrators.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
