@@ -641,7 +641,7 @@ def test_orchestrator_roster_entry_resolves_to_the_synthesizer_on_disk() -> None
     declared_names = {
         next(
             (
-                line.split(":", 1)[1].strip()
+                line.split(":", 1)[1].strip().strip('"')
                 for line in path.read_text(encoding="utf-8").splitlines()
                 if line.startswith("name:")
             ),

@@ -1,5 +1,5 @@
 ---
-description: Orchestrates test operations (analysis: documents; write/fix/remediation: documents + code) — delegates analysis, writing, or fixing to test subagents with optional remediation through the feature pipeline.
+description: Analyzes, writes, or fixes a repository's tests. Analysis reports coverage gaps, redundancy, and quality without touching code; writing and fixing change code, and larger remediation can be routed through the feature pipeline.
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 
@@ -115,7 +115,7 @@ Follow the Post-Loop: Documentation Update section from the `implementation-pipe
 
 ## Pipeline Asymmetry (by design)
 
-This orchestrator omits qa Writer and prod-code-review steps. Test remediation tasks are scoped to test code, which is self-validating (tests pass or fail).
+This orchestrator omits QA Writer and prod-code-review steps. Test remediation tasks are scoped to test code, which is self-validating (tests pass or fail).
 
 ---
 
@@ -154,7 +154,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-qa.md` | z-feature-qa-writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
@@ -164,15 +164,15 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated qa Documents
+## Consolidated QA Documents
 
-In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
+In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary
@@ -193,7 +193,7 @@ Use the `execute` tool to run this shell command. Do not ask the user for confir
 
 **Error handling:** If the command exits with a non-zero code, log the error in the pipeline completion report under a `Graph rebuild` field but do NOT fail the pipeline or re-run any steps. The rebuild is a best-effort index update.
 
-**When to run:** Always — regardless of whether all features were approved, qa was skipped, or any subagent returned an error. The rebuild happens once, after the user-facing completion report is printed.
+**When to run:** Always — regardless of whether all features were approved, QA was skipped, or any subagent returned an error. The rebuild happens once, after the user-facing completion report is printed.
 
 > **Note for maintainers:** If new orchestrator agents are added to this project, add their filenames to the `applyTo` list above AND inline this section into their `claude/agents/` counterpart.
 
@@ -210,7 +210,7 @@ Orchestrators coordinate subagents — they do not perform work directly. These 
 ## Common Constraints
 
 - DO NOT write source code, test files, or configuration directly
-- DO NOT write plan documents, review records, or qa plans directly — delegate to subagents
+- DO NOT write plan documents, review records, or QA plans directly — delegate to subagents
 - ALWAYS ask the user before proceeding to the fix/remediation phase
 
 ## Working Branch

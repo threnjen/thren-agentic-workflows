@@ -60,19 +60,17 @@ Reach for these individually, whenever you need them — no pipeline required:
 - **Debugger** — diagnose and fix a frontend or backend error
 - **Docs Writer** — create or update your repo's documentation
 - **Web Researcher** — research a topic and produce a cited findings report
-- **Audit - Code, Infra, Refactor** — health-check your code, infra, or structure; audit
-  two repos or two branches and get a reconciled delta of what changed between them
+- **Audit - Code, Infra, Refactor, Security** — health-check your code, infra, structure, or
+  security posture; audit two repos or two branches and get a reconciled delta of what changed
+  between them
 - **Test - Orchestrator** — analyze, write, or fix your test suite
-- **Prod Code Review** — a final GO / NO-GO readiness gate
-- **Security Scan** — a full-codebase security assessment
-- **Unity Reviewer** / **Visual Verifier** — review Unity C# and verify what actually renders
-- **Eval - Grader** / **Instructions Manager** — score agent runs and manage AI instruction files
-- **Engagement - Orchestrator** / **Engagement - Prepare** — run a client engagement end to
-  end (comparative audits, client narratives, compliance package) or just prepare its
-  repos for comparison analysis
+- **QA - Bootstrapper** — generate a repo's QA_AUTOMATED and QA_USER package, then run it
+- **Instructions Manager** — create and evaluate AI instruction files for a repository
+- **Client Deliverable** — run a client engagement end to end (comparative audits, client
+  narratives, compliance package) from an engagement configuration file
 
 Behind these, a set of automated subagents and on-demand skills do the detailed work —
-you never invoke them directly. The library ships 56 source agent definitions in
+you never invoke them directly. The library ships 51 source agent definitions in
 `source_of_truth/agents/`. For the complete catalog and how the pipeline flows,
 see [source_of_truth/agents/README.md](source_of_truth/agents/README.md).
 

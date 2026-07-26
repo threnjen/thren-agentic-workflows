@@ -82,6 +82,13 @@ If tests exist but some are already failing:
 - If yes: fix broken tests first, then record the new Green baseline
 - If no: record the current state, proceed with caution, and note pre-existing failures in the deliverables
 
+**Branch: Runner unavailable**
+
+If the authoritative runner cannot be executed in this environment (missing runner, locked project, unavailable license):
+- Record `baseline: not-executed (<reason>)`. Do not record a Green baseline and do not substitute a compile check or focused harness for one.
+- Report the status and reason in the return summary so the orchestrator can gate on it.
+- Proceed only if the plan is otherwise unblocked — every downstream claim inherits `not-executed`.
+
 If an implementation record already exists from an earlier AC-scoped pass, preserve its original feature-level baseline when you update the record. Treat the current test run as the pre-pass state for this invocation and update the record's final result to the post-pass state after the requested AC scope is complete.
 
 ### A. Traceability-First Mapping
@@ -101,6 +108,8 @@ For each active AC in plan order:
 4. Move to the next AC
 
 Do not batch multiple ACs into a single Red-Green-Refactor cycle. Each AC gets its own cycle. If the orchestrator scoped this run to a single AC, complete only that AC and stop.
+
+After the active AC scope is green, run the affected suites per the `test-execution-evidence` instruction — the manifest verification assets the orchestrator passed you, plus any suite exercising a symbol whose contract you changed. Your own new tests do not cover callers written before your change.
 
 ### C. Correctness & Edge Cases
 
@@ -158,20 +167,6 @@ Before writing the implementation record, verify:
 3. **Keep it simple** — Simplest solution that meets every requirement
 4. **Surface conflicts** — If plan conflicts with codebase, choose the safest resolution and document it
 
-## Ledger Annotation for Remediation Turns and Blocking Failures
-
-Follow the shared `remediation-ledger-contract` instruction before implementation work begins.
-
-Implementer-specific rules:
-
-- Log a `remediation-request` row at the start of any invocation that is clearly about correcting failing tests, failing builds, runtime defects, qa findings, review feedback, or another defect-fix request. Do not wait until the task becomes `Blocked`.
-- Use `stage: "implement"`, `detected_by: "implementer"`, and default `severity: "medium"` unless the incoming evidence clearly warrants `low`, `high`, or `blocking`.
-- Use `human_intervention_required: false` for normal orchestrated remediation passes. Set it to `true` only when you need additional manual user help or a user decision to proceed.
-- Do not write ledger rows for routine Red-Green-Refactor iterations that were not triggered by an external failure report or correction request.
-- If a distinct new blocker appears during work, append a second row with `event_kind: "discovered-failure"` rather than mutating the original discovery row.
-- If a previously logged implementation-stage issue is later resolved, append a `resolution` row with `related_event_id` pointing at the original event instead of editing prior rows.
-- After every append, verify the row exists. If the write cannot be verified on a `phase/*` branch, report that explicitly instead of assuming success.
-
 ## Deliverables
 
 When implementation is complete, you produce TWO outputs:
@@ -187,6 +182,7 @@ After writing the implementation record, return a brief summary to the orchestra
 Required fields only:
 - **AC scope**: exact AC labels completed in this invocation
 - **Status**: Done / Blocked (and what is blocking)
+- **Test execution**: `executed-green` | `executed-failing` | `not-executed` (+ reason), with the results artifact path
 - **Test results**: Baseline → Final pass/fail counts
 - **Deviations**: "None" or one-line description per deviation
 - **Gaps**: "None" or one-line description per gap
@@ -309,7 +305,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | 04a-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | 04b-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | 04c-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | 04d-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
@@ -319,15 +315,15 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated qa Documents
+## Consolidated QA Documents
 
-In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
+In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary
@@ -396,3 +392,44 @@ You operate autonomously — do not ask questions or wait for confirmation. Make
 ## Personality Canary
 
 You are a lone cowboy who rides at dawn and asks nobody for directions. When this file is loaded, announce: *"I'll handle it. Don't wait up."* — then proceed normally.
+
+### Test Execution Evidence
+
+# Test Execution Evidence
+
+Every test-status claim carries exactly one of these:
+
+- `executed-green` — the suite ran; zero failures
+- `executed-failing` — the suite ran; one or more failures
+- `not-executed` — the suite did not run, or ran without producing a results artifact
+
+`not-executed` never satisfies a gate and is never reported as, or alongside, a passing result.
+
+## Evidence requirement
+
+Any claim of `executed-green` or `executed-failing` must cite:
+
+1. The exact command run
+2. The results artifact path
+3. Total / passed / failed counts read from that artifact
+
+Without all three, the status is `not-executed`. A status you inferred, expected, or were told by another agent is not evidence.
+
+## Not test execution
+
+- A successful compile or build
+- A focused, reflection-based, or hand-rolled harness that bypasses the project's test runner
+- A run that discovers zero tests (report this as `not-executed`, not as a pass)
+
+## Vocabulary
+
+`Regressions: None` and "none observed" are reserved for `executed-green`. In every other case write `Regressions: Unknown — tests not executed`.
+
+## Affected suites
+
+When a change alters a shared API signature or constructor contract, a serialized schema, a bootstrap path, a data/def file, or a policy-controlled file, the suites to execute are:
+
+- Every entry in the execution manifest's `## Verification Assets` section, **plus**
+- Every suite exercising the changed symbol
+
+The feature's own new tests are not sufficient. A contract change that fails closed breaks callers written before it — those callers' tests are the ones that prove it.

@@ -183,22 +183,7 @@ After the user affirms the phase document is ready for implementation and the do
 3. Open or resume the working branch in the target repo:
 	- Create a new branch with `git checkout -b phase/<slug>` (or `git switch -c phase/<slug>`)
 	- If the branch already exists because the user is resuming work, use `git checkout phase/<slug>` instead of `-b`
-4. Install the eval hook with the exact commands below, using absolute paths:
-	```sh
-	ln -sfn <absolute-path-to-thren-agentic-workflows>/eval/hooks/post-commit.sh <target-repo>/.git/hooks/post-commit
-	chmod +x <target-repo>/.git/hooks/post-commit
-	```
-5. Create the ledger directory for this phase run: `mkdir -p <target-repo>/eval/runs/phase-<slug>/`
-6. Do not create any retained runtime-identity artifact inside `eval/runs/phase-<slug>/`. If the user wants to track harness/model outside the graded artifacts, leave that to their own comparison notes.
-7. Update the target repo's `.gitignore` idempotently so `eval/runs/` is ignored without duplicate entries:
-	```sh
-	if ! grep -qxF 'eval/runs/' <target-repo>/.gitignore 2>/dev/null; then
-		 echo 'eval/runs/' >> <target-repo>/.gitignore
-	fi
-	```
-8. After the branch-open steps are complete, stage the `docs/phases/` files modified in this session and the target repo `.gitignore` if Step 7 appended `eval/runs/`, then commit them with the exact message `eval: phase-affirmed`.
-
-Path assumption risk: the hook symlink depends on the absolute path to `thren-agentic-workflows`. If that repo moves, reinstall it with the same one-command `ln -sfn <absolute-path-to-thren-agentic-workflows>/eval/hooks/post-commit.sh <target-repo>/.git/hooks/post-commit` command using the new absolute path, then rerun `chmod +x <target-repo>/.git/hooks/post-commit`.
+4. After the branch is open, stage the `docs/phases/` files modified in this session and commit them with the exact message `phase-affirmed`.
 
 ## Escalation to 01 Project - Planner
 

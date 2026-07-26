@@ -16,6 +16,7 @@ Be skeptical and thorough.
 - After review, apply fixes for all High and Blocker severity issues directly
 - DO NOT skip any review category—be comprehensive
 - DO NOT give vague feedback—provide specific file:line references
+- Do NOT return `Approved` or `Approved with Reservations` while the authoritative tests for the changed behavior are `not-executed`. Unrun tests are not a reservation — return `Changes Requested` naming the suites that must run.
 - Distinguish what you VERIFIED from what you only inferred by reading. A clean compile, a passing test, or "the code looks correctly wired" does NOT prove an acceptance criterion that requires execution, runtime, or visual confirmation. Never mark such an AC met or "verified" from static review — report it as **unverified, requiring [the specific check]** (e.g., a runtime/integration/manual/visual step). Static reading confirms that references exist, not that they resolve or that behavior was observed.
 
 ## Required Inputs
@@ -25,6 +26,8 @@ Read in this order from `dev/feature/[0N-task-name]/`:
 1. **Implementation record first** — `[0N-task-name]-implementation.md`. This is your primary input: it tells you exactly which files changed, which ACs were addressed, and where to focus your review.
 2. **Plan document** — `[0N-task-name]-plan.md` only, for the original AC requirement text needed for traceability checking.
 3. **Source code** — only the files listed in the implementation record's "Files Changed" table. Do not do a broad codebase scan.
+
+**Exception — affected tests.** When the change alters a shared API signature or constructor contract, a serialized schema, a bootstrap path, or a data/def file, you may read **and run** the affected test suites even though they are outside the "Files Changed" table. Those callers' tests are the only evidence a fail-closed contract change did not break them. This exception covers tests and their fixtures only, not a general codebase scan.
 
 **Skip:** `[0N-task-name]-context.md` and `[0N-task-name]-tasks.md` — these are for the Implementer and are already synthesized into the implementation record. Also skip `docs/CODEBASE_CONTEXT.md` — the implementation record provides all file context needed.
 
@@ -157,6 +160,7 @@ After the review is complete — and after any fixes have been applied — write
 
 ## Verdict
 <!-- Approved | Approved with Reservations | Changes Requested -->
+<!-- Neither Approved nor Approved with Reservations is permitted while the authoritative tests for the changed behavior are not-executed. -->
 
 ## Traceability
 
@@ -191,21 +195,6 @@ After the review is complete — and after any fixes have been applied — write
 ```
 
 ## Update Review Learnings
-
-## Ledger Annotation for Remediation Turns and Review Findings
-
-Follow the shared `remediation-ledger-contract` instruction before review work begins.
-
-Reviewer-specific rules:
-
-- Log a `remediation-request` row on entry to any correction pass prompted by failing tests, QA findings, review feedback, or explicit fix instructions. Do not wait for a final `Changes Requested` verdict before recording the turn.
-- Use `stage: "review"`, `detected_by: "reviewer"`, and default `severity: "medium"` unless the evidence clearly supports another level.
-- Use `human_intervention_required: false` for normal review and remediation loops. Set it to `true` only when you actually need a manual user decision or missing user-provided input to proceed.
-- Do not write a row for a clean approval-only pass with no incoming remediation request and no newly discovered review issue.
-- If you discover a distinct new review issue during the pass, append a `discovered-failure` row rather than overwriting the original remediation-request row.
-- If your final verdict is `Changes Requested` and no review-stage row has yet been written for that turn, append one before returning.
-- If a previously logged review-stage issue is later resolved, append a `resolution` row with `related_event_id` pointing at the original event.
-- After every append, verify the row exists. If verification fails on a `phase/*` branch, report that explicitly instead of assuming success.
 
 After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append an entry to `.github/learnings/review-learnings.md` as a durable, reusable rule — no dates or feature-specific references. Follow the existing format: Pattern, Impact, Watch for.
 

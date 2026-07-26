@@ -31,23 +31,15 @@ Before diving in, classify the error by examining:
   - *Backend*: Startup failure (missing config, bad imports, port conflicts), runtime exception (unhandled errors during request processing), database-related (connection refused, query failures, migrations), dependency-related (missing packages, version conflicts), environment-related (missing env vars, wrong runtime version, permissions)
   - *Full-stack*: API contract mismatches, serialization issues, auth flow failures, CORS
 
-### Step 1a — Log Remediation Turns on Phase Branches
+### Step 1a — Phase Doc Sync Gate
 
-Follow the shared `remediation-ledger-contract` instruction before diagnosis or edits.
+Detect whether the repository has a `docs/phases/` directory. If it does, **load the `phase-doc-sync` skill** before applying fixes: any fix that alters what a phase delivers or how it behaves is not complete until the affected `PHASE_0N_SUMMARY.md` and `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` in legacy repos) entries are updated as baseline truth, per that skill's contract. Also update the phase's `_QA.md` step when a fix changes that step's expected behavior.
 
-Debugger-specific rules:
+### Step 1b — Scope Guardrail
 
-- Treat every user prompt that reports a bug, stack trace, failing test or build output, qa failure, or explicit request to fix or debug as a remediation turn.
-- Write the initial row on entry to that turn with `stage: "debug"`, `detected_by: "user-discovered"`, and `event_kind: "remediation-request"`.
-- Set `human_intervention_required: true` on that initial row because the run required a user-reported correction pass.
-- Use the user-provided failure signal as the primary `evidence` text.
-- If `task_slug` cannot be inferred, use `unscoped` instead of skipping the write.
-- If you uncover a second, distinct issue during diagnosis, append another row with `event_kind: "discovered-failure"` instead of overwriting the original request row.
-- After every append, verify that the row exists by reading back the file tail or searching for the new `event_id`. If verification fails, say so explicitly instead of assuming the ledger was updated.
+If a fix grows beyond a small change (more than 5 code files, or unrelated modules), stop and recommend `@04-phase-execute` with a proper feature plan. Phase-doc updates never count against this limit.
 
-### Step 1b — Phase Doc Sync Gate
-
-Detect whether the repository has a `docs/phases/` directory. If it does, **load the `phase-doc-sync` skill** before applying fixes: any fix that alters what a phase delivers or how it behaves is not complete until the affected `PHASE_0N_SUMMARY.md` and `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` in legacy repos) entries are updated as baseline truth, per that skill's contract.
+A broad test-failure set spanning multiple features is not a phase re-plan — recommend `@test-orchestrator`. Group the failures by root cause before recommending; a single contract change commonly accounts for most of them, and the raw count overstates the work.
 
 ### Step 2 — Diagnose
 
@@ -144,7 +136,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | 04a-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | 04b-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | 04c-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | 04d-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
@@ -154,15 +146,15 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated qa Documents
+## Consolidated QA Documents
 
-In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
+In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary

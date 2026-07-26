@@ -77,7 +77,7 @@ When refining a Phase document, probe these dimensions:
 5. **Integration Points** — Where does output connect to other phases/systems? Contracts to define? Data migration concerns?
 6. **Risk & Complexity** — Where is technical risk concentrated? Unknowns needing investigation? Fallback plans?
 7. **Decomposition Readiness** — Can the Feature - Decomposer break this into 2-6 features? Are feature boundaries clear? Are "Notes for Feature - Decomposer" actionable?
-8. **Test Impact & Refactor Safety** — For any refactor, rewire, or behavior change, explicitly surface which existing tests are likely to break or need updates, whether the phase needs new tests, and whether Unity EditMode/PlayMode or manual qa is required.
+8. **Test Impact & Refactor Safety** — For any refactor, rewire, or behavior change, explicitly surface which existing tests are likely to break or need updates, whether the phase needs new tests, and whether Unity EditMode/PlayMode or manual QA is required.
 9. **Cross-Phase Discoveries** — When you surface an architectural decision, design constraint, risk, or deferred capability that affects a later phase, note it immediately without asking. Drop it into the current phase document's Notes section (if a Decomposer handoff), into `cross-phase-decisions.md` (if it spans multiple future phases), or into `DISCOVERY_CONTEXT.md` (if it's a design decision). Never ask "should I note this for later?" — the answer is always yes. A downstream agent can ignore an irrelevant note but cannot consult a note never written.
 
 ## Phase Document Template
@@ -188,22 +188,7 @@ After the user affirms the phase document is ready for implementation and the do
 3. Open or resume the working branch in the target repo:
 	- Create a new branch with `git checkout -b phase/<slug>` (or `git switch -c phase/<slug>`)
 	- If the branch already exists because the user is resuming work, use `git checkout phase/<slug>` instead of `-b`
-4. Install the eval hook with the exact commands below, using absolute paths:
-	```sh
-	ln -sfn <absolute-path-to-thren-agentic-workflows>/eval/hooks/post-commit.sh <target-repo>/.git/hooks/post-commit
-	chmod +x <target-repo>/.git/hooks/post-commit
-	```
-5. Create the ledger directory for this phase run: `mkdir -p <target-repo>/eval/runs/phase-<slug>/`
-6. Do not create any retained runtime-identity artifact inside `eval/runs/phase-<slug>/`. If the user wants to track harness/model outside the graded artifacts, leave that to their own comparison notes.
-7. Update the target repo's `.gitignore` idempotently so `eval/runs/` is ignored without duplicate entries:
-	```sh
-	if ! grep -qxF 'eval/runs/' <target-repo>/.gitignore 2>/dev/null; then
-		 echo 'eval/runs/' >> <target-repo>/.gitignore
-	fi
-	```
-8. After the branch-open steps are complete, stage the `docs/phases/` files modified in this session and the target repo `.gitignore` if Step 7 appended `eval/runs/`, then commit them with the exact message `eval: phase-affirmed`.
-
-Path assumption risk: the hook symlink depends on the absolute path to `thren-agentic-workflows`. If that repo moves, reinstall it with the same one-command `ln -sfn <absolute-path-to-thren-agentic-workflows>/eval/hooks/post-commit.sh <target-repo>/.git/hooks/post-commit` command using the new absolute path, then rerun `chmod +x <target-repo>/.git/hooks/post-commit`.
+4. After the branch is open, stage the `docs/phases/` files modified in this session and commit them with the exact message `phase-affirmed`.
 
 ## Escalation to 01-project-planner
 
@@ -277,7 +262,7 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 | `-tasks.md` | 04a-feature-plan-expander | Ordered checklist of work items |
 | `-implementation.md` | 04b-feature-implementer | Files changed, AC traceability, test results |
 | `-review.md` | 04c-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | qa plan for a single feature |
+| `-qa.md` | 04d-feature-qa-writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | 04d-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
 | `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
 | `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
@@ -287,15 +272,15 @@ All pipeline subagents write their output to `dev/feature/[0N-task-name]/` direc
 
 web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
 
-## Consolidated qa Documents
+## Consolidated QA Documents
 
-In **batch mode**, qa documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated qa document after all features/tasks are implemented and reviewed.
+In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
 
-In **per-feature mode**, qa documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
+In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
 
 | Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
 |----------|----------------------------------------|--------------------------|---------------------|
-| qa Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
+| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
 ## Personality Canary
@@ -392,7 +377,7 @@ Before sending any question, apply this test: *If this question were the only te
 
 ## What You CAN Do
 
-- Write planning documents to disk — phase summaries, phase overviews, discovery context docs, audit reports, research reports, test analysis plans, and qa documents
+- Write planning documents to disk — phase summaries, phase overviews, discovery context docs, audit reports, research reports, test analysis plans, and QA documents
 - You have the `edit` tool for writing these deliverables
 - Present your proposed document content in chat for user review before writing
 

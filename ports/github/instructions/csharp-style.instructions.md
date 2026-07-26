@@ -1,6 +1,6 @@
 ---
 description: "C# (Google) style rules for naming, organization, formatting, and idiomatic C#. Auto-loaded for C#-focused agents. Full reference: the-movies/docs/STYLE_GUIDE.md"
-applyTo: "**/unity-reviewer.agent.md,**/auditor-code.agent.md,**/04b-feature-implementer.agent.md,**/04c-feature-reviewer.agent.md"
+applyTo: "**/04h-unity-reviewer.agent.md,**/auditor-code.agent.md,**/04b-feature-implementer.agent.md,**/04c-feature-reviewer.agent.md"
 ---
 
 # C# Style Rules (Google Style Guide)

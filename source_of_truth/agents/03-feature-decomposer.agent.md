@@ -1,6 +1,6 @@
 ---
 name: 03 Feature - Decomposer
-description: "Breaks a refined Phase document into independent features, prepares execution-ready feature bundles, and records the execution schedule."
+description: "Splits a refined phase document into independently buildable features. Writes an execution-ready bundle per feature plus the order they should be built in, ready for Phase - Execute."
 tools: [agent, read, search, edit, fetch]
 agents: [Feature - Plan Expander]
 

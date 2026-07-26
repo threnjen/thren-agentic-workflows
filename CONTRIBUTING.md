@@ -31,11 +31,11 @@ directory). Hand-maintained files are never touched.
 
 ## What's in the Repo
 
-- **52 agent definitions** in `source_of_truth/agents/` (50 `*.agent.md` plus the plain
-  `docs-writer.md` and `04f-prod-code-review.md`), of which **20 are user-invocable** and
-  **32 are hidden subagents** (`user-invocable: false`) that orchestrators spawn
-  automatically.
-- **29 skills** — directory-based capabilities agents load on demand, each rooted at
+- **51 agent definitions** in `source_of_truth/agents/` (48 `*.agent.md` plus the plain
+  `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`), of which **14 are
+  user-invocable** and **37 are hidden subagents** (`user-invocable: false`) that
+  orchestrators spawn automatically.
+- **32 skills** — directory-based capabilities agents load on demand, each rooted at
   `SKILL.md`.
 - **16 instruction files** and **4 learnings files** — cross-cutting guidance applied by
   `applyTo` file-glob matching.
@@ -51,31 +51,29 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ├── README.md                       # User-facing overview
 ├── CONTRIBUTING.md                 # This file
 ├── source_of_truth/                # THE authoring surface — edit here
-│   ├── agents/                     # 40 agent definitions + README (agent catalog)
-│   ├── skills/                     # 24 skill directories, each rooted at SKILL.md
-│   ├── instructions/               # 15 instruction files matched by applyTo globs
-│   ├── learnings/                  # 4 shared learnings files
-│   └── hooks/                      # Defunct prompt-injection scanner (inert)
+│   ├── agents/                     # 51 agent definitions + README (agent catalog)
+│   ├── skills/                     # 32 skill directories, each rooted at SKILL.md
+│   ├── instructions/               # 16 instruction files matched by applyTo globs
+│   └── learnings/                  # 4 shared learnings files
 ├── ports/                          # Generated outputs — do not edit by hand
 │   ├── claude/                     # agents, commands, skills, learnings
 │   ├── codex/                      # agents, profiles, skills, learnings (TOML agents)
 │   ├── opencode/                   # agents, skills
 │   ├── cursor/                     # commands, rules (.mdc)
-│   └── github/                     # verbatim mirror of the 5 source subdirs
+│   └── github/                     # verbatim mirror of the source subdirs
 ├── .github/                        # Real mirror of ports/github (for Copilot)
 ├── scripts/
 │   ├── propagate_master_assets.py  # Transform: source_of_truth/ -> ports/ + .github/
 │   ├── asset_paths.py              # Shared markers + poll-watch primitives
-│   ├── extract_pdfs.py             # Utility
-│   └── setup-hook-symlinks.sh      # Utility
+│   └── extract_pdfs.py             # Utility
 ├── deploy_agents.py                # Deploy: ports/ -> real harness config dirs
 ├── docs/                           # ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT,
-│                                   # TROUBLESHOOTING, porting/, inspiration/
-├── eval/                           # Agent evaluation grader system and run artifacts
+│                                   # TROUBLESHOOTING, COPILOT_SETUP, porting/
+├── eval/                           # Past benchmark run artifacts + deprecated/ (archived grader)
 ├── benchmarks/                     # Model cost/performance benchmark data
 ├── packages/                       # Distributable UPM package (com.threnjen.visual-verification)
-├── tests/                          # Python regression tests for both scripts
-└── .vscode/tasks.json              # One-shot + watch tasks for propagate and deploy
+├── dev/                            # inspiration/ write-ups; pr-review/ fixtures
+└── tests/                          # Python regression tests for both scripts
 ```
 
 ## The Maintenance Loop
@@ -90,9 +88,11 @@ python3 scripts/propagate_master_assets.py --once
 ```
 
 Runs one propagation pass to a fixed point (converges, then exits). Run this only if you
-have edited files under `source_of_truth/`. In VS Code the equivalent task is
-`propagate: master assets (once)`. The background task `watch: propagate master assets`
-starts on folder open and re-propagates on every save under `source_of_truth/`.
+have edited files under `source_of_truth/`. Use `--watch` instead to re-propagate on
+every save under `source_of_truth/`.
+
+`.vscode/` is gitignored, so a fresh clone ships no editor tasks — the two commands above
+are the canonical interface. Wire up your own tasks if you want them on folder open.
 
 The test suite (`tests/test_propagate_master_assets.py`) fails when source and generated
 outputs drift; a sync failure means "rerun propagation," not "edit the output."
@@ -104,9 +104,11 @@ outputs drift; a sync failure means "rerun propagation," not "edit the output."
 `source_of_truth/agents/` follows an orchestrator + subagent pattern: the project
 planning pipeline (planner, refiner, decomposer, phase executor), the feature
 implementation pipeline (plan expander, implementer, reviewer, QA writer), PR Review
-orchestration and evaluators, evaluation agents, audit orchestrators (code, infra,
-refactor), test operations, and standalone utility agents (docs writer, debugger,
-single-feature agent, prod code review, unity reviewer, web researcher). See
+orchestration and evaluators, the audit orchestrator and its auditors
+(code, infra, refactor, security, delta, remediation research), the Client Deliverable
+engagement fleet, QA bootstrapping, test operations, and standalone utility agents
+(docs writer, debugger, single-feature agent, unity reviewer, visual verifier, web
+researcher). See
 [source_of_truth/agents/README.md](source_of_truth/agents/README.md) for the full catalog
 and pipeline flow.
 
@@ -130,4 +132,5 @@ screenshot capture, paired with the Visual Verifier agent.
 - [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) — setup, commands, testing
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — non-obvious failures and fixes
 - [docs/porting/README.md](docs/porting/README.md) — per-harness porting references
-- [eval/EVAL_SYSTEM_USAGE.md](eval/EVAL_SYSTEM_USAGE.md) — grader workflows and run artifacts
+- [eval/deprecated/README.md](eval/deprecated/README.md) — the archived eval-grader system,
+  why it was retired, and what reactivating it would require

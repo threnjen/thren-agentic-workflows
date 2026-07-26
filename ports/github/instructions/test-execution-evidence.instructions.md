@@ -1,0 +1,43 @@
+---
+description: "Defines what counts as test execution evidence and forbids treating unexecuted tests as passing. Auto-loaded for the implementation pipeline agents."
+applyTo: "**/04b-feature-implementer.agent.md,**/04c-feature-reviewer.agent.md,**/04-phase-execute.agent.md"
+---
+
+# Test Execution Evidence
+
+Every test-status claim carries exactly one of these:
+
+- `executed-green` — the suite ran; zero failures
+- `executed-failing` — the suite ran; one or more failures
+- `not-executed` — the suite did not run, or ran without producing a results artifact
+
+`not-executed` never satisfies a gate and is never reported as, or alongside, a passing result.
+
+## Evidence requirement
+
+Any claim of `executed-green` or `executed-failing` must cite:
+
+1. The exact command run
+2. The results artifact path
+3. Total / passed / failed counts read from that artifact
+
+Without all three, the status is `not-executed`. A status you inferred, expected, or were told by another agent is not evidence.
+
+## Not test execution
+
+- A successful compile or build
+- A focused, reflection-based, or hand-rolled harness that bypasses the project's test runner
+- A run that discovers zero tests (report this as `not-executed`, not as a pass)
+
+## Vocabulary
+
+`Regressions: None` and "none observed" are reserved for `executed-green`. In every other case write `Regressions: Unknown — tests not executed`.
+
+## Affected suites
+
+When a change alters a shared API signature or constructor contract, a serialized schema, a bootstrap path, a data/def file, or a policy-controlled file, the suites to execute are:
+
+- Every entry in the execution manifest's `## Verification Assets` section, **plus**
+- Every suite exercising the changed symbol
+
+The feature's own new tests are not sufficient. A contract change that fails closed breaks callers written before it — those callers' tests are the ones that prove it.

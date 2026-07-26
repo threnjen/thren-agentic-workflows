@@ -11,7 +11,7 @@ application to build or serve.
 
 - `git`
 - `python3` (standard library only — no third-party runtime dependencies)
-- VS Code if you want the built-in workspace tasks
+- `uv` (or a virtualenv with `pytest`) to run the test suite
 - Optional harness tooling depending on what you deploy to: Claude Code, Codex,
   OpenCode, Cursor, or GitHub Copilot in VS Code
 
@@ -22,12 +22,12 @@ git clone https://github.com/threnjen/thren-agentic-workflows.git
 cd thren-agentic-workflows
 ```
 
-If you use VS Code, open the repository root. The workspace defines three tasks in
-`.vscode/tasks.json` (see below).
+Open the repository root in your editor. Both pipeline stages are driven from the command
+line; no editor configuration is required.
 
 ## The Maintenance Loop
 
-1. Edit source-of-truth files under `source_of_truth/{agents,skills,instructions,learnings,hooks}`.
+1. Edit source-of-truth files under `source_of_truth/{agents,skills,instructions,learnings}`.
 2. Transform: regenerate `ports/` and `.github/` from source.
 3. Review the resulting diff before committing.
 4. Deploy (optional): copy the generated outputs to your real harness directories.
@@ -51,13 +51,12 @@ JSON convergence summary; a second run reporting zero changes confirms a fixed p
 python3 scripts/propagate_master_assets.py --watch
 ```
 
-Watch mode monitors the five source directories and re-propagates when files change:
+Watch mode monitors the source directories and re-propagates when files change:
 
 - `source_of_truth/agents/`
 - `source_of_truth/skills/`
 - `source_of_truth/instructions/`
 - `source_of_truth/learnings/`
-- `source_of_truth/hooks/`
 
 It rewrites `ports/{claude,codex,opencode,cursor}`, plus `ports/github` and the real
 `.github/` mirror.
@@ -93,7 +92,7 @@ out with a usage hint rather than guessing.
 | codex | `~/.codex` + `~/.agents/skills` | `CODEX_HOME` | agents; skills |
 | opencode | `~/.config/opencode` | `OPENCODE_CONFIG_DIR` | agents, skills |
 | cursor | `~/.cursor` | — | commands, rules |
-| github | `<repo>/.github` | — | verbatim mirror of the 5 source subdirs |
+| github | `<repo>/.github` | — | verbatim mirror of the source subdirs |
 
 After the asset copy, deploy also splices a baseline instructions file per harness,
 rendered from `source_of_truth/baseline/baseline-instructions.md` with the machine's
@@ -117,24 +116,20 @@ marker, or membership in a marked skill directory). A hand-placed file at a dest
 is left alone and reported under `skipped_paths` in the run output — delete it by hand if
 you want it replaced.
 
-## VS Code Tasks
+## Editor Tasks (optional)
 
-`.vscode/tasks.json` provides three tasks:
-
-- `propagate: master assets (once)` — one-shot transform
-- `watch: propagate master assets` — transform watcher, starts on folder open
-- `watch: deploy ports to real harness dirs` — deploy watcher, starts on folder open
-
-The two watch tasks are configured with `runOn: folderOpen`, so VS Code starts them
-automatically when the folder opens unless you disable task auto-run.
+`.vscode/` is gitignored, so a fresh clone ships no editor tasks. If you want the watchers
+to start on folder open, add your own `.vscode/tasks.json` wrapping
+`propagate_master_assets.py --watch` and `deploy_agents.py --watch`. Nothing in the
+maintenance loop depends on it.
 
 ## What To Verify After Changes
 
 ### After editing `source_of_truth/`
 
-- Run the one-shot transform if the watcher is not already running.
+- Run the one-shot transform (or leave `--watch` running).
 - Confirm the expected updates appear under `ports/{claude,opencode,codex,cursor}` and,
-  for the five mirrored subdirs, under `ports/github` and `.github/`.
+  for the mirrored subdirs, under `ports/github` and `.github/`.
 - Check that filenames match platform conventions, including aliases and `z-` prefixes.
 
 ### After editing documentation
@@ -175,4 +170,4 @@ Interpretation guidance:
 ## Related References
 
 - [docs/porting/README.md](porting/README.md) — per-harness porting guides and tool mapping.
-- [eval/EVAL_SYSTEM_USAGE.md](../eval/EVAL_SYSTEM_USAGE.md) — the agent evaluation grader system.
+- [eval/deprecated/README.md](../eval/deprecated/README.md) — the archived eval-grader system.

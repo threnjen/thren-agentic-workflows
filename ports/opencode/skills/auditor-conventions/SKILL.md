@@ -173,7 +173,7 @@ When two independent scans of the same dimension are compared (e.g., two sides
 of an engagement pair), these rules make them comparable:
 
 - **Stable categories**: the producing agent's own category names are the
-  canonical comparison categories — security uses Security Scan's 10 scope
+  canonical comparison categories — security uses Auditor - Security's 10 scope
   categories, code quality uses Auditor - Code's 14 audit categories, infra
   uses Auditor - Infra's 14 audit categories, dependencies uses the dependency
   inventory and duplicate-library checks. Never rename, merge, or invent

@@ -11,10 +11,10 @@ pointers — the detailed rules live in the assets it references:
 
 - **Config contract**: the `engagement-configuration` skill (schema,
   validation rules, canonical field vocabulary).
-- **Orchestrator**: the **06 Engagement - Prepare** agent
+- **Orchestrator**: the **Client Deliverable - Prepare** agent
   (`06-engagement-prepare.agent.md`) — graph build, baseline snapshot,
   analysis-branch convention, fail-fast policy. It spawns no agents;
-  documentation is produced later by the engagement orchestrator's
+  documentation is produced later by the Client Deliverable orchestrator's
   evidence stage (`engagement-pair-loop` skill, Stage A).
 
 Where behavior is described below, the referenced asset is the source of
@@ -50,7 +50,7 @@ them too, but your independent record is the verification evidence.
 
 ## Step 3: Invoke the Preparation Orchestrator
 
-Invoke the **06 Engagement - Prepare** agent. The run proceeds in this order
+Invoke the **Client Deliverable - Prepare** agent. The run proceeds in this order
 (details in the agent definition):
 
 1. **Validate** the config — any violation halts the run before any

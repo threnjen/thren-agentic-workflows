@@ -12,11 +12,10 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 56 source agent definitions in `source_of_truth/agents/` (53 `*.agent.md` + `auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 36 hidden subagents (`user-invocable: false`) and 20 user-invocable.
-- 34 skills in `source_of_truth/skills/`.
+- 51 source agent definitions in `source_of_truth/agents/` (48 `*.agent.md` + `auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 37 hidden subagents (`user-invocable: false`) and 14 user-invocable.
+- 32 skills in `source_of_truth/skills/`.
 - 16 instructions in `source_of_truth/instructions/`.
 - 4 learnings in `source_of_truth/learnings/`.
-- 1 defunct hook artifact set in `source_of_truth/hooks/`.
 
 ## Key Paths
 
@@ -26,37 +25,39 @@ INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
     README.md                              # full agent catalog and pipeline docs
-    *.agent.md                             # 53, plus the three plain .md agents below (56 total definitions)
+    *.agent.md                             # 48, plus the three plain .md agents below (51 total definitions)
     auditor.md                             # plain .md agent (audit orchestrator)
     docs-writer.md                         # plain .md agent (loaded by frontmatter)
     04f-prod-code-review.md                # plain .md agent (loaded by frontmatter)
-  skills/                                  # 34 skill dirs, each rooted at SKILL.md
+  skills/                                  # 32 skill dirs, each rooted at SKILL.md
   instructions/                            # 16 applyTo-glob instruction files
   learnings/                               # 4 learnings files
-  hooks/                                   # defunct injection scanner (DEFUNCT.md)
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
   claude/  {agents, commands, skills, learnings}
-  codex/   {agents, skills, learnings}             # TOML agents
+  codex/   {agents, profiles, skills, learnings}   # TOML agents
   opencode/{agents, skills}
   cursor/  {commands, rules}               # commands=*.md, rules=*.mdc
-  github/  {agents, hooks, instructions, learnings, skills}   # verbatim mirror
+  github/  {agents, instructions, learnings, skills}          # verbatim mirror
 .github/                                   # real deployed mirror of ports/github
 scripts/
   propagate_master_assets.py               # transform entry point (--once | --watch)
   asset_paths.py                           # shared markers + poll_watch
-  extract_pdfs.py, setup-hook-symlinks.sh  # utilities
+  extract_pdfs.py                          # utility
 deploy_agents.py                           # deploy entry point (root, not scripts/)
 docs/ ARCHITECTURE.md CODEBASE_CONTEXT.md COPILOT_SETUP.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
-docs/porting/ docs/inspiration/
-eval/ benchmarks/ packages/ tests/
+docs/ ai-instruction-framework.md UNDERSTANDING_AGENTIC_ECOSYSTEM.md
+docs/porting/                              # CLAUDE/CODEX/OPENCODE guides + TOOL_MAPPING
+dev/      inspiration/ (write-ups), pr-review/ (fixtures)
+eval/                                      # past benchmark artifacts; deprecated/ = archived grader
+benchmarks/ packages/ tests/
 .deploy-config.json                        # gitignored; saved harness selection
-.vscode/tasks.json                         # propagate once/watch + deploy watch
+.vscode/                                   # gitignored; no tasks shipped in a clone
 ```
 
 ## Pipeline Model
 
-- Edit `source_of_truth/{agents,skills,instructions,learnings,hooks}` first.
+- Edit `source_of_truth/{agents,skills,instructions,learnings}` first.
 - Transform: `python3 scripts/propagate_master_assets.py --once` (default) or `--watch`.
   Runs to a fixed point via `propagate_until_converged` (max 25 passes).
 - Transform targets: `ports/{claude,codex,opencode,cursor}` plus `ports/github` and `.github/`.
@@ -68,7 +69,7 @@ eval/ benchmarks/ packages/ tests/
   - codex → `$CODEX_HOME` or `~/.codex` (agents) + `~/.agents/skills` (skills)
   - opencode → `$OPENCODE_CONFIG_DIR` or `~/.config/opencode` (agents, skills)
   - cursor → `~/.cursor` (commands, rules)
-  - github → `<repo>/.github` (verbatim mirror of the 5 subdirs)
+  - github → `<repo>/.github` (verbatim mirror of the mirrored subdirs)
 - Deploy selection persists to `.deploy-config.json` (gitignored) unless `--no-save`.
 - Deploy also splices a baseline instructions file per harness (`deploy_baseline`),
   rendered from `source_of_truth/baseline/baseline-instructions.md` with real home
@@ -99,14 +100,24 @@ eval/ benchmarks/ packages/ tests/
 - Skill auxiliary files carry no marker of their own; the whole skill dir is owned via
   its marked `SKILL.md`.
 - The `github` harness is a verbatim mirror: its files carry no marker and are treated
-  as unconditionally managed within the 5 mirrored subdirs.
+  as unconditionally managed within the mirrored subdirs.
 - Deploy heals debris from the old symlink deployment: destination roots that are
   symlinks pointing into this repo (or dangling) are unlinked and replaced with real
   dirs; foreign symlinks are left alone and skipped.
 - Known filename aliases: `docs-writer` → `docs-writer`, `web-research-specialist` →
   `web-researcher`, `audit-code-or-infra` → `audit-code-infra-refactor` (legacy: the
   source file is now `auditor.md`, which emits under its own name).
-- Hidden (non-user-invocable) subagents become `z-*` in Claude and Codex outputs.
+- Hidden (non-user-invocable) subagents become `z-*` in Claude and Codex outputs, except
+  where a pre-existing generated stem is reused: `04f-prod-code-review` stays
+  `prod-code-review.md` and `04h-unity-reviewer` stays `unity-reviewer.md` in
+  `ports/claude/agents` for that reason.
+- Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
+  plus a subagent file only if an orchestrator names it as a child (dual-use). So
+  `ports/claude/agents` = 37 hidden + 2 dual-use (docs-writer, web-researcher)
+  = 39, while `ports/claude/commands` = 14.
+- Codex and OpenCode emit all 51 agents; only Claude and Cursor split commands out.
+- `ports/cursor/rules` = the 4 learnings only; agent-targeted instructions are excluded
+  because they ship inside the agents.
 
 ## Platform Surface Rules
 
@@ -132,4 +143,7 @@ eval/ benchmarks/ packages/ tests/
   `codex/README.md`, and `scripts/runtime_deployment.py` no longer exist.
 - Do not treat `04f-prod-code-review.md`, `auditor.md`, or `docs-writer.md` as non-agent content
   just because they lack the `.agent.md` suffix.
-- Do not document a root `dev/` beyond `dev/pr-review/` (its fixtures are tracked; run output is gitignored).
+- Do not document a root `dev/` beyond `dev/pr-review/` (fixtures tracked, run output
+  gitignored) and `dev/inspiration/` (write-ups). Agent *runtime* output paths like
+  `dev/feature/` are conventions the agents create in a target repo, not directories here.
+- Do not tell contributors to use VS Code tasks: `.vscode/` is gitignored and a clone has none.

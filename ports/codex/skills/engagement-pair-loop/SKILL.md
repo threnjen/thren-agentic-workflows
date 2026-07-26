@@ -1,6 +1,6 @@
 ---
 name: engagement-pair-loop
-description: "Standard analysis flow used by the engagement orchestrator: the per-pair evidence stage (docs + comparative audits + validation gate), then the engagement-level synthesis stages (Delta → Security → Cloud/Cost → Narrative) that produce the single holistic client-facing document set. Defines spawn inputs, ordering, gating, and working-state recording. Use when: driving the analysis stages of an engagement."
+description: "Standard analysis flow used by the Client Deliverable orchestrator: the per-pair evidence stage (docs + comparative audits + validation gate), then the engagement-level synthesis stages (Delta → Security → Cloud/Cost → Narrative) that produce the single holistic client-facing document set. Defines spawn inputs, ordering, gating, and working-state recording. Use when: driving the analysis stages of an engagement."
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Engagement Pair Loop
@@ -41,7 +41,7 @@ analysis-branch checkout:
 
 | Dimension | Agent |
 |-----------|-------|
-| security | Security Scan (full codebase) |
+| security | Auditor - Security (full codebase) |
 | code | Auditor - Code |
 | dependencies | 05e Dependency Auditor |
 | infra | Auditor - Infra |
@@ -109,7 +109,7 @@ re-run stages B–E in full before finalizing.
 
 ### Stage B: Delta
 
-Spawn **Engagement - Delta Synthesizer** with every pair's audit report
+Spawn **Client Deliverable - Delta Synthesizer** with every pair's audit report
 pointers. Record its client document pointers, each pair's
 exclusions-partition and remediation-recommendations pointers, and any
 missing-SOW or user-review flags; surface a non-empty remediation list to
@@ -117,7 +117,7 @@ the user alongside Stage C's fix-and-re-run flow.
 
 ### Stage C: Security Synthesis
 
-Spawn **Engagement - Security Narrative** with every pair's security report
+Spawn **Client Deliverable - Security Narrative** with every pair's security report
 and exclusions-partition pointers. Record its client document pointer and
 each pair's internal security-delta report pointer. If any pair's
 security-delta Introduced section is non-empty, surface the fix-and-re-run
@@ -126,7 +126,7 @@ re-run above), then re-run stages B–E per the invalidation rule.
 
 ### Stage D: Cloud/Cost Analysis
 
-Spawn **Engagement - Pricing Researcher** with every pair's dependency/infra
+Spawn **Client Deliverable - Pricing Researcher** with every pair's dependency/infra
 report pointers. It is the **only** agent permitted internet access during
 an engagement run; every other subagent operates offline against local
 evidence. Record the client cloud/cost-analysis pointer, each pair's
@@ -134,7 +134,7 @@ internal cost-basis pointer, and any NOT RESEARCHED status.
 
 ### Stage E: Narrative & Specification Documents
 
-Spawn **Engagement - Narrative Writer** with the A3-verified concrete
+Spawn **Client Deliverable - Narrative Writer** with the A3-verified concrete
 paths from the working-state file — per side: the analysis-branch checkout
 path, the docs-set file paths on that branch, and the code-graph pointer —
 plus the exact `QA_AUTOMATED.md` and `QA_USER.md` paths, QA run-result/check

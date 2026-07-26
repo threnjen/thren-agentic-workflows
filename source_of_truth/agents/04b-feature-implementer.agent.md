@@ -75,6 +75,13 @@ If tests exist but some are already failing:
 - If yes: fix broken tests first, then record the new Green baseline
 - If no: record the current state, proceed with caution, and note pre-existing failures in the deliverables
 
+**Branch: Runner unavailable**
+
+If the authoritative runner cannot be executed in this environment (missing runner, locked project, unavailable license):
+- Record `baseline: not-executed (<reason>)`. Do not record a Green baseline and do not substitute a compile check or focused harness for one.
+- Report the status and reason in the return summary so the orchestrator can gate on it.
+- Proceed only if the plan is otherwise unblocked — every downstream claim inherits `not-executed`.
+
 If an implementation record already exists from an earlier AC-scoped pass, preserve its original feature-level baseline when you update the record. Treat the current test run as the pre-pass state for this invocation and update the record's final result to the post-pass state after the requested AC scope is complete.
 
 ### A. Traceability-First Mapping
@@ -94,6 +101,8 @@ For each active AC in plan order:
 4. Move to the next AC
 
 Do not batch multiple ACs into a single Red-Green-Refactor cycle. Each AC gets its own cycle. If the orchestrator scoped this run to a single AC, complete only that AC and stop.
+
+After the active AC scope is green, run the affected suites per the `test-execution-evidence` instruction — the manifest verification assets the orchestrator passed you, plus any suite exercising a symbol whose contract you changed. Your own new tests do not cover callers written before your change.
 
 ### C. Correctness & Edge Cases
 
@@ -151,20 +160,6 @@ Before writing the implementation record, verify:
 3. **Keep it simple** — Simplest solution that meets every requirement
 4. **Surface conflicts** — If plan conflicts with codebase, choose the safest resolution and document it
 
-## Ledger Annotation for Remediation Turns and Blocking Failures
-
-Follow the shared `remediation-ledger-contract` instruction before implementation work begins.
-
-Implementer-specific rules:
-
-- Log a `remediation-request` row at the start of any invocation that is clearly about correcting failing tests, failing builds, runtime defects, QA findings, review feedback, or another defect-fix request. Do not wait until the task becomes `Blocked`.
-- Use `stage: "implement"`, `detected_by: "implementer"`, and default `severity: "medium"` unless the incoming evidence clearly warrants `low`, `high`, or `blocking`.
-- Use `human_intervention_required: false` for normal orchestrated remediation passes. Set it to `true` only when you need additional manual user help or a user decision to proceed.
-- Do not write ledger rows for routine Red-Green-Refactor iterations that were not triggered by an external failure report or correction request.
-- If a distinct new blocker appears during work, append a second row with `event_kind: "discovered-failure"` rather than mutating the original discovery row.
-- If a previously logged implementation-stage issue is later resolved, append a `resolution` row with `related_event_id` pointing at the original event instead of editing prior rows.
-- After every append, verify the row exists. If the write cannot be verified on a `phase/*` branch, report that explicitly instead of assuming success.
-
 ## Deliverables
 
 When implementation is complete, you produce TWO outputs:
@@ -180,6 +175,7 @@ After writing the implementation record, return a brief summary to the orchestra
 Required fields only:
 - **AC scope**: exact AC labels completed in this invocation
 - **Status**: Done / Blocked (and what is blocking)
+- **Test execution**: `executed-green` | `executed-failing` | `not-executed` (+ reason), with the results artifact path
 - **Test results**: Baseline → Final pass/fail counts
 - **Deviations**: "None" or one-line description per deviation
 - **Gaps**: "None" or one-line description per gap

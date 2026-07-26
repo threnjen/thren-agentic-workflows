@@ -810,11 +810,49 @@ class OrphanPruningTests(unittest.TestCase):
         # one file to claude agents (40 -> 41) and opencode/codex agents
         # (55 -> 56); claude commands unchanged (not user-invocable). Counts
         # recounted from disk.
+        # `Security Scan` was folded into `Auditor - Security`, a hidden
+        # sibling of the Code/Infra/Refactor auditors: the agent surfaces are
+        # unchanged (its spawnable file, held because the Engagement
+        # orchestrator declared it as a child, is simply renamed), but it loses
+        # its user-invocable command -- claude commands 20 -> 19. Counts
+        # recounted from disk.
+        # The `QA` agent was merged into `Debugger`: both were authored in one
+        # commit, and that same commit gave Debugger the phase-doc-sync gate
+        # that was QA's only reason to exist, so QA was redundant from birth.
+        # Its two unique clauses moved into Debugger and the file was deleted.
+        # It was user-invocable, so it held no z-file in claude agents (41
+        # unchanged) but did hold a command (19 -> 18) and an opencode/codex
+        # agent file (56 -> 55). Counts recounted from disk.
+        # The `Engagement - *` fleet was renamed to `Client Deliverable*`
+        # (files `engagement-orchestrator`/`engagement-0N-*` ->
+        # `client-deliverable`/`client-deliverable-0N-*`). Earlier entries in
+        # this log keep the old names because they record what was true when
+        # written. A rename is 1:1, so every count below is unchanged; the
+        # propagation pass pruned the nine stale generated files as orphans.
+        # The eval-grader system was archived to `eval/deprecated/` (outside
+        # `source_of_truth/`, so propagation no longer sees it): `Eval - Grader`
+        # and `Eval - Feature Decomposition` were user-invocable and held no
+        # spawnable file, so claude commands 18 -> 16; `Eval - Metric Grader`
+        # and `Eval - Score Recorder` were hidden, so claude agents 41 -> 39.
+        # All four left opencode/codex agents 55 -> 51. Counts recounted from
+        # disk.
+        # `Visual Verifier` became hidden (`user-invocable: false`) and its
+        # source moved to `04g-unity-visual-verification.agent.md`, since it
+        # reads its inputs from a spawning orchestrator and cannot run cold. It
+        # was dual-use, so it held both a command and a spawnable file: claude
+        # commands 16 -> 15, claude agents unchanged at 39. The rename dropped
+        # its stem-stickiness, so it now emits as `z-unity-visual-verification`.
+        # `Unity Reviewer` became hidden the same way and moved to
+        # `04h-unity-reviewer.agent.md`; it is now spawned by PR - Review as
+        # well as Phase - Execute and Single Feature - Agent. It was also
+        # dual-use: claude commands 15 -> 14, claude agents unchanged at 39.
+        # Stripping `04h-` yields the pre-existing stem, so stickiness held and
+        # it still emits as `unity-reviewer.md`, not `z-unity-reviewer.md`.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 20),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 56),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 56),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 39),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 14),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 51),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 51),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:

@@ -5,7 +5,7 @@
 This repository is organized around one authoring surface and a two-stage pipeline:
 
 - `source_of_truth/` is the master source for agent definitions, skills, instructions,
-  learnings, and hooks.
+  and learnings.
 - `ports/{claude,codex,opencode,cursor,github}` are generated outputs.
 - `.github/` at the repo root is a real, deployed mirror of `ports/github`.
 - `docs/`, `eval/`, `benchmarks/`, and `packages/` are supporting material.
@@ -28,16 +28,15 @@ flowchart TD
     Root --> Ports[ports generated outputs]
     Root --> DotGithub[.github deployed mirror]
     Root --> Docs[docs and porting guides]
-    Root --> Eval[eval grader system]
+    Root --> Eval[eval past benchmark artifacts]
     Root --> Bench[benchmarks model data]
     Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
-    SOT --> Agents[49 agent definitions]
-    SOT --> Skills[28 skill directories]
+    SOT --> Agents[51 agent definitions]
+    SOT --> Skills[32 skill directories]
     SOT --> Instructions[16 instruction files]
     SOT --> Learnings[4 learnings files]
-    SOT --> Hooks[defunct injection scanner]
 
     Scripts --> Propagate[propagate_master_assets.py]
     Scripts --> Shared[asset_paths.py]
@@ -54,7 +53,7 @@ flowchart TD
 %% Shows how edits under source_of_truth are transformed into per-harness ports/ outputs and the .github mirror.
 ```mermaid
 flowchart LR
-    Author[Edit source_of_truth files] --> Watcher[VS Code watch task or --once]
+    Author[Edit source_of_truth files] --> Watcher[Run with --once or --watch]
     Watcher --> Script[propagate_master_assets.py]
     Script --> ClaudeOut[ports/claude agents commands skills learnings]
     Script --> CodexOut[ports/codex agents skills learnings TOML]
@@ -66,12 +65,13 @@ flowchart LR
 
 The transform runs to a fixed point: `propagate_until_converged` repeats a single pass
 until a pass makes zero changes (max 25 passes). Each pass rewrites agents per platform,
-regenerates skills and learnings, emits Cursor commands and rules, and mirrors the five
-source subdirs to `ports/github` and `.github/`.
+regenerates skills and learnings, emits Cursor commands and rules, and mirrors the
+source subdirs (`agents`, `instructions`, `learnings`, `skills`) to `ports/github` and
+`.github/`.
 
-The watcher in `.vscode/tasks.json` starts on folder open and monitors the five source
-directories (`agents`, `skills`, `instructions`, `learnings`, `hooks`). `--once` (the
-default when no flag is passed) and `--watch` use the same transformation logic.
+`--watch` monitors the source directories (`agents`, `skills`, `instructions`,
+`learnings`). `--once` (the default when no flag is passed) and `--watch` use the same
+transformation logic.
 
 ### Stage 2 — Deploy (deploy_agents.py)
 
@@ -94,7 +94,7 @@ generated marker (or lives inside a marked skill directory). Files without a mar
 foreign and never touched — they are surfaced under `skipped_paths` in the run output so
 a fail-closed skip is visible, not silent. The `github` harness is the one exception:
 its mirrored tree is copied verbatim (no per-file marker), so it is treated as
-unconditionally managed within the five mirrored subdirs.
+unconditionally managed within the mirrored subdirs.
 
 After the asset copy, deploy renders a per-harness **baseline instructions file** from
 `source_of_truth/baseline/baseline-instructions.md`. The template holds three sections
@@ -122,14 +122,13 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 49 agent definitions. Most use the `.agent.md` suffix; `docs-writer.md`
-  and `04f-prod-code-review.md` are intentional plain-`.md` exceptions still loaded as
-  agents because loading keys off `name`/`description` frontmatter, not the suffix.
-- `skills/` — 28 directory-based skills, each rooted at `SKILL.md`.
+- `agents/` — 51 agent definitions (14 user-invocable, 37 hidden subagents). Most use
+  the `.agent.md` suffix; `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`
+  are intentional plain-`.md` exceptions still loaded as agents because loading keys off
+  `name`/`description` frontmatter, not the suffix.
+- `skills/` — 32 directory-based skills, each rooted at `SKILL.md`.
 - `instructions/` — 16 instruction files matched by `applyTo` globs.
 - `learnings/` — 4 cross-cutting learnings files.
-- `hooks/` — a defunct prompt-injection scanner, retained but wired nowhere. See
-  `source_of_truth/hooks/DEFUNCT.md`.
 - `baseline/` — `baseline-instructions.md`, the sentinel-sectioned baseline
   instructions template rendered per harness at deploy time (not propagated to
   `ports/`, since it needs the deployed machine's real paths).
@@ -142,6 +141,12 @@ platform-specific transformations:
 - tool declarations are remapped per platform
 - agent references are rewritten to the correct generated identifiers
 - hidden subagents gain `z-` naming for Claude and Codex outputs
+- Claude emission splits by invocability: a hidden agent emits a subagent file only; a
+  user-invocable agent emits a slash command, **plus** a subagent file when some
+  orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
+  it. That is why `ports/claude/agents` (39) and `ports/claude/commands` (14) differ:
+  37 hidden subagents plus the two dual-use agents (Docs Writer,
+  Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
   support `instructions/` directly
 - Cursor: user-invocable agents become `commands/*.md`; instructions and learnings
@@ -154,9 +159,9 @@ Known filename aliases preserved during propagation: `docs-writer` → `docs-wri
 
 ### The `.github/` mirror
 
-`ports/github` is a verbatim copy of the five mirrored source subdirs, and `.github/`
-at the repo root is a real deployed copy of it. Only the five mirrored subdirs
-(`agents`, `hooks`, `instructions`, `learnings`, `skills`) are touched — anything else
+`ports/github` is a verbatim copy of the mirrored source subdirs, and `.github/`
+at the repo root is a real deployed copy of it. Only the mirrored subdirs
+(`agents`, `instructions`, `learnings`, `skills`) are touched — anything else
 in `.github/` (for example a future `workflows/`) is left alone.
 
 ### Shared module (`scripts/asset_paths.py`)
@@ -169,8 +174,10 @@ used by both scripts' watch modes.
 
 ### Supporting material
 
-- `docs/` — architecture, setup, troubleshooting, porting guides, and inspiration write-ups.
-- `eval/` — the agent evaluation grader system, rubrics, hook templates, and run artifacts.
+- `docs/` — architecture, setup, troubleshooting, and porting guides.
+- `dev/` — `inspiration/` write-ups and `pr-review/` fixtures.
+- `eval/` — past benchmark run artifacts and rubrics. `eval/deprecated/` holds the
+  archived eval-grader agents, skills, and commit hook; see its README.
 - `benchmarks/` — model cost/performance benchmark data and charts.
 - `packages/com.threnjen.visual-verification/` — a Unity UPM package for deterministic
   screenshot capture, paired with the Visual Verifier agent.
@@ -187,12 +194,11 @@ flowchart TD
     Refiner[02 Phase - Refiner]
     Decomposer[03 Feature - Decomposer]
     PhaseExecute[04 Phase - Execute]
-    Audit[Audit - Code, Infra, Refactor]
+    Audit[Audit - Code, Infra, Refactor, Security]
     Test[Test - Orchestrator]
     ProdReview[Prod Code Review]
-    EvalGrader[Eval - Grader]
-    EngagementOrchestrator[Engagement - Orchestrator]
-    EngagementPrepare[06 Engagement - Prepare]
+    ClientDeliverable[Client Deliverable]
+    ClientDeliverablePrepare[Client Deliverable - Prepare]
     DocsWriter[Docs Writer]
 
     PlanExpander[04a Feature - Plan Expander]
@@ -215,6 +221,7 @@ flowchart TD
     Audit --> AuditorCode[Auditor - Code]
     Audit --> AuditorInfra[Auditor - Infra]
     Audit --> AuditorRefactor[Auditor - Refactor]
+    Audit --> AuditorSecurity[Auditor - Security]
     Audit --> AuditorDelta[Auditor - Delta]
     Audit --> AuditorFixes[Auditor - Remediation Research]
 
@@ -222,13 +229,9 @@ flowchart TD
     Test --> TestWriter[Test - Writer]
     Test --> TestFixer[Test - Fixer]
 
-    EvalGrader --> EvalDecomp[Eval - Decomposition]
-    EvalGrader --> EvalMetric[Eval - Metric Grader]
-    EvalGrader --> EvalScore[Eval - Score Recorder]
-
-    EngagementOrchestrator --> EngagementPrepare
-    EngagementOrchestrator --> EngagementSubs[Engagement subagents: Delta Synthesizer, Security Narrative, Pricing Researcher, Narrative Writer, Compliance Writer, Gap Reviewer]
-    EngagementOrchestrator --> DocsWriter
+    ClientDeliverable --> ClientDeliverablePrepare
+    ClientDeliverable --> ClientDeliverableSubs[Client Deliverable subagents: Delta Synthesizer, Security Narrative, Pricing Researcher, Narrative Writer, Compliance Writer, Manifest Assembler, Gap Reviewer]
+    ClientDeliverable --> DocsWriter
 ```
 
 The audit orchestrator runs a matrix of audit types by targets. A target is a
@@ -247,13 +250,13 @@ comparison point; the baseline is read-only and receives no files.
 
 A separate engagement flow sits outside the phase pipeline:
 
-- **06 Engagement - Prepare** loads an engagement configuration (validated by the
+- **Client Deliverable - Prepare** loads an engagement configuration (validated by the
   `engagement-configuration` skill), then for each declared repository side ensures
   fresh documentation (delegating to Docs Writer) and a current code graph plus a
   baseline snapshot on a local, never-pushed analysis branch. Its operator procedure
   lives in the `engagement-preparation-runbook` skill.
-- **Engagement - Orchestrator** runs a client engagement end to end: it invokes
-  Engagement - Prepare first (reused unchanged), keeps on-disk working state in a
+- **Client Deliverable** runs a client engagement end to end: it invokes
+  Client Deliverable - Prepare first (reused unchanged), keeps on-disk working state in a
   per-engagement workspace (`engagement-workspace` skill), and drives the per-pair
   analysis stages via hidden subagents — comparative audit runs, delta synthesis with
   SOW-exclusion routing, the client-facing security narrative with its internal
@@ -265,7 +268,8 @@ A separate engagement flow sits outside the phase pipeline:
 ## External Dependencies And Integrations
 
 - Python standard library only for both scripts; no project package manifest is required.
-- VS Code task integration via `.vscode/tasks.json` for propagate (once/watch) and deploy (watch).
+- No editor integration is shipped: `.vscode/` is gitignored, so both stages are driven
+  from the command line.
 - Code-review-graph MCP as a review/exploration aid (see `AGENTS.md`); auto-installed
   by the deploy script when absent.
 - Context7 MCP for current library documentation; auto-configured by the deploy script
