@@ -191,8 +191,8 @@ flowchart TD
     Test[Test - Orchestrator]
     ProdReview[Prod Code Review]
     EvalGrader[Eval - Grader]
-    EngagementOrchestrator[Engagement - Orchestrator]
-    EngagementPrepare[06 Engagement - Prepare]
+    ClientDeliverable[Client Deliverable]
+    ClientDeliverablePrepare[Client Deliverable - Prepare]
     DocsWriter[Docs Writer]
 
     PlanExpander[04a Feature - Plan Expander]
@@ -227,9 +227,9 @@ flowchart TD
     EvalGrader --> EvalMetric[Eval - Metric Grader]
     EvalGrader --> EvalScore[Eval - Score Recorder]
 
-    EngagementOrchestrator --> EngagementPrepare
-    EngagementOrchestrator --> EngagementSubs[Engagement subagents: Delta Synthesizer, Security Narrative, Pricing Researcher, Narrative Writer, Compliance Writer, Gap Reviewer]
-    EngagementOrchestrator --> DocsWriter
+    ClientDeliverable --> ClientDeliverablePrepare
+    ClientDeliverable --> EngagementSubs[Engagement subagents: Delta Synthesizer, Security Narrative, Pricing Researcher, Narrative Writer, Compliance Writer, Gap Reviewer]
+    ClientDeliverable --> DocsWriter
 ```
 
 The audit orchestrator runs a matrix of audit types by targets. A target is a
@@ -248,13 +248,13 @@ comparison point; the baseline is read-only and receives no files.
 
 A separate engagement flow sits outside the phase pipeline:
 
-- **06 Engagement - Prepare** loads an engagement configuration (validated by the
+- **Client Deliverable - Prepare** loads an engagement configuration (validated by the
   `engagement-configuration` skill), then for each declared repository side ensures
   fresh documentation (delegating to Docs Writer) and a current code graph plus a
   baseline snapshot on a local, never-pushed analysis branch. Its operator procedure
   lives in the `engagement-preparation-runbook` skill.
-- **Engagement - Orchestrator** runs a client engagement end to end: it invokes
-  Engagement - Prepare first (reused unchanged), keeps on-disk working state in a
+- **Client Deliverable** runs a client engagement end to end: it invokes
+  Client Deliverable - Prepare first (reused unchanged), keeps on-disk working state in a
   per-engagement workspace (`engagement-workspace` skill), and drives the per-pair
   analysis stages via hidden subagents — comparative audit runs, delta synthesis with
   SOW-exclusion routing, the client-facing security narrative with its internal

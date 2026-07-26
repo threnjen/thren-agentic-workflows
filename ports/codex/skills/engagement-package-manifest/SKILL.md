@@ -60,7 +60,7 @@ under `deliverables/`:
 8. Verification summary — `deliverables/verification-summary.md`
 9. QA appendix — `deliverables/qa-appendix.md` (one section per repository:
    its QA_USER acceptance checklist plus an automated-QA run summary for
-   agent-only targets; written by Engagement - Prepare at its QA gate)
+   agent-only targets; written by Client Deliverable - Prepare at its QA gate)
 
 Metrics in holistic documents are reported **per pair**; an engagement-wide
 roll-up appears only when no repository is shared across pairs — otherwise

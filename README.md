@@ -67,9 +67,8 @@ Reach for these individually, whenever you need them — no pipeline required:
 - **Prod Code Review** — a final GO / NO-GO readiness gate
 - **Unity Reviewer** / **Visual Verifier** — review Unity C# and verify what actually renders
 - **Eval - Grader** / **Instructions Manager** — score agent runs and manage AI instruction files
-- **Engagement - Orchestrator** / **Engagement - Prepare** — run a client engagement end to
-  end (comparative audits, client narratives, compliance package) or just prepare its
-  repos for comparison analysis
+- **Client Deliverable** — run a client engagement end to end (comparative audits, client
+  narratives, compliance package) from an engagement configuration file
 
 Behind these, a set of automated subagents and on-demand skills do the detailed work —
 you never invoke them directly. The library ships 55 source agent definitions in

@@ -823,6 +823,12 @@ class OrphanPruningTests(unittest.TestCase):
         # It was user-invocable, so it held no z-file in claude agents (41
         # unchanged) but did hold a command (19 -> 18) and an opencode/codex
         # agent file (56 -> 55). Counts recounted from disk.
+        # The `Engagement - *` fleet was renamed to `Client Deliverable*`
+        # (files `engagement-orchestrator`/`engagement-0N-*` ->
+        # `client-deliverable`/`client-deliverable-0N-*`). Earlier entries in
+        # this log keep the old names because they record what was true when
+        # written. A rename is 1:1, so every count below is unchanged; the
+        # propagation pass pruned the nine stale generated files as orphans.
         roots = [
             (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 18),
