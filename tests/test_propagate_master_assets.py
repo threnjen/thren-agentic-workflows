@@ -836,9 +836,21 @@ class OrphanPruningTests(unittest.TestCase):
         # and `Eval - Score Recorder` were hidden, so claude agents 41 -> 39.
         # All four left opencode/codex agents 55 -> 51. Counts recounted from
         # disk.
+        # `Visual Verifier` became hidden (`user-invocable: false`) and its
+        # source moved to `04g-unity-visual-verification.agent.md`, since it
+        # reads its inputs from a spawning orchestrator and cannot run cold. It
+        # was dual-use, so it held both a command and a spawnable file: claude
+        # commands 16 -> 15, claude agents unchanged at 39. The rename dropped
+        # its stem-stickiness, so it now emits as `z-unity-visual-verification`.
+        # `Unity Reviewer` became hidden the same way and moved to
+        # `04h-unity-reviewer.agent.md`; it is now spawned by PR - Review as
+        # well as Phase - Execute and Single Feature - Agent. It was also
+        # dual-use: claude commands 15 -> 14, claude agents unchanged at 39.
+        # Stripping `04h-` yields the pre-existing stem, so stickiness held and
+        # it still emits as `unity-reviewer.md`, not `z-unity-reviewer.md`.
         roots = [
             (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 39),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 16),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 14),
             (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 51),
             (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 51),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),

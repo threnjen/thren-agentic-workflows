@@ -12,7 +12,7 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 51 source agent definitions in `source_of_truth/agents/` (48 `*.agent.md` + `auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 35 hidden subagents (`user-invocable: false`) and 16 user-invocable.
+- 51 source agent definitions in `source_of_truth/agents/` (48 `*.agent.md` + `auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 37 hidden subagents (`user-invocable: false`) and 14 user-invocable.
 - 32 skills in `source_of_truth/skills/`.
 - 16 instructions in `source_of_truth/instructions/`.
 - 4 learnings in `source_of_truth/learnings/`.
@@ -35,7 +35,7 @@ source_of_truth/                           # THE authoring surface
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
   claude/  {agents, commands, skills, learnings}
-  codex/   {agents, skills, learnings}             # TOML agents
+  codex/   {agents, profiles, skills, learnings}   # TOML agents
   opencode/{agents, skills}
   cursor/  {commands, rules}               # commands=*.md, rules=*.mdc
   github/  {agents, instructions, learnings, skills}          # verbatim mirror
@@ -46,11 +46,13 @@ scripts/
   extract_pdfs.py                          # utility
 deploy_agents.py                           # deploy entry point (root, not scripts/)
 docs/ ARCHITECTURE.md CODEBASE_CONTEXT.md COPILOT_SETUP.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
-docs/porting/ docs/inspiration/
+docs/ ai-instruction-framework.md UNDERSTANDING_AGENTIC_ECOSYSTEM.md
+docs/porting/                              # CLAUDE/CODEX/OPENCODE guides + TOOL_MAPPING
+dev/      inspiration/ (write-ups), pr-review/ (fixtures)
 eval/                                      # past benchmark artifacts; deprecated/ = archived grader
 benchmarks/ packages/ tests/
 .deploy-config.json                        # gitignored; saved harness selection
-.vscode/tasks.json                         # propagate once/watch + deploy watch
+.vscode/                                   # gitignored; no tasks shipped in a clone
 ```
 
 ## Pipeline Model
@@ -107,11 +109,12 @@ benchmarks/ packages/ tests/
   source file is now `auditor.md`, which emits under its own name).
 - Hidden (non-user-invocable) subagents become `z-*` in Claude and Codex outputs, except
   where a pre-existing generated stem is reused: `04f-prod-code-review` stays
-  `prod-code-review.md` in `ports/claude/agents` for that reason.
+  `prod-code-review.md` and `04h-unity-reviewer` stays `unity-reviewer.md` in
+  `ports/claude/agents` for that reason.
 - Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
   plus a subagent file only if an orchestrator names it as a child (dual-use). So
-  `ports/claude/agents` = 35 hidden + 4 dual-use (docs-writer, unity-reviewer,
-  visual-verifier, web-researcher) = 39, while `ports/claude/commands` = 16.
+  `ports/claude/agents` = 37 hidden + 2 dual-use (docs-writer, web-researcher)
+  = 39, while `ports/claude/commands` = 14.
 - Codex and OpenCode emit all 51 agents; only Claude and Cursor split commands out.
 - `ports/cursor/rules` = the 4 learnings only; agent-targeted instructions are excluded
   because they ship inside the agents.
@@ -140,4 +143,7 @@ benchmarks/ packages/ tests/
   `codex/README.md`, and `scripts/runtime_deployment.py` no longer exist.
 - Do not treat `04f-prod-code-review.md`, `auditor.md`, or `docs-writer.md` as non-agent content
   just because they lack the `.agent.md` suffix.
-- Do not document a root `dev/` beyond `dev/pr-review/` (its fixtures are tracked; run output is gitignored).
+- Do not document a root `dev/` beyond `dev/pr-review/` (fixtures tracked, run output
+  gitignored) and `dev/inspiration/` (write-ups). Agent *runtime* output paths like
+  `dev/feature/` are conventions the agents create in a target repo, not directories here.
+- Do not tell contributors to use VS Code tasks: `.vscode/` is gitignored and a clone has none.

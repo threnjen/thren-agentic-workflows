@@ -30,8 +30,8 @@ The source-of-truth flag `user-invocable:` (default `true`) drives the split:
   never hard-coded. Add a new reference and the agent automatically becomes
   dual-use on the next propagation.
 - Dual-use exists so an orchestrator command can still `Task`-spawn the worker
-  (e.g. `phase-execute` spawns `visual-verifier`) while the same role is also
-  directly invocable as `/visual-verifier`.
+  (e.g. `project-planner` spawns `web-researcher`) while the same role is also
+  directly invocable as `/web-researcher`.
 - When an agent is reclassified to command-only, delete any stale
   `claude/agents/<id>.md` it previously generated. Never delete hand-authored
   Claude-only agents (e.g. `single-feature.md`) or `README.md`.
@@ -72,7 +72,7 @@ Instruction content must be present in the generated agent body.
 2. Resolve applicable `.github/instructions/*.instructions.md` entries by `applyTo`.
 3. Convert tool names to Claude names (subagent files only — commands carry no `tools:` line).
 4. Resolve the final Claude destination identifier from the generated filename stem, including any aliasing or `z-` prefixing for hidden subagents. The slash command uses the same stem (without any `z-` prefix, since only user-invocable agents become commands).
-5. Rewrite source agent references in the body to Claude handles. Worker subagents use their `@z-...` handle such as `@z-feature-plan-expander`; dual-use agents use their bare handle such as `@visual-verifier`. References always resolve to the **subagent** file so orchestrators can spawn them.
+5. Rewrite source agent references in the body to Claude handles. Worker subagents use their `@z-...` handle such as `@z-feature-plan-expander`; dual-use agents use their bare handle such as `@web-researcher`. References always resolve to the **subagent** file so orchestrators can spawn them.
 6. **Subagent file:** set frontmatter `name:` to the final destination identifier and add `user-invocable: false`. **Command file:** emit only `description:` frontmatter (no `name:`, no `tools:`, no `user-invocable:`).
 7. Append inlined instruction content under a `## Auto-Loaded Instructions` section header at the end of the body (both file types).
 8. Ensure instruction intent is present in the final body. Keep behavior equivalent to source, excluding unsupported tool semantics.

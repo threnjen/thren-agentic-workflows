@@ -65,7 +65,6 @@ Reach for these individually, whenever you need them — no pipeline required:
   between them
 - **Test - Orchestrator** — analyze, write, or fix your test suite
 - **QA - Bootstrapper** — generate a repo's QA_AUTOMATED and QA_USER package, then run it
-- **Unity Reviewer** / **Visual Verifier** — review Unity C# and verify what actually renders
 - **Instructions Manager** — create and evaluate AI instruction files for a repository
 - **Client Deliverable** — run a client engagement end to end (comparative audits, client
   narratives, compliance package) from an engagement configuration file

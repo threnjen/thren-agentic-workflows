@@ -1,5 +1,5 @@
 ---
-description: "Bootstraps a repository's complete QA package: gathers whatever starter inputs exist (agent QA files, manual engineer QA, SOW/acceptance docs), spawns the QA Doc Generator to produce QA_AUTOMATED and QA_USER, then spawns the QA Runner to execute the automated runbook and stamp pass/fail results into it."
+description: "Builds a repository's QA package from scratch and then runs it. Produces QA_AUTOMATED (a technical runbook) and QA_USER (a manual acceptance checklist) from whatever starter inputs exist, executes the runbook, and stamps pass/fail results into it."
 model: deepseek/deepseek-v4-pro
 permission:
   bash: allow

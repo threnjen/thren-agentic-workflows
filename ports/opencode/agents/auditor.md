@@ -1,5 +1,5 @@
 ---
-description: "Orchestrates code, infrastructure, refactor, and security audits of a repository, and — when the user names two revisions or checkouts — compares them into a reconciled delta document. Audit-only produces documents; with remediation it drives fixes through the feature pipeline."
+description: "Audits a repository for code quality, infrastructure, architecture, and security. Name two revisions or checkouts and it also reconciles them into a delta report of what changed. Produces documents only, unless you ask for remediation — then it drives the fixes through the feature pipeline."
 model: deepseek/deepseek-v4-pro
 permission:
   bash: allow

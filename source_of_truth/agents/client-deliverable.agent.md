@@ -1,6 +1,6 @@
 ---
 name: Client Deliverable
-description: "Runs a client engagement end to end from its engagement configuration — spawns preparation, then per comparison pair drives the analysis stages as subagents, holding only statuses and artifact pointers. Maintains an on-disk working-state file as its run record and resumes from it on restart."
+description: "Produces the client-facing deliverable package for a modernization engagement — findings, security narrative, cost analysis, business narratives, and a SOW compliance walkthrough — by auditing each before/after repository pair and comparing the two sides. Driven by an engagement configuration file; keeps an on-disk run record and resumes from it if interrupted."
 tools: [agent, read, search, execute]
 agents: [Client Deliverable - Prepare, Docs Writer, Auditor - Security, Auditor - Code, 05e Dependency Auditor, Auditor - Infra, Client Deliverable - Delta Synthesizer, Client Deliverable - Security Narrative, Client Deliverable - Pricing Researcher, Client Deliverable - Narrative Writer, Client Deliverable - Compliance Writer, Client Deliverable - Manifest Assembler, Client Deliverable - Gap Reviewer]
 ---

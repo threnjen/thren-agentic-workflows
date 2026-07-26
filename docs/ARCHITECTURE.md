@@ -53,7 +53,7 @@ flowchart TD
 %% Shows how edits under source_of_truth are transformed into per-harness ports/ outputs and the .github mirror.
 ```mermaid
 flowchart LR
-    Author[Edit source_of_truth files] --> Watcher[VS Code watch task or --once]
+    Author[Edit source_of_truth files] --> Watcher[Run with --once or --watch]
     Watcher --> Script[propagate_master_assets.py]
     Script --> ClaudeOut[ports/claude agents commands skills learnings]
     Script --> CodexOut[ports/codex agents skills learnings TOML]
@@ -65,12 +65,13 @@ flowchart LR
 
 The transform runs to a fixed point: `propagate_until_converged` repeats a single pass
 until a pass makes zero changes (max 25 passes). Each pass rewrites agents per platform,
-regenerates skills and learnings, emits Cursor commands and rules, and mirrors the five
-source subdirs to `ports/github` and `.github/`.
+regenerates skills and learnings, emits Cursor commands and rules, and mirrors the
+source subdirs (`agents`, `instructions`, `learnings`, `skills`) to `ports/github` and
+`.github/`.
 
-The watcher in `.vscode/tasks.json` starts on folder open and monitors the source
-directories (`agents`, `skills`, `instructions`, `learnings`). `--once` (the
-default when no flag is passed) and `--watch` use the same transformation logic.
+`--watch` monitors the source directories (`agents`, `skills`, `instructions`,
+`learnings`). `--once` (the default when no flag is passed) and `--watch` use the same
+transformation logic.
 
 ### Stage 2 — Deploy (deploy_agents.py)
 
@@ -121,7 +122,7 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 51 agent definitions (16 user-invocable, 35 hidden subagents). Most use
+- `agents/` — 51 agent definitions (14 user-invocable, 37 hidden subagents). Most use
   the `.agent.md` suffix; `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`
   are intentional plain-`.md` exceptions still loaded as agents because loading keys off
   `name`/`description` frontmatter, not the suffix.
@@ -143,9 +144,9 @@ platform-specific transformations:
 - Claude emission splits by invocability: a hidden agent emits a subagent file only; a
   user-invocable agent emits a slash command, **plus** a subagent file when some
   orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
-  it. That is why `ports/claude/agents` (39) and `ports/claude/commands` (16) differ:
-  35 hidden subagents plus the four dual-use agents (Docs Writer, Unity Reviewer,
-  Visual Verifier, Web Researcher)
+  it. That is why `ports/claude/agents` (39) and `ports/claude/commands` (14) differ:
+  37 hidden subagents plus the two dual-use agents (Docs Writer,
+  Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
   support `instructions/` directly
 - Cursor: user-invocable agents become `commands/*.md`; instructions and learnings
@@ -173,7 +174,8 @@ used by both scripts' watch modes.
 
 ### Supporting material
 
-- `docs/` — architecture, setup, troubleshooting, porting guides, and inspiration write-ups.
+- `docs/` — architecture, setup, troubleshooting, and porting guides.
+- `dev/` — `inspiration/` write-ups and `pr-review/` fixtures.
 - `eval/` — past benchmark run artifacts and rubrics. `eval/deprecated/` holds the
   archived eval-grader agents, skills, and commit hook; see its README.
 - `benchmarks/` — model cost/performance benchmark data and charts.
@@ -266,7 +268,8 @@ A separate engagement flow sits outside the phase pipeline:
 ## External Dependencies And Integrations
 
 - Python standard library only for both scripts; no project package manifest is required.
-- VS Code task integration via `.vscode/tasks.json` for propagate (once/watch) and deploy (watch).
+- No editor integration is shipped: `.vscode/` is gitignored, so both stages are driven
+  from the command line.
 - Code-review-graph MCP as a review/exploration aid (see `AGENTS.md`); auto-installed
   by the deploy script when absent.
 - Context7 MCP for current library documentation; auto-configured by the deploy script

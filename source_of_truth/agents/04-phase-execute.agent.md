@@ -1,6 +1,6 @@
 ---
 name: 04 Phase - Execute
-description: "Orchestrates end-to-end execution of a refined Phase document using a prepared execution manifest and feature bundles, then delegates implementation, review, QA, and documentation."
+description: "Builds an entire phase, feature by feature. Takes the decomposer's bundles and runs each feature through implementation, review, QA, and documentation, reporting progress as it goes. Writes code."
 tools: [agent, read, search, todo, execute]
 agents: [Feature - Implementer, Feature - Reviewer, Unity Reviewer, Visual Verifier, Feature - QA Writer, 04e Diff Security Scan, Prod Code Review, Docs Writer]
 ---

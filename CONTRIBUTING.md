@@ -32,8 +32,8 @@ directory). Hand-maintained files are never touched.
 ## What's in the Repo
 
 - **51 agent definitions** in `source_of_truth/agents/` (48 `*.agent.md` plus the plain
-  `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`), of which **16 are
-  user-invocable** and **35 are hidden subagents** (`user-invocable: false`) that
+  `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`), of which **14 are
+  user-invocable** and **37 are hidden subagents** (`user-invocable: false`) that
   orchestrators spawn automatically.
 - **32 skills** — directory-based capabilities agents load on demand, each rooted at
   `SKILL.md`.
@@ -68,12 +68,12 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 │   └── extract_pdfs.py             # Utility
 ├── deploy_agents.py                # Deploy: ports/ -> real harness config dirs
 ├── docs/                           # ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT,
-│                                   # TROUBLESHOOTING, porting/, inspiration/
+│                                   # TROUBLESHOOTING, COPILOT_SETUP, porting/
 ├── eval/                           # Past benchmark run artifacts + deprecated/ (archived grader)
 ├── benchmarks/                     # Model cost/performance benchmark data
 ├── packages/                       # Distributable UPM package (com.threnjen.visual-verification)
-├── tests/                          # Python regression tests for both scripts
-└── .vscode/tasks.json              # One-shot + watch tasks for propagate and deploy
+├── dev/                            # inspiration/ write-ups; pr-review/ fixtures
+└── tests/                          # Python regression tests for both scripts
 ```
 
 ## The Maintenance Loop
@@ -88,9 +88,11 @@ python3 scripts/propagate_master_assets.py --once
 ```
 
 Runs one propagation pass to a fixed point (converges, then exits). Run this only if you
-have edited files under `source_of_truth/`. In VS Code the equivalent task is
-`propagate: master assets (once)`. The background task `watch: propagate master assets`
-starts on folder open and re-propagates on every save under `source_of_truth/`.
+have edited files under `source_of_truth/`. Use `--watch` instead to re-propagate on
+every save under `source_of_truth/`.
+
+`.vscode/` is gitignored, so a fresh clone ships no editor tasks — the two commands above
+are the canonical interface. Wire up your own tasks if you want them on folder open.
 
 The test suite (`tests/test_propagate_master_assets.py`) fails when source and generated
 outputs drift; a sync failure means "rerun propagation," not "edit the output."

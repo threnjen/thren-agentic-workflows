@@ -1,6 +1,6 @@
 ---
 name: 01 Project - Planner
-description: "Creates phased project roadmaps. Iterates with the user to produce self-contained phase documents ready for Phase - Refiner."
+description: "Turns a project idea into a phased roadmap. Iterates with you on scope and sequencing, then writes one self-contained document per phase, ready for Phase - Refiner."
 tools: [read, search, edit, agent]
 agents: [Web Researcher, Docs Writer]
 ---

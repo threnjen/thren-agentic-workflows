@@ -1,5 +1,5 @@
 ---
-description: "Helps an author self-review their change before they open a PR — the diff between a confirmed base commit and a head commit: confirms the base once, fans out to the evaluator roster over that diff, and synthesizes a plain-language readiness report. Advisory only -- it records no verdict in any document."
+description: "Reviews your change before you open the PR. Confirms the base commit and head commit with you, runs a roster of evaluators over that diff, and returns a plain-language readiness report. Advisory only — it changes no code and records no verdict anywhere."
 model: deepseek/deepseek-v4-pro
 permission:
   bash: allow
@@ -147,8 +147,8 @@ suggestion is a guess and must be presented as one:
 
 A user-supplied base override **replaces** the suggestion outright. Recompute
 `git merge-base HEAD <base>` against the corrected base, and use that result as
-the diff range for **every** downstream evaluator — the preflight worktree, all
-seven fan-out evaluators, and the synthesizer. No evaluator may receive the
+the diff range for **every** downstream evaluator — the preflight worktree, every
+fan-out evaluator, and the synthesizer. No evaluator may receive the
 original suggestion after an override. Confirm the corrected range once, in the
 block, and carry it forward unchanged.
 
@@ -215,7 +215,21 @@ baseline worktree path from `05a`, and the absolute paths of both diff
 artifacts. An evaluator invoked without these inputs fails for lack of them and
 wastes the run.
 
-### 3. Confirm model-tier assignment
+### 3. Detect whether this is a Unity project
+
+Inspect path metadata only — this is a directory-existence check, not a read:
+
+- If a `game/Assets` directory exists at repository root (nested/monorepo Unity
+  layout), set `is-unity-project: yes`
+- Otherwise, if both `Assets/` and `ProjectSettings/` directories exist at
+  repository root (the standard root Unity layout), set `is-unity-project: yes`
+- Otherwise, set `is-unity-project: no`
+
+`yes` adds `unity-reviewer` to the fan-out. `no` omits it, and that omission is
+not a `not-run` record — an evaluator that does not apply to the repository was
+never part of the run's required coverage.
+
+### 4. Confirm model-tier assignment
 
 Restate the model-tier warning state from the block, confirm the mapping below,
 and include the mapping in each evaluator's invocation prompt. A lower model
@@ -225,6 +239,7 @@ tier is an execution limitation to report, never a clean result.
 |---|---|
 | `05b`, `04e`, `05g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
 | `05c`, `05d`, `05e`, `05h` | Cheap tier for mechanical sweeps |
+| `04h` | Top available tier when present in the fan-out; Unity findings are judgment calls |
 | `05a`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
 
 Do not place model or harness identity in retained review reports or status
@@ -239,15 +254,16 @@ must stop the run, while an evaluator failure must not.
 | Position | Agents | When |
 |---|---|---|
 | Preflight | `05a-baseline-worktree` | Before fan-out. Its failure stops the run. |
-| Fan-out (concurrent) | `05b-change-narrator`, `05c-artifact-sweeper`, `05d-consistency-auditor`, `05e-dependency-auditor`, `05f-test-health`, `05h-cleanliness-auditor`, and `04e-diff-security-scan` | **Seven**, concurrently, after the base is confirmed. |
+| Fan-out (concurrent) | `05b-change-narrator`, `05c-artifact-sweeper`, `05d-consistency-auditor`, `05e-dependency-auditor`, `05f-test-health`, `05h-cleanliness-auditor`, and `04e-diff-security-scan`, plus `04h unity-reviewer` when `is-unity-project: yes` | **Seven**, or **eight** on a Unity repository, concurrently, after the base is confirmed. |
 | Synthesis | `05g-readiness-synthesizer` | Last. Consumes the others' reports and status records. |
 
 `05a` is not a fan-out evaluator: nothing can run before the baseline exists.
 `05g` is not one either: it consumes the others' output.
 
-Security is delegated to the existing **`04e-diff-security-scan`**, invoked with
-the confirmed diff range like any other fan-out evaluator. **No new security
-agent is authored.**
+Security is delegated to the existing **`04e-diff-security-scan`**, and Unity
+review to the existing **`04h unity-reviewer`**, each invoked with the confirmed
+diff range like any other fan-out evaluator. **No new evaluator is authored for
+either.**
 
 ## Context and Return Contracts
 
@@ -281,7 +297,7 @@ Use this invocation shape for every evaluator:
 
 ## Run and Partial-Failure Semantics
 
-After preflight, invoke the seven fan-out evaluators concurrently. The run
+After preflight, invoke the fan-out evaluators concurrently. The run
 continues when any evaluator fails, crashes, loses a dependency, cannot access
 its worktree, or exceeds the bounded wait. An evaluator failure never aborts the
 run and never becomes a passing result.

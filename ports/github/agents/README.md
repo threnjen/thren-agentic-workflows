@@ -16,7 +16,7 @@ These agents deploy to Claude Code, Codex, OpenCode, Cursor, and GitHub Copilot.
 | Codex | Name the agent in the prompt: `codex '@feature-decomposer ...'` |
 | OpenCode | Name the agent in the prompt |
 
-Only the 16 user-facing agents are reachable this way. The rest are spawned by orchestrators.
+Only the 14 user-facing agents are reachable this way. The rest are spawned by orchestrators.
 
 Be specific in your request. Each agent produces structured output — plan documents, implementation summaries, review tables, audit reports.
 
@@ -138,17 +138,15 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **02 Phase - Refiner** | Refine and deepen an individual Phase document |
 | **03 Feature - Decomposer** | Break a phase into features, prepare execution-ready bundles, and write the execution manifest |
 | **04 Phase - Execute** | Orchestrate full phase execution from a prepared manifest and feature bundles |
-| **05 PR - Review** | Orchestrate a readiness review of the diff between a base commit and a head commit |
-| **Client Deliverable** | Run a client engagement end to end from its configuration — preparation, then per-pair analysis stages through compliance, manifest, and gap review, all via subagents |
-| **Audit - Code, Infra, Refactor, Security** | Orchestrate code, infrastructure, structural, or security audits — one repository, or two with a reconciled delta — with optional automated fix pipeline |
-| **Instructions Manager** | Create or evaluate AI coding instruction files — routes to Instructions - Writer or Instructions - Evaluator |
+| **05 PR - Review** | Self-review a change before opening the PR — readiness report on the diff between a base commit and a head commit |
+| **Client Deliverable** | Produce the client deliverable package for a modernization engagement — audits each before/after repository pair and compares the two sides |
+| **Audit - Code, Infra, Refactor, Security** | Audit code quality, infrastructure, architecture, or security — one repository, or two with a reconciled delta — with optional automated fix pipeline |
+| **Instructions Manager** | Create a scoped AI coding instruction set, or blind A/B-test whether a change to one is an improvement |
 | **Single Feature - Agent** | Handle small, focused changes with a proposal + explicit permission gate before implementation |
 | **Debugger** | Diagnose and fix frontend or backend application errors |
 | **Docs Writer** | Create or update repo documentation; also spawned automatically by orchestrators after pipeline completion |
 | **QA - Bootstrapper** | Bootstrap a repository's QA package — generate QA_AUTOMATED and QA_USER from available starter inputs, run the automated runbook, and stamp pass/fail results |
 | **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
-| **Unity Reviewer** | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
-| **Visual Verifier** | Produce deterministic runtime screenshots and assess them against a phase's visual acceptance criteria (does it actually render?) |
 | **Web Researcher** | Research a topic and produce a structured findings report and executive summary saved to `dev/research/[topic-name]/` |
 
 ### Hidden Subagents
@@ -157,8 +155,8 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 | Agent | Spawned By | Purpose |
 |-------|------------|---------|
-| **Auditor - Code** | Audit orchestrator | Comprehensive code quality, security, and health audit |
-| **Auditor - Infra** | Audit orchestrator | Audit Dockerfiles, CI/CD pipelines, IaC templates, and config files |
+| **Auditor - Code** | Audit orchestrator, Client Deliverable | Comprehensive code quality, security, and health audit |
+| **Auditor - Infra** | Audit orchestrator, Client Deliverable | Audit Dockerfiles, CI/CD pipelines, IaC templates, and config files |
 | **Auditor - Refactor** | Audit orchestrator | Audit codebase structure, module organization, and architecture |
 | **Auditor - Security** | Audit orchestrator, Client Deliverable | Full-codebase security audit across secrets, dependencies, attack surface, auth, data protection, runtime safety, infra/CI-CD, and observability |
 | **Auditor - Delta** | Audit orchestrator | Compare two audit reports of the same product and produce a reconciled delta document plus an open-items queue |
@@ -175,8 +173,10 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **05b Change Narrator** | 05 PR - Review | Build the base-to-head narrative for the diff under review and identify churn hotspots |
 | **05c Artifact Sweeper** | 05 PR - Review | Sweep the branch diff for debug artifacts, TODO/FIXME markers, and dead code added by the branch |
 | **05d Consistency Auditor** | 05 PR - Review | Compare the branch diff against established repository conventions and recommend canonical forms |
-| **05e Dependency Auditor** | 05 PR - Review | Inventory dependencies added by the branch and report supply-chain and duplication risks, offline |
+| **05e Dependency Auditor** | 05 PR - Review, Client Deliverable | Inventory dependencies added by the branch and report supply-chain and duplication risks, offline |
 | **04e Diff Security Scan** | Phase - Execute | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
+| **Unity Reviewer** | Phase - Execute, PR - Review, Single Feature - Agent | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
+| **Visual Verifier** | Phase - Execute | Produce deterministic runtime screenshots and assess them against a phase's visual acceptance criteria (does it actually render?) |
 | **Prod Code Review** | Phase - Execute, Audit orchestrator | Final pre-production readiness gate — cross-validate every pipeline document in a phase and produce a GO / NO-GO verdict |
 | **05f Test Health** | 05 PR - Review | Delegate coverage, redundancy, and flake analysis into a test health report |
 | **05h Cleanliness Auditor** | 05 PR - Review | Evaluate the cleanliness of branch-added code and recommend specific cleanup categories when non-passing |
@@ -212,10 +212,10 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 > Give it a refined Phase document after 03 has already prepared the feature bundles. It reads `dev/feature/[phase-name]-execution-manifest.md`, verifies each listed feature has `-plan.md`, `-context.md`, and `-tasks.md`, and fails immediately if those prepared artifacts are missing. When the bundle set is complete, it implements features by manifest wave order, then runs consolidated QA, the diff security scan, and Prod Code Review.
 
 **05 PR - Review** (orchestrator — delegates to evaluators)
-> Give it a pull request. In a single upfront interaction it confirms the base commit (suggest-and-confirm — git cannot derive a branch's base), warns on a below-par model tier, and asks how the report should reach the PR. It then fans out the PR Review evaluators and returns a readiness verdict without reading code or diffs itself. Advisory only: it records no verdict in any document.
+> Point it at a change you are about to open a PR for — this is an author self-review, not a reviewer critiquing someone else's open PR. In a single upfront interaction it warns on a below-par model tier, confirms the base commit (suggest-and-confirm — git cannot derive a branch's base), and asks whether the report should be posted to a draft PR if one already exists (posting is opt-in; the default recommendation keeps you between the finding and the audience). It then fans out the PR Review evaluators over that diff and returns a readiness verdict without reading code or diffs itself. Advisory only: it changes no code and records no verdict in any document.
 
 **Client Deliverable** (orchestrator — delegates to the engagement subagents)
-> Give it an engagement configuration file path. It spawns Client Deliverable - Prepare unchanged, then drives each comparison pair through comparative audit runs, delta and security synthesis, cloud/cost analysis, and narrative/specification documents, finishing the engagement with the SOW compliance walkthrough, verification summary, package manifest, and client-perspective gap review. It holds only statuses and artifact pointers, maintains `engagement-state.md` as its run record, and resumes from it on restart.
+> Give it an engagement configuration file path. It produces the client-facing deliverable package — findings report, security narrative, cloud/cost analysis, business and workflow narratives, the SOW compliance walkthrough and verification summary, and the package manifest — by auditing each before/after repository pair and comparing the two sides, closing with a client-perspective gap review. Mechanically: it spawns Client Deliverable - Prepare unchanged, then drives each pair's analysis stages through subagents, holding only statuses and artifact pointers. It maintains `engagement-state.md` as its run record and resumes from it on restart.
 
 **Audit - Code, Infra, Refactor, Security** (orchestrator — delegates to subagents)
 > Asks which audit type to run (CODE, INFRA, REFACTOR, or SECURITY — multi-select), delegates to the appropriate auditor subagents, and presents findings. When the user names two checkouts or two branches, it audits each independently and produces a reconciled delta. Optionally drives automated remediation by converting audit findings into task plans and running them through the Feature - Implementer → Feature - Reviewer → Feature - QA Writer pipeline. After remediation, updates documentation via the Docs Writer.
@@ -241,13 +241,12 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 **Docs Writer** (reads codebase, writes documentation)
 > Give it a repo to document. Produces or updates README, ARCHITECTURE, CODEBASE_CONTEXT, and TROUBLESHOOTING documents. Also spawned automatically at the end of orchestrator pipelines to update stale documentation after code changes.
 
-**Unity Reviewer** (read-only — does not modify code)
-> Give it Unity C# source files or a directory to review. Loads Unity-specific skills (MonoBehaviour lifecycle, UI Toolkit pitfalls, performance rules, design patterns, style guide compliance) and produces structured review findings. Does not modify code — review output only.
-
-**Visual Verifier** (runs capture, reads frames, writes a report — does not modify source)
-> Give it a phase's visual acceptance criteria and a capture config path. It runs the repository's documented deterministic screenshot capture, reads the produced frames as images, and judges each visual AC against what is actually on screen — returning Pass / Fail / Unverified with per-AC evidence. Catches the defect class that compiles, passes unit tests, and passes static review while rendering nothing usable. Honesty-bound: never certifies a visual AC without viewing the frame, and reports Unverified (not a fake pass) if it cannot ingest the images. Also spawned automatically by Phase - Execute on Unity phases that have visual ACs and a capture config.
 
 ### Hidden Subagents
+
+**Unity Reviewer** *(subagent of Phase - Execute, PR - Review, Single Feature - Agent)* — Spawned on repositories with a Unity layout. Runs the repository's compile gate, adds a batch asset-import gate when the change touches serialized assets, then reviews against the Unity reference categories (style, performance, architecture, lifecycle/wiring, UI Toolkit, test authenticity, 2D rendering, DOTS/ECS, serialized-asset integrity). Returns severity-ranked findings with a rule citation per finding. Read-only: it never edits source and never implements a fix. States what each check actually proves — a clean compile or import is not evidence that references resolve or that anything renders, so runtime and visual criteria come back as unverified rather than passing.
+
+**Visual Verifier** *(subagent of Phase - Execute)* — Spawned on Unity phases that have visual acceptance criteria and a capture config. Runs the repository's documented deterministic screenshot capture, reads the produced frames as images, and judges each visual AC against what is actually on screen — returning Pass / Fail / Unverified with per-AC evidence. Catches the defect class that compiles, passes unit tests, and passes static review while rendering nothing usable. Honesty-bound: never certifies a visual AC without viewing the frame, and reports Unverified (not a fake pass) if it cannot ingest the images. Does not modify source.
 
 **Feature - Plan Expander** *(subagent of Feature - Decomposer)* — Reads existing `-plan.md` files and generates companion `-context.md` and `-tasks.md` files in the same `dev/feature/[0N-task-name]/` directory. Does not modify plan files.
 
@@ -371,8 +370,6 @@ Not everything needs a pipeline. These agents work well on their own:
 - **05 PR - Review** — Get a readiness verdict on any diff, without running a pipeline first
 - **QA - Bootstrapper** — Generate a repository's QA_AUTOMATED and QA_USER package and run it
 - **Debugger** — Fix a specific frontend or backend error without a full pipeline
-- **Unity Reviewer** — Review Unity C# code for architecture, performance, and pitfalls
-- **Visual Verifier** — Screenshot a rendering phase and judge it against its visual acceptance criteria
 - **Web Researcher** — Research a technical question or debug a tricky issue
 - **Docs Writer** — Update documentation after any significant change
 
@@ -481,10 +478,10 @@ Do not hand-copy files out of `ports/` or `.github/` — both are generated. Edi
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each generated agent file is complete on its own — applicable instruction content is inlined at propagation time rather than referenced.
 - **Orchestrators**: **04 Phase - Execute**, **05 PR - Review**, **Audit - Code, Infra, Refactor, Security**, **Test - Orchestrator**, **QA - Bootstrapper**, **Instructions Manager**, and **Client Deliverable** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
-- **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned at the end of the Phase - Execute, Audit, Test, and Client Deliverable pipelines to update stale documentation, and by the Planner and Refiner when critical docs are missing (it remains user-invocable for standalone use as well). **Unity Reviewer** and **Visual Verifier** are spawned by Phase - Execute on Unity phases.
-- **Dual-use agents**: four agents are user-invocable *and* declared as children by an orchestrator, so they emit both a slash command and a spawnable subagent file — **Docs Writer** (Planner, Refiner, Phase - Execute, Audit, Test, Client Deliverable), **Web Researcher** (Planner, Refiner, Debugger), **Unity Reviewer** (Phase - Execute, Single Feature - Agent), and **Visual Verifier** (Phase - Execute). **03 Feature - Decomposer** is not among them: Phase - Execute fails on missing bundles rather than spawning the decomposer.
+- **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned at the end of the Phase - Execute, Audit, Test, and Client Deliverable pipelines to update stale documentation, and by the Planner and Refiner when critical docs are missing (it remains user-invocable for standalone use as well). **Unity Reviewer** and **Visual Verifier** are spawned on Unity repositories — Unity Reviewer by Phase - Execute, PR - Review, and Single Feature - Agent, Visual Verifier by Phase - Execute alone. Both are hidden-only.
+- **Dual-use agents**: two agents are user-invocable *and* declared as children by an orchestrator, so they emit both a slash command and a spawnable subagent file — **Docs Writer** (Planner, Refiner, Phase - Execute, Audit, Test, Client Deliverable) and **Web Researcher** (Planner, Refiner, Debugger). **03 Feature - Decomposer** is not among them: Phase - Execute fails on missing bundles rather than spawning the decomposer.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
-- **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Security**, **Auditor - Delta**, **Auditor - Remediation Research**, and **Test - Analyst** do not modify code. They analyze and report only.
+- **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Security**, **Auditor - Delta**, **Auditor - Remediation Research**, **Test - Analyst**, **Unity Reviewer**, **Visual Verifier**, **04e Diff Security Scan**, and the **05x PR Review evaluators** do not modify code. They analyze and write their own reports only. **Unity Reviewer** and **Baseline Worktree** are the two that hold no write tool at all.
 - **Approval-gated agents**: **01 Project - Planner**, **02 Phase - Refiner**, and **03 Feature - Decomposer** always present findings and ask for explicit approval before creating files. They also check for missing critical documentation (`README.md`, `docs/CODEBASE_CONTEXT.md`) and recommend running the **Docs Writer** before continuing. The **Audit** and **Test** orchestrators ask before proceeding to the remediation phase.
 - **Code-writing agents**: **Debugger**, **Test - Writer**, **Test - Fixer**, **Feature - Implementer**, and **Feature - Reviewer** have full tool access to create and modify files.
 - **Prod Code Review** does not modify code — it analyzes and reports only, producing a GO / NO-GO verdict.

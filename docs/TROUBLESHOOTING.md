@@ -65,10 +65,11 @@ prefixes for hidden (non-user-invocable) Claude and Codex subagents.
 - Expect these aliases: `docs-writer` → `docs-writer`, `web-research-specialist` →
   `web-researcher`, `audit-code-or-infra` → `audit-code-infra-refactor`.
 - Expect non-user-invocable agents to become `z-*` files in Claude and Codex outputs, with
-  one exception: the emitter reuses a pre-existing generated stem when one exists, so
-  `04f-prod-code-review` stays `prod-code-review.md` in `ports/claude/agents`.
+  two exceptions: the emitter reuses a pre-existing generated stem when one exists, so
+  `04f-prod-code-review` stays `prod-code-review.md` and `04h-unity-reviewer` stays
+  `unity-reviewer.md` in `ports/claude/agents`.
 - Expect a user-invocable agent to *also* get a subagent file when an orchestrator declares
-  it as a child (Docs Writer, Web Researcher, Unity Reviewer, Visual Verifier). That is why
+  it as a child (Docs Writer, Web Researcher). That is why
   `ports/claude/agents` and `ports/claude/commands` hold different counts.
 
 ### Symptom

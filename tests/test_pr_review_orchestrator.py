@@ -610,14 +610,24 @@ def test_roster_declares_three_positions_not_a_flat_range() -> None:
     assert "its failure stops the run" in body
 
 
-def test_fan_out_is_seven_evaluators_including_the_security_seam() -> None:
+def test_fan_out_is_seven_evaluators_plus_unity_on_a_unity_repository() -> None:
     body = _prose()
 
     # Display name, not slug: `_build_agent_reference_map` keys on `agent.name`,
     # so only this form is rewritten to each root's identifier.
     assert "`04e diff security scan`" in body
-    assert "**seven**" in body
-    assert "no new security agent is authored" in body
+    assert "unity reviewer" in body
+    assert "**seven**, or **eight** on a unity repository" in body
+    assert "no new evaluator is authored for" in body
+
+
+def test_unity_evaluator_is_conditional_and_its_absence_is_not_a_not_run() -> None:
+    """A repository with no Unity layout is not missing coverage -- recording
+    the omission as `not-run` would make every non-Unity run a forced NO-GO."""
+    body = _prose()
+
+    assert "is-unity-project: yes" in body
+    assert "is not a `not-run` record" in body
 
 
 def test_frontmatter_agents_list_names_the_full_roster_by_display_name() -> None:
@@ -637,6 +647,7 @@ def test_frontmatter_agents_list_names_the_full_roster_by_display_name() -> None
         "05f Test Health",
         "05g Readiness Synthesizer",
         "04e Diff Security Scan",
+        "Unity Reviewer",
     ):
         assert name in agents_line, name
 
@@ -733,11 +744,13 @@ def test_report_templates_and_severity_are_not_restated() -> None:
         assert f"| {severity} |" not in body, f"severity table restated: {severity}"
 
 
-def test_preflight_is_exactly_three_steps() -> None:
-    """Baseline, materialize diff artifacts, model tier. The materialize step
-    was added so shell-less evaluators receive range.diff/changed-files.txt."""
+def test_preflight_is_exactly_four_steps() -> None:
+    """Baseline, materialize diff artifacts, Unity detection, model tier. The
+    materialize step was added so shell-less evaluators receive
+    range.diff/changed-files.txt; Unity detection decides whether the Unity
+    Reviewer joins the fan-out and is a path-metadata check, not a read."""
     body = ORCHESTRATOR.read_text(encoding="utf-8")
     preflight = body.split("## Preflight", 1)[1].split("\n## ", 1)[0]
     steps = [line for line in preflight.splitlines() if line.startswith("### ")]
 
-    assert len(steps) == 3, f"preflight has {len(steps)} steps: {steps}"
+    assert len(steps) == 4, f"preflight has {len(steps)} steps: {steps}"

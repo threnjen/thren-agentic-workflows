@@ -1,5 +1,5 @@
 ---
-description: "Breaks a refined Phase document into independent features, prepares execution-ready feature bundles, and records the execution schedule."
+description: "Splits a refined phase document into independently buildable features. Writes an execution-ready bundle per feature plus the order they should be built in, ready for Phase - Execute."
 model: deepseek/deepseek-v4-pro
 permission:
   edit: allow

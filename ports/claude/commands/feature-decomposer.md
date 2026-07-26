@@ -1,5 +1,5 @@
 ---
-description: Breaks a refined Phase document into independent features, prepares execution-ready feature bundles, and records the execution schedule.
+description: Splits a refined phase document into independently buildable features. Writes an execution-ready bundle per feature plus the order they should be built in, ready for Phase - Execute.
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 

@@ -1,5 +1,5 @@
 ---
-description: "Creates or evaluates AI coding instruction files (.github/instructions/, copilot-instructions.md, .cursorrules, CLAUDE.md, or equivalent). Routes to Instructions - Writer for new instruction sets and Instructions - Evaluator for assessing whether instruction changes are improvements."
+description: "Creates or evaluates a repository's AI coding instruction files — CLAUDE.md, .github/instructions/, copilot-instructions.md, .cursorrules, or equivalent. Writes a new scoped instruction set, or blind A/B-tests whether a change to existing instructions is an improvement or a regression."
 model: deepseek/deepseek-v4-pro
 permission:
   glob: allow
