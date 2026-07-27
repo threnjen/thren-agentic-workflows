@@ -35,7 +35,7 @@ flowchart TD
 
     SOT --> Agents[51 agent definitions]
     SOT --> Skills[32 skill directories]
-    SOT --> Instructions[16 instruction files]
+    SOT --> Instructions[15 instruction files]
     SOT --> Learnings[4 learnings files]
 
     Scripts --> Propagate[propagate_master_assets.py]
@@ -127,7 +127,7 @@ The only authoring surface.
   are intentional plain-`.md` exceptions still loaded as agents because loading keys off
   `name`/`description` frontmatter, not the suffix.
 - `skills/` — 32 directory-based skills, each rooted at `SKILL.md`.
-- `instructions/` — 16 instruction files matched by `applyTo` globs.
+- `instructions/` — 15 instruction files matched by `applyTo` globs.
 - `learnings/` — 4 cross-cutting learnings files.
 - `baseline/` — `baseline-instructions.md`, the sentinel-sectioned baseline
   instructions template rendered per harness at deploy time (not propagated to

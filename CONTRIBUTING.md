@@ -37,7 +37,7 @@ directory). Hand-maintained files are never touched.
   orchestrators spawn automatically.
 - **32 skills** — directory-based capabilities agents load on demand, each rooted at
   `SKILL.md`.
-- **16 instruction files** and **4 learnings files** — cross-cutting guidance applied by
+- **15 instruction files** and **4 learnings files** — cross-cutting guidance applied by
   `applyTo` file-glob matching.
 
 Only the destinations differ per harness; the agents behave the same everywhere.
@@ -53,7 +53,7 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ├── source_of_truth/                # THE authoring surface — edit here
 │   ├── agents/                     # 51 agent definitions + README (agent catalog)
 │   ├── skills/                     # 32 skill directories, each rooted at SKILL.md
-│   ├── instructions/               # 16 instruction files matched by applyTo globs
+│   ├── instructions/               # 15 instruction files matched by applyTo globs
 │   └── learnings/                  # 4 shared learnings files
 ├── ports/                          # Generated outputs — do not edit by hand
 │   ├── claude/                     # agents, commands, skills, learnings
