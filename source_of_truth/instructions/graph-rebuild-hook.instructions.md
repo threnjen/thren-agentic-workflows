@@ -1,6 +1,6 @@
 ---
 description: "Triggers a deterministic code-review-graph build at the end of every orchestrator pipeline. Loaded automatically for orchestrator agent definitions."
-applyTo: "**/audit-code-or-infra.agent.md,**/04-phase-execute.agent.md,**/test-orchestrator.agent.md"
+applyTo: "**/auditor.md,**/delta-auditor.md,**/04-phase-execute.agent.md,**/test-orchestrator.agent.md"
 ---
 
 # Graph Rebuild Hook

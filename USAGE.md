@@ -13,10 +13,10 @@ These agents deploy to Claude Code, Codex, OpenCode, Cursor, and GitHub Copilot.
 | Claude Code | `/agent-name` slash command, or ask for the agent by name |
 | Cursor | `/agent-name` slash command |
 | GitHub Copilot | Agent picker dropdown at the top of the Copilot Chat panel in VS Code |
-| Codex | Name the agent in the prompt: `codex '@feature-decomposer ...'` |
+| Codex | Name the agent in the prompt: `as feature-decomposer, ...'` |
 | OpenCode | Name the agent in the prompt |
 
-Only the 14 user-facing agents are reachable this way. The rest are spawned by orchestrators.
+Only the 15 user-facing agents are reachable this way. The rest are spawned by orchestrators.
 
 Be specific in your request. Each agent produces structured output — plan documents, implementation summaries, review tables, audit reports.
 
@@ -155,7 +155,8 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **04 Phase - Execute** | Orchestrate full phase execution from a prepared manifest and feature bundles |
 | **05 PR - Review** | Self-review a change before opening the PR — readiness report on the diff between a base commit and a head commit |
 | **Client Deliverable** | Produce the client deliverable package for a modernization engagement — audits each before/after repository pair and compares the two sides |
-| **Audit - Code, Infra, Refactor, Security** | Audit code quality, infrastructure, architecture, or security — one repository, or two with a reconciled delta — with optional automated fix pipeline |
+| **Audit - Code, Infra, Refactor, Security** | Audit code quality, infrastructure, architecture, or security in one repository, with optional fix research and automated fix pipeline |
+| **Audit - Delta** | Audit two revisions or checkouts of the same product and reconcile them into a delta of what changed, with optional fix research and automated fix pipeline |
 | **Instructions Manager** | Create a scoped AI coding instruction set, or blind A/B-test whether a change to one is an improvement |
 | **Single Feature - Agent** | Handle small, focused changes with a proposal + explicit permission gate before implementation |
 | **Debugger** | Diagnose and fix frontend or backend application errors |
@@ -174,7 +175,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **Auditor - Infra** | Audit orchestrator, Client Deliverable | Audit Dockerfiles, CI/CD pipelines, IaC templates, and config files |
 | **Auditor - Refactor** | Audit orchestrator | Audit codebase structure, module organization, and architecture |
 | **Auditor - Security** | Audit orchestrator, Client Deliverable | Full-codebase security audit across secrets, dependencies, attack surface, auth, data protection, runtime safety, infra/CI-CD, and observability |
-| **Auditor - Delta** | Audit orchestrator | Compare two audit reports of the same product and produce a reconciled delta document plus an open-items queue |
+| **Auditor - Delta** | Audit - Delta orchestrator | Compare two audit reports of the same product and produce a reconciled delta document plus an open-items queue |
 | **Auditor - Remediation Research** | Audit orchestrator | Research exactly one assigned open-items subsystem and write its exclusive fix-research report |
 | **Auditor - Remediation Reconciler** | Audit orchestrator | Validate researcher corrections and reconcile the current report, summary, full delta, and queue |
 | **Instructions - Writer** | Instructions Manager | Draft scoped `.instructions.md` files for a repository |
@@ -234,7 +235,10 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 > Give it an engagement configuration file path. It produces the client-facing deliverable package — findings report, security narrative, cloud/cost analysis, business and workflow narratives, the SOW compliance walkthrough and verification summary, and the package manifest — by auditing each before/after repository pair and comparing the two sides, closing with a client-perspective gap review. Mechanically: it spawns Client Deliverable - Prepare unchanged, then drives each pair's analysis stages through subagents, holding only statuses and artifact pointers. It maintains `engagement-state.md` as its run record and resumes from it on restart.
 
 **Audit - Code, Infra, Refactor, Security** (orchestrator — delegates to subagents)
-> Asks which audit type to run (CODE, INFRA, REFACTOR, or SECURITY — multi-select), delegates to the appropriate auditor subagents, and presents findings. When the user names two checkouts or two branches, it audits each independently and produces a reconciled delta. Optionally drives automated remediation by converting audit findings into task plans and running them through the Feature - Implementer → Feature - Reviewer → Feature - QA Writer pipeline. After remediation, updates documentation via the Docs Writer.
+> Asks which audit type to run (CODE, INFRA, REFACTOR, or SECURITY — multi-select), delegates to the appropriate auditor subagents, and presents findings for **one** repository. Optionally queues the open findings by severity threshold and researches fixes for them (Auditor - Remediation Research → Auditor - Remediation Reconciler), then drives automated remediation by converting findings into task plans and running them through the Feature - Implementer → Feature - Reviewer → Feature - QA Writer pipeline. After remediation, updates documentation via the Docs Writer. Two checkouts or two branches belong to **Audit - Delta** instead.
+
+**Audit - Delta** (orchestrator — delegates to subagents)
+> The comparative counterpart. Confirms the targets, snapshot labels, and which side is the baseline; materializes any git refs into read-only worktrees via Baseline Worktree; runs the full type × target matrix of auditors under identical prompts; then spawns Auditor - Delta per (type, pair) to reconcile each into a delta plus an open-items queue. All deliverables land on the newer side. Shares the same optional fix-research and remediation pipeline as the single-target orchestrator.
 
 **Single Feature - Agent** (direct implementation path)
 > Handles small-scope changes (typically up to a few files) without full pipeline artifacts. It investigates, proposes a focused plan, asks for explicit permission before implementation, executes minimal changes, and verifies results. When scope expands, it recommends switching to **04 Phase - Execute**.
@@ -288,7 +292,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **Auditor - Security** *(subagent of Audit orchestrator and Client Deliverable)* — Audits every in-scope file against ten fixed security categories: secrets, dependencies and supply chain, attack surface and injection, authentication and authorization, data protection and cryptography, API and input boundaries, filesystem/process/runtime safety, infrastructure and CI/CD, observability, and cross-cutting security architecture. Redacts every secret value, records each category as assessed-clean or not-assessed so the two are never confused, and produces a structured report plus executive summary. (Distinct from the hidden **04e Diff Security Scan**, which only covers a single pass's diff.)
 
-**Auditor - Delta** *(subagent of Audit orchestrator)* — Compares two completed audit reports of the same product — a baseline snapshot and a current one — and produces a delta document classifying every finding as resolved, improved, unchanged, transformed, unverified, or new, with the counts reconciled against both reports, plus a standalone open-items queue holding only the new and transformed findings. Raises no findings of its own.
+**Auditor - Delta** *(subagent of Audit - Delta orchestrator)* — Compares two completed audit reports of the same product — a baseline snapshot and a current one — and produces a delta document classifying every finding as resolved, improved, unchanged, transformed, unverified, or new, with the counts reconciled against both reports, plus a standalone open-items queue holding only the new and transformed findings. Raises no findings of its own.
 
 **Auditor - Remediation Research** *(subagent of Audit orchestrator)* — Receives one subsystem assignment and writes one exclusive detailed report after validating every assigned item as real, true, current, and actionable. Returns correction candidates compactly; it does not edit shared audit artifacts or production code.
 
@@ -437,7 +441,7 @@ dev/[audit-name]/
 └── [audit-name]-summary.md          # Executive summary with priority actions
 ```
 
-A multi-target audit (two checkouts, or two branches) keeps each snapshot in its own labelled directory and adds a delta from **Auditor - Delta**:
+The **Audit - Delta** orchestrator keeps each snapshot in its own labelled directory and adds a delta from **Auditor - Delta**, all under the newer side:
 
 ```
 dev/[audit-name]/
@@ -473,13 +477,24 @@ Copilot-specific. Other harnesses need no equivalent configuration.
 
 ---
 
-## Skills and Instructions
+## Skills, Instructions, and Learnings
 
 Agents reference **skills** (`source_of_truth/skills/<name>/SKILL.md`) for shared templates and formats that would otherwise be duplicated. Skills are loaded on demand when an agent's instructions say "Load the `<name>` skill."
 
 **Instructions** (`source_of_truth/instructions/*.instructions.md`) inject cross-cutting conventions into agents automatically via `applyTo` glob patterns. Agent-targeted instructions are inlined into the generated agents at propagation time, so they cost no separate lookup at runtime.
 
-Both are authored under `source_of_truth/` and propagated per harness. See [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for the transform model.
+**Learnings** (`source_of_truth/learnings/*.md`) are four seed files of durable, repo-agnostic rules:
+
+| File | Holds |
+|------|-------|
+| `review-learnings.md` | Recurring review findings — guards and tests, safety-critical code, delegation and documents |
+| `cross-phase-decisions.md` | Conventions that must hold across phases — identifiers and scope, verification and verdicts, capability grants, git base derivation |
+| `project-learnings.md` | Framework quirks, config traps, and library behavior |
+| `debugging-learnings.md` | Diagnosed root causes for pipeline gaps, harness quirks, and agent workflow failures |
+
+They ship into a working repository at `.github/learnings/` (and, for Cursor, as agent-requested rules). This is a two-way loop: agents read them for prior art, and the **Feature - Reviewer** appends new durable rules to `review-learnings.md` and new forward-looking decisions to `cross-phase-decisions.md` as it works. Entries appended in a project stay in that project — the authored seed here stays general.
+
+All three are authored under `source_of_truth/` and propagated per harness. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the transform model.
 
 ---
 
@@ -491,7 +506,7 @@ The agents deploy **user-level**, not per-repository — install once and they a
 python3 deploy_agents.py
 ```
 
-This copies the generated per-harness outputs into the real config directories each harness reads (`~/.claude`, `~/.codex`, `~/.config/opencode`, `~/.cursor`) and mirrors the Copilot port into this repo's `.github/`. See [INSTALLATION.md](../../INSTALLATION.md).
+This copies the generated per-harness outputs into the real config directories each harness reads (`~/.claude`, `~/.codex`, `~/.config/opencode`, `~/.cursor`) and mirrors the Copilot port into this repo's `.github/`. See [INSTALLATION.md](INSTALLATION.md).
 
 Do not hand-copy files out of `ports/` or `.github/` — both are generated. Edit `source_of_truth/`, propagate, then deploy.
 
@@ -501,7 +516,7 @@ Do not hand-copy files out of `ports/` or `.github/` — both are generated. Edi
 
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each generated agent file is complete on its own — applicable instruction content is inlined at propagation time rather than referenced.
-- **Orchestrators**: **04 Phase - Execute**, **05 PR - Review**, **Audit - Code, Infra, Refactor, Security**, **Test - Orchestrator**, **QA - Bootstrapper**, **Instructions Manager**, and **Client Deliverable** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
+- **Orchestrators**: **04 Phase - Execute**, **05 PR - Review**, **Audit - Code, Infra, Refactor, Security**, **Audit - Delta**, **Test - Orchestrator**, **QA - Bootstrapper**, **Instructions Manager**, and **Client Deliverable** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
 - **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned at the end of the Phase - Execute, Audit, Test, and Client Deliverable pipelines to update stale documentation, and by the Planner and Refiner when critical docs are missing (it remains user-invocable for standalone use as well). **Unity Reviewer** and **Visual Verifier** are spawned on Unity repositories — Unity Reviewer by Phase - Execute, PR - Review, and Single Feature - Agent, Visual Verifier by Phase - Execute alone. Both are hidden-only.
 - **Dual-use agents**: two agents are user-invocable *and* declared as children by an orchestrator, so they emit both a slash command and a spawnable subagent file — **Docs Writer** (Planner, Refiner, Phase - Execute, Audit, Test, Client Deliverable) and **Web Researcher** (Planner, Refiner, Debugger). **03 Feature - Decomposer** is not among them: Phase - Execute fails on missing bundles rather than spawning the decomposer.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.

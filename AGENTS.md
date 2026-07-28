@@ -45,10 +45,10 @@ Both stages are safe by construction: a destination file is only overwritten or 
 
 ### Content model
 
-- **Agents** (`source_of_truth/agents/`) — 52 definitions (14 user-invocable, 38 hidden) following an orchestrator + subagent pattern: user-invocable primary agents (planner → refiner → decomposer → phase-execute pipeline, PR review, audits, test orchestrator, standalone specialists) plus hidden `user-invocable: false` subagents (deployed with a `z-` prefix) that orchestrators spawn. Full catalog: `source_of_truth/agents/README.md`.
+- **Agents** (`source_of_truth/agents/`) — 53 definitions (15 user-invocable, 38 hidden) following an orchestrator + subagent pattern: user-invocable primary agents (planner → refiner → decomposer → phase-execute pipeline, PR review, audits, test orchestrator, standalone specialists) plus hidden `user-invocable: false` subagents (deployed with a `z-` prefix) that orchestrators spawn. Full catalog: `USAGE.md`.
 - **Skills** (`source_of_truth/skills/`) — directory-based capabilities, each rooted at `SKILL.md`, loaded on demand by agents.
 - **Instructions** (`source_of_truth/instructions/`) — cross-cutting guidance matched by `applyTo` file globs; consumed directly by Copilot, transformed for other harnesses.
-- **Learnings** (`source_of_truth/learnings/`) — shared cross-phase knowledge propagated to every harness.
+- **Learnings** (`source_of_truth/learnings/`) — 4 seed files of durable, repo-agnostic rules. They ship into a target repo's `.github/learnings/`, where agents read them and append newly learned rules as they work.
 
 **Brevity constraint on authored agent and skill definitions**: the agent and skill files written to `source_of_truth/` are loaded into model context at runtime — every unnecessary word is wasted context. Definitions must be terse: state the behavior, the constraints, and the output contract once each, and stop. No restating context the agent already has, no motivational preamble, no repeating a rule in different words, no exhaustive examples where one suffices. Carry this into every feature's AC: a definition that says the same thing twice fails review.
 

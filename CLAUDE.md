@@ -10,10 +10,16 @@ A library of AI development agents (planning, implementation, review, testing, a
 
 **`source_of_truth/` is the only authoring surface.** Everything under `ports/` and the real `.github/` directory is generated output — never hand-edit them. If generated output looks wrong, fix the source and re-propagate. A sync-test failure means "rerun propagation," not "edit the output."
 
+## Agents: never run propagation
+
+**Propagation is the maintainer's manual step. Do not run `scripts/propagate_master_assets.py` (`--once` or `--watch`) as part of agent work**, even to make tests pass. It regenerates every file under `ports/` and `.github/`, which swamps the diff and makes authored source changes impossible to review.
+
+Edit `source_of_truth/` only, then stop and report that propagation is pending. Sync tests and any test reading `ports/` will fail until the maintainer propagates — say so plainly rather than propagating to go green.
+
 ## Commands
 
 ```bash
-# Transform: regenerate ports/ and .github/ from source_of_truth/
+# Transform: regenerate ports/ and .github/ from source_of_truth/ (MAINTAINER ONLY — see above)
 python3 scripts/propagate_master_assets.py --once
 
 # Watch mode: re-propagate on every save under source_of_truth/
@@ -45,7 +51,7 @@ Both stages are safe by construction: a destination file is only overwritten or 
 
 ### Content model
 
-- **Agents** (`source_of_truth/agents/`) — 52 definitions (14 user-invocable, 38 hidden) following an orchestrator + subagent pattern: user-invocable primary agents (planner → refiner → decomposer → phase-execute pipeline, PR review, audits, test orchestrator, standalone specialists) plus hidden `user-invocable: false` subagents (deployed with a `z-` prefix) that orchestrators spawn. Full catalog: `source_of_truth/agents/README.md`.
+- **Agents** (`source_of_truth/agents/`) — 53 definitions (15 user-invocable, 38 hidden) following an orchestrator + subagent pattern: user-invocable primary agents (planner → refiner → decomposer → phase-execute pipeline, PR review, audits, test orchestrator, standalone specialists) plus hidden `user-invocable: false` subagents (deployed with a `z-` prefix) that orchestrators spawn. Full catalog: `USAGE.md`.
 - **Skills** (`source_of_truth/skills/`) — directory-based capabilities, each rooted at `SKILL.md`, loaded on demand by agents.
 - **Instructions** (`source_of_truth/instructions/`) — cross-cutting guidance matched by `applyTo` file globs; consumed directly by Copilot, transformed for other harnesses.
 - **Learnings** (`source_of_truth/learnings/`) — shared cross-phase knowledge propagated to every harness.
@@ -54,7 +60,7 @@ Both stages are safe by construction: a destination file is only overwritten or 
 
 ### Tests
 
-`tests/` are regression tests over both scripts — they verify source↔generated sync, deploy safety (marker respect), naming conventions (aliases, `z-` prefixes), and per-harness invocation contracts. After editing `source_of_truth/`, propagate before running tests or sync tests will fail.
+`tests/` are regression tests over both scripts — they verify source↔generated sync, deploy safety (marker respect), naming conventions (aliases, `z-` prefixes), and per-harness invocation contracts. After editing `source_of_truth/`, sync tests fail until propagation runs — which the maintainer does manually (see "Agents: never run propagation"). Agents should report the pending propagation, not trigger it.
 
 ### Other areas
 

@@ -1,6 +1,6 @@
 ---
 description: "Shared conventions for orchestrator agents that coordinate subagent pipelines. Loaded automatically for orchestrator agent definitions."
-applyTo: "**/audit-code-or-infra.agent.md,**/04-phase-execute.agent.md,**/test-orchestrator.agent.md"
+applyTo: "**/auditor.md,**/delta-auditor.md,**/04-phase-execute.agent.md,**/test-orchestrator.agent.md"
 ---
 
 # Orchestrator Conventions

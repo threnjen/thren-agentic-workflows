@@ -17,6 +17,7 @@ def test_delegation_depth_is_globally_one_level() -> None:
 
     assert "**/05-pr-review.agent.md" in text
     assert "**/auditor.md" in text
+    assert "**/delta-auditor.md" in text
     assert "Delegation depth is one" in text
     assert "Child agents never spawn agents" in text
 
@@ -30,15 +31,65 @@ def test_delegation_depth_is_globally_one_level() -> None:
     assert hidden_with_spawn_tool == []
 
 
-def test_auditor_owns_index_and_spawns_sibling_researchers_and_reconciler() -> None:
-    text = (AGENTS / "auditor.md").read_text()
+def test_both_audit_roots_own_the_index_and_spawn_researchers_and_reconciler() -> None:
+    """The four research stages live in the shared skill, not duplicated in each root.
 
-    assert "Auditor - Remediation Reconciler" in text
-    assert "Stage 1: Prepare the draft index" in text
-    assert "per `(delta, subsystem)`" in text
-    assert "Stage 3: Reconcile the audit chain" in text
-    assert "Stage 4: Finalize the index" in text
-    assert "every researcher and reconciler below is your direct child" in text
+    Both audit orchestrators declare the same children and the same
+    depth-one boundary; the skill holds the stage mechanics.
+    """
+    skill = (SKILLS / "audit-remediation-research" / "SKILL.md").read_text()
+    for heading in (
+        "## Stage 1 — Prepare the draft index",
+        "## Stage 2 — Research one subsystem",
+        "## Stage 3 — Reconcile shared artifacts",
+        "## Stage 4 — Finalize the index",
+    ):
+        assert heading in skill
+
+    for name in ("auditor.md", "delta-auditor.md"):
+        text = (AGENTS / name).read_text()
+        assert "Auditor - Remediation Reconciler" in text
+        assert "audit-remediation-research" in text
+        assert "every researcher and reconciler is your direct child" in text
+
+
+def test_research_skill_supports_single_target_and_comparative_modes() -> None:
+    skill = _collapsed(SKILLS / "audit-remediation-research" / "SKILL.md")
+
+    assert "single-target" in skill
+    assert "comparative" in skill
+    assert "supplied as `not available`" in skill
+
+    # Only the delta root runs comparative mode; only the plain auditor
+    # builds a queue from a single report.
+    auditor = _collapsed(AGENTS / "auditor.md")
+    delta = _collapsed(AGENTS / "delta-auditor.md")
+    assert "single-target mode" in auditor
+    assert "comparative mode" in delta
+
+
+def test_audit_roots_split_single_target_from_multi_target() -> None:
+    auditor = (AGENTS / "auditor.md").read_text()
+    delta = (AGENTS / "delta-auditor.md").read_text()
+
+    # The multi-target machinery lives only in the delta root.
+    for marker in ("worktree-baseline", "Auditor - Delta", "snapshot label"):
+        assert marker in delta, marker
+        assert marker not in auditor.replace("Audit - Delta", ""), marker
+
+    # Each root hands off rather than guessing at the other's run shape.
+    assert "Audit - Delta" in auditor
+    assert "Audit - Code, Infra, Refactor, Security" in delta
+
+
+def test_both_audit_roots_share_the_remediation_pipeline_skill() -> None:
+    skill = (SKILLS / "audit-remediation-pipeline" / "SKILL.md").read_text()
+    assert "implementation-pipeline-loop" in skill
+    assert "Feature - QA Writer" in skill
+    assert "Prod Code Review" in skill
+
+    for name in ("auditor.md", "delta-auditor.md"):
+        assert "audit-remediation-pipeline" in (AGENTS / name).read_text()
 
 
 def test_subsystem_researcher_has_exclusive_report_write_boundary() -> None:

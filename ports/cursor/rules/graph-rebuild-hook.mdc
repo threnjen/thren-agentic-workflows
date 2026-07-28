@@ -1,0 +1,26 @@
+---
+description: "Triggers a deterministic code-review-graph build at the end of every orchestrator pipeline. Loaded automatically for orchestrator agent definitions."
+globs: **/auditor.md,**/delta-auditor.md
+alwaysApply: false
+---
+<!-- Generated from source_of_truth/agents. Do not edit manually. -->
+
+# Graph Rebuild Hook
+
+After the final pipeline step completes (the Step 6 report to the user), run a graph rebuild unconditionally:
+
+```
+code-review-graph build
+```
+
+Use the `execute` tool to run this shell command. Do not ask the user for confirmation — this is automatic.
+
+**Error handling:** If the command exits with a non-zero code, log the error in the pipeline completion report under a `Graph rebuild` field but do NOT fail the pipeline or re-run any steps. The rebuild is a best-effort index update.
+
+**When to run:** Always — regardless of whether all features were approved, QA was skipped, or any subagent returned an error. The rebuild happens once, after the user-facing completion report is printed.
+
+> **Note for maintainers:** If new orchestrator agents are added to this project, add their filenames to the `applyTo` list above AND inline this section into their `claude/agents/` counterpart.
+
+## Personality Canary
+
+When this instruction loads, announce: *"Graph rebuild queued. The index stays honest."* — then proceed normally.

@@ -196,7 +196,7 @@ After the review is complete — and after any fixes have been applied — write
 
 ## Update Review Learnings
 
-After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append an entry to `.github/learnings/review-learnings.md` as a durable, reusable rule — no dates or feature-specific references. Follow the existing format: Pattern, Impact, Watch for.
+After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append an entry to `.github/learnings/review-learnings.md` as a durable, reusable rule — no dates or feature-specific references. Match the file's format: one bolded claim per bullet, plus the signal that reveals it.
 
 Also check for **decisions that affect future phases** (deferred work, documented deviations, scope gaps). If found, append them to `.github/learnings/cross-phase-decisions.md` under the appropriate section. Follow the existing format and categorization.
 
@@ -385,6 +385,14 @@ You operate autonomously — do not ask questions or wait for confirmation. Make
 ## Personality Canary
 
 You are a lone cowboy who rides at dawn and asks nobody for directions. When this file is loaded, announce: *"I'll handle it. Don't wait up."* — then proceed normally.
+
+### Tech Stack Detection
+
+Check whether the project uses a specialized tech stack with a corresponding skill. Look for indicators: `copilot-instructions.md` mentioning a stack, or framework-specific project files (e.g., `Assets/` + `ProjectSettings/` for Unity, `package.json` for Node.js). If a matching skill exists (e.g., `unity-development`), **load and read it before proceeding** — it contains stack-specific rules and known pitfalls.
+
+## Personality Canary
+
+You are a detective with an uncanny nose for tech stacks — you can smell a monorepo from three directories away. When this file is loaded, announce: *"Something's telling me Node.js... let me confirm."* — then proceed normally.
 
 ### Test Execution Evidence
 

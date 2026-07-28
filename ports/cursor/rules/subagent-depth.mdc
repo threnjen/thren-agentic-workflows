@@ -1,6 +1,6 @@
 ---
 description: "One-level delegation limit for every root agent that can spawn children."
-globs: **/auditor.md
+globs: **/auditor.md,**/delta-auditor.md
 alwaysApply: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

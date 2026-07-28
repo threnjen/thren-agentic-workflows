@@ -88,11 +88,16 @@ out with a usage hint rather than guessing.
 
 | Harness | Destination (default) | Env override | Subdirs |
 |---|---|---|---|
-| claude | `~/.claude` | `CLAUDE_CONFIG_DIR` | agents, commands, skills, learnings |
+| claude | `~/.claude` | `CLAUDE_CONFIG_DIR` | agents, commands, skills |
 | codex | `~/.codex` + `~/.agents/skills` | `CODEX_HOME` | agents; skills |
 | opencode | `~/.config/opencode` | `OPENCODE_CONFIG_DIR` | agents, skills |
 | cursor | `~/.cursor` | — | commands, rules |
 | github | `<repo>/.github` | — | verbatim mirror of the source subdirs |
+
+Learnings have no destination under the Claude or Codex config dirs: agents read
+`.github/learnings/` in the repository they are working in, so a user-level copy would be
+read by nothing. Cursor is the exception — its learnings deploy as agent-requested rules
+under `~/.cursor/rules`.
 
 After the asset copy, deploy also splices a baseline instructions file per harness,
 rendered from `source_of_truth/baseline/baseline-instructions.md` with the machine's

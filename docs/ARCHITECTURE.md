@@ -33,10 +33,10 @@ flowchart TD
     Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
-    SOT --> Agents[52 agent definitions]
-    SOT --> Skills[33 skill directories]
+    SOT --> Agents[53 agent definitions]
+    SOT --> Skills[34 skill directories]
     SOT --> Instructions[16 instruction files]
-    SOT --> Learnings[4 learnings files]
+    SOT --> Learnings[4 seed learnings files]
 
     Scripts --> Propagate[propagate_master_assets.py]
     Scripts --> Shared[asset_paths.py]
@@ -122,13 +122,16 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 52 agent definitions (14 user-invocable, 38 hidden subagents). Most use
-  the `.agent.md` suffix; `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`
-  are intentional plain-`.md` exceptions still loaded as agents because loading keys off
-  `name`/`description` frontmatter, not the suffix.
-- `skills/` — 33 directory-based skills, each rooted at `SKILL.md`.
-- `instructions/` — 16 instruction files matched by `applyTo` globs.
-- `learnings/` — 4 cross-cutting learnings files.
+- `agents/` — 53 agent definitions (15 user-invocable, 38 hidden subagents). Most use
+  the `.agent.md` suffix; `auditor.md`, `delta-auditor.md`, `docs-writer.md`, and
+  `04f-prod-code-review.md` are intentional plain-`.md` exceptions still loaded as agents
+  because loading keys off `name`/`description` frontmatter, not the suffix.
+- `skills/` — 34 directory-based skills, each rooted at `SKILL.md`.
+- `instructions/` — 16 instruction files matched by `applyTo` globs. Matching is
+  `fnmatch` against the agent's repo-relative path, so a `**/name.agent.md` pattern
+  requires a `/` immediately before `name` — numbered agents must be named in full, and a
+  pattern matching nothing fails silently.
+- `learnings/` — 4 seed learnings files of durable, repo-agnostic rules.
 - `baseline/` — `baseline-instructions.md`, the sentinel-sectioned baseline
   instructions template rendered per harness at deploy time (not propagated to
   `ports/`, since it needs the deployed machine's real paths).
@@ -144,7 +147,7 @@ platform-specific transformations:
 - Claude emission splits by invocability: a hidden agent emits a subagent file only; a
   user-invocable agent emits a slash command, **plus** a subagent file when some
   orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
-  it. That is why `ports/claude/agents` (40) and `ports/claude/commands` (14) differ:
+  it. That is why `ports/claude/agents` (40) and `ports/claude/commands` (15) differ:
   38 hidden subagents plus the two dual-use agents (Docs Writer,
   Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
@@ -157,6 +160,11 @@ platform-specific transformations:
 Known filename aliases preserved during propagation: `docs-writer` → `docs-writer`,
 `web-research-specialist` → `web-researcher`, `audit-code-or-infra` →
 `audit-code-infra-refactor`.
+
+Learnings reach a working repository through `.github/learnings/` (and, for Cursor, as
+agent-requested `rules/*.mdc`). There is no learnings destination under the Claude or
+Codex user config directories: every consumer reads the copy in the repo it is working
+in, so a copy there would be read by nothing.
 
 ### The `.github/` mirror
 

@@ -1,6 +1,6 @@
 ---
 description: "Constraints for agents that analyze and plan but do not modify source code. Covers codebase read-only policy and user approval gates for file creation."
-applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-feature-decomposer.agent.md,**/feature-qa-writer.agent.md,**/auditor-code.agent.md,**/auditor-infra.agent.md,**/auditor-refactor.agent.md,**/test-analyst.agent.md"
+applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-feature-decomposer.agent.md,**/04d-feature-qa-writer.agent.md,**/auditor-code.agent.md,**/auditor-infra.agent.md,**/auditor-refactor.agent.md,**/test-analyst.agent.md"
 ---
 
 # Read-Only Agent Constraints

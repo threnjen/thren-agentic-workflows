@@ -70,9 +70,9 @@ Reach for these individually, whenever you need them — no pipeline required:
   narratives, compliance package) from an engagement configuration file
 
 Behind these, a set of automated subagents and on-demand skills do the detailed work —
-you never invoke them directly. The library ships 52 source agent definitions in
+you never invoke them directly. The library ships 53 source agent definitions in
 `source_of_truth/agents/`. For the complete catalog and how the pipeline flows,
-see [source_of_truth/agents/README.md](source_of_truth/agents/README.md).
+see [USAGE.md](USAGE.md).
 
 ## How It Works
 
@@ -127,7 +127,7 @@ subsequent runs are just `python3 deploy_agents.py`. Full details are in
 - [INSTALLATION.md](INSTALLATION.md) — how to deploy the agents into your harness
 - [docs/COPILOT_SETUP.md](docs/COPILOT_SETUP.md) — using the agents with GitHub Copilot
   (open this repo in your VS Code workspace alongside your project)
-- [source_of_truth/agents/README.md](source_of_truth/agents/README.md) — the full agent
+- [USAGE.md](USAGE.md) — the full agent
   catalog and pipeline flow
 - [CONTRIBUTING.md](CONTRIBUTING.md) — for maintainers and contributors: how the repo is
   authored, transformed, and laid out

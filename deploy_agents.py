@@ -69,14 +69,18 @@ def harness_mappings(
     port = PORTS_DIR / harness
     if harness == "claude":
         base = root("CLAUDE_CONFIG_DIR", ".claude")
-        return [(port / sub, base / sub) for sub in ("agents", "commands", "skills", "learnings")]
+        # learnings/ has no runtime destination under the config dir: every
+        # consumer reads `.github/learnings/` in the working repo, so a copy
+        # here would be read by nothing. Cursor is the exception - its
+        # learnings ship as agent-requested rules under rules/.
+        return [(port / sub, base / sub) for sub in ("agents", "commands", "skills")]
     if harness == "codex":
         base = root("CODEX_HOME", ".codex")
-        # codex profiles/ has no documented runtime destination and is not deployed.
+        # codex profiles/ has no documented runtime destination and is not
+        # deployed; neither does learnings/ (see the claude branch above).
         return [
             (port / "agents", base / "agents"),
             (port / "skills", home / ".agents" / "skills"),
-            (port / "learnings", base / "learnings"),
         ]
     if harness == "opencode":
         base = root("OPENCODE_CONFIG_DIR", Path(".config") / "opencode")

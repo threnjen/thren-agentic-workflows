@@ -26,12 +26,10 @@ class HarnessMappingTests(unittest.TestCase):
                 home / ".claude" / "agents",
                 home / ".claude" / "commands",
                 home / ".claude" / "skills",
-                home / ".claude" / "learnings",
             },
             "codex": {
                 home / ".codex" / "agents",
                 home / ".agents" / "skills",
-                home / ".codex" / "learnings",
             },
             "opencode": {
                 home / ".config" / "opencode" / "agents",

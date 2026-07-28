@@ -76,7 +76,7 @@ RETIRED_COMMAND = "ports/claude/commands/phase-final-review.md"
 # ---------------------------------------------------------------------------
 
 DOC_SURFACES = (
-    "source_of_truth/agents/README.md",
+    "USAGE.md",
     "docs/CODEBASE_CONTEXT.md",
     "README.md",
 )
@@ -380,7 +380,7 @@ def test_agents_readme_roster_covers_every_pr_review_evaluator_on_disk() -> None
     A restated roster drifts. This derives the expectation from disk so that
     adding an evaluator without cataloguing it fails here.
     """
-    catalogue = _read("source_of_truth/agents/README.md")
+    catalogue = _read("USAGE.md")
     for slug in PR_REVIEW_ROSTER:
         # Matched as a whole bolded table cell, not as a bare name. A bare
         # `name in catalogue` is satisfied by any superstring, so renaming a row
