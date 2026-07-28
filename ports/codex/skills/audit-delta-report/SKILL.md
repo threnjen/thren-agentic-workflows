@@ -66,7 +66,7 @@ deliverables.
 Output paths:
 
 ```
-dev/<audit-name>/<audit-name>-delta-<baseline-label>-to-<current-label>.md
+dev/<audit-name>/<audit-name>-delta-<baseline-label>-to-<current-label>-baseline.md
 dev/<audit-name>/<audit-name>-delta-<baseline-label>-to-<current-label>-open-items.md
 ```
 
