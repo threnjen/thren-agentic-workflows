@@ -190,7 +190,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **05c Artifact Sweeper** | 05 PR - Review | Sweep the branch diff for debug artifacts, TODO/FIXME markers, and dead code added by the branch |
 | **05d Consistency Auditor** | 05 PR - Review | Compare the branch diff against established repository conventions and recommend canonical forms |
 | **05e Dependency Auditor** | 05 PR - Review, Client Deliverable | Inventory dependencies added by the branch and report supply-chain and duplication risks, offline |
-| **04e Diff Security Scan** | Phase - Execute | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
+| **04e Diff Security Scan** | Phase - Execute, 05 PR - Review | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
 | **Unity Reviewer** | Phase - Execute, PR - Review, Single Feature - Agent | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
 | **Visual Verifier** | Phase - Execute | Produce deterministic runtime screenshots and assess them against a phase's visual acceptance criteria (does it actually render?) |
 | **Prod Code Review** | Phase - Execute, Audit orchestrator | Final pre-production readiness gate — cross-validate every pipeline document in a phase and produce a GO / NO-GO verdict |
@@ -272,7 +272,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **Feature - QA Writer** *(subagent of Phase - Execute, Audit orchestrator)* — In batch mode: reads all pipeline docs from every feature in a phase and writes a single consolidated QA plan. In per-feature mode: reads pipeline docs from a single feature and writes QA plan and coverage map to that feature's directory.
 
-**04e Diff Security Scan** *(subagent of Phase - Execute)* — Performs a diff-scoped security review of only the files changed by an implementation pass (from an implementation record's "Files Changed" table or a git diff range), plus their immediate security-relevant context. Writes a compact report with verdict, findings, and the categories not assessable at diff scope. It does not replace the full-codebase Auditor - Security scan.
+**04e Diff Security Scan** *(subagent of Phase - Execute and 05 PR - Review)* — Performs a diff-scoped security review of only the files changed by an implementation pass (from an implementation record's "Files Changed" table or a git diff range), plus their immediate security-relevant context. Writes a compact report with verdict, findings, and the categories not assessable at diff scope. It does not replace the full-codebase Auditor - Security scan.
 
 **Prod Code Review** *(subagent of Phase - Execute and the Audit orchestrator)* — Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Pipeline-internal only (`user-invocable: false`): orchestrators spawn it as the automated gate at the end of a phase. For an on-demand readiness check of your own, use **05 PR - Review** instead.
 

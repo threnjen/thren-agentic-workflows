@@ -151,7 +151,8 @@ platform-specific transformations:
   support `instructions/` directly
 - Cursor: user-invocable agents become `commands/*.md`; instructions and learnings
   become `rules/*.mdc` (agent-targeted instructions are excluded, since their content
-  ships inside the rendered agents)
+  ships inside the rendered agents; the exclusion test matches `applyTo` globs ending in
+  `.agent.md` or `agents`, so a glob naming a plain-`.md` agent is not caught by it)
 
 Known filename aliases preserved during propagation: `docs-writer` → `docs-writer`,
 `web-research-specialist` → `web-researcher`, `audit-code-or-infra` →

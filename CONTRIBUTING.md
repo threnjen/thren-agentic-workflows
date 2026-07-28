@@ -33,7 +33,7 @@ directory). Hand-maintained files are never touched.
 
 - **52 agent definitions** in `source_of_truth/agents/` (49 `*.agent.md` plus the plain
   `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`), of which **14 are
-  user-invocable** and **37 are hidden subagents** (`user-invocable: false`) that
+  user-invocable** and **38 are hidden subagents** (`user-invocable: false`) that
   orchestrators spawn automatically.
 - **33 skills** — directory-based capabilities agents load on demand, each rooted at
   `SKILL.md`.
@@ -105,7 +105,8 @@ outputs drift; a sync failure means "rerun propagation," not "edit the output."
 planning pipeline (planner, refiner, decomposer, phase executor), the feature
 implementation pipeline (plan expander, implementer, reviewer, QA writer), PR Review
 orchestration and evaluators, the audit orchestrator and its auditors
-(code, infra, refactor, security, delta, remediation research), the Client Deliverable
+(code, infra, refactor, security, delta, remediation research, remediation
+reconciler), the Client Deliverable
 engagement fleet, QA bootstrapping, test operations, and standalone utility agents
 (docs writer, debugger, single-feature agent, unity reviewer, visual verifier, web
 researcher). See

@@ -116,8 +116,12 @@ benchmarks/ packages/ tests/
   `ports/claude/agents` = 38 hidden + 2 dual-use (docs-writer, web-researcher)
   = 40, while `ports/claude/commands` = 14.
 - Codex and OpenCode emit all 52 agents; only Claude and Cursor split commands out.
-- `ports/cursor/rules` = the 4 learnings only; agent-targeted instructions are excluded
-  because they ship inside the agents.
+- `ports/cursor/rules` = the 4 learnings plus any instruction whose `applyTo` globs are
+  not all agent-targeted. Agent-targeted instructions are excluded because they ship
+  inside the agents; the exclusion test in `propagate_cursor_rules_once` matches patterns
+  ending in `.agent.md` or `agents`, so a glob naming a plain-`.md` agent
+  (`**/auditor.md`, `**/docs-writer.md`, `**/04f-prod-code-review.md`) is not recognized
+  as agent-targeted. `subagent-depth.mdc` reaches `ports/cursor/rules` for that reason.
 
 ## Platform Surface Rules
 
