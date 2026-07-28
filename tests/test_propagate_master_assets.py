@@ -92,7 +92,13 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             skill_dir = repo_root / "source_of_truth" / "skills" / "demo-skill"
             skill_dir.mkdir(parents=True, exist_ok=True)
             (skill_dir / "SKILL.md").write_text(
-                "---\nname: demo-skill\ndescription: \"Demo skill\"\n---\n# Demo body\n",
+                "---\n"
+                "name: demo-skill\n"
+                "description:\n"
+                '  "Demo skill with a wrapped\n'
+                '  description."\n'
+                "---\n"
+                "# Demo body\n",
                 encoding="utf-8",
             )
 
@@ -103,7 +109,12 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             self.assertEqual(result["codex_changed"], 1)
             self.assertTrue((repo_root / "ports" / "claude" / "skills" / "demo-skill" / "SKILL.md").exists())
             self.assertTrue((repo_root / "ports" / "opencode" / "skills" / "demo-skill" / "SKILL.md").exists())
-            self.assertTrue((repo_root / "ports" / "codex" / "skills" / "demo-skill" / "SKILL.md").exists())
+            codex_skill = repo_root / "ports" / "codex" / "skills" / "demo-skill" / "SKILL.md"
+            self.assertTrue(codex_skill.exists())
+            self.assertIn(
+                'description: "Demo skill with a wrapped description."',
+                codex_skill.read_text(encoding="utf-8"),
+            )
 
     def test_propagate_learnings_mirrors_to_claude_and_codex(self) -> None:
         """Codex absorbs the learnings independently: nothing may plan on a

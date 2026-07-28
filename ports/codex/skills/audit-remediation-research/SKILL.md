@@ -1,6 +1,6 @@
 ---
 name: audit-remediation-research
-description: ""
+description: "Contract for organizing an audit open-items queue into subsystem research, validating every item, correcting false or stale audit artifacts, and producing one draft-to-final index plus one detailed report per subsystem. Use when preparing, researching, reconciling, or finalizing remediation research."
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Audit Remediation Research

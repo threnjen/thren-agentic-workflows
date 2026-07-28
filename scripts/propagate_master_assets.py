@@ -342,6 +342,7 @@ def _parse_frontmatter(text: str) -> Tuple[Dict[str, FrontmatterValue], str]:
         #   - read
         #   - edit
         block_items: List[str] = []
+        block_scalar_lines: List[str] = []
         probe = index + 1
         while probe < len(lines):
             probe_line = lines[probe]
@@ -350,10 +351,17 @@ def _parse_frontmatter(text: str) -> Tuple[Dict[str, FrontmatterValue], str]:
             item = probe_line.strip()
             if item.startswith("- "):
                 block_items.append(item[2:].strip())
+            elif item:
+                block_scalar_lines.append(item)
             probe += 1
 
         if block_items:
             data[key] = block_items
+            index = probe
+            continue
+
+        if block_scalar_lines:
+            data[key] = " ".join(block_scalar_lines)
             index = probe
             continue
 

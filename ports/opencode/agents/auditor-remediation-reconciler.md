@@ -1,5 +1,5 @@
 ---
-description: ""
+description: "Reconciles completed subsystem fix research against its audit chain. Validates correction candidates, updates affected report/summary/delta/queue artifacts, and proves final counts close. Writes no production code, subsystem research, or index content."
 model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true

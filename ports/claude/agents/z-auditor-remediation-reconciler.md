@@ -1,6 +1,6 @@
 ---
 name: z-auditor-remediation-reconciler
-description: 
+description: Reconciles completed subsystem fix research against its audit chain. Validates correction candidates, updates affected report/summary/delta/queue artifacts, and proves final counts close. Writes no production code, subsystem research, or index content.
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
