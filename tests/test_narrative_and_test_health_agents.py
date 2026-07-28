@@ -3,30 +3,24 @@
 `05b-change-narrator` and `05f-test-health` are the pair the Phase document says
 "differ enough to warrant individual design". Everything else in the `05` family
 is a mechanical sweep, a worktree, or synthesis. These two are the deep-judgment
-narrator and the delegating adapter, and each has a failure mode that looks
+narrator and the analyst-evidence adapter, and each has a failure mode that looks
 exactly like success:
 
   * `05b` can quietly keep narrating a *phase* -- subphases, per-subphase
     partitions, whole-phase baselines -- after the family has been rescoped to a
     branch diff. A PR has no subphases, so the concept does not degrade
     gracefully; it produces confident prose about a structure that is not there.
-  * `05f` can quietly stop delegating and "just do a quick coverage check
-    itself". That produces a plausible report which diverges from the project's
-    real test analysis, and nothing in the output says so.
+  * `05f` can quietly replace missing root-supplied analyst evidence with "just
+    a quick coverage check". That produces a plausible report which diverges
+    from the project's real test analysis, and nothing in the output says so.
 
 Style follows `tests/test_pr_review_orchestrator.py`: module-level `Path`
 constants and plain `assert`, pytest-style -- not the `unittest` classes of
 `tests/test_propagate_master_assets.py`.
 
-A note on what is deliberately NOT asserted here. AC5b: Codex `agents.max_depth`
-defaults to 1, and a blocked spawn causes the model to do the work inline and
-report success rather than fail (`.github/learnings/debugging-learnings.md:25-38`).
-Both `05f` -> `Test - Analyst` and `05b` -> per-directory readers sit at depth 2.
-So a static assertion that the body *says* it delegates passes while the runtime
-contract is broken. `test_delegation_is_declared_not_inlined` below is a
-declaration assertion and is labelled as one. It is necessary and it is not
-sufficient. Delegation is verifiable only from a runtime transcript, which is why
-the plan routes AC5b to manual QA.
+The root PR Review orchestrator owns the `Test - Analyst` spawn. `05f` consumes
+its files as a sibling, and `05b` chunks serially. This preserves the standing
+one-level delegation rule while keeping both contexts bounded.
 """
 
 import re
@@ -37,6 +31,7 @@ AGENTS_DIR = REPO_ROOT / "source_of_truth" / "agents"
 
 NARRATOR = AGENTS_DIR / "05b-change-narrator.agent.md"
 TEST_HEALTH = AGENTS_DIR / "05f-test-health.agent.md"
+PR_REVIEW = AGENTS_DIR / "05-pr-review.agent.md"
 RETIRED_TEST_HEALTH = AGENTS_DIR / "05h-test-health.agent.md"
 
 OPENCODE_AGENTS_DIR = REPO_ROOT / "ports" / "opencode" / "agents"
@@ -121,7 +116,7 @@ def test_retired_test_health_slug_left_no_opencode_orphan() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_delegation_target_display_name_is_exact() -> None:
+def test_root_delegation_target_display_name_is_exact() -> None:
     """AC5. The propagator resolves agent references by display name.
 
     `Test - Analyst` is the verified existing value at `test-analyst.agent.md:2`.
@@ -129,54 +124,31 @@ def test_delegation_target_display_name_is_exact() -> None:
     silently ships to all three roots as literal prose, and the delegation
     quietly stops existing.
     """
-    assert "agents: [Test - Analyst]" in TEST_HEALTH.read_text(encoding="utf-8")
+    assert "Test - Analyst" in PR_REVIEW.read_text(encoding="utf-8")
+    assert "agents:" not in TEST_HEALTH.read_text(encoding="utf-8").split("---", 2)[1]
 
     target = (AGENTS_DIR / "test-analyst.agent.md").read_text(encoding="utf-8")
     assert "name: Test - Analyst" in target, "the delegate's display name moved"
 
 
-def test_delegation_is_declared_not_inlined() -> None:
-    """AC5. A DECLARATION assertion. It cannot detect a runtime inline fallback.
-
-    See this module's docstring: with Codex `max_depth` at its default of 1 the
-    depth-2 spawn is blocked and the model does the work inline while reporting
-    success. This test passes in exactly that case. It pins the declaration so a
-    deliberate rewrite into a reimplementation fails; the runtime contract is
-    verified only by manual QA against a transcript (AC5b).
-    """
+def test_root_spawns_analyst_and_test_health_only_adapts() -> None:
+    """AC5. Root-owned sibling evidence replaces nested delegation."""
     body = _prose(TEST_HEALTH)
+    root = _prose(PR_REVIEW)
 
-    # The imperative itself, with its objects and target attached. A bare
-    # `"delegate" in body` cannot fail: the token occurs 13 times in this file
-    # ("the delegate's analysis procedure", "delegate inputs", "as delegated
-    # analysis"), so the one sentence that actually issues the instruction can
-    # be reversed to "Perform coverage..." while the guard stays green.
-    assert (
-        "delegate coverage, redundancy, and flake-candidate analysis to `test - analyst`"
-        in body
-    )
+    assert "before fan-out, spawn `test - analyst` directly" in root
+    assert "passes the analyst's three native planning files" in body
     assert "analysis belongs to `test - analyst`" in body
-    assert "do not reimplement the delegate's analysis procedure" in body
+    assert "do not reimplement the analyst's procedure" in body
     assert "no local scan or test-analysis procedure is defined here" in body
 
 
-def test_test_health_names_the_max_depth_fallback() -> None:
-    """AC5b. The trap is that the failure is silent, so it must be named.
-
-    `.github/learnings/debugging-learnings.md:25-38`: a blocked spawn does not
-    raise. The agent must know the depth requirement and must know that
-    continuing inline is the failure, not the fallback.
-
-    Each assertion is a distinct single-occurrence claim. Asserting a bare
-    `"max_depth" in body` passes while the paragraph that explains the default
-    is deleted, because the required-value sentence also contains the token.
-    """
+def test_test_health_never_substitutes_inline_analysis() -> None:
+    """AC5b. Missing analyst evidence is NOT RUN, never inline work."""
     body = _prose(TEST_HEALTH)
 
-    assert "`agents.max_depth` defaults to 1" in body
-    assert "requires `[agents] max_depth = 2`" in body
-    assert "silently performs the work inline and reports success" in body
-    assert "never continue inline" in body
+    assert "if any required analyst file is missing" in body
+    assert "never substitute inline analysis" in body
 
 
 def test_test_health_preserves_the_not_run_ceiling() -> None:
@@ -361,26 +333,23 @@ def test_narrator_chunking_is_structural() -> None:
     delegations as the pressure valve, and detail on disk.
 
     The chunk-reading instruction is asserted with its objects attached. A bare
-    `"one bounded chunk at a time"` also matches the max_depth paragraph below,
-    which would keep this green while step 2 stopped saying how to read.
+    `"one bounded chunk at a time"` alone would not pin the serial evidence
+    handoff that keeps the context bounded.
     """
     body = _prose(NARRATOR)
 
     assert "read one bounded chunk at a time from the baseline worktree and the head tree" in body
     assert "never load the full branch diff into one context" in body
-    assert "per-directory reader delegations" in body
+    assert "process chunks serially" in body
+    assert "recording a concise evidence summary on disk" in body
 
 
-def test_narrator_chunking_degrades_when_readers_are_unavailable() -> None:
-    """AC4 / AC5b. Reader spawns sit at depth 2 and Codex `max_depth` defaults
-    to 1, so the pressure valve is not always there. The fallback must be a
-    stated serial path -- not an inline improvisation that silently loads more
-    than one chunk."""
+def test_narrator_does_not_spawn_nested_readers() -> None:
+    """AC4 / AC5b. The evaluator is already a child; chunking stays local."""
     body = _prose(NARRATOR)
 
-    assert "otherwise process the same chunks serially in this context" in body
-    assert "`agents.max_depth` defaults to 1" in body
-    assert "it is never a licence to read the whole diff at once" in body
+    assert "do not spawn readers" in body
+    assert "delegation depth is one" in body
 
 
 # ---------------------------------------------------------------------------

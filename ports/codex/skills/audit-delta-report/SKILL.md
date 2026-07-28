@@ -294,10 +294,10 @@ required and appears in this order.
 ## 5. The open-items queue
 
 A second, smaller document containing **only the NEW and TRANSFORMED findings**.
-Its reader is a remediation research agent that receives this file, the current
-snapshot's audit report, and the current snapshot's summary — and nothing else.
-It will not have the full delta, either source tree, or the baseline report.
-Write accordingly.
+Its reader is a remediation research agent that receives this file, the full
+delta, both snapshot reports and summaries, and the available source trees.
+Write it to stand alone anyway: the queue remains the scoped work list, while
+the other inputs exist to validate it and correct upstream errors.
 
 **Selection.** NEW and TRANSFORMED, plus the **dependency closure** defined
 below. RESOLVED, IMPROVED, UNCHANGED, and UNVERIFIED are otherwise excluded by
@@ -346,6 +346,13 @@ list. State the count of excluded findings by disposition, and name any
 excluded Critical or High explicitly, so the omission is visible without
 opening the full delta.
 
+**Subsystem ownership.** Assign every queued and closure item one `Subsystem`:
+the smallest stable runtime, component, or responsibility boundary that owns
+the remediation. A subsystem is not the audit dimension, severity, directory
+chosen for convenience, or proposed work phase. Use the same concise name for
+items with the same production owner. Cross-subsystem dependencies do not
+duplicate ownership; record them in `Blocked by` or `Pulled in by`.
+
 **Structure.**
 
 ```markdown
@@ -364,9 +371,11 @@ UNVERIFIED. After the closure, the still-excluded set contains <N> Critical and
 ## <Severity> — <N> items
 
 ### <N>. [NEW | TRANSFORMED] <title>
+- **Source finding:** <current audit report identifier>
 - **Location:** `path:line` (current snapshot)
 - **Severity:** <Critical | High | Medium | Low | Info>
 - **Dimension:** <the auditor's own category name>
+- **Subsystem:** <stable production owner>
 - **Origin:** genuine regression | artifact of new functionality | reporting
   difference | responsibility moved from `<baseline path:line>`
 - **The defect:** <what is wrong, self-contained — assume no other document>
@@ -382,9 +391,11 @@ Excluded findings that queued items above cannot close without. These are
 enabling work, not defects this snapshot introduced. <N> closure passes.
 
 ### D<N>. [<original disposition>] <title>
+- **Source finding:** <current audit report identifier>
 - **Location:** `path:line` (current snapshot)
 - **Severity:** <Critical | High | Medium | Low | Info>
 - **Dimension:** <the auditor's own category name>
+- **Subsystem:** <stable production owner>
 - **Pulled in by:** item <N> (<blocking | partial>), item <N> (<blocking | partial>)
 - **What the dependent items need from it:** <the specific decision or artifact
   that unblocks each — not a restatement of the finding>

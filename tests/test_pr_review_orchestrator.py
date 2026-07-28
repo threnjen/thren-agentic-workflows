@@ -594,18 +594,19 @@ def test_report_root_migration_cannot_split_silently() -> None:
 
 
 # ---------------------------------------------------------------------------
-# AC10 -- the roster, in three distinct positions
+# AC10 -- the roster, in four distinct positions
 # ---------------------------------------------------------------------------
 
 
-def test_roster_declares_three_positions_not_a_flat_range() -> None:
+def test_roster_declares_four_positions_not_a_flat_range() -> None:
     """AC10. A flat `05a`-`05g` reading makes AC10 contradict AC11: it implies
     an `05a` failure is survivable like any evaluator's, when nothing can run
     before the baseline exists."""
     body = _prose()
 
-    assert "three distinct positions" in body
+    assert "four distinct positions" in body
     assert "`05a` is not a fan-out evaluator" in body
+    assert "`test - analyst` is not one either" in body
     assert "`05g` is not one either" in body
     assert "its failure stops the run" in body
 
@@ -640,6 +641,7 @@ def test_frontmatter_agents_list_names_the_full_roster_by_display_name() -> None
 
     for name in (
         "Baseline Worktree",
+        "Test - Analyst",
         "05b Change Narrator",
         "05c Artifact Sweeper",
         "05d Consistency Auditor",

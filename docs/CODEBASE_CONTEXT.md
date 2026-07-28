@@ -12,9 +12,9 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 51 source agent definitions in `source_of_truth/agents/` (48 `*.agent.md` + `auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 37 hidden subagents (`user-invocable: false`) and 14 user-invocable.
-- 32 skills in `source_of_truth/skills/`.
-- 15 instructions in `source_of_truth/instructions/`.
+- 52 source agent definitions in `source_of_truth/agents/` (49 `*.agent.md` + `auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 38 hidden subagents (`user-invocable: false`) and 14 user-invocable.
+- 33 skills in `source_of_truth/skills/`.
+- 16 instructions in `source_of_truth/instructions/`.
 - 4 learnings in `source_of_truth/learnings/`.
 
 ## Key Paths
@@ -25,11 +25,11 @@ INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
     README.md                              # full agent catalog and pipeline docs
-    *.agent.md                             # 48, plus the three plain .md agents below (51 total definitions)
+    *.agent.md                             # 49, plus the three plain .md agents below (52 total definitions)
     auditor.md                             # plain .md agent (audit orchestrator)
     docs-writer.md                         # plain .md agent (loaded by frontmatter)
     04f-prod-code-review.md                # plain .md agent (loaded by frontmatter)
-  skills/                                  # 32 skill dirs, each rooted at SKILL.md
+  skills/                                  # 33 skill dirs, each rooted at SKILL.md
   instructions/                            # 16 applyTo-glob instruction files
   learnings/                               # 4 learnings files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
@@ -113,9 +113,9 @@ benchmarks/ packages/ tests/
   `ports/claude/agents` for that reason.
 - Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
   plus a subagent file only if an orchestrator names it as a child (dual-use). So
-  `ports/claude/agents` = 37 hidden + 2 dual-use (docs-writer, web-researcher)
-  = 39, while `ports/claude/commands` = 14.
-- Codex and OpenCode emit all 51 agents; only Claude and Cursor split commands out.
+  `ports/claude/agents` = 38 hidden + 2 dual-use (docs-writer, web-researcher)
+  = 40, while `ports/claude/commands` = 14.
+- Codex and OpenCode emit all 52 agents; only Claude and Cursor split commands out.
 - `ports/cursor/rules` = the 4 learnings only; agent-targeted instructions are excluded
   because they ship inside the agents.
 

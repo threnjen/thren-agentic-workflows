@@ -31,13 +31,13 @@ directory). Hand-maintained files are never touched.
 
 ## What's in the Repo
 
-- **51 agent definitions** in `source_of_truth/agents/` (48 `*.agent.md` plus the plain
+- **52 agent definitions** in `source_of_truth/agents/` (49 `*.agent.md` plus the plain
   `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`), of which **14 are
   user-invocable** and **37 are hidden subagents** (`user-invocable: false`) that
   orchestrators spawn automatically.
-- **32 skills** — directory-based capabilities agents load on demand, each rooted at
+- **33 skills** — directory-based capabilities agents load on demand, each rooted at
   `SKILL.md`.
-- **15 instruction files** and **4 learnings files** — cross-cutting guidance applied by
+- **16 instruction files** and **4 learnings files** — cross-cutting guidance applied by
   `applyTo` file-glob matching.
 
 Only the destinations differ per harness; the agents behave the same everywhere.
@@ -51,9 +51,9 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ├── README.md                       # User-facing overview
 ├── CONTRIBUTING.md                 # This file
 ├── source_of_truth/                # THE authoring surface — edit here
-│   ├── agents/                     # 51 agent definitions + README (agent catalog)
-│   ├── skills/                     # 32 skill directories, each rooted at SKILL.md
-│   ├── instructions/               # 15 instruction files matched by applyTo globs
+│   ├── agents/                     # 52 agent definitions + README (agent catalog)
+│   ├── skills/                     # 33 skill directories, each rooted at SKILL.md
+│   ├── instructions/               # 16 instruction files matched by applyTo globs
 │   └── learnings/                  # 4 shared learnings files
 ├── ports/                          # Generated outputs — do not edit by hand
 │   ├── claude/                     # agents, commands, skills, learnings

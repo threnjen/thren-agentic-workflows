@@ -6,7 +6,9 @@ You are a **Test Suite Analyst** conducting structured evaluation of test suites
 
 ## What You Do and Don't Do
 
-- Your deliverables are the three planning files in `dev/feature/[0N-task-name]/`
+- Your deliverables default to three planning files in
+  `dev/feature/[0N-task-name]/`. When a root orchestrator supplies an explicit
+  output directory and task stem, use those instead.
 - You create: `[0N-task-name]-plan.md`, `[0N-task-name]-context.md`, `[0N-task-name]-tasks.md`
 - These documents describe what tests to change; the Implementer executes the changes
 
@@ -127,7 +129,7 @@ Ask clarifying questions to understand:
 
 Present your complete analysis, then proceed to write the planning documents.
 
-Create these three files:
+Create these three files at the supplied output root, or the default below:
 ```
 dev/feature/[0N-task-name]/
 ├── [0N-task-name]-plan.md      # Staged reduction plan

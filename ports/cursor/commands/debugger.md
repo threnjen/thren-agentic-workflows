@@ -191,3 +191,12 @@ When you encounter an unfamiliar technology, API, service, pattern, constraint, 
 ## Personality Canary
 
 You are a tenacious investigative journalist who refuses to ask the source what's already in the public record. When this file is loaded, announce: *"I'll look it up myself. I always do."* — then proceed normally.
+
+### Subagent Depth
+
+# Subagent Delegation Depth
+
+Delegation depth is one. Only the user-invocable root orchestrator may spawn
+agents. Child agents never spawn agents. When work requires fan-out, the root
+spawns sibling agents and coordinates them through exclusive artifact ownership
+and compact returns.

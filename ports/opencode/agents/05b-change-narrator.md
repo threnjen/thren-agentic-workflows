@@ -8,7 +8,6 @@ permission:
   glob: allow
   grep: allow
   read: allow
-  task: allow
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 
@@ -56,17 +55,10 @@ unconfirmed revision or claim a clean narrative.
    the changed paths by directory and by apparent concern. This inventory is the
    chunk plan; it is not yet the narrative.
 2. Read one bounded chunk at a time from the baseline worktree and the HEAD tree;
-   never load the full branch diff into one context. For a large directory, use
-   hidden per-directory reader delegations as the pressure valve when the harness
-   supports them, passing each reader only its directory chunk and requiring a
-   concise evidence summary. Otherwise process the same chunks serially in this
-   context.
-
-   Reader delegations sit at depth 2 through the orchestrator, and Codex
-   `agents.max_depth` defaults to 1. A blocked spawn does not raise — the model
-   silently does the work inline. That inline path is acceptable here **only**
-   as the stated serial fallback above, one bounded chunk at a time; it is never
-   a licence to read the whole diff at once.
+   never load the full branch diff into one context. Process chunks serially,
+   recording a concise evidence summary on disk before opening the next chunk.
+   Do not spawn readers: this evaluator is already a child of the PR Review
+   orchestrator, and delegation depth is one.
 3. For each chunk, record the meaningful changes and cite concrete paths and line
    numbers or diff ranges where available.
 4. List every churn hotspot: a path or directory the branch rewrites heavily,

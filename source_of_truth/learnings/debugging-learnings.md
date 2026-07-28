@@ -20,20 +20,21 @@
 
 **Watch for**: If the `[SUBAGENT-MODE]` invocation syntax looks right but spawning fails, the issue is almost always the agent not being loaded, not the invocation language.
 
-## If a Codex Orchestrator's Delegate Says a Subagent Tool "Is Not Exposed"
+## If a Codex Child Agent Tries To Spawn Another Agent
 
-**Problem**: A depth-1 agent (spawned by an orchestrator) reports its own subagent tool unavailable and does the work inline instead.
+**Problem**: A child agent reports its own spawn tool unavailable or silently
+does nested work inline.
 
-**Root cause**: Codex `agents.max_depth` defaults to `1`. An orchestrator → delegate → sub-delegate chain needs depth 2, so the deepest spawn is blocked and the model falls back to inline work — output indistinguishable from real delegation.
+**Root cause**: The workflow put fan-out ownership on a child. This repository
+limits delegation to one level; only the user-invocable root may spawn agents.
 
-**Fix**: Add to `~/.codex/config.toml`:
+**Fix**: Move the nested work to the root as sibling assignments. Give each
+sibling exclusive artifact ownership and a compact return contract; let the
+root sequence any consumer that needs their combined output.
 
-```toml
-[agents]
-max_depth = 2
-```
-
-**Watch for**: `max_depth = 2` is the minimum for a two-level pipeline and the recommended setting; going higher risks runaway fan-out. This is a global operator setting — no repository artifact can enforce it.
+**Watch for**: Do not raise `agents.max_depth` to preserve a nested design. A
+blocked spawn may fall back to inline work and look successful, which defeats
+the intended context isolation.
 
 ## If a propagated agent delegates to a name that does not exist, check how the reference map is keyed
 

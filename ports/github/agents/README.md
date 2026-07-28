@@ -175,7 +175,8 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **Auditor - Refactor** | Audit orchestrator | Audit codebase structure, module organization, and architecture |
 | **Auditor - Security** | Audit orchestrator, Client Deliverable | Full-codebase security audit across secrets, dependencies, attack surface, auth, data protection, runtime safety, infra/CI-CD, and observability |
 | **Auditor - Delta** | Audit orchestrator | Compare two audit reports of the same product and produce a reconciled delta document plus an open-items queue |
-| **Auditor - Remediation Research** | Audit orchestrator | Research fixes for the new and transformed findings in a delta's open-items queue |
+| **Auditor - Remediation Research** | Audit orchestrator | Research exactly one assigned open-items subsystem and write its exclusive fix-research report |
+| **Auditor - Remediation Reconciler** | Audit orchestrator | Validate researcher corrections and reconcile the current report, summary, full delta, and queue |
 | **Instructions - Writer** | Instructions Manager | Draft scoped `.instructions.md` files for a repository |
 | **Instructions - Evaluator** | Instructions Manager | A/B evaluate whether instruction-file changes improve or regress |
 | **Feature - Plan Expander** | Feature - Decomposer | Generate context and tasks files from existing plan files |
@@ -193,7 +194,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **Unity Reviewer** | Phase - Execute, PR - Review, Single Feature - Agent | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
 | **Visual Verifier** | Phase - Execute | Produce deterministic runtime screenshots and assess them against a phase's visual acceptance criteria (does it actually render?) |
 | **Prod Code Review** | Phase - Execute, Audit orchestrator | Final pre-production readiness gate — cross-validate every pipeline document in a phase and produce a GO / NO-GO verdict |
-| **05f Test Health** | 05 PR - Review | Delegate coverage, redundancy, and flake analysis into a test health report |
+| **05f Test Health** | 05 PR - Review | Adapt root-supplied Test Analyst evidence into a test health report |
 | **05h Cleanliness Auditor** | 05 PR - Review | Evaluate the cleanliness of branch-added code and recommend specific cleanup categories when non-passing |
 | **05g Readiness Synthesizer** | 05 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
 | **Client Deliverable - Prepare** | Client Deliverable | Prepare a client engagement for comparison analysis — validate the engagement config, then ensure an analysis branch, a code graph, and a baseline snapshot per side |
@@ -204,7 +205,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **Client Deliverable - Compliance Writer** | Client Deliverable | Walk SOW acceptance criteria against retained artifacts; write the compliance walkthrough, verification summary, and internal compliance-basis report |
 | **Client Deliverable - Manifest Assembler** | Client Deliverable | Assemble the package manifest per its schema, evaluating every row's present/missing status from disk, plus the internal manifest-basis report |
 | **Client Deliverable - Gap Reviewer** | Client Deliverable | Review the deliverable set from the client's perspective against the manifest; always emit the internal gap-review report |
-| **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
+| **Test - Analyst** | Test orchestrator, 05 PR - Review | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
 | **Test - Writer** | Test orchestrator | Bootstrap a test suite from scratch for untested code |
 
@@ -289,7 +290,9 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **Auditor - Delta** *(subagent of Audit orchestrator)* — Compares two completed audit reports of the same product — a baseline snapshot and a current one — and produces a delta document classifying every finding as resolved, improved, unchanged, transformed, unverified, or new, with the counts reconciled against both reports, plus a standalone open-items queue holding only the new and transformed findings. Raises no findings of its own.
 
-**Auditor - Remediation Research** *(subagent of Audit orchestrator)* — Reads a delta's open-items queue plus the current snapshot's audit report and summary, and produces a researched fix proposal per item: root cause, approach, trade-offs, dependencies, and a named verification step. Proposes only — writes no code.
+**Auditor - Remediation Research** *(subagent of Audit orchestrator)* — Receives one subsystem assignment and writes one exclusive detailed report after validating every assigned item as real, true, current, and actionable. Returns correction candidates compactly; it does not edit shared audit artifacts or production code.
+
+**Auditor - Remediation Reconciler** *(subagent of Audit orchestrator)* — Validates all subsystem correction candidates against the snapshots, then is the sole child writer for the affected current report, current summary, full delta, and open-items queue. It writes no production code.
 
 **Instructions - Writer** *(subagent of Instructions Manager)* — Discovers a repository's domains and non-obvious rules and drafts scoped `.instructions.md` files following the AI Instruction File Framework.
 
@@ -311,7 +314,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **Client Deliverable - Gap Reviewer** *(subagent of Client Deliverable)* — Reviews the complete deliverable set from the client's perspective using the manifest as its completeness checklist and unconditionally emits `internal/gap-review.md`, even when no gaps are found.
 
-**Test - Analyst** *(subagent of Test orchestrator)* — Classifies tests by value, flags redundancy and over-mocking, and writes a categorized inventory with a staged reduction plan.
+**Test - Analyst** *(subagent of Test orchestrator and PR Review)* — Classifies tests by value, flags redundancy and over-mocking, and writes a categorized inventory with a staged reduction plan. PR Review spawns it directly and passes its files to 05f as sibling evidence.
 
 **Test - Writer** *(subagent of Test orchestrator)* — Bootstraps a test suite from scratch. Scans the codebase, creates test files with meaningful coverage, and verifies the suite passes.
 
@@ -446,10 +449,16 @@ dev/[audit-name]/
 │   └── [audit-name]-summary.md
 ├── [audit-name]-delta-<baseline-label>-to-<current-label>.md
 ├── [audit-name]-delta-<baseline-label>-to-<current-label>-open-items.md
-└── [audit-name]-delta-<baseline-label>-to-<current-label>-fix-research.md
+├── [audit-name]-delta-<baseline-label>-to-<current-label>-fix-research.md
+└── [audit-name]-delta-<baseline-label>-to-<current-label>-fix-research-<subsystem>.md
 ```
 
-The open-items queue holds only the new and transformed findings and is the scoped input to **Auditor - Remediation Research**, which writes the optional fix-research document.
+The root Audit orchestrator writes the fix-research index first as an
+unvalidated DRAFT, grouping the queue and dependency closure by subsystem. It
+then spawns one **Auditor - Remediation Research** sibling per subsystem. After
+all exclusive subsystem reports exist, **Auditor - Remediation Reconciler**
+corrects the shared audit chain; the root incorporates compact returns and marks
+the index FINAL.
 
 Each selected audit type gets its own tree and its own delta; code and infra findings are never merged into one document.
 
@@ -459,7 +468,7 @@ Each selected audit type gets its own tree and its own delta; code and infra fin
 
 Copilot-specific. Other harnesses need no equivalent configuration.
 
-- **`chat.subagents.allowInvocationsFromSubagents`**: Leave at `false` (default) — subagents don't need to spawn further subagents.
+- **`chat.subagents.allowInvocationsFromSubagents`**: Leave at `false` (default) — delegation is one level; only the user-invocable root spawns agents.
 - The orchestrator's `agents:` frontmatter restricts which subagents it can spawn, preventing unintended delegation.
 
 ---
@@ -496,7 +505,7 @@ Do not hand-copy files out of `ports/` or `.github/` — both are generated. Edi
 - **Shared subagents**: **Feature - Implementer** and **Feature - Reviewer** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned at the end of the Phase - Execute, Audit, Test, and Client Deliverable pipelines to update stale documentation, and by the Planner and Refiner when critical docs are missing (it remains user-invocable for standalone use as well). **Unity Reviewer** and **Visual Verifier** are spawned on Unity repositories — Unity Reviewer by Phase - Execute, PR - Review, and Single Feature - Agent, Visual Verifier by Phase - Execute alone. Both are hidden-only.
 - **Dual-use agents**: two agents are user-invocable *and* declared as children by an orchestrator, so they emit both a slash command and a spawnable subagent file — **Docs Writer** (Planner, Refiner, Phase - Execute, Audit, Test, Client Deliverable) and **Web Researcher** (Planner, Refiner, Debugger). **03 Feature - Decomposer** is not among them: Phase - Execute fails on missing bundles rather than spawning the decomposer.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
-- **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Security**, **Auditor - Delta**, **Auditor - Remediation Research**, **Test - Analyst**, **Unity Reviewer**, **Visual Verifier**, **04e Diff Security Scan**, and the **05x PR Review evaluators** do not modify code. They analyze and write their own reports only. **Unity Reviewer** and **Baseline Worktree** are the two that hold no write tool at all.
+- **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Security**, **Auditor - Delta**, **Auditor - Remediation Research**, **Auditor - Remediation Reconciler**, **Test - Analyst**, **Unity Reviewer**, **Visual Verifier**, **04e Diff Security Scan**, and the **05x PR Review evaluators** do not modify production code. They analyze and write only their assigned reports or audit artifacts. **Unity Reviewer** and **Baseline Worktree** are the two that hold no write tool at all.
 - **Approval-gated agents**: **01 Project - Planner**, **02 Phase - Refiner**, and **03 Feature - Decomposer** always present findings and ask for explicit approval before creating files. They also check for missing critical documentation (`README.md`, `docs/CODEBASE_CONTEXT.md`) and recommend running the **Docs Writer** before continuing. The **Audit** and **Test** orchestrators ask before proceeding to the remediation phase.
 - **Code-writing agents**: **Debugger**, **Test - Writer**, **Test - Fixer**, **Feature - Implementer**, and **Feature - Reviewer** have full tool access to create and modify files.
 - **Prod Code Review** does not modify code — it analyzes and reports only, producing a GO / NO-GO verdict.

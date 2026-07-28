@@ -33,9 +33,9 @@ flowchart TD
     Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
-    SOT --> Agents[51 agent definitions]
-    SOT --> Skills[32 skill directories]
-    SOT --> Instructions[15 instruction files]
+    SOT --> Agents[52 agent definitions]
+    SOT --> Skills[33 skill directories]
+    SOT --> Instructions[16 instruction files]
     SOT --> Learnings[4 learnings files]
 
     Scripts --> Propagate[propagate_master_assets.py]
@@ -122,12 +122,12 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 51 agent definitions (14 user-invocable, 37 hidden subagents). Most use
+- `agents/` — 52 agent definitions (14 user-invocable, 38 hidden subagents). Most use
   the `.agent.md` suffix; `auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`
   are intentional plain-`.md` exceptions still loaded as agents because loading keys off
   `name`/`description` frontmatter, not the suffix.
-- `skills/` — 32 directory-based skills, each rooted at `SKILL.md`.
-- `instructions/` — 15 instruction files matched by `applyTo` globs.
+- `skills/` — 33 directory-based skills, each rooted at `SKILL.md`.
+- `instructions/` — 16 instruction files matched by `applyTo` globs.
 - `learnings/` — 4 cross-cutting learnings files.
 - `baseline/` — `baseline-instructions.md`, the sentinel-sectioned baseline
   instructions template rendered per harness at deploy time (not propagated to
@@ -144,8 +144,8 @@ platform-specific transformations:
 - Claude emission splits by invocability: a hidden agent emits a subagent file only; a
   user-invocable agent emits a slash command, **plus** a subagent file when some
   orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
-  it. That is why `ports/claude/agents` (39) and `ports/claude/commands` (14) differ:
-  37 hidden subagents plus the two dual-use agents (Docs Writer,
+  it. That is why `ports/claude/agents` (40) and `ports/claude/commands` (14) differ:
+  38 hidden subagents plus the two dual-use agents (Docs Writer,
   Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
   support `instructions/` directly
@@ -223,7 +223,8 @@ flowchart TD
     Audit --> AuditorRefactor[Auditor - Refactor]
     Audit --> AuditorSecurity[Auditor - Security]
     Audit --> AuditorDelta[Auditor - Delta]
-    Audit --> AuditorFixes[Auditor - Remediation Research]
+    Audit --> AuditorFixes[Auditor - Remediation Research per subsystem]
+    Audit --> AuditorReconciler[Auditor - Remediation Reconciler]
 
     Test --> TestAnalyst[Test - Analyst]
     Test --> TestWriter[Test - Writer]
@@ -243,10 +244,14 @@ target's tree or report.
 
 When two targets are compared, **Auditor - Delta** produces a reconciled delta
 per audit type (`audit-delta-report` skill) plus a standalone open-items queue of
-only the NEW and TRANSFORMED findings. **Auditor - Remediation Research** then
-optionally researches fixes for that queue. All deliverables — both snapshots'
-reports, the delta, the queue, the fix research — are written under the newer
-comparison point; the baseline is read-only and receives no files.
+only the NEW and TRANSFORMED findings and their dependency closure. For optional
+fix research, the root writes a DRAFT index, spawns one isolated **Auditor -
+Remediation Research** sibling per subsystem, then spawns **Auditor -
+Remediation Reconciler** to validate corrections and update the current report,
+summary, full delta, and queue. The root marks the index FINAL only after the
+audit chain reconciles. Delegation depth is one: children never spawn children.
+All deliverables are written under the newer comparison point; the baseline is
+read-only and receives no files.
 
 A separate engagement flow sits outside the phase pipeline:
 

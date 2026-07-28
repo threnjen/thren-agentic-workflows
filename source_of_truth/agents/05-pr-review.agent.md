@@ -2,7 +2,7 @@
 name: 05 PR - Review
 description: "Reviews your change before you open the PR. Confirms the base commit and head commit with you, runs a roster of evaluators over that diff, and returns a plain-language readiness report. Advisory only — it changes no code and records no verdict anywhere."
 tools: [agent, read, search, edit, execute]
-agents: [Baseline Worktree, 05b Change Narrator, 05c Artifact Sweeper, 05d Consistency Auditor, 05e Dependency Auditor, 05f Test Health, 05h Cleanliness Auditor, 05g Readiness Synthesizer, 04e Diff Security Scan, Unity Reviewer]
+agents: [Baseline Worktree, Test - Analyst, 05b Change Narrator, 05c Artifact Sweeper, 05d Consistency Auditor, 05e Dependency Auditor, 05f Test Health, 05h Cleanliness Auditor, 05g Readiness Synthesizer, 04e Diff Security Scan, Unity Reviewer]
 ---
 
 You are the **PR Review Orchestrator**. This tool is for an **author checking
@@ -234,24 +234,27 @@ tier is an execution limitation to report, never a clean result.
 | `05b`, `04e`, `05g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
 | `05c`, `05d`, `05e`, `05h` | Cheap tier for mechanical sweeps |
 | `04h` | Top available tier when present in the fan-out; Unity findings are judgment calls |
-| `05a`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
+| `05a`, `Test - Analyst`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
 
 Do not place model or harness identity in retained review reports or status
 records.
 
 ## Roster
 
-The roster occupies **three distinct positions**. They are not a flat range, and
+The roster occupies **four distinct positions**. They are not a flat range, and
 flattening them breaks the partial-failure semantics below — an `05a` failure
 must stop the run, while an evaluator failure must not.
 
 | Position | Agents | When |
 |---|---|---|
 | Preflight | `Baseline Worktree` | Before fan-out. Its failure stops the run. |
+| Test-analysis input | `Test - Analyst` | After preflight and before fan-out. Its three files become read-only inputs to `05f`; failure makes that check NOT RUN but does not stop the other evaluators. |
 | Fan-out (concurrent) | `05b Change Narrator`, `05c Artifact Sweeper`, `05d Consistency Auditor`, `05e Dependency Auditor`, `05f Test Health`, `05h Cleanliness Auditor`, and `04e Diff Security Scan`, plus `04h Unity Reviewer` when `is-unity-project: yes` | **Seven**, or **eight** on a Unity repository, concurrently, after the base is confirmed. |
 | Synthesis | `05g Readiness Synthesizer` | Last. Consumes the others' reports and status records. |
 
 `05a` is not a fan-out evaluator: nothing can run before the baseline exists.
+`Test - Analyst` is not one either: it prepares the isolated evidence consumed
+by `05f`, and the root spawns it directly to keep delegation depth at one.
 `05g` is not one either: it consumes the others' output.
 
 Security is delegated to the existing **`04e Diff Security Scan`**, and Unity
@@ -288,6 +291,20 @@ Use this invocation shape for every evaluator:
 > hangs, or fails, do not claim success: return no report or an incomplete
 > report and state the concrete reason. Return no more than 10 lines: report
 > path/status/outcome or failure reason.`
+
+Before fan-out, spawn `Test - Analyst` directly:
+
+> `[SUBAGENT-MODE] Analyze test coverage gaps, redundancy, and flake candidates
+> for the confirmed diff range <BASE_SHA>..<HEAD_SHA>. Use the read-only
+> baseline worktree at <BASELINE_WORKTREE_PATH>, the HEAD tree, and any supplied
+> coverage evidence. Write the three native planning files under
+> <REPORT_ROOT>/test-analysis/ with task stem test-analysis. Do not modify source
+> or tests and do not spawn agents. Return only the three paths and status.`
+
+Pass those three paths to `05f` as its analyst inputs. If the analyst fails or
+any file is missing, invoke `05f` with the concrete unavailable reason so it
+writes the required NOT RUN report. The failure does not block the other
+fan-out evaluators.
 
 ## Run and Partial-Failure Semantics
 

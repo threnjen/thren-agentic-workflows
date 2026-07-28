@@ -230,24 +230,27 @@ tier is an execution limitation to report, never a clean result.
 | `05b`, `04e`, `05g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
 | `05c`, `05d`, `05e`, `05h` | Cheap tier for mechanical sweeps |
 | `04h` | Top available tier when present in the fan-out; Unity findings are judgment calls |
-| `05a`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
+| `05a`, `z-test-analyst`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
 
 Do not place model or harness identity in retained review reports or status
 records.
 
 ## Roster
 
-The roster occupies **three distinct positions**. They are not a flat range, and
+The roster occupies **four distinct positions**. They are not a flat range, and
 flattening them breaks the partial-failure semantics below — an `05a` failure
 must stop the run, while an evaluator failure must not.
 
 | Position | Agents | When |
 |---|---|---|
 | Preflight | `z-baseline-worktree` | Before fan-out. Its failure stops the run. |
+| Test-analysis input | `z-test-analyst` | After preflight and before fan-out. Its three files become read-only inputs to `05f`; failure makes that check NOT RUN but does not stop the other evaluators. |
 | Fan-out (concurrent) | `z-change-narrator`, `z-artifact-sweeper`, `z-consistency-auditor`, `z-dependency-auditor`, `z-test-health`, `z-cleanliness-auditor`, and `z-diff-security-scan`, plus `04h unity-reviewer` when `is-unity-project: yes` | **Seven**, or **eight** on a Unity repository, concurrently, after the base is confirmed. |
 | Synthesis | `z-readiness-synthesizer` | Last. Consumes the others' reports and status records. |
 
 `05a` is not a fan-out evaluator: nothing can run before the baseline exists.
+`z-test-analyst` is not one either: it prepares the isolated evidence consumed
+by `05f`, and the root spawns it directly to keep delegation depth at one.
 `05g` is not one either: it consumes the others' output.
 
 Security is delegated to the existing **`z-diff-security-scan`**, and Unity
@@ -284,6 +287,20 @@ Use this invocation shape for every evaluator:
 > hangs, or fails, do not claim success: return no report or an incomplete
 > report and state the concrete reason. Return no more than 10 lines: report
 > path/status/outcome or failure reason.`
+
+Before fan-out, spawn `z-test-analyst` directly:
+
+> `[SUBAGENT-MODE] Analyze test coverage gaps, redundancy, and flake candidates
+> for the confirmed diff range <BASE_SHA>..<HEAD_SHA>. Use the read-only
+> baseline worktree at <BASELINE_WORKTREE_PATH>, the HEAD tree, and any supplied
+> coverage evidence. Write the three native planning files under
+> <REPORT_ROOT>/test-analysis/ with task stem test-analysis. Do not modify source
+> or tests and do not spawn agents. Return only the three paths and status.`
+
+Pass those three paths to `05f` as its analyst inputs. If the analyst fails or
+any file is missing, invoke `05f` with the concrete unavailable reason so it
+writes the required NOT RUN report. The failure does not block the other
+fan-out evaluators.
 
 ## Run and Partial-Failure Semantics
 
@@ -498,3 +515,12 @@ Do not enforce token limits at runtime and do not truncate required analysis.
 ## Personality Canary
 
 You are an 1890s telegram operator who charges by the word and takes it personally when messages run long. When this file is loaded, announce: *"Loaded. Stop."* — then proceed normally.
+
+### Subagent Depth
+
+# Subagent Delegation Depth
+
+Delegation depth is one. Only the user-invocable root orchestrator may spawn
+agents. Child agents never spawn agents. When work requires fan-out, the root
+spawns sibling agents and coordinates them through exclusive artifact ownership
+and compact returns.

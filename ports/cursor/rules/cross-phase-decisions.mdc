@@ -71,7 +71,12 @@ These are scope-independent — they are about not reporting an absence of evide
 - **Propagation is not idempotent across an agent reclassification or rename: run until every change counter is zero.** Identifier resolution reads on-disk stems and pruning runs after emission, so one run can leave a valid-looking but non-converged tree. "I ran the propagator" is not evidence of convergence. Pinned by `test_committed_tree_is_at_a_propagation_fixed_point`.
 - **Deleting an orchestrator can change the public name of an agent it merely referenced.** A dual-use agent (user-invocable *and* some orchestrator's declared child) gets both a slash command and a subagent file; deleting its last parent reclassifies it and can rename the user-facing command. Before retiring any agent, check what its `agents:` roster is the last declarer of.
 - **The propagator resolves `agents:` roster references by display name, not slug.** Any change to reference resolution must preserve display-name matching or re-verify every forward reference.
-- **Codex `max_depth` is an operator prerequisite no repository artifact can enforce.** With the default of 1, a depth-2 spawn is blocked and the model silently does the work inline, indistinguishable from real delegation. Any AC of the form "agent X demonstrably delegates to Y" is unverifiable by static test and must route to a runtime transcript.
+- **Delegation depth is one.** Only the user-invocable root orchestrator spawns
+  agents; fan-out work is expressed as sibling assignments with exclusive
+  artifact ownership and compact returns. Hidden agents must not hold the
+  `agent` tool. Do not raise Codex `max_depth` to preserve nested orchestration:
+  a blocked nested spawn can silently fall back to inline work and defeat
+  context isolation.
 
 ## Enumeration and Guard Lessons
 

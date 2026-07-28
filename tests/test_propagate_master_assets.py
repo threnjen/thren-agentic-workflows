@@ -42,13 +42,13 @@ import _propagate_env as env
 #     Listing it is the honest outcome: visible and justified beats absent.
 PR_REVIEW_EVALUATOR_TOOLS = {
     "05a-baseline-worktree": ["read", "search", "execute"],
-    "05b-change-narrator": ["agent", "read", "search", "edit"],
+    "05b-change-narrator": ["read", "search", "edit"],
     # execute granted for one purpose: read-only git fallback when the
     # orchestrator's materialized range.diff/changed-files.txt are absent.
     "05c-artifact-sweeper": ["read", "search", "edit", "execute"],
     "05d-consistency-auditor": ["read", "search", "edit", "execute"],
     "05e-dependency-auditor": ["read", "search", "edit"],
-    "05f-test-health": ["agent", "read", "search", "edit"],
+    "05f-test-health": ["read", "search", "edit"],
     # execute granted for one purpose: read-only git fallback when the
     # orchestrator's materialized range.diff/changed-files.txt are absent.
     "05h-cleanliness-auditor": ["read", "search", "edit", "execute"],
@@ -810,6 +810,10 @@ class OrphanPruningTests(unittest.TestCase):
         # one file to claude agents (40 -> 41) and opencode/codex agents
         # (55 -> 56); claude commands unchanged (not user-invocable). Counts
         # recounted from disk.
+        # `Auditor - Remediation Reconciler` (hidden sibling of the subsystem
+        # researchers) added one file to every agent surface. After the later
+        # retirements below, final counts are claude agents 40 and
+        # opencode/codex agents 52.
         # `Security Scan` was folded into `Auditor - Security`, a hidden
         # sibling of the Code/Infra/Refactor auditors: the agent surfaces are
         # unchanged (its spawnable file, held because the Engagement
@@ -849,10 +853,10 @@ class OrphanPruningTests(unittest.TestCase):
         # Stripping `04h-` yields the pre-existing stem, so stickiness held and
         # it still emits as `unity-reviewer.md`, not `z-unity-reviewer.md`.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 39),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 40),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 14),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 51),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 51),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 52),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 52),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:
