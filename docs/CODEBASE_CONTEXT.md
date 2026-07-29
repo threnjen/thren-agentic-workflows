@@ -12,7 +12,7 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 53 source agent definitions in `source_of_truth/agents/` (49 `*.agent.md` + `auditor.md` + `delta-auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 38 hidden subagents (`user-invocable: false`) and 15 user-invocable.
+- 54 source agent definitions in `source_of_truth/agents/` (50 `*.agent.md` + `auditor.md` + `delta-auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 39 hidden subagents (`user-invocable: false`) and 15 user-invocable.
 - 34 skills in `source_of_truth/skills/`.
 - 16 instructions in `source_of_truth/instructions/`.
 - 4 learnings in `source_of_truth/learnings/`.
@@ -25,7 +25,7 @@ AGENTS.md                                  # code-review-graph MCP workflow guid
 INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
-    *.agent.md                             # 49, plus the four plain .md agents below (53 total definitions)
+    *.agent.md                             # 50, plus the four plain .md agents below (54 total definitions)
     auditor.md                             # plain .md agent (single-target audit orchestrator)
     delta-auditor.md                       # plain .md agent (comparative audit orchestrator)
     docs-writer.md                         # plain .md agent (loaded by frontmatter)
@@ -114,9 +114,9 @@ benchmarks/ packages/ tests/
   `ports/claude/agents` for that reason.
 - Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
   plus a subagent file only if an orchestrator names it as a child (dual-use). So
-  `ports/claude/agents` = 38 hidden + 2 dual-use (docs-writer, web-researcher)
+  `ports/claude/agents` = 39 hidden + 2 dual-use (docs-writer, web-researcher)
   = 40, while `ports/claude/commands` = 15.
-- Codex and OpenCode emit all 53 agents; only Claude and Cursor split commands out.
+- Codex and OpenCode emit all 54 agents; only Claude and Cursor split commands out.
 - `ports/cursor/rules` = the 4 learnings plus any instruction whose `applyTo` globs are
   not all agent-targeted. Agent-targeted instructions are excluded because they ship
   inside the agents; the exclusion test in `propagate_cursor_rules_once` matches patterns

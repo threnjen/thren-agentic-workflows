@@ -176,6 +176,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **Auditor - Refactor** | Audit orchestrator | Audit codebase structure, module organization, and architecture |
 | **Auditor - Security** | Audit orchestrator, Client Deliverable | Full-codebase security audit across secrets, dependencies, attack surface, auth, data protection, runtime safety, infra/CI-CD, and observability |
 | **Auditor - Delta** | Audit - Delta orchestrator | Compare two audit reports of the same product and produce a reconciled delta document plus an open-items queue |
+| **Auditor - Attribution** | Audit - Delta orchestrator | Probe both source trees to settle whether each provisional delta finding is a regression or pre-existing |
 | **Auditor - Remediation Research** | Audit orchestrator | Research exactly one assigned open-items subsystem and write its exclusive fix-research report |
 | **Auditor - Remediation Reconciler** | Audit orchestrator | Validate researcher corrections and reconcile the current report, summary, full delta, and queue |
 | **Instructions - Writer** | Instructions Manager | Draft scoped `.instructions.md` files for a repository |
@@ -292,7 +293,9 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **Auditor - Security** *(subagent of Audit orchestrator and Client Deliverable)* — Audits every in-scope file against ten fixed security categories: secrets, dependencies and supply chain, attack surface and injection, authentication and authorization, data protection and cryptography, API and input boundaries, filesystem/process/runtime safety, infrastructure and CI/CD, observability, and cross-cutting security architecture. Redacts every secret value, records each category as assessed-clean or not-assessed so the two are never confused, and produces a structured report plus executive summary. (Distinct from the hidden **04e Diff Security Scan**, which only covers a single pass's diff.)
 
-**Auditor - Delta** *(subagent of Audit - Delta orchestrator)* — Compares two completed audit reports of the same product — a baseline snapshot and a current one — and produces a delta document classifying every finding as resolved, improved, unchanged, transformed, unverified, or new, with the counts reconciled against both reports, plus a standalone open-items queue holding only the new and transformed findings. Raises no findings of its own.
+**Auditor - Delta** *(subagent of Audit - Delta orchestrator)* — Compares two completed audit reports of the same product — a baseline snapshot and a current one — and produces a delta document classifying every finding as resolved, improved, unchanged, transformed, or unverified, with the counts reconciled against both reports, plus a standalone open-items queue. Current-side findings with no baseline counterpart are marked `PROVISIONAL` and handed off; it attributes nothing itself and raises no findings of its own.
+
+**Auditor - Attribution** *(subagent of Audit - Delta orchestrator)* — Runs after a delta closes its arithmetic. For each provisional finding it searches the baseline tree by symbol and signature and settles the item as NEW (the newer work introduced the code), PRE-EXISTING (position materially identical at baseline), or UNVERIFIED-ORIGIN (no baseline tree). It rewrites only the attribution fields of the delta and queue, and proves the unattributed total is unchanged. This split is what keeps a reporting difference between two auditors from being reported as a regression.
 
 **Auditor - Remediation Research** *(subagent of Audit orchestrator)* — Receives one subsystem assignment and writes one exclusive detailed report after validating every assigned item as real, true, current, and actionable. Returns correction candidates compactly; it does not edit shared audit artifacts or production code.
 
@@ -456,6 +459,10 @@ dev/[audit-name]/
 ├── [audit-name]-delta-<baseline-label>-to-<current-label>-fix-research.md
 └── [audit-name]-delta-<baseline-label>-to-<current-label>-fix-research-<subsystem>.md
 ```
+
+After the delta, the root spawns **Auditor - Attribution** batches to settle
+every provisional finding against both trees; no regression count exists until
+they return. Only then does fix research become available.
 
 The root Audit orchestrator writes the fix-research index first as an
 unvalidated DRAFT, grouping the queue and dependency closure by subsystem. It

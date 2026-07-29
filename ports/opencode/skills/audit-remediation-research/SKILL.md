@@ -19,14 +19,16 @@ artifacts. No child spawns another agent.
 
 The contract runs against an open-items queue from either source:
 
-- **Comparative** — the queue came from a delta. Items carry NEW or TRANSFORMED,
-  a dependency closure exists, and a baseline snapshot is available.
+- **Comparative** — the queue came from a delta. Items carry NEW, TRANSFORMED, or
+  PRE-EXISTING, a dependency closure exists, and a baseline snapshot is available.
+  A queue still carrying `PROVISIONAL` items has not had its attribution settled;
+  stop and report that rather than researching unattributed findings.
 - **Single-target** — the queue was derived from one audit report. Every item
   carries `OPEN`, there is no delta, no baseline, and no closure.
 
 Mode changes which inputs exist, not the stages. Wherever this contract names
 the full delta, the baseline report/summary, the baseline snapshot, closure
-identifiers, or NEW/TRANSFORMED attribution, those are **comparative-only**: in
+identifiers, or disposition attribution, those are **comparative-only**: in
 single-target mode they are supplied as `not available`, and every instruction
 conditioned on them is skipped rather than approximated. Never infer a baseline.
 
@@ -39,9 +41,11 @@ The current snapshot is a ref plus resolved SHA, or a path explicitly recorded
 as a dirty tree. Stop if an artifact or identity needed for safe validation is
 missing for the declared mode.
 
-Use queue ordinals (`1`, `2`, `D1`) as canonical research identifiers; audit
-finding IDs are provenance. In comparative mode NEW/TRANSFORMED and
-dependency-closure attribution remain separate throughout.
+Use queue ordinals (`1`, `2`, `P1`, `D1`) as canonical research identifiers;
+audit finding IDs are provenance. In comparative mode the three attributions —
+NEW/TRANSFORMED, PRE-EXISTING, and dependency closure — remain separate
+throughout. Never present a PRE-EXISTING item as something the newer work
+introduced, and never sum it into a regression count.
 
 ## Stage 0 — Consensus condensation (conditional)
 
@@ -60,10 +64,10 @@ any work.
 
 Condensation rules:
 
-- Include every item classified NEW or TRANSFORMED (comparative) or OPEN
-  (single-target). Include UNCHANGED items only when a NEW or TRANSFORMED item
-  cannot be fixed without them; list those as ordinary fix items, not as a
-  separate class.
+- Include every item classified NEW, TRANSFORMED, or PRE-EXISTING (comparative)
+  or OPEN (single-target), preserving each item's own attribution. Include
+  UNCHANGED items only when a queued item cannot be fixed without them; list
+  those as ordinary fix items, not as a separate class.
 - Where samples disagree, research the disputed claim against the current
   snapshot and rule it valid or invalid. Never average, vote, or defer.
 - Correct false positives and stale claims in the originating audit reports,
@@ -156,7 +160,7 @@ researched counts, constraints, and shared root causes. Write valid queue items
 in severity order and closure entries under `## Dependency closure`:
 
 ```markdown
-### <N>. [NEW | TRANSFORMED | CLOSURE | OPEN] <title>
+### <N>. [NEW | TRANSFORMED | PRE-EXISTING | CLOSURE | OPEN] <title>
 
 - **Location:** `path:line`
 - **Severity:** <level> **Effort:** <trivial | small | medium | large>
@@ -232,9 +236,9 @@ return to the draft index. Replace the draft body with:
 
 ## 1. Scope and truth gate
 
-<!-- inputs; final counts — comparative: NEW/TRANSFORMED and closure separately,
-plus excluded Critical/High findings; single-target: queued and below-threshold
-counts -->
+<!-- inputs; final counts — comparative: NEW/TRANSFORMED, PRE-EXISTING, and
+closure each counted separately, plus excluded Critical/High findings;
+single-target: queued and below-threshold counts -->
 
 ## 2. Subsystem reports
 
@@ -270,5 +274,6 @@ PASS/FAIL, and — comparative mode — the excluded Critical/High findings.
   the reconciler writes shared audit artifacts.
 - Every FINAL artifact contains only real, true, current, actionable findings.
 - Report, summary, queue, subsystem reports, index, and any delta reconcile.
-- Comparative mode: NEW/TRANSFORMED and closure attribution remain separate.
+- Comparative mode: NEW/TRANSFORMED, PRE-EXISTING, and closure attribution
+  remain separate; no pre-existing item is reported as a regression.
 - No production source or configuration file changed.

@@ -863,11 +863,16 @@ class OrphanPruningTests(unittest.TestCase):
         # dual-use: claude commands 15 -> 14, claude agents unchanged at 39.
         # Stripping `04h-` yields the pre-existing stem, so stickiness held and
         # it still emits as `unity-reviewer.md`, not `z-unity-reviewer.md`.
+        # `Auditor - Attribution` (hidden sibling of `Auditor - Delta`, which
+        # probes both trees to settle whether each provisional finding pre-dates
+        # the newer work) added one file to claude agents (40 -> 41) and
+        # opencode/codex agents (53 -> 54); claude commands unchanged (not
+        # user-invocable). Counts recounted from disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 40),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 15),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 53),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 53),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 54),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 54),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:
