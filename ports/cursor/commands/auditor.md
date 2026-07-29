@@ -94,7 +94,9 @@ Resolve the current snapshot to a ref plus SHA, or record it explicitly as a dir
 
 #### Run the research
 
-Load `audit-remediation-research` and execute its four stages in **single-target mode**: no delta, no baseline report or summary, no baseline root, no closure identifiers. Supply each as `not available`.
+If `dev/[audit-name]/` holds more than one independent audit sample of this target — blind runs by different models or sessions — say so and run the skill's Stage 0 consensus condensation first. Pass any exclusion categories the user names; default to none.
+
+Load `audit-remediation-research` and execute its stages in **single-target mode**: no delta, no baseline report or summary, no baseline root, no closure identifiers. Supply each as `not available`.
 
 You are the root orchestrator: every researcher and reconciler is your direct child, and none may spawn another agent.
 

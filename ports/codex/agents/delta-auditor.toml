@@ -138,7 +138,9 @@ The dependency closure means a queued item is never handed over without the work
 
 If the user wants a **wider** scope, offer either to have the research agent additionally cover named findings from the full delta's Residual Risk, or to re-run the delta agent with a wider queue selection. If they want a **narrower** one — regressions only — honor it, but say that some queued items will come back unfinishable without their closure. Never silently change the scope yourself.
 
-Load `audit-remediation-research` and execute its four stages in **comparative mode** — the delta, baseline report and summary, baseline root, and closure identifiers are all available and supplied. You are the root orchestrator: every researcher and reconciler is your direct child, and none may spawn another agent.
+If the delta's output directory holds more than one independent delta sample of this pair — blind runs by different models or sessions — say so and run the skill's Stage 0 consensus condensation first. Pass any exclusion categories the user names; default to none.
+
+Load `audit-remediation-research` and execute its stages in **comparative mode** — the delta, baseline report and summary, baseline root, and closure identifiers are all available and supplied. You are the root orchestrator: every researcher and reconciler is your direct child, and none may spawn another agent.
 
 Per spawn, the researcher receives its subsystem slug, its exact assigned queue and closure IDs, its exclusive report path, the index, queue, and delta paths, both sides' report and summary paths, and both snapshot refs/SHAs and roots marked read-only. The reconciler receives the same inputs plus every subsystem report and packet, and writes only the current report, current summary, full delta, and queue.
 

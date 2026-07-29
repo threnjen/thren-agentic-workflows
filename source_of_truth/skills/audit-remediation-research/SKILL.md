@@ -9,7 +9,8 @@ description:
 
 # Audit Remediation Research
 
-Run four stages. The root orchestrator prepares and finalizes the index; one
+Run Stages 1–4, preceded by Stage 0 when the output directory holds more than
+one audit sample. The root orchestrator prepares and finalizes the index; one
 child researches each subsystem; one final sibling reconciles shared audit
 artifacts. No child spawns another agent.
 
@@ -40,6 +41,42 @@ missing for the declared mode.
 Use queue ordinals (`1`, `2`, `D1`) as canonical research identifiers; audit
 finding IDs are provenance. In comparative mode NEW/TRANSFORMED and
 dependency-closure attribution remain separate throughout.
+
+## Stage 0 — Consensus condensation (conditional)
+
+Runs only when the queue's directory holds more than one independent audit
+sample of the same target — blind runs by different models or sessions, each
+with its own report, summary, or delta set. Count distinct sample sets; never
+infer one from filenames alone. With a single set, skip this stage entirely.
+
+With multiple sets, stop and ask the user whether to condense them into one
+consensus queue before research. Never condense silently and never proceed on
+multiple queues silently. If they decline, ask which single queue is canonical.
+
+If they accept, restate a preliminary plan — samples found, disagreements to
+research, exclusions in force, output path — and get explicit approval before
+any work.
+
+Condensation rules:
+
+- Include every item classified NEW or TRANSFORMED (comparative) or OPEN
+  (single-target). Include UNCHANGED items only when a NEW or TRANSFORMED item
+  cannot be fixed without them; list those as ordinary fix items, not as a
+  separate class.
+- Where samples disagree, research the disputed claim against the current
+  snapshot and rule it valid or invalid. Never average, vote, or defer.
+- Correct false positives and stale claims in the originating audit reports,
+  present-tense, with no changelog framing.
+- The caller supplies the exclusion list; default to none. Excluded items appear
+  only in a trailing Exclusions appendix, never in the body.
+
+The consensus queue uses the same structure as a single-sample queue, with the
+disposition vocabulary of the declared mode. It reads as present-tense ground
+truth: no sample, model, or report-difference commentary anywhere.
+
+Write it beside the samples as `<queue-stem>-consensus-open-items.md`. Retain
+every source sample unmodified except for factual corrections; the consensus
+queue is Stage 1's input and does not replace them.
 
 ## Stage 1 — Prepare the draft index
 
