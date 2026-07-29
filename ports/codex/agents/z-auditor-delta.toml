@@ -104,14 +104,15 @@ partial input.
    `Current = Carried at band + Entered band + unattributed`. A band with zero
    continuity, or a small net over large churn, is called out in words.
 8. Write the full delta per the `audit-delta-report` skill's structure.
-9. Write the open-items queue per that skill's section 5 — after the full
-   delta's arithmetic closes, derived from it. TRANSFORMED items are placed;
-   provisional items go in their own section for the attribution agent to file.
-   Every entry must be actionable without the full delta,
-   and its header must state what it excludes and name every excluded Critical
-   and High. The exclusion is
-   deliberate but consequential: an UNCHANGED Critical is still a Critical, and
-   the queue's reader will see nothing else.
+9. Write the open-items queue per that skill's section 5 — after the full delta's
+   arithmetic closes, derived from it. TRANSFORMED items are placed; provisional
+   items go in their own section for the attribution agent to file. Walk the
+   dependency closure over TRANSFORMED plus every provisional item, recording
+   dependencies among provisional items too, so the attribution agent can prune it
+   without re-reasoning. Every entry must be actionable without the full delta,
+   and its header must state what it excludes and name every excluded Critical and
+   High. The exclusion is deliberate but consequential: an UNCHANGED Critical is
+   still a Critical, and the queue's reader will see nothing else.
 10. Run that skill's closing checklist before returning.
 
 ## Return Contract

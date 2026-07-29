@@ -199,8 +199,13 @@ outcome, and owns exactly these fields — nothing else in either document:
 - the `NEW`, `PRE-EXISTING`, and `UNVERIFIED-ORIGIN` rows of the Disposition
   Rollup, the `new / pre-existing` split in the dimension table, and the
   regression count in the Executive Summary;
-- sections 10 and 10a; and in the queue, filing each provisional entry into
-  either the severity-ordered NEW list or the `P`-numbered section;
+- sections 10 and 10a;
+- in the queue: filing each `NEW` entry into the severity-ordered list, moving
+  each `PRE-EXISTING` and `UNVERIFIED-ORIGIN` entry out of the work list and into
+  the header's exclusion counts, and pruning the closure — a closure item whose
+  every dependent settled PRE-EXISTING leaves with them, and an item a surviving
+  queued entry names in `Blocked by` becomes a `D`-numbered closure entry instead
+  of leaving;
 - the calibration guard's verdict.
 
 The bucket's **total is invariant** under probing — only its internal split
@@ -404,16 +409,21 @@ delta, both snapshot reports and summaries, and the available source trees.
 Write it to stand alone anyway: the queue remains the scoped work list, while
 the other inputs exist to validate it and correct upstream errors.
 
-**Selection.** NEW and TRANSFORMED, plus PRE-EXISTING and UNVERIFIED-ORIGIN in
-their own separate section, plus the **dependency closure** defined below.
-RESOLVED, IMPROVED, UNCHANGED, and UNVERIFIED are otherwise excluded by
-design: this queue is scoped to what the current snapshot introduced or carried
-across in a new shape, not to everything still open. Residual Risk in the full
-delta remains the complete picture, and the two documents disagree on purpose.
+**Selection.** NEW and TRANSFORMED, plus the **dependency closure** defined
+below. RESOLVED, IMPROVED, UNCHANGED, UNVERIFIED, PRE-EXISTING, and
+UNVERIFIED-ORIGIN are excluded by design: this queue is scoped to what the
+current snapshot introduced or carried across in a new shape, not to everything
+still open. Residual Risk in the full delta remains the complete picture, and
+the two documents disagree on purpose.
 
-**PRE-EXISTING items are real work, filed under the right cause.** They belong
-in the queue — but they are not regressions. Number them `P<N>` in their own
-section; never renumber them into the NEW/TRANSFORMED list.
+**A pre-existing defect is not queued work.** `PRE-EXISTING` and
+`UNVERIFIED-ORIGIN` are open defects the newer work did not cause — the same
+class as `UNCHANGED`, differing only in whether the baseline auditor happened to
+raise them. Queueing them spends the remediation research budget on code nobody
+touched, and excluding UNCHANGED while including them is incoherent. They are
+reported in the full delta's section 10a and counted among the queue header's
+exclusions. They enter the queue only through the closure, and only as a named
+dependency.
 
 **The dependency closure.** Scoping by attribution and scoping by closability
 are different things, and a queue that only does the first hands the next agent
@@ -425,8 +435,8 @@ else must change for it to close. Any **still-open** excluded finding that
 answer names joins the queue in its own section. Rules:
 
 - **Eligible pool: open findings only** — UNCHANGED, UNVERIFIED, and IMPROVED
-  findings whose residue is still open. A RESOLVED finding can never be a
-  dependency; it is already closed.
+  findings whose residue is still open, plus PRE-EXISTING and UNVERIFIED-ORIGIN.
+  A RESOLVED finding can never be a dependency; it is already closed.
 - **Entry is by named dependent.** A finding joins only because a specific
   queued item needs it. Record which item(s) pulled it in. Nothing enters the
   closure because it is severe, adjacent, or obviously worth doing — severity is
@@ -448,6 +458,11 @@ answer names joins the queue in its own section. Rules:
   the closure's own count alongside it, never folded into it.
 - **An empty closure is a result.** If every queued item is independently
   closable, say so explicitly. Silence reads as "not checked."
+- **Walked before attribution, pruned after.** Which provisional items are `NEW`
+  is not known yet, so the delta agent walks the closure over TRANSFORMED plus
+  every provisional item — a superset of the final closure — recording
+  dependencies among provisional items too. The attribution agent prunes it to
+  the settled set per section 2D.
 
 Because the exclusion is deliberate and consequential, the queue must say so in
 its own header — an UNCHANGED Critical is still a Critical, and a reader who
@@ -472,13 +487,12 @@ Source: `<full delta filename>`. Current snapshot: `<label>`, audited at
 `<path or ref@sha>`, <N> findings.
 
 Scope: the <N> findings classified NEW or TRANSFORMED — the defects this
-snapshot is answerable for — plus <N> PRE-EXISTING findings the baseline auditor
-did not raise, plus <N> excluded findings pulled in as their dependency closure.
-**Not a complete list of open defects.** Excluded by design: <N> RESOLVED, <N>
-IMPROVED, <N> UNCHANGED, <N>
-UNVERIFIED. After the closure, the still-excluded set contains <N> Critical and
-<N> High findings that remain open — see the full delta's Residual Risk section:
-<one line naming each still-excluded Critical and High>.
+snapshot is answerable for — plus <N> excluded findings pulled in as their
+dependency closure. **Not a complete list of open defects.** Excluded by design:
+<N> RESOLVED, <N> IMPROVED, <N> UNCHANGED, <N> UNVERIFIED, <N> PRE-EXISTING, <N>
+UNVERIFIED-ORIGIN. After the closure, the still-excluded set contains <N>
+Critical and <N> High findings that remain open — see the full delta's Residual
+Risk section: <one line naming each still-excluded Critical and High>.
 
 ## <Severity> — <N> items
 
@@ -496,21 +510,6 @@ UNVERIFIED. After the closure, the still-excluded set contains <N> Critical and
   code — that it is on a UI thread, that a caller depends on the current
   shape, that a test asserts the present behavior — or "none recorded">
 - **Blocked by:** <closure item number(s) this cannot close without, or "none">
-
-## Pre-existing, newly reported — <N> items
-
-Open defects whose code position is identical in the baseline. **The newer work
-did not introduce these** — do not look for a regression. Worth fixing on their
-own merit.
-
-### P<N>. [PRE-EXISTING | UNVERIFIED-ORIGIN] <title>
-
-Same fields as a queued item above, with `Origin` replaced by:
-
-- **Attribution:** not caused by the newer work — <the `Origin` value>
-- **Baseline position:** `path:line`, materially identical (or "no baseline tree
-  available" for UNVERIFIED-ORIGIN)
-- **Evidence:** the probe's paired excerpts, or the failed search
 
 ## Dependency closure — <N> items
 
@@ -532,8 +531,8 @@ enabling work, not defects this snapshot introduced. <N> closure passes.
 ```
 
 Order every section by severity, most severe first, then by dimension. Number
-pre-existing items with a `P` prefix and the closure with a `D` prefix so the
-three sets can never be conflated by an item number alone.
+closure items with a `D` prefix so the two sets can never be conflated by an item
+number alone.
 
 **Rules.**
 
@@ -547,8 +546,8 @@ three sets can never be conflated by an item number alone.
   what that agent considers.
 - **Counts must agree with the full delta.** The queue's NEW + TRANSFORMED item
   count equals `NEW + TRANSFORMED` from the Disposition Rollup. If it does not,
-  the delta is wrong, not the queue. Pre-existing and closure items are counted
-  and reported separately.
+  the delta is wrong, not the queue. Closure items are counted and reported
+  separately.
 - **Every closure item traces back.** Each one names at least one queued item
   that pulled it in, and every `Blocked by` reference above resolves to a
   closure item that exists. A closure item nothing depends on is scope creep —
@@ -618,8 +617,9 @@ every other item is the delta agent's.
 - [ ] The open-items queue exists, its NEW + TRANSFORMED section holds exactly
       the NEW + TRANSFORMED count from the Disposition Rollup, and every entry
       is actionable without the full delta.
-- [ ] Pre-existing items are in their own `P`-numbered section, each leading with
-      its attribution line, and none appear in the NEW/TRANSFORMED list.
+- [ ] No PRE-EXISTING or UNVERIFIED-ORIGIN finding is queued as work. Each is
+      counted among the header's exclusions, and appears in the queue only as a
+      `D`-numbered closure item a queued entry names in `Blocked by`.
 - [ ] The dependency closure was walked to a fixed point. Every queued item
       states what blocks it or `none`; every closure item names the queued
       item(s) that pulled it in and whether the block is total or partial; every

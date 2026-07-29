@@ -148,7 +148,8 @@ After they return:
 
 1. Confirm the splits sum to the delta's unattributed total. If they do not, an item was dropped or double-assigned — resolve it before presenting anything.
 2. Verify no provisional marking survives in either document.
-3. Present, per type: the regression count (`NEW`) **alone**, the pre-existing count separately, and whether any batch's calibration guard triggered — if it did, the current side's growth is mostly reporting, not code, and the headline must say so.
+3. Verify the queue's work list holds only NEW and TRANSFORMED items. A pre-existing finding left in it will be researched as though the newer work caused it, which wastes the research budget on code nobody touched — send that batch back rather than proceeding.
+4. Present, per type: the regression count (`NEW`) **alone**, the pre-existing count separately, and whether any batch's calibration guard triggered — if it did, the current side's growth is mostly reporting, not code, and the headline must say so.
 
 ### Phase 7: Fix Research for the Open-Items Queue
 
@@ -156,9 +157,9 @@ Runs only after a delta and its attribution phase, and only if the user confirms
 
 > **Would you like researched fix proposals for the open-items queue?**
 >
-> I will prepare a draft research index, then run one isolated research subagent per subsystem in the [CODE / INFRA / REFACTOR / SECURITY] delta's open-items queue ([N] findings: [X] NEW, [Y] TRANSFORMED, plus [P] pre-existing and [Z] dependency-closure items). A final sibling reconciles corrections across the audit chain before I mark the index FINAL. The work proposes fixes only; no production code is written.
+> I will prepare a draft research index, then run one isolated research subagent per subsystem in the [CODE / INFRA / REFACTOR / SECURITY] delta's open-items queue ([N] findings: [X] NEW, [Y] TRANSFORMED, plus [Z] dependency-closure items). A final sibling reconciles corrections across the audit chain before I mark the index FINAL. The work proposes fixes only; no production code is written.
 >
-> **Scope note:** [X] NEW and [Y] TRANSFORMED are what the newer snapshot introduced or carried across in a new shape. The [P] pre-existing items are open defects at positions identical in the baseline — worth fixing, but **not regressions**, so do not read them as damage this work caused. Plus the pre-existing findings queued items cannot be fixed without. It excludes everything else still open — including [N] Critical and [N] High findings unchanged from the baseline that nothing in the queue depends on: [name them].
+> **Scope note:** [X] NEW and [Y] TRANSFORMED are what the newer snapshot introduced or carried across in a new shape, plus the [Z] excluded findings those cannot be fixed without. Everything else still open is excluded — including [P] pre-existing findings the baseline auditor did not raise, and [N] Critical and [N] High findings unchanged from the baseline that nothing in the queue depends on: [name them]. The pre-existing set is real work, but it is not this work's damage and is not what this research covers; ask for a single-target audit of the current side if you want it queued.
 
 The dependency closure means a queued item is never handed over without the work it needs to actually close. It does **not** mean the research covers everything open — severity alone never pulls a finding into the closure, and the most severe open finding is frequently one that blocks nothing. So quote the still-excluded Critical and High findings from the delta agent's return summary verbatim; a user approving this step should know what it does not cover. If the closure is empty, say so — "every queued item is independently closable" is a real result, otherwise indistinguishable from the closure not having been computed.
 

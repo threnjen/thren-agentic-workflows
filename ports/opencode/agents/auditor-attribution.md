@@ -53,14 +53,21 @@ If the baseline root is unavailable, every assigned item settles as
 - **Never adjust an outcome to balance the split**, and never drop an assigned
   item because its outcome is inconvenient. A single `NEW` among fifty
   pre-existing findings is a real result, and so is the reverse.
+- **A pre-existing defect is not queued work.** Leaving one in the work list
+  spends the next agent's research budget on code nobody touched. It stays only as
+  a closure dependency of a surviving queued item.
 
 ## Process
 
 1. Read your assigned items from the delta's provisional handoff section.
 2. Probe each construct in the baseline tree per section 2A. Record the outcome
    with paired excerpts, or the failed search.
-3. Replace each provisional marking in the delta and the queue with its settled
-   disposition and the fields section 2D lists.
+3. Replace each provisional marking in the delta with its settled disposition and
+   the fields section 2D lists.
+3a. Re-file the queue: `NEW` joins the severity-ordered work list; `PRE-EXISTING`
+   and `UNVERIFIED-ORIGIN` leave it for the header's exclusion counts, staying
+   only where a surviving queued item names them in `Blocked by` — then as a
+   `D`-numbered closure item. Prune closure items whose every dependent left.
 4. Update the derived counts section 2D assigns you, and evaluate the
    calibration guard (section 2C).
 5. Verify the invariant: your `NEW` + `PRE-EXISTING` + `UNVERIFIED-ORIGIN` must
@@ -75,6 +82,7 @@ Return a compact summary only — never bulk document content:
 
 - Assigned count and the settled split: NEW / PRE-EXISTING / UNVERIFIED-ORIGIN.
 - Confirmation that the unattributed total is unchanged.
+- The queue's resulting work-list count, and the closure items added and pruned.
 - Whether the calibration guard triggered.
 - Each `NEW` in one line: the construct, and the search that proved it absent.
 - Any item you could not settle, and the evidence that would settle it.
