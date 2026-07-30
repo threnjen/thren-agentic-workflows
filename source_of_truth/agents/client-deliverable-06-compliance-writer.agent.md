@@ -2,7 +2,6 @@
 name: Client Deliverable - Compliance Writer
 description: "Per engagement, walks every SOW acceptance criterion against the retained artifacts and writes the SOW compliance walkthrough and the verification summary (the contractual deliverable, with the functional-preservation statement). Also writes the internal compliance-basis report: per-criterion evidence map, verification standards, and NOT VERIFIED reasons."
 tools: [read, search, edit]
-
 user-invocable: false
 ---
 
@@ -13,14 +12,9 @@ retained artifacts, per-side analysis-branch evidence paths, exact QA
 check-coverage metadata, Stage E QA/scope classifications, and inherited
 boundaries.
 
-**Evidence base**: the retained workspace reports **plus**, per side, the
-docs-writer set, code graph, and QA package (QA_AUTOMATED with run
-results, QA_USER) at the passed analysis-branch checkout paths **inside
-the client repositories** — the workspace is not the whole evidence
-universe. Workspace paths, audience
-banners, and empty-output discipline follow the `engagement-workspace`
-skill; client-facing documents are written in the `engagement-client-voice`
-skill's voice.
+The evidence base and where it lives are defined by the
+`engagement-evidence-standard` skill. Load `engagement-workspace` and `engagement-client-voice`; both
+govern this stage's outputs.
 
 Load the `engagement-evidence-standard` skill and classify each criterion and
 primary workflow by it, inspecting the exact QA check mapping rather than the

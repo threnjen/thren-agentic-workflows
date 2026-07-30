@@ -26,6 +26,8 @@ Invocation prompt:
 
 > "The user wants to create instruction files. [Paste user's message verbatim.] Load the `ai-instruction-framework` skill for the taxonomy, Rule Quality Standard, and anti-patterns. The full workflow is in your agent definition — follow it exactly."
 
+The writer cannot talk to the user. Spawn it twice: the first run stops after Step 1 and returns its discovered-domain list — relay that to the user, get scope confirmation, then re-spawn with the confirmed domains and instruct it to proceed from Step 2. Writer outputs land in `.github/instructions/`.
+
 After the writer completes, suggest running the evaluator:
 
 > "Your instruction files have been written. To verify they are effective — and not accidentally Knowledge-heavy — you can run `@Instructions Manager` and ask it to evaluate the new files."
@@ -39,7 +41,9 @@ After the writer completes, suggest running the evaluator:
 
 Invocation prompt:
 
-> "The user wants to evaluate instruction changes. [Paste user's message verbatim.] The file path(s) to evaluate are: [list paths]. Read each from disk as the AFTER version. Resolve BEFORE automatically: check for uncommitted changes first (git diff HEAD), then last committed state (HEAD~1), then treat as new if untracked. Load the `ai-instruction-framework` skill for the taxonomy, Rule Quality Standard, and anti-patterns. The full workflow is in your agent definition — follow it exactly."
+> "The user wants to evaluate instruction changes. [Paste user's message verbatim.] The file path(s) to evaluate are: [list paths]. Resolve BEFORE/AFTER yourself per your Required Inputs section. Load the `ai-instruction-framework` skill for the taxonomy, Rule Quality Standard, and anti-patterns. The full workflow is in your agent definition — follow it exactly."
+
+The evaluator writes its verdict to `dev/instructions-eval/<filename>-verdict.md` and its test tasks to `dev/instructions-eval/<filename>-tasks.md`. Relay the verdict and top recommendations to the user.
 
 If the user has not specified which file(s) to evaluate, ask before routing:
 

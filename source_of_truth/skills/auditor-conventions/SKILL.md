@@ -95,8 +95,8 @@ gets its own independent audit run and its own report.
 
 ## Unity Detection
 
-Before discovery, test the target repository for Unity using the canonical predicate.
-The repository is a Unity project if **any** of these holds: `Assets/` and `ProjectSettings/` both exist at the repository root; both exist inside one nested project directory (e.g. `game/Assets/` and `game/ProjectSettings/`); `.github/copilot-instructions.md` identifies the project as Unity; or the plan or phase document under work targets Unity. `*.asmdef` files corroborate but are never required.
+Before discovery, test the target repository against the canonical Unity detection predicate
+in the auto-loaded `tech-stack-detection` instruction.
 
 On a match, load both `unity-development` and
 `unity-review-knowledge` before proceeding, then apply the Unity guidance your

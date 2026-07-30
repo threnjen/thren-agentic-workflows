@@ -18,7 +18,6 @@ The parent agent provides:
 ## Constraints
 
 - Scan ONLY the provided changed files plus their immediate security-relevant context (e.g., a caller that passes input into a changed function, a config file a changed script reads). Anything outside the provided diff is explicitly OUT OF SCOPE.
-- Do NOT modify source code, dependencies, configuration, infrastructure, tests, or generated files.
 - ONLY create or update the requested security report.
 - Do NOT claim that the repository is free from security issues. This is a diff-scoped review; state explicitly which categories cannot be assessed at diff scope.
 - Do NOT expose secret values, credentials, private keys, tokens, connection strings, or personal data in the report or chat. Report the type, redacted fingerprint when useful, and file location only.

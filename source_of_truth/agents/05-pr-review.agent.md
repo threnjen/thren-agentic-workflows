@@ -185,7 +185,7 @@ no-reading-diffs boundary — opening one does. If either command fails, stop
 before fan-out with the concrete error, as with a baseline failure.
 
 Every fan-out invocation must include: the confirmed diff range, the absolute
-baseline worktree path from `05a`, and the absolute paths of both diff
+baseline worktree path from `Baseline Worktree`, and the absolute paths of both diff
 artifacts. An evaluator invoked without these inputs fails for lack of them and
 wastes the run.
 
@@ -193,7 +193,7 @@ wastes the run.
 
 Inspect path metadata only — this is a directory-existence check, not a read:
 
-Canonical predicate: The repository is a Unity project if **any** of these holds: `Assets/` and `ProjectSettings/` both exist at the repository root; both exist inside one nested project directory (e.g. `game/Assets/` and `game/ProjectSettings/`); `.github/copilot-instructions.md` identifies the project as Unity; or the plan or phase document under work targets Unity. `*.asmdef` files corroborate but are never required. Set `is-unity-project: yes` on a match, `no` otherwise.
+Apply the canonical Unity detection predicate. Set `is-unity-project: yes` on a match, `no` otherwise.
 
 `yes` adds `Unity Reviewer` to the fan-out. `no` omits it, and that omission is
 not a `not-run` record — an evaluator that does not apply to the repository was
@@ -210,7 +210,7 @@ tier is an execution limitation to report, never a clean result.
 | `05b`, `04e`, `05g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
 | `05c`, `05d`, `05e`, `05h` | Cheap tier for mechanical sweeps |
 | `Unity Reviewer` | Top available tier when present in the fan-out; Unity findings are judgment calls |
-| `05a`, `Test - Analyst`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
+| `Baseline Worktree`, `Test - Analyst`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
 
 Do not place model or harness identity in retained review reports or status
 records.
@@ -218,8 +218,8 @@ records.
 ## Roster
 
 The roster occupies **four distinct positions**. They are not a flat range, and
-flattening them breaks the partial-failure semantics below — an `05a` failure
-must stop the run, while an evaluator failure must not.
+flattening them breaks the partial-failure semantics below — a `Baseline
+Worktree` failure must stop the run, while an evaluator failure must not.
 
 | Position | Agents | When |
 |---|---|---|
@@ -228,7 +228,8 @@ must stop the run, while an evaluator failure must not.
 | Fan-out (concurrent) | `05b Change Narrator`, `05c Artifact Sweeper`, `05d Consistency Auditor`, `05e Dependency Auditor`, `05f Test Health`, `05h Cleanliness Auditor`, and `04e Diff Security Scan`, plus `Unity Reviewer` when `is-unity-project: yes` | **Seven**, or **eight** on a Unity repository, concurrently, after the base is confirmed. |
 | Synthesis | `05g Readiness Synthesizer` | Last. Consumes the others' reports and status records. |
 
-`05a` is not a fan-out evaluator: nothing can run before the baseline exists.
+`Baseline Worktree` is not a fan-out evaluator: nothing can run before the
+baseline exists.
 `Test - Analyst` is not one either: it prepares the isolated evidence consumed
 by `05f`, and the root spawns it directly to keep delegation depth at one.
 `05g` is not one either: it consumes the others' output.

@@ -12,7 +12,7 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 54 source agent definitions in `source_of_truth/agents/` (50 `*.agent.md` + `auditor.md` + `delta-auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 39 hidden subagents (`user-invocable: false`) and 15 user-invocable.
+- 54 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 39 hidden subagents (`user-invocable: false`) and 15 user-invocable.
 - 41 skills in `source_of_truth/skills/`.
 - 19 instructions in `source_of_truth/instructions/`.
 - `ports/claude/agents` = 40, `ports/claude/commands` = 15.
@@ -24,11 +24,7 @@ AGENTS.md                                  # code-review-graph MCP workflow guid
 INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
-    *.agent.md                             # 50, plus the four plain .md agents below (54 total definitions)
-    auditor.md                             # plain .md agent (single-target audit orchestrator)
-    delta-auditor.md                       # plain .md agent (comparative audit orchestrator)
-    docs-writer.md                         # plain .md agent (loaded by frontmatter)
-    04f-prod-code-review.md                # plain .md agent (loaded by frontmatter)
+    *.agent.md                             # 54 agent definitions
   skills/                                  # 41 skill dirs, each rooted at SKILL.md
   instructions/                            # 19 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
@@ -106,7 +102,7 @@ benchmarks/ packages/ tests/
   dirs; foreign symlinks are left alone and skipped.
 - Known filename aliases: `docs-writer` → `docs-writer`, `web-research-specialist` →
   `web-researcher`, `audit-code-or-infra` → `audit-code-infra-refactor` (legacy: the
-  source file is now `auditor.md`, which emits under its own name).
+  source file is now `auditor.agent.md`, which emits under its own name).
 - Hidden (non-user-invocable) subagents become `z-*` in Claude and Codex outputs, except
   where a pre-existing generated stem is reused: `04f-prod-code-review` stays
   `prod-code-review.md` and `04h-unity-reviewer` stays `unity-reviewer.md` in
@@ -119,12 +115,8 @@ benchmarks/ packages/ tests/
 - `ports/cursor/rules` = any instruction whose `applyTo` globs are
   not all agent-targeted. Agent-targeted instructions are excluded because they ship
   inside the agents; the exclusion test in `propagate_cursor_rules_once` matches patterns
-  ending in `.agent.md` or `agents`, so a glob naming a plain-`.md` agent
-  (`**/auditor.md`, `**/delta-auditor.md`, `**/docs-writer.md`,
-  `**/04f-prod-code-review.md`) is not recognized as agent-targeted. The three
-  instructions naming `auditor.md`/`delta-auditor.md` — `subagent-depth`,
-  `graph-rebuild-hook`, `orchestrator-conventions` — reach `ports/cursor/rules` for that
-  reason.
+  ending in `.agent.md` or `agents`. Every source agent now carries the `.agent.md`
+  suffix, so any glob naming an agent is recognized as agent-targeted.
 - `applyTo` globs are matched with `fnmatch` against each agent's repo-relative path, so
   `**/x.agent.md` only matches when a `/` immediately precedes `x`. Numbered agents must
   be named in full (`**/04b-feature-implementer.agent.md`). A pattern that matches nothing
@@ -155,8 +147,8 @@ benchmarks/ packages/ tests/
 - Do not assume filename parity across platforms; aliases and `z-` prefixes are intentional.
 - Do not reference removed surfaces: `nodejs/`, `python/`, `HARNESS_SETUP.md`, `.mcp.json`,
   `codex/README.md`, and `scripts/runtime_deployment.py` no longer exist.
-- Do not treat `04f-prod-code-review.md`, `auditor.md`, `delta-auditor.md`, or
-  `docs-writer.md` as non-agent content just because they lack the `.agent.md` suffix.
+- Do not assume the `.agent.md` suffix is what makes a file an agent: loading keys off
+  `name`/`description` frontmatter, and `source_of_truth/agents/*.md` is globbed wholesale.
 - Do not reintroduce `source_of_truth/learnings/`. Durable repo-agnostic rules are
   skills; this repository's own authoring knowledge is `docs/AUTHORING.md`; a working
   repo's findings belong in its own `docs/learnings/`.

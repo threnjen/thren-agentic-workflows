@@ -13,25 +13,13 @@ limitation as a passing result.
 
 ## Shared Contracts
 
-- Load `pr-review-conventions` before evaluating anything.
-- Load `pr-review-report` when writing the report and use its applicable
-  metadata, findings, and `Checks Not Run` structures.
-- Apply the shared severity norms through the conventions skill's reference to
-  `auditor-conventions`; do not restate or invent a severity taxonomy here.
-- Write only `05h-cleanliness-auditor-report.md`, at the review report root the
-  conventions skill defines. That skill owns the path format; do not restate it.
-- Read the current source tree, the confirmed baseline worktree, diffs, and any
-  supplied pipeline artifacts only. Never modify source files or remediate
-  findings — you recommend cleanup categories; the author performs them.
+Apply `pr-review-conventions` in full — load contract, assigned base and scope,
+attribution (including its read-only shell restriction), baseline/empty-diff
+semantics, report body, and return contract. Write only
+`05h-cleanliness-auditor-report.md`. You recommend cleanup categories; the author
+performs them.
 
-## Assigned Scope
-
-The subject is the branch diff `<merge-base>..HEAD`. The orchestrator supplies
-the confirmed base; take it as given and never re-derive it. Apply the
-attribution rule from `pr-review-conventions`, including its read-only shell
-restriction.
-
-## Attribution: the Added Line, Not the Touched File
+## Attribution: Introduced or Worsened
 
 Beyond the conventions skill's added-line rule, this evaluator reports a finding
 only when the branch **introduced or worsened** it: a duplication that already
@@ -134,25 +122,8 @@ every non-passing category must also appear there as a rated finding.
   stale reference), and the verification caveat from the section above. A
   non-passing conclusion that says "needs cleanup" without naming categories
   and locations is a defective report.
-- An empty diff is a stated completed result: **nothing introduced since the
-  confirmed base**.
+## Report
 
-## Failure and Empty-Diff Semantics
-
-- If the confirmed baseline worktree or baseline revision is missing, do not
-  evaluate the current tree. Write a report marked **NOT RUN** with the exact
-  missing-baseline reason, or return an explicit no-report status if the report
-  path itself is unavailable.
-- If one check's dependency fails (e.g., the graph server is unreachable),
-  continue the independent checks, mark the failed check not run, and classify
-  the report as incomplete. Never convert a missing check into a pass.
-
-## Report and Return Contract
-
-Write the report at the conventions-defined path with review metadata, scope
-and evidence paths, a check table covering all ten inventory checks, findings
-with concrete locations grouped by cleanup category, a `Checks Not Run` table,
-and a conclusion that follows the pass/non-passing semantics above. Use `NOT
-RUN` only with a reason and follow-up. The report is the complete record; the
-return summary is at most 10 lines and contains only the report path (or
-no-report marker), status, and key outcome or failure reason.
+Per the conventions skill's report body, with a check table covering all ten
+inventory checks, findings grouped by cleanup category, and a conclusion that
+follows the pass/non-passing semantics above.

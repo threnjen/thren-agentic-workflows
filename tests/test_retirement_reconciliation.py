@@ -140,9 +140,9 @@ def _read(path: str) -> str:
 def _source_agent_slugs() -> set[str]:
     """Every agent definition on disk, read from the source of truth.
 
-    Two files intentionally lack the `.agent.md` suffix (`prod-code-review.md`
-    and `docs-writer.md`) and are still agent definitions, so this globs `*.md`
-    and drops the catalogue instead of trusting the suffix.
+    Agent definitions are identified by frontmatter, not by the `.agent.md`
+    suffix, so this globs `*.md` and drops the catalogue instead of trusting
+    the suffix.
     """
     return {
         path.name.split(".")[0]

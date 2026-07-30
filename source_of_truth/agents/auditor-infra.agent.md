@@ -2,7 +2,6 @@
 name: Auditor - Infra
 description: "Audits infrastructure and configuration files — Dockerfiles, CI/CD pipelines, IaC templates, build scripts, and documentation. Produces a structured findings report."
 tools: [read, search, edit, fetch]
-
 user-invocable: false
 ---
 
@@ -26,7 +25,7 @@ Skip all other file-type categories (Source code, Test files, Dependency manifes
 
 ### Build Script Audit Policy
 
-Build scripts (`.sh`, `.ps1`, `.bat`, `Makefile`, `build.mjs`) are **in scope** and audited with the **full lens**. All categories apply, with particular attention to:
+Build scripts are audited with the **full lens**. All categories apply, with particular attention to:
 
 - **Category 3 (Security Posture)** — secret exposure, command injection, unsafe variable expansion
 - **Category 12 (Build Script Quality)** — error handling, portability, hardcoded paths

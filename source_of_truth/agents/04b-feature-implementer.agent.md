@@ -2,7 +2,6 @@
 name: Feature - Implementer
 description: "Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record."
 tools: [read, edit, search, execute, todo]
-
 user-invocable: false
 ---
 
@@ -158,7 +157,7 @@ When implementation is complete, you produce TWO outputs:
 
 ### A. Written Artifact: `[task-name]-implementation.md`
 
-This is the **primary deliverable**. Write or update it in `[plan-path]/` as described in Section G above. The Feature - Reviewer subagent consumes this file to scope its review. It must be written before the return summary.
+This is the **primary deliverable**. Write or update it in `[plan-path]/` as described in Section G above. The Feature - Review and Fix subagent consumes this file to scope its review. It must be written before the return summary.
 
 ### B. Return Summary
 

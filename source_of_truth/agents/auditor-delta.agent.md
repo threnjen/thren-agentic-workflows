@@ -2,7 +2,6 @@
 name: Auditor - Delta
 description: "Compares two completed audit reports of the same product — a baseline snapshot and a current one — and produces a reconciled delta document classifying every finding as resolved, improved, unchanged, transformed, or unverified, plus a standalone open-items queue for remediation research. Findings with no baseline counterpart are marked provisional for a separate attribution agent to settle against the trees."
 tools: [read, search, edit, execute]
-
 user-invocable: false
 ---
 
@@ -49,7 +48,7 @@ The spawn prompt gives you:
   your header so the comparison is reproducible. A side identified only by a
   moving branch name, with no sha, is a limitation — record it.
 - **Output paths** for the delta document and its open-items queue.
-- The audit type (code / infra / refactor), which fixes the dimension set.
+- The audit type (code / infra / refactor / security), which fixes the dimension set.
 
 If a repository root is missing, proceed from the reports alone and record the
 consequence in Comparison Limitations — several dispositions that would

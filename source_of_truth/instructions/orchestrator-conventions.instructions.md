@@ -1,6 +1,6 @@
 ---
 description: "Shared conventions for orchestrator agents that coordinate subagent pipelines, including the end-of-run graph rebuild (merged from graph-rebuild-hook). Audience is ENUMERATED deliberately - the four pipeline orchestrators are an arbitrary subset with no filename family. Add any new agent that coordinates a subagent pipeline, and inline this file into its claude/agents/ counterpart."
-applyTo: "**/auditor.md,**/delta-auditor.md,**/04-phase-execute.agent.md,**/test-orchestrator.agent.md"
+applyTo: "**/auditor.agent.md,**/delta-auditor.agent.md,**/04-phase-execute.agent.md,**/test-orchestrator.agent.md"
 ---
 
 # Orchestrator Conventions

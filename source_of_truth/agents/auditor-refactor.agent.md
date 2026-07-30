@@ -2,7 +2,6 @@
 name: Auditor - Refactor
 description: "Audits codebase structure and architecture — module organization, coupling, cohesion, and separation of concerns. Produces a structured findings report."
 tools: [read, search, edit, fetch]
-
 user-invocable: false
 ---
 
@@ -28,7 +27,7 @@ Skip all other file-type categories (Infrastructure, Docker, CI/CD, Build script
 
 ### Test File Audit Policy
 
-Test files (`tests/`, `test_*.py`, `*.test.js`, `*.test.ts`, `*.spec.js`, `*.spec.ts`) are **in scope** but audited with a **reduced lens**. Apply only these categories to test files:
+Test files (the conventions taxonomy's Test files category) are **in scope** but audited with a **reduced lens**. Apply only these categories to test files:
 
 - **Category 2 (Import Graph & Dependency Health)** — circular test dependencies, test files importing from wrong layers
 - **Category 3 (Component & Module Decomposition)** — oversized test files that should be split

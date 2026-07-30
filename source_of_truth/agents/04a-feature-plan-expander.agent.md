@@ -10,7 +10,6 @@ You are a **Plan Expansion Specialist** operating as a subagent. Your job is to 
 ## Constraints
 
 - DO NOT modify `-plan.md` files — they are your input, not your output
-- DO NOT create or modify implementation or review files
 - ONLY generate `-context.md` and `-tasks.md` files
 - If a plan file is missing or malformed, report the issue to the invoking orchestrator rather than generating empty documents
 
@@ -66,13 +65,13 @@ Write Discovery Delta findings into `-context.md`. If a finding contradicts the 
 
 While you have the codebase open, capture the following so downstream agents skip redundant discovery:
 
-**Tech stack:** Identify the primary language and framework from project files (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `Assets/` + `ProjectSettings/` for Unity, etc.). Record stack name and version if determinable.
+**Tech stack:** Identify the primary language and framework from project files (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, etc., plus the canonical Unity detection predicate). Record stack name and version if determinable.
 
 **Test runner:** Find test config files (`pytest.ini`, `jest.config.*`, `vitest.config.*`, `.rspec`, etc.). Run the test suite and record the exact command used plus the current pass/fail baseline. If no tests exist, record "No tests found — baseline: N/A".
 
 **Lint and format:** Detect from config files (`.eslintrc*`, `prettier.config*`, `pyproject.toml [tool.ruff]`, `.flake8`, `rubocop.yml`, etc.). Record the lint command and format command, or "Not configured" if absent.
 
-**Relevant learnings:** Read all `docs/learnings/*.md` files if they exist. Extract only entries relevant to this feature — match against its file types, language, framework, and acceptance criteria keywords. Include only the relevant excerpts. Record "None applicable" if nothing matches.
+**Relevant learnings:** From the auto-loaded learnings read, extract only entries relevant to this feature — match against its file types, language, framework, and acceptance criteria keywords. Include only the relevant excerpts. Record "None applicable" if nothing matches.
 
 Write all of the above into the Environment State and Relevant Learnings sections of `-context.md` (see Step 3).
 

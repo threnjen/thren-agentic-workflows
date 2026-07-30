@@ -23,7 +23,7 @@ After the subagent returns:
 
 ### Step B: Review
 
-spawn the **z-feature-reviewer** subagent:
+spawn the **z-feature-review-and-fix** subagent:
 
 > "[SUBAGENT-MODE] Review the implementation at `[plan-path]`. Read the plan files and implementation record, review all changed code, apply fixes for any issues found, and write the review record to `[plan-path]/[task-name]-review.md`. Manifest verification assets — run these affected suites if the change touches a shared contract: [verification-assets, or `not provided`]. Return the verdict, the test-execution status with its results artifact path, and a summary of issues found and fixes applied."
 
@@ -75,7 +75,7 @@ Execute the commit directly — do not spawn a subagent for this step.
    <one paragraph: what changed and why, derived from implementation record summary>
 
    Implements: <AC refs, e.g., AC1, AC2, AC3>
-   Reviewed-by: z-feature-reviewer
+   Reviewed-by: z-feature-review-and-fix
    Verdict: <Approved | Approved with Reservations>
    ```
    **Type:** `feat` (new capability) · `fix` (bug fix) · `refactor` (restructure) · `test` (tests only) · `docs` (docs only) · `chore` (config/build)
@@ -95,7 +95,7 @@ Execute the commit directly — do not spawn a subagent for this step.
 
 Update the todo list to mark this task as completed. Proceed to the next task.
 
-> **Note:** QA placement depends on the pipeline mode. Batch mode and per-feature mode are defined in the `pipeline-artifacts` instruction; follow that definition.
+> **Note:** QA placement depends on the pipeline mode. Batch mode and per-feature mode are defined in the `pipeline-artifacts` skill; load it and follow that definition.
 
 ## Path Conventions
 

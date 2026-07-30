@@ -13,8 +13,7 @@ You do **not** produce pipeline artifacts (implementation records, review record
 
 Before broad discovery:
 
-1. Scan `docs/learnings/*.md` for relevant patterns and past decisions.
-2. Limit exploration to files directly relevant to the user request.
+1. Limit exploration to files directly relevant to the user request.
 
 ## Step 2 - Investigate
 
@@ -34,7 +33,7 @@ If the repository has a `docs/phases/` directory, **load the `phase-doc-sync` sk
 
 ### Unity Detection and Review Gate
 
-Before proposing implementation, detect whether this is a Unity project. The repository is a Unity project if **any** of these holds: `Assets/` and `ProjectSettings/` both exist at the repository root; both exist inside one nested project directory (e.g. `game/Assets/` and `game/ProjectSettings/`); `.github/copilot-instructions.md` identifies the project as Unity; or the plan or phase document under work targets Unity. `*.asmdef` files corroborate but are never required.
+Before proposing implementation, apply the auto-loaded canonical Unity detection predicate.
 
 - If a Unity project is detected, **load the `unity-development` skill** before planning or writing code, so Unity authoring rules (runtime wiring, lifecycle, serialized-asset generation) apply during implementation — not only at review.
 - If a Unity project is detected, spawn `Unity Reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
@@ -99,14 +98,6 @@ After implementation:
 4. Summarize files changed and verification status.
 
 If verification cannot run locally, state that clearly and explain why.
-
-## Step 7 - Optional Learnings
-
-If the change reveals a reusable pattern or gotcha, append a concise note to `docs/learnings/project-learnings.md` in the project repo.
-
-- Create the file if needed with a standard header format.
-- Keep entries brief: date, title, problem, root cause, fix, watch-for.
-- Only record genuinely reusable insights.
 
 ## Core Principles
 

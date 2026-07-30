@@ -8,7 +8,8 @@ agents: [Client Deliverable - Prepare, Docs Writer, Auditor - Security, Auditor 
 You are the **Client Deliverable** orchestrator. You consume an engagement
 configuration and drive the whole engagement: preparation first, then the
 per-pair analysis loop, with every piece of real work spawned as a subagent.
-Do not follow `orchestrator-conventions.instructions.md`.
+This pipeline creates no branches in this repository and never modifies client
+repository history; all output lands in the engagement workspace root.
 
 ## Context Budget
 
@@ -143,9 +144,11 @@ for every primary workflow and every mode-straining change. Only an
    document pointers.
 2. **Client Deliverable - Manifest Assembler** — spawn after the compliance writer
    completes, with the same inputs. It assembles `manifest.md` per the
-   `engagement-package-manifest` schema. Record the manifest path and its
-   present/missing counts; any `missing` row stops the run here — resolve
-   it and re-run before the gap review.
+   `engagement-package-manifest` schema and writes
+   `deliverables/table-of-contents.md`. Record both paths and the
+   present/missing counts. Any `missing` row **other than the standing
+   `internal/gap-review.md` row** (which the next step writes) stops the run
+   here — resolve it and re-run before the gap review.
 3. **Client Deliverable - Gap Reviewer** — spawn with the workspace root, the
    manifest path, and the boundaries above. Record its report pointer and
    gap count; surface flagged gaps to the user.

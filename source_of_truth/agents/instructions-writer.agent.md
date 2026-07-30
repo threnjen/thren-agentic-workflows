@@ -26,7 +26,7 @@ Domain: <name>
 | Observable conventions: <patterns visible in code>
 ```
 
-Present discovered domains to the user and confirm scope before proceeding.
+Return the discovered domains to your caller and stop. The caller confirms scope with the user and re-spawns you with the confirmed domain list; resume at Step 2 only then.
 
 ### Step 2: Identify Non-Obvious Rules
 
@@ -35,7 +35,7 @@ For each confirmed domain, find rules that satisfy ALL of:
 - Not discoverable by reading 1-2 files in the domain
 - Violation causes a real bug, test failure, or code review rejection
 
-Primary sources: past code review comments, README/CONTRIBUTING, CI/CD failure patterns, domain-specific constraints, team policies. Ask the user about review history and past bugs — this is your most valuable signal.
+Primary sources: past code review comments, README/CONTRIBUTING, CI/CD failure patterns, domain-specific constraints, team policies. If review history or past-bug context is needed, return that request to your caller; it is your most valuable signal.
 
 Classify each candidate rule as **Judgment**, **Knowledge**, or **Pointer** (skill definitions and target ratios). Only carry forward Judgment and Pointer rules. Drop Knowledge rules — they degrade agent behavior.
 
@@ -74,5 +74,5 @@ Before finalizing, verify every file path mentioned in any instruction file exis
 - MUST NOT write Knowledge rules — they degrade agent behavior below baseline
 - MUST keep domain files short — if a file is growing long, cut Knowledge rules first
 - MUST verify all file path references exist before writing final output
-- MUST present discovered domains to the user for scope confirmation before drafting
+- MUST return discovered domains to the caller for scope confirmation before drafting
 - If a domain has no non-obvious rules that satisfy Step 2 criteria, skip it — do not write empty or low-value files

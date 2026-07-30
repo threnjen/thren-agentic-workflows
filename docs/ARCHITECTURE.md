@@ -121,10 +121,9 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 54 agent definitions (15 user-invocable, 39 hidden subagents). Most use
-  the `.agent.md` suffix; `auditor.md`, `delta-auditor.md`, `docs-writer.md`, and
-  `04f-prod-code-review.md` are intentional plain-`.md` exceptions still loaded as agents
-  because loading keys off `name`/`description` frontmatter, not the suffix.
+- `agents/` — 54 agent definitions (15 user-invocable, 39 hidden subagents), all using
+  the `.agent.md` suffix. Loading keys off `name`/`description` frontmatter, not the
+  suffix, so the source glob stays `*.md`.
 - `skills/` — 41 directory-based skills, each rooted at `SKILL.md`.
 - `instructions/` — 19 instruction files matched by `applyTo` globs. Matching is
   `fnmatch` against the agent's repo-relative path, so a `**/name.agent.md` pattern
@@ -210,7 +209,7 @@ flowchart TD
 
     PlanExpander[04a Feature - Plan Expander]
     Implementer[04b Feature - Implementer]
-    Reviewer[04c Feature - Reviewer]
+    Reviewer[04c Feature - Review and Fix]
     QA[04d Feature - QA Writer]
     Security[Diff Security Scan]
 

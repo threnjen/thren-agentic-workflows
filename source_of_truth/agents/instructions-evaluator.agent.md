@@ -18,14 +18,14 @@ Load the `ai-instruction-framework` skill before starting. It defines the Rule Q
 - One or more instruction file paths to evaluate (the **AFTER** versions, read from disk)
 - Access to the target repository
 
-Do NOT ask the user to provide BEFORE content. Resolve it automatically using this detection order:
+Resolve BEFORE content automatically using this detection order:
 
 1. **Uncommitted changes** — run `git diff HEAD <path>`. If output is non-empty, BEFORE = `git show HEAD:<path>` (last committed), AFTER = file on disk.
 2. **Already committed** — if no uncommitted changes, BEFORE = `git show HEAD~1:<path>`, AFTER = `git show HEAD:<path>`.
 3. **New untracked file** — if `git log <path>` returns no commits, BEFORE = none (testing instructions vs. nothing).
-4. **Fallback** — if none of the above resolves cleanly, ask the user to provide the BEFORE content directly.
+4. **Fallback** — if none of the above resolves cleanly, abort and return the reason to your caller.
 
-Abort immediately if the file path does not exist on disk:
+Abort immediately if the file path does not exist on disk, returning to your caller:
 
 > "Could not find `<path>` in the repository. Please confirm the file path and try again."
 
@@ -128,7 +128,7 @@ Write a single verdict report to `dev/instructions-eval/<filename>-verdict.md` c
 5. **Verdict** — PASS / TIE / NEEDS REVIEW / FAIL with one-sentence rationale
 6. **Recommendations** — specific, actionable changes to reach PASS; reference flagged rules from Phase 0
 
-Present the verdict and top recommendations inline in chat after writing the report file.
+Return the verdict and top recommendations to your caller after writing the report file.
 
 ## Constraints
 

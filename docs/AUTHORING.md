@@ -54,10 +54,11 @@ this — the defect lives in the *relationship* between a body and the tree it l
 ## A source surface described by a single filename glob is usually incomplete
 
 Definitions distinguishable from documentation only by frontmatter get silently excluded,
-invisibly to reviewers scanning for the expected extension. `auditor.md`,
-`delta-auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md` are agents despite
-lacking the `.agent.md` suffix, because loading keys off `name`/`description`
-frontmatter.
+invisibly to reviewers scanning for the expected extension. `auditor`, `delta-auditor`,
+`docs-writer`, and `04f-prod-code-review` shipped for a long time without the `.agent.md`
+suffix and were still agents, because loading keys off `name`/`description` frontmatter,
+not the extension. They have since been renamed for consistency, but the loader remains
+frontmatter-driven — the glob must stay `*.md`.
 
 The same trap applies to `applyTo` globs: `fnmatch` runs against the agent's
 repo-relative path, so `**/x.agent.md` matches only when a `/` immediately precedes `x`,

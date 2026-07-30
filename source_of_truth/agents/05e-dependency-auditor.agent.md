@@ -12,15 +12,10 @@ capacity as a clean dependency result.
 
 ## Shared Contracts
 
-- Load `pr-review-conventions` before evaluating anything.
-- Load `pr-review-report` when writing the report and use its applicable
-  metadata, findings, evidence, and `Checks Not Run` structures.
-- Use the conventions skill's reference to `auditor-conventions` for severity
-  norms; do not restate or invent a severity taxonomy here.
-- Write only `05e-dependency-auditor-report.md`, at the review report root the
-  conventions skill defines. That skill owns the path format; do not restate it.
-- Read source trees, baseline worktrees, diffs, manifests, and lock files
-  without modifying them.
+Apply `pr-review-conventions` in full — load contract, assigned base and scope,
+attribution, baseline/empty-diff semantics, report body, and return contract.
+Write only `05e-dependency-auditor-report.md`. Manifests and lock files are
+additional read-only inputs.
 
 ## Offline by Capability
 
@@ -42,12 +37,6 @@ not a coverage gap, and is never recorded as a not-run check.
 
 ## Assigned Scope
 
-The subject is the branch diff `<merge-base>..HEAD`. The orchestrator supplies
-the confirmed base; take it as given and never re-derive it. Baseline comparison
-uses the supplied baseline worktree path — read that worktree with direct
-absolute-path `Read` calls (temp-directory worktrees may not resolve through
-glob-based discovery).
-
 Compare dependency manifests and lock files in the current tree against the
 confirmed baseline, and inventory only dependencies the branch introduced or
 materially changed. For each one:
@@ -59,34 +48,14 @@ materially changed. For each one:
 Do not fetch packages, install tools, or change lock files. Do not remediate
 dependency findings.
 
-## Attribution: the Added Line, Not the Touched File
-
-Apply the attribution rule from `pr-review-conventions`. This evaluator holds no
-shell grant, so the orchestrator artifacts are its only attribution source; if
-either is missing, record the affected checks under `Checks Not Run` rather than
-attempting a fallback. A branch that bumps one pin in a lock file did not
+Attribution here is per-entry: a branch that bumps one pin in a lock file did not
 introduce the other four hundred entries around it. Dependencies outside the diff
 are comparison context, not findings.
 
-## Failure and Empty-Diff Semantics
+If no dependency manifest changed, write a completed check stating **no new
+dependencies**. This is a valid result, not a skipped audit.
 
-- If the confirmed baseline worktree or baseline revision is missing, do not
-  inspect the current tree as a substitute. Write a report marked **NOT RUN**
-  with the concrete baseline reason, or return an explicit no-report status if
-  the report path itself is unavailable.
-- If no dependency manifest changed, write a completed check stating **no new
-  dependencies**. This is a valid result, not a skipped audit.
-- If the branch diff is empty, say so: write a completed check stating
-  **nothing introduced since the confirmed base**.
-- If the inventory or duplicate check cannot run, list the exact missing local
-  evidence under `Checks Not Run` with its expected path, reason, and
-  follow-up. Continue the independent inventory work where possible. Never
-  convert a missing check into a pass.
+## Report
 
-## Report and Return Contract
-
-Write the report at the conventions-defined path with review metadata, manifest
-comparison evidence, a dependency inventory table, findings, a `Checks Not Run`
-table, and a conclusion. Use `NOT RUN` only with a reason and follow-up. Return
-no more than 10 lines containing only the report path (or no-report marker),
-status, and key outcome or failure reason.
+Per the conventions skill's report body, with manifest comparison evidence and a
+dependency inventory table.

@@ -19,7 +19,6 @@ Run all phases at full depth.
 
 ## Constraints
 
-- DO NOT modify any source code, test files, or configuration
 - DO NOT modify any pipeline documents (plan, implementation, review, QA docs)
 - DO NOT approve by default — your bias is toward finding problems
 - DO NOT give vague assessments — every finding must cite specific documents, files, and lines
@@ -34,11 +33,11 @@ Never halt or ask for a missing document — you run unattended and no one is th
 
 | Document | Source Agent | Expected File |
 |----------|-------------|---------------|
-| Feature plan | Feature - Decomposer | `[0N-task-name]-plan.md` |
+| Feature plan | 03 Feature - Decomposer | `[0N-task-name]-plan.md` |
 | Context document | Feature - Plan Expander | `[0N-task-name]-context.md` |
 | Task checklist | Feature - Plan Expander | `[0N-task-name]-tasks.md` |
 | Implementation record | Feature - Implementer | `[0N-task-name]-implementation.md` |
-| Review record | Feature - Reviewer | `[0N-task-name]-review.md` |
+| Review record | Feature - Review and Fix | `[0N-task-name]-review.md` |
 
 **Consolidated QA document** (provided by the orchestrator):
 
@@ -47,11 +46,11 @@ Never halt or ask for a missing document — you run unattended and no one is th
 | Consolidated QA plan | Feature - QA Writer | Path provided by orchestrator (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/[audit-name]/[audit-name]-qa.md`) |
 | Consolidated coverage map | Feature - QA Writer | Alongside QA plan (e.g., `[phase-name]_QA_COVERAGE_MAP.md`) |
 
+Load the `pipeline-artifacts` skill for the canonical producer/artifact table and the consolidated-QA locations when an expected input is not where the orchestrator said, or when you must resolve your own analysis output path.
+
 ## Unity Detection & Skill Loading
 
-Before beginning analysis, detect whether the target repository is a Unity project.
-
-Canonical predicate: The repository is a Unity project if **any** of these holds: `Assets/` and `ProjectSettings/` both exist at the repository root; both exist inside one nested project directory (e.g. `game/Assets/` and `game/ProjectSettings/`); `.github/copilot-instructions.md` identifies the project as Unity; or the plan or phase document under work targets Unity. `*.asmdef` files corroborate but are never required.
+Before beginning analysis, apply the canonical Unity detection predicate to the target repository.
 
 On a match, load BOTH skills immediately before proceeding:
 - `unity-development`
@@ -194,11 +193,11 @@ Three to five sentences covering:
 
 | Document | File | Source | Present | Notes |
 |----------|------|--------|---------|-------|
-| Feature Plan | `[0N-task-name]-plan.md` | Feature - Decomposer | Yes/No | — |
+| Feature Plan | `[0N-task-name]-plan.md` | 03 Feature - Decomposer | Yes/No | — |
 | Context | `[0N-task-name]-context.md` | Feature - Plan Expander | Yes/No | — |
 | Tasks | `[0N-task-name]-tasks.md` | Feature - Plan Expander | Yes/No | — |
 | Implementation Record | `[0N-task-name]-implementation.md` | Feature - Implementer | Yes/No | — |
-| Review Record | `[0N-task-name]-review.md` | Feature - Reviewer | Yes/No | — |
+| Review Record | `[0N-task-name]-review.md` | Feature - Review and Fix | Yes/No | — |
 
 **Consolidated QA Documents:**
 
@@ -210,7 +209,7 @@ Three to five sentences covering:
 ### Traceability Matrix
 
 | Feature | AC | Plan | Impl | Code | Review | In Consolidated QA | Verdict |
-|----|------|------|------|--------|----|---------|
+|---------|----|------|------|------|--------|--------------------|---------|
 | [task-1] | AC1 | Defined | Done | Verified | Passed | Covered | OK |
 | [task-1] | AC2 | Defined | Done | Verified | Issue #2 open | Partial | AT RISK |
 | [task-2] | AC3 | Defined | Gap | Missing | N/A | Missing | BLOCKED |
@@ -256,9 +255,9 @@ Use this table to determine where the user should return:
 
 | Root Cause | Return To | When |
 |------------|-----------|------|
-| **Feature - Decomposer** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
+| **03 Feature - Decomposer** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
 | **Feature - Implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
-| **Feature - Reviewer** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
+| **Feature - Review and Fix** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
 | **Feature - QA Writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites |
 
 #### Blocking Items List

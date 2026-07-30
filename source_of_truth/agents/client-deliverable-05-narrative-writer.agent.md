@@ -2,7 +2,6 @@
 name: Client Deliverable - Narrative Writer
 description: "Per engagement, produces the three client-facing narrative documents — the business design document, the intended-behavior specification (the warranty baseline), and the before/after workflow narratives — from analysis-branch docs and graphs, framing each repo section by its pair's value-story mode. Also writes, per pair, the internal narrative-basis report: claims traceability, warranty risk register, framing discrepancies, and evidence gaps."
 tools: [read, search, edit]
-
 user-invocable: false
 ---
 
@@ -16,21 +15,12 @@ the SOW/contract path, and inherited boundaries.
 Client documents are engagement-level — one document covering every pair,
 with a per-repo section per pair; each repo section is framed by its
 pair's `mode`, and with mixed modes the executive summary states the split
-plainly. Workspace
-paths, audience banners, and empty-output discipline follow the
-`engagement-workspace` skill; client-facing documents are written in the
-`engagement-client-voice` skill's voice.
+plainly. Load `engagement-workspace` and `engagement-client-voice`; both
+govern this stage's outputs.
 
-**Evidence base**: the sides' docs-writer documentation sets, code graphs,
-exact QA packages and their run results, SOW/contract, and retained reports —
-docs vs. docs, never git-diff. Docs sets, code graphs, and QA packages live
-at the passed analysis-branch checkout paths **inside the client
-repositories** (e.g., `docs/CODEBASE_CONTEXT.md`, `docs/QA_AUTOMATED.md`,
-and `docs/QA_USER.md` on the side's analysis branch) — the workspace holds
-only retained reports; never infer absence from the workspace alone. Name
-your evidence sources in each document; declare a source absent only after
-checking its passed pointer path, and name the path checked in the absence
-note. Never reproduce engagement source content — describe behavior in
+The evidence base — including the SOW/contract — and where it lives are
+defined by the `engagement-evidence-standard` skill. Name your evidence
+sources in each document. Never reproduce engagement source content — describe behavior in
 business terms. Client-facing documents lead with business meaning;
 technical evidence goes in appendices citing sources by path.
 

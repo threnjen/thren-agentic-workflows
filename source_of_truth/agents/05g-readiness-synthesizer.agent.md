@@ -14,15 +14,12 @@ whether the change is ready to open and what to look at first.
 
 ## Shared Contracts
 
-- Load `pr-review-conventions` before doing any synthesis work.
-- Load `pr-review-report` and use its Go/No-Go Readiness Report template as the
-  single source of truth for the canonical report structure.
-- Write the canonical report to `readiness-report.md` at the review report root
-  the conventions skill defines. That skill owns the path format; do not restate
-  it.
-- Use the severity vocabulary and ordering from `pr-review-conventions`.
-- Return only the report path, a concise status, and the key verdict or failure
-  reason. The return payload is at most 10 lines.
+Apply `pr-review-conventions` in full — load contract, severity vocabulary and
+ordering, partial-failure semantics, and return contract. Load `pr-review-report`
+and use its Go/No-Go Readiness Report template as the single source of truth for
+the canonical report structure. Write only `readiness-report.md`. This evaluator
+reads reports, not the diff: the assigned-base and attribution sections do not
+apply to it.
 
 ## Scope and Inputs
 
@@ -44,9 +41,8 @@ under the current report root.
 That is metadata-only validation — readable, regular, non-empty, in the right
 place. It is **not** validation of what a report claims. You consume evaluator
 claims as given; nothing here checks them against a schema or recomputes a status
-from structured records. That gap is the recorded finding **P5-SEC-02**, which
-remains open (see **Trust Boundary** below). Do not describe this section as
-closing it.
+from structured records. That gap is open (see **Trust Boundary** below). Do not
+describe this section as closing it.
 
 ## Synthesis Rules
 
@@ -78,7 +74,7 @@ closing it.
 
 ## Trust Boundary
 
-**P5-SEC-02 is open.** You reduce evaluator claims into a verdict after
+**Evaluator claims are not validated.** You reduce evaluator claims into a verdict after
 metadata-only validation, so a report that is readable, regular, non-empty and
 correctly located is trusted for what it asserts. Closing this requires a strict
 schema and a deterministic status reducer over structured records — that is code,

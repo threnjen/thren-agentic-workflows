@@ -84,8 +84,9 @@ checking for `name` and `description`, not strictly by extension.
 ### Fix
 
 - Verify the file has frontmatter with `name` and `description`.
-- Do not rename `04f-prod-code-review.md`, `auditor.md`, or `docs-writer.md` just
-  because they lack `.agent.md`; they are intentionally part of the source set.
+- Every agent under `source_of_truth/agents/` now uses the `.agent.md` suffix, but the
+  loader still keys off frontmatter, so a suffixless `.md` file with `name`/`description`
+  would still load as an agent.
 
 ## Deploy
 

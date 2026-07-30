@@ -9,6 +9,12 @@ One workspace root per engagement holds **every** engagement output. This
 layout is the contract downstream engagement features reference — they use
 these paths, they do not restate them.
 
+**Applies to every engagement stage.** Loading this skill governs the whole
+of a stage's output behavior: the security boundary, workspace root, layout,
+path discipline, empty-output discipline, and the required audience banner. A
+stage names its own documents and their contract paths; it does not restate
+any rule from this skill.
+
 ## Security Boundary — Client Code
 
 Engagement repositories are client code; the `sow_document` and

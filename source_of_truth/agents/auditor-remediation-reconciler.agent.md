@@ -6,7 +6,6 @@ description:
   and delta when one exists, and proves final counts close. Writes no production
   code, subsystem research, or index content."
 tools: [read, search, edit, execute]
-
 user-invocable: false
 ---
 

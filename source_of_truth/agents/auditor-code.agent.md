@@ -2,7 +2,6 @@
 name: Auditor - Code
 description: "Audits source code for quality, security, readability, DRY, type hints, and dependencies. Produces a structured findings report."
 tools: [read, search, edit, fetch]
-
 user-invocable: false
 ---
 
@@ -24,7 +23,7 @@ Skip all other file-type categories. Within documentation, Category 4 applies on
 
 ### Test File Audit Policy
 
-Test files (`tests/`, `test_*.py`, `*.test.js`, `*.test.ts`, `*.spec.js`, `*.spec.ts`) are **in scope** but audited with a **reduced lens**. Apply only these categories to test files:
+Test files (the conventions taxonomy's Test files category) are **in scope** but audited with a **reduced lens**. Apply only these categories to test files:
 
 - **Category 2 (Errors & Defects)** — broken or incorrect assertions, wrong mock setup
 - **Category 5 (Readability, Brevity & Clarity)** — only for deeply nested or overly complex test code

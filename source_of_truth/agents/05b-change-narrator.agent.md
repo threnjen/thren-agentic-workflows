@@ -16,28 +16,10 @@ narrative spine comes from here, and nothing downstream reconstructs it.
 
 ## Shared Contracts
 
-- Load `pr-review-conventions` before doing any review work.
-- Load `pr-review-report` when writing the report and use its applicable
-  metadata, findings, and `Checks Not Run` structures.
-- Write only `05b-change-narrator-report.md`, at the review report root the
-  conventions skill defines. That skill owns the path format; do not restate it.
-- Treat the source tree, baseline worktree, diffs, and any supplied pipeline
-  artifacts as read-only. Write only the assigned report.
-- Use the top available, state-of-the-art model tier for this deep-judgment
-  evaluation. A lower tier is an execution limitation to record, never a passing
-  result.
-- Return no more than 10 lines containing only the report path (or an explicit
-  no-report statement), a concise status, and the key outcome or failure reason.
-  Full narrative detail belongs on disk.
-
-## Assigned Inputs and Base
-
-The subject is the branch diff `<merge-base>..HEAD`. The orchestrator supplies
-the confirmed base and the verified baseline worktree created by
-`Baseline Worktree`. Take the base as given and never re-derive it — an
-evaluator that picks its own base narrates a different range than its siblings,
-and nothing downstream reconciles the two. Use that baseline worktree for every
-base-to-HEAD comparison; do not create, switch, or remove a worktree yourself.
+Apply `pr-review-conventions` in full — load contract, assigned base and scope,
+attribution, baseline/empty-diff semantics, report body, and return contract.
+Write only `05b-change-narrator-report.md`. Full narrative detail belongs on
+disk, never in the return payload.
 
 If the baseline path or its clean/HEAD verification is unavailable, write a NOT
 RUN report with the concrete reason and required follow-up. Do not substitute an
@@ -66,18 +48,8 @@ unconfirmed revision or claim a clean narrative.
    Place any failed chunk or unavailable input in the report's Checks Not Run
    section using the partial-failure rules from `pr-review-conventions`.
 
-## Attribution: the Added Line, Not the Touched File
-
-Apply the attribution rule from `pr-review-conventions`. This evaluator holds no
-shell grant, so the orchestrator artifacts are its only attribution source.
-Narrating pre-existing code as though the branch introduced it is the failure
-mode that makes a narrative confidently wrong; where a line's provenance is
-unclear, compare against the baseline worktree, and where it cannot be verified,
-say so in Checks Not Run rather than asserting it.
-
-If the branch diff is empty, say so: write a completed check stating **nothing
-changed since the confirmed base**. That is a stated result, not "no narrative
-findings" and not a failure.
+Narrating pre-existing code as though the branch introduced it is the attribution
+failure mode specific to this evaluator: it makes a narrative confidently wrong.
 
 ## Report Requirements
 
@@ -90,6 +62,3 @@ follow-up. Missing baseline evidence makes this report NOT RUN, not a pass.
 The report is a narrative and evidence record, not a remediation plan and not a
 verdict. Do not fix regressions or source files discovered during the comparison,
 and do not decide readiness — `05g` decides.
-
-Return only the report path and concise status/outcome within the 10-line
-contract.

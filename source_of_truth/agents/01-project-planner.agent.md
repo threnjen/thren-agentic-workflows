@@ -96,8 +96,8 @@ Use this procedure:
 
 1. **Check existing phase documents** — Scan `docs/phases/` to see which `PHASE_0N_SUMMARY.md` files already exist on disk
 2. **Write or regenerate `PROJECT_ROADMAP.md`** — Always regenerate this file on each run to keep the roadmap in sync with any changes to project scope or priorities
-3. **Write or update `DISCOVERY_CONTEXT.md`** — If any additional context was gathered during Discovery or Clarification (additional folders/projects, web research, user-provided docs), write it to `docs/phases/DISCOVERY_CONTEXT.md`. If the file already exists, update it with any new context from this session. Skip this step only if no additional context was gathered beyond what's in the codebase itself. When the phase includes refactors, rewires, or behavior changes, also note likely test impact, affected test suites, and any Unity EditMode/PlayMode (If a Unity project) or manual QA needs in the phase document.
-4. **Write exactly one phase summary** — Write only the lowest-numbered `PHASE_0N_SUMMARY.md` not yet on disk, and only after the prior phase is complete. On the first run that is `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`. Never write a second new phase summary in the same run, and never pre-generate future phases.
+3. **Write or update `DISCOVERY_CONTEXT.md`** — If any additional context was gathered during Discovery or Clarification (additional folders/projects, web research, user-provided docs), write it to `docs/phases/DISCOVERY_CONTEXT.md`. If the file already exists, update it with any new context from this session. Skip this step only if no additional context was gathered beyond what's in the codebase itself.
+4. **Write exactly one phase summary** — Write only the lowest-numbered `PHASE_0N_SUMMARY.md` not yet on disk, and only after the prior phase is complete. On the first run that is `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`. Never write a second new phase summary in the same run, and never pre-generate future phases. When the phase includes refactors, rewires, or behavior changes, also note likely test impact, affected test suites, and any Unity EditMode/PlayMode (if a Unity project) or manual QA needs in the phase document.
 5. **Present and prepare for refinement** — Show the newly written phase document and prepare it for handoff to `@02 Phase - Refiner` for refinement
 
 ### Commit: Plan Affirmation
@@ -121,7 +121,7 @@ After the user confirms the planning documents are final for this session, stage
 - **Later phases add polish** — optimizations, nice-to-haves, and edge cases come last
 - **Each phase should be decomposable into 2-6 features** — too few means the phase is too small; too many means it should be split
 - **Cross-repo phases stay in sync** — if a phase spans repos, each repo gets its own phase doc that cross-references the other
-- **Auto-note cross-phase discoveries** — when planning reveals an architectural decision, design constraint, risk, or deferred capability that affects a later phase, document it immediately in the relevant downstream location (`docs/learnings/cross-phase-decisions.md`, the phase document's Notes section, or `docs/phases/DISCOVERY_CONTEXT.md`). Never ask "should I note this for later?" — the answer is always yes. A downstream agent can ignore an irrelevant note but cannot consult a note never written.
+- **Auto-note cross-phase discoveries** — when planning reveals a decision, constraint, risk, or deferred capability affecting a later phase, record it immediately per the auto-loaded learnings routing rules.
 
 ## Pipeline Next Step
 

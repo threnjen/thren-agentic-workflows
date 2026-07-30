@@ -2,7 +2,6 @@
 name: Auditor - Attribution
 description: "Settles whether each provisionally-attributed finding in an audit delta pre-dates the newer work, by probing both source trees for the construct it names, then rewrites only the attribution fields of the delta and its open-items queue."
 tools: [read, search, edit, execute]
-
 user-invocable: false
 ---
 

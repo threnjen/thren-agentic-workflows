@@ -2,7 +2,6 @@
 name: Auditor - Remediation Research
 description: "Researches one assigned subsystem from an audit open-items queue in isolated context. Validates each assigned item and writes one evidence-backed subsystem report; returns correction candidates without editing shared audit artifacts. Proposes only — writes no production code."
 tools: [read, search, edit, fetch]
-
 user-invocable: false
 ---
 

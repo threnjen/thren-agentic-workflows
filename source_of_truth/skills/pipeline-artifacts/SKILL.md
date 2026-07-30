@@ -1,12 +1,12 @@
 ---
-description: "Producer/artifact table and consolidated-QA locations for the agents that actually write pipeline artifacts. Audience is DERIVED by family: the numbered pipeline (0*), the auditor family, plus the three named producers outside both. Agents writing to other layouts (the client-deliverable engagement workspace, docs/QA_*.md) are deliberately excluded."
-applyTo: "source_of_truth/agents/0*.md,source_of_truth/agents/auditor*.md,**/delta-auditor.md,**/test-analyst.agent.md,**/test-orchestrator.agent.md,**/web-research-specialist.agent.md"
+name: pipeline-artifacts
+description: "Producer/artifact table and consolidated-QA locations for the pipeline. Load when deciding where to write a pipeline artifact or what to name it — QA plan, coverage map, or pre-production analysis — when choosing between batch mode and per-feature mode QA placement, or when locating the artifacts another pipeline agent produced. Does not cover the client-deliverable engagement workspace or docs/QA_*.md."
 ---
 
 # Pipeline Artifacts
 
-Path tokens are bound in the auto-loaded path-token instruction; this file only says who
-writes what, and where.
+Path tokens (`[0N-task-name]`, `[phase-name]`, `[audit-name]`, `[topic-name]`) are bound in
+the auto-loaded path-token instruction. This file only says who writes what, and where.
 
 ## Standard File Naming
 
@@ -18,7 +18,7 @@ Inside `dev/feature/[0N-task-name]/`:
 | `-context.md` | Feature - Plan Expander | Key files, decisions, constraints |
 | `-tasks.md` | Feature - Plan Expander | Ordered checklist of work items |
 | `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results |
-| `-review.md` | Feature - Reviewer | Verdict, issues found, fixes applied |
+| `-review.md` | Feature - Review and Fix | Verdict, issues found, fixes applied |
 | `-qa.md` | Feature - QA Writer (per-feature mode) | QA plan for a single feature |
 | `-coverage-map-qa.md` | Feature - QA Writer (per-feature mode) | AC coverage map for a single feature |
 | `-report.md` | Auditor subagents, Web Researcher | Full structured audit findings or research findings with citations |

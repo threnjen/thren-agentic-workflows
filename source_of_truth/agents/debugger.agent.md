@@ -31,7 +31,7 @@ A broad test-failure set spanning multiple features is not a phase re-plan — r
 
 ### Step 2 — Diagnose
 
-- **Frontend runtime errors**: Use the browser-tools MCP to take screenshots and examine console logs. After taking screenshots, check `./screenshots/` for saved images
+- **Frontend runtime errors**: Ask the user for the browser console output and a screenshot of the error state; you cannot drive a browser yourself
 - **Frontend build errors**: Analyze the full error stack trace and compilation output
 - **Backend errors**: Reproduce the error by running the application or relevant script in the terminal. Analyze the full error stack trace and log output
 - Check for common patterns: null/undefined access, unhandled promise rejections, missing imports, type errors, connection timeouts
@@ -44,7 +44,6 @@ A broad test-failure set spanning multiple features is not a phase re-plan — r
 - Check surrounding code for context
 - Inspect relevant configuration files (package.json, requirements.txt, pyproject.toml, .env, tsconfig.json)
 - For backend: examine database connection settings and migration status
-- For frontend: when applicable, use `mcp__browser-tools__takeScreenshot` to capture the error state
 - Look for recent changes that might have introduced the issue
 - Run the failing command or test to reproduce the error firsthand
 - Use Web Researcher sub-agent to search for the error message and related symptoms to find similar issues and solutions from the community
@@ -66,13 +65,7 @@ A broad test-failure set spanning multiple features is not a phase re-plan — r
 
 ### Step 6 — Record Learnings
 
-After completing a fix, append a concise entry to the appropriate learnings file:
-- **Project-specific findings** (framework quirks, config issues, library behavior) → `docs/learnings/project-learnings.md`. Create the file if it doesn't exist.
-- **Debugging patterns** (pipeline gaps, architectural anti-patterns, agent workflow failures) → `docs/learnings/debugging-learnings.md`. Create the file if it doesn't exist.
-
-Each entry should be a durable, reusable rule — not an incident log. Write it as a pattern that will still be useful months later, without dates or references to the specific ticket/feature that triggered it.
-
-Each entry should include:
+After completing a fix, route the entry per the auto-loaded learnings routing table — diagnosed root causes go to `project-learnings.md`. Append each entry as its own `##` section; multiple entries coexist in the file, so never rewrite or fold into an existing section. Each entry should include:
 - **Short title** as a `##` heading — phrase it as "If you see X" or a concise rule name
 - **Problem** — What was broken and how it manifested
 - **Root cause** — The actual underlying issue

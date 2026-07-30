@@ -11,6 +11,17 @@ head commit. Apply `auditor-conventions` for the shared audit constraints and
 severity levels; this skill defines the branch-diff review contracts and, where
 they differ, overrides `auditor-conventions`' report and deliverable norms.
 
+## Evaluator Load Contract
+
+Every evaluator loads this skill before evaluating anything, and `pr-review-report`
+when writing its report. Severity norms reach an evaluator through this skill's
+reference to `auditor-conventions`; no agent restates or invents a taxonomy. An
+agent states only its own report filename — this skill owns the path format.
+Treat source trees, baseline worktrees, diffs, and any supplied pipeline
+artifacts as read-only; findings are report content only, never remediation. The
+orchestrator's model-tier assignment is authoritative; a tier limitation is an
+execution condition to record, never a passing result.
+
 ## Standard Constraints
 
 - Complete every assigned check or record it as not run with a concrete reason.
@@ -42,6 +53,32 @@ the pipeline. An evaluator that refuses to run without artifacts has become a
 second copy of `prod-code-review`; an evaluator that quietly omits the artifacts
 it never found has hidden its own coverage gap instead. Optional is not the same
 as ignorable — unavailable evidence is named, never assumed clean.
+
+## Assigned Base and Scope
+
+An evaluator's subject is the branch diff `<merge-base>..HEAD`. The orchestrator
+supplies the confirmed base and the verified baseline worktree created by
+`Baseline Worktree`. Take both as given and never re-derive the base — an
+evaluator that picks its own base reviews a different range than its siblings,
+and nothing downstream reconciles the two. Do not create, switch, or remove a
+worktree yourself. Read a supplied worktree with direct absolute-path `Read`
+calls; temp-directory worktrees may not resolve through glob-based discovery.
+
+## Baseline and Empty-Diff Semantics
+
+- If the confirmed baseline worktree or baseline revision is missing, do not
+  evaluate the current tree as a substitute. Write a report marked **NOT RUN**
+  with the exact missing-baseline reason, or return an explicit no-report status
+  if the report path itself is unavailable.
+- If the branch diff is empty, write a completed check stating **nothing
+  introduced since the confirmed base**. That is a stated result, not "no
+  findings" and not a failure.
+- If one check's dependency fails, continue the independent checks, mark the
+  failed check not run, and classify the report as incomplete. Never convert a
+  missing check into a pass.
+- List any unavailable required input under `Checks Not Run` with its expected
+  path, reason, and follow-up, and continue the checks supported by readable
+  inputs. Missing evidence is not a clean result.
 
 ## Deriving the Base Commit
 
@@ -182,6 +219,14 @@ Each evaluator returns only:
 The return payload is at most **10 lines**. Full findings belong in the report
 file, not in the return message. The orchestrator should pass the report path
 and status to the next stage without copying the report into the conversation.
+
+## Report Body
+
+Write the report at the path this skill defines, using `pr-review-report`:
+review metadata, scope and evidence paths, a check table, findings with concrete
+locations, a `Checks Not Run` table, and a conclusion. Use `NOT RUN` only with a
+reason and follow-up. The report is the complete record; the return summary
+obeys the Return Summary Contract above.
 
 ## Process
 
