@@ -72,7 +72,7 @@ While you have the codebase open, capture the following so downstream agents ski
 
 **Lint and format:** Detect from config files (`.eslintrc*`, `prettier.config*`, `pyproject.toml [tool.ruff]`, `.flake8`, `rubocop.yml`, etc.). Record the lint command and format command, or "Not configured" if absent.
 
-**Relevant learnings:** Read all `.github/learnings/*.md` files if they exist. Extract only entries relevant to this feature — match against its file types, language, framework, and acceptance criteria keywords. Include only the relevant excerpts. Record "None applicable" if nothing matches.
+**Relevant learnings:** Read all `docs/learnings/*.md` files if they exist. Extract only entries relevant to this feature — match against its file types, language, framework, and acceptance criteria keywords. Include only the relevant excerpts. Record "None applicable" if nothing matches.
 
 Write all of the above into the Environment State and Relevant Learnings sections of `-context.md` (see Step 3).
 

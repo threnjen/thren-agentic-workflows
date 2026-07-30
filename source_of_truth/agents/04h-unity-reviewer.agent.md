@@ -17,7 +17,7 @@ You are a Unity C# code reviewer. Your job is to review code for correctness, pe
 
 1. Load the `unity-review-knowledge` skill (SKILL.md) and then the specific reference file(s) relevant to the code under review
 2. Load the `unity-development` skill for runtime wiring, UI Toolkit, MonoBehaviour lifecycle, and test authenticity rules
-3. Read `.github/learnings/review-learnings.md` for project-specific recurring issues
+3. Read `docs/learnings/review-learnings.md` for project-specific recurring issues
 
 ### Phase 2: Compilation Check
 

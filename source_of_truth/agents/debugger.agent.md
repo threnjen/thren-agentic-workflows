@@ -67,8 +67,8 @@ A broad test-failure set spanning multiple features is not a phase re-plan — r
 ### Step 6 — Record Learnings
 
 After completing a fix, append a concise entry to the appropriate learnings file:
-- **Project-specific findings** (framework quirks, config issues, library behavior) → `.github/learnings/project-learnings.md`. Create the file if it doesn't exist.
-- **Debugging patterns** (pipeline gaps, architectural anti-patterns, agent workflow failures) → `.github/learnings/debugging-learnings.md`. Create the file if it doesn't exist.
+- **Project-specific findings** (framework quirks, config issues, library behavior) → `docs/learnings/project-learnings.md`. Create the file if it doesn't exist.
+- **Debugging patterns** (pipeline gaps, architectural anti-patterns, agent workflow failures) → `docs/learnings/debugging-learnings.md`. Create the file if it doesn't exist.
 
 Each entry should be a durable, reusable rule — not an incident log. Write it as a pattern that will still be useful months later, without dates or references to the specific ticket/feature that triggered it.
 

@@ -195,9 +195,9 @@ After the review is complete — and after any fixes have been applied — write
 
 ## Update Review Learnings
 
-After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append an entry to `.github/learnings/review-learnings.md` as a durable, reusable rule — no dates or feature-specific references. Match the file's format: one bolded claim per bullet, plus the signal that reveals it.
+After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append an entry to `docs/learnings/review-learnings.md` as a durable, reusable rule — no dates or feature-specific references. Match the file's format: one bolded claim per bullet, plus the signal that reveals it.
 
-Also check for **decisions that affect future phases** (deferred work, documented deviations, scope gaps). If found, append them to `.github/learnings/cross-phase-decisions.md` under the appropriate section. Follow the existing format and categorization.
+Also check for **decisions that affect future phases** (deferred work, documented deviations, scope gaps). If found, append them to `docs/learnings/cross-phase-decisions.md` under the appropriate section. Follow the existing format and categorization.
 
 Create either file if it doesn't exist.
 

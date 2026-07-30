@@ -131,8 +131,11 @@ benchmarks/ packages/ tests/
   `**/x.agent.md` only matches when a `/` immediately precedes `x`. Numbered agents must
   be named in full (`**/04b-feature-implementer.agent.md`). A pattern that matches nothing
   fails silently — no error, the instruction simply ships to no agent.
-- Learnings deploy only to `.github/learnings/` (per working repo) and to Cursor's
-  `rules/`. They intentionally have no destination under `~/.claude` or `~/.codex`.
+- Agents read and write a working repo's learnings at `docs/learnings/` — durable project
+  knowledge belongs beside the other docs, not in `.github/`, which is GitHub's own
+  machine-config surface. Seed files still mirror to `.github/learnings/` and to Cursor's
+  `rules/`; that mirror is being retired. They intentionally have no destination under
+  `~/.claude` or `~/.codex`.
 
 ## Platform Surface Rules
 
@@ -160,7 +163,7 @@ benchmarks/ packages/ tests/
   `docs-writer.md` as non-agent content just because they lack the `.agent.md` suffix.
 - Do not put repo-specific findings in `source_of_truth/learnings/` — those files are a
   general-purpose seed shipped to every project. Per-repo entries belong in that repo's
-  own `.github/learnings/`.
+  own `docs/learnings/`.
 - Do not document a root `dev/` beyond `dev/pr-review/` (fixtures tracked, run output
   gitignored) and `dev/inspiration/` (write-ups). Agent *runtime* output paths like
   `dev/feature/` are conventions the agents create in a target repo, not directories here.

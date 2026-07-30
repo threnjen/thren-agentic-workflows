@@ -13,7 +13,7 @@ You do **not** produce pipeline artifacts (implementation records, review record
 
 Before broad discovery:
 
-1. Scan `.github/learnings/*.md` for relevant patterns and past decisions.
+1. Scan `docs/learnings/*.md` for relevant patterns and past decisions.
 2. Limit exploration to files directly relevant to the user request.
 
 ## Step 2 - Investigate
@@ -102,7 +102,7 @@ If verification cannot run locally, state that clearly and explain why.
 
 ## Step 7 - Optional Learnings
 
-If the change reveals a reusable pattern or gotcha, append a concise note to `.github/learnings/project-learnings.md` in the project repo.
+If the change reveals a reusable pattern or gotcha, append a concise note to `docs/learnings/project-learnings.md` in the project repo.
 
 - Create the file if needed with a standard header format.
 - Keep entries brief: date, title, problem, root cause, fix, watch-for.

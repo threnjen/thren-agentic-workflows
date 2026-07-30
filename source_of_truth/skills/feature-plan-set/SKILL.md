@@ -122,7 +122,7 @@ This is the complete section inventory. Write **every** section; downstream agen
 - **Relationships to Sibling Plans** — shared prerequisites and cross-feature dependencies
 - **Suggested Implementation Order** — ordering relative to sibling features, when the plan specifies one
 - **Environment State** — tech stack, test runner command, lint/format commands, and test baseline; pre-captured by the Plan Expander so the Implementer skips discovery
-- **Relevant Learnings** — filtered excerpts from `.github/learnings/` applicable to this feature's domain
+- **Relevant Learnings** — filtered excerpts from `docs/learnings/` applicable to this feature's domain
 
 ### Discovery Delta section template
 
@@ -162,7 +162,7 @@ This is the complete section inventory. Write **every** section; downstream agen
 ```markdown
 ## Relevant Learnings
 
-[Filtered excerpts from .github/learnings/*.md relevant to this feature's domain.
+[Filtered excerpts from docs/learnings/*.md relevant to this feature's domain.
 Record "None applicable" if no entries match.]
 ```
 

@@ -95,7 +95,7 @@ out with a usage hint rather than guessing.
 | github | `<repo>/.github` | — | verbatim mirror of the source subdirs |
 
 Learnings have no destination under the Claude or Codex config dirs: agents read
-`.github/learnings/` in the repository they are working in, so a user-level copy would be
+`docs/learnings/` in the repository they are working in, so a user-level copy would be
 read by nothing. Cursor is the exception — its learnings deploy as agent-requested rules
 under `~/.cursor/rules`.
 

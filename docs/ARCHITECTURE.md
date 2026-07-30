@@ -161,8 +161,10 @@ Known filename aliases preserved during propagation: `docs-writer` → `docs-wri
 `web-research-specialist` → `web-researcher`, `audit-code-or-infra` →
 `audit-code-infra-refactor`.
 
-Learnings reach a working repository through `.github/learnings/` (and, for Cursor, as
-agent-requested `rules/*.mdc`). There is no learnings destination under the Claude or
+Agents read and write a working repository's learnings at `docs/learnings/`. Seed files
+still reach a repository through the `.github/learnings/` mirror (and, for Cursor, as
+agent-requested `rules/*.mdc`); that mirror is being retired now that the seeds are
+moving into skills. There is no learnings destination under the Claude or
 Codex user config directories: every consumer reads the copy in the repo it is working
 in, so a copy there would be read by nothing.
 

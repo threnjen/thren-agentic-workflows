@@ -76,7 +76,7 @@ Never bake a secret into a container image or Lambda package. Never commit one o
 
 truffleHog runs as a pre-commit hook and in CI; detected secrets block the merge.
 
-**Unreconciled — SSM Parameter Store.** The org standard says Parameter Store "is not used" for application configuration. The infrastructure-patterns standard mandates it for cross-stack references (one stack publishing a resource ARN for another to consume). Both are recorded as written; neither overrides the other without a maintainer decision.
+**SSM Parameter Store is scoped by purpose.** Never for application configuration — that is S3, per above. Always for cross-stack infrastructure references, where one stack publishes a resource ARN another consumes; use it in preference to CloudFormation `!ImportValue`, which creates a hard dependency lock preventing the exporting stack's deletion. The consumer resolves the value with a dynamic reference inside the template (`{{resolve:ssm:/<org-prefix>/<environment>/<resource-slug>:1}}`), never a workflow-side lookup. A missing, malformed, or stale parameter must break the deploy rather than fall back silently.
 
 ## Database migrations
 

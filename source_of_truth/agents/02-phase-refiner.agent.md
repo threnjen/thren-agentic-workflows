@@ -74,7 +74,7 @@ When refining a Phase document, probe these dimensions:
 6. **Risk & Complexity** — Where is technical risk concentrated? Unknowns needing investigation? Fallback plans?
 7. **Decomposition Readiness** — Can the Feature - Decomposer break this into 2-6 features? Are feature boundaries clear? Are "Notes for Feature - Decomposer" actionable?
 8. **Test Impact & Refactor Safety** — For any refactor, rewire, or behavior change, explicitly surface which existing tests are likely to break or need updates, whether the phase needs new tests, and whether Unity EditMode/PlayMode or manual QA is required.
-9. **Cross-Phase Discoveries** — When you surface an architectural decision, design constraint, risk, or deferred capability that affects a later phase, note it immediately without asking. Drop it into the current phase document's Notes section (if a Decomposer handoff), into `.github/learnings/cross-phase-decisions.md` (if it spans multiple future phases), or into `PHASE_0N_DISCOVERY_CONTEXT.md` (if it's a design decision). Never ask "should I note this for later?" — the answer is always yes. A downstream agent can ignore an irrelevant note but cannot consult a note never written.
+9. **Cross-Phase Discoveries** — When you surface an architectural decision, design constraint, risk, or deferred capability that affects a later phase, note it immediately without asking. Drop it into the current phase document's Notes section (if a Decomposer handoff), into `docs/learnings/cross-phase-decisions.md` (if it spans multiple future phases), or into `PHASE_0N_DISCOVERY_CONTEXT.md` (if it's a design decision). Never ask "should I note this for later?" — the answer is always yes. A downstream agent can ignore an irrelevant note but cannot consult a note never written.
 
 ## Phase Document Template
 
@@ -97,7 +97,7 @@ Read the Phase document and any referenced materials:
 - Referenced codebase areas and existing implementations
 - External links, specs, or documentation referenced in the phase — spawn `@Web Researcher` to review these
 - Prior and subsequent phase documents (for dependency context only — do not modify them)
-- `.github/learnings/cross-phase-decisions.md` if it exists — contains deferred work, known gaps, and design decisions from prior phases that may need to be pulled into this phase's scope
+- `docs/learnings/cross-phase-decisions.md` if it exists — contains deferred work, known gaps, and design decisions from prior phases that may need to be pulled into this phase's scope
 - `docs/phases/DISCOVERY_CONTEXT.md` if it exists — project-level discovery context written by `@01 Project - Planner` (external folders/projects, web research, user-provided specs)
 
 As you work through this phase, keep a running list of any additional context gathered beyond the codebase itself — web research results, additional folders/projects referenced, and user-provided documentation. This is persisted to the phase-scoped `PHASE_0N_DISCOVERY_CONTEXT.md`, which `@03 Feature - Decomposer` reads during its own discovery.
@@ -110,7 +110,7 @@ Run the auto-loaded Documentation Freshness Check before continuing to Phase 3.
 
 When the user comes directly with a feature idea:
 
-1. **Gather context** — Read the codebase to understand the project structure, tech stack, conventions, and the areas relevant to the requested feature. Read `.github/learnings/cross-phase-decisions.md` if it exists — it contains deferred work and known gaps from prior phases. If the feature involves external services, APIs, or unfamiliar technologies, spawn `@Web Researcher` to gather the necessary context. Keep a running list of additional context gathered (web research, extra folders/projects, user-provided documentation) — it is persisted to `PHASE_0N_DISCOVERY_CONTEXT.md`. Run the auto-loaded Documentation Freshness Check before drafting.
+1. **Gather context** — Read the codebase to understand the project structure, tech stack, conventions, and the areas relevant to the requested feature. Read `docs/learnings/cross-phase-decisions.md` if it exists — it contains deferred work and known gaps from prior phases. If the feature involves external services, APIs, or unfamiliar technologies, spawn `@Web Researcher` to gather the necessary context. Keep a running list of additional context gathered (web research, extra folders/projects, user-provided documentation) — it is persisted to `PHASE_0N_DISCOVERY_CONTEXT.md`. Run the auto-loaded Documentation Freshness Check before drafting.
 
 2. **Ask clarifying questions** — Use the Question Triage rules above. Focus on scope boundaries, user-visible behavior, and integration concerns. Don't ask about implementation details.
 3. **Draft the Phase document** — Using the Phase Document Template above, create an initial draft. Fill in as much as you can from the codebase context and the user's description. Mark areas where you need input with `[TBD]`.
@@ -124,7 +124,7 @@ Determine the appropriate path:
 
 #### Cross-Phase Decision Enforcement
 
-In the `.github/learnings/cross-phase-decisions.md` content read during Phase 2A or 2B, check for any items tagged "Must-do before Phase N" where N matches the current phase. For each such item:
+In the `docs/learnings/cross-phase-decisions.md` content read during Phase 2A or 2B, check for any items tagged "Must-do before Phase N" where N matches the current phase. For each such item:
 
 - **If it's not addressed in the Phase document** — flag it as a gap in the assessment and recommend adding it to the scope
 - **If the user explicitly defers it** — document the deferral in the Phase document with a rationale, so downstream agents (Feature - Decomposer, Feature - Implementer) are aware
