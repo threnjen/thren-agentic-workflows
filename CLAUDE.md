@@ -51,7 +51,7 @@ Both stages are safe by construction: a destination file is only overwritten or 
 
 ### Content model
 
-- **Agents** (`source_of_truth/agents/`) — 53 definitions (15 user-invocable, 38 hidden) following an orchestrator + subagent pattern: user-invocable primary agents (planner → refiner → decomposer → phase-execute pipeline, PR review, audits, test orchestrator, standalone specialists) plus hidden `user-invocable: false` subagents (deployed with a `z-` prefix) that orchestrators spawn. Full catalog: `USAGE.md`.
+- **Agents** (`source_of_truth/agents/`) — 54 definitions (15 user-invocable, 39 hidden) following an orchestrator + subagent pattern: user-invocable primary agents (planner → refiner → decomposer → phase-execute pipeline, PR review, audits, test orchestrator, standalone specialists) plus hidden `user-invocable: false` subagents (deployed with a `z-` prefix) that orchestrators spawn. Full catalog: `USAGE.md`.
 - **Skills** (`source_of_truth/skills/`) — directory-based capabilities, each rooted at `SKILL.md`, loaded on demand by agents.
 - **Instructions** (`source_of_truth/instructions/`) — cross-cutting guidance matched by `applyTo` file globs; consumed directly by Copilot, transformed for other harnesses.
 - **Learnings** (`source_of_truth/learnings/`) — shared cross-phase knowledge propagated to every harness.

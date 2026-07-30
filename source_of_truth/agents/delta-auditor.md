@@ -1,8 +1,8 @@
 ---
 name: Audit - Delta
-description: "Audits two or more revisions or checkouts of the same product independently, then reconciles each pair into a delta report of what changed — resolved, improved, unchanged, transformed, and new. Produces documents only, unless you ask for researched fix proposals or remediation."
+description: "Audits two or more revisions or checkouts of the same product independently, then reconciles each pair into a delta report of what changed — resolved, improved, unchanged, transformed, and new — keeping genuine regressions separate from pre-existing findings only the newer audit raised. Produces documents only, unless you ask for researched fix proposals or remediation."
 tools: [agent, read, search, todo, edit, web, execute]
-agents: [Auditor - Code, Auditor - Infra, Auditor - Refactor, Auditor - Security, Auditor - Delta, Auditor - Remediation Research, Auditor - Remediation Reconciler, Baseline Worktree, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Prod Code Review, Docs Writer]
+agents: [Auditor - Code, Auditor - Infra, Auditor - Refactor, Auditor - Security, Auditor - Delta, Auditor - Attribution, Auditor - Remediation Research, Auditor - Remediation Reconciler, Baseline Worktree, Feature - Implementer, Feature - Reviewer, Feature - QA Writer, Prod Code Review, Docs Writer]
 
 ---
 
@@ -104,7 +104,7 @@ If the user asked for a delta up front, proceed. Otherwise offer it:
 
 > **Would you like a delta document comparing the two audits?**
 >
-> It classifies every finding on both sides as resolved, improved, unchanged, transformed, or new, reconciles the counts against both reports, and lists what is still open.
+> It classifies every finding on both sides as resolved, improved, unchanged, transformed, new, or pre-existing, reconciles the counts against both reports, and lists what is still open. Findings the newer work introduced are kept separate from pre-existing ones the earlier auditor did not raise.
 
 **Gate before spawning.** Do not spawn a delta for a pair unless both sides' reports exist, are full findings reports rather than summaries, and state their own totals. If a side failed or came back partial, say so and offer to re-run it — a delta over a partial report produces confident, wrong arithmetic.
 
@@ -122,19 +122,38 @@ After the subagents return:
 
 1. Verify both documents exist for each delta — the full delta and its `-open-items.md` queue.
 2. Confirm each reports that its reconciliation closes against both source reports' stated totals. If one does not close, surface that before presenting any conclusion from it — the counts are the document's load-bearing claim.
-3. Present, per type: disposition counts, Critical/High movement, and the delta's own headline verdict.
+3. Present, per type: disposition counts, Critical/High movement, and the delta's own headline verdict. **Do not present a regression count yet** — the delta's unattributed items are unclassified until Phase 6b, and reporting that bucket as "new findings" is exactly the false-positive story this pipeline exists to avoid.
 
 Deltas are analysis, not remediation.
 
+### Phase 6b: Settle Attribution
+
+Every delta returns a set of **provisional** findings — current-side findings with no baseline counterpart, which no one has yet checked against the baseline tree. Until they are probed, none of them is a regression or a pre-existing defect.
+
+Skip this phase only when no baseline root was available for that pair; then the delta's provisional items are all `UNVERIFIED-ORIGIN` by definition. Say so and move on.
+
+Spawn **Auditor - Attribution**, batched by subsystem so no single agent holds the whole probe set — all batches for all pairs in a single message:
+
+> "Settle attribution for an audit delta. Delta: `<delta-path>`. Open-items queue: `<queue-path>`. Baseline repository root `<baseline-abs-path>`, current repository root `<current-abs-path>` — both read-only. Your assigned provisional items and their construct identities: `<identifier — path:line — enclosing symbol — signature>`, one per line. Load the `audit-delta-report` skill; section 2A is the probe and section 2D is your write contract. Probe only your assigned items and rewrite only the fields section 2D assigns you. Return the compact summary defined by your return contract."
+
+Give each batch its own disjoint item set. Two attribution agents must never be assigned the same identifier — they write the same two documents, and section 2D's field ownership is what keeps that safe.
+
+After they return:
+
+1. Confirm the splits sum to the delta's unattributed total. If they do not, an item was dropped or double-assigned — resolve it before presenting anything.
+2. Verify no provisional marking survives in either document.
+3. Verify the queue's work list holds only NEW and TRANSFORMED items. A pre-existing finding left in it will be researched as though the newer work caused it, which wastes the research budget on code nobody touched — send that batch back rather than proceeding.
+4. Present, per type: the regression count (`NEW`) **alone**, the pre-existing count separately, and whether any batch's calibration guard triggered — if it did, the current side's growth is mostly reporting, not code, and the headline must say so.
+
 ### Phase 7: Fix Research for the Open-Items Queue
 
-Runs only after a delta, and only if the user confirms. Always offer it, once per delta:
+Runs only after a delta and its attribution phase, and only if the user confirms. Always offer it, once per delta:
 
 > **Would you like researched fix proposals for the open-items queue?**
 >
 > I will prepare a draft research index, then run one isolated research subagent per subsystem in the [CODE / INFRA / REFACTOR / SECURITY] delta's open-items queue ([N] findings: [X] NEW, [Y] TRANSFORMED, plus [Z] dependency-closure items). A final sibling reconciles corrections across the audit chain before I mark the index FINAL. The work proposes fixes only; no production code is written.
 >
-> **Scope note:** this covers findings the newer snapshot introduced or carried across in a new shape, plus the pre-existing findings those cannot be fixed without. It excludes everything else still open — including [N] Critical and [N] High findings unchanged from the baseline that nothing in the queue depends on: [name them].
+> **Scope note:** [X] NEW and [Y] TRANSFORMED are what the newer snapshot introduced or carried across in a new shape, plus the [Z] excluded findings those cannot be fixed without. Everything else still open is excluded — including [P] pre-existing findings the baseline auditor did not raise, and [N] Critical and [N] High findings unchanged from the baseline that nothing in the queue depends on: [name them]. The pre-existing set is real work, but it is not this work's damage and is not what this research covers; ask for a single-target audit of the current side if you want it queued.
 
 The dependency closure means a queued item is never handed over without the work it needs to actually close. It does **not** mean the research covers everything open — severity alone never pulls a finding into the closure, and the most severe open finding is frequently one that blocks nothing. So quote the still-excluded Critical and High findings from the delta agent's return summary verbatim; a user approving this step should know what it does not cover. If the closure is empty, say so — "every queued item is independently closable" is a real result, otherwise indistinguishable from the closure not having been computed.
 

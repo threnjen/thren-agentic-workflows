@@ -33,7 +33,7 @@ flowchart TD
     Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
-    SOT --> Agents[53 agent definitions]
+    SOT --> Agents[54 agent definitions]
     SOT --> Skills[34 skill directories]
     SOT --> Instructions[16 instruction files]
     SOT --> Learnings[4 seed learnings files]
@@ -122,7 +122,7 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 53 agent definitions (15 user-invocable, 38 hidden subagents). Most use
+- `agents/` — 54 agent definitions (15 user-invocable, 39 hidden subagents). Most use
   the `.agent.md` suffix; `auditor.md`, `delta-auditor.md`, `docs-writer.md`, and
   `04f-prod-code-review.md` are intentional plain-`.md` exceptions still loaded as agents
   because loading keys off `name`/`description` frontmatter, not the suffix.
@@ -148,7 +148,7 @@ platform-specific transformations:
   user-invocable agent emits a slash command, **plus** a subagent file when some
   orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
   it. That is why `ports/claude/agents` (40) and `ports/claude/commands` (15) differ:
-  38 hidden subagents plus the two dual-use agents (Docs Writer,
+  39 hidden subagents plus the two dual-use agents (Docs Writer,
   Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
   support `instructions/` directly
@@ -232,6 +232,7 @@ flowchart TD
     Audit --> AuditorRefactor[Auditor - Refactor]
     Audit --> AuditorSecurity[Auditor - Security]
     Audit --> AuditorDelta[Auditor - Delta]
+    Audit --> AuditorAttribution[Auditor - Attribution per batch]
     Audit --> AuditorFixes[Auditor - Remediation Research per subsystem]
     Audit --> AuditorReconciler[Auditor - Remediation Reconciler]
 
@@ -252,8 +253,12 @@ and output path — comparability depends on it, and no auditor reads another
 target's tree or report.
 
 When two targets are compared, **Auditor - Delta** produces a reconciled delta
-per audit type (`audit-delta-report` skill) plus a standalone open-items queue of
-only the NEW and TRANSFORMED findings and their dependency closure. For optional
+per audit type (`audit-delta-report` skill) plus a standalone open-items queue and
+their dependency closure. Findings with no baseline counterpart are left
+`PROVISIONAL`: the root then spawns **Auditor - Attribution** batches, which probe
+both trees and settle each as NEW, PRE-EXISTING, or UNVERIFIED-ORIGIN. Matching two
+reports and reading two trees are separate jobs, and separating them is what keeps
+one auditor's extra lens on unchanged code from being counted as a regression. For optional
 fix research, the root writes a DRAFT index, spawns one isolated **Auditor -
 Remediation Research** sibling per subsystem, then spawns **Auditor -
 Remediation Reconciler** to validate corrections and update the current report,

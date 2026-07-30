@@ -87,7 +87,7 @@ Write `dev/[audit-name]/[audit-name]-open-items.md` yourself, mechanically, from
 
 Follow the open-items queue structure in the `audit-delta-report` skill, with these single-target differences:
 
-- Every entry is `### <N>. [OPEN] <title>`. NEW, TRANSFORMED, and CLOSURE are delta vocabulary and never appear.
+- Every entry is `### <N>. [OPEN] <title>`. NEW, TRANSFORMED, PRE-EXISTING, PROVISIONAL, and CLOSURE are delta vocabulary and never appear — with one snapshot there is no attribution question to answer, so there is no attribution phase and no probe.
 - There is **no dependency closure section**. Nothing was excluded by attribution, so there is nothing to pull back in. State `Dependency closure: n/a — single-target queue` rather than omitting it silently.
 - The header states the current snapshot, the threshold, the queued count, and the count and severities left below the threshold.
 - Omit `Origin` and `Blocked by`. Keep `Location`, `Severity`, `Dimension`, `Subsystem`, `The defect`, `Evidence`, and `Constraints a fix must respect`.

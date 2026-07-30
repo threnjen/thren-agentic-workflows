@@ -31,7 +31,7 @@ directory). Hand-maintained files are never touched.
 
 ## What's in the Repo
 
-- **53 agent definitions** in `source_of_truth/agents/` (49 `*.agent.md` plus the plain
+- **54 agent definitions** in `source_of_truth/agents/` (50 `*.agent.md` plus the plain
   `auditor.md`, `delta-auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`), of
   which **15 are user-invocable** and **38 are hidden subagents** (`user-invocable: false`)
   that orchestrators spawn automatically.
@@ -53,7 +53,7 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ├── README.md                       # User-facing overview
 ├── CONTRIBUTING.md                 # This file
 ├── source_of_truth/                # THE authoring surface — edit here
-│   ├── agents/                     # 53 agent definitions (catalog lives in USAGE.md)
+│   ├── agents/                     # 54 agent definitions (catalog lives in USAGE.md)
 │   ├── skills/                     # 34 skill directories, each rooted at SKILL.md
 │   ├── instructions/               # 16 instruction files matched by applyTo globs
 │   └── learnings/                  # 4 seed learnings files

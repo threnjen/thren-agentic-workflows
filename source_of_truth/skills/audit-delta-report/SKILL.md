@@ -1,6 +1,6 @@
 ---
 name: audit-delta-report
-description: "Produces a delta document comparing two audit reports of the same codebase taken at different points in time — what was resolved, improved, unchanged, transformed, and newly introduced, with a reconciled count of every finding on both sides. Use when: asked for the delta/changes/fixes/residuals between two audit reports in dev/<audit-name>/, or to compare a baseline audit against a current one."
+description: "Produces a delta document comparing two audit reports of the same codebase taken at different points in time — what was resolved, improved, unchanged, transformed, and newly introduced, with a reconciled count of every finding on both sides and defects the newer work caused separated from pre-existing ones only the newer audit raised. Use when: asked for the delta/changes/fixes/residuals between two audit reports in dev/<audit-name>/, or to compare a baseline audit against a current one."
 ---
 
 # Audit Delta Report
@@ -75,8 +75,9 @@ or the branch under review rather than the branch it targets. The baseline is
 read, never written to, and never receives a deliverable.
 
 The first is the full comparison (section 4). The second is the **open-items
-queue** (section 5) — the NEW and TRANSFORMED findings alone, written to be
-read on its own by a remediation agent that will never see the full delta.
+queue** (section 5) — the actionable findings, attribution kept separate,
+written to be read on its own by a remediation agent that will never see the
+full delta.
 Always write both; the queue is written last, after the full delta's
 arithmetic closes, and is derived from it rather than assembled in parallel.
 
@@ -85,7 +86,8 @@ arithmetic closes, and is derived from it rather than assembled in parallel.
 ## 2. Disposition taxonomy
 
 Every **baseline** finding gets exactly one of these. Every **current** finding
-is either the mapped counterpart of a baseline finding or is `NEW`.
+is either the mapped counterpart of a baseline finding, or `NEW`, or
+`PRE-EXISTING`.
 
 | Disposition | Meaning |
 |---|---|
@@ -94,7 +96,15 @@ is either the mapped counterpart of a baseline finding or is `NEW`.
 | `UNCHANGED` | The code/config position is materially identical. A severity re-rating with no code change is UNCHANGED, and must be labelled as a re-rating. |
 | `TRANSFORMED` | The responsibility moved to a new file, mechanism, or format, and the defect moved with it. Same root cause, different shape. |
 | `UNVERIFIED` | Neither report nor either tree can settle it. Requires a stated reason plus the specific evidence that would settle it. |
-| `NEW` | Exists only in the current snapshot. Not part of the baseline percentage base. |
+| `NEW` | The defect is attributable to the newer work: the code carrying it did not exist at baseline, or baseline code changed in a way that caused it. |
+| `PRE-EXISTING` | A real, open defect the current report raised and the baseline report did not, whose code position is **materially identical in the baseline tree**. Not attributable to the newer work. |
+| `UNVERIFIED-ORIGIN` | Raised only by the current report, and no baseline tree is available to establish whether the position pre-dates the newer work. |
+
+`NEW` is the regression count, reported alone and never summed with
+`PRE-EXISTING` in any table or sentence. A finding the baseline auditor simply
+did not raise is `PRE-EXISTING`: the code did not get worse, the reporting got
+better. Conflating them sends the next engineer hunting regressions in code
+nobody touched.
 
 Classification rules:
 
@@ -113,15 +123,95 @@ Classification rules:
 - **Separate "genuine regression" from "artifact of new functionality."** A NEW
   finding in a subsystem that did not exist at baseline is not the same as the
   release making existing code worse. Label every NEW Critical/High as one or
-  the other, and say when a NEW finding is merely a *reporting* difference
-  (identical position on both sides, raised by only one auditor).
+  the other.
 - **Removing a blind spot is not a change in the code.** When the baseline could
   not read something (an undecompiled binary, an out-of-repo reference) and the
-  current snapshot can, the resulting finding is usually TRANSFORMED, not NEW —
-  but state the alternative reading and why you chose yours.
+  current snapshot can, the resulting finding is TRANSFORMED or PRE-EXISTING,
+  never NEW — state the alternative reading and why you chose yours.
 - **Merges and splits are allowed** (2 baseline → 1 current, or 1 baseline →
   2 current). Every merge and split must be enumerated in the Reconciliation
   subsection. Each current finding has exactly one owning baseline row.
+
+### 2A. The co-location probe — required before any NEW
+
+Attribution is a claim about the trees, not about what two auditors chose to
+mention. A **separate attribution agent** executes this probe; the delta agent
+marks unmatched findings provisional and hands off the construct identity, per
+section 2D. For each current finding with no matched baseline counterpart:
+
+1. **Find the construct in the baseline tree** — search the whole tree by symbol
+   name and signature, never by path or line: between two snapshots a file may
+   have been renamed, split, or moved, and a path-only miss is not evidence of
+   absence.
+2. **Record one outcome, quoting both excerpts** (or the failed search):
+
+| Baseline state | Disposition |
+|---|---|
+| Construct absent | `NEW` — the newer work introduced the code |
+| Present, materially identical | `PRE-EXISTING` |
+| Present but changed, and the change caused the defect | `NEW` — quote both versions |
+| Present but changed, defect pre-dates the change | `PRE-EXISTING` |
+| No baseline tree available | `UNVERIFIED-ORIGIN` — never bare `NEW` |
+
+Every `PRE-EXISTING` carries an `Origin` from this closed set: `baseline auditor
+did not raise it`; `additional lens on baseline <id> — same construct, different
+dimension`; `baseline blind spot now readable`.
+
+### 2B. Same-position sweep — before classifying anything
+
+Description-only matching mints a fresh `NEW` for every lens the second auditor
+applied. Prevent it mechanically:
+
+- **Index both reports by `(file, enclosing symbol)`.** Adjudicate every shared
+  position explicitly and record the verdict: same defect · additional lens on
+  the same defect · genuinely different defect at the same location. Never leave
+  a shared position unmatched by default.
+- **A self-citation is a hard match signal.** A current finding referencing a
+  baseline finding's ID in its own prose ("beyond the correctness bug (2.1/2.2)")
+  concedes the shared position. Treat it as evidence, not commentary.
+- **A different dimension is not a different defect.** One construct faulted for
+  concurrency by one auditor and performance by the other is one position with
+  two lenses: `PRE-EXISTING`, `Origin: additional lens on baseline <id>`.
+
+### 2C. Calibration guard
+
+If `PRE-EXISTING` outnumbers `NEW`, the two auditors applied materially different
+lenses. Say so in Comparison Limitations and do not tell a regression story off
+the raw current-side count — most of the growth is reporting, not code.
+
+### 2D. Provisional attribution and the probe handoff
+
+Matching two reports and reading two source trees are different jobs on different
+inputs, so they belong to two agents. The delta agent does the first and never
+probes.
+
+**The delta agent** marks every current finding with no matched baseline
+counterpart `PROVISIONAL` and lists it under a `## Provisional attribution —
+pending probe` section: item identifier, `path:line`, enclosing symbol, and
+signature. Its arithmetic counts the whole set as one **unattributed** bucket, so
+section 3 closes without any probe having run.
+
+**The attribution agent** replaces each provisional marking with its section 2A
+outcome, and owns exactly these fields — nothing else in either document:
+
+- the item's disposition, `Origin`, baseline position, and probe evidence;
+- the `NEW` and `Pre-existing` columns of the section 3A severity table;
+- the `NEW`, `PRE-EXISTING`, and `UNVERIFIED-ORIGIN` rows of the Disposition
+  Rollup, the `new / pre-existing` split in the dimension table, and the
+  regression count in the Executive Summary;
+- sections 10 and 10a;
+- in the queue: filing each `NEW` entry into the severity-ordered list, moving
+  each `PRE-EXISTING` and `UNVERIFIED-ORIGIN` entry out of the work list and into
+  the header's exclusion counts, and pruning the closure — a closure item whose
+  every dependent settled PRE-EXISTING leaves with them, and an item a surviving
+  queued entry names in `Blocked by` becomes a `D`-numbered closure entry instead
+  of leaving;
+- the calibration guard's verdict.
+
+The bucket's **total is invariant** under probing — only its internal split
+changes — so this rewrite cannot break the delta's reconciliation. The
+attribution agent verifies that invariant, stops if it fails, and deletes the
+provisional section once every item in it is settled.
 
 ---
 
@@ -131,9 +221,12 @@ The document must prove its own completeness:
 
 - **Baseline side:** `RESOLVED + IMPROVED + UNCHANGED + TRANSFORMED + UNVERIFIED`
   = the baseline report's stated total.
-- **Current side:** `mapped counterparts + NEW` = the current report's stated total.
-- **NEW findings are excluded from the baseline percentage base.** State this
-  explicitly. Express NEW as a percentage of the *current* report's total instead.
+- **Current side:** `mapped counterparts + NEW + PRE-EXISTING + UNVERIFIED-ORIGIN`
+  = the current report's stated total. Before the probe those three are one
+  `unattributed` bucket (section 2D); the identity holds either way.
+- **NEW, PRE-EXISTING, and UNVERIFIED-ORIGIN are excluded from the baseline
+  percentage base.** State this explicitly. Express each as a percentage of the
+  *current* report's total instead.
 - Any baseline row classified without a corresponding current finding (verified
   on disk, or UNVERIFIED) must be named and must not add to the current-side count.
 - If the arithmetic does not close, do not adjust a disposition to make it
@@ -157,9 +250,9 @@ of, on the same row.** Never a net figure alone.
 
 Build the severity table by tracking the flow through each band:
 
-| Severity | Baseline | Resolved | Left band | Carried at band | Entered band | NEW | Current | Continuity |
-|---|---|---|---|---|---|---|---|---|
-| Critical | 2 | 2 | 0 | 0 | 1 | 1 | 2 | 0 of 2 |
+| Severity | Baseline | Resolved | Left band | Carried at band | Entered band | NEW | Pre-existing | Current | Continuity |
+|---|---|---|---|---|---|---|---|---|---|
+| Critical | 2 | 2 | 0 | 0 | 1 | 1 | 0 | 2 | 0 of 2 |
 
 Columns:
 
@@ -172,13 +265,16 @@ Columns:
   that represents genuine continuity.
 - **Entered band** — findings that exist on both sides but arrived at this
   severity from another one: re-rated up, or a defect that genuinely worsened.
-- **NEW** — findings with no baseline counterpart.
+- **NEW** — findings the newer work is answerable for.
+- **Pre-existing** — raised only by the current auditor, position identical at
+  baseline. Include `UNVERIFIED-ORIGIN` here and footnote the count.
 - **Continuity** — `carried of current`, in words: how many of today's findings
   at this severity are the same findings as yesterday's. This is the column
   that would have prevented the misleading zero.
 
 Each row must satisfy: `Baseline = Resolved + Left band + Carried at band`, and
-`Current = Carried at band + Entered band + NEW`. Include a `**Total**` row.
+`Current = Carried at band + Entered band + NEW + Pre-existing`. Include a
+`**Total**` row.
 
 Then, immediately below the table and before any other prose, state:
 
@@ -216,15 +312,18 @@ required and appears in this order.
    where the improvement is concentrated and *why* it is concentrated there
    (usually one structural change resolves many findings at once). Then state
    plainly what got worse. Name the number of genuinely resolved findings and
-   the Critical/High movement. End with a one-sentence net verdict that a reader
-   could act on. Never let a favourable total hide an unfavourable composition.
+   the Critical/High movement. State the regression count as `NEW` alone, and
+   separately how many current findings are pre-existing conditions the baseline
+   auditor did not raise. End with a one-sentence net verdict that a reader could
+   act on. Never let a favourable total hide an unfavourable composition, and
+   never let a growth in findings read as a growth in defects.
 3. **Severity Movement** — see section 3A. A net-count table is not acceptable
    here; the movement must be decomposed on the row.
 4. **Disposition Rollup** — the disposition table with counts and % of baseline,
    the NEW exclusion note, then a **Reconciliation** subsection showing both
    sides' arithmetic and enumerating every merge and split.
 5. **Dimension-Level Movement** — table: dimension × (baseline, current, net,
-   **of current: carried / new**, assessment). The carried/new split is required
+   **of current: carried / new / pre-existing**, assessment). The split is required
    for the same reason as section 3A: a dimension that fell from 10 to 6 by
    resolving 9 and adding 5 is not the same dimension, and the net alone says
    it is. The assessment column is a short clause, not a number restated. Bold
@@ -252,6 +351,12 @@ required and appears in this order.
    For NEW items the Baseline line may be dropped and the body replaced with a
    bolded regression judgement (`**Genuine regression.**` /
    `**Artifact of new functionality.**`) plus the explanation.
+
+   For PRE-EXISTING items the Baseline line carries the position the probe found
+   (`Not raised — position present at <path:line>`), and the body leads with
+   `**Not attributable to the newer work.**` followed by the `Origin` and the
+   probe's paired excerpts. Group them under a `### Highs — Pre-existing,
+   Newly Reported` heading, never inside the `New` group.
 8. **Medium, Low, and Info Findings — Rollup** — one subsection per dimension,
    each a two-column table of `Disposition | Findings`, findings separated by
    ` · `. Each entry names both sides' locations. Add a `Cross-reference` row
@@ -266,7 +371,12 @@ required and appears in this order.
 10. **New Findings Introduced** — all NEW findings, numbered, grouped by
     severity, most severe first, each with a location and a one-or-two-sentence
     regression judgement. Close with a count breakdown and a sentence
-    characterizing the NEW Critical/High set specifically.
+    characterizing the NEW Critical/High set specifically. PRE-EXISTING findings
+    never appear here.
+10a. **Pre-existing Findings Newly Reported** — all PRE-EXISTING and
+    UNVERIFIED-ORIGIN findings, same format, each with its `Origin` and probe
+    evidence. Close with the calibration guard's verdict (section 2C) when it
+    triggers.
 11. **Residual Risk** — what remains unaddressed, ranked by severity. Group
     related findings that constitute one risk and say so ("these three findings
     should be treated as one risk, not three"). State up front that this is a
@@ -300,10 +410,20 @@ Write it to stand alone anyway: the queue remains the scoped work list, while
 the other inputs exist to validate it and correct upstream errors.
 
 **Selection.** NEW and TRANSFORMED, plus the **dependency closure** defined
-below. RESOLVED, IMPROVED, UNCHANGED, and UNVERIFIED are otherwise excluded by
-design: this queue is scoped to what the current snapshot introduced or carried
-across in a new shape, not to everything still open. Residual Risk in the full
-delta remains the complete picture, and the two documents disagree on purpose.
+below. RESOLVED, IMPROVED, UNCHANGED, UNVERIFIED, PRE-EXISTING, and
+UNVERIFIED-ORIGIN are excluded by design: this queue is scoped to what the
+current snapshot introduced or carried across in a new shape, not to everything
+still open. Residual Risk in the full delta remains the complete picture, and
+the two documents disagree on purpose.
+
+**A pre-existing defect is not queued work.** `PRE-EXISTING` and
+`UNVERIFIED-ORIGIN` are open defects the newer work did not cause — the same
+class as `UNCHANGED`, differing only in whether the baseline auditor happened to
+raise them. Queueing them spends the remediation research budget on code nobody
+touched, and excluding UNCHANGED while including them is incoherent. They are
+reported in the full delta's section 10a and counted among the queue header's
+exclusions. They enter the queue only through the closure, and only as a named
+dependency.
 
 **The dependency closure.** Scoping by attribution and scoping by closability
 are different things, and a queue that only does the first hands the next agent
@@ -315,8 +435,8 @@ else must change for it to close. Any **still-open** excluded finding that
 answer names joins the queue in its own section. Rules:
 
 - **Eligible pool: open findings only** — UNCHANGED, UNVERIFIED, and IMPROVED
-  findings whose residue is still open. A RESOLVED finding can never be a
-  dependency; it is already closed.
+  findings whose residue is still open, plus PRE-EXISTING and UNVERIFIED-ORIGIN.
+  A RESOLVED finding can never be a dependency; it is already closed.
 - **Entry is by named dependent.** A finding joins only because a specific
   queued item needs it. Record which item(s) pulled it in. Nothing enters the
   closure because it is severe, adjacent, or obviously worth doing — severity is
@@ -338,6 +458,11 @@ answer names joins the queue in its own section. Rules:
   the closure's own count alongside it, never folded into it.
 - **An empty closure is a result.** If every queued item is independently
   closable, say so explicitly. Silence reads as "not checked."
+- **Walked before attribution, pruned after.** Which provisional items are `NEW`
+  is not known yet, so the delta agent walks the closure over TRANSFORMED plus
+  every provisional item — a superset of the final closure — recording
+  dependencies among provisional items too. The attribution agent prunes it to
+  the settled set per section 2D.
 
 Because the exclusion is deliberate and consequential, the queue must say so in
 its own header — an UNCHANGED Critical is still a Critical, and a reader who
@@ -361,12 +486,13 @@ duplicate ownership; record them in `Blocked by` or `Pulled in by`.
 Source: `<full delta filename>`. Current snapshot: `<label>`, audited at
 `<path or ref@sha>`, <N> findings.
 
-Scope: the <N> findings classified NEW or TRANSFORMED, plus <N> excluded
-findings pulled in as their dependency closure. **Not a complete list of open
-defects.** Excluded by design: <N> RESOLVED, <N> IMPROVED, <N> UNCHANGED, <N>
-UNVERIFIED. After the closure, the still-excluded set contains <N> Critical and
-<N> High findings that remain open — see the full delta's Residual Risk section:
-<one line naming each still-excluded Critical and High>.
+Scope: the <N> findings classified NEW or TRANSFORMED — the defects this
+snapshot is answerable for — plus <N> excluded findings pulled in as their
+dependency closure. **Not a complete list of open defects.** Excluded by design:
+<N> RESOLVED, <N> IMPROVED, <N> UNCHANGED, <N> UNVERIFIED, <N> PRE-EXISTING, <N>
+UNVERIFIED-ORIGIN. After the closure, the still-excluded set contains <N>
+Critical and <N> High findings that remain open — see the full delta's Residual
+Risk section: <one line naming each still-excluded Critical and High>.
 
 ## <Severity> — <N> items
 
@@ -404,9 +530,9 @@ enabling work, not defects this snapshot introduced. <N> closure passes.
 - **Constraints a fix must respect:** <as above, or "none recorded">
 ```
 
-Order both sections by severity, most severe first, then by dimension. Number
-the closure separately with a `D` prefix so the two sets can never be conflated
-by an item number alone.
+Order every section by severity, most severe first, then by dimension. Number
+closure items with a `D` prefix so the two sets can never be conflated by an item
+number alone.
 
 **Rules.**
 
@@ -421,7 +547,7 @@ by an item number alone.
 - **Counts must agree with the full delta.** The queue's NEW + TRANSFORMED item
   count equals `NEW + TRANSFORMED` from the Disposition Rollup. If it does not,
   the delta is wrong, not the queue. Closure items are counted and reported
-  separately and are never added into that figure.
+  separately.
 - **Every closure item traces back.** Each one names at least one queued item
   that pulled it in, and every `Blocked by` reference above resolves to a
   closure item that exists. A closure item nothing depends on is scope creep —
@@ -463,6 +589,9 @@ by an item number alone.
 
 ## 7. Before finishing
 
+The three attribution items are the attribution agent's to check (section 2D);
+every other item is the delta agent's.
+
 - [ ] Baseline-side arithmetic closes against the baseline report's stated total.
 - [ ] Current-side arithmetic closes against the current report's stated total.
 - [ ] Every merge and split is enumerated in Reconciliation.
@@ -474,13 +603,23 @@ by an item number alone.
       its composition.
 - [ ] Every Critical and High from either side appears in section 7.
 - [ ] Every remaining finding from either side appears exactly once in section 8.
-- [ ] Every NEW Critical/High is labelled genuine regression, artifact of new
-      functionality, or reporting difference.
+- [ ] Every NEW Critical/High is labelled genuine regression or artifact of new
+      functionality.
+- [ ] Every NEW passed the section 2A probe, outcome recorded with paired
+      excerpts. No NEW rests on the baseline report's silence alone, and no
+      provisional marking survives in a finished delta.
+- [ ] Every shared `(file, enclosing symbol)` position was adjudicated per
+      section 2B; the calibration guard (2C) was evaluated.
+- [ ] The regression count is stated as NEW alone, nowhere summed with
+      PRE-EXISTING, in any table or sentence.
 - [ ] Every RESOLVED cites positive evidence, not an absence of mention.
 - [ ] Every UNVERIFIED states why, and what would settle it.
 - [ ] The open-items queue exists, its NEW + TRANSFORMED section holds exactly
       the NEW + TRANSFORMED count from the Disposition Rollup, and every entry
       is actionable without the full delta.
+- [ ] No PRE-EXISTING or UNVERIFIED-ORIGIN finding is queued as work. Each is
+      counted among the header's exclusions, and appears in the queue only as a
+      `D`-numbered closure item a queued entry names in `Blocked by`.
 - [ ] The dependency closure was walked to a fixed point. Every queued item
       states what blocks it or `none`; every closure item names the queued
       item(s) that pulled it in and whether the block is total or partial; every
