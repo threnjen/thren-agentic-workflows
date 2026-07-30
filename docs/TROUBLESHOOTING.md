@@ -32,8 +32,28 @@ one-shot command.
 ### Fix
 
 - Run `python3 scripts/propagate_master_assets.py --once`.
-- In VS Code, confirm the `watch: propagate master assets` task is running.
+- If a `--watch` process was meant to be running, confirm it is still alive.
 - If you edited generated files directly, rerun the transform and recheck the diff.
+
+### Symptom
+
+`BLOCKED: propagation is the maintainer's manual step and must not be run by an agent.`
+
+### Cause
+
+An agent tried to execute `scripts/propagate_master_assets.py`. The `PreToolUse` hook
+`.claude/hooks/block-propagation.py` exits 2 on any command that runs the script, because
+regenerating `ports/` and `.github/` swamps the authored source diff.
+
+### Fix
+
+- Nothing to fix in the agent session: edit `source_of_truth/` only, then report that
+  propagation is pending. Sync tests failing until then is the expected state.
+- Run the transform yourself from your own shell.
+- Inspection is not blocked — `grep propagate_master_assets ...` and reading the file pass.
+  If an inspection command is being blocked, it is matching the execution pattern (an
+  interpreter or `./` reaching the script at the start of a command or after a separator);
+  rephrase it.
 
 ### Symptom
 
@@ -162,7 +182,8 @@ deploy does not update.
 ### Cause
 
 Deploy only manages content between matching sentinel comments (`<!-- context7 -->`,
-`<!-- code-review-graph -->`, `<!-- agent-discovery -->`). A hand-written copy of the
+`<!-- code-review-graph -->`, `<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`,
+`<!-- know-the-audience -->`). A hand-written copy of the
 same guidance outside sentinels (for example, an old unsentineled discovery section) is
 foreign content and is deliberately left alone, so it coexists with the managed block.
 
@@ -198,31 +219,40 @@ Counts in `README.md`, `docs/ARCHITECTURE.md`, and `docs/CODEBASE_CONTEXT.md` di
 ### Cause
 
 Agent, skill, or instruction inventories changed without updating the standard
-docs as a set.
-
-### Fix
-
-- Recount the actual files under `source_of_truth/{agents,skills,instructions}`
-  and update all three overview docs in the same change.
-
-### Symptom
-
-`test_retirement_reconciliation.py` fails with `disk holds N, but the surface still
-claims M`.
-
-### Cause
-
-You added or removed agents, skills, or instructions, and a count claim in `README.md`,
-`CONTRIBUTING.md`, or `docs/CODEBASE_CONTEXT.md` still states the old number. The guards
-read the real count from disk and compare.
+docs as a set. No test guards these counts — nothing will tell you they drifted.
 
 ### Fix
 
 - Recount from disk — do not arithmetic a new number out of the old one. Counts appear in
-  more than one place per file (prose *and* a directory tree), and the guards check all of
-  them.
+  more than one place per file (prose *and* a directory tree, plus Mermaid node labels).
 - Per-harness port counts also live in the comment block and `roots` list of
-  `test_marker_guard_matches_every_real_generated_file`; update both together.
+  `test_marker_guard_matches_every_real_generated_file` in
+  `tests/test_propagate_master_assets.py`; update those with the docs.
+
+## Corpus Guards
+
+### Symptom
+
+`test_agent_corpus_invariants.py` fails on a roster entry, frontmatter shape, or
+`applyTo` pattern.
+
+### Cause
+
+One of four structural invariants over `source_of_truth/` broke: a frontmatter roster
+names an agent that no longer exists (usually a rename), an agent declares a roster it
+lacks the tool grant to spawn, an agent or skill frontmatter block is malformed, or an
+`applyTo` glob matches nothing.
+
+### Fix
+
+- Roster failures: fix the roster entry to the current agent slug, or restore the agent.
+- `applyTo` failures are the quiet ones — a pattern that matches nothing ships the
+  instruction to no agent, with no error at propagation time. Matching is `fnmatch`
+  against the agent's repo-relative path, so `**/x.agent.md` needs a `/` immediately
+  before `x`, and numbered agents must be named in full
+  (`**/04b-feature-implementer.agent.md`).
+- Do not fix a failure by adding a prose-keyed assertion. Every check in this file is
+  structural on purpose; a check that cannot survive a reword does not belong there.
 
 ### Symptom
 

@@ -4,8 +4,7 @@
 
 This repository is organized around one authoring surface and a two-stage pipeline:
 
-- `source_of_truth/` is the master source for agent definitions, skills, instructions,
-  and instructions.
+- `source_of_truth/` is the master source for agent definitions, skills, and instructions.
 - `ports/{claude,codex,opencode,cursor,github}` are generated outputs.
 - `.github/` at the repo root is a real, deployed mirror of `ports/github`.
 - `docs/`, `eval/`, `benchmarks/`, and `packages/` are supporting material.
@@ -34,8 +33,8 @@ flowchart TD
     Root --> Scripts[scripts and deploy_agents.py]
 
     SOT --> Agents[54 agent definitions]
-    SOT --> Skills[41 skill directories]
-    SOT --> Instructions[19 instruction files]
+    SOT --> Skills[42 skill directories]
+    SOT --> Instructions[18 instruction files]
 
     Scripts --> Propagate[propagate_master_assets.py]
     Scripts --> Shared[asset_paths.py]
@@ -64,13 +63,18 @@ flowchart LR
 
 The transform runs to a fixed point: `propagate_until_converged` repeats a single pass
 until a pass makes zero changes (max 25 passes). Each pass rewrites agents per platform,
-regenerates skills, emits Cursor commands and rules, and mirrors the
-source subdirs (`agents`, `instructions`, `skills`) to `ports/github` and
-`.github/`.
+regenerates skills, emits Cursor commands and rules, and mirrors the source subdirs
+(`agents`, `hooks`, `instructions`, `skills`) to `ports/github` and `.github/`. Only
+`agents`, `instructions`, and `skills` exist under `source_of_truth/`; a mirrored subdir
+that is absent is simply skipped.
 
-`--watch` monitors the source directories (`agents`, `skills`, `instructions`,
-`hooks`). `--once` (the default when no flag is passed) and `--watch` use the same
-transformation logic.
+`--watch` monitors those same source directories. `--once` (the default when no flag is
+passed) and `--watch` use the same transformation logic.
+
+Propagation is a maintainer step run by hand. A `PreToolUse` hook
+(`.claude/hooks/block-propagation.py`, wired in `.claude/settings.json`) blocks any agent
+attempt to execute the script, because a regeneration sweep buries the authored source
+diff. Reading or grepping the script stays allowed; only execution is blocked.
 
 ### Stage 2 — Deploy (deploy_agents.py)
 
@@ -96,9 +100,10 @@ its mirrored tree is copied verbatim (no per-file marker), so it is treated as
 unconditionally managed within the mirrored subdirs.
 
 After the asset copy, deploy renders a per-harness **baseline instructions file** from
-`source_of_truth/baseline/baseline-instructions.md`. The template holds four sections
+`source_of_truth/baseline/baseline-instructions.md`. The template holds five sections
 wrapped in HTML sentinel comments (`<!-- context7 -->`, `<!-- code-review-graph -->`,
-`<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`); placeholders for harness name and agent/skill paths are
+`<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`, `<!-- know-the-audience -->`);
+placeholders for harness name and agent/skill paths are
 substituted at deploy time using the machine's real home directory, so no OS branching
 is needed. Deploy splices each sentinel-delimited section into the destination —
 replacing an existing block in place or appending a missing one — and never touches
@@ -124,8 +129,8 @@ The only authoring surface.
 - `agents/` — 54 agent definitions (15 user-invocable, 39 hidden subagents), all using
   the `.agent.md` suffix. Loading keys off `name`/`description` frontmatter, not the
   suffix, so the source glob stays `*.md`.
-- `skills/` — 41 directory-based skills, each rooted at `SKILL.md`.
-- `instructions/` — 19 instruction files matched by `applyTo` globs. Matching is
+- `skills/` — 42 directory-based skills, each rooted at `SKILL.md`.
+- `instructions/` — 18 instruction files matched by `applyTo` globs. Matching is
   `fnmatch` against the agent's repo-relative path, so a `**/name.agent.md` pattern
   requires a `/` immediately before `name` — numbered agents must be named in full, and a
   pattern matching nothing fails silently.
@@ -144,7 +149,7 @@ platform-specific transformations:
 - Claude emission splits by invocability: a hidden agent emits a subagent file only; a
   user-invocable agent emits a slash command, **plus** a subagent file when some
   orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
-  it. That is why `ports/claude/agents` (40) and `ports/claude/commands` (15) differ:
+  it. That is why `ports/claude/agents` (41) and `ports/claude/commands` (15) differ:
   39 hidden subagents plus the two dual-use agents (Docs Writer,
   Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
@@ -167,7 +172,7 @@ skills instead — this repository ships no learnings content.
 
 `ports/github` is a verbatim copy of the mirrored source subdirs, and `.github/`
 at the repo root is a real deployed copy of it. Only the mirrored subdirs
-(`agents`, `instructions`, `skills`) are touched — anything else
+(`agents`, `hooks`, `instructions`, `skills`) are touched — anything else
 in `.github/` (for example a future `workflows/`) is left alone.
 
 ### Shared module (`scripts/asset_paths.py`)

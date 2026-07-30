@@ -13,9 +13,9 @@ Quick-reference for AI agents working in this repository.
 ## Current Counts
 
 - 54 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 39 hidden subagents (`user-invocable: false`) and 15 user-invocable.
-- 41 skills in `source_of_truth/skills/`.
-- 19 instructions in `source_of_truth/instructions/`.
-- `ports/claude/agents` = 40, `ports/claude/commands` = 15.
+- 42 skills in `source_of_truth/skills/`.
+- 18 instructions in `source_of_truth/instructions/`.
+- `ports/claude/agents` = 41, `ports/claude/commands` = 15.
 
 ## Key Paths
 
@@ -25,8 +25,8 @@ INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
     *.agent.md                             # 54 agent definitions
-  skills/                                  # 41 skill dirs, each rooted at SKILL.md
-  instructions/                            # 19 applyTo-glob instruction files
+  skills/                                  # 42 skill dirs, each rooted at SKILL.md
+  instructions/                            # 18 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
   claude/  {agents, commands, skills}
@@ -40,6 +40,7 @@ scripts/
   asset_paths.py                           # shared markers + poll_watch
   extract_pdfs.py                          # utility
 deploy_agents.py                           # deploy entry point (root, not scripts/)
+.claude/hooks/block-propagation.py         # PreToolUse hook: agents may not RUN propagation
 docs/ ARCHITECTURE.md AUTHORING.md CODEBASE_CONTEXT.md COPILOT_SETUP.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
 docs/ ai-instruction-framework.md UNDERSTANDING_AGENTIC_ECOSYSTEM.md
 docs/porting/                              # CLAUDE/CODEX/OPENCODE guides + TOOL_MAPPING
@@ -55,6 +56,10 @@ benchmarks/ packages/ tests/
 - Edit `source_of_truth/{agents,skills,instructions}` first.
 - Transform: `python3 scripts/propagate_master_assets.py --once` (default) or `--watch`.
   Runs to a fixed point via `propagate_until_converged` (max 25 passes).
+- Agents must NOT run the transform — the maintainer does it by hand. `.claude/settings.json`
+  wires a `PreToolUse` Bash hook (`.claude/hooks/block-propagation.py`) that exits 2 on any
+  command executing the script; inspection commands (grep, read) pass. After editing source,
+  report that propagation is pending. Sync tests fail until it runs; that is expected.
 - Transform targets: `ports/{claude,codex,opencode,cursor}` plus `ports/github` and `.github/`.
 - Deploy: `python3 deploy_agents.py [--harness a,b | --all | --watch | --list | --no-save | --skip-tools]`.
 - Deploy also bootstraps companion tools (code-review-graph via pip/pipx, Context7 via
@@ -75,9 +80,9 @@ benchmarks/ packages/ tests/
   - cursor → `~/.cursor/rules/baseline-instructions.mdc` (`alwaysApply: true` frontmatter)
   - github → `<repo>/.github/copilot-instructions.md` (a `.github/AGENTS.md` would only
     scope to files under `.github/`)
-- Baseline splice model: four sections delimited by sentinel comments
+- Baseline splice model: five sections delimited by sentinel comments
   (`<!-- context7 -->`, `<!-- code-review-graph -->`, `<!-- phase-doc-sync -->`,
-  `<!-- agent-discovery -->`);
+  `<!-- agent-discovery -->`, `<!-- know-the-audience -->`);
   only sentinel blocks are replaced/appended, content outside them is never touched;
   idempotent (second run → `unchanged`); every failure returns a status, never raises.
 - The cursor baseline `.mdc` deliberately carries NO generated marker so the
@@ -110,7 +115,7 @@ benchmarks/ packages/ tests/
 - Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
   plus a subagent file only if an orchestrator names it as a child (dual-use). So
   `ports/claude/agents` = 39 hidden + 2 dual-use (docs-writer, web-researcher)
-  = 40, while `ports/claude/commands` = 15.
+  = 41, while `ports/claude/commands` = 15.
 - Codex and OpenCode emit all 54 agents; only Claude and Cursor split commands out.
 - `ports/cursor/rules` = any instruction whose `applyTo` globs are
   not all agent-targeted. Agent-targeted instructions are excluded because they ship
@@ -134,11 +139,17 @@ benchmarks/ packages/ tests/
 
 ## Testing
 
-- Python regression tests under `tests/` cover both scripts.
+- 14 Python test modules under `tests/` cover both scripts plus the agent corpus.
 - Run with `uv run pytest tests/` (or `.venv/bin/python -m pytest tests/`); bare
   `python -m pytest` may lack pytest.
 - `tests/_propagate_env.py` redirects the propagator's directory globals to a temp tree
   so tests never read/write the real repo.
+- `tests/test_agent_corpus_invariants.py` holds the corpus guards: every frontmatter
+  roster entry names a real agent and is spawnable, frontmatter is well-formed for agents
+  and skills, every instruction declares an `applyTo` that matches at least one real file,
+  and no large block is duplicated across three or more agents.
+- Corpus checks are structural only — they compare frontmatter, paths, and tool grants.
+  Never add a check keyed to agent prose; it goes inert the moment someone rewords.
 
 ## Do Not
 

@@ -56,10 +56,20 @@ Watch mode monitors the source directories and re-propagates when files change:
 - `source_of_truth/agents/`
 - `source_of_truth/skills/`
 - `source_of_truth/instructions/`
-- `source_of_truth/hooks/`
 
 It rewrites `ports/{claude,codex,opencode,cursor}`, plus `ports/github` and the real
 `.github/` mirror.
+
+### Propagation is yours, not an agent's
+
+Run the transform yourself. A `PreToolUse` hook (`.claude/hooks/block-propagation.py`,
+wired in `.claude/settings.json`) blocks an agent from executing the script and returns an
+explanation instead — regenerating every file under `ports/` and `.github/` buries the
+authored source diff you need to review. Agents may still read and grep the script.
+
+An agent that edits `source_of_truth/` should stop and report that propagation is pending.
+Sync tests, and any test that reads `ports/`, fail until you propagate. That failure is
+correct, not something to fix by propagating.
 
 ## Stage 2 — Deploy
 
@@ -92,7 +102,7 @@ out with a usage hint rather than guessing.
 | codex | `~/.codex` + `~/.agents/skills` | `CODEX_HOME` | agents; skills |
 | opencode | `~/.config/opencode` | `OPENCODE_CONFIG_DIR` | agents, skills |
 | cursor | `~/.cursor` | — | commands, rules |
-| github | `<repo>/.github` | — | verbatim mirror of the source subdirs |
+| github | `<repo>/.github` | — | verbatim mirror of `agents`, `hooks`, `instructions`, `skills` |
 
 Learnings are not deployed at all. Agents read and write `docs/learnings/` in the
 repository they are working in, and that directory is never seeded or propagated — a
@@ -110,8 +120,9 @@ real home paths substituted at deploy time:
 | cursor | `~/.cursor/rules/baseline-instructions.mdc` (`alwaysApply` rule) |
 | github | `<repo>/.github/copilot-instructions.md` |
 
-Only the four sentinel-delimited sections (`<!-- context7 -->`,
-`<!-- code-review-graph -->`, `<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`) are replaced or appended;
+Only the five sentinel-delimited sections (`<!-- context7 -->`,
+`<!-- code-review-graph -->`, `<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`,
+`<!-- know-the-audience -->`) are replaced or appended;
 content outside the sentinels is never touched, and a repeat run reports `unchanged`.
 The result appears under a `baseline` key in the per-harness deploy output.
 
@@ -144,8 +155,8 @@ maintenance loop depends on it.
 
 ## Testing And Validation
 
-Python regression tests live under `tests/` and cover both the transform and deploy
-scripts. Run them with the environment's Python:
+Python regression tests live under `tests/` and cover the transform script, the deploy
+script, and the agent corpus itself. Run them with the environment's Python:
 
 ```bash
 uv run pytest tests/
@@ -162,6 +173,13 @@ Validation sequence:
 4. Optionally run `python3 deploy_agents.py --all` against a throwaway `HOME` to confirm
    deploy behavior without touching your real config dirs:
    `HOME=$(mktemp -d) python3 deploy_agents.py --all`.
+
+`tests/test_agent_corpus_invariants.py` is the guard on the authored corpus: it catches a
+roster entry naming an agent that no longer exists, malformed agent or skill frontmatter,
+an `applyTo` glob that stopped matching anything (so the instruction silently ships to no
+agent), and a large block duplicated across three or more agents. Every check is
+structural — it reads frontmatter and paths, never agent prose, because a check keyed to
+wording passes forever once someone rephrases the sentence it was watching.
 
 Interpretation guidance:
 

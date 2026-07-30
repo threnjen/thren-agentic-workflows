@@ -91,10 +91,10 @@ to pull the latest.
 
 Deploy also maintains a **baseline instructions file** per harness — `CLAUDE.md` for
 Claude, `AGENTS.md` for Codex and OpenCode, an always-applied rule for Cursor, and
-`.github/copilot-instructions.md` for Copilot. It carries three managed sections
-(Context7 usage, code-review-graph usage, and agent/skill discovery) wrapped in HTML
-sentinel comments; deploy splices only those sections, so anything you write outside
-them in the same file is preserved.
+`.github/copilot-instructions.md` for Copilot. It carries five managed sections
+(Context7 usage, code-review-graph usage, phase-document sync, agent/skill discovery,
+and audience-appropriate writing) wrapped in HTML sentinel comments; deploy splices only
+those sections, so anything you write outside them in the same file is preserved.
 
 ## Prerequisites
 
