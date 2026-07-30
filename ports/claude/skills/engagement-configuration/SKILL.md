@@ -8,8 +8,9 @@ description: "Schema and validation rules for an engagement configuration file �
 
 This skill defines the format of an engagement configuration file and the
 validation rules an orchestrator applies when loading it. The schema section
-below is the **load contract**: the preparation orchestrator loads and
-validates configs against it, and the graph baseline capture procedure reuses
+below is the **load contract**: the Client Deliverable orchestrator loads and
+validates configs against it before spawning any stage, the preparation stage
+re-checks against it, and the graph baseline capture procedure reuses
 its field vocabulary. Field names defined here are canonical — downstream
 consumers must use them verbatim.
 
@@ -20,11 +21,9 @@ orchestrator performs by following the rules in this skill.
 
 The config is a single YAML file. By convention it is named
 `engagement.yaml` and lives at the root of the engagement's working
-directory, but any path works. The user may point the orchestrator at an
-existing config, or simply answer the orchestrator's questions (pair paths,
-branches, roles, SOW and deliverables-spec paths) and let it write the file
-for them. The orchestrator never scans the filesystem for a config nobody
-pointed at.
+directory, but any path works. The user authors the file and points the
+orchestrator at it; the orchestrator never scans the filesystem for a config
+nobody pointed at, and never gathers configuration interactively.
 
 ## Schema
 
@@ -129,6 +128,6 @@ Explicitly allowed (do not over-validate):
 
 Missing supporting artifacts — documentation or code graphs for a declared
 repository — are **not** config validation failures. They are work for the
-preparation orchestrator, which regenerates them after the config validates.
+preparation stage, which regenerates them after the config validates.
 Validation covers only the config's own declarations (paths, branches,
 roles, structure).

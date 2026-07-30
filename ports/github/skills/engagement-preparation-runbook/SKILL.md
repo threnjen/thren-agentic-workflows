@@ -1,6 +1,6 @@
 ---
 name: engagement-preparation-runbook
-description: "Repeatable runbook for preparing a client engagement for comparison analysis — declare an engagement configuration, invoke the preparation orchestrator, verify what a successful run produced per side, re-run safely (idempotent), and diagnose failures. Use when: starting preparation for any engagement, re-running preparation after changes or a partial failure, or verifying that a preparation run left every engagement repo's history untouched."
+description: "Repeatable runbook for preparing a client engagement for comparison analysis — author an engagement configuration file, invoke the Client Deliverable orchestrator with it, verify what a successful run produced per side, re-run safely (idempotent), and diagnose failures. Use when: starting preparation for any engagement, re-running preparation after changes or a partial failure, or verifying that a preparation run left every engagement repo's history untouched."
 ---
 
 # Engagement Preparation Runbook
@@ -11,28 +11,34 @@ pointers — the detailed rules live in the assets it references:
 
 - **Config contract**: the `engagement-configuration` skill (schema,
   validation rules, canonical field vocabulary).
-- **Orchestrator**: the **Client Deliverable - Prepare** agent
-  (`06-engagement-prepare.agent.md`) — graph build, baseline snapshot,
-  analysis-branch convention, fail-fast policy. It spawns no agents;
-  documentation is produced later by the Client Deliverable orchestrator's
-  evidence stage (`engagement-pair-loop` skill, Stage A).
+- **Entry point**: the **Client Deliverable** agent — the only user-invocable
+  agent in the fleet. It validates the config, scaffolds the workspace, then
+  spawns its preparation stage (Run Flow steps 1–2 of its definition).
+- **Preparation stage**: the **Client Deliverable - Prepare** agent — QA gate
+  and QA appendix, analysis-branch convention, graph build, baseline snapshot,
+  fail-fast policy, idempotency, final report. It is spawned by the root
+  orchestrator, never invoked directly. It spawns no agents; documentation is
+  produced later by the evidence stage (`engagement-pair-loop` skill, Stage A).
 
 Where behavior is described below, the referenced asset is the source of
 truth.
 
 ## Security Boundary
 
-Engagement repositories, SOW documents, and deliverables specs are
-engagement-confidential. They never enter this repository or its generated
-outputs — reports carry only local paths and compact status summaries.
+Per the `engagement-workspace` skill's Security Boundary section.
 
 ## Step 1: Declare the Engagement Configuration
 
-Either author a config file per the `engagement-configuration` skill (a
-`sow_document` pointer, a `deliverables_spec` pointer, and any number of
-comparison pairs), or skip the pre-work entirely: invoke the orchestrator
-and answer its questions — it gathers the pair paths, branches, roles, and
-document pointers, then writes the config for you.
+Preparation is config-file-driven; there is no interactive Q&A. Author the
+config file per the `engagement-configuration` skill before invoking
+anything: a `sow_document` pointer, a `deliverables_spec` pointer, and any
+number of comparison pairs (each with `name`, `type`, `original`,
+`upgraded`, and — for branch pairs — `repo_path`). By convention it is
+`engagement.yaml` at the root of the engagement's working directory; any
+path works, and relative paths inside it resolve against its own directory.
+
+The config is the single declaration of the run, which is what makes the run
+repeatable: the same config re-invoked produces the same preparation.
 
 ## Step 2: Record Pre-Run Branch SHAs
 
@@ -45,37 +51,39 @@ git rev-parse <branch>                  # record this SHA per repo, per branch
 git log -1 --format='%H %ci' <branch>   # SHA + commit date, for the record
 ```
 
-Keep these SHAs with your run notes. The orchestrator records and asserts
-them too, but your independent record is the verification evidence.
+Keep these SHAs with your run notes. The preparation stage records and
+asserts them too, but your independent record is the verification evidence.
 
-## Step 3: Invoke the Preparation Orchestrator
+## Step 3: Invoke the Client Deliverable Orchestrator
 
-Invoke the **Client Deliverable - Prepare** agent. The run proceeds in this order
-(details in the agent definition):
+Invoke the **Client Deliverable** agent and give it the path to the config
+file from Step 1. That is the whole interaction — a single non-interactive
+invocation, with no Q&A and no confirmation gate.
 
-1. **Validate** the config — any violation halts the run before any
-   preparation work, with a specific error naming the pair, the field, and
-   what was expected.
-2. **Confirm** — the orchestrator shows the full pair/side roster and waits
-   for your confirmation before creating any analysis branch.
-3. **Prepare each side** of each pair: analysis branch/worktree setup →
-   graph build (always) → internal baseline snapshot → record.
+The orchestrator then, per its Run Flow: validates the config against the
+`engagement-configuration` skill's Validation Rules (any violation halts the
+run before anything is prepared), scaffolds the engagement workspace per the
+`engagement-workspace` skill, records the resolved inputs in
+`engagement-state.md`, and spawns **Client Deliverable - Prepare** with that
+validated config. Because validation happens before the spawn, the
+preparation stage never asks you anything — it receives a config it can
+trust. Its preflights, prepare order, and per-side outputs are defined in
+its agent definition.
+
+If you want preparation only, stop after reading the preparation results
+(Step 4) — the orchestrator's later analysis stages are out of this
+runbook's scope.
 
 ## Step 4: What a Successful Run Produces, Per Side
 
-For every side of every pair, on that side's local, never-pushed analysis
-branch:
-
-- **A built code graph** — parse-based, with language coverage and gaps
-  recorded as known limitations (never gated on).
-- **A SHA-pinned internal baseline snapshot** — committed on the analysis
-  branch, labeled internal-only.
-- **A per-side record** in the final report: what was produced or failed,
-  and the local paths where each artifact lives.
-
-The final report also asserts the three analysis-branch invariants (no
-source file modified; original/main history byte-identical; analysis branch
-never pushed) with the recorded HEAD SHAs as evidence.
+Per the preparation stage's Final Report section: a per-side row for every
+side of every pair (analysis-branch status, graph status, baseline snapshot
+path, QA package paths and QA-gate status, the `deliverables/qa-appendix.md`
+pointer), and the three analysis-branch invariant assertions with their
+recorded HEAD SHAs as evidence. The orchestrator relays that report and
+records the same per-side status and pointers in the workspace's
+`engagement-state.md` — read that file to verify per side after the fact.
+Verify the SHAs independently in Step 5.
 
 ## Step 5: Verify Non-Contamination
 
@@ -98,26 +106,23 @@ difference is a defect in the run — stop and diagnose before proceeding.
 
 ## Re-Running: Idempotency and Resume
 
-Re-running the orchestrator on a prepared engagement is safe:
-
-- **The graph build always runs** — it is incremental and cheap.
-- **Analysis branches and worktrees are reused**, never recreated; an
-  existing analysis branch is not an error.
-- **After a partial failure**: whatever a failed side produced was committed
-  to its analysis branch before the failure was reported; a re-run
-  regenerates that side in full.
+Re-run the same way: invoke **Client Deliverable** again with the same
+config file. Re-running on a prepared engagement is safe — rules in the
+preparation stage's Idempotency section (graph builds are incremental,
+snapshots re-emit identically, analysis branches and worktrees are reused).
+The orchestrator resumes from `engagement-state.md`, redoing only sides not
+recorded complete; a re-run after a partial failure regenerates the failed
+side in full. Because the run is driven entirely by the config file, nothing
+about a re-run depends on remembering what you typed the first time.
 
 ## Failure Modes and Resolution
 
-The orchestrator fails fast only on unresolvable problems, naming the side
-and the cause (full enumeration in the agent's Fail Fast section):
+The preparation stage's Fail Fast section enumerates what stops a run and
+what it reports. Your resolutions:
 
-| Failure | Presentation | Resolution |
-|---------|--------------|------------|
-| Config validation error | Specific error naming the pair, field, and expectation; nothing is prepared | Fix the config; re-run |
-| Dirty working tree in a branch-pair repo | Run stops naming the repo | Commit/stash/clean the repo; re-run |
-| Graph build failure on a side | Run stops naming the side and the cause | Diagnose the build error; re-run |
-| Graph tooling unavailable (code-review-graph MCP server not in session) | **Not a failure** — the side's graph status is recorded **NOT RUN** with the reason; the run continues | Connect the code-review-graph MCP server; re-run |
-
-Missing graphs are never failures — they are the work the orchestrator
-exists to do.
+| Failure | Resolution |
+|---------|------------|
+| Config validation error | Fix the config; re-run |
+| Dirty working tree in a branch-pair repo | Commit/stash/clean the repo; re-run |
+| Graph build failure on a side | Diagnose the build error; re-run |
+| Graph tooling unavailable (`code-review-graph` CLI not installed) — recorded **NOT RUN**, not a failure | Install the `code-review-graph` CLI; re-run |

@@ -19,6 +19,8 @@
 
 ### Field Prefixes
 
+Unity-scoped. These prefixes apply inside Unity assemblies only; non-Unity C# uses `_camelCase` for private fields (see `csharp-standards`). `[SerializeField]` fields are the further exception — plain `camelCase`, no prefix (see `unity-development`).
+
 | Scope | Prefix | Example |
 |-------|--------|---------|
 | Private member | `m_` | `m_movementSpeed` |

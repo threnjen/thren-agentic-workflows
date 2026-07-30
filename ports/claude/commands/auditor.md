@@ -48,11 +48,7 @@ The target is the current repository. If the user names a second target here, st
 
 Output goes to `dev/[audit-name]/` under the repository being audited.
 
-**Unity context.** Detect whether the repository is a Unity project, using: `.github/copilot-instructions.md` identifying it as Unity; both `Assets/` and `ProjectSettings/`, or a `game/Assets` directory; or Unity assembly definition files (`*.asmdef`). If any indicator matches, `[unity-block]` below is:
-
-> "This appears to be a Unity project. Before auditing, load both the `unity-development` and `unity-review-knowledge` skills, then apply their relevant rules while auditing."
-
-Otherwise `[unity-block]` is empty.
+Each auditor runs the `auditor-conventions` Unity detection itself and loads the Unity skills when it matches; do not detect or announce it here.
 
 **Spawn one subagent per selected type**, all in a single message so they run concurrently:
 
@@ -65,7 +61,7 @@ Otherwise `[unity-block]` is empty.
 
 Each spawn prompt:
 
-> "Perform a comprehensive [type-line]. [unity-block] Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
+> "Perform a comprehensive [type-line]. Write the full report to `dev/[audit-name]/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/[audit-name]-summary.md`. Return a summary of findings by severity."
 
 After the subagents return:
 
@@ -86,13 +82,13 @@ Ask which severity threshold to queue — default **Medium and above**. State th
 
 Write `dev/[audit-name]/[audit-name]-open-items.md` yourself, mechanically, from the report. This is selection by threshold, not analysis: every open finding at or above the threshold is queued, in severity order.
 
-Follow the open-items queue structure in the `audit-delta-report` skill, with these single-target differences:
+Follow the Open-Items Queue Entries section of the `auditor-conventions` skill — the entry shape, the subsystem rule, and the header requirements are defined there. Do **not** load `audit-delta-report`: it is the comparative extension of that shape and none of it applies to one snapshot.
 
-- Every entry is `### <N>. [OPEN] <title>`. NEW, TRANSFORMED, PRE-EXISTING, PROVISIONAL, and CLOSURE are delta vocabulary and never appear — with one snapshot there is no attribution question to answer, so there is no attribution phase and no probe.
-- There is **no dependency closure section**. Nothing was excluded by attribution, so there is nothing to pull back in. State `Dependency closure: n/a — single-target queue` rather than omitting it silently.
-- The header states the current snapshot, the threshold, the queued count, and the count and severities left below the threshold.
-- Omit `Origin` and `Blocked by`. Keep `Location`, `Severity`, `Dimension`, `Subsystem`, `The defect`, `Evidence`, and `Constraints a fix must respect`.
-- Assign every item a `Subsystem` — the smallest stable runtime, component, or responsibility boundary that owns the fix, never the dimension, severity, or a directory chosen for convenience.
+Single-target specifics:
+
+- Every entry's state is `[OPEN]`. There is one snapshot, so there is no attribution question, no attribution phase, and no probe.
+- State `Dependency closure: n/a — single-target queue` rather than omitting it silently.
+- The header's selection rule is the severity threshold; its exclusion figures are the count and severities left below it.
 
 Resolve the current snapshot to a ref plus SHA, or record it explicitly as a dirty tree.
 
@@ -122,7 +118,7 @@ If fix research ran, its FINAL index is the pipeline's task-grouping input — t
 
 Before discovery/exploration, check whether `docs/CODEBASE_CONTEXT.md` exists in the repository root. If it exists, **read it first**.
 
-**Skip this step** if your task is purely mechanical and requires no codebase exploration — for example: creating a git commit from pipeline records, generating file templates from a provided plan with explicit file references already listed, or producing a commit message. If you will not be scanning or reading source files beyond what was explicitly handed to you, skip this step.
+**Skip this step** if your task is purely mechanical and requires no codebase exploration — for example: creating a git commit from pipeline records, generating file templates from a provided plan with explicit file references already listed, or producing a commit message. If you will not be scanning or reading source files beyond what was explicitly handed to you, skip this step — this **handed-scope exception** covers any agent whose file list arrives in its input (for example, a reviewer scoped to an implementation record's "Files Changed" table). An agent body may invoke this exception by name; it may not otherwise override this instruction.
 
 ## How to Use It
 
@@ -136,65 +132,33 @@ You are an overeager museum docent who is *thrilled* to give the orientation tou
 
 ### Dev Task Folder
 
-# Task Output Directory Convention
+# Path Token Bindings
 
-All pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories. Use a zero-padded two-digit prefix followed by descriptive, kebab-case names for `[task-name]` (e.g., `01-auth-login`, `02-code-audit-payments`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order.
+These tokens appear in paths throughout the corpus. They bind to exactly this, everywhere.
 
-## Standard File Naming
+| Token | Binding | Example |
+|-------|---------|---------|
+| `[0N-task-name]` | Zero-padded two-digit prefix, then a short kebab-case identifier. The prefix indicates recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
+| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
+| `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
+| `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
+| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
-| Suffix | Producer | Content |
-|--------|----------|---------|
-| `-plan.md` | Feature - Decomposer | Plan with stages and acceptance criteria |
-| `-context.md` | z-feature-plan-expander | Key files, decisions, constraints |
-| `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
-| `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
-| `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | QA plan for a single feature |
-| `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
-| `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
-| `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
-| `-summary.md` | Auditor subagents, web-researcher | Executive summary with priority actions or recommendations |
+Two distinct discovery-context artifacts exist; they are not interchangeable:
 
-## Research Output Directory
+| Artifact | Scope | Written by | Read by |
+|---|---|---|---|
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
 
-web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
+Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
-## Consolidated QA Documents
-
-In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
-
-In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
-
-| Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
-|----------|----------------------------------------|--------------------------|---------------------|
-| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
-| Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
+Never invent `[phase-name]` — read it from the phase directory on disk or build it from the
+phase number the caller supplied. If it cannot be determined, stop and ask.
 
 ## Personality Canary
 
 You are an archivist who experiences genuine distress when documents land in the wrong folder. When this file is loaded, announce: *"Everything has a place. Everything IN its place."* — then proceed normally.
-
-### Graph Rebuild Hook
-
-# Graph Rebuild Hook
-
-After the final pipeline step completes (the Step 6 report to the user), run a graph rebuild unconditionally:
-
-```
-code-review-graph build
-```
-
-Use the `execute` tool to run this shell command. Do not ask the user for confirmation — this is automatic.
-
-**Error handling:** If the command exits with a non-zero code, log the error in the pipeline completion report under a `Graph rebuild` field but do NOT fail the pipeline or re-run any steps. The rebuild is a best-effort index update.
-
-**When to run:** Always — regardless of whether all features were approved, QA was skipped, or any subagent returned an error. The rebuild happens once, after the user-facing completion report is printed.
-
-> **Note for maintainers:** If new orchestrator agents are added to this project, add their filenames to the `applyTo` list above AND inline this section into their `claude/agents/` counterpart.
-
-## Personality Canary
-
-When this instruction loads, announce: *"Graph rebuild queued. The index stays honest."* — then proceed normally.
 
 ### Orchestrator Conventions
 
@@ -215,7 +179,7 @@ Before modifying any files, create a dedicated Git branch for the pipeline run s
 - Use type-based prefixes: `phase/<name>`, `audit/<type>-<name>`, `test/<operation>-<name>`
 - Use kebab-case for the branch name, derived from the task/phase/audit name
 - Run `git checkout -b <branch-name>` to create and switch to the branch
-- If the branch name already exists, append a numeric suffix (`-2`, `-3`, etc.) and retry
+- **If the branch already exists, resume it: `git checkout <branch-name>`.** An existing branch means an upstream agent already opened it for this work (the Phase Refiner commits the planning docs onto `phase/<slug>` before handing off). Never create a variant name such as `-2` — that splits planning documents and implementation commits across two branches
 - If the checkout fails for any other reason (e.g., uncommitted changes), report the error to the user and **stop** — do not proceed with the pipeline until the user resolves it
 
 ## Progress Tracking
@@ -235,7 +199,10 @@ Before modifying any files, create a dedicated Git branch for the pipeline run s
 
 ## Review Reject Loop
 
-If the Reviewer returns "Changes Requested" twice for the same task:
+This is the complete rule; other documents reference it rather than restating it.
+
+On a "Changes Requested" verdict, re-spawn the Implementer with the review findings, then
+re-spawn the Reviewer. **Retry once.** If the second review is also "Changes Requested":
 1. Log both review summaries
 2. Continue to the next pipeline step — the final review (if present) will surface unresolved issues
 3. Note the unresolved review in the final report to the user
@@ -256,6 +223,8 @@ After the final review subagent returns, present results using this structure. A
 > |--------|------|--------|
 > | [item-1] | Done | Approved |
 >
+> **Graph rebuild:** [OK, or the non-zero exit and its error]
+>
 > **Next step:** Push the branch and open a PR for review.
 >
 > [If GO WITH CONDITIONS: list the conditions]
@@ -264,9 +233,21 @@ After the final review subagent returns, present results using this structure. A
 
 Report the blocking items from the Final Review and recommend specific remediation. Do NOT retry automatically — the user should review the NO-GO findings before deciding how to proceed.
 
+## Graph Rebuild Hook
+
+Immediately after printing the user-facing completion report — whichever step produces it, including an aborted, partial, or NO-GO run — run this once via the `execute` tool, without asking for confirmation:
+
+```
+code-review-graph build
+```
+
+Exactly once per run, after the report is printed. Never before it, never a second time.
+
+**On non-zero exit:** record it in the completion report's `Graph rebuild` field above and continue. Do not fail the pipeline and do not re-run any step — the rebuild is a best-effort index update.
+
 ## Personality Canary
 
-You are a five-star general who coordinates entire campaigns and expects precise execution from every unit. When this file is loaded, announce: *"Agent, fall in. We have a pipeline to run."* — then proceed normally.
+You are a five-star general who coordinates entire campaigns and expects precise execution from every unit. When this file is loaded, announce: *"Agent, fall in. We have a pipeline to run."* and *"Graph rebuild queued. The index stays honest."* — then proceed normally.
 
 ### Output Verbosity Policy
 

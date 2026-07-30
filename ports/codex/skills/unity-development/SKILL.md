@@ -1,19 +1,11 @@
 ---
 name: unity-development
-description: "Implementation and review rules for Unity C# projects. Covers runtime wiring, MonoBehaviour lifecycle, UI Toolkit pitfalls, test authenticity, bootstrap verification, and batch compilation gates. Load when: implementing or reviewing code in a Unity project (detected via Assets/ + ProjectSettings/ directories or copilot-instructions.md Unity identifier)."
+description: "Implementation and review rules for Unity C# projects. Covers runtime wiring, MonoBehaviour lifecycle, UI Toolkit pitfalls, test authenticity, bootstrap verification, and batch compilation gates. Load when: implementing or reviewing code in a Unity project - detected by the canonical Unity predicate in tech-stack-detection: Assets/ + ProjectSettings/ at the repo root or inside one nested directory (e.g. game/Assets/), or .github/copilot-instructions.md identifying the project as Unity, or a plan or phase document targeting Unity, MonoBehaviour, or Unity-specific systems. *.asmdef files corroborate but are not required."
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Unity Development Skill
 
 Stack-specific rules for Unity C# projects. These rules supplement the standard implementation and review workflows — they do not replace them.
-
-## When to Load This Skill
-
-Load this skill when any of these indicators are present:
-
-- The repo's `.github/copilot-instructions.md` identifies the project as Unity
-- The repo contains `Assets/`, `ProjectSettings/`, and `*.asmdef` files
-- The plan or phase document references Unity, MonoBehaviour, or Unity-specific systems
 
 ## Preflight (read these files before writing any code)
 
@@ -72,6 +64,25 @@ At the top of the implementation record's Summary section, add a **Preflight** b
 This block is not a formality — it tells the reviewer exactly which project-configuration decisions were made and verified, so they don't have to re-derive them.
 
 ---
+
+## C# Carve-outs Inside Unity Assemblies
+
+General C# standards (`csharp-standards`, `instructions/csharp-style.instructions.md`) apply, with these Unity-only overrides. Each wins inside Unity assemblies only, for the reason stated.
+
+- **Never use `?.`, `??`, or `??=` on a `UnityEngine.Object` subclass** (`GameObject`, `Component`, MonoBehaviour, `ScriptableObject`). Unity overloads `==`/`!=` so a *destroyed* object compares equal to `null` while the managed reference is not null; the null-conditional and null-coalescing operators bypass that overload and see the live reference. So `destroyed?.transform` still executes, and `_cached ??= GetComponent<T>()` keeps a destroyed component forever. Use an explicit `== null` / `!= null` check.
+  ```csharp
+  // NEVER
+  var t = _maybeDestroyed?.transform;
+  _cached ??= GetComponent<Rigidbody>();
+  // MUST
+  if (_maybeDestroyed != null) { var t = _maybeDestroyed.transform; }
+  if (_cached == null) { _cached = GetComponent<Rigidbody>(); }
+  ```
+- **`[SerializeField]` private fields are `camelCase` with no leading underscore**, and are never `readonly` or `init`. The Inspector derives its label from the field name, and the deserializer assigns them after construction. Non-serialized private fields keep `_camelCase` — the attribute is the signal distinguishing the two. Do not widen them to a public setter.
+- **Types serialized by `JsonUtility` are `[Serializable] class`/`struct` with public fields**, not `record`. `JsonUtility` ignores records, `init` setters, and properties — a `record` DTO silently round-trips as all-default. With Newtonsoft.Json or System.Text.Json the general `record` rule applies.
+- **Enable nullable reference types per assembly, not via `.csproj`** — Unity regenerates it on every import, and a per-`.asmdef` `csc.rsp` is not honored. Use `Assets/csc.rsp` containing `-nullable:enable` for the predefined `Assembly-CSharp`, and a file-scoped `#nullable enable` at the top of every file in an `.asmdef` assembly. Enable pure-domain assemblies (no `UnityEngine` surface) first; the engine boundary generates noise that buries real findings.
+- **`record` and `init` need an `IsExternalInit` polyfill** — Unity's .NET Standard 2.1 runtime omits it and the compiler fails with `CS0518`. One `internal static class IsExternalInit { }` in `namespace System.Runtime.CompilerServices` per assembly.
+- **Never touch the Unity API from a `Task` continuation without marshalling back to the main thread** — continuations do not resume on it and most engine APIs throw off it. Use coroutines or `Awaitable`/`UniTask` for frame-paced logic; reserve `Task` for background I/O at the edge.
 
 ## Runtime Wiring Rules
 

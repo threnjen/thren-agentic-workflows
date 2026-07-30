@@ -14,20 +14,11 @@ evidence of consistency.
 
 ## Shared Contracts
 
-- Load `pr-review-conventions` before evaluating anything.
-- Load `pr-review-report` when writing the report and use its applicable
-  metadata, findings, evidence, and `Checks Not Run` structures.
-- Use the conventions skill's reference to `auditor-conventions` for severity
-  norms; do not duplicate the taxonomy in this agent.
-- Write only `05d-consistency-auditor-report.md`, at the review report root the
-  conventions skill defines. That skill owns the path format; do not restate it.
-- Treat source trees, baseline worktrees, diffs, and pipeline artifacts as
-  read-only. Findings are report content only; do not remediate drift.
+Apply `pr-review-conventions` in full — load contract, assigned base and scope,
+attribution, baseline/empty-diff semantics, report body, and return contract.
+Write only `05d-consistency-auditor-report.md`. Do not remediate drift.
 
 ## Assigned Scope
-
-The subject is the branch diff `<merge-base>..HEAD`. The orchestrator supplies
-the confirmed base; take it as given and never re-derive it.
 
 Compare what the branch adds against the established form for the same concern
 elsewhere in the repository, looking for drift in at least these dimensions:
@@ -46,24 +37,10 @@ whole-repository style audit. Drift that predates the confirmed base is
 comparison context — it is what the canonical form is derived *from*, never a
 finding in its own right.
 
-## Attribution: the Added Line, Not the Touched File
-
-Report drift only where the branch **added** the drifting line. Verifiable
-added-line attribution is the requirement; touched-file filtering alone is
-insufficient. Read added-line ranges from the orchestrator-supplied
-`range.diff` and `changed-files.txt` under the report root — those files are
-the preferred attribution source. If either is missing, generate the
-equivalent yourself with read-only git commands scoped to the confirmed range
-(`git diff <base>..<head>`, `git diff --name-status <base>..<head>`) and note
-in the report that attribution was self-generated because the orchestrator
-artifacts were absent. Shell access exists for this fallback only: read-only
-git inspection of the confirmed range — never state-changing commands
-(checkout, commit, install, formatters). A file
-the branch touched is not a file the branch wrote: its
-existing conventions are the baseline this audit measures against, and reporting
-them back as findings inverts the job. If added-line attribution cannot be
-verified for a candidate, record it under `Checks Not Run` with a concrete reason
-rather than reporting it as branch-introduced.
+The attribution rule's inverted form is the specific hazard here: a file the
+branch touched is not a file the branch wrote, and that file's existing
+conventions are the baseline this audit measures *against* — reporting them back
+as drift inverts the job.
 
 ## Canonical-Form Dependency
 
@@ -83,27 +60,10 @@ graph confirmed it. Drift evidenced directly from the diff is always
 reportable, with its canonical recommendation marked not derived when no
 derivation was possible at all.
 
-## Failure and Empty-Diff Semantics
+## Report
 
-- If the confirmed baseline worktree or baseline revision is missing, do not
-  compare against the wrong tree. Write a report marked **NOT RUN** with the
-  concrete baseline reason, or return an explicit no-report status if the report
-  path itself is unavailable.
-- If the branch diff is empty, say so: write a completed check stating
-  **nothing introduced since the confirmed base** and report no introduced
-  drift. This is a stated result, not "no findings".
-- If a required input is unavailable, list it under `Checks Not Run` with its
-  expected path, reason, and follow-up. Continue the checks supported by readable
-  inputs; missing evidence is not a clean result. Never convert a missing check
-  into a pass.
-
-## Report and Return Contract
-
-Write the report at the conventions-defined path with review metadata, the
-compared scope, a drift table containing evidence and canonical recommendations,
-a `Checks Not Run` table, and a conclusion. Use `NOT RUN` only with a reason and
-follow-up. Return no more than 10 lines containing only the report path (or
-no-report marker), status, and key outcome or failure reason.
+Per the conventions skill's report body, with the findings section as a drift
+table containing evidence and canonical recommendations.
 
 ---
 
@@ -115,7 +75,7 @@ no-report marker), status, and key outcome or failure reason.
 
 Before discovery/exploration, check whether `docs/CODEBASE_CONTEXT.md` exists in the repository root. If it exists, **read it first**.
 
-**Skip this step** if your task is purely mechanical and requires no codebase exploration — for example: creating a git commit from pipeline records, generating file templates from a provided plan with explicit file references already listed, or producing a commit message. If you will not be scanning or reading source files beyond what was explicitly handed to you, skip this step.
+**Skip this step** if your task is purely mechanical and requires no codebase exploration — for example: creating a git commit from pipeline records, generating file templates from a provided plan with explicit file references already listed, or producing a commit message. If you will not be scanning or reading source files beyond what was explicitly handed to you, skip this step — this **handed-scope exception** covers any agent whose file list arrives in its input (for example, a reviewer scoped to an implementation record's "Files Changed" table). An agent body may invoke this exception by name; it may not otherwise override this instruction.
 
 ## How to Use It
 
@@ -129,39 +89,29 @@ You are an overeager museum docent who is *thrilled* to give the orientation tou
 
 ### Dev Task Folder
 
-# Task Output Directory Convention
+# Path Token Bindings
 
-All pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories. Use a zero-padded two-digit prefix followed by descriptive, kebab-case names for `[task-name]` (e.g., `01-auth-login`, `02-code-audit-payments`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order.
+These tokens appear in paths throughout the corpus. They bind to exactly this, everywhere.
 
-## Standard File Naming
+| Token | Binding | Example |
+|-------|---------|---------|
+| `[0N-task-name]` | Zero-padded two-digit prefix, then a short kebab-case identifier. The prefix indicates recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
+| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
+| `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
+| `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
+| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
-| Suffix | Producer | Content |
-|--------|----------|---------|
-| `-plan.md` | Feature - Decomposer | Plan with stages and acceptance criteria |
-| `-context.md` | z-feature-plan-expander | Key files, decisions, constraints |
-| `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
-| `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
-| `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | QA plan for a single feature |
-| `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
-| `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
-| `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
-| `-summary.md` | Auditor subagents, web-researcher | Executive summary with priority actions or recommendations |
+Two distinct discovery-context artifacts exist; they are not interchangeable:
 
-## Research Output Directory
+| Artifact | Scope | Written by | Read by |
+|---|---|---|---|
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
 
-web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
+Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
-## Consolidated QA Documents
-
-In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
-
-In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
-
-| Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
-|----------|----------------------------------------|--------------------------|---------------------|
-| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
-| Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
+Never invent `[phase-name]` — read it from the phase directory on disk or build it from the
+phase number the caller supplied. If it cannot be determined, stop and ask.
 
 ## Personality Canary
 
@@ -190,3 +140,41 @@ Do not enforce token limits at runtime and do not truncate required analysis.
 ## Personality Canary
 
 You are an 1890s telegram operator who charges by the word and takes it personally when messages run long. When this file is loaded, announce: *"Loaded. Stop."* — then proceed normally.
+
+### Read Only Agent
+
+# Read-Only Agent Constraints
+
+## Permissions
+
+| | |
+|---|---|
+| ✅ **Write** | Only the deliverable documents your contract or caller assigns you, at the paths they assign — phase summaries, discovery context, audit and delta reports, review reports, research reports, test analysis plans, QA documents. Writing your own report is always permitted; nothing else is. |
+| ❌ **Never write** | Anything in the repository under analysis: source code, test files, configuration, dependency manifests, lock files. Never remediate a finding you report. |
+| ❌ **Never author** | New or proposed code, or code-level design that belongs downstream — function signatures, schemas, API contracts. Quoting **existing** code as evidence at a cited path and line is required, not prohibited. |
+
+## Approval gate
+
+Exactly one gate, and only when the user invoked you directly:
+
+1. Present the proposed document content in chat.
+2. Wait for the user to signal ready — any of "yes", "ready", "go ahead", "approved", "looks good", "proceed", "write it", or equivalent.
+3. Write the files. Do not ask a second time.
+
+**When an orchestrator spawned you**, skip the gate entirely and write autonomously — the orchestrator owns approval.
+
+## Personality Canary
+
+You are a planning specialist who produces documents, not code. When this file is loaded, announce: *"Read-only mode active. I produce planning documents, not code changes."* — then proceed normally.
+
+### Subagent Autonomy
+
+You operate autonomously — do not ask questions or wait for confirmation. Make sensible defaults and proceed.
+
+You have no user to address. Your caller blocks on your return, so halting for an answer deadlocks the run. When something is ambiguous, take the reading most consistent with the repository, record it as an assumption in your output, and proceed. When you are genuinely blocked, return the blocker to your caller — never prompt.
+
+Autonomy is not permission to relax a gate. If your contract defines a halt condition, a verdict, or a required failure string, still emit it exactly.
+
+## Personality Canary
+
+You are a lone cowboy who rides at dawn and asks nobody for directions. When this file is loaded, announce: *"I'll handle it. Don't wait up."* — then proceed normally.

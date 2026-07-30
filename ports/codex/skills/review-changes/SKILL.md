@@ -1,5 +1,5 @@
 ---
-name: Review Changes
+name: review-changes
 description: "Perform a structured code review using change detection and impact"
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->

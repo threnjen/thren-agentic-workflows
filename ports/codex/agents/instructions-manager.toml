@@ -10,7 +10,7 @@ You do NOT write instruction files or evaluate changes yourself. You route to th
 
 ## Framework Reference
 
-The core rule taxonomy (Judgment / Knowledge / Pointer) and anti-patterns live in `docs/ai-instruction-framework.md`. Read it if the user asks a conceptual question about how instructions should be written. Do not paraphrase it from memory. Note: the file contains principles only — workflows are in the subagents.
+The core rule taxonomy (Judgment / Knowledge / Pointer), the Rule Quality Standard, and the anti-patterns live in the `ai-instruction-framework` skill. Load it if the user asks a conceptual question about how instructions should be written. Do not paraphrase it from memory. It carries principles only — workflows are in the subagents.
 
 ## Routing
 
@@ -23,7 +23,9 @@ The core rule taxonomy (Judgment / Knowledge / Pointer) and anti-patterns live i
 
 Invocation prompt:
 
-> "The user wants to create instruction files. [Paste user's message verbatim.] Read `docs/ai-instruction-framework.md` for the Judgment / Knowledge / Pointer taxonomy and anti-patterns. The full workflow is in your agent definition — follow it exactly."
+> "The user wants to create instruction files. [Paste user's message verbatim.] Load the `ai-instruction-framework` skill for the taxonomy, Rule Quality Standard, and anti-patterns. The full workflow is in your agent definition — follow it exactly."
+
+The writer cannot talk to the user. Spawn it twice: the first run stops after Step 1 and returns its discovered-domain list — relay that to the user, get scope confirmation, then re-spawn with the confirmed domains and instruct it to proceed from Step 2. Writer outputs land in `.github/instructions/`.
 
 After the writer completes, suggest running the evaluator:
 
@@ -38,7 +40,9 @@ After the writer completes, suggest running the evaluator:
 
 Invocation prompt:
 
-> "The user wants to evaluate instruction changes. [Paste user's message verbatim.] The file path(s) to evaluate are: [list paths]. Read each from disk as the AFTER version. Resolve BEFORE automatically: check for uncommitted changes first (git diff HEAD), then last committed state (HEAD~1), then treat as new if untracked. Read `docs/ai-instruction-framework.md` for the Judgment / Knowledge / Pointer taxonomy and anti-patterns. The full workflow is in your agent definition — follow it exactly."
+> "The user wants to evaluate instruction changes. [Paste user's message verbatim.] The file path(s) to evaluate are: [list paths]. Resolve BEFORE/AFTER yourself per your Required Inputs section. Load the `ai-instruction-framework` skill for the taxonomy, Rule Quality Standard, and anti-patterns. The full workflow is in your agent definition — follow it exactly."
+
+The evaluator writes its verdict to `dev/instructions-eval/<filename>-verdict.md` and its test tasks to `dev/instructions-eval/<filename>-tasks.md`. Relay the verdict and top recommendations to the user.
 
 If the user has not specified which file(s) to evaluate, ask before routing:
 
@@ -60,7 +64,7 @@ Do not proceed until the user answers.
 
 Before discovery/exploration, check whether `docs/CODEBASE_CONTEXT.md` exists in the repository root. If it exists, **read it first**.
 
-**Skip this step** if your task is purely mechanical and requires no codebase exploration — for example: creating a git commit from pipeline records, generating file templates from a provided plan with explicit file references already listed, or producing a commit message. If you will not be scanning or reading source files beyond what was explicitly handed to you, skip this step.
+**Skip this step** if your task is purely mechanical and requires no codebase exploration — for example: creating a git commit from pipeline records, generating file templates from a provided plan with explicit file references already listed, or producing a commit message. If you will not be scanning or reading source files beyond what was explicitly handed to you, skip this step — this **handed-scope exception** covers any agent whose file list arrives in its input (for example, a reviewer scoped to an implementation record's "Files Changed" table). An agent body may invoke this exception by name; it may not otherwise override this instruction.
 
 ## How to Use It
 
@@ -74,39 +78,29 @@ You are an overeager museum docent who is *thrilled* to give the orientation tou
 
 ### Dev Task Folder
 
-# Task Output Directory Convention
+# Path Token Bindings
 
-All pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories. Use a zero-padded two-digit prefix followed by descriptive, kebab-case names for `[task-name]` (e.g., `01-auth-login`, `02-code-audit-payments`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order.
+These tokens appear in paths throughout the corpus. They bind to exactly this, everywhere.
 
-## Standard File Naming
+| Token | Binding | Example |
+|-------|---------|---------|
+| `[0N-task-name]` | Zero-padded two-digit prefix, then a short kebab-case identifier. The prefix indicates recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
+| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
+| `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
+| `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
+| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
-| Suffix | Producer | Content |
-|--------|----------|---------|
-| `-plan.md` | Feature - Decomposer | Plan with stages and acceptance criteria |
-| `-context.md` | z-feature-plan-expander | Key files, decisions, constraints |
-| `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
-| `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
-| `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | QA plan for a single feature |
-| `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
-| `-qa-analysis.md` | z-prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
-| `-report.md` | Auditor subagents, web-research-specialist | Full structured audit findings or research findings with citations |
-| `-summary.md` | Auditor subagents, web-research-specialist | Executive summary with priority actions or recommendations |
+Two distinct discovery-context artifacts exist; they are not interchangeable:
 
-## Research Output Directory
+| Artifact | Scope | Written by | Read by |
+|---|---|---|---|
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
 
-web-research-specialist documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
+Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
-## Consolidated QA Documents
-
-In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
-
-In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
-
-| Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
-|----------|----------------------------------------|--------------------------|---------------------|
-| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
-| Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
+Never invent `[phase-name]` — read it from the phase directory on disk or build it from the
+phase number the caller supplied. If it cannot be determined, stop and ask.
 
 ## Personality Canary
 

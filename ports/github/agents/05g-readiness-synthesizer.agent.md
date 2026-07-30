@@ -14,18 +14,12 @@ whether the change is ready to open and what to look at first.
 
 ## Shared Contracts
 
-- Load `pr-review-conventions` before doing any synthesis work.
-- Load `pr-review-report` and use its Go/No-Go Readiness Report template as the
-  single source of truth for the canonical report structure.
-- Write the canonical report to
-  `dev/pr-review/<base-sha-short>-<UTC-YYYYMMDDTHHMMSSZ>/readiness-report.md`.
-- Use the top available, state-of-the-art model tier assigned by the
-  orchestrator for this deep-judgment synthesis. If that tier is unavailable,
-  record the limitation as an execution condition, never as a passing check.
-- Use the severity vocabulary and ordering from `pr-review-conventions`:
-  Critical, High, Medium, then Low; preserve source order within a severity.
-- Return only the report path, a concise status, and the key verdict or failure
-  reason. The return payload is at most 10 lines.
+Apply `pr-review-conventions` in full — load contract, severity vocabulary and
+ordering, partial-failure semantics, and return contract. Load `pr-review-report`
+and use its Go/No-Go Readiness Report template as the single source of truth for
+the canonical report structure. Write only `readiness-report.md`. This evaluator
+reads reports, not the diff: the assigned-base and attribution sections do not
+apply to it.
 
 ## Scope and Inputs
 
@@ -47,9 +41,8 @@ under the current report root.
 That is metadata-only validation — readable, regular, non-empty, in the right
 place. It is **not** validation of what a report claims. You consume evaluator
 claims as given; nothing here checks them against a schema or recomputes a status
-from structured records. That gap is the recorded finding **P5-SEC-02**, which
-remains open (see **Trust Boundary** below). Do not describe this section as
-closing it.
+from structured records. That gap is open (see **Trust Boundary** below). Do not
+describe this section as closing it.
 
 ## Synthesis Rules
 
@@ -81,7 +74,7 @@ closing it.
 
 ## Trust Boundary
 
-**P5-SEC-02 is open.** You reduce evaluator claims into a verdict after
+**Evaluator claims are not validated.** You reduce evaluator claims into a verdict after
 metadata-only validation, so a report that is readable, regular, non-empty and
 correctly located is trusted for what it asserts. Closing this requires a strict
 schema and a deterministic status reducer over structured records — that is code,
@@ -91,12 +84,11 @@ contract more firmly; prose is what the finding is about.
 
 ## Relationship to the Existing Gate
 
-Extend the conventions of `.github/agents/prod-code-review.md` on a different
-axis. `prod-code-review` gates one phase's feature set from pipeline documents;
-`05g` gates one branch diff from evaluator reports. It is a complement, not a
-superset and not a level up. Reference that precedent; do not duplicate, modify,
-or invoke it, and do not read its implementation analysis as a substitute for the
-current run's reports.
+The **Prod Code Review** gate covers a different axis: it gates one phase's
+feature set from pipeline documents, while `05g` gates one branch diff from
+evaluator reports. `05g` is a complement, not a superset and not a level up. Do
+not duplicate, modify, or invoke that gate, and never read its implementation
+analysis as a substitute for the current run's reports.
 
 ## Output and Boundaries
 

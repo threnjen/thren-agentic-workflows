@@ -46,22 +46,17 @@ path before invoking `git worktree add`.
    implied by this procedure.
 
 3. Inspect `git -C "<REPOSITORY_ROOT>" worktree list --porcelain` and the target
-   path before writing. Apply the deterministic target-path policy below.
+   path before writing.
 
-4. Apply the target-path decision before running `git worktree add`:
+4. Apply the **Existing Target-Path Policy** below — it is the only decision
+   procedure for this step, including the exact stop messages. For its create
+   cases, run:
 
    ```sh
-   # New target: create only its missing parent, then register the worktree.
+   # Create only the missing parent, then register the worktree.
    mkdir -p "$(dirname "<TARGET_PATH>")"
    git -C "<REPOSITORY_ROOT>" worktree add --detach "<TARGET_PATH>" "<BASELINE_COMMIT>"
    ```
-
-   Skip `git worktree add` for `reused_existing_worktree`. For a clean
-   same-repository target at another commit, first run
-   `git -C "<REPOSITORY_ROOT>" worktree remove "<TARGET_PATH>"`, then run
-   the create command above and mark the new worktree
-   `created_by_this_invocation`. Dirty or unrelated targets stop before any
-   removal or creation.
 
 5. Verify the returned worktree before handing it to the caller:
 

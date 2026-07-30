@@ -112,3 +112,11 @@ Before presenting or writing any Phase document, verify:
 - [ ] Edge cases, failure modes, and key user flows documented
 - [ ] Dependencies (internal, external, cross-phase) and risks have mitigations
 - [ ] Integration points with other phases/systems identified
+
+## Phase Numbering and Recorded Decisions
+
+- **A phase number is a public identifier — changing what it denotes breaks every document citing it, and nothing warns you.** Grep for the number before re-pointing one. Read the dependency column for execution order, never the number.
+- **Agent numbers are pipeline positions, not phase numbers.** Do not "correct" them to match.
+- **A decision recorded as resolved does not update itself when later work reverses it.** Treat every entry as time-stamped intent; check what actually shipped before trusting it.
+- **If a rescope only relocates work, suspect the new scope is the old scope wearing a hat.** A good rescope deletes work.
+- **When inventory, counts, schemas, or contract rules change, update every summary surface in the same change.** Stale intros, comparison tables, and diagrams keep advertising removed keys and mislead the agents that bootstrap from them. Recounting cannot fix a *definition* conflict — reconcile what the counted term means first.
