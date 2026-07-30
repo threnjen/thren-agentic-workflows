@@ -13,9 +13,8 @@ Quick-reference for AI agents working in this repository.
 ## Current Counts
 
 - 54 source agent definitions in `source_of_truth/agents/` (50 `*.agent.md` + `auditor.md` + `delta-auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 39 hidden subagents (`user-invocable: false`) and 15 user-invocable.
-- 34 skills in `source_of_truth/skills/`.
-- 16 instructions in `source_of_truth/instructions/`.
-- 4 learnings in `source_of_truth/learnings/`.
+- 41 skills in `source_of_truth/skills/`.
+- 19 instructions in `source_of_truth/instructions/`.
 - `ports/claude/agents` = 40, `ports/claude/commands` = 15.
 
 ## Key Paths
@@ -30,23 +29,22 @@ source_of_truth/                           # THE authoring surface
     delta-auditor.md                       # plain .md agent (comparative audit orchestrator)
     docs-writer.md                         # plain .md agent (loaded by frontmatter)
     04f-prod-code-review.md                # plain .md agent (loaded by frontmatter)
-  skills/                                  # 34 skill dirs, each rooted at SKILL.md
-  instructions/                            # 16 applyTo-glob instruction files
-  learnings/                               # 4 seed learnings files
+  skills/                                  # 41 skill dirs, each rooted at SKILL.md
+  instructions/                            # 19 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
-  claude/  {agents, commands, skills, learnings}
-  codex/   {agents, profiles, skills, learnings}   # TOML agents
+  claude/  {agents, commands, skills}
+  codex/   {agents, profiles, skills}   # TOML agents
   opencode/{agents, skills}
   cursor/  {commands, rules}               # commands=*.md, rules=*.mdc
-  github/  {agents, instructions, learnings, skills}          # verbatim mirror
+  github/  {agents, instructions, skills}          # verbatim mirror
 .github/                                   # real deployed mirror of ports/github
 scripts/
   propagate_master_assets.py               # transform entry point (--once | --watch)
   asset_paths.py                           # shared markers + poll_watch
   extract_pdfs.py                          # utility
 deploy_agents.py                           # deploy entry point (root, not scripts/)
-docs/ ARCHITECTURE.md CODEBASE_CONTEXT.md COPILOT_SETUP.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
+docs/ ARCHITECTURE.md AUTHORING.md CODEBASE_CONTEXT.md COPILOT_SETUP.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
 docs/ ai-instruction-framework.md UNDERSTANDING_AGENTIC_ECOSYSTEM.md
 docs/porting/                              # CLAUDE/CODEX/OPENCODE guides + TOOL_MAPPING
 dev/      inspiration/ (write-ups), pr-review/ (fixtures)
@@ -58,7 +56,7 @@ benchmarks/ packages/ tests/
 
 ## Pipeline Model
 
-- Edit `source_of_truth/{agents,skills,instructions,learnings}` first.
+- Edit `source_of_truth/{agents,skills,instructions}` first.
 - Transform: `python3 scripts/propagate_master_assets.py --once` (default) or `--watch`.
   Runs to a fixed point via `propagate_until_converged` (max 25 passes).
 - Transform targets: `ports/{claude,codex,opencode,cursor}` plus `ports/github` and `.github/`.
@@ -118,7 +116,7 @@ benchmarks/ packages/ tests/
   `ports/claude/agents` = 39 hidden + 2 dual-use (docs-writer, web-researcher)
   = 40, while `ports/claude/commands` = 15.
 - Codex and OpenCode emit all 54 agents; only Claude and Cursor split commands out.
-- `ports/cursor/rules` = the 4 learnings plus any instruction whose `applyTo` globs are
+- `ports/cursor/rules` = any instruction whose `applyTo` globs are
   not all agent-targeted. Agent-targeted instructions are excluded because they ship
   inside the agents; the exclusion test in `propagate_cursor_rules_once` matches patterns
   ending in `.agent.md` or `agents`, so a glob naming a plain-`.md` agent
@@ -131,15 +129,13 @@ benchmarks/ packages/ tests/
   `**/x.agent.md` only matches when a `/` immediately precedes `x`. Numbered agents must
   be named in full (`**/04b-feature-implementer.agent.md`). A pattern that matches nothing
   fails silently — no error, the instruction simply ships to no agent.
-- Agents read and write a working repo's learnings at `docs/learnings/` — durable project
-  knowledge belongs beside the other docs, not in `.github/`, which is GitHub's own
-  machine-config surface. Seed files still mirror to `.github/learnings/` and to Cursor's
-  `rules/`; that mirror is being retired. They intentionally have no destination under
-  `~/.claude` or `~/.codex`.
+- Agents read and write a working repo's learnings at `docs/learnings/` in that repo —
+  durable project knowledge belongs beside the other docs, not in `.github/`, which is
+  GitHub's own machine-config surface. Nothing seeds or propagates that directory.
 
 ## Platform Surface Rules
 
-- `source_of_truth/` is the only shared source-of-truth for agents, skills, instructions, learnings.
+- `source_of_truth/` is the only shared source-of-truth for agents, skills, and instructions.
 - `ports/*` and `.github/` are generated outputs, not authoring surfaces.
 - Make the logical change in `source_of_truth/` first; do not mirror it manually into `ports/`.
 - Rerun propagation rather than hand-editing generated outputs.
@@ -161,9 +157,9 @@ benchmarks/ packages/ tests/
   `codex/README.md`, and `scripts/runtime_deployment.py` no longer exist.
 - Do not treat `04f-prod-code-review.md`, `auditor.md`, `delta-auditor.md`, or
   `docs-writer.md` as non-agent content just because they lack the `.agent.md` suffix.
-- Do not put repo-specific findings in `source_of_truth/learnings/` — those files are a
-  general-purpose seed shipped to every project. Per-repo entries belong in that repo's
-  own `docs/learnings/`.
+- Do not reintroduce `source_of_truth/learnings/`. Durable repo-agnostic rules are
+  skills; this repository's own authoring knowledge is `docs/AUTHORING.md`; a working
+  repo's findings belong in its own `docs/learnings/`.
 - Do not document a root `dev/` beyond `dev/pr-review/` (fixtures tracked, run output
   gitignored) and `dev/inspiration/` (write-ups). Agent *runtime* output paths like
   `dev/feature/` are conventions the agents create in a target repo, not directories here.

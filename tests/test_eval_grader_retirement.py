@@ -73,10 +73,6 @@ EXEMPT_PREFIXES = (
     "docs/phases/",
     # Decision history and its propagated copies. `05-pr-review` records its own
     # earlier ledger removal there; that note is the reason, not a regression.
-    "source_of_truth/learnings/",
-    ".github/learnings/",
-    "ports/claude/learnings/",
-    "ports/github/learnings/",
     "ports/cursor/rules/",
     "dev/feature/",
 )

@@ -196,12 +196,12 @@ Counts in `README.md`, `docs/ARCHITECTURE.md`, and `docs/CODEBASE_CONTEXT.md` di
 
 ### Cause
 
-Agent, skill, instruction, or learnings inventories changed without updating the standard
+Agent, skill, or instruction inventories changed without updating the standard
 docs as a set.
 
 ### Fix
 
-- Recount the actual files under `source_of_truth/{agents,skills,instructions,learnings}`
+- Recount the actual files under `source_of_truth/{agents,skills,instructions}`
   and update all three overview docs in the same change.
 
 ### Symptom

@@ -106,6 +106,11 @@ The orchestrator supplies both tokens in its spawn prompt.
 
 Token bindings are owned by the `dev-task-folder` instruction.
 
+## Working Against a Plan
+
+- **A plan's claim about existing code is a hypothesis.** Verify it before building to match — implementing to satisfy a false claim manufactures a dependency that never existed. Reporting the plan's error is the correct move, not working around it.
+- **Checkpoint-commit steps must stage every artifact they mutate**, and resumable scopes are described as created *or modified*. Keep the checkpoint contract at the same scope as the artifacts it commits.
+
 ## Post-Loop: Documentation Update
 
 After all tasks are complete and reported to the user, spawn the **Docs Writer** subagent to update any documentation that may be stale:

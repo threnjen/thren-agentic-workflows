@@ -27,7 +27,7 @@ line; no editor configuration is required.
 
 ## The Maintenance Loop
 
-1. Edit source-of-truth files under `source_of_truth/{agents,skills,instructions,learnings}`.
+1. Edit source-of-truth files under `source_of_truth/{agents,skills,instructions}`.
 2. Transform: regenerate `ports/` and `.github/` from source.
 3. Review the resulting diff before committing.
 4. Deploy (optional): copy the generated outputs to your real harness directories.
@@ -56,7 +56,7 @@ Watch mode monitors the source directories and re-propagates when files change:
 - `source_of_truth/agents/`
 - `source_of_truth/skills/`
 - `source_of_truth/instructions/`
-- `source_of_truth/learnings/`
+- `source_of_truth/hooks/`
 
 It rewrites `ports/{claude,codex,opencode,cursor}`, plus `ports/github` and the real
 `.github/` mirror.
@@ -94,10 +94,9 @@ out with a usage hint rather than guessing.
 | cursor | `~/.cursor` | — | commands, rules |
 | github | `<repo>/.github` | — | verbatim mirror of the source subdirs |
 
-Learnings have no destination under the Claude or Codex config dirs: agents read
-`docs/learnings/` in the repository they are working in, so a user-level copy would be
-read by nothing. Cursor is the exception — its learnings deploy as agent-requested rules
-under `~/.cursor/rules`.
+Learnings are not deployed at all. Agents read and write `docs/learnings/` in the
+repository they are working in, and that directory is never seeded or propagated — a
+repo's learnings are what its own agents recorded there.
 
 After the asset copy, deploy also splices a baseline instructions file per harness,
 rendered from `source_of_truth/baseline/baseline-instructions.md` with the machine's

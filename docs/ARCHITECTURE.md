@@ -5,7 +5,7 @@
 This repository is organized around one authoring surface and a two-stage pipeline:
 
 - `source_of_truth/` is the master source for agent definitions, skills, instructions,
-  and learnings.
+  and instructions.
 - `ports/{claude,codex,opencode,cursor,github}` are generated outputs.
 - `.github/` at the repo root is a real, deployed mirror of `ports/github`.
 - `docs/`, `eval/`, `benchmarks/`, and `packages/` are supporting material.
@@ -34,9 +34,8 @@ flowchart TD
     Root --> Scripts[scripts and deploy_agents.py]
 
     SOT --> Agents[54 agent definitions]
-    SOT --> Skills[34 skill directories]
-    SOT --> Instructions[16 instruction files]
-    SOT --> Learnings[4 seed learnings files]
+    SOT --> Skills[41 skill directories]
+    SOT --> Instructions[19 instruction files]
 
     Scripts --> Propagate[propagate_master_assets.py]
     Scripts --> Shared[asset_paths.py]
@@ -55,8 +54,8 @@ flowchart TD
 flowchart LR
     Author[Edit source_of_truth files] --> Watcher[Run with --once or --watch]
     Watcher --> Script[propagate_master_assets.py]
-    Script --> ClaudeOut[ports/claude agents commands skills learnings]
-    Script --> CodexOut[ports/codex agents skills learnings TOML]
+    Script --> ClaudeOut[ports/claude agents commands skills]
+    Script --> CodexOut[ports/codex agents skills TOML]
     Script --> OpenCodeOut[ports/opencode agents skills]
     Script --> CursorOut[ports/cursor commands rules]
     Script --> GithubPort[ports/github verbatim mirror]
@@ -65,12 +64,12 @@ flowchart LR
 
 The transform runs to a fixed point: `propagate_until_converged` repeats a single pass
 until a pass makes zero changes (max 25 passes). Each pass rewrites agents per platform,
-regenerates skills and learnings, emits Cursor commands and rules, and mirrors the
-source subdirs (`agents`, `instructions`, `learnings`, `skills`) to `ports/github` and
+regenerates skills, emits Cursor commands and rules, and mirrors the
+source subdirs (`agents`, `instructions`, `skills`) to `ports/github` and
 `.github/`.
 
 `--watch` monitors the source directories (`agents`, `skills`, `instructions`,
-`learnings`). `--once` (the default when no flag is passed) and `--watch` use the same
+`hooks`). `--once` (the default when no flag is passed) and `--watch` use the same
 transformation logic.
 
 ### Stage 2 — Deploy (deploy_agents.py)
@@ -126,12 +125,11 @@ The only authoring surface.
   the `.agent.md` suffix; `auditor.md`, `delta-auditor.md`, `docs-writer.md`, and
   `04f-prod-code-review.md` are intentional plain-`.md` exceptions still loaded as agents
   because loading keys off `name`/`description` frontmatter, not the suffix.
-- `skills/` — 34 directory-based skills, each rooted at `SKILL.md`.
-- `instructions/` — 16 instruction files matched by `applyTo` globs. Matching is
+- `skills/` — 41 directory-based skills, each rooted at `SKILL.md`.
+- `instructions/` — 19 instruction files matched by `applyTo` globs. Matching is
   `fnmatch` against the agent's repo-relative path, so a `**/name.agent.md` pattern
   requires a `/` immediately before `name` — numbered agents must be named in full, and a
   pattern matching nothing fails silently.
-- `learnings/` — 4 seed learnings files of durable, repo-agnostic rules.
 - `baseline/` — `baseline-instructions.md`, the sentinel-sectioned baseline
   instructions template rendered per harness at deploy time (not propagated to
   `ports/`, since it needs the deployed machine's real paths).
@@ -152,7 +150,7 @@ platform-specific transformations:
   Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
   support `instructions/` directly
-- Cursor: user-invocable agents become `commands/*.md`; instructions and learnings
+- Cursor: user-invocable agents become `commands/*.md`; instructions
   become `rules/*.mdc` (agent-targeted instructions are excluded, since their content
   ships inside the rendered agents; the exclusion test matches `applyTo` globs ending in
   `.agent.md` or `agents`, so a glob naming a plain-`.md` agent is not caught by it)
@@ -161,18 +159,16 @@ Known filename aliases preserved during propagation: `docs-writer` → `docs-wri
 `web-research-specialist` → `web-researcher`, `audit-code-or-infra` →
 `audit-code-infra-refactor`.
 
-Agents read and write a working repository's learnings at `docs/learnings/`. Seed files
-still reach a repository through the `.github/learnings/` mirror (and, for Cursor, as
-agent-requested `rules/*.mdc`); that mirror is being retired now that the seeds are
-moving into skills. There is no learnings destination under the Claude or
-Codex user config directories: every consumer reads the copy in the repo it is working
-in, so a copy there would be read by nothing.
+Agents read and write a working repository's learnings at `docs/learnings/` in that
+repository. Nothing is seeded there and nothing is propagated to it: a repo's learnings
+are what its own agents recorded while working in it. Durable, repo-agnostic rules are
+skills instead — this repository ships no learnings content.
 
 ### The `.github/` mirror
 
 `ports/github` is a verbatim copy of the mirrored source subdirs, and `.github/`
 at the repo root is a real deployed copy of it. Only the mirrored subdirs
-(`agents`, `instructions`, `learnings`, `skills`) are touched — anything else
+(`agents`, `instructions`, `skills`) are touched — anything else
 in `.github/` (for example a future `workflows/`) is left alone.
 
 ### Shared module (`scripts/asset_paths.py`)

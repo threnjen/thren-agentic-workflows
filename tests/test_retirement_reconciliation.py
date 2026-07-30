@@ -109,13 +109,9 @@ SHIPPED_ASSET_PREFIXES = (
     ".github/",
 )
 
-# The propagated copy of an exempt source. Generated, not authored: fixing it
-# means editing `source_of_truth/learnings/`, which is an exempt historical record, so
-# sweeping it would demand a change the exemption forbids.
+# Propagated copies of exempt sources. Generated, not authored: fixing one means
+# editing an exempt source, so sweeping it would demand a change the exemption forbids.
 GENERATED_EXEMPT_PREFIXES = (
-    "ports/claude/learnings/",
-    "ports/github/learnings/",
-    ".github/learnings/",
     "ports/cursor/rules/",
 )
 

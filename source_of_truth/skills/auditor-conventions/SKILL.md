@@ -173,6 +173,14 @@ All auditors use this 4-level structure. Each auditor defines domain-specific me
 | **Medium** | Missing best practices, DRY violations, documentation gaps, readability |
 | **Low** | Style inconsistency, minor cleanup, formatting |
 
+## Findings, Verdicts, and What Counts as Closed
+
+- **"Remediated in code" is not "verified."** A fix without a re-run gate is not a verdict; status lines move only on fresh final-state evidence. Verdicts are issued by the user — no agent writes a status line.
+- **Every finding must name the revision it examined.** An artifact that does not name its revision cannot be reconciled later, and a release dossier must confirm each artifact post-dates the code it covers.
+- **Missing or incomplete required checks are a hard gate: the verdict is `NO-GO`.** A failed, hung, or unavailable evaluator never becomes a passing result, and a later success never repairs an earlier failure. Enumerate every such case by name with a concrete reason.
+- **A fixed budget is never relaxed to make a gate pass.** If it is genuinely unachievable, the honest outcome is a user-approved acceptance-criterion change carrying proof that a deliberately broken implementation still fails the new gate.
+- **When the honest fix needs capability the scope excludes, record the finding open with routing.** Redefining the finding to fit the scope closes nothing, and "a future rebuild will handle it" is a prediction unless it names the capability that rebuild must gain.
+
 ## Open-Items Queue Entries
 
 An open-items queue is a standalone work list selected from audit findings. Its

@@ -35,7 +35,7 @@ import _propagate_env as env
 #     doing so would break the report contract. Pinned here so that fails.
 #   * `execute` is DECLARED, not hidden. It survives only on `05a-baseline-worktree`,
 #     whose `git worktree` call has no non-shell equivalent; the grant is recorded
-#     as explicitly unclosable in `source_of_truth/learnings/cross-phase-decisions.md:16`.
+#     as explicitly unclosable in `pr-review-conventions` (capability boundaries).
 #     Per-agent command scoping is not expressible in Claude subagent frontmatter
 #     (`tools: Bash(gh:*)` is an unresolved tool name, not a narrower grant), so
 #     removal is the only narrowing available -- and this one cannot be removed.
@@ -115,34 +115,6 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 'description: "Demo skill with a wrapped description."',
                 codex_skill.read_text(encoding="utf-8"),
             )
-
-    def test_propagate_learnings_mirrors_to_claude_and_codex(self) -> None:
-        """Codex absorbs the learnings independently: nothing may plan on a
-        consumer repo's `.github/learnings/` being present, so the learnings are
-        emitted into each harness's own root and deployed from there."""
-        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
-            repo_root = Path(tmp_dir)
-            env.use(self, repo_root)
-            learnings_dir = repo_root / "source_of_truth" / "learnings"
-            learnings_dir.mkdir(parents=True, exist_ok=True)
-            (learnings_dir / "demo-learnings.md").write_text(
-                "# Demo Learnings\n\nA pattern.\n", encoding="utf-8"
-            )
-
-            result = mod.propagate_learnings_once()
-
-            self.assertEqual(result["claude_changed"], 1)
-            self.assertEqual(result["codex_changed"], 1)
-            self.assertEqual(result["learnings_changed"], 2)
-            for harness in ("claude", "codex"):
-                copy = repo_root / "ports" / harness / "learnings" / "demo-learnings.md"
-                self.assertTrue(copy.exists(), f"{harness} learnings copy missing")
-                self.assertTrue(
-                    copy.read_text(encoding="utf-8").startswith(
-                        mod.GENERATED_SKILL_HEADER.strip("\n")
-                    ),
-                    f"{harness} learnings copy is unmarked and thus unprunable",
-                )
 
     def test_pr_review_evaluator_roster_is_fully_enumerated(self) -> None:
         """AC8: no evaluator may be omitted from propagation enumeration.
@@ -939,7 +911,6 @@ class OrphanPruningTests(unittest.TestCase):
         self.assertEqual(result["skill_orphans_removed"], 0)
         self.assertEqual(result["cursor_command_orphans_removed"], 0)
         self.assertEqual(result["cursor_rule_orphans_removed"], 0)
-        self.assertEqual(result["learning_orphans_removed"], 0)
 
 
 class StaticDoneNotifyNonInterferenceTests(unittest.TestCase):
@@ -1048,7 +1019,7 @@ class StaticDoneNotifyNonInterferenceTests(unittest.TestCase):
 
 class CursorPropagationTests(unittest.TestCase):
     """Cursor harness outputs: commands from user-invocable agents, rules from
-    instructions with real file globs and from learnings."""
+    instructions with real file globs."""
 
     def _seed(self, repo_root: Path) -> None:
         agents_dir = repo_root / "source_of_truth" / "agents"
@@ -1087,11 +1058,6 @@ class CursorPropagationTests(unittest.TestCase):
             "---\n\nInternal to agent rendering.\n",
             encoding="utf-8",
         )
-        learnings_dir = repo_root / "source_of_truth" / "learnings"
-        learnings_dir.mkdir(parents=True, exist_ok=True)
-        (learnings_dir / "project-learnings.md").write_text(
-            "# Project Learnings\n\nLesson one.\n", encoding="utf-8"
-        )
 
     def test_user_invocable_agent_becomes_a_cursor_command(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
@@ -1111,7 +1077,7 @@ class CursorPropagationTests(unittest.TestCase):
                 "non-invocable agents must not become Cursor commands",
             )
 
-    def test_glob_instruction_and_learning_become_rules_agent_plumbing_does_not(self) -> None:
+    def test_glob_instruction_becomes_a_rule_agent_plumbing_does_not(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
             env.use(self, repo_root)
@@ -1124,11 +1090,6 @@ class CursorPropagationTests(unittest.TestCase):
             self.assertIn('description: "Style rules."', style)
             self.assertIn("globs: **/*.cs,**/*.py", style)
             self.assertIn("alwaysApply: false", style)
-
-            learning = (rules / "project-learnings.mdc").read_text(encoding="utf-8")
-            self.assertIn('description: "Project Learnings"', learning)
-            self.assertIn("alwaysApply: false", learning)
-            self.assertNotIn("globs:", learning)
 
             self.assertFalse(
                 (rules / "agent-only.mdc").exists(),

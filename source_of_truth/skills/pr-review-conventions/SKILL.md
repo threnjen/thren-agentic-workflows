@@ -43,6 +43,22 @@ second copy of `prod-code-review`; an evaluator that quietly omits the artifacts
 it never found has hidden its own coverage gap instead. Optional is not the same
 as ignorable — unavailable evidence is named, never assumed clean.
 
+## Deriving the Base Commit
+
+**Git cannot determine a branch's base.** This is a data-model fact, not a tooling gap. `git merge-base HEAD main` requires already knowing the base; the reflog is SHA-only, local, and gc-pruned; `origin/HEAD` gives the repository default, not this branch's base.
+
+Use suggest-and-confirm: infer a candidate, compute `merge-base`, show the implied diff scope, and let the user override. Never infer silently — inference is actively wrong for branches cut from another feature branch, for rebased branches, and for squash-merged bases.
+
+**A branch is always its own nearest merge-base, and so is its remote-tracking ref.** Filter both before ranking candidates.
+
+## Capability Boundaries Are Not Policy
+
+Where evidence can only come from artifacts supplied to the run, their absence is `NOT RUN` — never a pass. Supply the artifact; do not restore the grant. Never widen shell permissions to satisfy an acceptance criterion.
+
+**The decisive evidence that a grant is required is a sibling with the same job operating without it**, not the strength of the justification. The capability is usually already supplied as an artifact by one privileged component.
+
+**Report validation is metadata-only** — readable, regular, non-empty, under the run's report root. Do not mistake it for validating a report's *claims*.
+
 ## Report Locations and Naming
 
 Every report for a run goes directly under

@@ -78,6 +78,16 @@ truffleHog runs as a pre-commit hook and in CI; detected secrets block the merge
 
 **SSM Parameter Store is scoped by purpose.** Never for application configuration — that is S3, per above. Always for cross-stack infrastructure references, where one stack publishes a resource ARN another consumes; use it in preference to CloudFormation `!ImportValue`, which creates a hard dependency lock preventing the exporting stack's deletion. The consumer resolves the value with a dynamic reference inside the template (`{{resolve:ssm:/<org-prefix>/<environment>/<resource-slug>:1}}`), never a workflow-side lookup. A missing, malformed, or stale parameter must break the deploy rather than fall back silently.
 
+## Runtime safety
+
+These are the defect classes that turn a protection into a hole. Each one passes review by reading correctly.
+
+- **Validate resolved sources and resolved destination directories against their declared roots before reading or writing.** A symlinked *parent* redirects writes outside the root even when every leaf check passes; replacing only a symlinked leaf is insufficient.
+- **Re-validate at every security-sensitive emission or execution boundary** when a public value type can be constructed directly as well as through a validating factory. Otherwise callers bypass the factory and a fail-closed path becomes ambiguous.
+- **Fail-open observability must cover the executable wrapper, not just exceptions inside the language.** An interpreter-startup or pipeline failure returns non-zero before application handling runs, so an audit-only hook blocks its caller. Watch for `set -e`/`pipefail` with no non-blocking fallback.
+- **Glob-comparison matchers must vary wildcard replacements independently** and treat the protected root as part of a recursive rule — `protected/**` can accidentally allow `protected` itself.
+- **Use exact suffix removal, not `rstrip`, when stripping a delimiter.** `rstrip("\n")` eats any trailing backslash or `n`, corrupting names like `auth.json` before policy evaluation.
+
 ## Database migrations
 
 Alembic, or the language equivalent. Migrations run as a pre-deploy step; a failed migration aborts the deploy and leaves running tasks untouched. There is no automated rollback — migration problems are forward-fix only.

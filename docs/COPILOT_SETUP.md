@@ -15,7 +15,7 @@ project directory.
    ```
 
    This mirrors the agent library into this repo's `.github/` (agents, instructions,
-   learnings, skills) and splices the baseline guidance into
+   skills) and splices the baseline guidance into
    `.github/copilot-instructions.md`.
 
 2. **Open your project in VS Code**, then add this repository as a second workspace

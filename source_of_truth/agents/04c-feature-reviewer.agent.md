@@ -195,9 +195,9 @@ After the review is complete — and after any fixes have been applied — write
 
 ## Update Review Learnings
 
-After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append an entry to `docs/learnings/review-learnings.md` as a durable, reusable rule — no dates or feature-specific references. Match the file's format: one bolded claim per bullet, plus the signal that reveals it.
+After writing the review record, check whether any issues found represent **recurring patterns** worth capturing (not one-off bugs). If so, append an entry to `docs/learnings/review-learnings.md` as a durable, reusable rule — no dates or feature-specific references. Use one bolded claim per bullet, plus the signal that reveals it. Create the file if it does not exist.
 
-Also check for **decisions that affect future phases** (deferred work, documented deviations, scope gaps). If found, append them to `docs/learnings/cross-phase-decisions.md` under the appropriate section. Follow the existing format and categorization.
+Also check for **decisions that affect future phases** (deferred work, documented deviations, scope gaps). If found, append them to `docs/learnings/cross-phase-decisions.md`. Match the file's existing sections if it has any; create the file if it does not exist.
 
 Create either file if it doesn't exist.
 
