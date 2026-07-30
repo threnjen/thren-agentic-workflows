@@ -113,7 +113,11 @@ Both stages are safe by construction: a destination file is only overwritten or 
 
 - **Agents** (`source_of_truth/agents/`) — 54 definitions (15 user-invocable, 39 hidden) following an orchestrator + subagent pattern: user-invocable primary agents (planner → refiner → decomposer → phase-execute pipeline, PR review, audits, test orchestrator, standalone specialists) plus hidden `user-invocable: false` subagents (deployed with a `z-` prefix) that orchestrators spawn. Full catalog: `USAGE.md`.
 - **Skills** (`source_of_truth/skills/`) — directory-based capabilities, each rooted at `SKILL.md`, loaded on demand by agents.
-- **Instructions** (`source_of_truth/instructions/`) — cross-cutting guidance matched by `applyTo` file globs; consumed directly by Copilot, transformed for other harnesses.
+- **Instructions** (`source_of_truth/instructions/`) — cross-cutting guidance matched by `applyTo` globs. Agent-targeted instructions are inlined into the rendered agent body for every harness; source-file-glob instructions reach Cursor (`.mdc` rules) and Copilot (native) only.
+
+**Skill or instruction?** Not a style choice. A skill is loaded once the agent knows what work it is doing; an instruction is inlined unconditionally, before the agent knows anything. The test is timing: **does this apply from the first turn, or only once the work is scoped?** `orchestrator-conventions` governs how an orchestrator spawns before any work exists, so it is an instruction; `auditor-conventions` governs a report the agent has already decided to write, so it is a skill. The second test is failure mode: if forgetting to load it produces the exact defect the content exists to prevent, it must be an instruction.
+
+The three language files (`python`, `typescript`, `csharp`) are deliberately duplicated by their `*-standards` skills — the glob path serves Cursor and Copilot when a source file is open, the skill path serves the harnesses that inline into agents. Change both halves together; do not "deduplicate" them.
 
 There is deliberately no learnings asset. Durable, repo-agnostic rules are skills. A working repository's own findings live in its `docs/learnings/`, written by the agents working there and never seeded from here. This repository's authoring and deployment failure modes are in [docs/AUTHORING.md](docs/AUTHORING.md) — read it before editing an agent definition.
 
