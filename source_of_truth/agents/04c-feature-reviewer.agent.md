@@ -12,8 +12,7 @@ Be skeptical and thorough.
 
 ## Constraints
 
-- Complete the full review BEFORE making any edits
-- After review, apply fixes for all High and Blocker severity issues directly
+- Complete the full review BEFORE making any edits, then apply fixes per the Fix Workflow below
 - DO NOT skip any review category—be comprehensive
 - DO NOT give vague feedback—provide specific file:line references
 - Do NOT return `Approved` or `Approved with Reservations` while the authoritative tests for the changed behavior are `not-executed`. Unrun tests are not a reservation — return `Changes Requested` naming the suites that must run.
@@ -29,7 +28,7 @@ Read in this order from `dev/feature/[0N-task-name]/`:
 
 **Exception — affected tests.** When the change alters a shared API signature or constructor contract, a serialized schema, a bootstrap path, or a data/def file, you may read **and run** the affected test suites even though they are outside the "Files Changed" table. Those callers' tests are the only evidence a fail-closed contract change did not break them. This exception covers tests and their fixtures only, not a general codebase scan.
 
-**Skip:** `[0N-task-name]-context.md` and `[0N-task-name]-tasks.md` — these are for the Implementer and are already synthesized into the implementation record. Also skip `docs/CODEBASE_CONTEXT.md` — the implementation record provides all file context needed.
+**Skip:** `[0N-task-name]-context.md` and `[0N-task-name]-tasks.md` — these are for the Implementer and are already synthesized into the implementation record. Also skip `docs/CODEBASE_CONTEXT.md` under the `codebase-context-bootstrap` instruction's handed-scope exception — the implementation record hands you the exact file list, so you read no source beyond it.
 
 ## Review Categories
 

@@ -12,9 +12,8 @@ self-review of one change — the diff between a confirmed base commit and a hea
 commit — by delegating to the roster below and handing back a plain-language
 readiness result the author can act on before opening the PR.
 
-Follow the numbered-orchestrator house style established by
-`.github/agents/04-phase-execute.agent.md`: coordinate subagents and fail
-loudly at preflight boundaries.
+Follow the numbered-orchestrator house style established by **04 Phase -
+Execute**: coordinate subagents and fail loudly at preflight boundaries.
 
 You do NOT read source code or diffs yourself. You do NOT perform evaluator
 analysis yourself. You coordinate subagents, inspect path metadata during
@@ -61,28 +60,18 @@ block. The block contains exactly three questions:
 **After this block, no code path may introduce a new prompt.** Not on evaluator
 failure, not on timeout, not when `gh` is absent, not when no PR exists, not on
 an unreadable report. After the block the run reaches a report or it records a
-failure — it never asks. A question asked after the work is on disk blocks
-nothing, which is exactly what makes "ask me once the report is written" both
-unattended and safe.
+failure — it never asks.
 
-There is exactly one prompt after this block: the *ask once the report is
-written* confirmation is the single designed exception, and it blocks nothing
-because the report is already written. It is not a precedent. Every other
-question — retry this evaluator? post anyway? pick a different base? — is
-forbidden on every path.
-
-This is a structural property, not a courtesy. It became achievable only because
-the ledger, artifact-refusal, and verdict-recording questions were removed,
-leaving the base as the single blocking question. It will attract "one more
-question"; each addition is individually reasonable and collectively fatal to
-the unattended-run property. Guard it.
+The one designed exception is the *ask once the report is written* confirmation,
+which blocks nothing because the report is already on disk. It is not a
+precedent: every other question — retry this evaluator? post anyway? pick a
+different base? — is forbidden on every path.
 
 ## Base Suggest-and-Confirm
 
 **Git cannot determine a branch's base.** This is a data-model fact, not a
-tooling gap: a ref is a SHA and nothing else. The reflog records `branch:
-Created from HEAD` — the SHA, never the branch name — and is local-only, never
-cloned, and gc-pruned at 90 days. There is no correct algorithm. There is only
+tooling gap: a ref is a SHA and nothing else, and nothing in the repository
+records what a branch was cut from. There is no correct algorithm. There is only
 suggest-and-confirm.
 
 ### Suggestion order
@@ -112,15 +101,6 @@ looks obviously right and ranks the current branch first, every time, with a
 merge-base of HEAD itself and a diff of nothing. A run that reviews an empty
 diff and reports no findings is the worst available failure, because it looks
 like a pass.
-
-Verified on this repository, on branch `repo_improvements_project` at HEAD
-`ae9823a`:
-
-```
-git merge-base HEAD main                             -> e3398c7  (a real base)
-git merge-base HEAD repo_improvements_project        -> ae9823a  (HEAD itself)
-git merge-base HEAD origin/repo_improvements_project -> ae9823a  (HEAD itself)
-```
 
 A branch is always its own nearest base, and so is its remote-tracking ref.
 Exclude both explicitly; do not rely on a ranking to sort them out.
@@ -213,11 +193,7 @@ wastes the run.
 
 Inspect path metadata only — this is a directory-existence check, not a read:
 
-- If a `game/Assets` directory exists at repository root (nested/monorepo Unity
-  layout), set `is-unity-project: yes`
-- Otherwise, if both `Assets/` and `ProjectSettings/` directories exist at
-  repository root (the standard root Unity layout), set `is-unity-project: yes`
-- Otherwise, set `is-unity-project: no`
+Canonical predicate: The repository is a Unity project if **any** of these holds: `Assets/` and `ProjectSettings/` both exist at the repository root; both exist inside one nested project directory (e.g. `game/Assets/` and `game/ProjectSettings/`); `.github/copilot-instructions.md` identifies the project as Unity; or the plan or phase document under work targets Unity. `*.asmdef` files corroborate but are never required. Set `is-unity-project: yes` on a match, `no` otherwise.
 
 `yes` adds `Unity Reviewer` to the fan-out. `no` omits it, and that omission is
 not a `not-run` record — an evaluator that does not apply to the repository was
@@ -233,7 +209,7 @@ tier is an execution limitation to report, never a clean result.
 |---|---|
 | `05b`, `04e`, `05g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
 | `05c`, `05d`, `05e`, `05h` | Cheap tier for mechanical sweeps |
-| `04h` | Top available tier when present in the fan-out; Unity findings are judgment calls |
+| `Unity Reviewer` | Top available tier when present in the fan-out; Unity findings are judgment calls |
 | `05a`, `Test - Analyst`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
 
 Do not place model or harness identity in retained review reports or status
@@ -249,7 +225,7 @@ must stop the run, while an evaluator failure must not.
 |---|---|---|
 | Preflight | `Baseline Worktree` | Before fan-out. Its failure stops the run. |
 | Test-analysis input | `Test - Analyst` | After preflight and before fan-out. Its three files become read-only inputs to `05f`; failure makes that check NOT RUN but does not stop the other evaluators. |
-| Fan-out (concurrent) | `05b Change Narrator`, `05c Artifact Sweeper`, `05d Consistency Auditor`, `05e Dependency Auditor`, `05f Test Health`, `05h Cleanliness Auditor`, and `04e Diff Security Scan`, plus `04h Unity Reviewer` when `is-unity-project: yes` | **Seven**, or **eight** on a Unity repository, concurrently, after the base is confirmed. |
+| Fan-out (concurrent) | `05b Change Narrator`, `05c Artifact Sweeper`, `05d Consistency Auditor`, `05e Dependency Auditor`, `05f Test Health`, `05h Cleanliness Auditor`, and `04e Diff Security Scan`, plus `Unity Reviewer` when `is-unity-project: yes` | **Seven**, or **eight** on a Unity repository, concurrently, after the base is confirmed. |
 | Synthesis | `05g Readiness Synthesizer` | Last. Consumes the others' reports and status records. |
 
 `05a` is not a fan-out evaluator: nothing can run before the baseline exists.
@@ -258,7 +234,7 @@ by `05f`, and the root spawns it directly to keep delegation depth at one.
 `05g` is not one either: it consumes the others' output.
 
 Security is delegated to the existing **`04e Diff Security Scan`**, and Unity
-review to the existing **`04h Unity Reviewer`**, each invoked with the confirmed
+review to the existing **`Unity Reviewer`**, each invoked with the confirmed
 diff range like any other fan-out evaluator. **No new evaluator is authored for
 either.**
 
@@ -386,8 +362,7 @@ fails — which is the documented no-PR outcome below, not an error to recover f
   further interaction.
 - **ask once the report is written** — the report must already exist on disk
   before the confirmation appears. Show the report path and the verdict, ask
-  once, and post on confirmation using the same single command. This is the only
-  prompt permitted after the block, and it blocks nothing.
+  once, and post on confirmation using the same single command.
 - **never** — make no `gh` invocation and no network call on this path. The local
   readiness report is the entire deliverable. Do not check whether a PR exists,
   do not probe `gh` availability, and do not report a posting condition: there is

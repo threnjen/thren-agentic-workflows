@@ -231,8 +231,6 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         agent = agents["04e-diff-security-scan"]
         self.assertFalse(agent.user_invocable)
         self.assertNotIn("execute", agent.tools)
-        self.assertIn("BLOCKED", agent.body)
-        self.assertIn("OUT OF SCOPE", agent.body)
         docs = mod.applicable_instructions(agent, instructions)
 
         claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
@@ -1215,6 +1213,61 @@ class GithubMirrorTests(unittest.TestCase):
 
             self.assertGreater(first["github_changed"], 0)
             self.assertEqual(second["github_changed"], 0)
+
+
+class InstructionApplyToTests(unittest.TestCase):
+    """Every enumerated `applyTo` filename must resolve to an agent on disk.
+
+    Thirteen of the sixteen instruction files hand-enumerate their target agents
+    by filename; three use a directory glob. An enumerated path that no longer
+    resolves — a renamed or deleted agent — fails open: the instruction simply
+    stops being injected, the agent still runs, and nothing reports it. This
+    asserts the enumerations still point at real files.
+    """
+
+    INSTRUCTIONS_DIR = REPO_ROOT / "source_of_truth" / "instructions"
+    AGENTS_DIR = REPO_ROOT / "source_of_truth" / "agents"
+
+    def _apply_to_patterns(self, path: Path) -> list[str]:
+        text = path.read_text(encoding="utf-8")
+        match = re.search(r'^applyTo:\s*"([^"]+)"', text, re.MULTILINE)
+        if not match:
+            return []
+        return [p.strip() for p in match.group(1).split(",") if p.strip()]
+
+    def test_every_enumerated_applyto_target_exists(self) -> None:
+        agent_names = {p.name for p in self.AGENTS_DIR.iterdir() if p.is_file()}
+        self.assertTrue(agent_names, "no agent definitions found")
+
+        unresolved = []
+        for instruction in sorted(self.INSTRUCTIONS_DIR.glob("*.instructions.md")):
+            for pattern in self._apply_to_patterns(instruction):
+                if not pattern.startswith("**/"):
+                    # Directory glob (e.g. "source_of_truth/agents/**") — matches
+                    # by directory, so there is no filename to resolve.
+                    continue
+                target = pattern[len("**/") :]
+                if not target.endswith(".md"):
+                    # Source-file glob (e.g. "**/*.py", "**/pyproject.toml") —
+                    # matches code being edited, not an agent definition.
+                    continue
+                if target not in agent_names:
+                    unresolved.append(f"{instruction.name} -> {target}")
+
+        self.assertEqual(
+            [],
+            unresolved,
+            "applyTo entries naming agents that do not exist (the instruction "
+            "silently stops being injected):\n  " + "\n  ".join(unresolved),
+        )
+
+    def test_every_instruction_declares_applyto(self) -> None:
+        missing = [
+            p.name
+            for p in sorted(self.INSTRUCTIONS_DIR.glob("*.instructions.md"))
+            if not self._apply_to_patterns(p)
+        ]
+        self.assertEqual([], missing, f"instructions with no applyTo: {missing}")
 
 
 if __name__ == "__main__":

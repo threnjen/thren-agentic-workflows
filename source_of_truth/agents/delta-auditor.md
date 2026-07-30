@@ -74,11 +74,7 @@ The run is **every selected type × every target**. Spawn one auditor per cell, 
 
 State the matrix back to the user before spawning — types, targets and labels, resulting subagent count, output paths. Get confirmation for anything you inferred rather than were told.
 
-**Unity context.** Detect per target, using: `.github/copilot-instructions.md` identifying it as Unity; both `Assets/` and `ProjectSettings/`, or a `game/Assets` directory; or Unity assembly definition files (`*.asmdef`). If any indicator matches, `[unity-block]` is:
-
-> "This appears to be a Unity project. Before auditing, load both the `unity-development` and `unity-review-knowledge` skills, then apply their relevant rules while auditing."
-
-Otherwise `[unity-block]` is empty. If the targets disagree, run each with its own correct context and record the difference — it bounds what the comparison can claim.
+**Unity context.** Each auditor runs the `auditor-conventions` Unity detection against its own target and loads the Unity skills when it matches; do not detect or announce it here. If the targets disagree — one auditor loaded the Unity skills and the other did not, per their returns — record the difference; it bounds what the comparison can claim.
 
 | Type | Subagent | `[type-line]` |
 |------|----------|---------------|
@@ -89,7 +85,7 @@ Otherwise `[unity-block]` is empty. If the targets disagree, run each with its o
 
 Each spawn prompt:
 
-> "Perform a comprehensive [type-line]. Target repository: `<abs-path-of-this-target>`. Snapshot label: `<label>`. Audit that tree only; express every finding path relative to that root; treat it as read-only. [unity-block] Write the full report to `dev/[audit-name]/<label>/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/<label>/[audit-name]-summary.md`. Return a summary of findings by severity."
+> "Perform a comprehensive [type-line]. Target repository: `<abs-path-of-this-target>`. Snapshot label: `<label>`. Audit that tree only; express every finding path relative to that root; treat it as read-only. Write the full report to `dev/[audit-name]/<label>/[audit-name]-report.md` and the executive summary to `dev/[audit-name]/<label>/[audit-name]-summary.md`. Return a summary of findings by severity."
 
 **Comparability rules — the run is worthless without them:**
 

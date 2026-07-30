@@ -51,13 +51,11 @@ As you work through Discovery and Clarification, keep a running list of any addi
 - **Web research results** — summaries and key findings from `@Web Researcher` invocations (both proactive research and user-provided URLs)
 - **User-provided documentation** — specs, design docs, ADRs, or other materials the user shared that aren't part of the repo
 
-This context will be persisted to a `DISCOVERY_CONTEXT.md` file so downstream agents (`@02 Phase - Refiner`, `@04 Phase - Execute`) can load it without the user needing to re-provide it.
+This context is persisted to `docs/phases/DISCOVERY_CONTEXT.md`, which `@02 Phase - Refiner` and `@03 Feature - Decomposer` read during their own discovery, so the user does not have to re-provide it.
 
 #### Documentation Freshness Check
 
-Run the Documentation Freshness Check (see auto-loaded instructions). If README.md or docs/CODEBASE_CONTEXT.md is missing and the project is not brand new, spawn `@Docs Writer` as a subagent to create the missing documentation first. Do not continue to Phase 2 until the documentation exists.
-
-If the repository is genuinely brand new with nothing substantive to report yet, note that exception and continue.
+Run the auto-loaded Documentation Freshness Check before continuing to Phase 2.
 
 ### Phase 2: Clarification (Interactive)
 
@@ -94,31 +92,13 @@ Incorporate all feedback and loop back through the roadmap as many times as need
 
 When the user signals they're ready, write documents incrementally to avoid scope creep and allow priorities to evolve.
 
-#### First-Use Output Gate (Project Bootstrap)
-
-If this is the first planner run for a project (no `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` files exist yet), the deliverables are strictly limited to:
-- `docs/phases/PROJECT_ROADMAP.md`
-- `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`
-
-Do not write `PHASE_02+` documents during the initial bootstrap run, even if the roadmap contains later phases.
-
-#### Return-Visit Gate (Subsequent Phase Authoring)
-
-Write a new `PHASE_0N_SUMMARY.md` only when the user returns after completing the prior full phase (for example, write `PHASE_02` only after `PHASE_01` has been completed and the user is back for the next iteration).
-
-Never pre-generate future phase summaries in advance.
-
 Use this procedure:
 
 1. **Check existing phase documents** — Scan `docs/phases/` to see which `PHASE_0N_SUMMARY.md` files already exist on disk
 2. **Write or regenerate `PROJECT_ROADMAP.md`** — Always regenerate this file on each run to keep the roadmap in sync with any changes to project scope or priorities
 3. **Write or update `DISCOVERY_CONTEXT.md`** — If any additional context was gathered during Discovery or Clarification (additional folders/projects, web research, user-provided docs), write it to `docs/phases/DISCOVERY_CONTEXT.md`. If the file already exists, update it with any new context from this session. Skip this step only if no additional context was gathered beyond what's in the codebase itself. When the phase includes refactors, rewires, or behavior changes, also note likely test impact, affected test suites, and any Unity EditMode/PlayMode (If a Unity project) or manual QA needs in the phase document.
-4. **On first run, write only `PHASE_01`** — If no phase summaries exist yet, write only `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`
-5. **On return runs, write only the next single phase after completion of the prior one** — If `PHASE_01` is complete and the user has returned, write only `PHASE_02`; if `PHASE_02` is complete and the user has returned, write only `PHASE_03`; and so on
-6. **Do not skip ahead** — Never write multiple new `PHASE_0N` summaries in one run
-7. **Present and prepare for refinement** — Show the newly written phase document and prepare it for handoff to `@02 Phase - Refiner` for refinement
-
-**Why incremental?** Writing all phases upfront leads to scope creep. By writing one phase at a time, refinements to earlier phases naturally influence later ones.
+4. **Write exactly one phase summary** — Write only the lowest-numbered `PHASE_0N_SUMMARY.md` not yet on disk, and only after the prior phase is complete. On the first run that is `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`. Never write a second new phase summary in the same run, and never pre-generate future phases.
+5. **Present and prepare for refinement** — Show the newly written phase document and prepare it for handoff to `@02 Phase - Refiner` for refinement
 
 ### Commit: Plan Affirmation
 
@@ -141,15 +121,13 @@ After the user confirms the planning documents are final for this session, stage
 - **Later phases add polish** — optimizations, nice-to-haves, and edge cases come last
 - **Each phase should be decomposable into 2-6 features** — too few means the phase is too small; too many means it should be split
 - **Cross-repo phases stay in sync** — if a phase spans repos, each repo gets its own phase doc that cross-references the other
-- **Auto-note cross-phase discoveries** — when planning reveals an architectural decision, design constraint, risk, or deferred capability that affects a later phase, document it immediately in the relevant downstream location (project's `cross-phase-decisions.md`, the phase document's Notes section, or `DISCOVERY_CONTEXT.md`). Never ask "should I note this for later?" — the answer is always yes. A downstream agent can ignore an irrelevant note but cannot consult a note never written.
+- **Auto-note cross-phase discoveries** — when planning reveals an architectural decision, design constraint, risk, or deferred capability that affects a later phase, document it immediately in the relevant downstream location (`.github/learnings/cross-phase-decisions.md`, the phase document's Notes section, or `docs/phases/DISCOVERY_CONTEXT.md`). Never ask "should I note this for later?" — the answer is always yes. A downstream agent can ignore an irrelevant note but cannot consult a note never written.
 
 ## Pipeline Next Step
 
 After writing each phase document, tell the user:
 
 > **"Phase document written to `docs/phases/`. To refine this phase, use `/compact` to reduce context, then spawn `phase-refiner` in this same chat. We recommend attaching the Phase document (e.g., `docs/phases/PHASE_01/PHASE_01_SUMMARY.md`) and any `DISCOVERY_CONTEXT.md` so the refiner has full context. Once you've completed executing phase 1, return here to write the next phase."**
-
-When the user returns after completing a phase, detect the next unwritten `PHASE_0N_SUMMARY.md` and continue writing incrementally.
 
 ## Quality Checklist
 

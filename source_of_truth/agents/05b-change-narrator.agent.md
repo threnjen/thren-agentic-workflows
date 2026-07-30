@@ -68,12 +68,12 @@ unconfirmed revision or claim a clean narrative.
 
 ## Attribution: the Added Line, Not the Touched File
 
-Attribute to the branch only what the branch actually changed. A file the branch
-touched is not a file the branch wrote: narrating pre-existing code as though it
-were introduced is the failure mode that makes a narrative confidently wrong.
-Use the diff's added-line ranges, and compare against the baseline worktree when
-a line's provenance is unclear. Where attribution cannot be verified, say so in
-Checks Not Run rather than asserting it.
+Apply the attribution rule from `pr-review-conventions`. This evaluator holds no
+shell grant, so the orchestrator artifacts are its only attribution source.
+Narrating pre-existing code as though the branch introduced it is the failure
+mode that makes a narrative confidently wrong; where a line's provenance is
+unclear, compare against the baseline worktree, and where it cannot be verified,
+say so in Checks Not Run rather than asserting it.
 
 If the branch diff is empty, say so: write a completed check stating **nothing
 changed since the confirmed base**. That is a stated result, not "no narrative

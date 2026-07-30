@@ -35,7 +35,7 @@ If the user already specified scope in their initial message, skip this step.
 
 ### Phase 3: Run Subagent
 
-Based on the user's choice, determine the output directory name. Use the format `dev/feature/[0N-task-name]/` where `[0N-task-name]` is a zero-padded prefix plus descriptive name (e.g., `01-test-analysis`, `01-test-bootstrap`, `01-test-fixes`, or a user-specified name).
+Based on the user's choice, name the output directory `dev/feature/[0N-task-name]/` — the task name records which operation was chosen (analysis, bootstrap, fixes), or the name the user supplied. Numbering follows the auto-loaded path-token binding: one directory per operation, each with its own next-available prefix.
 
 #### If ANALYZE:
 
@@ -51,20 +51,20 @@ After the subagent returns:
 
 spawn the **Test - Writer** subagent:
 
-> "Bootstrap a test suite for [scope]. Discover the project structure, assess what needs tests, create test files with meaningful baseline coverage, verify all tests pass, and return a summary of test files created, test count, and coverage. Write a test suite summary to `dev/feature/[0N-task-name]/[0N-task-name]-summary.md`."
+> "[SUBAGENT-MODE] Bootstrap a test suite for [scope]. Discover the project structure, assess what needs tests, create test files with meaningful baseline coverage, verify all tests pass. Proceed autonomously — do not wait for approval; record any decision you would have asked about. Return all five Deliverables sections."
 
 After the subagent returns:
-1. Verify test files were created
+1. Verify the returned Files Created table names test files that exist on disk
 2. Present the summary to the user
 
 #### If FIX:
 
 spawn the **Test - Fixer** subagent:
 
-> "Diagnose and fix the failing tests in [scope]. Reproduce failures, classify root causes, apply targeted fixes to test code only (never modify source code), verify all tests pass, and return a structured fix summary. Write the fix report to `dev/feature/[0N-task-name]/[0N-task-name]-report.md`."
+> "[SUBAGENT-MODE] Diagnose and fix the failing tests in [scope]. Reproduce failures, classify root causes, apply targeted fixes to test code only (never modify source code), verify all tests pass. Proceed autonomously — do not wait for approval; record any decision you would have asked about. Return all four Deliverables sections."
 
 After the subagent returns:
-1. Verify the fix report exists
+1. Verify the returned Test Results show zero remaining failures, or that each remaining failure is documented
 2. Present the fix summary to the user
 
 ### Phase 4: Offer Remediation

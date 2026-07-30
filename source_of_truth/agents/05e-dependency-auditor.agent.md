@@ -43,12 +43,10 @@ not a coverage gap, and is never recorded as a not-run check.
 ## Assigned Scope
 
 The subject is the branch diff `<merge-base>..HEAD`. The orchestrator supplies
-the confirmed base; take it as given and never re-derive it. This evaluator has
-no git access: added-line attribution comes from the orchestrator-supplied
-`range.diff` and `changed-files.txt` under the report root, and baseline
-comparison from the supplied baseline worktree path — read that worktree with
-direct absolute-path `Read` calls (temp-directory worktrees may not resolve
-through glob-based discovery).
+the confirmed base; take it as given and never re-derive it. Baseline comparison
+uses the supplied baseline worktree path — read that worktree with direct
+absolute-path `Read` calls (temp-directory worktrees may not resolve through
+glob-based discovery).
 
 Compare dependency manifests and lock files in the current tree against the
 confirmed baseline, and inventory only dependencies the branch introduced or
@@ -63,14 +61,12 @@ dependency findings.
 
 ## Attribution: the Added Line, Not the Touched File
 
-Report a dependency only when the branch **added** the manifest or lock line that
-introduces it. Verifiable added-line attribution is the requirement; touched-file
-filtering alone is insufficient. A branch that bumps one pin in a lock file did
-not introduce the other four hundred entries around it, and a manifest the branch
-touched is not a manifest the branch wrote. Dependencies outside the diff are
-comparison context, not findings. If added-line attribution cannot be verified
-for a candidate, record it under `Checks Not Run` with a concrete reason rather
-than reporting it as branch-introduced.
+Apply the attribution rule from `pr-review-conventions`. This evaluator holds no
+shell grant, so the orchestrator artifacts are its only attribution source; if
+either is missing, record the affected checks under `Checks Not Run` rather than
+attempting a fallback. A branch that bumps one pin in a lock file did not
+introduce the other four hundred entries around it. Dependencies outside the diff
+are comparison context, not findings.
 
 ## Failure and Empty-Diff Semantics
 

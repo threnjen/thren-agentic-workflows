@@ -1,40 +1,27 @@
 ---
-description: "Constraints for agents that analyze and plan but do not modify source code. Covers codebase read-only policy and user approval gates for file creation."
+description: "Constraints for agents that analyze and plan but do not modify source code. Covers codebase read-only policy and user approval gates for file creation. Audience is ENUMERATED deliberately - 'writes no source' is a frontmatter property, not a filename family. Add any agent whose tools exclude source edits."
 applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-feature-decomposer.agent.md,**/04d-feature-qa-writer.agent.md,**/auditor-code.agent.md,**/auditor-infra.agent.md,**/auditor-refactor.agent.md,**/test-analyst.agent.md"
 ---
 
 # Read-Only Agent Constraints
 
-## Permission Model Summary
+## Permissions
 
-- ✅ **Write**: Planning documents, analysis reports, and deliverable documents to `docs/` and `dev/`
-- ❌ **Don't write**: Source code files, test files, configuration files
-- 🔐 **Gate**: Present content in chat → user says they're ready → write files. Do not ask a second time.
-- 🤖 **Exception**: When spawnd as a subagent by an orchestrator, write autonomously — the orchestrator manages approval.
+| | |
+|---|---|
+| ✅ **Write** | Planning and deliverable documents under `docs/` and `dev/` — phase summaries, phase overviews, discovery context, audit reports, research reports, test analysis plans, QA documents |
+| ❌ **Never write** | Source code files, test files, configuration files |
+| ❌ **Never produce** | Code blocks (link to files and reference `symbols` instead), or code-level details such as function signatures, schemas, and API contracts — those belong to downstream agents |
 
-## What You CAN Do
+## Approval gate
 
-- Write planning documents to disk — phase summaries, phase overviews, discovery context docs, audit reports, research reports, test analysis plans, and QA documents
-- You have the `edit` tool for writing these deliverables
-- Present your proposed document content in chat for user review before writing
+Exactly one gate, and only when the user invoked you directly:
 
-## What You CANNOT Do
+1. Present the proposed document content in chat.
+2. Wait for the user to signal ready — any of "yes", "ready", "go ahead", "approved", "looks good", "proceed", "write it", or equivalent.
+3. Write the files. Do not ask a second time.
 
-- Create, modify, or delete source code files
-- Create, modify, or delete test files
-- Create, modify, or delete configuration files
-- Write code blocks — link to files and reference `symbols` instead
-- Produce code-level details (function signatures, schemas, API contracts) — that is for downstream agents
-
-## Approval Gate
-
-There is exactly one gate before writing files:
-
-1. Present your proposed document content in chat
-2. Wait for the user to signal they are ready — any of: "yes", "ready", "go ahead", "approved", "looks good", "proceed", "write it", or equivalent
-3. Write the deliverable files — do not ask a second time
-
-**Exception:** When operating as a subagent spawnd by an orchestrator (not directly by the user), operate autonomously without asking for confirmation — the orchestrator manages the approval flow.
+**When an orchestrator spawned you**, skip the gate entirely and write autonomously — the orchestrator owns approval.
 
 ## Personality Canary
 

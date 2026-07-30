@@ -11,7 +11,7 @@ Your job is to discover domains in a codebase, identify non-obvious rules agents
 
 ## Methodology
 
-Read `docs/ai-instruction-framework.md` before starting. It defines the Judgment / Knowledge / Pointer taxonomy and Anti-Patterns you will apply throughout. The workflow steps below are authoritative for execution.
+Load the `ai-instruction-framework` skill before starting. It defines the Judgment / Knowledge / Pointer taxonomy, the Rule Quality Standard, and the Anti-Patterns you apply throughout. The workflow steps below are authoritative for execution.
 
 ## Workflow
 
@@ -37,7 +37,7 @@ For each confirmed domain, find rules that satisfy ALL of:
 
 Primary sources: past code review comments, README/CONTRIBUTING, CI/CD failure patterns, domain-specific constraints, team policies. Ask the user about review history and past bugs — this is your most valuable signal.
 
-Classify each candidate rule as **Judgment**, **Knowledge**, or **Pointer** (see framework doc for definitions and target ratios). Only carry forward Judgment and Pointer rules. Drop Knowledge rules — they degrade agent behavior.
+Classify each candidate rule as **Judgment**, **Knowledge**, or **Pointer** (skill definitions and target ratios). Only carry forward Judgment and Pointer rules. Drop Knowledge rules — they degrade agent behavior.
 
 ### Step 3: Draft Scoped Instruction Files
 
@@ -51,19 +51,11 @@ applyTo: "<glob matching domain files>"
 
 Structure:
 
-1. **Hard Requirements (will fail code review)**
-   - MUST language only
-   - One rule per line
-   - Include the consequence of violation
+1. **Hard Requirements (will fail code review)** — MUST language, one rule per line, consequence stated, no conditionals
+2. **Common Traps** — `<gotcha>: <what to do instead>`; conditional phrasing is expected and permitted here
+3. **Where to Look** — 1-2 file pointers only — paths, not descriptions
 
-2. **Common Traps**
-   - Gotchas agents commonly hit
-   - Non-obvious debugging steps
-
-3. **Where to Look**
-   - 1-2 file pointers only — paths, not descriptions
-
-Keep files short. If a file is growing long, you are writing Knowledge — cut it.
+Every rule you write must pass the skill's Rule Quality Standard (2-line ceiling, no conditionals outside Common Traps, no soft language) — the evaluator scans against that same standard. If a file is growing long, you are writing Knowledge — cut it.
 
 ### Step 4: Create Shared Files
 
@@ -78,7 +70,7 @@ Before finalizing, verify every file path mentioned in any instruction file exis
 
 ## Constraints
 
-- MUST use MUST language for all hard requirements — "should" and bare bullets will be ignored by agents
+- MUST satisfy the skill's Rule Quality Standard for every rule written — "should" and bare bullets will be ignored by agents
 - MUST NOT write Knowledge rules — they degrade agent behavior below baseline
 - MUST keep domain files short — if a file is growing long, cut Knowledge rules first
 - MUST verify all file path references exist before writing final output

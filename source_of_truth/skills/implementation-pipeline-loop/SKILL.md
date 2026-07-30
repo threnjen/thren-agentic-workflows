@@ -15,7 +15,7 @@ For **each task** (in priority order), run these steps sequentially. Complete AL
 
 spawn the **z-feature-implementer** subagent:
 
-> "[SUBAGENT-MODE] Implement the plan at `[plan-path]`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `[plan-path]/[task-name]-implementation.md`. Return a summary of what was implemented and test results."
+> "[SUBAGENT-MODE] Implement the plan at `[plan-path]`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `[plan-path]/[task-name]-implementation.md`. Manifest verification assets — run these affected suites if the change touches a shared contract: [verification-assets, or `not provided`]. Return a summary of what was implemented, the test-execution status with its results artifact path, and any gaps or blockers."
 
 After the subagent returns:
 - Verify `[plan-path]/[task-name]-implementation.md` exists
@@ -30,12 +30,24 @@ spawn the **z-feature-reviewer** subagent:
 After the subagent returns:
 - Verify `[plan-path]/[task-name]-review.md` exists
 - Check the verdict:
-  - **Approved** or **Approved with Reservations** → proceed to Step C
-  - **Changes Requested** → Re-spawn the Implementer with the review findings, then re-spawn the Reviewer. Retry once. If still "Changes Requested" after retry, log the issue and proceed
+  - **Approved** or **Approved with Reservations** → apply the Test Execution Gate below
+  - **Changes Requested** → apply the Review Reject Loop from the auto-loaded orchestrator conventions (retry once, then log both summaries, proceed, and note the unresolved review in the final report)
 
-### Step B2: Diff Security Scan
+### Test Execution Gate
 
-spawn the **z-diff-security-scan** subagent:
+Read the Implementer's and Reviewer's reported test-execution status. Statuses are defined in the `test-execution-evidence` instruction.
+
+- **`executed-green`** → proceed to Step B2.
+- **`executed-failing`** → re-spawn the Implementer with the failing test names, then re-spawn the Reviewer. Retry once. If still failing, record it as a blocking status and proceed — the final review surfaces it.
+- **`not-executed`** → do NOT treat this as green. Record `test-execution: not-executed (<reason>)` for the task and report it to the orchestrator as a blocking status. A task with unrun tests cannot be reported complete.
+
+Carry the per-task status forward: the orchestrator gates its wave and phase completion on it.
+
+### Step B2: Diff Security Scan (conditional)
+
+Run this step **only when the caller has not declared run-level security handling**. `04-phase-execute` declares it (one phase-level scan at its own Step 5) and skips B2 entirely. Callers that execute Steps A through D without such a declaration — `test-orchestrator` and `audit-remediation-pipeline` — run B2 once per task. Never produce both a per-task and a run-level verdict for the same change.
+
+When it runs, spawn the **z-diff-security-scan** subagent:
 
 > "[SUBAGENT-MODE] Perform a diff-scoped security scan for the task at `[plan-path]`. Scan ONLY these changed files, taken from the 'Files Changed' table in `[plan-path]/[task-name]-implementation.md`: [list of changed file paths]. Write the report to `[plan-path]/[task-name]-security.md`. Do not modify source code or reveal secret values. Return the report path, verdict, severity totals, and any Critical/High findings."
 
@@ -47,11 +59,12 @@ After the subagent returns:
 
 Execute the commit directly — do not spawn a subagent for this step.
 
-1. **Collect files to stage** — From the "Files Changed" table in `[plan-path]/[task-name]-implementation.md`, collect every source file and test file path listed. Also include all pipeline documents in `[plan-path]/` (plan, context, tasks, implementation, review, and security files).
+1. **Collect files to stage** — From the "Files Changed" table in `[plan-path]/[task-name]-implementation.md`, collect every source file and test file path listed. Also include all pipeline documents in `[plan-path]/` (plan, context, tasks, implementation, review, and — only if Step B2 ran — security).
 
 2. **Stage only those files**:
    ```bash
-   git add <file1> <file2> ... [plan-path]/[task-name]-implementation.md [plan-path]/[task-name]-review.md [plan-path]/[task-name]-security.md
+   git add <file1> <file2> ... [plan-path]/[task-name]-implementation.md [plan-path]/[task-name]-review.md
+   # append [plan-path]/[task-name]-security.md only if Step B2 ran
    ```
    Do NOT use `git add -A` — staging untracked files outside the implementation record risks including debug files or changes from adjacent features.
 
@@ -62,7 +75,7 @@ Execute the commit directly — do not spawn a subagent for this step.
    <one paragraph: what changed and why, derived from implementation record summary>
 
    Implements: <AC refs, e.g., AC1, AC2, AC3>
-   Reviewed-by: 04c-feature-reviewer
+   Reviewed-by: z-feature-reviewer
    Verdict: <Approved | Approved with Reservations>
    ```
    **Type:** `feat` (new capability) · `fix` (bug fix) · `refactor` (restructure) · `test` (tests only) · `docs` (docs only) · `chore` (config/build)
@@ -82,22 +95,16 @@ Execute the commit directly — do not spawn a subagent for this step.
 
 Update the todo list to mark this task as completed. Proceed to the next task.
 
-> **Note:** In **batch mode**, QA is not produced per-task. The orchestrator runs a consolidated QA step after all tasks complete. In **per-feature mode**, QA and Final Review run after each individual feature. See the Phase - Execute agent for details.
+> **Note:** QA placement depends on the pipeline mode. Batch mode and per-feature mode are defined in the `pipeline-artifacts` instruction; follow that definition.
 
 ## Path Conventions
 
-- `[plan-path]` is the directory containing the task's plan files (e.g., `dev/feature/[0N-task-name]/` or `dev/[audit-name]/[task-name]/`)
-- `[task-name]` is the kebab-case identifier for the task, matching the plan file prefix (including the `0N-` numeric prefix for feature directories)
+The orchestrator supplies both tokens in its spawn prompt.
 
-## Test Execution Gate
+- `[plan-path]` — the directory containing the task's plan files (phase pipeline: `dev/feature/[0N-task-name]/`; audit and test pipelines supply their own)
+- `[task-name]` — the kebab-case identifier for the task, matching the plan file prefix (including the `0N-` numeric prefix for feature directories)
 
-After Step B, read the Implementer's and Reviewer's reported test-execution status. Statuses are defined in the `test-execution-evidence` instruction.
-
-- **`executed-green`** → proceed to Step B2.
-- **`executed-failing`** → re-spawn the Implementer with the failing test names, then re-spawn the Reviewer. Retry once. If still failing, record it as a blocking status and proceed — the final review surfaces it.
-- **`not-executed`** → do NOT treat this as green. Record `test-execution: not-executed (<reason>)` for the task and report it to the orchestrator as a blocking status. A task with unrun tests cannot be reported complete.
-
-Carry the per-task status forward: the orchestrator gates its wave and phase completion on it.
+Token bindings are owned by the `dev-task-folder` instruction.
 
 ## Post-Loop: Documentation Update
 

@@ -13,9 +13,8 @@ You do **not** produce pipeline artifacts (implementation records, review record
 
 Before broad discovery:
 
-1. Read `docs/CODEBASE_CONTEXT.md` if present and use it as your baseline orientation.
-2. Scan `.github/learnings/*.md` for relevant patterns and past decisions.
-3. Limit exploration to files directly relevant to the user request.
+1. Scan `.github/learnings/*.md` for relevant patterns and past decisions.
+2. Limit exploration to files directly relevant to the user request.
 
 ## Step 2 - Investigate
 
@@ -27,15 +26,15 @@ Understand request scope and impact:
 - **Tests**: Check if project has tests and if the affected area is covered.
 - **Lint**: Note any linter or formatter requirements.
 
-**Scope check**: If touching >5 files or multiple unrelated modules, warn the user — see Scope Guardrail below.
+**Scope check**: If touching more than 5 code files or multiple unrelated modules, apply the Scope Guardrail below.
 
 ### Phase Doc Sync Gate
 
-Detect whether the repository has a `docs/phases/` directory. If it does, **load the `phase-doc-sync` skill** before implementing, and treat its documentation-reconciliation contract as part of the change's scope: any fix or tweak that alters what a phase delivers or how it behaves is not complete until the affected `PHASE_0N_SUMMARY.md` and `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` in legacy repos) entries are updated as baseline truth. Phase-doc updates made under this gate do not count against the 5-file scope guardrail.
+If the repository has a `docs/phases/` directory, **load the `phase-doc-sync` skill** before implementing and treat its contract as part of this change's scope. Phase-doc updates made under it never count against the scope guardrail below.
 
 ### Unity Detection and Review Gate
 
-Before proposing implementation, detect whether this is a Unity project: a `game/Assets` directory, OR both `Assets/` and `ProjectSettings/` directories at the repository root (the standard Unity layout).
+Before proposing implementation, detect whether this is a Unity project. The repository is a Unity project if **any** of these holds: `Assets/` and `ProjectSettings/` both exist at the repository root; both exist inside one nested project directory (e.g. `game/Assets/` and `game/ProjectSettings/`); `.github/copilot-instructions.md` identifies the project as Unity; or the plan or phase document under work targets Unity. `*.asmdef` files corroborate but are never required.
 
 - If a Unity project is detected, **load the `unity-development` skill** before planning or writing code, so Unity authoring rules (runtime wiring, lifecycle, serialized-asset generation) apply during implementation — not only at review.
 - If a Unity project is detected, spawn `Unity Reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
@@ -48,11 +47,11 @@ Use this invocation template when Unity is detected:
 
 ## Scope Guardrail
 
-If the change grows beyond a small feature (more than 5 files or unrelated modules), say:
+If the change grows beyond a small feature (more than 5 code files, or unrelated modules), stop and say:
 
 > "This is expanding beyond a small feature. I recommend using `@04 Phase - Execute` with a proper feature plan for full pipeline coverage (implementation, review, QA, and final validation). Do you want to continue here anyway, or switch to that flow?"
 
-Proceed based on user choice.
+Continue only on an explicit instruction to continue here.
 
 ## Step 3 - Propose and Iterate
 
@@ -112,6 +111,6 @@ If the change reveals a reusable pattern or gotcha, append a concise note to `.g
 ## Core Principles
 
 - **Ask before acting** — explicit permission always (Step 4).
-- **Stay small** — warn if scope grows beyond 5 files.
+- **Stay small** — stop and consult the user if scope grows beyond 5 code files.
 - **Match, don't invent** — follow existing patterns.
 - **Verify** — always run tests and lint before finishing.

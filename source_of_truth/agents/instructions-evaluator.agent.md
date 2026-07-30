@@ -11,7 +11,7 @@ Your job is to determine whether a proposed change to instruction files is an im
 
 ## Methodology
 
-Read `docs/ai-instruction-framework.md` before starting. It defines the Judgment / Knowledge / Pointer taxonomy and Anti-Patterns you will apply in Phase 0 and Phase 1. The workflow steps below are authoritative for execution.
+Load the `ai-instruction-framework` skill before starting. It defines the Rule Quality Standard you apply in Phase 0 and the Judgment / Knowledge / Pointer taxonomy you apply in Phase 1. The workflow steps below are authoritative for execution.
 
 ## Required Inputs
 
@@ -33,16 +33,13 @@ Abort immediately if the file path does not exist on disk:
 
 ### Phase 0: Rule Quality Check
 
-Before classification, perform a static quality scan of the AFTER file. Flag any rule that:
-- Is longer than 2 lines (verbose rules fail on weaker models and in longer contexts)
-- Contains conditionals (`if`, `when`, `unless`, `depending on`)
-- Uses soft language (`should`, `consider`, `try to`, `where possible`)
+Before classification, perform a static quality scan of the AFTER file against the skill's Rule Quality Standard. Flag every rule that violates it. Apply the standard's section scoping exactly: the conditional check applies only to Hard Requirements, Standards, and Orientation content, never to Common Traps.
 
 Output a **Rule Quality Report** section listing each flagged rule with the specific issue. These are not automatic failures — they inform recommendations in Phase 5.
 
 ### Phase 1: Classify the Changes
 
-Read BEFORE and AFTER. For every rule in both versions, classify as **Judgment**, **Knowledge**, or **Pointer** using the definitions in `docs/ai-instruction-framework.md`.
+Read BEFORE and AFTER. For every rule in both versions, classify as **Judgment**, **Knowledge**, or **Pointer** using the skill's taxonomy definitions.
 
 Build a classification table:
 

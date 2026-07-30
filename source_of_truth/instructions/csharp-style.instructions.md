@@ -1,6 +1,6 @@
 ---
-description: "C# (Google) style rules for naming, organization, formatting, and idiomatic C#. Auto-loaded for C#-focused agents. Full reference: the-movies/docs/STYLE_GUIDE.md"
-applyTo: "**/04h-unity-reviewer.agent.md,**/auditor-code.agent.md,**/04b-feature-implementer.agent.md,**/04c-feature-reviewer.agent.md"
+description: "Hard C# rules a competent model violates by default — naming, member order, formatting, nullability, async, error handling, and access control. Audience is source files only: the glob fires for Cursor and Copilot whenever C# is open, and costs nothing otherwise. Harnesses that inline instructions into agents reach these rules through the csharp-standards skill instead, routed by language-standards.instructions.md. PAIRED ASSET: skills/csharp-standards/SKILL.md restates these rules — change both together. Unity carve-outs live in skills/unity-development."
+applyTo: "**/*.cs"
 ---
 
 # C# Style Rules (Google Style Guide)
@@ -11,13 +11,17 @@ applyTo: "**/04h-unity-reviewer.agent.md,**/auditor-code.agent.md,**/04b-feature
 |--------|-----------|
 | Classes, methods, enums, public fields/properties, namespaces | PascalCase |
 | Local variables, parameters | camelCase |
-| Private/protected/internal fields and properties | `_camelCase` |
+| Private/protected/internal fields and properties (non-Unity C#) | `_camelCase` |
 | Interfaces | `I` prefix (`IMyInterface`) |
 | Filenames, directories | PascalCase |
 
 - Acronyms are single words: `MyRpc` not `MyRPC`
 - `const`, `static`, `readonly` do not affect naming conventions
 - One core class per file; filename matches the main class
+- Booleans read as a true/false statement: `CanRefund(order)`, `IsEligibleForRefund` — never `CheckRefund`
+- No `Manager` / `Helper` / `Util` / `Data` class-name suffix unless you can state the class's single responsibility
+
+Inside Unity assemblies the private-field prefix differs — see `skills/unity-development`.
 
 ## Organization
 
@@ -81,3 +85,19 @@ Within each group: Public → Internal → Protected internal → Protected → 
 **Field initializers:** Encouraged.
 
 **Object initializers:** Fine for plain data types; avoid for classes or structs that have constructors.
+
+## Access and Immutability
+
+Most restrictive modifier that works; start `private`. No public setter unless external mutation is an explicit requirement — expose an intent-revealing transition method (`Submit()`) and keep the setter `private`. `readonly` on construction-only fields. `record` for behavior-free DTOs; a class for anything owning behavior.
+
+## Nulls
+
+Nullable reference types enabled (`<Nullable>enable</Nullable>`). Never return `null` for an empty collection — return `[]`. A possibly-missing single object returns `T?`. Never pass a literal `null` argument.
+
+## Async
+
+`async` only for real I/O — never because it might be needed later. Never `async void` outside event handlers. Every public async method that calls external infrastructure takes a `CancellationToken`. Never `.Result` or `.Wait()` — `await`.
+
+## Error Handling
+
+Catch the specific exception you expect; bare `Exception` only at a top-level boundary. Never swallow silently. Never use exceptions for control flow — model expected absence in the return type.

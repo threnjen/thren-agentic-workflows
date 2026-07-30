@@ -1,11 +1,11 @@
 ---
 name: implementation-record
-description: "Template for the implementation record artifact produced by the 04b-feature-implementer. Load when writing [0N-task-name]-implementation.md."
+description: "Template for the implementation record artifact produced by the 04b-feature-implementer. Load when writing a task's [task-name]-implementation.md record."
 ---
 
 # Implementation Record Template
 
-Write `[0N-task-name]-implementation.md` to `dev/feature/[0N-task-name]/` using this exact template:
+Write `[task-name]-implementation.md` to `[plan-path]/` using this exact template. The orchestrator supplies both tokens; if it supplied none, default to the phase-pipeline shape `dev/feature/[0N-task-name]/` with `[0N-task-name]` as `[task-name]`, and say so in your return summary.
 
 ```markdown
 # Implementation Record: [Task Name]

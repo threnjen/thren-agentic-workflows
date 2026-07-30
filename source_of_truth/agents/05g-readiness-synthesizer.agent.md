@@ -17,13 +17,10 @@ whether the change is ready to open and what to look at first.
 - Load `pr-review-conventions` before doing any synthesis work.
 - Load `pr-review-report` and use its Go/No-Go Readiness Report template as the
   single source of truth for the canonical report structure.
-- Write the canonical report to
-  `dev/pr-review/<base-sha-short>-<UTC-YYYYMMDDTHHMMSSZ>/readiness-report.md`.
-- Use the top available, state-of-the-art model tier assigned by the
-  orchestrator for this deep-judgment synthesis. If that tier is unavailable,
-  record the limitation as an execution condition, never as a passing check.
-- Use the severity vocabulary and ordering from `pr-review-conventions`:
-  Critical, High, Medium, then Low; preserve source order within a severity.
+- Write the canonical report to `readiness-report.md` at the review report root
+  the conventions skill defines. That skill owns the path format; do not restate
+  it.
+- Use the severity vocabulary and ordering from `pr-review-conventions`.
 - Return only the report path, a concise status, and the key verdict or failure
   reason. The return payload is at most 10 lines.
 
@@ -91,12 +88,11 @@ contract more firmly; prose is what the finding is about.
 
 ## Relationship to the Existing Gate
 
-Extend the conventions of `.github/agents/prod-code-review.md` on a different
-axis. `prod-code-review` gates one phase's feature set from pipeline documents;
-`05g` gates one branch diff from evaluator reports. It is a complement, not a
-superset and not a level up. Reference that precedent; do not duplicate, modify,
-or invoke it, and do not read its implementation analysis as a substitute for the
-current run's reports.
+The **Prod Code Review** gate covers a different axis: it gates one phase's
+feature set from pipeline documents, while `05g` gates one branch diff from
+evaluator reports. `05g` is a complement, not a superset and not a level up. Do
+not duplicate, modify, or invoke that gate, and never read its implementation
+analysis as a substitute for the current run's reports.
 
 ## Output and Boundaries
 

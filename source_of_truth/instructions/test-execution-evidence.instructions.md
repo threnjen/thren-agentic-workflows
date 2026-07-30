@@ -1,5 +1,5 @@
 ---
-description: "Defines what counts as test execution evidence and forbids treating unexecuted tests as passing. Auto-loaded for the implementation pipeline agents."
+description: "Defines what counts as test execution evidence and forbids treating unexecuted tests as passing. Audience is ENUMERATED deliberately - an arbitrary subset with no filename family. Add any agent that runs or reports on tests."
 applyTo: "**/04b-feature-implementer.agent.md,**/04c-feature-reviewer.agent.md,**/04-phase-execute.agent.md"
 ---
 

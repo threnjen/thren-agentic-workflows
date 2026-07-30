@@ -1,5 +1,5 @@
 ---
-description: "Subagent autonomy: do not ask questions or wait for confirmation. Make sensible defaults and proceed."
+description: "Subagent autonomy: do not ask questions or wait for confirmation. Make sensible defaults and proceed. Audience is ENUMERATED deliberately - 'user-invocable: false' is a frontmatter property with no filename marker in source. Add every non-user-invocable subagent."
 applyTo: "**/04b-feature-implementer.agent.md,**/04c-feature-reviewer.agent.md,**/04a-feature-plan-expander.agent.md"
 ---
 

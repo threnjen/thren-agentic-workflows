@@ -58,8 +58,9 @@ The capture run is project-specific; do not hardcode it. Discover the documented
    With the resolved editor, run `-batchmode -runTests -testPlatform PlayMode -projectPath .
    -testResults <results.xml> -logFile <log>` (graphics on, no `-quit`).
 
-   **If none of 1–3 resolves but the repo is clearly a Unity project** (`Assets/` + `ProjectSettings/`,
-   or `game/Assets/`): do not fail quietly — **flag it and get the path from the user.** Report:
+   **If none of 1–3 resolves but the repo is a Unity project** (canonical predicate: `Assets/` +
+   `ProjectSettings/` at the repo root or inside one nested directory such as `game/`, or
+   `.github/copilot-instructions.md` identifying Unity): do not fail quietly — **flag it and get the path from the user.** Report:
    "This is a Unity project but no Unity editor / Hub install was found (checked: [paths]). What is
    the full path to the Unity `<version>` editor?" (In non-interactive subagent mode, return that as
    a blocking request rather than guessing.) When the user supplies the path, **save it once** to

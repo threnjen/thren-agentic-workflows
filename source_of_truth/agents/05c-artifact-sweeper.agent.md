@@ -1,6 +1,6 @@
 ---
 name: 05c Artifact Sweeper
-description: "Finds debug artifacts, temporary markers, and dead code added by a branch."
+description: "Finds debug statements, TODO/FIXME markers, and temporary feature flags added by a branch."
 tools: [read, search, edit, execute]
 user-invocable: false
 ---
@@ -36,49 +36,18 @@ Sweep the added lines in that diff for all of these categories:
 2. `TODO` and `FIXME` markers.
 3. Temporary feature flags, bypasses, kill switches, or rollout guards that lack
    an explicit approved lifecycle.
-4. Commented-out executable code and other dead-code evidence.
+4. Commented-out executable code.
+
+Reachability-based dead code is **not** yours: `05h Cleanliness Auditor` owns
+that check (inventory item 7). Report commented-out code as a textual artifact
+and leave unreachable live code to `05h` — do not run a dead-code analysis here.
 
 ## Attribution: the Added Line, Not the Touched File
 
-Report a finding only when it maps to a line the branch **added**. Verifiable
-added-line attribution is the requirement; touched-file filtering alone is
-insufficient, and the distinction is the whole job. A branch that adds one line
-to a 900-line file did not introduce that file's twelve pre-existing `TODO`s.
-Reporting them is not thoroughness — it is noise that trains the reader to skim
-the report, and a report nobody reads blocks nothing.
-
-Use the diff's added-line ranges, read from the orchestrator-supplied
-`range.diff` and `changed-files.txt` under the report root — those files are
-the preferred attribution source. If either is missing, generate the
-equivalent yourself with read-only git commands scoped to the confirmed range
-(`git diff <base>..<head>`, `git diff --name-status <base>..<head>`) and note
-in the report that attribution was self-generated because the orchestrator
-artifacts were absent. Shell access exists for this fallback only: read-only
-git inspection of the confirmed range — never state-changing commands
-(checkout, commit, install, formatters). When a matched line is not inside one, compare
-it against the baseline before reporting it as introduced. If added-line
-attribution cannot be verified for a candidate, record it under `Checks Not Run`
-with a concrete reason rather than reporting it as branch-introduced. Do not
-report unrelated whole-repository cleanup.
-
-## Dead-Code Dependency
-
-For dead-code detection, invoke the code-review-graph `refactor_tool` with
-`mode="dead_code"` against the current source tree. The tool is repo-wide, so its
-results carry no attribution on their own: report one only when its path and line
-or range map to an added-line range in the branch diff. Never treat all dead code
-in a touched file as introduced.
-
-The graph is preferred, not required — MCP tools are frequently unreachable from
-subagent sessions. If the graph server or `refactor_tool` is unavailable, fall
-back to a text-search sweep: for symbols the diff adds, search the current tree
-for references outside their own definition. Label the check's method
-explicitly as **text-search fallback (not graph-verified)** in the report — a
-fallback result is a best-effort finding set, never presented as though the
-graph answered it, and its unverified reach is named in `Checks Not Run`. If
-line or range attribution is missing and cannot be verified for a candidate,
-that candidate is recorded under `Checks Not Run`, not reported as a clean
-result.
+Apply the attribution rule from `pr-review-conventions` — added-line ranges from
+the orchestrator artifacts, the read-only git fallback, and `Checks Not Run` for
+anything unverifiable. Pre-existing markers in a file the branch merely touched
+are never findings here.
 
 ## Failure and Empty-Diff Semantics
 

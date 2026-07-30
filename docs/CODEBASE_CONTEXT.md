@@ -81,8 +81,9 @@ benchmarks/ packages/ tests/
   - cursor → `~/.cursor/rules/baseline-instructions.mdc` (`alwaysApply: true` frontmatter)
   - github → `<repo>/.github/copilot-instructions.md` (a `.github/AGENTS.md` would only
     scope to files under `.github/`)
-- Baseline splice model: three sections delimited by sentinel comments
-  (`<!-- context7 -->`, `<!-- code-review-graph -->`, `<!-- agent-discovery -->`);
+- Baseline splice model: four sections delimited by sentinel comments
+  (`<!-- context7 -->`, `<!-- code-review-graph -->`, `<!-- phase-doc-sync -->`,
+  `<!-- agent-discovery -->`);
   only sentinel blocks are replaced/appended, content outside them is never touched;
   idempotent (second run → `unchanged`); every failure returns a status, never raises.
 - The cursor baseline `.mdc` deliberately carries NO generated marker so the

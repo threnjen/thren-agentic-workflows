@@ -1,6 +1,6 @@
 ---
-description: "Requires agents to spawn @Web Researcher for unfamiliar technologies, errors, or APIs instead of asking the user."
-applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/debugger.agent.md"
+description: "Requires agents to spawn @Web Researcher for unfamiliar technologies, errors, or APIs instead of asking the user. Audience is DERIVED for pipeline stages 01-02; `debugger` is enumerated because it sits outside the numbered pipeline."
+applyTo: "source_of_truth/agents/0[12]-*.agent.md,**/debugger.agent.md"
 ---
 
 # Proactive Research Over Asking the User

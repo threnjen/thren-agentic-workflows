@@ -41,14 +41,10 @@ Evaluate code against these categories, loading the relevant reference as needed
 
 | Category | Reference |
 |---|---|
-| **C# Style** | `unity-review-knowledge/references/csharp-style-conventions.md` |
-| **Performance** | `unity-review-knowledge/references/performance-and-profiling.md` |
-| **Architecture & Patterns** | `unity-review-knowledge/references/architecture-and-patterns.md` |
+| **C# Style**, **Performance**, **Architecture & Patterns**, **2D Art & Rendering**, **DOTS/ECS** | the matching reference file per the `unity-review-knowledge` skill's Reference Routing table |
 | **Unity Lifecycle & Wiring** | `unity-development` skill |
 | **UI Toolkit** | `unity-development` skill |
 | **Test Authenticity** | `unity-development` skill |
-| **2D Art & Rendering** | `unity-review-knowledge/references/2d-art-and-rendering.md` |
-| **DOTS/ECS** | `unity-review-knowledge/references/dots-and-ecs.md` |
 | **Serialized Asset Integrity** | `unity-development` skill ("Serialized Assets" + "Invalid-asset red flags") — mandatory when the diff touches `.prefab`/`.unity`/`.mat`/`.asset`/`.meta` |
 | **Compilation** | Repository compile gate output |
 

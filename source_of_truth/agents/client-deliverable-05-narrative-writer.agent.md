@@ -34,15 +34,11 @@ note. Never reproduce engagement source content — describe behavior in
 business terms. Client-facing documents lead with business meaning;
 technical evidence goes in appendices citing sources by path.
 
-Before writing workflow or warranty claims, make a compact evidence map per
+Before writing workflow or warranty claims, load the
+`engagement-evidence-standard` skill and make a compact evidence map per
 primary workflow: the before/after comparison evidence, exact QA check IDs
-and native/binary statuses, and the controlling SOW criterion or explicit
-scope exception. Treat a completed PASS on an exact QA check as evidence that
-the upgraded behavior worked at the recorded QA standard. Do not treat an
-overall PASS with no matching check as proof of a specific workflow. If the
-original side has no QA package, say that the runtime evidence is asymmetric;
-do not turn that asymmetry into a claim that the upgraded behavior was not
-tested.
+and native/binary statuses, the controlling SOW criterion or explicit scope
+exception, and the resulting evidence and scope classes.
 
 ## Business Design Document
 
@@ -72,13 +68,11 @@ Write `deliverables/workflow-narratives.md`: per repo section, for each
 component with functional changes, walk its workflow as-was and as-is.
 Frame through that pair's `mode`: under `modernization`, changes are
 "modernized, nothing changed" only where the comparison supports that claim;
-an explicit SOW exception is narrated as an authorized scoped functional
+a `sow-authorized` change is narrated as an authorized scoped functional
 delta, not hidden under "nothing changed"; under
 `modernized-and-improved`, intentional changes are narrated as delivered
 value. A pair with no identifiable functional changes gets an honest
-statement to that effect, never fabricated deltas. “No identifiable delta”
-means no behavioral delta was established by the comparison evidence; it does
-not mean the codebase has no changes or that QA did not cover the workflow.
+statement to that effect, never fabricated deltas.
 
 ## Narrative Basis — Internal, Per Pair
 
@@ -102,17 +96,15 @@ engineer-facing, scoped to that pair's repo sections. Four sections:
    promises "nothing changed"), or claimed improvements under
    `modernized-and-improved` lacking evidence. Each with its evidence
    pointer and a recommended resolution (re-scope the framing, escalate to
-   the user, or amend the narrative). First classify every candidate as
-   explicitly authorized by the SOW, outside scope, or unresolved. SOW-
-   authorized changes are not framing discrepancies; unresolved candidates
-   are the only ones that block compliance.
+   the user, or amend the narrative). Assign every candidate its scope class
+   first; only `unresolved` candidates belong in this section.
 4. **Evidence gaps**: absent or thin sources encountered, what each forced
    the narratives to omit or soften, and what would fill the gap.
 
 ## Return
 
-Compact summary only: all document paths, evidence sources used, QA-backed
-workflow count/pointers, SOW-authorized delta count/pointers, any
-absent-source or comparison-only/no-delta notes, unresolved discrepancy
-count/pointers, and per-pair counts of assumed warranty items and framing
-discrepancies (zero called out explicitly).
+Compact summary only: all document paths, evidence sources used, counts and
+pointers per `engagement-evidence-standard` class (`qa-backed`,
+`comparison-only`, `unverified`, `sow-authorized`, `unresolved`), any
+absent-source notes, and per-pair counts of assumed warranty items and
+framing discrepancies (zero called out explicitly).

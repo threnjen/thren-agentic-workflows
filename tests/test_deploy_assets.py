@@ -1,6 +1,7 @@
 """deploy_assets: ports/ -> real harness config dirs, marker-ownership safety."""
 
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -390,6 +391,23 @@ class BaselineDeployTests(unittest.TestCase):
         self.assertEqual(
             mod.baseline_destination("codex", home=home, environ={"CODEX_HOME": "/opt/codex"}),
             Path("/opt/codex/AGENTS.md"),
+        )
+
+    def test_baseline_sections_matches_template_sentinels(self) -> None:
+        """Every sentinel block in the template must be spliced, and vice versa.
+
+        The other baseline tests iterate BASELINE_SECTIONS, so a section authored
+        in the template but missing from the tuple is silently never deployed.
+        Derive the expected set from the template instead of trusting the list.
+        """
+        template = mod.BASELINE_TEMPLATE.read_text(encoding="utf-8")
+        authored = set(re.findall(r"<!-- ([a-z0-9-]+) -->", template))
+        self.assertEqual(
+            authored,
+            set(mod.BASELINE_SECTIONS),
+            "baseline template sentinels and BASELINE_SECTIONS have drifted: "
+            f"authored-but-not-spliced={sorted(authored - set(mod.BASELINE_SECTIONS))}, "
+            f"spliced-but-not-authored={sorted(set(mod.BASELINE_SECTIONS) - authored)}",
         )
 
     def test_creates_file_with_all_sections_and_real_paths(self) -> None:

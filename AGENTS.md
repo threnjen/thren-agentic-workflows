@@ -1,7 +1,3 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## What This Repo Is
 
 A library of AI development agents (planning, implementation, review, testing, auditing, docs) deployed across five harnesses: Claude Code, Codex, OpenCode, Cursor, and GitHub Copilot. There is no application to build or serve — the workflow is: edit source, propagate, review the diff, deploy.
@@ -9,6 +5,76 @@ A library of AI development agents (planning, implementation, review, testing, a
 ## The One Rule That Matters
 
 **`source_of_truth/` is the only authoring surface.** Everything under `ports/` and the real `.github/` directory is generated output — never hand-edit them. If generated output looks wrong, fix the source and re-propagate. A sync-test failure means "rerun propagation," not "edit the output."
+
+## Know The Audience
+
+**Dense is correct for machine-facing docs or spawned subagents** — phase summaries, discovery context, roadmaps, feature
+plan/context/tasks bundles. The agentic workflow consumes these to decompose work, and spelling out
+every constraint helps it.
+
+**Simple is mandatory for human-facing docs or interaction** — QA plans, operator checklists, human interaction, chat replies.
+These must be **simple, concise, readable, easily followed.** 
+A runbook's only job is that someone follows it and succeeds. If it has to be parsed, it failed.
+
+Never carry the machine-facing register into a human-facing doc, and never into a reply.
+Style-matching applies to **code, not prose.**
+
+**BAD**: "prose is the one thing this corpus needs to be free to reword"
+**GOOD**: "We need to be able to rewrite the words freely"
+
+- Lead with the answer and what it changes. Evidence after, or behind a link.
+- Unpack jargon inline on first use — "monotone (moves one direction, no zigzag)".
+- Translate any decision-driving number into plain words.
+- One idea per sentence. One caveat, not three.
+- Runbooks: TL;DR in 5 lines, then numbered steps. Rationale below the steps, not between them.
+- No "corrected on <date>" narration — rewrite the step instead.
+
+If the reader has to ask for a simpler version, the first version was wrong.
+
+Write to a colleague who is sharp, busy, and has not read the rest of the phase.
+
+### Concrete Rules — Replies And Human-Facing Docs Alike
+
+- **Answer first, evidence second.** Open with the conclusion and what it changes for the reader.
+  Tables, spreads, and citations come after — or go in an appendix with a link.
+- **Unpack every term on first use, inline.** "monotone (moves one direction, no zigzag)."
+  Especially: monotone, spread, saturated, inverted, pooled, per-path, degenerate, control.
+- **Translate any number that drives a decision.** "0.0034 spread" is not an answer; "too small
+  to pick a winner from" is. Give both, in that order.
+- **One idea per sentence.** No stacked subordinate clauses, no three-hedge qualifiers. State the
+  claim, then the single caveat that could change what the reader does.
+- **Reach for a physical analogy** when explaining whether a measurement or instrument is
+  trustworthy. Analogies land; abstractions do not.
+- **Bold the decision, not the vocabulary.**
+- **Lead with the plain version even when a precise version follows.** If a summary is needed
+  after the fact, the first pass was too dense.
+
+### Extra Rules For Runbooks, QA Docs, And Checklists
+
+- **Open with a TL;DR of five lines or fewer**: what this page is for, and the first thing to do.
+- **The steps are the page.** Numbered, in order, one action each, with the exact command and what
+  a correct result looks like. Rationale goes below the steps or behind a link — never between two
+  steps the reader is trying to follow.
+- **One screen per step.** If a step needs more, it is two steps.
+- **Put warnings where the mistake happens**, not in a preamble the reader has already scrolled past.
+- **No correction logs in the body.** When a step changes, rewrite the step. Historical
+  "corrected on <date>" narration belongs in an appendix or the commit message; it doubles the
+  length of the thing the reader has to parse.
+- **Prose blocks over ~6 lines are a smell.** Convert to a list, a table, or delete.
+
+### Before Sending Or Committing
+
+- Is the first sentence the answer, or a windup?
+- Any term used but not unpacked?
+- Could the reader act on this after one read, without backtracking?
+- For a runbook: could someone follow it start to finish without stopping to interpret anything?
+
+## Agents: never run propagation
+
+**Propagation is the maintainer's manual step. Do not run `scripts/propagate_master_assets.py` (`--once` or `--watch`) as part of agent work**, even to make tests pass. It regenerates every file under `ports/` and `.github/`, which swamps the diff and makes authored source changes impossible to review.
+
+Edit `source_of_truth/` only, then stop and report that propagation is pending. Sync tests and any test reading `ports/` will fail until the maintainer propagates — say so plainly rather than propagating to go green.
+
 
 ## Commands
 
@@ -39,22 +105,22 @@ Two-stage pipeline, two scripts:
 
 1. **Transform** — `scripts/propagate_master_assets.py` reads `source_of_truth/{agents,skills,instructions,learnings}` and regenerates per-harness variants under `ports/{claude,codex,opencode,cursor}` (Claude/OpenCode markdown agents, Codex TOML agents + profiles, Cursor `.mdc` rules/commands). It also mirrors the source verbatim to `ports/github` and the real `.github/` (read by Copilot). Runs to a fixed point; prints a JSON convergence summary — a second run reporting zero changes confirms convergence. `scripts/asset_paths.py` holds shared markers and watch primitives.
 
-2. **Deploy** — `deploy_agents.py` (repo root, not `scripts/`) copies `ports/` outputs into the real harness config dirs (`~/.claude`, `~/.codex` + `~/.agents/skills`, `~/.config/opencode`, `~/.cursor`; env overrides `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `OPENCODE_CONFIG_DIR`). It also splices a baseline instructions file per harness (rendered from `source_of_truth/baseline/baseline-instructions.md`), replacing only three sentinel-delimited sections (`<!-- context7 -->`, `<!-- code-review-graph -->`, `<!-- agent-discovery -->`) and leaving user content outside sentinels untouched.
+2. **Deploy** — `deploy_agents.py` (repo root, not `scripts/`) copies `ports/` outputs into the real harness config dirs (`~/.claude`, `~/.codex` + `~/.agents/skills`, `~/.config/opencode`, `~/.cursor`; env overrides `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `OPENCODE_CONFIG_DIR`). It also splices a baseline instructions file per harness (rendered from `source_of_truth/baseline/baseline-instructions.md`), replacing only the four sentinel-delimited sections (`<!-- context7 -->`, `<!-- code-review-graph -->`, `<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`) and leaving user content outside sentinels untouched. `BASELINE_SECTIONS` must stay in sync with the template's sentinels — a test derives the expected set from the template.
 
 Both stages are safe by construction: a destination file is only overwritten or pruned when it carries a generated marker (or lives inside a generated skill directory). Hand-placed files are skipped and reported under `skipped_paths`.
 
 ### Content model
 
-- **Agents** (`source_of_truth/agents/`) — 53 definitions (15 user-invocable, 38 hidden) following an orchestrator + subagent pattern: user-invocable primary agents (planner → refiner → decomposer → phase-execute pipeline, PR review, audits, test orchestrator, standalone specialists) plus hidden `user-invocable: false` subagents (deployed with a `z-` prefix) that orchestrators spawn. Full catalog: `USAGE.md`.
+- **Agents** (`source_of_truth/agents/`) — 54 definitions (15 user-invocable, 39 hidden) following an orchestrator + subagent pattern: user-invocable primary agents (planner → refiner → decomposer → phase-execute pipeline, PR review, audits, test orchestrator, standalone specialists) plus hidden `user-invocable: false` subagents (deployed with a `z-` prefix) that orchestrators spawn. Full catalog: `USAGE.md`.
 - **Skills** (`source_of_truth/skills/`) — directory-based capabilities, each rooted at `SKILL.md`, loaded on demand by agents.
 - **Instructions** (`source_of_truth/instructions/`) — cross-cutting guidance matched by `applyTo` file globs; consumed directly by Copilot, transformed for other harnesses.
-- **Learnings** (`source_of_truth/learnings/`) — 4 seed files of durable, repo-agnostic rules. They ship into a target repo's `.github/learnings/`, where agents read them and append newly learned rules as they work.
+- **Learnings** (`source_of_truth/learnings/`) — shared cross-phase knowledge propagated to every harness.
 
 **Brevity constraint on authored agent and skill definitions**: the agent and skill files written to `source_of_truth/` are loaded into model context at runtime — every unnecessary word is wasted context. Definitions must be terse: state the behavior, the constraints, and the output contract once each, and stop. No restating context the agent already has, no motivational preamble, no repeating a rule in different words, no exhaustive examples where one suffices. Carry this into every feature's AC: a definition that says the same thing twice fails review.
 
 ### Tests
 
-`tests/` are regression tests over both scripts — they verify source↔generated sync, deploy safety (marker respect), naming conventions (aliases, `z-` prefixes), and per-harness invocation contracts. After editing `source_of_truth/`, propagate before running tests or sync tests will fail.
+`tests/` are regression tests over both scripts — they verify source↔generated sync, deploy safety (marker respect), naming conventions (aliases, `z-` prefixes), and per-harness invocation contracts. After editing `source_of_truth/`, sync tests fail until propagation runs — which the maintainer does manually (see "Agents: never run propagation"). Agents should report the pending propagation, not trigger it.
 
 ### Other areas
 

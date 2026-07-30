@@ -27,23 +27,19 @@ limitation as a passing result.
 ## Assigned Scope
 
 The subject is the branch diff `<merge-base>..HEAD`. The orchestrator supplies
-the confirmed base; take it as given and never re-derive it. Use the
-orchestrator-supplied `range.diff` and `changed-files.txt` under the report
-root for attribution; if either is missing, generate the equivalent with
-read-only git commands scoped to the confirmed range and note that attribution
-was self-generated. Shell access exists for read-only inspection only — never
-state-changing commands (checkout, commit, install, formatters, test runs that
-write artifacts).
+the confirmed base; take it as given and never re-derive it. Apply the
+attribution rule from `pr-review-conventions`, including its read-only shell
+restriction.
 
 ## Attribution: the Added Line, Not the Touched File
 
-Report a finding only when the branch **introduced or worsened** it. Compare
-against the baseline worktree before attributing: a duplication that already
+Beyond the conventions skill's added-line rule, this evaluator reports a finding
+only when the branch **introduced or worsened** it: a duplication that already
 existed at the base and was not extended by this branch belongs to the
-repository, not to this change. The two exceptions are the module-size and
-dead-code checks, where a branch that *pushes a file past a threshold* or
-*makes existing code unreachable* owns the crossing even though most of the
-lines predate it — say so explicitly when reporting those.
+repository, not to this change. Two checks are exceptions — module size (1) and
+dead code (7) — where a branch that *pushes a file past a threshold* or *makes
+existing code unreachable* owns the crossing even though most of the lines
+predate it. Say so explicitly when reporting those.
 
 ## The Cleanliness Check Inventory
 
@@ -78,13 +74,19 @@ silently skipped.
    (`is not None and <= 0`, emptiness checks, type-of-collection checks)
    written longhand across several classes. Recommend a shared module-level
    validator matching the model's existing helper idiom.
-7. **Dead and unreachable code.** Code the branch added earlier in its life and
-   then made unreachable by a later change on the same branch — a branch of a
-   dispatch that a newer code path now intercepts, handlers for cases that can
-   no longer occur, exhausted feature toggles. Prefer the code-review-graph
-   `refactor_tool` with `mode="dead_code"` where reachable, with added-line
-   attribution as in the Artifact Sweeper; otherwise use a text-search
-   fallback labeled **text-search fallback (not graph-verified)**.
+7. **Dead and unreachable code.** This evaluator is the family's sole owner of
+   reachability-based dead-code detection; `05c` reports commented-out text only.
+   The subject is code the branch added earlier in its life and then made
+   unreachable by a later change on the same branch — a branch of a dispatch that
+   a newer code path now intercepts, handlers for cases that can no longer occur,
+   exhausted feature toggles. Prefer the code-review-graph `refactor_tool` with
+   `mode="dead_code"`; it is repo-wide and carries no attribution of its own, so
+   report a hit only when its path and line map to an added-line range. If the
+   graph server or the tool is unreachable — common from subagent sessions — fall
+   back to searching the current tree for references to symbols the diff adds,
+   outside their own definition, and label the method **text-search fallback (not
+   graph-verified)** with its unverified reach named in `Checks Not Run`. A
+   fallback result is never presented as though the graph answered it.
 8. **Duplicate computation.** The same expression computed more than once
    inside one function body where a local would do.
 9. **Speculative abstraction.** Helpers, parameters, or model fields the branch
@@ -115,11 +117,17 @@ missing evidence itself is a finding.
 
 ## Pass / Non-Passing Semantics
 
+Passing and Non-passing are this evaluator's own report vocabulary, not a
+verdict. `05g` consumes only severity-rated findings and release conditions, so
+every non-passing category must also appear there as a rated finding.
+
 - **Passing**: every inventory check ran and produced no branch-attributed
-  findings above the conventions skill's advisory severity floor. State this as
-  a completed result with the check table, not as an absence of content.
-- **Non-passing**: one or more checks produced branch-attributed findings. The
-  conclusion MUST then enumerate the **specific cleanup categories** (by the
+  finding at Medium or above. Low findings are listed in the report and do not
+  make it non-passing. State Passing as a completed result with the check table,
+  not as an absence of content.
+- **Non-passing**: one or more checks produced a branch-attributed finding at
+  Medium or above. The conclusion MUST then enumerate the **specific cleanup
+  categories** (by the
   inventory numbers and names above) that failed, each with: the concrete
   locations (file and added-line ranges), the recommended remedy shape (extract
   helper / split module / delete dead branch / consolidate validator / update

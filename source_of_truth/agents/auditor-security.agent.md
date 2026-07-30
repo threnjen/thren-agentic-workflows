@@ -14,18 +14,9 @@ Load the `auditor-conventions` skill for standard constraints, deliverables, sco
 
 Default `[audit-name]`: `security-scan`.
 
-## Unity Detection & Skill Loading
+## Unity
 
-Before starting discovery, detect whether the target repository is a Unity project.
-
-Use these indicators:
-- `.github/copilot-instructions.md` identifies the project as Unity
-- Repository contains both `Assets/` and `ProjectSettings/`, or a `game/Assets` directory
-- Repository contains Unity assembly definition files (`*.asmdef`)
-
-If any indicator matches, load BOTH skills immediately before proceeding:
-- `unity-development`
-- `unity-review-knowledge`
+Run the conventions skill's Unity Detection before discovery. When it matches, apply Unity runtime and build-pipeline guidance to the security categories below.
 
 ## Domain Focus
 

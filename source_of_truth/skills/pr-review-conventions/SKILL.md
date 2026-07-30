@@ -8,7 +8,8 @@ description: "Shared conventions for PR Review evaluators. Defines report contra
 Shared conventions for the PR Review evaluator family. Load this skill before
 performing work for a review scoped to the diff between a base commit and a
 head commit. Apply `auditor-conventions` for the shared audit constraints and
-report norms; this skill defines only the branch-diff review contracts.
+severity levels; this skill defines the branch-diff review contracts and, where
+they differ, overrides `auditor-conventions`' report and deliverable norms.
 
 ## Standard Constraints
 
@@ -44,29 +45,40 @@ as ignorable — unavailable evidence is named, never assumed clean.
 
 ## Report Locations and Naming
 
-Reports for a run go under a root keyed by the base commit and the run's start
-time:
+Every report for a run goes directly under
+`dev/pr-review/<base-sha-short>-<UTC-YYYYMMDDTHHMMSSZ>/`. No path component
+carries a branch name: a run is identified by what it reviewed and when, both of
+which are stable and unique, while a branch name is neither.
 
-```text
-dev/pr-review/<base-sha-short>-<UTC-YYYYMMDDTHHMMSSZ>/
-├── 05a-baseline-worktree-report.md
-├── 05b-change-narrator-report.md
-├── 05c-artifact-sweeper-report.md
-├── 05d-consistency-auditor-report.md
-├── 05e-dependency-auditor-report.md
-├── 05f-test-health-report.md
-├── 05h-cleanliness-auditor-report.md
-├── 05g-readiness-synthesizer-report.md
-└── readiness-report.md
-```
+Each evaluator writes exactly one file, named `<evaluator-slug>-report.md`. The
+one exception is `readiness-report.md`, the synthesizer's canonical hand-off file
+for the orchestrator. `Baseline Worktree` writes no report: it is preflight and
+returns its result in its return payload, so no report path is expected from it
+and its absence is not an incomplete check.
 
-The root key is a short base SHA plus a UTC timestamp. No path component carries
-a branch name: a run is identified by what it reviewed and when, both of which
-are stable and unique, while a branch name is neither.
+## Attribution: the Added Line, Not the Touched File
 
-Evaluator-specific reports use `<evaluator-slug>-report.md`.
-`readiness-report.md` is the canonical hand-off file for the orchestrator and
-must remain at the report root.
+Report a finding only when it maps to a line the branch **added**. Touched-file
+filtering alone is insufficient, and the distinction is the whole job: a branch
+that adds one line to a 900-line file did not introduce that file's twelve
+pre-existing `TODO`s. Reporting them is not thoroughness — it is noise that
+trains the author to skim, and a report nobody reads blocks nothing.
+
+The orchestrator-supplied `range.diff` and `changed-files.txt` under the report
+root are the authoritative added-line source. If either is missing **and the
+evaluator holds a shell grant**, generate the equivalent with read-only git
+commands scoped to the confirmed range (`git diff <base>..<head>`,
+`git diff --name-status <base>..<head>`) and note in the report that attribution
+was self-generated because the orchestrator artifacts were absent. Shell access
+exists for that fallback only — never state-changing commands (checkout, commit,
+install, formatters, test runs that write artifacts). An evaluator with no shell
+grant records the missing artifact under `Checks Not Run` instead.
+
+When a matched line is not inside an added range, compare it against the
+baseline worktree before reporting it as introduced. If added-line attribution
+cannot be verified for a candidate, record it under `Checks Not Run` with a
+concrete reason rather than reporting it as branch-introduced. Do not report
+unrelated whole-repository cleanup.
 
 ## Tone: Write for the Author
 
@@ -111,14 +123,9 @@ the same level. Do not downgrade a missing check to a finding that looks clean.
 
 ## Model Tiers
 
-- The orchestrator should recommend or require a state-of-the-art model and
-  warn when the active model is below that tier.
-- Deep-judgment work—change narration and readiness synthesis—uses the top
-  available tier.
-- Mechanical sweeps—artifact, consistency, and dependency checks—may use a
-  lower-cost tier when their agent contract permits it.
-- A model-tier limitation is an execution condition to report, not evidence
-  that an unrun check passed.
+The orchestrator assigns each evaluator's tier in its invocation prompt; that
+assignment is authoritative and is not restated here. A model-tier limitation is
+an execution condition to report, never evidence that an unrun check passed.
 
 ## Missing and Unreadable Inputs
 

@@ -97,9 +97,9 @@ its mirrored tree is copied verbatim (no per-file marker), so it is treated as
 unconditionally managed within the mirrored subdirs.
 
 After the asset copy, deploy renders a per-harness **baseline instructions file** from
-`source_of_truth/baseline/baseline-instructions.md`. The template holds three sections
+`source_of_truth/baseline/baseline-instructions.md`. The template holds four sections
 wrapped in HTML sentinel comments (`<!-- context7 -->`, `<!-- code-review-graph -->`,
-`<!-- agent-discovery -->`); placeholders for harness name and agent/skill paths are
+`<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`); placeholders for harness name and agent/skill paths are
 substituted at deploy time using the machine's real home directory, so no OS branching
 is needed. Deploy splices each sentinel-delimited section into the destination —
 replacing an existing block in place or appending a missing one — and never touches

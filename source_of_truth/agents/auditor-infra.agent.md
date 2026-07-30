@@ -12,20 +12,9 @@ You are an **Infrastructure Auditor** performing comprehensive quality and healt
 
 Load the `auditor-conventions` skill for standard constraints, deliverables, scope determination, file-type taxonomy, process flow, and output format.
 
-## Unity Detection & Skill Loading
+## Unity
 
-Before starting discovery, detect whether the target repository is a Unity project.
-
-Use these indicators:
-- `.github/copilot-instructions.md` identifies the project as Unity
-- Repository contains both `Assets/` and `ProjectSettings/`, or a `game/Assets` directory
-- Repository contains Unity assembly definition files (`*.asmdef`)
-
-If any indicator matches, load BOTH skills immediately before proceeding:
-- `unity-development`
-- `unity-review-knowledge`
-
-Then apply relevant Unity project conventions where they intersect with infrastructure concerns (for example: assembly boundaries, build/bootstrap assumptions, and Unity-specific pipeline/tooling implications).
+Run the conventions skill's Unity Detection before discovery. When it matches, apply Unity conventions where they intersect with infrastructure concerns: assembly boundaries, build/bootstrap assumptions, and Unity-specific pipeline/tooling implications.
 
 ## Domain Focus
 

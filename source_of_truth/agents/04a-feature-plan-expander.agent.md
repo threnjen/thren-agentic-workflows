@@ -78,15 +78,13 @@ Write all of the above into the Environment State and Relevant Learnings section
 
 ### Step 3: Generate Context File
 
-Write `dev/feature/[0N-task-name]/[0N-task-name]-context.md` following the Context File structure from the `feature-plan-set` skill. Include:
+Write `dev/feature/[0N-task-name]/[0N-task-name]-context.md` with **every** section in the `feature-plan-set` skill's Context File inventory, using that skill's templates. Where to source the content:
 
-- **Key Files** — Table of files relevant to this feature with their role and change type. Separate files being changed from read-only reference files.
-- **Discovery Delta** — Missing references, refined API names, companion files, exact assertion tests, framework constraints, and other findings that validate or contradict the plan. If none, record "No contradictions found."
-- **Architectural Decisions** — Decisions made during planning: what was chosen, why, and the rationale. Extract these from the plan's Section C (Consistency & Architecture Fit) and Section D (Clean Design).
-- **Constraints** — Hard constraints from the Phase document, codebase conventions, or the plan's non-goals that the Implementer must respect.
-- **Scope Boundaries** — Important files, systems, or behaviors the Implementer should preserve or intentionally not touch. Derive this from non-goals, invariants, and any plan language about avoided scope.
-- **Relationships to Sibling Plans** — If the plan references other features (shared prerequisites, implementation order), capture those relationships here.
-- **Suggested Implementation Order** — If the plan specifies ordering relative to sibling features, include it.
+- **Discovery Delta** — your Step 2 findings. If none, record "No contradictions found."
+- **Architectural Decisions** — the plan's Section C (Consistency & Architecture Fit) and Section D (Clean Design).
+- **Scope Boundaries** — the plan's non-goals, invariants, and any language about avoided scope.
+- **Environment State** and **Relevant Learnings** — what you captured in Step 2.5.
+- Everything else — the plan plus your Step 2 codebase scan.
 
 ### Step 4: Generate Tasks File
 
@@ -95,17 +93,6 @@ Write `dev/feature/[0N-task-name]/[0N-task-name]-tasks.md` following the Tasks F
 - The plan's stages (each stage becomes a section header)
 - The acceptance criteria within each stage (each AC maps to one or more concrete tasks)
 - Any prerequisite stages (Stage 0 for test bootstrapping, if applicable)
-
-Format as an ordered checklist:
-
-```markdown
-## Stage N: [Name]
-
-- [ ] Task description derived from stage goal and acceptance criteria
-- [ ] Another task
-```
-
-Tasks **must always be grouped under stage headers** — never emit a flat list. If the plan does not have explicit stage boundaries, infer stage groupings from the AC structure (e.g., group data/schema tasks as Stage 1, logic tasks as Stage 2, test verification tasks as Stage 3). A flat ungrouped task list is a format error.
 
 If the plan is incomplete (e.g., missing sections), generate best-effort content from what is available and note the gaps.
 

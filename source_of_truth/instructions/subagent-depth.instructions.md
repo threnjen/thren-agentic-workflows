@@ -1,6 +1,6 @@
 ---
-description: "One-level delegation limit for every root agent that can spawn children."
-applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-feature-decomposer.agent.md,**/04-phase-execute.agent.md,**/05-pr-review.agent.md,**/auditor.md,**/delta-auditor.md,**/client-deliverable.agent.md,**/debugger.agent.md,**/instructions-manager.agent.md,**/qa-bootstrap.agent.md,**/single-feature-agent.agent.md,**/test-orchestrator.agent.md"
+description: "One-level delegation limit for every root agent that can spawn children. Audience is DERIVED for the numbered pipeline: `0?-*.agent.md` matches the five pipeline roots (01, 02, 03, 04-phase-execute, 05-pr-review) and not their `0Na-` subagents, so a new pipeline root inherits it automatically. The non-numbered roots have no filename family and stay enumerated."
+applyTo: "source_of_truth/agents/0?-*.agent.md,**/05-pr-review.agent.md,**/auditor.md,**/delta-auditor.md,**/client-deliverable.agent.md,**/debugger.agent.md,**/instructions-manager.agent.md,**/qa-bootstrap.agent.md,**/single-feature-agent.agent.md,**/test-orchestrator.agent.md"
 ---
 
 # Subagent Delegation Depth

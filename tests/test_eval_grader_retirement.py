@@ -84,10 +84,6 @@ EXEMPT_PREFIXES = (
 EXEMPT_FILES = (
     # This module defines the token list.
     "tests/test_eval_grader_retirement.py",
-    # The prior retirement guard. `05-pr-review` shed its own ledger reads
-    # earlier, and that module names the same tokens for the same reason this
-    # one does -- to assert their absence.
-    "tests/test_pr_review_orchestrator.py",
     # `eval/runs/` is gitignored here (0 tracked files), so the rule keeps local
     # run output from being committed. Deleting the line would surface every
     # local run directory as a commit candidate.

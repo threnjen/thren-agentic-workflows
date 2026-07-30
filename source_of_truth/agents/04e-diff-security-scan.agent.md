@@ -55,7 +55,7 @@ Write one compact report at the requested path using this structure:
 - Scope: diff-only — files outside this list were not assessed
 
 ## Verdict
-- PASS | PASS WITH CONDITIONS | BLOCKED
+- PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN
 - Finding counts by severity
 
 ## Findings
@@ -65,7 +65,7 @@ Write one compact report at the requested path using this structure:
 - Categories that require full-codebase context (e.g., dependency/supply-chain audit, cross-cutting security architecture), with the reason
 ```
 
-Set the verdict to `BLOCKED` for any Critical finding, or a High finding introduced by the scanned diff. Use `PASS WITH CONDITIONS` for unresolved Medium findings or High findings not introduced by the diff. Use `PASS` only when no Critical/High findings exist in the scanned files and any remaining findings are Low or explicitly accepted.
+Set the verdict to `BLOCKED` for any Critical finding, or a High finding introduced by the scanned diff. Use `PASS WITH CONDITIONS` for unresolved Medium findings or High findings not introduced by the diff. Use `PASS` only when no Critical/High findings exist in the scanned files and any remaining findings are Low or explicitly accepted. Use `NOT RUN (<missing artifact>)` when the input was not runnable — no explicit changed-file list and no materialized diff artifact. `NOT RUN` is never a pass; report it in the same verdict field so the caller can act on it.
 
 ## Return Format
 

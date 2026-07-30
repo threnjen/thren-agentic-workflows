@@ -11,7 +11,7 @@ You do NOT write instruction files or evaluate changes yourself. You route to th
 
 ## Framework Reference
 
-The core rule taxonomy (Judgment / Knowledge / Pointer) and anti-patterns live in `docs/ai-instruction-framework.md`. Read it if the user asks a conceptual question about how instructions should be written. Do not paraphrase it from memory. Note: the file contains principles only — workflows are in the subagents.
+The core rule taxonomy (Judgment / Knowledge / Pointer), the Rule Quality Standard, and the anti-patterns live in the `ai-instruction-framework` skill. Load it if the user asks a conceptual question about how instructions should be written. Do not paraphrase it from memory. It carries principles only — workflows are in the subagents.
 
 ## Routing
 
@@ -24,7 +24,7 @@ The core rule taxonomy (Judgment / Knowledge / Pointer) and anti-patterns live i
 
 Invocation prompt:
 
-> "The user wants to create instruction files. [Paste user's message verbatim.] Read `docs/ai-instruction-framework.md` for the Judgment / Knowledge / Pointer taxonomy and anti-patterns. The full workflow is in your agent definition — follow it exactly."
+> "The user wants to create instruction files. [Paste user's message verbatim.] Load the `ai-instruction-framework` skill for the taxonomy, Rule Quality Standard, and anti-patterns. The full workflow is in your agent definition — follow it exactly."
 
 After the writer completes, suggest running the evaluator:
 
@@ -39,7 +39,7 @@ After the writer completes, suggest running the evaluator:
 
 Invocation prompt:
 
-> "The user wants to evaluate instruction changes. [Paste user's message verbatim.] The file path(s) to evaluate are: [list paths]. Read each from disk as the AFTER version. Resolve BEFORE automatically: check for uncommitted changes first (git diff HEAD), then last committed state (HEAD~1), then treat as new if untracked. Read `docs/ai-instruction-framework.md` for the Judgment / Knowledge / Pointer taxonomy and anti-patterns. The full workflow is in your agent definition — follow it exactly."
+> "The user wants to evaluate instruction changes. [Paste user's message verbatim.] The file path(s) to evaluate are: [list paths]. Read each from disk as the AFTER version. Resolve BEFORE automatically: check for uncommitted changes first (git diff HEAD), then last committed state (HEAD~1), then treat as new if untracked. Load the `ai-instruction-framework` skill for the taxonomy, Rule Quality Standard, and anti-patterns. The full workflow is in your agent definition — follow it exactly."
 
 If the user has not specified which file(s) to evaluate, ask before routing:
 

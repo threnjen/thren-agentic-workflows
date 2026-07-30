@@ -67,9 +67,8 @@ against later work.
   limitation, not a failure; this family ships to projects that have none. Do not
   grow a coverage runner here to close the gap.
 - If `Test - Analyst` is unavailable, errors, times out, or returns no usable
-  analysis, write a report with a NOT RUN entry and
-  concrete reason. The report must state that the verdict ceiling is below GO;
-  missing analysis is never a clean result.
+  analysis, write a report with a NOT RUN entry and concrete reason; missing
+  analysis is never a clean result.
 - If the branch changed no tests, say so as a stated result, not "no findings".
 - Preserve delegate evidence paths and distinguish an incomplete health report
   from a clean result. Do not infer coverage, redundancy, or flake outcomes from

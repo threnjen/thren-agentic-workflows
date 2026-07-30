@@ -1,5 +1,5 @@
 ---
-description: "Read learnings files before starting work — past mistakes, review patterns, debugging fixes, and cross-phase decisions."
+description: "Read learnings files before starting work - past mistakes, review patterns, debugging fixes, and cross-phase decisions. Audience is ENUMERATED deliberately - an arbitrary subset with no filename family. Add any agent that writes code or plans against prior-phase history."
 applyTo: "**/04b-feature-implementer.agent.md,**/03-feature-decomposer.agent.md,**/debugger.agent.md"
 ---
 

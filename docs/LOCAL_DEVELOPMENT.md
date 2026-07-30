@@ -111,8 +111,8 @@ real home paths substituted at deploy time:
 | cursor | `~/.cursor/rules/baseline-instructions.mdc` (`alwaysApply` rule) |
 | github | `<repo>/.github/copilot-instructions.md` |
 
-Only the three sentinel-delimited sections (`<!-- context7 -->`,
-`<!-- code-review-graph -->`, `<!-- agent-discovery -->`) are replaced or appended;
+Only the four sentinel-delimited sections (`<!-- context7 -->`,
+`<!-- code-review-graph -->`, `<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`) are replaced or appended;
 content outside the sentinels is never touched, and a repeat run reports `unchanged`.
 The result appears under a `baseline` key in the per-harness deploy output.
 
