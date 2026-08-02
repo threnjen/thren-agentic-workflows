@@ -35,7 +35,7 @@ import _propagate_env as env
 #     doing so would break the report contract. Pinned here so that fails.
 #   * `execute` is DECLARED, not hidden. It survives only on `05a-baseline-worktree`,
 #     whose `git worktree` call has no non-shell equivalent; the grant is recorded
-#     as explicitly unclosable in `source_of_truth/learnings/cross-phase-decisions.md:16`.
+#     as explicitly unclosable in `pr-review-conventions` (capability boundaries).
 #     Per-agent command scoping is not expressible in Claude subagent frontmatter
 #     (`tools: Bash(gh:*)` is an unresolved tool name, not a narrower grant), so
 #     removal is the only narrowing available -- and this one cannot be removed.
@@ -115,34 +115,6 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 'description: "Demo skill with a wrapped description."',
                 codex_skill.read_text(encoding="utf-8"),
             )
-
-    def test_propagate_learnings_mirrors_to_claude_and_codex(self) -> None:
-        """Codex absorbs the learnings independently: nothing may plan on a
-        consumer repo's `.github/learnings/` being present, so the learnings are
-        emitted into each harness's own root and deployed from there."""
-        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
-            repo_root = Path(tmp_dir)
-            env.use(self, repo_root)
-            learnings_dir = repo_root / "source_of_truth" / "learnings"
-            learnings_dir.mkdir(parents=True, exist_ok=True)
-            (learnings_dir / "demo-learnings.md").write_text(
-                "# Demo Learnings\n\nA pattern.\n", encoding="utf-8"
-            )
-
-            result = mod.propagate_learnings_once()
-
-            self.assertEqual(result["claude_changed"], 1)
-            self.assertEqual(result["codex_changed"], 1)
-            self.assertEqual(result["learnings_changed"], 2)
-            for harness in ("claude", "codex"):
-                copy = repo_root / "ports" / harness / "learnings" / "demo-learnings.md"
-                self.assertTrue(copy.exists(), f"{harness} learnings copy missing")
-                self.assertTrue(
-                    copy.read_text(encoding="utf-8").startswith(
-                        mod.GENERATED_SKILL_HEADER.strip("\n")
-                    ),
-                    f"{harness} learnings copy is unmarked and thus unprunable",
-                )
 
     def test_pr_review_evaluator_roster_is_fully_enumerated(self) -> None:
         """AC8: no evaluator may be omitted from propagation enumeration.
@@ -231,8 +203,6 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         agent = agents["04e-diff-security-scan"]
         self.assertFalse(agent.user_invocable)
         self.assertNotIn("execute", agent.tools)
-        self.assertIn("BLOCKED", agent.body)
-        self.assertIn("OUT OF SCOPE", agent.body)
         docs = mod.applicable_instructions(agent, instructions)
 
         claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
@@ -930,18 +900,32 @@ class OrphanPruningTests(unittest.TestCase):
 
     def test_real_repository_propagation_removes_nothing(self) -> None:
         """AC7: the pruner is proven inert against the current tree before it is
-        trusted against a changed one. This asserts on the real repository."""
-        result = mod.propagate_once(verbose=False)
+        trusted against a changed one.
 
-        self.assertEqual(result["claude_orphans_removed"], 0)
-        self.assertEqual(result["claude_command_orphans_removed"], 0)
-        self.assertEqual(result["opencode_orphans_removed"], 0)
-        self.assertEqual(result["codex_orphans_removed"], 0)
-        self.assertEqual(result["codex_profile_orphans_removed"], 0)
-        self.assertEqual(result["skill_orphans_removed"], 0)
-        self.assertEqual(result["cursor_command_orphans_removed"], 0)
-        self.assertEqual(result["cursor_rule_orphans_removed"], 0)
-        self.assertEqual(result["learning_orphans_removed"], 0)
+        Asserts on the real repository's *content* without mutating it: the
+        propagator's inputs (`source_of_truth/`) and outputs (`ports/`,
+        `.github/`) are staged into a throwaway tree, and the run is redirected
+        there by `env.use` exactly as every other test in this class does. A
+        run against the live `REPO_ROOT` would rewrite and prune this
+        repository as a side effect of asserting it does not.
+        """
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            for name in ("source_of_truth", "ports", ".github"):
+                source = REPO_ROOT / name
+                if source.is_dir():
+                    shutil.copytree(source, repo_root / name)
+            env.use(self, repo_root)
+            result = mod.propagate_once(verbose=False)
+
+            self.assertEqual(result["claude_orphans_removed"], 0)
+            self.assertEqual(result["claude_command_orphans_removed"], 0)
+            self.assertEqual(result["opencode_orphans_removed"], 0)
+            self.assertEqual(result["codex_orphans_removed"], 0)
+            self.assertEqual(result["codex_profile_orphans_removed"], 0)
+            self.assertEqual(result["skill_orphans_removed"], 0)
+            self.assertEqual(result["cursor_command_orphans_removed"], 0)
+            self.assertEqual(result["cursor_rule_orphans_removed"], 0)
 
 
 class StaticDoneNotifyNonInterferenceTests(unittest.TestCase):
@@ -1048,9 +1032,72 @@ class StaticDoneNotifyNonInterferenceTests(unittest.TestCase):
             self.assertEqual(plugin_file.read_text(encoding="utf-8"), original)
 
 
+class ToolKeyValidationTests(unittest.TestCase):
+    """An unrecognized `tools:` key must fail propagation loudly.
+
+    Silent dropping is how two auditor root agents shipped declaring `web` (the
+    valid key is `fetch`) without the capability their authors believed they had.
+    """
+
+    def _write_agent(self, repo_root: Path, slug: str, tools: str) -> Path:
+        agents_dir = repo_root / "source_of_truth" / "agents"
+        agents_dir.mkdir(parents=True, exist_ok=True)
+        path = agents_dir / f"{slug}.agent.md"
+        path.write_text(
+            "---\n"
+            f"name: {slug}\n"
+            f'description: "Fixture agent {slug}."\n'
+            f"tools: {tools}\n"
+            "user-invocable: false\n"
+            f"---\n\nYou are the **{slug}** fixture agent.\n",
+            encoding="utf-8",
+        )
+        return path
+
+    def test_invalid_tool_key_fails_propagation(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._write_agent(repo_root, "01-broken", "[read, web]")
+
+            with self.assertRaises(ValueError) as ctx:
+                mod.propagate_once(verbose=False)
+
+            message = str(ctx.exception)
+            self.assertIn("01-broken.agent.md", message)
+            self.assertIn("web", message)
+            self.assertIn("fetch", message)
+
+    def test_every_valid_tool_key_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            keys = ", ".join(sorted(mod.VALID_TOOL_KEYS))
+            self._write_agent(repo_root, "01-kitchen-sink", f"[{keys}]")
+
+            mod.propagate_once(verbose=False)  # must not raise
+
+    def test_todo_is_valid_and_a_claude_no_op(self) -> None:
+        self.assertIn("todo", mod.VALID_TOOL_KEYS)
+        self.assertEqual(mod.map_tools_for_claude(["todo"]), ["Skill"])
+        self.assertEqual(mod.map_permissions_for_opencode(["todo"]), {"todowrite": "allow"})
+
+    def test_source_corpus_declares_only_valid_tool_keys(self) -> None:
+        offenders = []
+        for path in sorted((REPO_ROOT / "source_of_truth" / "agents").glob("*.md")):
+            text = path.read_text(encoding="utf-8")
+            match = re.search(r"^tools:\s*(.+)$", text, re.MULTILINE)
+            if not match:
+                continue
+            for tool in mod._parse_list_value(match.group(1)):
+                if tool not in mod.VALID_TOOL_KEYS:
+                    offenders.append(f"{path.name}: {tool}")
+        self.assertEqual(offenders, [])
+
+
 class CursorPropagationTests(unittest.TestCase):
     """Cursor harness outputs: commands from user-invocable agents, rules from
-    instructions with real file globs and from learnings."""
+    instructions with real file globs."""
 
     def _seed(self, repo_root: Path) -> None:
         agents_dir = repo_root / "source_of_truth" / "agents"
@@ -1089,11 +1136,6 @@ class CursorPropagationTests(unittest.TestCase):
             "---\n\nInternal to agent rendering.\n",
             encoding="utf-8",
         )
-        learnings_dir = repo_root / "source_of_truth" / "learnings"
-        learnings_dir.mkdir(parents=True, exist_ok=True)
-        (learnings_dir / "project-learnings.md").write_text(
-            "# Project Learnings\n\nLesson one.\n", encoding="utf-8"
-        )
 
     def test_user_invocable_agent_becomes_a_cursor_command(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
@@ -1113,7 +1155,7 @@ class CursorPropagationTests(unittest.TestCase):
                 "non-invocable agents must not become Cursor commands",
             )
 
-    def test_glob_instruction_and_learning_become_rules_agent_plumbing_does_not(self) -> None:
+    def test_glob_instruction_becomes_a_rule_agent_plumbing_does_not(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
             env.use(self, repo_root)
@@ -1127,15 +1169,96 @@ class CursorPropagationTests(unittest.TestCase):
             self.assertIn("globs: **/*.cs,**/*.py", style)
             self.assertIn("alwaysApply: false", style)
 
-            learning = (rules / "project-learnings.mdc").read_text(encoding="utf-8")
-            self.assertIn('description: "Project Learnings"', learning)
-            self.assertIn("alwaysApply: false", learning)
-            self.assertNotIn("globs:", learning)
-
             self.assertFalse(
                 (rules / "agent-only.mdc").exists(),
                 "agent-targeted instructions ship inside rendered agents, not as rules",
             )
+
+    def _seed_bare_name_agents_and_internal_instructions(self, repo_root: Path) -> None:
+        """The shapes the old suffix heuristic misclassified.
+
+        Two agents whose files lack the `.agent.md` suffix, plus instructions
+        matching them by bare name and by a `0*.md` glob -- all internal plumbing
+        that must never reach the user-global Cursor rules directory.
+        """
+        agents_dir = repo_root / "source_of_truth" / "agents"
+        for slug, name in (("auditor", "Auditor"), ("04f-prod-code-review", "Prod Code Review")):
+            (agents_dir / f"{slug}.md").write_text(
+                "---\n"
+                f"name: {name}\n"
+                f'description: "Fixture {name}."\n'
+                "tools: [read]\n"
+                "user-invocable: true\n"
+                f"---\n\nYou are the **{name}** fixture agent.\n",
+                encoding="utf-8",
+            )
+        instructions_dir = repo_root / "source_of_truth" / "instructions"
+        (instructions_dir / "orchestrator-conventions.instructions.md").write_text(
+            "---\n"
+            'description: "Orchestrator plumbing."\n'
+            'applyTo: "**/auditor.md,**/01-captain.agent.md"\n'
+            "---\n\nInternal orchestration conventions.\n",
+            encoding="utf-8",
+        )
+        (instructions_dir / "pipeline-artifacts.instructions.md").write_text(
+            "---\n"
+            'description: "Pipeline artifacts."\n'
+            'applyTo: "source_of_truth/agents/0*.md"\n'
+            "---\n\nInternal pipeline artifact rules.\n",
+            encoding="utf-8",
+        )
+
+    def test_agent_targeted_instructions_never_become_cursor_rules(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+            self._seed_bare_name_agents_and_internal_instructions(repo_root)
+
+            mod.propagate_once(verbose=False)
+
+            rules = repo_root / "ports" / "cursor" / "rules"
+            for leaked in ("orchestrator-conventions.mdc", "pipeline-artifacts.mdc", "agent-only.mdc"):
+                self.assertFalse(
+                    (rules / leaked).exists(),
+                    f"{leaked} is internal plumbing and must not ship as a user-global Cursor rule",
+                )
+            self.assertTrue(
+                (rules / "style.mdc").is_file(),
+                "instructions with real source-file globs must still ship as Cursor rules",
+            )
+
+    def test_cursor_rule_classifier_matches_inlining(self) -> None:
+        """Bare-name and `0*.md` patterns resolve to agents, so they are internal."""
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+            self._seed_bare_name_agents_and_internal_instructions(repo_root)
+
+            agents = mod.load_source_agents()
+            instructions = mod.load_instruction_docs()
+            by_name = {doc.path.name: doc for doc in instructions}
+
+            for internal in (
+                "orchestrator-conventions.instructions.md",
+                "pipeline-artifacts.instructions.md",
+            ):
+                applicable = {
+                    agent.rel_path
+                    for agent in agents
+                    if by_name[internal] in mod.applicable_instructions(agent, instructions)
+                }
+                self.assertTrue(
+                    applicable,
+                    f"{internal} must inline into at least one agent to count as internal",
+                )
+
+            mod.propagate_cursor_rules_once(instructions, agents)
+            emitted = {
+                path.name for path in (repo_root / "ports" / "cursor" / "rules").glob("*.mdc")
+            }
+            self.assertEqual(emitted, {"style.mdc"})
 
     def test_orphaned_cursor_outputs_are_pruned(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
@@ -1215,6 +1338,61 @@ class GithubMirrorTests(unittest.TestCase):
 
             self.assertGreater(first["github_changed"], 0)
             self.assertEqual(second["github_changed"], 0)
+
+
+class InstructionApplyToTests(unittest.TestCase):
+    """Every enumerated `applyTo` filename must resolve to an agent on disk.
+
+    Thirteen of the sixteen instruction files hand-enumerate their target agents
+    by filename; three use a directory glob. An enumerated path that no longer
+    resolves — a renamed or deleted agent — fails open: the instruction simply
+    stops being injected, the agent still runs, and nothing reports it. This
+    asserts the enumerations still point at real files.
+    """
+
+    INSTRUCTIONS_DIR = REPO_ROOT / "source_of_truth" / "instructions"
+    AGENTS_DIR = REPO_ROOT / "source_of_truth" / "agents"
+
+    def _apply_to_patterns(self, path: Path) -> list[str]:
+        text = path.read_text(encoding="utf-8")
+        match = re.search(r'^applyTo:\s*"([^"]+)"', text, re.MULTILINE)
+        if not match:
+            return []
+        return [p.strip() for p in match.group(1).split(",") if p.strip()]
+
+    def test_every_enumerated_applyto_target_exists(self) -> None:
+        agent_names = {p.name for p in self.AGENTS_DIR.iterdir() if p.is_file()}
+        self.assertTrue(agent_names, "no agent definitions found")
+
+        unresolved = []
+        for instruction in sorted(self.INSTRUCTIONS_DIR.glob("*.instructions.md")):
+            for pattern in self._apply_to_patterns(instruction):
+                if not pattern.startswith("**/"):
+                    # Directory glob (e.g. "source_of_truth/agents/**") — matches
+                    # by directory, so there is no filename to resolve.
+                    continue
+                target = pattern[len("**/") :]
+                if not target.endswith(".md"):
+                    # Source-file glob (e.g. "**/*.py", "**/pyproject.toml") —
+                    # matches code being edited, not an agent definition.
+                    continue
+                if target not in agent_names:
+                    unresolved.append(f"{instruction.name} -> {target}")
+
+        self.assertEqual(
+            [],
+            unresolved,
+            "applyTo entries naming agents that do not exist (the instruction "
+            "silently stops being injected):\n  " + "\n  ".join(unresolved),
+        )
+
+    def test_every_instruction_declares_applyto(self) -> None:
+        missing = [
+            p.name
+            for p in sorted(self.INSTRUCTIONS_DIR.glob("*.instructions.md"))
+            if not self._apply_to_patterns(p)
+        ]
+        self.assertEqual([], missing, f"instructions with no applyTo: {missing}")
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 """Transform source_of_truth/ master assets into per-harness ports/ outputs.
 
 This script treats `source_of_truth/` as the canonical home for agents, skills,
-instructions, and learnings, and regenerates target-platform variants under
+and instructions, and regenerates target-platform variants under
 `ports/{claude,codex,opencode,cursor}`. It also mirrors the source verbatim to
 `ports/github` and to a real `.github/` directory at the repository root.
 
@@ -39,15 +39,12 @@ from asset_paths import (
 SOT_AGENTS_DIR = SOT_DIR / "agents"
 SOT_INSTRUCTIONS_DIR = SOT_DIR / "instructions"
 SOT_SKILLS_DIR = SOT_DIR / "skills"
-SOT_LEARNINGS_DIR = SOT_DIR / "learnings"
 SOT_HOOKS_DIR = SOT_DIR / "hooks"
 
 # Generated platform output roots under `ports/`.
 CLAUDE_AGENTS_DIR = PORTS_DIR / "claude" / "agents"
 CLAUDE_COMMANDS_DIR = PORTS_DIR / "claude" / "commands"
 CLAUDE_SKILLS_DIR = PORTS_DIR / "claude" / "skills"
-CLAUDE_LEARNINGS_DIR = PORTS_DIR / "claude" / "learnings"
-CODEX_LEARNINGS_DIR = PORTS_DIR / "codex" / "learnings"
 OPENCODE_AGENTS_DIR = PORTS_DIR / "opencode" / "agents"
 OPENCODE_SKILLS_DIR = PORTS_DIR / "opencode" / "skills"
 CODEX_AGENTS_DIR = PORTS_DIR / "codex" / "agents"
@@ -62,13 +59,12 @@ DOT_GITHUB_DIR = REPO_ROOT / ".github"
 
 # Subdirectories mirrored verbatim to ports/github and .github. Anything else in
 # .github/ (e.g. workflows/) is never touched.
-GITHUB_MIRRORED_SUBDIRS = ("agents", "hooks", "instructions", "learnings", "skills")
+GITHUB_MIRRORED_SUBDIRS = ("agents", "hooks", "instructions", "skills")
 
 WATCH_DIRS = [
     SOT_AGENTS_DIR,
     SOT_SKILLS_DIR,
     SOT_INSTRUCTIONS_DIR,
-    SOT_LEARNINGS_DIR,
     SOT_HOOKS_DIR,
 ]
 # Agents that should not be propagated to any platform output directory.
@@ -435,6 +431,7 @@ def load_source_agents() -> List[SourceAgent]:
         name = str(fm.get("name", "")).strip().strip('"').strip("'")
         description = str(fm.get("description", "")).strip().strip('"').strip("'")
         tools = _parse_list_value(fm.get("tools", ""))
+        _validate_tool_keys(rel_path, tools)
         subagents = _parse_list_value(fm.get("agents", ""))
         user_invocable = _parse_bool(fm.get("user-invocable"), default=True)
 
@@ -483,44 +480,62 @@ def applicable_instructions(agent: SourceAgent, instruction_docs: List[Instructi
     return applicable
 
 
-def map_tools_for_claude(source_tools: List[str]) -> List[str]:
-    mapping = {
-        "read": ["Read"],
-        "search": ["Grep", "Glob"],
-        "edit": ["Edit", "Write"],
-        "fetch": ["WebFetch"],
-        "web/fetch": ["WebFetch"],
-        "web/search": ["WebFetch"],
-        "web/screenshot": ["WebFetch"],
-        "execute": ["Bash"],
-        "agent": ["Agent"],
-    }
+CLAUDE_TOOL_MAPPING: Dict[str, List[str]] = {
+    "read": ["Read"],
+    "search": ["Grep", "Glob"],
+    "edit": ["Edit", "Write"],
+    "fetch": ["WebFetch"],
+    "web/fetch": ["WebFetch"],
+    "web/search": ["WebFetch"],
+    "web/screenshot": ["WebFetch"],
+    "execute": ["Bash"],
+    "agent": ["Agent"],
+    # `todo` is legal but has no Claude counterpart: a deliberate no-op here.
+    "todo": [],
+}
 
+OPENCODE_PERMISSION_MAPPING: Dict[str, List[str]] = {
+    "read": ["read"],
+    "search": ["grep", "glob"],
+    "edit": ["edit"],
+    "fetch": ["webfetch"],
+    "web/fetch": ["webfetch"],
+    "web/search": ["webfetch"],
+    "web/screenshot": ["webfetch"],
+    "execute": ["bash"],
+    "agent": ["task"],
+    "todo": ["todowrite"],
+}
+
+# The full legal `tools:` key set. Anything outside it is a propagation failure,
+# not a silent drop: an unmapped key ships an agent without the capability its
+# author believed it had.
+VALID_TOOL_KEYS = frozenset(CLAUDE_TOOL_MAPPING) | frozenset(OPENCODE_PERMISSION_MAPPING)
+
+
+def _validate_tool_keys(rel_path: str, source_tools: List[str]) -> None:
+    invalid = [tool for tool in source_tools if tool not in VALID_TOOL_KEYS]
+    if invalid:
+        raise ValueError(
+            f"unrecognized tools key(s) in {rel_path}: "
+            f"{', '.join(sorted(invalid))}; valid keys are: "
+            f"{', '.join(sorted(VALID_TOOL_KEYS))}"
+        )
+
+
+def map_tools_for_claude(source_tools: List[str]) -> List[str]:
     result: List[str] = ["Skill"]
     for tool in source_tools:
-        for mapped in mapping.get(tool, []):
+        for mapped in CLAUDE_TOOL_MAPPING.get(tool, []):
             if mapped not in result:
                 result.append(mapped)
     return result
 
 
 def map_permissions_for_opencode(source_tools: List[str]) -> Dict[str, str]:
-    mapping = {
-        "read": ["read"],
-        "search": ["grep", "glob"],
-        "edit": ["edit"],
-        "fetch": ["webfetch"],
-        "web/fetch": ["webfetch"],
-        "web/search": ["webfetch"],
-        "web/screenshot": ["webfetch"],
-        "execute": ["bash"],
-        "agent": ["task"],
-        "todo": ["todowrite"],
-    }
-
     result: Dict[str, str] = {}
     for tool in source_tools:
-        for mapped in mapping.get(tool, []):
+        for mapped in OPENCODE_PERMISSION_MAPPING.get(tool, []):
             result[mapped] = "allow"
     return result
 
@@ -1032,41 +1047,6 @@ def propagate_skills_once() -> Dict[str, int]:
     }
 
 
-def propagate_learnings_once() -> Dict[str, int]:
-    if not SOT_LEARNINGS_DIR.exists():
-        return {
-            "claude_changed": 0,
-            "codex_changed": 0,
-            "learnings_changed": 0,
-            "learning_orphans_removed": 0,
-        }
-
-    # Codex gets its own copy: nothing may plan on reading `.github/learnings/`
-    # from a consumer repo, so each harness absorbs the learnings independently.
-    changed_per_root = {CLAUDE_LEARNINGS_DIR: 0, CODEX_LEARNINGS_DIR: 0}
-    orphans = 0
-    for learnings_dir in changed_per_root:
-        learnings_dir.mkdir(parents=True, exist_ok=True)
-        expected: set[Path] = set()
-        for source_file in sorted(SOT_LEARNINGS_DIR.glob("*.md")):
-            dest = learnings_dir / source_file.name
-            expected.add(dest)
-            # Marked so deploy_assets can prove ownership of the runtime copy.
-            content = _with_generated_marker(_read_text(source_file), GENERATED_SKILL_HEADER)
-            if _write_if_changed(dest, content):
-                changed_per_root[learnings_dir] += 1
-        orphans += _prune_orphaned_outputs(
-            learnings_dir, "*.md", expected, GENERATED_SKILL_HEADER
-        )
-
-    return {
-        "claude_changed": changed_per_root[CLAUDE_LEARNINGS_DIR],
-        "codex_changed": changed_per_root[CODEX_LEARNINGS_DIR],
-        "learnings_changed": sum(changed_per_root.values()),
-        "learning_orphans_removed": orphans,
-    }
-
-
 def _first_sentence(text: str, limit: int = 200) -> str:
     """A one-line description: the first `#` title, else the first prose sentence."""
     for line in text.splitlines():
@@ -1114,22 +1094,33 @@ def render_cursor_rule(
     return _with_generated_marker("\n".join(lines), GENERATED_AGENT_MARKDOWN_HEADER)
 
 
-def propagate_cursor_rules_once(instructions: List[InstructionDoc]) -> Dict[str, int]:
-    """Emit Cursor rules from instruction docs and learnings, then prune orphans.
+def propagate_cursor_rules_once(
+    instructions: List[InstructionDoc], agents: List[SourceAgent]
+) -> Dict[str, int]:
+    """Emit Cursor rules from instruction docs, then prune orphans.
 
-    Instructions whose applyTo patterns target agent-definition files are internal
-    plumbing for the agent renderers (their content already ships inside each
-    rendered agent/command) and are skipped. Instructions with real file globs
-    become glob-attached rules; learnings become agent-requested rules.
+    Instructions whose applyTo patterns resolve to agent-definition files are
+    internal plumbing for the agent renderers (their content already ships inside
+    each rendered agent/command) and are skipped -- Cursor rules deploy
+    user-globally, so leaking them exposes internal orchestration everywhere.
+
+    Classification resolves each pattern against the loaded source agents with the
+    same `fnmatch` semantics `applicable_instructions` uses for inlining, so a rule
+    is skipped exactly when its content was already inlined. Naming form does not
+    matter: both `<slug>.agent.md` and bare `<slug>.md` agents are covered.
     """
     changed = 0
     expected: set[Path] = set()
+    agent_paths = [agent.rel_path for agent in agents]
+
+    def _targets_agent_definitions(pattern: str) -> bool:
+        return any(fnmatch.fnmatch(rel_path, pattern) for rel_path in agent_paths)
 
     for doc in instructions:
         globs = [
             pattern
             for pattern in doc.apply_to_patterns
-            if not pattern.rstrip("*/").endswith((".agent.md", "agents"))
+            if not _targets_agent_definitions(pattern)
         ]
         if doc.apply_to_patterns and not globs:
             continue
@@ -1144,17 +1135,6 @@ def propagate_cursor_rules_once(instructions: List[InstructionDoc]) -> Dict[str,
         )
         if _write_if_changed(dest, content):
             changed += 1
-
-    if SOT_LEARNINGS_DIR.exists():
-        for source_file in sorted(SOT_LEARNINGS_DIR.glob("*.md")):
-            dest = CURSOR_RULES_DIR / f"{source_file.stem}.mdc"
-            expected.add(dest)
-            body = _read_text(source_file)
-            content = render_cursor_rule(
-                _first_sentence(body), [], always_apply=False, body=body
-            )
-            if _write_if_changed(dest, content):
-                changed += 1
 
     orphans = _prune_orphaned_outputs(
         CURSOR_RULES_DIR, "*.mdc", expected, GENERATED_AGENT_MARKDOWN_HEADER
@@ -1337,18 +1317,16 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     skill_result = propagate_skills_once()
     changed_skills = skill_result["skills_changed"]
 
-    learnings_result = propagate_learnings_once()
-    cursor_rules_result = propagate_cursor_rules_once(instructions)
+    cursor_rules_result = propagate_cursor_rules_once(instructions, agents)
     github_result = mirror_github_once()
 
     result = {
         "source_agents": len(agents),
-        "claude_changed": changed_claude + skill_result["claude_changed"] + learnings_result["claude_changed"],
+        "claude_changed": changed_claude + skill_result["claude_changed"],
         "opencode_changed": changed_opencode + skill_result["opencode_changed"],
-        "codex_changed": changed_codex + skill_result["codex_changed"] + learnings_result["codex_changed"],
+        "codex_changed": changed_codex + skill_result["codex_changed"],
         "cursor_changed": changed_cursor + cursor_rules_result["cursor_changed"],
         "skills_changed": changed_skills,
-        "learnings_changed": learnings_result["learnings_changed"],
         "github_changed": github_result["github_changed"],
         # Deletions are reported on their own keys rather than folded into the
         # `changed_*` counters, which already conflate writes with removals. This
@@ -1361,7 +1339,6 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         "codex_profile_orphans_removed": codex_profile_orphans,
         "cursor_command_orphans_removed": cursor_command_orphans,
         "cursor_rule_orphans_removed": cursor_rules_result["cursor_rule_orphans_removed"],
-        "learning_orphans_removed": learnings_result["learning_orphans_removed"],
         "skill_orphans_removed": skill_result["skill_orphans_removed"],
     }
 
@@ -1439,7 +1416,7 @@ def propagate_until_converged(
 
 
 def watch_loop(interval_seconds: float = 1.0) -> None:
-    print("Starting master asset watcher for source_of_truth/{agents,skills,instructions,learnings,hooks} ...")
+    print("Starting master asset watcher for source_of_truth/{agents,skills,instructions,hooks} ...")
     print(json.dumps(_convergence_payload(propagate_until_converged()), indent=2))
 
     def _on_change(changes: List[str]) -> None:

@@ -2,7 +2,6 @@
 name: Auditor - Security
 description: "Audits a codebase for security posture across secrets, dependencies, attack surface, authentication, data protection, runtime safety, infrastructure, CI/CD, and observability. Produces a structured findings report."
 tools: [read, search, edit, execute]
-
 user-invocable: false
 ---
 
@@ -14,18 +13,9 @@ Load the `auditor-conventions` skill for standard constraints, deliverables, sco
 
 Default `[audit-name]`: `security-scan`.
 
-## Unity Detection & Skill Loading
+## Unity
 
-Before starting discovery, detect whether the target repository is a Unity project.
-
-Use these indicators:
-- `.github/copilot-instructions.md` identifies the project as Unity
-- Repository contains both `Assets/` and `ProjectSettings/`, or a `game/Assets` directory
-- Repository contains Unity assembly definition files (`*.asmdef`)
-
-If any indicator matches, load BOTH skills immediately before proceeding:
-- `unity-development`
-- `unity-review-knowledge`
+Run the conventions skill's Unity Detection before discovery. When it matches, apply Unity runtime and build-pipeline guidance to the security categories below.
 
 ## Domain Focus
 
@@ -35,7 +25,6 @@ Exclude generated outputs, build artifacts, vendored dependencies, caches, and b
 
 ## Additional Constraints
 
-- Do NOT modify source code, dependencies, configuration, infrastructure, or tests. You create report documents only.
 - Do NOT expose secret values, credentials, private keys, tokens, connection strings, or personal data in the report or in chat. Report the type, a redacted fingerprint when useful, and the file location only.
 - Do NOT invent findings. Every finding requires evidence at a specific file and line, command output, or a clearly identified structural location.
 - Do NOT claim the repository is free from security issues. An unassessed category is recorded as unassessed, never as clean.

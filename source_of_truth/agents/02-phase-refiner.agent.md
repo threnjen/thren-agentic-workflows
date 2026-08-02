@@ -29,7 +29,8 @@ You bridge the gap between a feature idea (or zoomed-out project plan) and decom
 - After writing or updating a Phase document, **proactively read** `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md` for legacy repos) and update the entry for this phase to reflect any changes that belong at the roadmap level
 - Routine roadmap-level updates should be made in the same pass, without waiting for the user to approve them. This includes phase name or description, high-level deliverables or goals, inter-phase dependencies, newly surfaced risks that affect sequencing, and scope additions/removals visible to the project as a whole
 - Do NOT rewrite the entire roadmap — update only the section(s) pertaining to this phase
-- Do NOT modify entries for other phases unless a cross-phase dependency was explicitly surfaced and resolved during refinement
+- Do NOT modify entries for other phases unless a cross-phase dependency was explicitly surfaced and resolved **with the user** during refinement
+- If no roadmap file exists and this is the first phase, create a minimal `PROJECT_ROADMAP.md` that registers it
 - If iteration reveals issues that require restructuring the overall roadmap (phase splits, reordering, project-level non-goals), **flag this to the user** and recommend they take those issues back to `@01 Project - Planner`; preserve the current phase’s updated entry, but avoid making those structural changes yourself
 
 ### The Phase document is always a clean current source of truth
@@ -73,7 +74,7 @@ When refining a Phase document, probe these dimensions:
 6. **Risk & Complexity** — Where is technical risk concentrated? Unknowns needing investigation? Fallback plans?
 7. **Decomposition Readiness** — Can the Feature - Decomposer break this into 2-6 features? Are feature boundaries clear? Are "Notes for Feature - Decomposer" actionable?
 8. **Test Impact & Refactor Safety** — For any refactor, rewire, or behavior change, explicitly surface which existing tests are likely to break or need updates, whether the phase needs new tests, and whether Unity EditMode/PlayMode or manual QA is required.
-9. **Cross-Phase Discoveries** — When you surface an architectural decision, design constraint, risk, or deferred capability that affects a later phase, note it immediately without asking. Drop it into the current phase document's Notes section (if a Decomposer handoff), into `cross-phase-decisions.md` (if it spans multiple future phases), or into `DISCOVERY_CONTEXT.md` (if it's a design decision). Never ask "should I note this for later?" — the answer is always yes. A downstream agent can ignore an irrelevant note but cannot consult a note never written.
+9. **Cross-Phase Discoveries** — When you surface a decision, constraint, risk, or deferred capability affecting a later phase, record it immediately per the auto-loaded learnings routing rules (`PHASE_0N_DISCOVERY_CONTEXT.md` is this agent's DISCOVERY_CONTEXT file).
 
 ## Phase Document Template
 
@@ -96,21 +97,19 @@ Read the Phase document and any referenced materials:
 - Referenced codebase areas and existing implementations
 - External links, specs, or documentation referenced in the phase — spawn `@Web Researcher` to review these
 - Prior and subsequent phase documents (for dependency context only — do not modify them)
-- `.github/learnings/cross-phase-decisions.md` if it exists — contains deferred work, known gaps, and design decisions from prior phases that may need to be pulled into this phase's scope
+- `docs/phases/DISCOVERY_CONTEXT.md` if it exists — project-level discovery context written by `@01 Project - Planner` (external folders/projects, web research, user-provided specs)
 
-As you work through this phase, keep a running list of any additional context gathered beyond the codebase itself — web research results, additional folders/projects referenced, and user-provided documentation. This will be persisted to a `PHASE_0N_DISCOVERY_CONTEXT.md` file so downstream agents don't need the user to re-provide it.
+As you work through this phase, keep a running list of any additional context gathered beyond the codebase itself — web research results, additional folders/projects referenced, and user-provided documentation. This is persisted to the phase-scoped `PHASE_0N_DISCOVERY_CONTEXT.md`, which `@03 Feature - Decomposer` reads during its own discovery.
 
 #### Documentation Freshness Check
 
-Run the Documentation Freshness Check (see auto-loaded instructions). If README.md or docs/CODEBASE_CONTEXT.md is missing and the project is not brand new, spawn `@Docs Writer` as a subagent to create the missing documentation first. Do not continue to Phase 3 until the documentation exists.
-
-If the repository is genuinely brand new with nothing substantive to report yet, note that exception and continue.
+Run the auto-loaded Documentation Freshness Check before continuing to Phase 3.
 
 ### Phase 2B: Draft a New Phase Document (standalone feature)
 
 When the user comes directly with a feature idea:
 
-1. **Gather context** — Read the codebase to understand the project structure, tech stack, conventions, and the areas relevant to the requested feature. Read `.github/learnings/cross-phase-decisions.md` if it exists — it contains deferred work and known gaps from prior phases. If the feature involves external services, APIs, or unfamiliar technologies, spawn `@Web Researcher` to gather the necessary context. Keep a running list of additional context gathered (web research, extra folders/projects, user-provided documentation) — it will be persisted to `PHASE_0N_DISCOVERY_CONTEXT.md`. Run the Documentation Freshness Check (see auto-loaded instructions); if README.md or docs/CODEBASE_CONTEXT.md is missing and the project is not brand new, spawn `@Docs Writer` first and do not continue until it exists.
+1. **Gather context** — Read the codebase to understand the project structure, tech stack, conventions, and the areas relevant to the requested feature. If the feature involves external services, APIs, or unfamiliar technologies, spawn `@Web Researcher` to gather the necessary context. Keep a running list of additional context gathered (web research, extra folders/projects, user-provided documentation) — it is persisted to `PHASE_0N_DISCOVERY_CONTEXT.md`. Run the auto-loaded Documentation Freshness Check before drafting.
 
 2. **Ask clarifying questions** — Use the Question Triage rules above. Focus on scope boundaries, user-visible behavior, and integration concerns. Don't ask about implementation details.
 3. **Draft the Phase document** — Using the Phase Document Template above, create an initial draft. Fill in as much as you can from the codebase context and the user's description. Mark areas where you need input with `[TBD]`.
@@ -124,7 +123,7 @@ Determine the appropriate path:
 
 #### Cross-Phase Decision Enforcement
 
-After reading `cross-phase-decisions.md`, check for any items tagged "Must-do before Phase N" where N matches the current phase. For each such item:
+In the auto-loaded `cross-phase-decisions.md` content, check for any items tagged "Must-do before Phase N" where N matches the current phase. For each such item:
 
 - **If it's not addressed in the Phase document** — flag it as a gap in the assessment and recommend adding it to the scope
 - **If the user explicitly defers it** — document the deferral in the Phase document with a rationale, so downstream agents (Feature - Decomposer, Feature - Implementer) are aware
@@ -172,18 +171,18 @@ Write the file when the user signals they are done iterating.
 - **If refining an existing document**: Rewrite the Phase document in place at its existing path as a clean, current source of truth. Do not preserve old wording alongside new wording, add inline change notes, or leave any trace of prior decisions that were overridden.
 - **If creating a new document**: Write the Phase document to the determined path (e.g., `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md`).
 - **Write `PHASE_0N_DISCOVERY_CONTEXT.md`** — If any additional context was gathered during your workflow (additional folders/projects referenced, web research results from `@Web Researcher`, user-provided documentation or specs), write it to the phase directory alongside the phase summary (e.g., `docs/phases/PHASE_0N/PHASE_0N_DISCOVERY_CONTEXT.md`). If the file already exists, update it with any new context from this session. Skip this step only if no additional context was gathered beyond what's in the codebase itself.
-- **Sync `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md`)** — Read the existing roadmap file and update the entry for this phase to reflect any roadmap-level changes made during refinement (see "Update the project roadmap when this phase changes meaningfully" above). Make these updates proactively in the same pass, without waiting for the user to approve routine planning-doc changes. If no roadmap file exists and you are creating the first phase, create a minimal `PROJECT_ROADMAP.md` that registers this phase. Update only the section(s) for this phase — do not restructure or rewrite other phase entries.
+- **Sync `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md`)** — Apply "Update the project roadmap when this phase changes meaningfully" above, in this same pass.
 
 ### Phase 7: Open Working Branch
 
 After the user affirms the phase document is ready for implementation and the document has been written:
 
 1. Confirm the target repo's absolute path (or read it from context if already provided)
-2. Derive the branch slug by stripping the `phase/` prefix from the intended branch name and replacing any remaining `/` with `-`
+2. Derive the branch slug from the phase document's name (e.g. `PHASE_01` → `phase-01-<kebab-case phase title>`), lowercased, with any `/` replaced by `-`
 3. Open or resume the working branch in the target repo:
 	- Create a new branch with `git checkout -b phase/<slug>` (or `git switch -c phase/<slug>`)
 	- If the branch already exists because the user is resuming work, use `git checkout phase/<slug>` instead of `-b`
-4. After the branch is open, stage the `docs/phases/` files modified in this session and commit them with the exact message `phase-affirmed`.
+4. After the branch is open, stage the `docs/phases/` files modified in this session and commit them with the exact message `eval: phase-affirmed`.
 
 ## Escalation to 01 Project - Planner
 
@@ -199,6 +198,5 @@ Tell the user:
 
 Before presenting the refined document, run through the Quality Checklist in the `phase-document-writing` skill. Additionally verify:
 
-- [ ] `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md`) has been updated to reflect any roadmap-level changes made to this phase
-- [ ] No changes were made to other phase entries in the roadmap unless a cross-phase dependency was explicitly resolved with the user
+- [ ] The roadmap sync above was performed and stayed within its stated bounds
 - [ ] No other Phase documents were modified

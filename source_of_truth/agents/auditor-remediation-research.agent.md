@@ -1,8 +1,7 @@
 ---
 name: Auditor - Remediation Research
-description: "Researches one assigned subsystem from an audit delta's open-items queue in isolated context. Validates each assigned item and writes one evidence-backed subsystem report; returns correction candidates without editing shared audit artifacts. Proposes only — writes no production code."
+description: "Researches one assigned subsystem from an audit open-items queue in isolated context. Validates each assigned item and writes one evidence-backed subsystem report; returns correction candidates without editing shared audit artifacts. Proposes only — writes no production code."
 tools: [read, search, edit, fetch]
-
 user-invocable: false
 ---
 
@@ -17,18 +16,26 @@ validation, report format, sources, and the compact update packet. Load
 
 ## Inputs
 
-- Audit type, subsystem slug, assigned queue and closure identifiers, and
-  exclusive subsystem report path.
-- Draft fix-research index and open-items queue.
-- Full delta and baseline/current reports and summaries.
-- Exact snapshot identities and available source roots.
+Always supplied:
 
-Stop if the assignment, queue, full delta, current report, current root, or
-current snapshot identity is missing. Do not infer a wider work list.
+- Audit type, subsystem slug, assigned queue identifiers, and exclusive
+  subsystem report path.
+- Draft fix-research index and open-items queue.
+- Current report and summary, current snapshot identity, and current source root.
+
+Comparative mode only — supplied as `not available` in single-target mode:
+
+- Assigned closure identifiers, the full delta, and the baseline report,
+  summary, and root.
+
+`not available` is a valid value: skip every instruction conditioned on that
+input rather than approximating it, and never infer a baseline. Stop only if the
+assignment, the queue, the current report, the current root, or the current
+snapshot identity is missing. Do not infer a wider work list.
 
 ## Process
 
-1. Read only the assigned queue and closure entries, then their evidence,
+1. Read only the assigned queue entries — and closure entries where assigned — then their evidence,
    implementation, callers, tests, and constraints.
 2. Apply the Real/True/Current/Actionable gate.
 3. Research shared causes, a concrete fix, trade-offs, dependencies, and named
@@ -39,7 +46,7 @@ current snapshot identity is missing. Do not infer a wider work list.
 
 ## Write boundary
 
-- Production trees, the index, queue, reports, summaries, delta, and other
+- Production trees, the index, queue, reports, summaries, any delta, and other
   subsystem documents are read-only.
 - Write only the exclusive subsystem report path.
 - Do not include an invalid item in the report merely to account for it; account

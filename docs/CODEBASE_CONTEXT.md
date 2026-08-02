@@ -12,11 +12,10 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 54 source agent definitions in `source_of_truth/agents/` (50 `*.agent.md` + `auditor.md` + `delta-auditor.md` + `docs-writer.md` + `04f-prod-code-review.md`), of which 39 hidden subagents (`user-invocable: false`) and 15 user-invocable.
-- 34 skills in `source_of_truth/skills/`.
-- 16 instructions in `source_of_truth/instructions/`.
-- 4 learnings in `source_of_truth/learnings/`.
-- `ports/claude/agents` = 40, `ports/claude/commands` = 15.
+- 54 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 39 hidden subagents (`user-invocable: false`) and 15 user-invocable.
+- 42 skills in `source_of_truth/skills/`.
+- 18 instructions in `source_of_truth/instructions/`.
+- `ports/claude/agents` = 41, `ports/claude/commands` = 15.
 
 ## Key Paths
 
@@ -25,28 +24,24 @@ AGENTS.md                                  # code-review-graph MCP workflow guid
 INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
-    *.agent.md                             # 50, plus the four plain .md agents below (54 total definitions)
-    auditor.md                             # plain .md agent (single-target audit orchestrator)
-    delta-auditor.md                       # plain .md agent (comparative audit orchestrator)
-    docs-writer.md                         # plain .md agent (loaded by frontmatter)
-    04f-prod-code-review.md                # plain .md agent (loaded by frontmatter)
-  skills/                                  # 34 skill dirs, each rooted at SKILL.md
-  instructions/                            # 16 applyTo-glob instruction files
-  learnings/                               # 4 seed learnings files
+    *.agent.md                             # 54 agent definitions
+  skills/                                  # 42 skill dirs, each rooted at SKILL.md
+  instructions/                            # 18 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
-  claude/  {agents, commands, skills, learnings}
-  codex/   {agents, profiles, skills, learnings}   # TOML agents
+  claude/  {agents, commands, skills}
+  codex/   {agents, profiles, skills}   # TOML agents
   opencode/{agents, skills}
   cursor/  {commands, rules}               # commands=*.md, rules=*.mdc
-  github/  {agents, instructions, learnings, skills}          # verbatim mirror
+  github/  {agents, instructions, skills}          # verbatim mirror
 .github/                                   # real deployed mirror of ports/github
 scripts/
   propagate_master_assets.py               # transform entry point (--once | --watch)
   asset_paths.py                           # shared markers + poll_watch
   extract_pdfs.py                          # utility
 deploy_agents.py                           # deploy entry point (root, not scripts/)
-docs/ ARCHITECTURE.md CODEBASE_CONTEXT.md COPILOT_SETUP.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
+.claude/hooks/block-propagation.py         # PreToolUse hook: agents may not RUN propagation
+docs/ ARCHITECTURE.md AUTHORING.md CODEBASE_CONTEXT.md COPILOT_SETUP.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
 docs/ ai-instruction-framework.md UNDERSTANDING_AGENTIC_ECOSYSTEM.md
 docs/porting/                              # CLAUDE/CODEX/OPENCODE guides + TOOL_MAPPING
 dev/      inspiration/ (write-ups), pr-review/ (fixtures)
@@ -58,9 +53,13 @@ benchmarks/ packages/ tests/
 
 ## Pipeline Model
 
-- Edit `source_of_truth/{agents,skills,instructions,learnings}` first.
+- Edit `source_of_truth/{agents,skills,instructions}` first.
 - Transform: `python3 scripts/propagate_master_assets.py --once` (default) or `--watch`.
   Runs to a fixed point via `propagate_until_converged` (max 25 passes).
+- Agents must NOT run the transform — the maintainer does it by hand. `.claude/settings.json`
+  wires a `PreToolUse` Bash hook (`.claude/hooks/block-propagation.py`) that exits 2 on any
+  command executing the script; inspection commands (grep, read) pass. After editing source,
+  report that propagation is pending. Sync tests fail until it runs; that is expected.
 - Transform targets: `ports/{claude,codex,opencode,cursor}` plus `ports/github` and `.github/`.
 - Deploy: `python3 deploy_agents.py [--harness a,b | --all | --watch | --list | --no-save | --skip-tools]`.
 - Deploy also bootstraps companion tools (code-review-graph via pip/pipx, Context7 via
@@ -81,8 +80,9 @@ benchmarks/ packages/ tests/
   - cursor → `~/.cursor/rules/baseline-instructions.mdc` (`alwaysApply: true` frontmatter)
   - github → `<repo>/.github/copilot-instructions.md` (a `.github/AGENTS.md` would only
     scope to files under `.github/`)
-- Baseline splice model: three sections delimited by sentinel comments
-  (`<!-- context7 -->`, `<!-- code-review-graph -->`, `<!-- agent-discovery -->`);
+- Baseline splice model: five sections delimited by sentinel comments
+  (`<!-- context7 -->`, `<!-- code-review-graph -->`, `<!-- phase-doc-sync -->`,
+  `<!-- agent-discovery -->`, `<!-- know-the-audience -->`);
   only sentinel blocks are replaced/appended, content outside them is never touched;
   idempotent (second run → `unchanged`); every failure returns a status, never raises.
 - The cursor baseline `.mdc` deliberately carries NO generated marker so the
@@ -107,7 +107,7 @@ benchmarks/ packages/ tests/
   dirs; foreign symlinks are left alone and skipped.
 - Known filename aliases: `docs-writer` → `docs-writer`, `web-research-specialist` →
   `web-researcher`, `audit-code-or-infra` → `audit-code-infra-refactor` (legacy: the
-  source file is now `auditor.md`, which emits under its own name).
+  source file is now `auditor.agent.md`, which emits under its own name).
 - Hidden (non-user-invocable) subagents become `z-*` in Claude and Codex outputs, except
   where a pre-existing generated stem is reused: `04f-prod-code-review` stays
   `prod-code-review.md` and `04h-unity-reviewer` stays `unity-reviewer.md` in
@@ -115,38 +115,41 @@ benchmarks/ packages/ tests/
 - Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
   plus a subagent file only if an orchestrator names it as a child (dual-use). So
   `ports/claude/agents` = 39 hidden + 2 dual-use (docs-writer, web-researcher)
-  = 40, while `ports/claude/commands` = 15.
+  = 41, while `ports/claude/commands` = 15.
 - Codex and OpenCode emit all 54 agents; only Claude and Cursor split commands out.
-- `ports/cursor/rules` = the 4 learnings plus any instruction whose `applyTo` globs are
+- `ports/cursor/rules` = any instruction whose `applyTo` globs are
   not all agent-targeted. Agent-targeted instructions are excluded because they ship
   inside the agents; the exclusion test in `propagate_cursor_rules_once` matches patterns
-  ending in `.agent.md` or `agents`, so a glob naming a plain-`.md` agent
-  (`**/auditor.md`, `**/delta-auditor.md`, `**/docs-writer.md`,
-  `**/04f-prod-code-review.md`) is not recognized as agent-targeted. The three
-  instructions naming `auditor.md`/`delta-auditor.md` — `subagent-depth`,
-  `graph-rebuild-hook`, `orchestrator-conventions` — reach `ports/cursor/rules` for that
-  reason.
+  ending in `.agent.md` or `agents`. Every source agent now carries the `.agent.md`
+  suffix, so any glob naming an agent is recognized as agent-targeted.
 - `applyTo` globs are matched with `fnmatch` against each agent's repo-relative path, so
   `**/x.agent.md` only matches when a `/` immediately precedes `x`. Numbered agents must
   be named in full (`**/04b-feature-implementer.agent.md`). A pattern that matches nothing
   fails silently — no error, the instruction simply ships to no agent.
-- Learnings deploy only to `.github/learnings/` (per working repo) and to Cursor's
-  `rules/`. They intentionally have no destination under `~/.claude` or `~/.codex`.
+- Agents read and write a working repo's learnings at `docs/learnings/` in that repo —
+  durable project knowledge belongs beside the other docs, not in `.github/`, which is
+  GitHub's own machine-config surface. Nothing seeds or propagates that directory.
 
 ## Platform Surface Rules
 
-- `source_of_truth/` is the only shared source-of-truth for agents, skills, instructions, learnings.
+- `source_of_truth/` is the only shared source-of-truth for agents, skills, and instructions.
 - `ports/*` and `.github/` are generated outputs, not authoring surfaces.
 - Make the logical change in `source_of_truth/` first; do not mirror it manually into `ports/`.
 - Rerun propagation rather than hand-editing generated outputs.
 
 ## Testing
 
-- Python regression tests under `tests/` cover both scripts.
+- 14 Python test modules under `tests/` cover both scripts plus the agent corpus.
 - Run with `uv run pytest tests/` (or `.venv/bin/python -m pytest tests/`); bare
   `python -m pytest` may lack pytest.
 - `tests/_propagate_env.py` redirects the propagator's directory globals to a temp tree
   so tests never read/write the real repo.
+- `tests/test_agent_corpus_invariants.py` holds the corpus guards: every frontmatter
+  roster entry names a real agent and is spawnable, frontmatter is well-formed for agents
+  and skills, every instruction declares an `applyTo` that matches at least one real file,
+  and no large block is duplicated across three or more agents.
+- Corpus checks are structural only — they compare frontmatter, paths, and tool grants.
+  Never add a check keyed to agent prose; it goes inert the moment someone rewords.
 
 ## Do Not
 
@@ -155,11 +158,11 @@ benchmarks/ packages/ tests/
 - Do not assume filename parity across platforms; aliases and `z-` prefixes are intentional.
 - Do not reference removed surfaces: `nodejs/`, `python/`, `HARNESS_SETUP.md`, `.mcp.json`,
   `codex/README.md`, and `scripts/runtime_deployment.py` no longer exist.
-- Do not treat `04f-prod-code-review.md`, `auditor.md`, `delta-auditor.md`, or
-  `docs-writer.md` as non-agent content just because they lack the `.agent.md` suffix.
-- Do not put repo-specific findings in `source_of_truth/learnings/` — those files are a
-  general-purpose seed shipped to every project. Per-repo entries belong in that repo's
-  own `.github/learnings/`.
+- Do not assume the `.agent.md` suffix is what makes a file an agent: loading keys off
+  `name`/`description` frontmatter, and `source_of_truth/agents/*.md` is globbed wholesale.
+- Do not reintroduce `source_of_truth/learnings/`. Durable repo-agnostic rules are
+  skills; this repository's own authoring knowledge is `docs/AUTHORING.md`; a working
+  repo's findings belong in its own `docs/learnings/`.
 - Do not document a root `dev/` beyond `dev/pr-review/` (fixtures tracked, run output
   gitignored) and `dev/inspiration/` (write-ups). Agent *runtime* output paths like
   `dev/feature/` are conventions the agents create in a target repo, not directories here.

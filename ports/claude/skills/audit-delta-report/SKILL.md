@@ -64,23 +64,17 @@ path as corroboration only. Code moves; line numbers shift.
 Both trees are **read-only**. The only files this work writes are its two
 deliverables.
 
-Output paths:
+Two deliverables, both at the output paths the spawn prompt names — never at
+paths you invent. Both land under the **newer** snapshot's checkout; the
+baseline is read, never written to, and never receives a deliverable.
 
-```
-dev/<audit-name>/<audit-name>-delta-<baseline-label>-to-<current-label>-baseline.md
-dev/<audit-name>/<audit-name>-delta-<baseline-label>-to-<current-label>-open-items.md
-```
+1. The **full delta** (section 4) — the complete comparison.
+2. The **open-items queue** (section 5) — the actionable findings, attribution
+   kept separate, written to be read on its own by a remediation agent that will
+   never see the full delta.
 
-Both are written under the **newer** snapshot's checkout — the later revision,
-or the branch under review rather than the branch it targets. The baseline is
-read, never written to, and never receives a deliverable.
-
-The first is the full comparison (section 4). The second is the **open-items
-queue** (section 5) — the actionable findings, attribution kept separate,
-written to be read on its own by a remediation agent that will never see the
-full delta.
-Always write both; the queue is written last, after the full delta's
-arithmetic closes, and is derived from it rather than assembled in parallel.
+Always write both. The queue is written last, after the full delta's arithmetic
+closes, and is derived from it rather than assembled in parallel.
 
 ---
 
@@ -237,17 +231,10 @@ The document must prove its own completeness:
 
 ## 3A. Severity movement must be decomposed, not netted
 
-A severity table that reports only baseline, current, and net change is
-**misleading and is not acceptable output**, even when a paragraph underneath
-corrects it. `Critical | 2 | 2 | 0` asserts that nothing happened in the most
-important row of the document. If both baseline Criticals were resolved and two
-different findings took their place, the true statement is that the Critical
-population turned over completely — and no reader gets that from a zero. Prose
-below a table does not undo a table: the table is what gets skimmed, quoted,
-and pasted into a status update.
-
-The rule: **every count in this document that moves must show what it is made
-of, on the same row.** Never a net figure alone.
+**Every count in this document that moves must show what it is made of, on the
+same row.** Never a net figure alone, in a table or in prose. A paragraph
+underneath does not repair a misleading table — the table is what gets skimmed,
+quoted, and pasted into a status update.
 
 Build the severity table by tracking the flow through each band:
 
@@ -290,12 +277,6 @@ Then, immediately below the table and before any other prose, state:
   worsening."
 - **What the net conceals.** Any band whose net change is small while its
   underlying churn is large gets named explicitly.
-
-The same discipline applies wherever else a count appears. Rewrite
-"Critical: 2 → 2 (no change)" as "Critical: 2 → 2, but a complete turnover —
-both baseline Criticals resolved, two different findings took their place."
-A net of zero across a full population turnover is not a finding of stability;
-it is a coincidence of arithmetic, and saying otherwise misrepresents the work.
 
 ---
 
@@ -361,7 +342,7 @@ required and appears in this order.
 8. **Medium, Low, and Info Findings — Rollup** — one subsection per dimension,
    each a two-column table of `Disposition | Findings`, findings separated by
    ` · `. Each entry names both sides' locations. Add a `Cross-reference` row
-   for items itemized in section 7 so the dimension still reads completely
+   for items itemized in document section 7 so the dimension still reads completely
    without repeating them. Open the section with the completeness statement:
    every remaining finding from both reports appears exactly once below.
 9. **\*Dependency Delta** — for infra-flavoured audits, or any audit where the
@@ -403,6 +384,11 @@ required and appears in this order.
 ---
 
 ## 5. The open-items queue
+
+The base entry shape, the subsystem rule, the self-contained-entry rule, the
+no-fixes rule, and the ordering are defined in `auditor-conventions` under
+**Open-Items Queue Entries**. This section is the comparative extension of it:
+the selection rule, the attribution fields, and the dependency closure.
 
 A second, smaller document containing **only the NEW and TRANSFORMED findings**.
 Its reader is a remediation research agent that receives this file, the full
@@ -472,14 +458,12 @@ list. State the count of excluded findings by disposition, and name any
 excluded Critical or High explicitly, so the omission is visible without
 opening the full delta.
 
-**Subsystem ownership.** Assign every queued and closure item one `Subsystem`:
-the smallest stable runtime, component, or responsibility boundary that owns
-the remediation. A subsystem is not the audit dimension, severity, directory
-chosen for convenience, or proposed work phase. Use the same concise name for
-items with the same production owner. Cross-subsystem dependencies do not
-duplicate ownership; record them in `Blocked by` or `Pulled in by`.
+**Subsystem ownership** follows the conventions skill's rule, for closure items
+as well as queued ones. Cross-subsystem dependencies do not duplicate ownership;
+record them in `Blocked by` or `Pulled in by`.
 
-**Structure.**
+**Structure.** The base fields carry their conventions-skill meanings; the
+fields marked below are this mode's additions.
 
 ```markdown
 # <Audit type> Delta — Open Items — <baseline-label> → <current-label>
@@ -498,19 +482,11 @@ Risk section: <one line naming each still-excluded Critical and High>.
 ## <Severity> — <N> items
 
 ### <N>. [NEW | TRANSFORMED] <title>
-- **Source finding:** <current audit report identifier>
-- **Location:** `path:line` (current snapshot)
-- **Severity:** <Critical | High | Medium | Low | Info>
-- **Dimension:** <the auditor's own category name>
-- **Subsystem:** <stable production owner>
+- **Source finding:** <current audit report identifier>          # added
+- <the conventions skill's base fields, in its order>
 - **Origin:** genuine regression | artifact of new functionality | reporting
-  difference | responsibility moved from `<baseline path:line>`
-- **The defect:** <what is wrong, self-contained — assume no other document>
-- **Evidence:** <the file content, command result, or report statement>
-- **Constraints a fix must respect:** <what the delta established about this
-  code — that it is on a UI thread, that a caller depends on the current
-  shape, that a test asserts the present behavior — or "none recorded">
-- **Blocked by:** <closure item number(s) this cannot close without, or "none">
+  difference | responsibility moved from `<baseline path:line>`  # added
+- **Blocked by:** <closure item number(s) this cannot close without, or "none">  # added
 
 ## Dependency closure — <N> items
 
@@ -518,33 +494,21 @@ Excluded findings that queued items above cannot close without. These are
 enabling work, not defects this snapshot introduced. <N> closure passes.
 
 ### D<N>. [<original disposition>] <title>
-- **Source finding:** <current audit report identifier>
-- **Location:** `path:line` (current snapshot)
-- **Severity:** <Critical | High | Medium | Low | Info>
-- **Dimension:** <the auditor's own category name>
-- **Subsystem:** <stable production owner>
-- **Pulled in by:** item <N> (<blocking | partial>), item <N> (<blocking | partial>)
+- **Source finding:** <current audit report identifier>          # added
+- <the conventions skill's base fields, in its order>
+- **Pulled in by:** item <N> (<blocking | partial>), item <N> (<blocking | partial>)  # added
 - **What the dependent items need from it:** <the specific decision or artifact
-  that unblocks each — not a restatement of the finding>
-- **The defect:** <what is wrong, self-contained — assume no other document>
-- **Evidence:** <the file content, command result, or report statement>
-- **Constraints a fix must respect:** <as above, or "none recorded">
+  that unblocks each — not a restatement of the finding>          # added
 ```
 
-Order every section by severity, most severe first, then by dimension. Number
-closure items with a `D` prefix so the two sets can never be conflated by an item
-number alone.
+Number closure items with a `D` prefix so the two sets can never be conflated by
+an item number alone.
 
 **Rules.**
 
-- **Self-contained entries.** Every entry must be actionable without the full
-  delta. Repeat the evidence rather than cross-referencing a section number.
 - **TRANSFORMED entries carry their history.** The baseline location and what
   moved are the useful part: a defect that survived one restructuring intact
   will survive a careless second one. Say what was tried and what it did not fix.
-- **No fixes.** This queue states defects and constraints. Researching and
-  proposing the fix is the next agent's job, and prejudging it there narrows
-  what that agent considers.
 - **Counts must agree with the full delta.** The queue's NEW + TRANSFORMED item
   count equals `NEW + TRANSFORMED` from the Disposition Rollup. If it does not,
   the delta is wrong, not the queue. Closure items are counted and reported
@@ -553,10 +517,8 @@ number alone.
   that pulled it in, and every `Blocked by` reference above resolves to a
   closure item that exists. A closure item nothing depends on is scope creep —
   remove it.
-- If there are zero NEW and zero TRANSFORMED findings, still write the file,
-  state that plainly, and say what was excluded. An empty queue is a real and
-  useful result; a missing file is ambiguous. A queue with no NEW or TRANSFORMED
-  items has no closure either — the closure is derived from them.
+- A queue with no NEW or TRANSFORMED items has no closure either — the closure
+  is derived from them. Still write the file and say what was excluded.
 
 ---
 
@@ -590,43 +552,23 @@ number alone.
 
 ## 7. Before finishing
 
-The three attribution items are the attribution agent's to check (section 2D);
-every other item is the delta agent's.
+Completeness proofs only — the cross-cutting checks no single section above can
+establish on its own. The rules themselves are stated once, where they are
+defined; do not re-derive them from this list. The last item is the attribution
+agent's (section 2D); the rest are the delta agent's.
 
-- [ ] Baseline-side arithmetic closes against the baseline report's stated total.
-- [ ] Current-side arithmetic closes against the current report's stated total.
-- [ ] Every merge and split is enumerated in Reconciliation.
-- [ ] The severity table is decomposed per section 3A, every row satisfies both
-      identities, and the continuity column is filled.
-- [ ] Every band with a small net but large churn, and every band with zero
-      continuity, is called out in words directly under the table.
-- [ ] No net count anywhere in the document — table or prose — stands without
-      its composition.
-- [ ] Every Critical and High from either side appears in section 7.
-- [ ] Every remaining finding from either side appears exactly once in section 8.
-- [ ] Every NEW Critical/High is labelled genuine regression or artifact of new
-      functionality.
-- [ ] Every NEW passed the section 2A probe, outcome recorded with paired
-      excerpts. No NEW rests on the baseline report's silence alone, and no
-      provisional marking survives in a finished delta.
-- [ ] Every shared `(file, enclosing symbol)` position was adjudicated per
-      section 2B; the calibration guard (2C) was evaluated.
-- [ ] The regression count is stated as NEW alone, nowhere summed with
-      PRE-EXISTING, in any table or sentence.
-- [ ] Every RESOLVED cites positive evidence, not an absence of mention.
-- [ ] Every UNVERIFIED states why, and what would settle it.
-- [ ] The open-items queue exists, its NEW + TRANSFORMED section holds exactly
-      the NEW + TRANSFORMED count from the Disposition Rollup, and every entry
-      is actionable without the full delta.
-- [ ] No PRE-EXISTING or UNVERIFIED-ORIGIN finding is queued as work. Each is
-      counted among the header's exclusions, and appears in the queue only as a
-      `D`-numbered closure item a queued entry names in `Blocked by`.
-- [ ] The dependency closure was walked to a fixed point. Every queued item
-      states what blocks it or `none`; every closure item names the queued
-      item(s) that pulled it in and whether the block is total or partial; every
-      `Blocked by` reference resolves. If the closure is empty, that is stated,
-      not left silent.
-- [ ] The queue's header states what it excludes *after* the closure, by
-      disposition count, and names every still-excluded Critical and High.
+- [ ] Both sides' arithmetic closes against their reports' stated totals
+      (section 3), with every merge and split enumerated in Reconciliation.
+- [ ] Every finding from either side appears **exactly once** across the
+      document: Criticals and Highs in the document's "Critical and High
+      Findings — Item by Item" section, everything else in "Medium, Low, and
+      Info Findings — Rollup".
+- [ ] Every shared `(file, enclosing symbol)` position was adjudicated
+      (section 2B) and the calibration guard (2C) was evaluated.
+- [ ] The queue exists; its NEW + TRANSFORMED count equals the Disposition
+      Rollup's; every `Blocked by` reference resolves to a closure item that
+      exists; the closure was walked to a fixed point, and an empty closure is
+      stated rather than left silent.
 - [ ] Both source trees are unmodified; the two deliverables are the only files
       written.
+- [ ] No provisional marking survives.

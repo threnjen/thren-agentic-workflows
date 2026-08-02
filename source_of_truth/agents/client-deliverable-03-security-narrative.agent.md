@@ -2,7 +2,6 @@
 name: Client Deliverable - Security Narrative
 description: "Per engagement, writes the client-facing security narrative — original posture, repaired findings tied to SOW scope, pre-existing out-of-scope findings, and residual risks — classifying every pair's original-side security risk as exactly one of repaired, out-of-scope, or residual. Also writes, per pair, the internal engineer-facing security-delta report: original findings, fixed, unfixed, and introduced."
 tools: [read, search, edit]
-
 user-invocable: false
 ---
 
@@ -16,10 +15,9 @@ documents lead with the posture-level before/after comparison (counts by
 category × severity per side); per-finding classification then follows the
 `auditor-conventions` Comparative Scans rules — issue-identity matching,
 never file-path joins, with ambiguous matches flagged as possibly
-persisting rather than defaulted to fixed or introduced. Workspace paths, audience
-banners, and empty-output discipline follow the `engagement-workspace`
-skill; client-facing documents are written in the `engagement-client-voice`
-skill's voice.
+persisting rather than defaulted to fixed or introduced. Load
+`engagement-workspace` and `engagement-client-voice`; both govern this
+stage's outputs.
 
 Write `deliverables/security-narrative.md`, business-framed, covering
 every pair with a per-repo section per pair, each with four parts:

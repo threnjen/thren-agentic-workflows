@@ -5,7 +5,7 @@ description: "Write feature plan documents for implementation. Use when: decompo
 
 # Feature Plan Set
 
-The three-file plan convention: `-plan.md` is produced by the Feature - Decomposer; `-context.md` and `-tasks.md` are produced by the 04a-feature-plan-expander. All three files are consumed by 04b-feature-implementer, 04c-feature-reviewer, 04d-feature-qa-writer, and orchestrators.
+The three-file plan convention: `-plan.md` is produced by the Feature - Decomposer; `-context.md` and `-tasks.md` are produced by the 04a-feature-plan-expander. All three files are consumed by 04b-feature-implementer, 04c-feature-review-and-fix, 04d-feature-qa-writer, and orchestrators.
 
 For a phase-decomposition request, producing `-plan.md` files does not finish
 the request. The Feature - Decomposer must invoke the plan expanders, verify all
@@ -33,7 +33,7 @@ dev/feature/[phase-name]-execution-manifest.md
 
 The manifest must list the phase document path, ordered feature task names, wave schedule, dependencies, parallel safety, key files modified, sequential reasons, expected bundle files, and verification assets.
 
-**Naming**: `[0N-task-name]` is a zero-padded two-digit prefix followed by a short, descriptive, kebab-case identifier (e.g., `01-auth-login`, `02-rate-limiter`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order.
+**Naming**: `[0N-task-name]` is a zero-padded two-digit prefix followed by a short, descriptive, kebab-case identifier (e.g., `01-auth-login`, `02-rate-limiter`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order. `[phase-name]` is always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number (e.g., `PHASE_03`), matching the phase directory under `docs/phases/`.
 
 **Numbering rules**:
 - Start numbering at `01`
@@ -53,7 +53,7 @@ The manifest must list the phase document path, ordered feature task names, wave
 |---------------------|-------------------|--------------------------|
 | AC1: ... | `src/module.py` | Must-have automated test; existing test to update; Unity EditMode/PlayMode constrained test; code-review evidence only; manual QA check |
 
-For refactors, rewires, or behavior-changing work, explicitly note which existing tests are likely to break or need updates and which new tests are required. Treat test maintenance as part of the scope, not a deferred follow-up.
+Those five values are the evidence taxonomy for the whole plan set; §F reuses them.
 
 ### B. Correctness & Edge Cases
 
@@ -84,17 +84,11 @@ For refactors, rewires, or behavior-changing work, explicitly note which existin
 
 ### F. Test Plan (required)
 
-- Map unit/integration tests to acceptance criteria
-- Split planned evidence into categories:
-  - Must-have automated tests
-  - Existing tests to update
-  - Tests requiring Unity Test Runner / PlayMode / EditMode or other runner constraints
-  - Code-review evidence only
-  - Manual QA checks
+- Map unit/integration tests to acceptance criteria, labelled with the §A evidence taxonomy
 - Write top 5 high-value test cases or evidence checks (Given/When/Then where applicable)
-- For refactors, rewires, or API changes, include a dedicated note on impacted existing tests, new tests required, and any Unity EditMode/PlayMode or manual QA coverage still needed.
+- For refactors, rewires, API changes, or any behavior-changing work, include a dedicated note on impacted existing tests, new tests required, and any Unity EditMode/PlayMode or manual QA coverage still needed. Test maintenance is in scope, not a deferred follow-up.
 - List test data, mocks, or fixtures needed
-- When listing planned test method names, either confirm the method exists in the codebase, label it `[PROPOSED - name TBD]`, or omit the method name and describe the scenario. Do not present new test method names as existing facts.
+- A planned test method name is a concrete name under §C's `[PROPOSED - name TBD]` rule; the third option here is to omit the name and describe the scenario instead.
 
 ## Stage Format
 
@@ -118,16 +112,17 @@ All other stages:
 
 ## Context File (`-context.md`)
 
-The context file captures:
+This is the complete section inventory. Write **every** section; downstream agents read them by name, so an omitted section is a silent gap, not a shorter document.
 
-- Key files and modules relevant to this feature
+- **Key Files** — table of files and modules relevant to this feature, each with its role and change type (Create, Modify, Read-only reference). Separate files being changed from read-only reference files.
 - **Discovery Delta** — Plan Expander findings that validate, contradict, or refine the plan, including missing references, better existing API names, companion files, exact assertion tests, and framework constraints
-- Architectural decisions made during planning (what was chosen and why)
-- Constraints from the Phase document or codebase conventions
-- Scope boundaries that the implementer should preserve, including important files, systems, or behaviors intentionally left untouched
-- Relationships to sibling plans (shared prerequisites, suggested implementation order)
-- **Environment state** — tech stack, test runner command, lint/format commands, and test baseline; pre-captured by the Plan Expander so the Implementer skips discovery
-- **Relevant learnings** — filtered excerpts from `.github/learnings/` applicable to this feature's domain
+- **Architectural Decisions** — decisions made during planning (what was chosen and why)
+- **Constraints** — constraints from the Phase document, codebase conventions, or the plan's non-goals
+- **Scope Boundaries** — files, systems, or behaviors the implementer should preserve or intentionally not touch
+- **Relationships to Sibling Plans** — shared prerequisites and cross-feature dependencies
+- **Suggested Implementation Order** — ordering relative to sibling features, when the plan specifies one
+- **Environment State** — tech stack, test runner command, lint/format commands, and test baseline; pre-captured by the Plan Expander so the Implementer skips discovery
+- **Relevant Learnings** — filtered excerpts from `docs/learnings/` applicable to this feature's domain
 
 ### Discovery Delta section template
 
@@ -167,18 +162,22 @@ The context file captures:
 ```markdown
 ## Relevant Learnings
 
-[Filtered excerpts from .github/learnings/*.md relevant to this feature's domain.
+[Filtered excerpts from docs/learnings/*.md relevant to this feature's domain.
 Record "None applicable" if no entries match.]
 ```
 
 ## Tasks File (`-tasks.md`)
 
-An ordered checklist of concrete work items derived from the plan:
+An ordered checklist of concrete work items derived from the plan, **always grouped under stage headers** — one section per plan stage, in plan order. A flat, ungrouped task list is a format error. If the plan has no explicit stage boundaries, infer groupings from the AC structure (e.g. data/schema tasks as Stage 1, logic tasks as Stage 2, test-verification tasks as Stage 3).
 
 ```markdown
-- [ ] Task 1: [description]
-- [ ] Task 2: [description]
+## Stage N: [Name]
+
+- [ ] Task description derived from the stage goal and its acceptance criteria
+- [ ] Another task
 ```
+
+The `- [ ] ` checkbox syntax is consumed by the Implementer, which checks tasks off in place; do not vary it.
 
 ## Decomposition Rules
 
@@ -197,9 +196,8 @@ Before delivering plan documents, verify:
 - [ ] All requirements restated as testable acceptance criteria
 - [ ] Non-goals explicitly defined
 - [ ] Traceability matrix complete (AC → code → tests)
-- [ ] Concrete symbols and file paths are verified existing, copied exactly from the Phase document, or labeled `[PROPOSED - name TBD]`
+- [ ] Every concrete name in the plan — symbols, paths, config keys, test methods — is verified existing, copied from the Phase document, labeled `[PROPOSED - name TBD]`, or replaced with a scenario description
 - [ ] Cross-feature API contracts required by downstream plans appear in upstream acceptance criteria
-- [ ] Planned test method names are verified existing, explicitly proposed, or replaced with scenario descriptions
 - [ ] Edge cases and error handling addressed
 - [ ] Existing patterns identified and followed
 - [ ] Test plan covers all acceptance criteria using evidence categories, not unverified test names

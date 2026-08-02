@@ -12,8 +12,7 @@ corresponding values are known.
 
 ## Output Rules
 
-- Write reports under `dev/pr-review/<base-sha-short>-<UTC-YYYYMMDDTHHMMSSZ>/`.
-- Use the canonical filenames in each template below.
+- `pr-review-conventions` owns the report root and filenames; do not restate them.
 - Cite concrete evidence paths and line numbers when available.
 - Use `Not run` only with a reason and an owner or next action.
 - Keep the return message to the invoking agent within the conventions skill's
@@ -21,7 +20,7 @@ corresponding values are known.
 
 ## 1. Go/No-Go Readiness Report
 
-Write to `dev/pr-review/<base-sha-short>-<UTC-YYYYMMDDTHHMMSSZ>/readiness-report.md`.
+Write to `readiness-report.md` at the report root.
 
 ```markdown
 # PR Readiness Report — <BASE_SHA_SHORT>..<HEAD_SHA_SHORT>

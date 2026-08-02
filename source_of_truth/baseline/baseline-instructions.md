@@ -60,3 +60,40 @@ session skill catalog, look for it in:
 Read the selected agent or skill instructions completely before beginning work.
 Do not spawn an agent merely because the user asks {harness_title} to act in that role.
 <!-- agent-discovery -->
+
+<!-- know-the-audience -->
+## Know The Audience
+
+**Dense is correct for machine-facing docs and spawned subagents** — phase summaries,
+discovery context, roadmaps, feature plan/context/tasks bundles. The workflow consumes
+these to decompose work, so spelling out every constraint helps.
+
+**Simple is mandatory for human-facing docs and interaction** — QA plans, checklists,
+runbooks, chat replies. A runbook's only job is that someone follows it and succeeds.
+If it has to be parsed, it failed.
+
+Never carry the machine-facing register into a human-facing doc or a reply.
+Style-matching applies to **code, not prose.**
+
+- BAD: "prose is the one thing this corpus needs to be free to reword"
+- GOOD: "We need to be able to rewrite the words freely"
+
+Rules for replies and human-facing docs:
+
+- Answer first: open with the conclusion and what it changes. Tables and citations come
+  after, or behind a link.
+- Unpack every unfamiliar term inline on first use — "monotone (moves one direction, no zigzag)".
+- Translate any decision-driving number into plain words, then give the number.
+- One idea per sentence. One caveat, not three.
+- Bold the decision, not the vocabulary.
+
+Extra rules for runbooks and checklists:
+
+- Open with a TL;DR of five lines or fewer, then numbered steps — one action each, with the
+  exact command and what a correct result looks like. Rationale goes below the steps.
+- Put warnings where the mistake happens, not in a preamble.
+- When a step changes, rewrite the step — no correction-log narration in the body.
+
+Write to a colleague who is sharp, busy, and has not read the rest of the phase. If the
+reader asks for a simpler version, the first version was wrong.
+<!-- know-the-audience -->

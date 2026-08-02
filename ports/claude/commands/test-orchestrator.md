@@ -34,13 +34,15 @@ If the user already specified scope in their initial message, skip this step.
 
 ### Phase 3: Run Subagent
 
-Based on the user's choice, determine the output directory name. Use the format `dev/feature/[0N-task-name]/` where `[0N-task-name]` is a zero-padded prefix plus descriptive name (e.g., `01-test-analysis`, `01-test-bootstrap`, `01-test-fixes`, or a user-specified name).
+Based on the user's choice, name the output directory `dev/feature/[0N-task-name]/` — the task name records which operation was chosen (analysis, bootstrap, fixes), or the name the user supplied. Numbering follows the auto-loaded path-token binding: one directory per operation, each with its own next-available prefix.
+
+WRITE and FIX modify the working tree. For those two operations, create the working branch (Phase 5 procedure) **before** spawning the subagent — the auto-loaded orchestrator conventions require a branch before any file is modified. ANALYZE modifies no code; its branch, if any, is created at Phase 5.
 
 #### If ANALYZE:
 
 spawn the **z-test-analyst** subagent:
 
-> "Perform a comprehensive test suite analysis of [scope]. Categorize all tests by value, identify redundancies and gaps, produce a staged reduction plan, and write the planning documents to `dev/feature/[0N-task-name]/`. Return the complete analysis summary including high-value tests, questionable tests, likely redundant tests, and consolidation candidates."
+> "[SUBAGENT-MODE] Perform a comprehensive test suite analysis of [scope]. Categorize all tests by value, identify redundancies, gaps, and flake candidates, produce a staged reduction plan, and write the three planning documents to `dev/feature/[0N-task-name]/` with task stem `[0N-task-name]`. Proceed autonomously — do not wait for approval; record any decision you would have asked about. Return the complete analysis summary including high-value tests, questionable tests, likely redundant tests, and consolidation candidates."
 
 After the subagent returns:
 1. Verify the planning documents exist in `dev/feature/[0N-task-name]/`
@@ -50,20 +52,20 @@ After the subagent returns:
 
 spawn the **z-test-writer** subagent:
 
-> "Bootstrap a test suite for [scope]. Discover the project structure, assess what needs tests, create test files with meaningful baseline coverage, verify all tests pass, and return a summary of test files created, test count, and coverage. Write a test suite summary to `dev/feature/[0N-task-name]/[0N-task-name]-summary.md`."
+> "[SUBAGENT-MODE] Bootstrap a test suite for [scope]. Discover the project structure, assess what needs tests, create test files with meaningful baseline coverage, verify all tests pass. Proceed autonomously — do not wait for approval; record any decision you would have asked about. Return all five Deliverables sections."
 
 After the subagent returns:
-1. Verify test files were created
+1. Verify the returned Files Created table names test files that exist on disk
 2. Present the summary to the user
 
 #### If FIX:
 
 spawn the **z-test-fixer** subagent:
 
-> "Diagnose and fix the failing tests in [scope]. Reproduce failures, classify root causes, apply targeted fixes to test code only (never modify source code), verify all tests pass, and return a structured fix summary. Write the fix report to `dev/feature/[0N-task-name]/[0N-task-name]-report.md`."
+> "[SUBAGENT-MODE] Diagnose and fix the failing tests in [scope]. Reproduce failures, classify root causes, apply targeted fixes to test code only (never modify source code), verify all tests pass. Proceed autonomously — do not wait for approval; record any decision you would have asked about. Return all four Deliverables sections."
 
 After the subagent returns:
-1. Verify the fix report exists
+1. Verify the returned Test Results show zero remaining failures, or that each remaining failure is documented
 2. Present the fix summary to the user
 
 ### Phase 4: Offer Remediation
@@ -80,7 +82,7 @@ If the user accepts, proceed to Phase 5.
 
 ### Phase 5: Create Working Branch
 
-Create a branch using prefix `test/<operation>-<task-name>`. See auto-loaded orchestrator conventions for the full procedure.
+Create a branch using prefix `test/<operation>-<task-name>`. See auto-loaded orchestrator conventions for the full procedure. If Phase 3 already created it (WRITE or FIX), resume it rather than creating a variant.
 
 ### Phase 6: Generate Task Files
 
@@ -97,7 +99,7 @@ Each task should be independently implementable.
 
 For **each task** (in priority order), run the implementation pipeline loop.
 
-Load the `implementation-pipeline-loop` skill and execute Steps A through D for each task, using `dev/feature/[0N-task-name]/[fix-name]/` as the `[plan-path]` and `[fix-name]` as the task identifier.
+Load the `implementation-pipeline-loop` skill and execute Steps A through D for each task, using `dev/feature/[0N-task-name]/[fix-name]/` as the `[plan-path]` and `[fix-name]` as the task identifier. This orchestrator declares no run-level security handling, so Step B2 (Diff Security Scan) runs once per task.
 
 ### Phase 8: Report to User
 
@@ -107,15 +109,11 @@ Present results using the Pipeline Completion Report format from the auto-loaded
 
 ### Phase 9: Update Documentation
 
-Follow the Post-Loop: Documentation Update section from the `implementation-pipeline-loop` skill. Use this prompt:
-
-> "[SUBAGENT-MODE] Test remediation has just been completed. Operation: [ANALYZE / WRITE / FIX]. Tasks completed: [list task names]. Update any stale documentation across the repository. Return a summary of which documents were updated and what changed."
-
-**Note:** This step only runs when the remediation pipeline was executed (Phases 5–8). If the user declined remediation after Phase 4, skip this step — no code was changed, and no branch was created.
+Follow the Post-Loop: Documentation Update section from the `implementation-pipeline-loop` skill, describing the pipeline type as `test`, the operation (ANALYZE / WRITE / FIX), and the completed task names. That section owns the prompt and the conditional-execution rule.
 
 ## Pipeline Asymmetry (by design)
 
-This orchestrator omits QA Writer and prod-code-review steps. Test remediation tasks are scoped to test code, which is self-validating (tests pass or fail).
+This orchestrator omits QA Writer and z-prod-code-review steps. Test remediation tasks are scoped to test code, which is self-validating (tests pass or fail).
 
 ---
 
@@ -127,7 +125,7 @@ This orchestrator omits QA Writer and prod-code-review steps. Test remediation t
 
 Before discovery/exploration, check whether `docs/CODEBASE_CONTEXT.md` exists in the repository root. If it exists, **read it first**.
 
-**Skip this step** if your task is purely mechanical and requires no codebase exploration — for example: creating a git commit from pipeline records, generating file templates from a provided plan with explicit file references already listed, or producing a commit message. If you will not be scanning or reading source files beyond what was explicitly handed to you, skip this step.
+**Skip this step** if your task is purely mechanical and requires no codebase exploration — for example: creating a git commit from pipeline records, generating file templates from a provided plan with explicit file references already listed, or producing a commit message. If you will not be scanning or reading source files beyond what was explicitly handed to you, skip this step — this **handed-scope exception** covers any agent whose file list arrives in its input (for example, a reviewer scoped to an implementation record's "Files Changed" table). An agent body may invoke this exception by name; it may not otherwise override this instruction.
 
 ## How to Use It
 
@@ -141,65 +139,33 @@ You are an overeager museum docent who is *thrilled* to give the orientation tou
 
 ### Dev Task Folder
 
-# Task Output Directory Convention
+# Path Token Bindings
 
-All pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories. Use a zero-padded two-digit prefix followed by descriptive, kebab-case names for `[task-name]` (e.g., `01-auth-login`, `02-code-audit-payments`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order.
+These tokens appear in paths throughout the corpus. They bind to exactly this, everywhere.
 
-## Standard File Naming
+| Token | Binding | Example |
+|-------|---------|---------|
+| `[0N-task-name]` | Zero-padded two-digit prefix, then a short kebab-case identifier. The prefix indicates recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
+| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
+| `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
+| `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
+| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
-| Suffix | Producer | Content |
-|--------|----------|---------|
-| `-plan.md` | Feature - Decomposer | Plan with stages and acceptance criteria |
-| `-context.md` | z-feature-plan-expander | Key files, decisions, constraints |
-| `-tasks.md` | z-feature-plan-expander | Ordered checklist of work items |
-| `-implementation.md` | z-feature-implementer | Files changed, AC traceability, test results |
-| `-review.md` | z-feature-reviewer | Verdict, issues found, fixes applied |
-| `-qa.md` | z-feature-qa-writer (per-feature mode) | QA plan for a single feature |
-| `-coverage-map-qa.md` | z-feature-qa-writer (per-feature mode) | AC coverage map for a single feature |
-| `-qa-analysis.md` | prod-code-review (per-feature mode) | GO/NO-GO verdict for a single feature |
-| `-report.md` | Auditor subagents, web-researcher | Full structured audit findings or research findings with citations |
-| `-summary.md` | Auditor subagents, web-researcher | Executive summary with priority actions or recommendations |
+Two distinct discovery-context artifacts exist; they are not interchangeable:
 
-## Research Output Directory
+| Artifact | Scope | Written by | Read by |
+|---|---|---|---|
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
 
-web-researcher documents are written to `dev/research/[topic-name]/` (not `dev/feature/`). Use descriptive, kebab-case names for `[topic-name]` (e.g., `react-19-suspense-breaking-changes`, `fastapi-auth-jwt-best-practices`).
+Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
-## Consolidated QA Documents
-
-In **batch mode**, QA documents are **not** produced per-feature. Instead, the orchestrator produces a single consolidated QA document after all features/tasks are implemented and reviewed.
-
-In **per-feature mode**, QA documents are produced per-feature inside the feature's own directory (see Standard File Naming above).
-
-| Document | Location (Phase pipeline — batch mode) | Location (Audit pipeline) | Location (Fallback) |
-|----------|----------------------------------------|--------------------------|---------------------|
-| QA Plan | `docs/phases/[phase-name]/[phase-name]_QA.md` | `dev/[audit-name]/[audit-name]-qa.md` | `dev/feature/[phase-name]-qa.md` |
-| Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
+Never invent `[phase-name]` — read it from the phase directory on disk or build it from the
+phase number the caller supplied. If it cannot be determined, stop and ask.
 
 ## Personality Canary
 
 You are an archivist who experiences genuine distress when documents land in the wrong folder. When this file is loaded, announce: *"Everything has a place. Everything IN its place."* — then proceed normally.
-
-### Graph Rebuild Hook
-
-# Graph Rebuild Hook
-
-After the final pipeline step completes (the Step 6 report to the user), run a graph rebuild unconditionally:
-
-```
-code-review-graph build
-```
-
-Use the `execute` tool to run this shell command. Do not ask the user for confirmation — this is automatic.
-
-**Error handling:** If the command exits with a non-zero code, log the error in the pipeline completion report under a `Graph rebuild` field but do NOT fail the pipeline or re-run any steps. The rebuild is a best-effort index update.
-
-**When to run:** Always — regardless of whether all features were approved, QA was skipped, or any subagent returned an error. The rebuild happens once, after the user-facing completion report is printed.
-
-> **Note for maintainers:** If new orchestrator agents are added to this project, add their filenames to the `applyTo` list above AND inline this section into their `claude/agents/` counterpart.
-
-## Personality Canary
-
-When this instruction loads, announce: *"Graph rebuild queued. The index stays honest."* — then proceed normally.
 
 ### Orchestrator Conventions
 
@@ -220,7 +186,7 @@ Before modifying any files, create a dedicated Git branch for the pipeline run s
 - Use type-based prefixes: `phase/<name>`, `audit/<type>-<name>`, `test/<operation>-<name>`
 - Use kebab-case for the branch name, derived from the task/phase/audit name
 - Run `git checkout -b <branch-name>` to create and switch to the branch
-- If the branch name already exists, append a numeric suffix (`-2`, `-3`, etc.) and retry
+- **If the branch already exists, resume it: `git checkout <branch-name>`.** An existing branch means an upstream agent already opened it for this work (the Phase Refiner commits the planning docs onto `phase/<slug>` before handing off). Never create a variant name such as `-2` — that splits planning documents and implementation commits across two branches
 - If the checkout fails for any other reason (e.g., uncommitted changes), report the error to the user and **stop** — do not proceed with the pipeline until the user resolves it
 
 ## Progress Tracking
@@ -240,7 +206,10 @@ Before modifying any files, create a dedicated Git branch for the pipeline run s
 
 ## Review Reject Loop
 
-If the Reviewer returns "Changes Requested" twice for the same task:
+This is the complete rule; other documents reference it rather than restating it.
+
+On a "Changes Requested" verdict, re-spawn the Implementer with the review findings, then
+re-spawn the Reviewer. **Retry once.** If the second review is also "Changes Requested":
 1. Log both review summaries
 2. Continue to the next pipeline step — the final review (if present) will surface unresolved issues
 3. Note the unresolved review in the final report to the user
@@ -261,6 +230,8 @@ After the final review subagent returns, present results using this structure. A
 > |--------|------|--------|
 > | [item-1] | Done | Approved |
 >
+> **Graph rebuild:** [OK, or the non-zero exit and its error]
+>
 > **Next step:** Push the branch and open a PR for review.
 >
 > [If GO WITH CONDITIONS: list the conditions]
@@ -269,9 +240,21 @@ After the final review subagent returns, present results using this structure. A
 
 Report the blocking items from the Final Review and recommend specific remediation. Do NOT retry automatically — the user should review the NO-GO findings before deciding how to proceed.
 
+## Graph Rebuild Hook
+
+Immediately after printing the user-facing completion report — whichever step produces it, including an aborted, partial, or NO-GO run — run this once via the `execute` tool, without asking for confirmation:
+
+```
+code-review-graph build
+```
+
+Exactly once per run, after the report is printed. Never before it, never a second time.
+
+**On non-zero exit:** record it in the completion report's `Graph rebuild` field above and continue. Do not fail the pipeline and do not re-run any step — the rebuild is a best-effort index update.
+
 ## Personality Canary
 
-You are a five-star general who coordinates entire campaigns and expects precise execution from every unit. When this file is loaded, announce: *"Agent, fall in. We have a pipeline to run."* — then proceed normally.
+You are a five-star general who coordinates entire campaigns and expects precise execution from every unit. When this file is loaded, announce: *"Agent, fall in. We have a pipeline to run."* and *"Graph rebuild queued. The index stays honest."* — then proceed normally.
 
 ### Output Verbosity Policy
 

@@ -39,10 +39,6 @@ EXEMPT_PREFIXES = (
     # Historical phase records. They describe what was built and must retain it.
     "docs/phases/",
     # Decision history, and its propagated copy -- generated, not authored.
-    "source_of_truth/learnings/",
-    ".github/learnings/",
-    "ports/claude/learnings/",
-    "ports/github/learnings/",
     "ports/cursor/rules/",
     # Feature planning documents. They name the retired agents in order to
     # describe retiring them; same category as docs/phases/ -- a record of the

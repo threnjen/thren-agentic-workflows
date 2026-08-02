@@ -94,10 +94,8 @@ side's entry is untouched.
 
 ## Stages B–E: Engagement-Level Synthesis
 
-Each stage below runs **once per engagement**, in order, and only when
-**every pair** has completed Stage A — holistic client documents are never
-written around a missing or blocked pair; a failed pair blocks all
-synthesis until resolved. Every spawn carries the full pair roster (names,
+Each stage below runs **once per engagement**, in order, and only once the
+orchestrator's §4 pair gate opens. Every spawn carries the full pair roster (names,
 `mode`s), the workspace root, the SOW path (or "none configured"), and
 every pair's relevant report pointers. Each stage writes one client
 document set at flat `deliverables/` paths with a per-repo section per
@@ -143,26 +141,13 @@ available. Never pass abstract pointers; the docs, graphs, and QA packages
 live at the passed paths inside the client repository checkouts, not the
 workspace, and the spawn must say so.
 
-Before drafting, the writer builds a compact evidence map for every primary
-workflow: original/upgraded comparison sources, exact QA check IDs and
-statuses for the upgraded side, and the SOW criterion or explicit scope
-exception that governs it. A completed PASS on an exact QA check is direct
-evidence that the upgraded behavior was observed at that QA standard. It is
-not, by itself, proof that the original side behaved identically; when
-original QA is absent, preserve that asymmetry in the wording. “No
-identifiable delta” means no behavioral delta was established by the
-comparison evidence; it never means no source-code changes and never means
-that QA was absent.
-
-An intentional change expressly authorized by the SOW is an approved scoped
-delta under any pair mode. It must be narrated as such and must not be
-reported as an unresolved framing discrepancy. Only a change outside the
-SOW, or a required behavior whose evidence and scope cannot be established,
-remains a framing discrepancy.
+The spawn directs the writer to build its evidence map and classify every
+primary workflow and every mode-straining change per the
+`engagement-evidence-standard` skill.
 
 Record its three client document pointers and each pair's internal
-narrative-basis pointer. The return must include compact counts/pointers for
-QA-backed workflows, SOW-authorized deltas, comparison-only claims, and
-unresolved discrepancies. If any unresolved framing discrepancy remains,
+narrative-basis pointer. The return must include compact counts/pointers per
+evidence class (`qa-backed`, `comparison-only`, `unverified`) and per scope
+class (`sow-authorized`, `unresolved`). If any `unresolved` change remains,
 surface it to the user before the compliance stage — a client narrative
 contradicted by evidence must be resolved before delivery.

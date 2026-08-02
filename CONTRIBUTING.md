@@ -31,16 +31,13 @@ directory). Hand-maintained files are never touched.
 
 ## What's in the Repo
 
-- **54 agent definitions** in `source_of_truth/agents/` (50 `*.agent.md` plus the plain
-  `auditor.md`, `delta-auditor.md`, `docs-writer.md`, and `04f-prod-code-review.md`), of
-  which **15 are user-invocable** and **38 are hidden subagents** (`user-invocable: false`)
+- **54 agent definitions** in `source_of_truth/agents/` (all `*.agent.md`), of
+  which **15 are user-invocable** and **39 are hidden subagents** (`user-invocable: false`)
   that orchestrators spawn automatically.
-- **34 skills** — directory-based capabilities agents load on demand, each rooted at
+- **42 skills** — directory-based capabilities agents load on demand, each rooted at
   `SKILL.md`.
-- **16 instruction files** — cross-cutting guidance applied by `applyTo` file-glob
+- **18 instruction files** — cross-cutting guidance applied by `applyTo` file-glob
   matching.
-- **4 learnings files** — seed rule sets that ship into a target repo and grow there as
-  agents append what they learn.
 
 Only the destinations differ per harness; the agents behave the same everywhere.
 
@@ -54,12 +51,12 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ├── CONTRIBUTING.md                 # This file
 ├── source_of_truth/                # THE authoring surface — edit here
 │   ├── agents/                     # 54 agent definitions (catalog lives in USAGE.md)
-│   ├── skills/                     # 34 skill directories, each rooted at SKILL.md
-│   ├── instructions/               # 16 instruction files matched by applyTo globs
-│   └── learnings/                  # 4 seed learnings files
+│   ├── skills/                     # 42 skill directories, each rooted at SKILL.md
+│   ├── instructions/               # 18 instruction files matched by applyTo globs
+│   └── baseline/                   # baseline-instructions.md, rendered at deploy time
 ├── ports/                          # Generated outputs — do not edit by hand
-│   ├── claude/                     # agents, commands, skills, learnings
-│   ├── codex/                      # agents, profiles, skills, learnings (TOML agents)
+│   ├── claude/                     # agents, commands, skills
+│   ├── codex/                      # agents, profiles, skills (TOML agents)
 │   ├── opencode/                   # agents, skills
 │   ├── cursor/                     # commands, rules (.mdc)
 │   └── github/                     # verbatim mirror of the source subdirs
@@ -115,19 +112,16 @@ researcher). See
 [USAGE.md](USAGE.md) for the full catalog
 and pipeline flow.
 
-### Shared skills, instructions, and learnings
+### Shared skills and instructions
 
 `source_of_truth/skills/` holds directory-based skills (each rooted at `SKILL.md`) that
 agents load on demand. `source_of_truth/instructions/` holds instruction files matched by
 `applyTo` globs — consumed directly by Copilot and transformed into inline guidance or
 Cursor rules for other harnesses.
 
-`source_of_truth/learnings/` holds four seed files of durable, repo-agnostic rules —
-review patterns, cross-phase conventions, project traps, and debugging root causes. They
-reach a working repository through its `.github/learnings/` directory (and as Cursor
-agent-requested rules), where agents both read them and append newly learned rules. Keep
-what is authored here general: anything specific to one repository belongs in that
-repository's copy, not in the seed.
+There is no learnings asset here. Durable, repo-agnostic rules are skills. A working
+repository's own findings live in its `docs/learnings/`, written by the agents working
+there and never seeded from this repository.
 
 An instruction's `applyTo` globs are matched with `fnmatch` against each agent's
 repo-relative path, so `**/name.agent.md` only matches when a `/` immediately precedes

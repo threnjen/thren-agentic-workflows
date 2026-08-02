@@ -29,7 +29,7 @@ For each function, class, file, or dependency in scope:
 
 ## What never gets flagged
 
-Do not report as excess: input validation at trust boundaries, error handling that prevents data loss or corruption, security measures, accessibility support, tests for non-trivial logic, or anything the user explicitly requested. If one of these *looks* over-built, note it as a question, not a finding.
+Nothing on the **Never minimized** list in [base-code-guidelines](../base-code-guidelines/SKILL.md) §2 may appear in the delete-list. Read that list before reporting.
 
 ## Verify before reporting
 

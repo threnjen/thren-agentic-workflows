@@ -7,13 +7,6 @@ description: "Author and publish reusable Terraform modules in cf-infra-terrafor
 
 Use this skill when working in `../cf-infra-terraform-modules` on reusable module design, packaging, publication, and downstream consumption guidance.
 
-## When To Load
-
-- You are creating or modifying modules in `terraform_modules/modules/`.
-- You are reviewing module publication or troubleshooting missing module artifacts.
-- You are updating docs or examples that reference module source URLs.
-- You are deciding whether a change should extend an existing module or add a new one.
-
 ## Source Of Truth Files
 
 - `../cf-infra-terraform-modules/terraform_modules/zip_files.sh`

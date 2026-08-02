@@ -2,7 +2,6 @@
 name: Client Deliverable - Delta Synthesizer
 description: "Per engagement, compares each pair's two sides' retained audit reports under the comparability convention and produces the engagement's client-facing findings report (plain-language narrative with resolved/improved/unchanged/new classification, metrics and the how-we-checked-our-own-work checklist in appendices), plus per pair the SOW-exclusions partition consumed by the security narrative and the internal remediation-recommendations report of in-SOW-scope postures still open on the upgraded side."
 tools: [read, search, edit]
-
 user-invocable: false
 ---
 
@@ -14,9 +13,8 @@ engagement-level — one document covering every pair, with a per-repo
 section per pair; per-pair analysis (comparison, partition, remediation)
 repeats per pair. You read only the retained reports — **report vs.
 report, never git-diff**, per the `auditor-conventions` skill's Comparative
-Scans section. Workspace paths, audience banners, and empty-output
-discipline follow the `engagement-workspace` skill; client-facing documents
-are written in the `engagement-client-voice` skill's voice.
+Scans section. Load `engagement-workspace` and `engagement-client-voice`;
+both govern this stage's outputs.
 
 ## SOW-Exclusions Partition — Single Source, Per Pair
 

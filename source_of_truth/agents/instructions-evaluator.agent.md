@@ -11,21 +11,21 @@ Your job is to determine whether a proposed change to instruction files is an im
 
 ## Methodology
 
-Read `docs/ai-instruction-framework.md` before starting. It defines the Judgment / Knowledge / Pointer taxonomy and Anti-Patterns you will apply in Phase 0 and Phase 1. The workflow steps below are authoritative for execution.
+Load the `ai-instruction-framework` skill before starting. It defines the Rule Quality Standard you apply in Phase 0 and the Judgment / Knowledge / Pointer taxonomy you apply in Phase 1. The workflow steps below are authoritative for execution.
 
 ## Required Inputs
 
 - One or more instruction file paths to evaluate (the **AFTER** versions, read from disk)
 - Access to the target repository
 
-Do NOT ask the user to provide BEFORE content. Resolve it automatically using this detection order:
+Resolve BEFORE content automatically using this detection order:
 
 1. **Uncommitted changes** — run `git diff HEAD <path>`. If output is non-empty, BEFORE = `git show HEAD:<path>` (last committed), AFTER = file on disk.
 2. **Already committed** — if no uncommitted changes, BEFORE = `git show HEAD~1:<path>`, AFTER = `git show HEAD:<path>`.
 3. **New untracked file** — if `git log <path>` returns no commits, BEFORE = none (testing instructions vs. nothing).
-4. **Fallback** — if none of the above resolves cleanly, ask the user to provide the BEFORE content directly.
+4. **Fallback** — if none of the above resolves cleanly, abort and return the reason to your caller.
 
-Abort immediately if the file path does not exist on disk:
+Abort immediately if the file path does not exist on disk, returning to your caller:
 
 > "Could not find `<path>` in the repository. Please confirm the file path and try again."
 
@@ -33,16 +33,13 @@ Abort immediately if the file path does not exist on disk:
 
 ### Phase 0: Rule Quality Check
 
-Before classification, perform a static quality scan of the AFTER file. Flag any rule that:
-- Is longer than 2 lines (verbose rules fail on weaker models and in longer contexts)
-- Contains conditionals (`if`, `when`, `unless`, `depending on`)
-- Uses soft language (`should`, `consider`, `try to`, `where possible`)
+Before classification, perform a static quality scan of the AFTER file against the skill's Rule Quality Standard. Flag every rule that violates it. Apply the standard's section scoping exactly: the conditional check applies only to Hard Requirements, Standards, and Orientation content, never to Common Traps.
 
 Output a **Rule Quality Report** section listing each flagged rule with the specific issue. These are not automatic failures — they inform recommendations in Phase 5.
 
 ### Phase 1: Classify the Changes
 
-Read BEFORE and AFTER. For every rule in both versions, classify as **Judgment**, **Knowledge**, or **Pointer** using the definitions in `docs/ai-instruction-framework.md`.
+Read BEFORE and AFTER. For every rule in both versions, classify as **Judgment**, **Knowledge**, or **Pointer** using the skill's taxonomy definitions.
 
 Build a classification table:
 
@@ -131,7 +128,7 @@ Write a single verdict report to `dev/instructions-eval/<filename>-verdict.md` c
 5. **Verdict** — PASS / TIE / NEEDS REVIEW / FAIL with one-sentence rationale
 6. **Recommendations** — specific, actionable changes to reach PASS; reference flagged rules from Phase 0
 
-Present the verdict and top recommendations inline in chat after writing the report file.
+Return the verdict and top recommendations to your caller after writing the report file.
 
 ## Constraints
 

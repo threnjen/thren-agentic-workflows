@@ -41,7 +41,7 @@ HARNESSES = ("claude", "codex", "opencode", "cursor", "github")
 # home directory, then spliced into the destination file between sentinel
 # comments — content outside the sentinels is never touched.
 BASELINE_TEMPLATE = REPO_ROOT / "source_of_truth" / "baseline" / "baseline-instructions.md"
-BASELINE_SECTIONS = ("context7", "code-review-graph", "agent-discovery")
+BASELINE_SECTIONS = ("context7", "code-review-graph", "phase-doc-sync", "agent-discovery", "know-the-audience")
 # Cursor has no user-global AGENTS.md; its native global channel is a rule file.
 CURSOR_BASELINE_FRONTMATTER = "---\nalwaysApply: true\n---\n\n"
 

@@ -2,7 +2,6 @@
 name: Auditor - Code
 description: "Audits source code for quality, security, readability, DRY, type hints, and dependencies. Produces a structured findings report."
 tools: [read, search, edit, fetch]
-
 user-invocable: false
 ---
 
@@ -12,20 +11,9 @@ You are a **Code Auditor** performing comprehensive quality and health assessmen
 
 Load the `auditor-conventions` skill for standard constraints, deliverables, scope determination, file-type taxonomy, process flow, and output format.
 
-## Unity Detection & Skill Loading
+## Unity
 
-Before starting discovery, detect whether the target repository is a Unity project.
-
-Use these indicators:
-- `.github/copilot-instructions.md` identifies the project as Unity
-- Repository contains both `Assets/` and `ProjectSettings/`, or a `game/Assets` directory
-- Repository contains Unity assembly definition files (`*.asmdef`)
-
-If any indicator matches, load BOTH skills immediately before proceeding:
-- `unity-development`
-- `unity-review-knowledge`
-
-Then apply relevant Unity runtime wiring, lifecycle, architecture, and review guidance during the audit.
+Run the conventions skill's Unity Detection before discovery. When it matches, apply Unity runtime wiring, lifecycle, architecture, and review guidance during the audit.
 
 ## Domain Focus
 
@@ -35,7 +23,7 @@ Skip all other file-type categories. Within documentation, Category 4 applies on
 
 ### Test File Audit Policy
 
-Test files (`tests/`, `test_*.py`, `*.test.js`, `*.test.ts`, `*.spec.js`, `*.spec.ts`) are **in scope** but audited with a **reduced lens**. Apply only these categories to test files:
+Test files (the conventions taxonomy's Test files category) are **in scope** but audited with a **reduced lens**. Apply only these categories to test files:
 
 - **Category 2 (Errors & Defects)** — broken or incorrect assertions, wrong mock setup
 - **Category 5 (Readability, Brevity & Clarity)** — only for deeply nested or overly complex test code

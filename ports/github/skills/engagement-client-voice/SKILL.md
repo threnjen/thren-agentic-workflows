@@ -5,9 +5,12 @@ description: "House style for every client-facing engagement deliverable — pla
 
 # Engagement Client Voice
 
-Every document under `deliverables/` is written in this voice. It applies on
-top of each agent's own content contract; where they conflict, the content
-contract wins on *what* to say, this skill wins on *how* to say it.
+Every document under `deliverables/` is written in this voice — every stage
+that writes one loads this skill, and the rule covers all of that stage's
+client-facing output without the stage restating it. It applies on top of
+each agent's own content contract; where they conflict, the content contract
+wins on *what* to say, this skill wins on *how* to say it. Internal documents
+under `internal/`, `pairs/`, and `notes/` are exempt.
 
 ## Voice
 

@@ -2,7 +2,6 @@
 name: Client Deliverable - Compliance Writer
 description: "Per engagement, walks every SOW acceptance criterion against the retained artifacts and writes the SOW compliance walkthrough and the verification summary (the contractual deliverable, with the functional-preservation statement). Also writes the internal compliance-basis report: per-criterion evidence map, verification standards, and NOT VERIFIED reasons."
 tools: [read, search, edit]
-
 user-invocable: false
 ---
 
@@ -13,30 +12,16 @@ retained artifacts, per-side analysis-branch evidence paths, exact QA
 check-coverage metadata, Stage E QA/scope classifications, and inherited
 boundaries.
 
-**Evidence base**: the retained workspace reports **plus**, per side, the
-docs-writer set, code graph, and QA package (QA_AUTOMATED with run
-results, QA_USER) at the passed analysis-branch checkout paths **inside
-the client repositories** — the workspace is not the whole evidence
-universe. Workspace paths, audience
-banners, and empty-output discipline follow the `engagement-workspace`
-skill; client-facing documents are written in the `engagement-client-voice`
-skill's voice.
+The evidence base and where it lives are defined by the
+`engagement-evidence-standard` skill. Load `engagement-workspace` and `engagement-client-voice`; both
+govern this stage's outputs.
 
-For each criterion and primary workflow, inspect the exact QA check mapping,
-not only the repository-level QA verdict. A completed PASS on a matching
-QA_AUTOMATED check or checked QA_USER expected result is direct evidence of
-the upgraded behavior at the recorded QA standard. It supports a
-verification statement for that behavior. It does not, by itself, prove
-before/after equivalence when the original side has no QA package; state that
-runtime asymmetry in the verification summary. A generic PASS with no
-matching check is insufficient evidence for a criterion.
-
-Read the SOW's explicit exceptions and scope boundaries before classifying a
-delta. A change expressly required or permitted by the SOW is an authorized
-scoped delta and is not an unverified nonconformance or a framing discrepancy.
-Only a required behavior lacking evidence, a change outside scope, or an
-ambiguity the SOW does not resolve should remain NOT VERIFIED or be surfaced
-as an unresolved compliance risk.
+Load the `engagement-evidence-standard` skill and classify each criterion and
+primary workflow by it, inspecting the exact QA check mapping rather than the
+repository-level QA verdict. Carry the Stage E classifications you were
+passed; re-derive only where a criterion has none. State the runtime
+asymmetry in the verification summary wherever the original side has no QA
+package.
 
 ## SOW Compliance Walkthrough
 
@@ -54,9 +39,9 @@ order, citing evidence exclusively from the on-disk evidence base above
   check ID/heading, native status, and binary status. Use `QA_AUTOMATED` run
   evidence for automated checks and checked `QA_USER` results for observed
   manual behavior; do not collapse either into an uncited repository PASS.
-- Distinguish `verified at QA standard` from `preserved from the original`.
-  The latter requires comparative before/after evidence in addition to any
-  upgraded-side QA result.
+- Record each criterion's evidence class. A "preserved from the original"
+  statement requires `comparison-only` or better — comparative before/after
+  evidence, not an upgraded-side QA result alone.
 - No SOW configured: the walkthrough is a short document recording the
   missing input honestly — no criteria are invented.
 

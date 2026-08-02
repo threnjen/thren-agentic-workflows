@@ -1,6 +1,6 @@
 ---
-description: "Shared conventions for orchestrator agents that coordinate subagent pipelines. Loaded automatically for orchestrator agent definitions."
-applyTo: "**/auditor.md,**/delta-auditor.md,**/04-phase-execute.agent.md,**/test-orchestrator.agent.md"
+description: "Shared conventions for orchestrator agents that coordinate subagent pipelines, including the end-of-run graph rebuild (merged from graph-rebuild-hook). Audience is ENUMERATED deliberately - the four pipeline orchestrators are an arbitrary subset with no filename family. Add any new agent that coordinates a subagent pipeline, and inline this file into its claude/agents/ counterpart."
+applyTo: "**/auditor.agent.md,**/delta-auditor.agent.md,**/04-phase-execute.agent.md,**/test-orchestrator.agent.md"
 ---
 
 # Orchestrator Conventions
@@ -20,7 +20,7 @@ Before modifying any files, create a dedicated Git branch for the pipeline run s
 - Use type-based prefixes: `phase/<name>`, `audit/<type>-<name>`, `test/<operation>-<name>`
 - Use kebab-case for the branch name, derived from the task/phase/audit name
 - Run `git checkout -b <branch-name>` to create and switch to the branch
-- If the branch name already exists, append a numeric suffix (`-2`, `-3`, etc.) and retry
+- **If the branch already exists, resume it: `git checkout <branch-name>`.** An existing branch means an upstream agent already opened it for this work (the Phase Refiner commits the planning docs onto `phase/<slug>` before handing off). Never create a variant name such as `-2` — that splits planning documents and implementation commits across two branches
 - If the checkout fails for any other reason (e.g., uncommitted changes), report the error to the user and **stop** — do not proceed with the pipeline until the user resolves it
 
 ## Progress Tracking
@@ -40,7 +40,10 @@ Before modifying any files, create a dedicated Git branch for the pipeline run s
 
 ## Review Reject Loop
 
-If the Reviewer returns "Changes Requested" twice for the same task:
+This is the complete rule; other documents reference it rather than restating it.
+
+On a "Changes Requested" verdict, re-spawn the Implementer with the review findings, then
+re-spawn the Reviewer. **Retry once.** If the second review is also "Changes Requested":
 1. Log both review summaries
 2. Continue to the next pipeline step — the final review (if present) will surface unresolved issues
 3. Note the unresolved review in the final report to the user
@@ -61,6 +64,8 @@ After the final review subagent returns, present results using this structure. A
 > |--------|------|--------|
 > | [item-1] | Done | Approved |
 >
+> **Graph rebuild:** [OK, or the non-zero exit and its error]
+>
 > **Next step:** Push the branch and open a PR for review.
 >
 > [If GO WITH CONDITIONS: list the conditions]
@@ -69,6 +74,18 @@ After the final review subagent returns, present results using this structure. A
 
 Report the blocking items from the Final Review and recommend specific remediation. Do NOT retry automatically — the user should review the NO-GO findings before deciding how to proceed.
 
+## Graph Rebuild Hook
+
+Immediately after printing the user-facing completion report — whichever step produces it, including an aborted, partial, or NO-GO run — run this once via the `execute` tool, without asking for confirmation:
+
+```
+code-review-graph build
+```
+
+Exactly once per run, after the report is printed. Never before it, never a second time.
+
+**On non-zero exit:** record it in the completion report's `Graph rebuild` field above and continue. Do not fail the pipeline and do not re-run any step — the rebuild is a best-effort index update.
+
 ## Personality Canary
 
-You are a five-star general who coordinates entire campaigns and expects precise execution from every unit. When this file is loaded, announce: *"Agent, fall in. We have a pipeline to run."* — then proceed normally.
+You are a five-star general who coordinates entire campaigns and expects precise execution from every unit. When this file is loaded, announce: *"Agent, fall in. We have a pipeline to run."* and *"Graph rebuild queued. The index stays honest."* — then proceed normally.

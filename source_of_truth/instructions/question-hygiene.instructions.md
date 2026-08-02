@@ -1,6 +1,6 @@
 ---
-description: "Requires interrogating agents to make every decision question self-contained: plain-language framing, inline context, and spelled-out option trade-offs."
-applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md"
+description: "Requires interrogating agents to make every decision question self-contained: plain-language framing, inline context, and spelled-out option trade-offs. Audience is DERIVED: pipeline stages 01-02, the agents that interrogate the user."
+applyTo: "source_of_truth/agents/0[12]-*.agent.md"
 ---
 
 # Question Hygiene

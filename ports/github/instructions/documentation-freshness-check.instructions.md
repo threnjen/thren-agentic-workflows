@@ -1,6 +1,6 @@
 ---
-description: "Checks for critical documentation files (README.md, CODEBASE_CONTEXT.md) during discovery and recommends running @Docs Writer if missing. Auto-loaded for planning agents."
-applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md"
+description: "Checks for critical documentation files (README.md, CODEBASE_CONTEXT.md) during discovery and recommends running @Docs Writer if missing. Audience is DERIVED: pipeline stages 01-02, the planning agents."
+applyTo: "source_of_truth/agents/0[12]-*.agent.md"
 ---
 
 # Documentation Freshness Check

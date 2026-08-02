@@ -2,7 +2,6 @@
 name: Auditor - Infra
 description: "Audits infrastructure and configuration files — Dockerfiles, CI/CD pipelines, IaC templates, build scripts, and documentation. Produces a structured findings report."
 tools: [read, search, edit, fetch]
-
 user-invocable: false
 ---
 
@@ -12,20 +11,9 @@ You are an **Infrastructure Auditor** performing comprehensive quality and healt
 
 Load the `auditor-conventions` skill for standard constraints, deliverables, scope determination, file-type taxonomy, process flow, and output format.
 
-## Unity Detection & Skill Loading
+## Unity
 
-Before starting discovery, detect whether the target repository is a Unity project.
-
-Use these indicators:
-- `.github/copilot-instructions.md` identifies the project as Unity
-- Repository contains both `Assets/` and `ProjectSettings/`, or a `game/Assets` directory
-- Repository contains Unity assembly definition files (`*.asmdef`)
-
-If any indicator matches, load BOTH skills immediately before proceeding:
-- `unity-development`
-- `unity-review-knowledge`
-
-Then apply relevant Unity project conventions where they intersect with infrastructure concerns (for example: assembly boundaries, build/bootstrap assumptions, and Unity-specific pipeline/tooling implications).
+Run the conventions skill's Unity Detection before discovery. When it matches, apply Unity conventions where they intersect with infrastructure concerns: assembly boundaries, build/bootstrap assumptions, and Unity-specific pipeline/tooling implications.
 
 ## Domain Focus
 
@@ -37,7 +25,7 @@ Skip all other file-type categories (Source code, Test files, Dependency manifes
 
 ### Build Script Audit Policy
 
-Build scripts (`.sh`, `.ps1`, `.bat`, `Makefile`, `build.mjs`) are **in scope** and audited with the **full lens**. All categories apply, with particular attention to:
+Build scripts are audited with the **full lens**. All categories apply, with particular attention to:
 
 - **Category 3 (Security Posture)** — secret exposure, command injection, unsafe variable expansion
 - **Category 12 (Build Script Quality)** — error handling, portability, hardcoded paths
