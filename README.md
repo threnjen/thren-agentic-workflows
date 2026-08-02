@@ -25,6 +25,8 @@ and destinations.**
 You interact with a small set of **primary agents**. Each one can drive a fleet of
 automated helpers behind the scenes, so you stay focused on a few entry points.
 
+**→ See [USAGE.md](USAGE.md) for descriptions of all included agents and agentic pipeline ideas.**
+
 ### Core project workflow
 
 A numbered pipeline you step through for building a project end to end:
