@@ -43,9 +43,9 @@ If the repository has a `docs/phases/` directory, **load the `phase-doc-sync` sk
 Before proposing implementation, apply the auto-loaded canonical Unity detection predicate.
 
 - If a Unity project is detected, **load the `unity-development` skill** before planning or writing code, so Unity authoring rules (runtime wiring, lifecycle, serialized-asset generation) apply during implementation — not only at review.
-- If a Unity project is detected, spawn `unity-reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
+- If a Unity project is detected, spawn `04h-unity-reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
 - Include the reviewer findings in your proposal as risks and constraints.
-- If no Unity layout is detected, continue without invoking `unity-reviewer`.
+- If no Unity layout is detected, continue without invoking `04h-unity-reviewer`.
 
 Use this invocation template when Unity is detected:
 

@@ -1,14 +1,8 @@
 ---
-description: "Final pre-production gate — cross-validates all pipeline documents across every feature in a phase and produces a go/no-go readiness assessment."
-model: deepseek/deepseek-v4-pro
-mode: subagent
-hidden: true
-permission:
-  bash: allow
-  edit: allow
-  glob: allow
-  grep: allow
-  read: allow
+name: z-prod-code-review
+description: Final pre-production gate — cross-validates all pipeline documents across every feature in a phase and produces a go/no-go readiness assessment.
+tools: Skill, Read, Grep, Glob, Edit, Write, Bash
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 
@@ -40,18 +34,18 @@ Never halt or ask for a missing document — you run unattended and no one is th
 
 | Document | Source Agent | Expected File |
 |----------|-------------|---------------|
-| Feature plan | 03-feature-decomposer | `[0N-task-name]-plan.md` |
-| Context document | 04a-feature-plan-expander | `[0N-task-name]-context.md` |
-| Task checklist | 04a-feature-plan-expander | `[0N-task-name]-tasks.md` |
-| Implementation record | 04b-feature-implementer | `[0N-task-name]-implementation.md` |
-| Review record | 04c-feature-review-and-fix | `[0N-task-name]-review.md` |
+| Feature plan | feature-decomposer | `[0N-task-name]-plan.md` |
+| Context document | z-feature-plan-expander | `[0N-task-name]-context.md` |
+| Task checklist | z-feature-plan-expander | `[0N-task-name]-tasks.md` |
+| Implementation record | z-feature-implementer | `[0N-task-name]-implementation.md` |
+| Review record | z-feature-review-and-fix | `[0N-task-name]-review.md` |
 
 **Consolidated QA document** (provided by the orchestrator):
 
 | Document | Source Agent | Expected Location |
 |----------|-------------|-------------------|
-| Consolidated QA plan | 04d-feature-qa-writer | Path provided by orchestrator (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/[audit-name]/[audit-name]-qa.md`) |
-| Consolidated coverage map | 04d-feature-qa-writer | Alongside QA plan (e.g., `[phase-name]_QA_COVERAGE_MAP.md`) |
+| Consolidated QA plan | z-feature-qa-writer | Path provided by orchestrator (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/[audit-name]/[audit-name]-qa.md`) |
+| Consolidated coverage map | z-feature-qa-writer | Alongside QA plan (e.g., `[phase-name]_QA_COVERAGE_MAP.md`) |
 
 Load the `pipeline-artifacts` skill for the canonical producer/artifact table and the consolidated-QA locations when an expected input is not where the orchestrator said, or when you must resolve your own analysis output path.
 
@@ -200,18 +194,18 @@ Three to five sentences covering:
 
 | Document | File | Source | Present | Notes |
 |----------|------|--------|---------|-------|
-| Feature Plan | `[0N-task-name]-plan.md` | 03-feature-decomposer | Yes/No | — |
-| Context | `[0N-task-name]-context.md` | 04a-feature-plan-expander | Yes/No | — |
-| Tasks | `[0N-task-name]-tasks.md` | 04a-feature-plan-expander | Yes/No | — |
-| Implementation Record | `[0N-task-name]-implementation.md` | 04b-feature-implementer | Yes/No | — |
-| Review Record | `[0N-task-name]-review.md` | 04c-feature-review-and-fix | Yes/No | — |
+| Feature Plan | `[0N-task-name]-plan.md` | feature-decomposer | Yes/No | — |
+| Context | `[0N-task-name]-context.md` | z-feature-plan-expander | Yes/No | — |
+| Tasks | `[0N-task-name]-tasks.md` | z-feature-plan-expander | Yes/No | — |
+| Implementation Record | `[0N-task-name]-implementation.md` | z-feature-implementer | Yes/No | — |
+| Review Record | `[0N-task-name]-review.md` | z-feature-review-and-fix | Yes/No | — |
 
 **Consolidated QA Documents:**
 
 | Document | File | Source | Present | Notes |
 |----------|------|--------|---------|-------|
-| QA Plan | `[QA output path]` | 04d-feature-qa-writer | Yes/No | — |
-| Coverage Map | `[coverage map path]` | 04d-feature-qa-writer | Yes/No | — |
+| QA Plan | `[QA output path]` | z-feature-qa-writer | Yes/No | — |
+| Coverage Map | `[coverage map path]` | z-feature-qa-writer | Yes/No | — |
 
 ### Traceability Matrix
 
@@ -262,10 +256,10 @@ Use this table to determine where the user should return:
 
 | Root Cause | Return To | When |
 |------------|-----------|------|
-| **03-feature-decomposer** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
-| **04b-feature-implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
-| **04c-feature-review-and-fix** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
-| **04d-feature-qa-writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites |
+| **feature-decomposer** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
+| **z-feature-implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
+| **z-feature-review-and-fix** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
+| **z-feature-qa-writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites |
 
 #### Blocking Items List
 
@@ -302,7 +296,7 @@ After completing the full analysis, write the record.
 # QA Readiness Analysis: [Task Name]
 
 **Date:** [date]
-**Analyst:** prod-code-review (automated)
+**Analyst:** z-prod-code-review (automated)
 **Verdict:** [GO | GO WITH CONDITIONS | NO-GO]
 **Documents Analyzed:** [count]
 **Findings:** [count] ([blocker count] blockers, [high count] high, [medium count] medium, [low count] low)

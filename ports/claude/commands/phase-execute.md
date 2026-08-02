@@ -72,7 +72,7 @@ These stages define the work. The wave mode below decides only fan-out (one feat
 
 **B. Review** — Only after the implementer for that feature has returned.
 
-If `is-unity-project: yes`, first spawn **unity-reviewer** for the feature as a Unity-specific review pass:
+If `is-unity-project: yes`, first spawn **z-unity-reviewer** for the feature as a Unity-specific review pass:
 
 > "[SUBAGENT-MODE] Review Unity-related changes for the feature at `dev/feature/[0N-task-name]/`. Focus on Unity lifecycle/wiring, rendering/performance pitfalls, UI Toolkit concerns, and project Unity conventions. Return structured findings only; do not implement fixes."
 
@@ -95,7 +95,7 @@ For each feature in the wave, in numeric prefix order, run A → A1 → B → B1
 Same stages, run as three barriered phases across the whole wave:
 
 1. Run **A** for every feature in the wave simultaneously, one implementer each. **Wait for ALL implementers to return before proceeding.** Then run **A1** for each feature in numeric prefix order.
-2. Run **B** for every feature in the wave simultaneously (unity-reviewer pass first for all features, waiting for all of those to return, then all **z-feature-review-and-fix** spawns). **Wait for ALL reviewers to return before proceeding.** Then run **B1** for each feature in numeric prefix order.
+2. Run **B** for every feature in the wave simultaneously (z-unity-reviewer pass first for all features, waiting for all of those to return, then all **z-feature-review-and-fix** spawns). **Wait for ALL reviewers to return before proceeding.** Then run **B1** for each feature in numeric prefix order.
 3. Apply **C**, then **D** for each feature in numeric prefix order.
 
 Because parallel-safe features have disjoint file scopes, sequential commits within the wave will not conflict.
@@ -166,12 +166,12 @@ After the z-diff-security-scan subagent returns:
 - Record the verdict as `security-scan: PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN (<reason>)`, using `04e`'s own upper-case strings verbatim.
 - If the verdict is `BLOCKED` or `NOT RUN`, set `all-approved: no` so the Phase Final Review (Step 6) runs in standard mode. A `NOT RUN` scan is missing evidence, not a pass.
 - `04e` is a changed-files reviewer, not a phase-level gate: its verdict is one input to `all-approved`, and it is not a substitute for a full-codebase `z-auditor-security` scan.
-- Do not automatically remediate security findings. prod-code-review determines the final GO / GO WITH CONDITIONS / NO-GO decision.
+- Do not automatically remediate security findings. z-prod-code-review determines the final GO / GO WITH CONDITIONS / NO-GO decision.
 - Do NOT emit a separate `eval:` commit for this step. Stage the report with the Phase Final Review checkpoint (`eval: final-review`).
 
 ### Step 6: Phase Final Review
 
-spawn the **prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected during the wave loop (Step 2), plus the visual-verification verdict from Step 3 (or its skip reason) as runtime evidence.
+spawn the **z-prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected during the wave loop (Step 2), plus the visual-verification verdict from Step 3 (or its skip reason) as runtime evidence.
 
 **If QA was generated and all verdicts Approved:**
 
@@ -189,7 +189,7 @@ spawn the **prod-code-review** subagent. Build the prompt from the applicable te
 >
 > Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-wave status and results artifact paths from Step 2.5]. Visual verification: [Pass | Fail | Unverified | skip reason]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). All verdicts Approved: NO — use standard mode."
 
-After the prod-code-review subagent returns, stage only the final review artifact, the security scan report, and any phase-level pipeline documents updated by this step, then commit them with the exact message `eval: final-review`.
+After the z-prod-code-review subagent returns, stage only the final review artifact, the security scan report, and any phase-level pipeline documents updated by this step, then commit them with the exact message `eval: final-review`.
 
 ### Step 7: Report to User
 

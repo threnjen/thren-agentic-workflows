@@ -109,7 +109,7 @@ Follow the Post-Loop: Documentation Update section from the `implementation-pipe
 
 ## Pipeline Asymmetry (by design)
 
-This orchestrator omits QA Writer and prod-code-review steps. Test remediation tasks are scoped to test code, which is self-validating (tests pass or fail).
+This orchestrator omits QA Writer and z-prod-code-review steps. Test remediation tasks are scoped to test code, which is self-validating (tests pass or fail).
 
 ---
 

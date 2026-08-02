@@ -191,7 +191,7 @@ Inspect path metadata only — this is a directory-existence check, not a read:
 
 Apply the canonical Unity detection predicate. Set `is-unity-project: yes` on a match, `no` otherwise.
 
-`yes` adds `unity-reviewer` to the fan-out. `no` omits it, and that omission is
+`yes` adds `z-unity-reviewer` to the fan-out. `no` omits it, and that omission is
 not a `not-run` record — an evaluator that does not apply to the repository was
 never part of the run's required coverage.
 
@@ -205,7 +205,7 @@ tier is an execution limitation to report, never a clean result.
 |---|---|
 | `05b`, `04e`, `05g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
 | `05c`, `05d`, `05e`, `05h` | Cheap tier for mechanical sweeps |
-| `unity-reviewer` | Top available tier when present in the fan-out; Unity findings are judgment calls |
+| `z-unity-reviewer` | Top available tier when present in the fan-out; Unity findings are judgment calls |
 | `z-baseline-worktree`, `z-test-analyst`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
 
 Do not place model or harness identity in retained review reports or status
@@ -221,7 +221,7 @@ Worktree` failure must stop the run, while an evaluator failure must not.
 |---|---|---|
 | Preflight | `z-baseline-worktree` | Before fan-out. Its failure stops the run. |
 | Test-analysis input | `z-test-analyst` | After preflight and before fan-out. Its three files become read-only inputs to `05f`; failure makes that check NOT RUN but does not stop the other evaluators. |
-| Fan-out (concurrent) | `z-change-narrator`, `z-artifact-sweeper`, `z-consistency-auditor`, `z-dependency-auditor`, `z-test-health`, `z-cleanliness-auditor`, and `z-diff-security-scan`, plus `unity-reviewer` when `is-unity-project: yes` | **Seven**, or **eight** on a Unity repository, concurrently, after the base is confirmed. |
+| Fan-out (concurrent) | `z-change-narrator`, `z-artifact-sweeper`, `z-consistency-auditor`, `z-dependency-auditor`, `z-test-health`, `z-cleanliness-auditor`, and `z-diff-security-scan`, plus `z-unity-reviewer` when `is-unity-project: yes` | **Seven**, or **eight** on a Unity repository, concurrently, after the base is confirmed. |
 | Synthesis | `z-readiness-synthesizer` | Last. Consumes the others' reports and status records. |
 
 `z-baseline-worktree` is not a fan-out evaluator: nothing can run before the
@@ -231,7 +231,7 @@ by `05f`, and the root spawns it directly to keep delegation depth at one.
 `05g` is not one either: it consumes the others' output.
 
 Security is delegated to the existing **`z-diff-security-scan`**, and Unity
-review to the existing **`unity-reviewer`**, each invoked with the confirmed
+review to the existing **`z-unity-reviewer`**, each invoked with the confirmed
 diff range like any other fan-out evaluator. **No new evaluator is authored for
 either.**
 

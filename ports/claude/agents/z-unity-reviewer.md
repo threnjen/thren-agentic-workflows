@@ -1,5 +1,5 @@
 ---
-name: unity-reviewer
+name: z-unity-reviewer
 description: Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls. Use when: reviewing Unity code, checking for Unity anti-patterns, validating design patterns, code quality review, performance review, style guide compliance.
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false

@@ -85,7 +85,7 @@ contract more firmly; prose is what the finding is about.
 
 ## Relationship to the Existing Gate
 
-The **prod-code-review** gate covers a different axis: it gates one phase's
+The **z-prod-code-review** gate covers a different axis: it gates one phase's
 feature set from pipeline documents, while `05g` gates one branch diff from
 evaluator reports. `05g` is a complement, not a superset and not a level up. Do
 not duplicate, modify, or invoke that gate, and never read its implementation
