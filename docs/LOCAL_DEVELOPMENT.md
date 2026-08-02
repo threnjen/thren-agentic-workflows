@@ -191,5 +191,7 @@ Interpretation guidance:
 
 ## Related References
 
+- [docs/AUTHORING.md](AUTHORING.md) — authoring and deployment failure modes; read before
+  editing an agent definition.
 - [docs/porting/README.md](porting/README.md) — per-harness porting guides and tool mapping.
 - [eval/deprecated/README.md](../eval/deprecated/README.md) — the archived eval-grader system.

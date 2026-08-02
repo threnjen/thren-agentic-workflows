@@ -8,7 +8,7 @@ Quick-reference for AI agents working in this repository.
 - Authoring surface is `source_of_truth/`. Everything else derived from it is generated.
 - Two-stage pipeline: transform (`source_of_truth/` → `ports/`) then deploy (`ports/` → real harness dirs).
 - Mostly Markdown plus two Python scripts (stdlib only) and a shared module.
-- No root `package.json` or `pyproject.toml` runtime deps; Python tests live under `tests/`.
+- No runtime dependencies. Root `pyproject.toml` is gitignored and carries pytest config only; no `package.json`. Python tests live under `tests/`.
 
 ## Current Counts
 
@@ -20,7 +20,9 @@ Quick-reference for AI agents working in this repository.
 ## Key Paths
 
 ```text
-AGENTS.md                                  # code-review-graph MCP workflow guidance
+AGENTS.md                                  # repo-wide guidelines (layout, style, testing, comms)
+CLAUDE.md                                  # pointer to AGENTS.md
+README.md USAGE.md CONTRIBUTING.md         # overview, agent catalog, contributor rules
 INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
@@ -34,7 +36,7 @@ ports/                                     # GENERATED — do not hand-edit
   opencode/{agents, skills}
   cursor/  {commands, rules}               # commands=*.md, rules=*.mdc
   github/  {agents, instructions, skills}          # verbatim mirror
-.github/                                   # real deployed mirror of ports/github
+.github/                                   # real deployed mirror of ports/github; gitignored
 scripts/
   propagate_master_assets.py               # transform entry point (--once | --watch)
   asset_paths.py                           # shared markers + poll_watch
@@ -44,7 +46,8 @@ deploy_agents.py                           # deploy entry point (root, not scrip
 docs/ ARCHITECTURE.md AUTHORING.md CODEBASE_CONTEXT.md COPILOT_SETUP.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
 docs/ ai-instruction-framework.md UNDERSTANDING_AGENTIC_ECOSYSTEM.md
 docs/porting/                              # CLAUDE/CODEX/OPENCODE guides + TOOL_MAPPING
-dev/      inspiration/ (write-ups), pr-review/ (fixtures)
+dev/                                       # gitignored scratch; nothing here is tracked
+tests/fixtures/pr-review/                  # tracked PR-review fixtures (NOT under dev/)
 eval/                                      # past benchmark artifacts; deprecated/ = archived grader
 benchmarks/ packages/ tests/
 .deploy-config.json                        # gitignored; saved harness selection
@@ -139,7 +142,7 @@ benchmarks/ packages/ tests/
 
 ## Testing
 
-- 14 Python test modules under `tests/` cover both scripts plus the agent corpus.
+- 13 Python test modules under `tests/` cover both scripts plus the agent corpus.
 - Run with `uv run pytest tests/` (or `.venv/bin/python -m pytest tests/`); bare
   `python -m pytest` may lack pytest.
 - `tests/_propagate_env.py` redirects the propagator's directory globals to a temp tree
@@ -163,7 +166,8 @@ benchmarks/ packages/ tests/
 - Do not reintroduce `source_of_truth/learnings/`. Durable repo-agnostic rules are
   skills; this repository's own authoring knowledge is `docs/AUTHORING.md`; a working
   repo's findings belong in its own `docs/learnings/`.
-- Do not document a root `dev/` beyond `dev/pr-review/` (fixtures tracked, run output
-  gitignored) and `dev/inspiration/` (write-ups). Agent *runtime* output paths like
-  `dev/feature/` are conventions the agents create in a target repo, not directories here.
+- Do not document anything under root `dev/` as part of the repo. `dev/*` is gitignored
+  in full — it is local scratch (audit write-ups, inspiration notes, PR-review run output).
+  Tracked PR-review fixtures live at `tests/fixtures/pr-review/`. Agent *runtime* output
+  paths like `dev/feature/` are conventions agents create in a target repo, not here.
 - Do not tell contributors to use VS Code tasks: `.vscode/` is gitignored and a clone has none.

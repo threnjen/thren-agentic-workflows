@@ -185,8 +185,12 @@ used by both scripts' watch modes.
 
 ### Supporting material
 
-- `docs/` — architecture, setup, troubleshooting, and porting guides.
-- `dev/` — `inspiration/` write-ups and `pr-review/` fixtures.
+- `docs/` — architecture, setup, troubleshooting, and porting guides. `docs/AUTHORING.md`
+  holds this repository's authoring and deployment failure modes; read it before editing
+  an agent definition.
+- `dev/` — gitignored local scratch (audit write-ups, inspiration notes, PR-review run
+  output). Nothing under it is tracked; the tracked PR-review fixture lives at
+  `tests/fixtures/pr-review/`.
 - `eval/` — past benchmark run artifacts and rubrics. `eval/deprecated/` holds the
   archived eval-grader agents, skills, and commit hook; see its README.
 - `benchmarks/` — model cost/performance benchmark data and charts.

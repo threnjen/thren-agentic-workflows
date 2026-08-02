@@ -71,7 +71,7 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ├── eval/                           # Past benchmark run artifacts + deprecated/ (archived grader)
 ├── benchmarks/                     # Model cost/performance benchmark data
 ├── packages/                       # Distributable UPM package (com.threnjen.visual-verification)
-├── dev/                            # inspiration/ write-ups; pr-review/ fixtures
+├── dev/                            # gitignored local scratch; nothing tracked
 └── tests/                          # Python regression tests for both scripts
 ```
 

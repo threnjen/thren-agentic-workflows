@@ -13,7 +13,7 @@ These agents deploy to Claude Code, Codex, OpenCode, Cursor, and GitHub Copilot.
 | Claude Code | `/agent-name` slash command, or ask for the agent by name |
 | Cursor | `/agent-name` slash command |
 | GitHub Copilot | Agent picker dropdown at the top of the Copilot Chat panel in VS Code |
-| Codex | Name the agent in the prompt: `as feature-decomposer, ...'` |
+| Codex | Name the agent explicitly in the prompt: `as feature-decomposer, ...'` |
 | OpenCode | Name the agent in the prompt |
 
 Only the 15 user-facing agents are reachable this way. The rest are spawned by orchestrators.
