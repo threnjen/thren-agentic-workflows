@@ -108,7 +108,7 @@ Run this at the end of every wave, before starting the next one. It is the gate 
 2. Read the results artifact and record `wave-[N] test-execution: executed-green | executed-failing | not-executed (<reason>)`.
 3. **On `executed-failing`, remediate once.** Re-spawn the **z-feature-implementer** owning the failing behavior with the failing test names, then re-run the gate. Retry at most once. If still failing, record the final status and proceed — the blocker escalates to the Phase Final Review (Step 6).
    > "[SUBAGENT-MODE] The wave test gate failed for phase [phase-name]. Failing tests: [names and assertion messages]. Results artifact: [path]. These failures are in suites outside your feature's Files Changed table — a contract you changed broke callers written before it. Fix the production code or update the affected fixtures so these tests pass. Do NOT delete, skip, or weaken tests to force a pass. Return what you changed."
-4. **On `not-executed`, do not proceed silently.** Report the reason to the user and ask them to run the suite, then resume from their results artifact. This is the one point where the pipeline waits on a human rather than accumulating unverified work.
+4. **On `not-executed`, do not proceed silently.** Report the reason to the user and ask them to run the suite, then resume from their results artifact. If the direct supervisor explicitly states that the named authoritative suite passed, accept that statement as the direct-supervisor-attestation exception from the Test Execution Evidence instruction: promote the final gate to `executed-green`, record the exact suite/action and any counts the supervisor supplied, and use `supervisor-attested (no artifact exported)` as the results artifact. If the direct supervisor explicitly directs this run to skip Unity testing gates, record `not-executed (supervisor-directed skip; user will run later)` for each skipped gate and continue the pipeline without treating it as green; carry `all-approved: no` into final review. Do not invent counts or apply either exception to a subagent's report.
 5. If the final status for any wave is not `executed-green`, set `all-approved: no`.
 
 Do NOT emit a separate `eval:` commit for this step.
@@ -438,6 +438,10 @@ Any claim of `executed-green` or `executed-failing` must cite:
 3. Total / passed / failed counts read from that artifact
 
 Without all three, the status is `not-executed`. A status you inferred, expected, or were told by another agent is not evidence.
+
+### Direct supervisor attestation
+
+For a user-invocable root orchestrator, an explicit assertion from the direct supervisor that a named authoritative suite completed with zero failures is an accepted exception when the supervisor did not export an XML artifact. This exception never applies to subagents or to an indirect report. Record the named suite, the command or Test Runner action as reported, the supervisor's stated counts when available, and `supervisor-attested (no artifact exported)` as the results artifact. If the supervisor only says “all passed,” record `failed=0`, `passed=all reported tests`, and `total=not supplied` rather than inventing counts. Do not convert silence, expectation, or a subagent's claim into supervisor attestation.
 
 ## Not test execution
 

@@ -42,10 +42,13 @@ analysis-branch checkout:
 
 | Dimension | Agent |
 |-----------|-------|
-| security | Auditor - Security (full codebase) |
 | code | Auditor - Code |
 | dependencies | 05e Dependency Auditor |
 | infra | Auditor - Infra |
+
+There is no separate security scan. The code and infra audits surface
+security findings within their own dimensions, and Stage C draws its
+security material from those reports.
 
 Each spawn carries the standing boundaries and directs the agent to write
 its reports under
@@ -53,7 +56,15 @@ its reports under
 the canonical filenames from the `engagement-package-manifest` skill, and to
 return its report file pointers.
 
-**All four dimensions are mandatory on every side.** A scan with no
+**Supplied deltas.** If the pair's config carries `code_delta_path` or
+`infra_delta_path`, that dimension is **not scanned on either side**: skip
+both spawns, record the supplied delta's absolute path in the pair's
+working-state entry as that dimension's evidence, and pass it to Stage B in
+place of the two per-side reports. The dimension is `supplied` — never
+`failed`, never re-derived from the trees. A dimension with no supplied
+path is scanned normally.
+
+**Every dimension not supplied is mandatory on every side.** A scan with no
 findings is a complete scan with an empty findings table — it still writes
 its reports. An agent returning without its reports, or claiming a
 dimension could not be scanned, is a failed spawn: re-run it once with the
@@ -70,10 +81,13 @@ sides**:
 - analysis branch, code graph, and baseline snapshot (from preparation;
   re-confirm on disk, do not trust the report)
 - the side's docs set from A1
-- all eight audit files from A2 — `<dimension>-report.md` and
-  `<dimension>-summary.md` per dimension, each non-empty at its exact
-  canonical path and name and opening with the internal audience banner
-  per the `engagement-workspace` skill
+- for every scanned dimension, its two audit files from A2 —
+  `<dimension>-report.md` and `<dimension>-summary.md`, each non-empty at
+  its exact canonical path and name and opening with the internal audience
+  banner per the `engagement-workspace` skill
+- for every supplied dimension, the configured delta path resolves to a
+  non-empty file (checked once for the pair, not per side); no banner check
+  applies — the file was authored outside this pipeline
 
 An artifact that fails any check — absent, wrong name, wrong path, empty,
 missing banner — is a stage failure for its producing step: re-run that
@@ -109,15 +123,20 @@ re-run stages B–E in full before finalizing.
 ### Stage B: Delta
 
 Spawn **Client Deliverable - Delta Synthesizer** with every pair's audit report
-pointers. Record its client document pointers, each pair's
+pointers, and for any supplied dimension the configured delta path in place
+of that dimension's two per-side reports — labelled as a supplied delta so
+the synthesizer consumes its classifications rather than re-comparing. Record its client document pointers, each pair's
 exclusions-partition and remediation-recommendations pointers, and any
 missing-SOW or user-review flags; surface a non-empty remediation list to
 the user alongside Stage C's fix-and-re-run flow.
 
 ### Stage C: Security Synthesis
 
-Spawn **Client Deliverable - Security Narrative** with every pair's security report
-and exclusions-partition pointers. Record its client document pointer and
+Spawn **Client Deliverable - Security Narrative** with every pair's code and
+infra report pointers for both sides (or the supplied delta path for a
+supplied dimension) and exclusions-partition pointers — there is no
+dedicated security report; the writer extracts the security-relevant
+findings from those reports itself. Record its client document pointer and
 each pair's internal security-delta report pointer. If any pair's
 security-delta Introduced section is non-empty, surface the fix-and-re-run
 flow to the user: after engineer fixes, re-run that side's audits (one-side

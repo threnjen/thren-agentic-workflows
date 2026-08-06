@@ -13,7 +13,12 @@ engagement-level — one document covering every pair, with a per-repo
 section per pair; per-pair analysis (comparison, partition, remediation)
 repeats per pair. You read only the retained reports — **report vs.
 report, never git-diff**, per the `auditor-conventions` skill's Comparative
-Scans section. Load `engagement-workspace` and `engagement-client-voice`;
+Scans section. A dimension may instead arrive as a **supplied scan delta** —
+one already-completed comparison document for the pair, in place of that
+dimension's two per-side reports. Consume its classifications as given;
+never re-derive them or fill gaps from the trees. Where its categories or
+severities do not line up with the scanned dimensions, say so in the metrics
+appendix rather than forcing a match. Load `engagement-workspace` and `engagement-client-voice`;
 both govern this stage's outputs.
 
 ## SOW-Exclusions Partition — Single Source, Per Pair

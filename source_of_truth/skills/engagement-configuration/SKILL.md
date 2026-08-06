@@ -50,6 +50,12 @@ Each entry in `pairs` is one comparison and has:
 | `upgraded` | yes | The side representing the upgraded codebase |
 | `repo_path` | branch pairs only | Path to the single repository whose branches are compared |
 | `mode` | no | Value story for the pair: `modernization` (pure modernization) or `modernized-and-improved` (modernization plus improvements). **Defaults to `modernization` when absent** — existing configs without it remain valid |
+| `code_delta_path` | no | Path to an already-completed code-scan delta report for this pair (original vs. upgraded). When present, the code dimension is not scanned on either side; the supplied delta is consumed directly |
+| `infra_delta_path` | no | Path to an already-completed infra-scan delta report for this pair. Same effect for the infra dimension |
+
+`code_delta_path` and `infra_delta_path` are independent — supplying one
+does not imply the other. Supplying neither is the normal case: both
+dimensions are scanned fresh on both sides.
 
 Exactly one side is `original` and exactly one side is `upgraded` — the role
 is expressed by which key the side sits under, so a pair with both roles
@@ -66,7 +72,8 @@ Side fields by pair type:
 
 Paths may be absolute or relative. Relative paths resolve against the
 directory containing the config file. This applies to `sow_document`,
-`deliverables_spec`, `path`, and `repo_path`.
+`deliverables_spec`, `path`, `repo_path`, `code_delta_path`, and
+`infra_delta_path`.
 
 ### Annotated example
 
@@ -85,6 +92,8 @@ pairs:
     upgraded:
       path: /abs/path/service-api-v2  # absolute paths are also accepted
     mode: modernized-and-improved     # optional; omitted -> modernization
+    code_delta_path: scans/service-api-code-delta.md    # optional; skips the code scans
+    infra_delta_path: scans/service-api-infra-delta.md  # optional; skips the infra scans
 
   - name: web-frontend                # a branch pair: two branches of one repo
     type: branch
@@ -117,6 +126,7 @@ and what was expected:
 | Branch pair: each side's `branch` exists in the repository | `pair '<name>': <original|upgraded>.branch '<value>' does not exist in '<repo_path>' (expected an existing branch)` |
 | Branch pair: the two branches are not the same ref | `pair '<name>': original.branch and upgraded.branch name the same ref (expected two distinct branches)` |
 | `mode`, when present, is `modernization` or `modernized-and-improved` | `pair '<name>': mode '<value>' (expected 'modernization' or 'modernized-and-improved')` |
+| `code_delta_path` / `infra_delta_path`, when present, resolve to an existing non-empty file | `pair '<name>': <code|infra>_delta_path '<value>' does not resolve (expected an existing non-empty file)` |
 
 Explicitly allowed (do not over-validate):
 

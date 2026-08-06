@@ -15,6 +15,11 @@ another. If the user declines, the audit deliverables are complete — stop.
 
 `[audit-name]` and its output directory are supplied by the caller.
 
+Load `auditor-conventions` first. Implementation is not a second chance to
+validate weak findings: admit work only after the audit finding truth gate has
+proved a reachable production path, material consequence, contract, identity,
+scope, and bounded verification.
+
 ## 1. Offer
 
 > **Would you like me to implement the fixes?**
@@ -43,6 +48,14 @@ fix-research index's suggested remediation order — its work items are already
 grouped by root cause and linked to subsystem reports; then a delta's Residual
 Risk section, which distinguishes findings already closed from those still open;
 then the raw audit report.
+
+Before creating tasks, verify the selected source names the examined revision,
+its counts reconcile, and every included finding passes the audit finding truth
+gate. Do not implement omitted, `Open`, out-of-scope, unreachable, immaterial,
+or purely stylistic items. A `Partial` item becomes a task only for its supported
+in-scope portion, with the residual risk kept explicit. If the best source lacks
+this evidence, return it to remediation research; do not infer a fix from the
+finding's title or severity.
 
 ## 4. Implementation loop
 
