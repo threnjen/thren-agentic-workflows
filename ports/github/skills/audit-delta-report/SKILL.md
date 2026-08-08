@@ -29,9 +29,10 @@ The `auditor-conventions` audit finding truth gate applies independently to
 every source finding and every proposed match. Reconcile each report's actual
 rows before trusting its totals. Verify reachable production paths, tests,
 material consequence, contracts, and issue identity against the trees. Omit a
-false or immaterial source finding through an explicit upstream correction;
-never preserve it merely to make inherited arithmetic close. Quarantine a
-source report's disputed arithmetic until its finding population is corrected.
+false or immaterial source finding from the actionable queue and record an
+explicit upstream correction in the delta; never preserve it merely to make
+inherited arithmetic close. Do not edit the source audits. Quarantine their
+disputed arithmetic and show raw versus supported populations separately.
 
 ---
 
@@ -115,8 +116,9 @@ Classification rules:
 - **Validate before classifying.** A disposition accounts for a supported
   defect, not merely a row inherited from a report. Prove production
   reachability and material consequence. Record upstream corrections for rows
-  that fail the truth gate, remove them consistently from reports, summaries,
-  queues, and delta arithmetic, then reconcile the corrected populations.
+  that fail the truth gate, exclude them from the actionable queue, and show
+  both inherited and supported delta arithmetic. The remediation-research
+  reconciler, not this read-only comparison, owns source-report correction.
 
 - **Judge the defect, not the file.** A deleted file does not mean a resolved
   weakness. Ask: did the *responsibility* survive? If yes, did the *defect*
@@ -587,6 +589,6 @@ agent's (section 2D); the rest are the delta agent's.
 - [ ] Both source trees are unmodified; the two deliverables are the only files
       written.
 - [ ] Every retained finding passed the audit finding truth gate; every omitted
-      finding has an explicit upstream correction reflected in all affected
-      counts and artifacts.
+      finding has an explicit upstream correction reflected in the delta and
+      queue without modifying either source audit.
 - [ ] No provisional marking survives.

@@ -39,9 +39,10 @@ auditors are not substitutes for evidence.
 5. **Identity and scope:** Match the underlying responsibility and failure
    mode, not a shared path, label, technology, or category. Do not merge or
    transform unrelated defects.
-6. **Bounded actionability:** Name an in-scope correction and a verification
-   capable of failing. If the evidence supports only containment or the real
-   closure needs an unowned decision or excluded system, state that limit.
+6. **Bounded actionability:** Establish that an in-scope correction and a
+   verification capable of failing exist, without prescribing the fix in an
+   audit report. If the evidence supports only containment or the real closure
+   needs an unowned decision or excluded system, state that limit.
 
 Omit any candidate that fails production-path or material-consequence proof.
 Narrow or qualify candidates whose contract, identity, scope, or actionability
