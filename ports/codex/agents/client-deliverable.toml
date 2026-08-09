@@ -73,7 +73,10 @@ working-state file.
 ### 1. Configuration
 
 Load the `engagement-configuration` skill; obtain and validate the config
-per its rules (including the per-pair `mode` field and its default). Then
+per its rules (including the per-pair `mode` field and its default, and the
+optional per-pair `code_delta_path` / `infra_delta_path` — when either is
+present that dimension is not scanned on either side and the supplied delta
+is used instead). Then
 scaffold the workspace per the `engagement-workspace` skill's Creation
 section — you are its sole creator; no subagent makes directories. Record
 resolved inputs in the working-state file.
@@ -159,7 +162,7 @@ config validation failure (whole run), preparation failure for a side,
 entry-check failure for a side, or any stage subagent reporting that it
 could not do its work. **A subagent failure is an execution failure only** —
 the child could not produce its artifact. Audit verdicts are evidence, not
-failures: a security scan reporting BLOCKED, an infra audit reporting
+failures: a code audit reporting BLOCKED, an infra audit reporting
 NO-GO, or any report full of critical findings is a *complete* stage whose
 findings flow into synthesis as comparison data. This engagement gathers
 and compares evidence; it never gates on release readiness.

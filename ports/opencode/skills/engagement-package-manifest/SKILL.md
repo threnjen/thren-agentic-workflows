@@ -10,7 +10,9 @@ The manifest is `manifest.md` at the `engagement-workspace` root: two
 sections — **Client-Facing** then **Technical / Internal** — each an ordered
 table of contents of the deliverable set. All paths are workspace-root
 relative and must resolve inside the root (per the `engagement-workspace`
-skill); a path outside the root is a schema violation.
+skill); a path outside the root is a schema violation. The one exception is a
+supplied scan-delta row (see Technical / Internal entry 11), which records
+the caller-provided path as configured — absolute or outside the root.
 
 ## Row Fields
 
@@ -100,13 +102,16 @@ Standing entries first, then per-pair expansions:
 10. SOW-exclusions partition (per pair) — `pairs/<p>/exclusions-partition.md`
 11. Raw audit reports (per pair, per side, per dimension) —
    `pairs/<p>/<side>/audits/<dimension>/` for sides `original`/`upgraded` and
-   dimensions security/code/dependencies/infra. Canonical filenames, identical
+   dimensions code/dependencies/infra. Canonical filenames, identical
    on both sides, no pair or side prefixes: `<dimension>-report.md` and
-   `<dimension>-summary.md` (security: `security-scan-report.md` /
-   `security-scan-summary.md`). One row per dimension directory, `present`
-   when it contains that dimension's report. Every dimension is mandatory —
-   an empty dimension directory is a `missing` row (a pipeline defect to
-   surface), never omitted
+   `<dimension>-summary.md`. One row per dimension directory, `present`
+   when it contains that dimension's report. Every scanned dimension is
+   mandatory — an empty dimension directory is a `missing` row (a pipeline
+   defect to surface), never omitted. For a dimension the pair supplied a
+   delta for (`code_delta_path` / `infra_delta_path`), the two per-side rows
+   are replaced by **one** row for that pair: document "Supplied `<dimension>`
+   scan delta", path the configured path, audience `internal`, `present` when
+   the file resolves non-empty
 12. Phase 01 baseline snapshots (per pair, per side) —
    `pairs/<p>/<side>/engagement-baseline-snapshot.md`. Snapshots originate on
    each side's analysis branch; the manifest-writing step copies each into

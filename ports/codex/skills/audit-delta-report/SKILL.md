@@ -1,6 +1,6 @@
 ---
 name: audit-delta-report
-description: "Produces a delta document comparing two audit reports of the same codebase taken at different points in time — what was resolved, improved, unchanged, transformed, and newly introduced, with a reconciled count of every finding on both sides and defects the newer work caused separated from pre-existing ones only the newer audit raised. Use when: asked for the delta/changes/fixes/residuals between two audit reports in dev/<audit-name>/, or to compare a baseline audit against a current one."
+description: "Produces a delta document comparing two audit reports of the same codebase taken at different points in time — what was resolved, improved, unchanged, transformed, and newly introduced, with a reconciled count of every finding on both sides and defects the newer work caused separated from pre-existing ones only the newer audit raised. Use when: asked for the delta, changes, fixes, or residuals between two reports in a dev audit directory, or to compare a baseline audit against a current one."
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Audit Delta Report
@@ -24,6 +24,15 @@ auditor's own category names are the canonical dimensions — never rename, merg
 or invent them across snapshots — and two findings match when they are the
 **same underlying issue**, judged from description and evidence, with a matching
 path as corroboration only. Code moves; line numbers shift.
+
+The `auditor-conventions` audit finding truth gate applies independently to
+every source finding and every proposed match. Reconcile each report's actual
+rows before trusting its totals. Verify reachable production paths, tests,
+material consequence, contracts, and issue identity against the trees. Omit a
+false or immaterial source finding from the actionable queue and record an
+explicit upstream correction in the delta; never preserve it merely to make
+inherited arithmetic close. Do not edit the source audits. Quarantine their
+disputed arithmetic and show raw versus supported populations separately.
 
 ---
 
@@ -58,7 +67,9 @@ path as corroboration only. Code moves; line numbers shift.
    two sections drive several dispositions and most of the honest caveats.
 5. **Record the stated totals** from each report. Your reconciliation must equal
    them. If a report's own internal counts disagree with its stated total, say
-   so explicitly rather than silently picking one.
+   so explicitly, enumerate the actual finding rows, and correct or quarantine
+   the source artifact before computing a delta. Do not build a reconciled
+   comparison on contradictory population claims.
 
 Both trees are **read-only**. The only files this work writes are its two
 deliverables.
@@ -101,6 +112,13 @@ better. Conflating them sends the next engineer hunting regressions in code
 nobody touched.
 
 Classification rules:
+
+- **Validate before classifying.** A disposition accounts for a supported
+  defect, not merely a row inherited from a report. Prove production
+  reachability and material consequence. Record upstream corrections for rows
+  that fail the truth gate, exclude them from the actionable queue, and show
+  both inherited and supported delta arithmetic. The remediation-research
+  reconciler, not this read-only comparison, owns source-report correction.
 
 - **Judge the defect, not the file.** A deleted file does not mean a resolved
   weakness. Ask: did the *responsibility* survive? If yes, did the *defect*
@@ -570,4 +588,7 @@ agent's (section 2D); the rest are the delta agent's.
       stated rather than left silent.
 - [ ] Both source trees are unmodified; the two deliverables are the only files
       written.
+- [ ] Every retained finding passed the audit finding truth gate; every omitted
+      finding has an explicit upstream correction reflected in the delta and
+      queue without modifying either source audit.
 - [ ] No provisional marking survives.

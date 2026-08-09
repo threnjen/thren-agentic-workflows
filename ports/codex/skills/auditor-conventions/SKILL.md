@@ -17,6 +17,39 @@ Common conventions for every auditor subagent and any agent that produces, queue
 
 Your agent definition adds domain-specific constraints (scope focus, additional prohibitions).
 
+## Audit finding truth gate
+
+Treat every candidate finding as untrusted until the target snapshot supports
+all of the following. Detail, repetition, severity, and agreement between
+auditors are not substitutes for evidence.
+
+1. **Population:** Mechanically enumerate findings and reconcile every stated
+   total. Quarantine contradictory counts; never choose one silently.
+2. **Production path:** Read the exact construct, its reachable production
+   callers, and its constraining tests. Test-only bypasses, invalid object
+   states, and hypothetical future callers are not current production defects
+   unless that boundary is the defect.
+3. **Material consequence:** Name an observed failure or enforceable security,
+   correctness, operability, or maintenance hazard. Reject style preferences,
+   positive observations, optional micro-optimizations, and unmeasured
+   speculation.
+4. **Contract:** Check repository rules, tests that preserve surprising
+   behavior, and current authoritative documentation for external APIs or
+   platforms. State an unresolved question instead of inventing an answer.
+5. **Identity and scope:** Match the underlying responsibility and failure
+   mode, not a shared path, label, technology, or category. Do not merge or
+   transform unrelated defects.
+6. **Bounded actionability:** Establish that an in-scope correction and a
+   verification capable of failing exist, without prescribing the fix in an
+   audit report. If the evidence supports only containment or the real closure
+   needs an unowned decision or excluded system, state that limit.
+
+Omit any candidate that fails production-path or material-consequence proof.
+Narrow or qualify candidates whose contract, identity, scope, or actionability
+is only partly supported. Use language proportional to evidence: `can`, `under
+this condition`, and `has no fixed cap` are different claims from `will`,
+`always`, and `unbounded`.
+
 ## Deliverables
 
 This section governs a **full-repository audit**. A narrower conventions skill
@@ -127,7 +160,7 @@ Regardless of audit domain, exclude generated and cached directories:
 
 ## Process
 
-Discover all in-scope files → Read each thoroughly → Evaluate against all audit categories → Cross-reference for patterns → Classify severity → Report.
+Discover all in-scope files → Read each thoroughly → Evaluate against all audit categories → Cross-reference for patterns → Apply the audit finding truth gate → Classify severity → Report.
 
 ## Report Structure
 

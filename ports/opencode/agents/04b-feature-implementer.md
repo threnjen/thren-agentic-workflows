@@ -343,6 +343,10 @@ Any claim of `executed-green` or `executed-failing` must cite:
 
 Without all three, the status is `not-executed`. A status you inferred, expected, or were told by another agent is not evidence.
 
+### Direct supervisor attestation
+
+For a user-invocable root orchestrator, an explicit assertion from the direct supervisor that a named authoritative suite completed with zero failures is an accepted exception when the supervisor did not export an XML artifact. This exception never applies to subagents or to an indirect report. Record the named suite, the command or Test Runner action as reported, the supervisor's stated counts when available, and `supervisor-attested (no artifact exported)` as the results artifact. If the supervisor only says “all passed,” record `failed=0`, `passed=all reported tests`, and `total=not supplied` rather than inventing counts. Do not convert silence, expectation, or a subagent's claim into supervisor attestation.
+
 ## Not test execution
 
 - A successful compile or build

@@ -10,6 +10,10 @@ description:
 
 # Audit Remediation Research
 
+Load `auditor-conventions` first. Its audit finding truth gate is the minimum
+admission standard; the evidence standard below applies it to consensus and
+fix research in greater detail.
+
 Run Stages 1–4, preceded by Stage 0 when the output directory holds more than
 one audit sample. The root orchestrator prepares and finalizes the index; one
 child researches each subsystem; one final sibling reconciles shared audit
@@ -50,6 +54,47 @@ present a closure item as something the newer work introduced, and never sum one
 into a regression count: a closure item is enabling work, and some carry a
 `PRE-EXISTING` original disposition.
 
+## Evidence standard — mandatory at every stage
+
+Treat every report, queue, delta, and consensus item as an untrusted claim until
+the supplied snapshot proves it. More prose is not more rigor. Rigor means the
+claim survives hostile checks against the implementation, reachable callers,
+tests, repository rules, and authoritative external contracts.
+
+Before retaining any item:
+
+1. **Prove the population.** Enumerate finding rows and queue entries
+   mechanically. Reconcile them with every stated total. A report whose header,
+   tables, and summary disagree is not count evidence; quarantine the disputed
+   arithmetic rather than choosing the convenient number.
+2. **Prove the path.** Read the exact construct, its production callers, and the
+   tests that constrain it. A behavior reachable only through an invalid object,
+   a hypothetical future implementation, or a test-only bypass is not a current
+   production defect unless that boundary is itself wrong.
+3. **Prove the consequence.** Separate an observed failure or enforceable
+   maintenance hazard from a technically true statement. Formatting, naming,
+   optional micro-optimizations, intentional duplication, positive observations,
+   and unmeasured performance or security speculation are not remediation work.
+4. **Prove the contract.** Tests may establish that surprising behavior is
+   deliberate. Repository rules may prohibit the proposed change. External API,
+   framework, or platform claims require current authoritative documentation.
+   Replace an unsupported assertion with the exact question that remains open.
+5. **Prove identity and scope.** Match the underlying responsibility and failure
+   mode, not a shared word, number, file, or technology. Do not label unrelated
+   old and new concurrency, logging, credential, or storage mechanisms
+   `TRANSFORMED` merely because they occupy the same category.
+6. **Prove actionability.** Name a bounded change that closes the supported
+   defect and a verification that can fail. If only part can close in scope,
+   classify it `Partial`; if closure needs an unowned decision or unavailable
+   system, classify it `Open`. Never present an in-repository containment step as
+   full closure of an external trust or platform boundary.
+
+Use precise language proportional to evidence. Replace “will,” “always,”
+“unbounded,” “starves,” or “secure” when the snapshot proves only “can,”
+“under this condition,” “has no fixed cap,” “can time out,” or “narrows
+exposure.” Consensus is a candidate filter, not a verdict: Stage 2 must still
+delete consensus items that fail this standard.
+
 ## Stage 0 — Consensus condensation (conditional)
 
 Runs only when the queue's directory holds more than one independent audit
@@ -65,6 +110,12 @@ If they accept, restate a preliminary plan — samples found, disagreements to
 research, exclusions in force, output path — and get explicit approval before
 any work.
 
+Before condensing, run the Evidence standard's population check on every sample.
+Record the actual report-row count, queue-entry count, disposition count, and
+whether the sample's own arithmetic closes. A malformed queue whose headline
+claims more items than its standalone entries is not research-ready. Recover its
+candidates for adjudication, but do not inherit its totals or structure.
+
 Condensation rules:
 
 - Include every item classified NEW or TRANSFORMED (comparative) or OPEN
@@ -73,6 +124,9 @@ Condensation rules:
   be fixed without it, and then as a closure entry, not a work item.
 - Where samples disagree, research the disputed claim against the current
   snapshot and rule it valid or invalid. Never average, vote, or defer.
+- Challenge agreements too. Independent reports can repeat the same unsupported
+  premise, and a detailed finding can still be false, unreachable, immaterial,
+  duplicate, or intentionally tested behavior.
 - Correct false positives and stale claims in the originating audit reports,
   present-tense, with no changelog framing.
 - The caller supplies the exclusion list; default to none. Excluded items appear
@@ -153,6 +207,21 @@ Truth-gate every assigned item:
 - **Current:** the defect exists in the supplied current snapshot.
 - **Actionable:** a concrete change can close it.
 
+Execute the Evidence standard for each item. In particular:
+
+- inspect all production callers and relevant tests, not only the cited lines;
+- distinguish an invalid direct-call test case from a reachable production path;
+- treat deliberate, test-protected behavior as a requirements question, not an
+  implementation defect;
+- reject a style cleanup or allocation reduction unless evidence establishes a
+  material behavior, maintenance, or measured resource consequence;
+- verify that a proposed abstraction removes real drift without coupling owners
+  that intentionally differ;
+- preserve the original exception, cancellation, durability, security, and
+  compatibility semantics in every proposal; and
+- state what the evidence does **not** prove. Do not turn a plausible runtime
+  risk into measured incidence, guaranteed failure, or full compromise.
+
 Amend an inaccurate but valid item in the proposal. Omit false, unsupported,
 stale, duplicate, resolved, positive/no-action, or otherwise non-actionable
 items from the report. Return each omission or upstream amendment only as a
@@ -198,6 +267,10 @@ every packet accounts for all assigned identifiers, and rejects duplicate or
 unassigned identifiers. Re-run a failed subsystem once with the exact defect
 named. Stop after a second failure; never reconcile a partial research set.
 
+Count omissions as successful truth-gate outcomes, not researcher failures. The
+correct result for a false, harmless, intentional, or non-actionable consensus
+item is removal from every active artifact.
+
 ## Stage 3 — Reconcile shared artifacts
 
 Spawn one reconciler sibling with every subsystem report and update packet.
@@ -216,6 +289,14 @@ then applies each accepted correction from origin through derivatives:
 3. Full delta, comparative mode only: maps, dispositions, rollups, residual
    risk, arithmetic, and conclusions.
 4. Queue: entries, closure, links, exclusions, and counts.
+
+When Stage 0 condensed multiple samples, supply every originating report,
+summary, delta, and queue that contains an accepted correction. Reconcile each
+sample independently against its own finding population. If an artifact cannot
+close because its source totals or mappings were already contradictory, mark it
+prominently `UNRECONCILED — DO NOT USE FOR COUNTS OR REMEDIATION`, preserve it
+only for trace evidence, and make the consensus queue authoritative. Never
+invent a remap or force arithmetic to preserve a source artifact's headline.
 
 Keep `## Queue corrections` when anything changed. State the supported
 correction, evidence, affected artifacts, and disposition without repeating a
@@ -276,6 +357,11 @@ PASS/FAIL, and — comparative mode — the excluded Critical/High findings.
 - Only the root writes the index; only each researcher writes its report; only
   the reconciler writes shared audit artifacts.
 - Every FINAL artifact contains only real, true, current, actionable findings.
+- Every retained item records its production reachability, material consequence,
+  relevant test contract, and the narrowest claim the evidence supports.
+- Every omitted item is removed from reports, summaries, deltas, queues, counts,
+  residual risks, ordering, and active proposals; a correction note is not an
+  active finding.
 - Report, summary, queue, subsystem reports, index, and any delta reconcile.
 - Comparative mode: NEW/TRANSFORMED and closure attribution remain separate; no
   closure item is reported as a regression, and no PRE-EXISTING finding was

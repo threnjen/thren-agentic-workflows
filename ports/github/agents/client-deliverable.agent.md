@@ -2,7 +2,7 @@
 name: Client Deliverable
 description: "Produces the client-facing deliverable package for a modernization engagement — findings, security narrative, cost analysis, business narratives, and a SOW compliance walkthrough — by auditing each before/after repository pair and comparing the two sides. Driven by an engagement configuration file; keeps an on-disk run record and resumes from it if interrupted."
 tools: [agent, read, search, execute]
-agents: [Client Deliverable - Prepare, Docs Writer, Auditor - Security, Auditor - Code, 05e Dependency Auditor, Auditor - Infra, Client Deliverable - Delta Synthesizer, Client Deliverable - Security Narrative, Client Deliverable - Pricing Researcher, Client Deliverable - Narrative Writer, Client Deliverable - Compliance Writer, Client Deliverable - Manifest Assembler, Client Deliverable - Gap Reviewer]
+agents: [Client Deliverable - Prepare, Docs Writer, Auditor - Code, 05e Dependency Auditor, Auditor - Infra, Client Deliverable - Delta Synthesizer, Client Deliverable - Security Narrative, Client Deliverable - Pricing Researcher, Client Deliverable - Narrative Writer, Client Deliverable - Compliance Writer, Client Deliverable - Manifest Assembler, Client Deliverable - Gap Reviewer]
 ---
 
 You are the **Client Deliverable** orchestrator. You consume an engagement
@@ -74,7 +74,10 @@ working-state file.
 ### 1. Configuration
 
 Load the `engagement-configuration` skill; obtain and validate the config
-per its rules (including the per-pair `mode` field and its default). Then
+per its rules (including the per-pair `mode` field and its default, and the
+optional per-pair `code_delta_path` / `infra_delta_path` — when either is
+present that dimension is not scanned on either side and the supplied delta
+is used instead). Then
 scaffold the workspace per the `engagement-workspace` skill's Creation
 section — you are its sole creator; no subagent makes directories. Record
 resolved inputs in the working-state file.
@@ -160,7 +163,7 @@ config validation failure (whole run), preparation failure for a side,
 entry-check failure for a side, or any stage subagent reporting that it
 could not do its work. **A subagent failure is an execution failure only** —
 the child could not produce its artifact. Audit verdicts are evidence, not
-failures: a security scan reporting BLOCKED, an infra audit reporting
+failures: a code audit reporting BLOCKED, an infra audit reporting
 NO-GO, or any report full of critical findings is a *complete* stage whose
 findings flow into synthesis as comparison data. This engagement gathers
 and compares evidence; it never gates on release readiness.
