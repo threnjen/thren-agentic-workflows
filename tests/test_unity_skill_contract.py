@@ -37,6 +37,26 @@ def _serialized_assets_section(text: str) -> str:
     return section
 
 
+def _assembly_reference_section(text: str) -> str:
+    match = re.search(
+        r"^### 2\. Assembly reference graph\s*$\n(.*?)(?=^###\s|\Z)",
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    assert match is not None, "Assembly reference graph section is missing"
+    return match.group(1).strip()
+
+
+def _refactor_test_preservation_section(text: str) -> str:
+    match = re.search(
+        r"^## Refactor / Rewire Test Preservation Rules\s*$\n(.*?)(?=^##\s|\Z)",
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    assert match is not None, "Refactor / Rewire Test Preservation Rules section is missing"
+    return match.group(1).strip()
+
+
 def _source_texts() -> list[tuple[Path, str]]:
     text_suffixes = {".json", ".md", ".py", ".toml", ".yaml", ".yml"}
     files = sorted(
@@ -54,22 +74,41 @@ def _meta_gui_requirement_offenders(
     offenders: list[Path] = []
     for path, text in source_texts:
         for sentence in re.split(r"(?<=[.!?])\s+", _normalize(text)):
-            lower = sentence.lower()
-            if ".meta" not in lower or not re.search(r"\b(?:human|gui)\b", lower):
-                continue
-            if not re.search(r"\b(?:must|need|require(?:s|d)?)\b", lower):
-                continue
-            if re.search(r"\b(?:no|not|without|never)\b", lower):
-                continue
-            offenders.append(path)
-            break
+            for clause in re.split(r"[;:—]|\s+-\s+", sentence):
+                lower = clause.lower()
+                if ".meta" not in sentence.lower():
+                    continue
+                if not re.search(r"\b(?:human|gui)\b", lower):
+                    continue
+                if not re.search(r"\b(?:must|need(?:s|ed)?|require(?:s|d)?)\b", lower):
+                    continue
+                if not re.search(r"\b(?:open|launch|run|use)\w*\b", lower):
+                    continue
+                scoped_negation = any(
+                    re.search(pattern, lower)
+                    for pattern in (
+                        r"\b(?:no|without)\s+(?:a\s+)?(?:human|gui)",
+                        r"\bnever\s+(?:requires?|needs?)",
+                        r"\b(?:human|gui)\b.*\b(?:is\s+)?not\s+required",
+                        r"\b(?:must|needs?|requires?)\s+not\b",
+                    )
+                )
+                if scoped_negation:
+                    continue
+                offenders.append(path)
+                break
+            if offenders and offenders[-1] == path:
+                break
     return offenders
 
 
 def _asset_contract_errors(section: str) -> set[str]:
     normalized = _normalize(section)
     errors: set[str] = set()
-    import_command = "Unity -batchmode -quit -projectPath <path> -logFile -"
+    import_command = (
+        '"<resolved-unity-editor>" -batchmode -quit '
+        '-projectPath "<execution-unity-project>" -logFile -'
+    )
 
     if import_command not in section:
         errors.add("plain import command")
@@ -77,8 +116,20 @@ def _asset_contract_errors(section: str) -> set[str]:
         (line for line in section.splitlines() if import_command in line), ""
     ):
         errors.add("import excludes runTests")
-    if "asset-database import and missing `.meta`/GUID generation" not in normalized:
+    if "asks Unity's asset database to import and generate missing `.meta`/GUID files" not in normalized:
         errors.add("meta and GUID generation")
+    if (
+        "treat regeneration as unverified until a controlled missing-`.meta` run succeeds"
+        not in normalized
+    ):
+        errors.add("conditional empirical claim")
+    if "editor and root-or-nested Unity project path resolved by Test Execution" not in normalized:
+        errors.add("canonical editor and project path")
+    if (
+        "`<execution-unity-project>` is `<main-repo-root>/<unity-project-relative-path>`"
+        not in normalized
+    ):
+        errors.add("main-checkout project path")
     if "without a human-opened or GUI-opened Editor" not in normalized:
         errors.add("no GUI requirement")
     if (
@@ -93,14 +144,17 @@ def _asset_contract_errors(section: str) -> set[str]:
     return errors
 
 
-def _path_contract_errors(combined_source: str) -> set[str]:
+def _path_contract_errors(skill_text: str, combined_source: str) -> set[str]:
     errors: set[str] = set()
     if "Assets/Tests/EditMode" in combined_source:
         errors.add("invalid EditMode path")
-    if "Assets/Tests/Editor" not in combined_source:
-        errors.add("verified Editor path")
-    if "Assets/Tests/PlayMode" not in combined_source:
-        errors.add("preserved PlayMode path")
+    if "Assets/Tests/Editor" not in _assembly_reference_section(skill_text):
+        errors.add("assembly graph Editor path")
+    refactor_section = _refactor_test_preservation_section(skill_text)
+    if "Assets/Tests/Editor" not in refactor_section:
+        errors.add("refactor Editor path")
+    if "Assets/Tests/PlayMode" not in refactor_section:
+        errors.add("refactor PlayMode path")
     return errors
 
 
@@ -256,28 +310,45 @@ def test_meta_generation_has_no_human_or_gui_requirement() -> None:
 
 
 def test_unity_test_paths_match_the_verified_convention() -> None:
+    skill_text = SKILL_PATH.read_text(encoding="utf-8")
     source_texts = _source_texts()
     combined = "\n".join(text for _, text in source_texts)
-    assert not _path_contract_errors(combined), sorted(_path_contract_errors(combined))
+    errors = _path_contract_errors(skill_text, combined)
+    assert not errors, sorted(errors)
 
 
 @pytest.mark.parametrize(
     ("needle", "replacement", "obligation"),
     [
         (
-            "Unity -batchmode -quit -projectPath <path> -logFile -",
-            "Unity -batchmode -projectPath <path>",
+            '"<resolved-unity-editor>" -batchmode -quit -projectPath "<execution-unity-project>" -logFile -',
+            '"<resolved-unity-editor>" -batchmode -projectPath "<execution-unity-project>"',
             "plain import command",
         ),
         (
-            "Unity -batchmode -quit -projectPath <path> -logFile -",
-            "Unity -batchmode -quit -projectPath <path> -logFile - -runTests",
+            '"<resolved-unity-editor>" -batchmode -quit -projectPath "<execution-unity-project>" -logFile -',
+            '"<resolved-unity-editor>" -batchmode -quit -projectPath "<execution-unity-project>" -logFile - -runTests',
             "import excludes runTests",
         ),
         (
-            "asset-database import and missing `.meta`/GUID generation",
+            "asks Unity's asset database to import and generate missing `.meta`/GUID files",
             "asset refresh",
             "meta and GUID generation",
+        ),
+        (
+            "treat regeneration as unverified until a controlled missing-`.meta` run succeeds",
+            "regeneration is always proven",
+            "conditional empirical claim",
+        ),
+        (
+            "editor and root-or-nested Unity project path resolved by Test Execution",
+            "editor and project path supplied by the caller",
+            "canonical editor and project path",
+        ),
+        (
+            "`<execution-unity-project>` is `<main-repo-root>/<unity-project-relative-path>`",
+            "`<execution-unity-project>` is `<main-repo-root>`",
+            "main-checkout project path",
         ),
         (
             "without a human-opened or GUI-opened Editor",
@@ -309,11 +380,43 @@ def test_source_sweep_mutations_are_killed() -> None:
     assert _meta_gui_requirement_offenders(injected_gui_requirement) == [
         Path("mutation.md")
     ]
+    mixed_requirement = source_texts + [
+        (
+            Path("mixed-mutation.md"),
+            "A human must open the GUI to generate a missing `.meta` file; do not run headlessly.",
+        )
+    ]
+    assert _meta_gui_requirement_offenders(mixed_requirement) == [
+        Path("mixed-mutation.md")
+    ]
 
+    legitimate_prohibition = source_texts + [
+        (
+            Path("legitimate.md"),
+            "A missing `.meta` file must be generated without a human-opened or GUI-opened Editor.",
+        )
+    ]
+    assert _meta_gui_requirement_offenders(legitimate_prohibition) == []
+
+    skill_text = SKILL_PATH.read_text(encoding="utf-8")
     combined = "\n".join(text for _, text in source_texts)
     assert "invalid EditMode path" in _path_contract_errors(
-        f"{combined}\nAssets/Tests/EditMode"
+        skill_text, f"{combined}\nAssets/Tests/EditMode"
     )
+
+    assembly_mutation = skill_text.replace(
+        "Assets/Tests/Editor/", "Assets/Tests/Alternate/", 1
+    )
+    assert "assembly graph Editor path" in _path_contract_errors(
+        assembly_mutation, combined
+    )
+
+    refactor_marker = "verified reference convention: `Assets/Tests/Editor`"
+    assert refactor_marker in skill_text
+    refactor_mutation = skill_text.replace(
+        refactor_marker, "verified reference convention: `Assets/Tests/Alternate`"
+    )
+    assert "refactor Editor path" in _path_contract_errors(refactor_mutation, combined)
 
 
 @pytest.mark.parametrize(
