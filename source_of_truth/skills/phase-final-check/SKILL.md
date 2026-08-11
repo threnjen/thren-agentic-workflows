@@ -13,8 +13,9 @@ Keep this contract here; consumers reference it instead of copying it.
 - Read the supplied phase document and committed repository facts available to a newcomer. This
   may include `docs/phases/DISCOVERY_CONTEXT.md` and
   `docs/learnings/cross-phase-decisions.md` when present.
-- Missing optional context does not fail or halt the review. Do not read or request conversation
-  history, secrets, uncommitted session context, or external data.
+- If optional context is missing, proceed with the supplied phase document and available committed
+  repository facts; do not fail or halt the review. Do not read or request conversation history,
+  secrets, uncommitted session context, or external data.
 
 ## Cold-start obligation
 
@@ -34,8 +35,8 @@ Report only observations in these six categories:
 
 Every finding must cite a phase-document location or a concrete repository fact. Consolidate
 similar observations, omit weak or speculative ones, and do not assign severity ratings,
-pass/fail judgments, or rank them. Roadmap or discovery-context synchronization state is not a
-finding.
+pass/fail judgments, grades, gates, blocking thresholds, or ranks. Roadmap or discovery-context
+synchronization state is not a finding.
 
 ## Response
 
