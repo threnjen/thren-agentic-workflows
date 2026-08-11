@@ -35,7 +35,15 @@ Treat `dev/feature/[phase-name]-execution-manifest.md` as the single source of t
 4. Extract the manifest's `## Verification Assets` section if present, including new test files, existing test files updated by multiple features, and manual QA checklist items. If the section is missing, record `verification-assets: not provided` and continue.
 5. For each feature listed in the manifest, verify that `dev/feature/[0N-task-name]/` exists and contains all three required files: `-plan.md`, `-context.md`, and `-tasks.md`.
 6. If any required file is missing, stop immediately and tell the user to rerun `feature-decomposer` for this phase.
-7. Create a todo list entry for each feature with status `not-started`.
+7. After manifest and bundle validation succeeds, resolve the bookend scope from every `key files modified` path. Reject duplicate, outside-repository, or otherwise unusable paths as a bookend-scope limitation; retain deleted or renamed starting paths and state when current-tree reference search cannot resolve them. For each valid path, add exactly one uncapped reference-search hop: files that name the path, import its module, or use names it defines. Do not expand transitively and do not impose a numeric cap.
+8. Treat every file under `source_of_truth/` and `tests/` as source. Exclude standalone `docs/`, README-style files, and equivalent documentation prose. If the dependent search is empty, retain the valid modified files alone and record the narrower-evidence limitation in each auditor's Coverage and Limitations. Keep the resolved paths and count for the bookend.
+9. Always select `z-auditor-code`. Select `z-auditor-infra` if and only if a validated manifest path touches CI, Docker, IaC, or build configuration; record the explicit run or skip reason, and record an ambiguity as missing evidence rather than silently skipping it.
+10. Ask exactly once, here, whether to run the resolved scoped bookend, run the full-codebase alternative, or decline. State the resolved file count and selected audit types in the question. Record the choice and any decline or scope-unusable reason; never infer full-codebase scope from size and never ask again later:
+
+    > "The resolved audit bookend contains [N] source files and selects [Code, plus Infra run/skip reason]. Run this scoped bookend, run the full-codebase alternative, or decline with a reason? This is the only bookend decision; record the choice now."
+
+    A declined or scope-unusable choice performs no bookend audit, records `all-approved: no`, and continues through the existing phase pipeline toward Step 6. A full-codebase choice is explicit and recorded, not inferred.
+11. Create a todo list entry for each feature with status `not-started`.
 
 Do not spawn `feature-decomposer`.
 Do not spawn `z-feature-plan-expander`.
@@ -165,25 +173,43 @@ After the z-diff-security-scan subagent returns:
 - Do not automatically remediate security findings. z-prod-code-review determines the final GO / GO WITH CONDITIONS / NO-GO decision.
 - Do NOT emit a separate `eval:` commit for this step. Stage the report with the Phase Final Review checkpoint (`eval: final-review`).
 
+### Step 5.5: Audit Bookend
+
+Run the accepted bookend only after all waves, wave test gates, visual verification, QA, and the existing Step 5 Diff Security Review have completed. Load the exact `audit-comparison` skill and pass it the caller-specific state; do not copy its output-root, materialization, matrix, delta, attribution, reconciliation, or cleanup mechanics here. Keep the `delta-auditor` orchestrator out of this bookend; the roster contains only the existing leaf agents.
+
+If Step 1 recorded a decline or unusable scope, perform no audit, retain its stated reason, set `all-approved: no`, and continue to Step 6. Otherwise:
+
+1. Use the accepted scoped paths or the explicitly accepted full-codebase source scope, the manifest's scope and intent, and the working checkout as `output_root`. Derive `[audit-name]` from the phase and short-SHA labels from `<phase-baseline>` and `HEAD`. Pass a matrix with independent Code and, when selected, Infra rows for the baseline and current targets. Put every report, summary, delta, queue, attribution update, and verification addendum below the working checkout's `dev/[audit-name]/`; write nothing into the baseline tree.
+2. Pass `<phase-baseline>` to `z-baseline-worktree` through the shared skill and use its returned root as the read-only baseline target. Keep the worktree through delta and attribution, release only a worktree created by this run after attribution, and never release a reused worktree. On materialization failure, record the concrete reason, set `all-approved: no`, skip invalid downstream operations, and continue to Step 6.
+3. Render one auditor prompt template for both snapshots. Its only snapshot-varying fields are `target_root`, `snapshot_label`, and `output_directory`; scope and intent remain byte-identical. The prompt must state that the manifest supplies scope and intent, stated intent never excuses a finding, standalone documentation is excluded, and this run overrides `z-auditor-infra`'s Documentation category. Treat tests as source but tell `z-auditor-code` to apply only Categories 2, 5, 8, and 9 to test files.
+4. Run the selected Code baseline/current pair and the selected Infra baseline/current pair back to back at this end-of-run step. Keep reports, deltas, queues, totals, and reconciliation independent by type; add no security or refactor audit and produce no cross-type delta. Require both corresponding full findings reports and their stated totals before each `z-auditor-delta` spawn. A partial return, missing total, missing report, unreconciled delta, or provisional item before attribution is incomplete evidence: record it, set `all-approved: no`, and continue without calling it a regression.
+5. Let the shared skill dispatch `z-auditor-attribution` for every provisional current-side finding against both trees in disjoint subsystem batches whose assigned counts sum to the delta's unattributed total. Do not present a regression before attribution; preserve any missing, overlapping, incomplete, or unreconciled result as missing evidence and keep `all-approved: no`.
+6. After attribution, select only High/Critical findings settled as caused by this phase for remediation. Record an empty eligible set as a valid result. Otherwise re-spawn `z-feature-implementer` once, on the working checkout only, using the bounded prose shape already established by Steps 2.5 and 3; capture the files it actually touched and do not start an audit/remediation loop. Verify only those touched files and eligible findings, append the result to the existing same-type delta as an explicitly non-comparable verification addendum, and never use it as a new delta snapshot. Do not remediate Medium/Low, pre-existing, unverified-origin, provisional, or otherwise non-phase findings.
+7. Record the Step 1 choice and count, audit-type run/skip reasons, roots and short-SHA labels, artifact paths, report totals, delta reconciliation, attribution batches and outcome, remediation result, targeted verification status, cleanup state, and every missing-evidence reason in the existing phase evidence flow. These outcomes feed `all-approved`; any decline, failure, partial evidence, mismatch, or unverified fix forces `all-approved: no`. Add no normal-path logging or persistent state. Continue to Step 6 in every branch.
+
 ### Step 6: Phase Final Review
 
-spawn the **z-prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and fast-track flag collected during the wave loop (Step 2), plus the visual-verification verdict from Step 3 (or its skip reason) as runtime evidence.
+spawn the **z-prod-code-review** subagent. Build the prompt from the applicable template below, substituting the verdict summary and final aggregate `all-approved` state after every gate, the visual-verification verdict from Step 3 (or its skip reason), and the complete Step 5.5 bookend evidence as runtime evidence. A declined, failed, partial, unreconciled, unattributed, or unverified bookend outcome keeps `all-approved: no` and still reaches this review.
 
-**If QA was generated and all verdicts Approved:**
-
-> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan: `[QA output path]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
->
-> Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
->
-> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-wave status and results artifact paths from Step 2.5]. Visual verification: [Pass | skip reason]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). All verdicts Approved: YES — use fast-track mode."
-
-**If QA was generated and any verdict was not Approved:**
+**If QA was generated and the complete pipeline is `all-approved: yes`:**
 
 > "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan: `[QA output path]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-wave status and results artifact paths from Step 2.5]. Visual verification: [Pass | Fail | Unverified | skip reason]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). All verdicts Approved: NO — use standard mode."
+> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-wave status and results artifact paths from Step 2.5]. Visual verification: [Pass | skip reason]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode."
+>
+> Bookend evidence: [Step 1 scoped/full/declined decision and reason; resolved file count; Code and Infra run/skip reasons; baseline/current roots and short-SHA labels; report, delta, queue, attribution, reconciliation, remediation, targeted non-comparable verification, cleanup paths/status; all missing-evidence reasons]. A declined or incomplete bookend is `all-approved: no` even when other verdicts are Approved.
+
+**If QA was generated and the complete pipeline is `all-approved: no`:**
+
+> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan: `[QA output path]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
+>
+> Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
+>
+> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-wave status and results artifact paths from Step 2.5]. Visual verification: [Pass | Fail | Unverified | skip reason]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode."
+>
+> Bookend evidence: [Step 1 scoped/full/declined decision and reason; resolved file count; Code and Infra run/skip reasons; baseline/current roots and short-SHA labels; report, delta, queue, attribution, reconciliation, remediation, targeted non-comparable verification, cleanup paths/status; all missing-evidence reasons]. A declined or incomplete bookend is `all-approved: no` even when other verdicts are Approved.
 
 After the z-prod-code-review subagent returns, stage only the final review artifact, the security scan report, and any phase-level pipeline documents updated by this step, then commit them with the exact message `eval: final-review`.
 
