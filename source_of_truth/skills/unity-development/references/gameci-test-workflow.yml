@@ -37,6 +37,7 @@ jobs:
           path: ${{ steps.editmode-tests.outputs.artifactsPath }}
 
       - name: Run PlayMode tests
+        if: ${{ !cancelled() }}
         id: playmode-tests
         uses: game-ci/unity-test-runner@v4
         env:

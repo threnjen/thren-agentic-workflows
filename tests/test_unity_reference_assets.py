@@ -36,7 +36,6 @@ def _workflow_errors(text: str) -> set[str]:
         ("artifactsPath: artifacts/playmode", "PlayMode artifact location"),
         ("path: ${{ steps.playmode-tests.outputs.artifactsPath }}", "PlayMode artifact output"),
         ("uses: actions/upload-artifact@v4", "artifact action"),
-        ("if: always()", "always upload"),
         ("projectPath: <UNITY_PROJECT_PATH>", "project placeholder"),
     ]:
         if token not in normalized:
@@ -54,6 +53,20 @@ def _workflow_errors(text: str) -> set[str]:
         errors.add("unneeded token permission")
     if "matrix:" in text:
         errors.add("matrix-free reference")
+    if normalized.count("uses: game-ci/unity-test-runner@v4") != 2:
+        errors.add("two test executions")
+    if normalized.count("uses: actions/upload-artifact@v4") != 2:
+        errors.add("artifact action")
+    if normalized.count("if: always()") != 2:
+        errors.add("always upload")
+
+    play_step = re.search(
+        r"- name: Run PlayMode tests\n(.*?)(?=\n\s+- name:)",
+        text,
+        re.DOTALL,
+    )
+    if play_step is None or "if: ${{ !cancelled() }}" not in play_step.group(1):
+        errors.add("PlayMode failure independence")
     return errors
 
 
@@ -80,6 +93,8 @@ def _runbook_errors(text: str) -> set[str]:
             errors.add(f"step {index} command")
         if "**Correct result:**" not in step:
             errors.add(f"step {index} result")
+    if steps and "git status --short" in steps[0]:
+        errors.add("staging result describes its own command")
 
     for token, obligation in [
         (" commit -m ", "commit first"),
@@ -90,6 +105,10 @@ def _runbook_errors(text: str) -> set[str]:
         ("multi-minute first import", "cold import"),
         ("checkout --detach", "refresh"),
         ("`Library/`", "Library retention"),
+        (
+            "no ignored content outside `<execution-unity-project>/Library/`",
+            "strict ignored-content boundary",
+        ),
         ("Visual Verifier", "editor discovery"),
         ("-batchmode -nographics -runTests", "EditMode flags"),
         ("-batchmode -runTests", "PlayMode flags"),
@@ -102,6 +121,10 @@ def _runbook_errors(text: str) -> set[str]:
         ("CI installation is out of scope", "CI scope"),
         ("Unity Personal", "Personal concurrency"),
         ("-batchmode -quit", "headless import"),
+        ("<test-run total= passed= failed=>", "root XML counts"),
+        ("<test-case result=\"Failed\">", "failing test names"),
+        ("zero discovered tests is `not-executed`", "zero-test status"),
+        ("retain its Unity log", "failure log retention"),
     ]:
         if token not in normalized:
             errors.add(obligation)
@@ -183,6 +206,11 @@ def test_local_runbook_contract() -> None:
             "UNITY_LICENSE: literal-license",
             "UNITY_LICENSE reference",
         ),
+        (
+            "if: ${{ !cancelled() }}",
+            "if: ${{ success() }}",
+            "PlayMode failure independence",
+        ),
     ],
 )
 def test_workflow_mutations_are_killed(
@@ -210,6 +238,36 @@ def test_removing_all_artifact_uploads_is_detected() -> None:
         ("worktree remove", "worktree list", "manual teardown"),
         ("Teardown is never automatic", "Teardown is automatic", "no automatic teardown"),
         ("`Library/`", "the cache", "Library retention"),
+        (
+            "no ignored content outside `<execution-unity-project>/Library/`",
+            "ignored content outside `<execution-unity-project>/Library/` is allowed",
+            "strict ignored-content boundary",
+        ),
+        (
+            "zero discovered tests is `not-executed`",
+            "zero discovered tests is `executed-green`",
+            "zero-test status",
+        ),
+        (
+            "<test-run total= passed= failed=>",
+            "a generic result summary",
+            "root XML counts",
+        ),
+        (
+            "<test-case result=\"Failed\">",
+            "failed cases",
+            "failing test names",
+        ),
+        (
+            "retain its Unity log",
+            "discard its Unity log",
+            "failure log retention",
+        ),
+        (
+            "The command exits with status 0 and reports no path or repository error.",
+            "`git status --short` shows the intended files staged.",
+            "staging result describes its own command",
+        ),
     ],
 )
 def test_runbook_mutations_are_killed(

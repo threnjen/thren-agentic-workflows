@@ -10,10 +10,10 @@ Remove the test worktree only when you deliberately choose to reclaim it.
 ## 1. Stage the files to test
 
 ```bash
-git -C "<main-repo-root>" add <files-to-test>
+git -C "<main-repo-root>" add -- "<file-to-test>"
 ```
 
-**Correct result:** `git status --short` shows the intended files staged and no accidental files.
+**Correct result:** The command exits with status 0 and reports no path or repository error. Repeat this step for each file that belongs in the testable commit.
 
 ## 2. Commit the testable state
 
@@ -65,7 +65,7 @@ git -C "<project-dir>-agent-tests/" checkout --detach "$(git -C "<main-repo-root
 git -C "<project-dir>-agent-tests/" status --short --untracked-files=all --ignored
 ```
 
-**Correct result:** There are no source changes or untracked files. Ignored output is confined to the Unity project's `Library/` and other normal Unity-generated directories.
+**Correct result:** There are no tracked changes or untracked files and no ignored content outside `<execution-unity-project>/Library/`. If any other path appears, stop and report `not-executed` without deleting or overwriting anything.
 
 ## 8. Resolve the Unity Editor executable
 
@@ -91,7 +91,7 @@ mkdir -p "<absolute-main-checkout>/dev/test-results"
 "<resolved-unity-editor>" -batchmode -nographics -runTests -projectPath "<project-dir>-agent-tests/<unity-project-relative-path>" -testPlatform EditMode -testResults "<absolute-main-checkout>/dev/test-results/editmode-results.xml" -logFile "<absolute-main-checkout>/dev/test-results/editmode-unity.log"
 ```
 
-**Correct result:** Unity exits, `editmode-results.xml` exists, and its result summary reports the executed EditMode tests.
+**Correct result:** `editmode-results.xml` exists. Record the root `<test-run total= passed= failed=>` counts and every `<test-case result="Failed">` name. A run with zero discovered tests is `not-executed`. On any failure, retain its Unity log at `editmode-unity.log` with the XML.
 
 ## 11. Run PlayMode tests
 
@@ -99,7 +99,7 @@ mkdir -p "<absolute-main-checkout>/dev/test-results"
 "<resolved-unity-editor>" -batchmode -runTests -projectPath "<project-dir>-agent-tests/<unity-project-relative-path>" -testPlatform PlayMode -testResults "<absolute-main-checkout>/dev/test-results/playmode-results.xml" -logFile "<absolute-main-checkout>/dev/test-results/playmode-unity.log"
 ```
 
-**Correct result:** Unity exits, `playmode-results.xml` exists, and its result summary reports the executed PlayMode tests.
+**Correct result:** `playmode-results.xml` exists. Record the root `<test-run total= passed= failed=>` counts and every `<test-case result="Failed">` name. A run with zero discovered tests is `not-executed`. On any failure, retain its Unity log at `playmode-unity.log` with the XML.
 
 ## 12. Run a controlled headless import when required
 
