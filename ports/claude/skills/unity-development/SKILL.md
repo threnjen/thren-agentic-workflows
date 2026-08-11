@@ -24,7 +24,7 @@ Before writing any Unity-specific code, read the following project files and doc
 **Record in implementation record:** `activeInputHandler: <value> — using <which API>`.
 
 ### 2. Assembly reference graph
-**Read:** the `.asmdef` file for every assembly you will create or modify. (For the View layer: `Assets/Scripts/View/Combat/View.asmdef`. For Controllers: `Assets/Scripts/Controllers/Controllers.asmdef`. For Tests: `Assets/Tests/EditMode/Tests.EditMode.asmdef`.)
+**Read:** the `.asmdef` file for every assembly you will create or modify. (For the View layer: `Assets/Scripts/View/Combat/View.asmdef`. For Controllers: `Assets/Scripts/Controllers/Controllers.asmdef`. For Tests, discover the project's EditMode test assembly; the verified reference convention places it under `Assets/Tests/Editor/`.)
 
 For each new `using` directive you add to any `.cs` file, confirm the assembly named after `using` appears in that `.asmdef`'s `"references"` array or is a known implicit dependency (e.g., `System`, `System.Collections.Generic`, `UnityEngine` when `noEngineReferences` is `false`).
 
@@ -162,7 +162,7 @@ This bug has recurred multiple times. It is the single most common UI Toolkit mi
 
 ## Refactor / Rewire Test Preservation Rules
 
-- Before planning a refactor, runtime rewire, API change, or behavior change, inventory the affected Unity tests and harnesses (`Assets/Tests/EditMode`, `Assets/Tests/PlayMode`, any phase-scoped or editor tests, and UI Toolkit test root builders). Plan them as part of the work, not as a deferred cleanup.
+- Before planning a refactor, runtime rewire, API change, or behavior change, inventory the affected Unity tests and harnesses: the project's EditMode directory (verified reference convention: `Assets/Tests/Editor`), `Assets/Tests/PlayMode`, any phase-scoped or editor tests, and UI Toolkit test root builders. Plan them as part of the work, not as a deferred cleanup.
 - If the change alters a public API, bootstrap path, serialized asset layout, scene wiring, prefab, event contract, or lifecycle behavior, assume related tests will need updates and include those files in the plan's scope and verification assets.
 - When a Unity test becomes obsolete because production behavior changed, update or retire it in the same feature and document the reason. Leave no orphaned or silently broken tests behind.
 - For controller, UI Toolkit, or scene-wiring changes, include the corresponding test assembly and test root builder files in the planned scope and explicitly note whether each needs test updates.
@@ -171,17 +171,37 @@ This bug has recurred multiple times. It is the single most common UI Toolkit mi
 
 Unity Test Framework is the authoritative runner. Compilation success and focused harnesses are not test execution — see the `test-execution-evidence` instruction.
 
+`-batchmode` is mandatory for every agent-driven Unity test run. Never assume a bare `Unity` executable is on `PATH`.
+
+**Editor discovery.** Load Step 1 from the deployed `Visual Verifier` agent definition by display name through the active harness's configured agent catalog. Resolve it there rather than pointing at an authoring-repository path in the consumer checkout. Do not copy its discovery algorithm into this skill; that deployed agent remains the single canonical implementation.
+
+**Project paths.** Resolve `<main-repo-root>` as the Git checkout root and `<unity-project-relative-path>` as `.` for a root Unity layout or the nested directory containing `Assets/` and `ProjectSettings/` (for example `game`). A shadow `<worktree-root>` is a checkout of the whole repository. Set `<execution-unity-project>` to `<worktree-root>/<unity-project-relative-path>`; for the main-checkout fallback use `<main-repo-root>/<unity-project-relative-path>`. Never pass a monorepo root without a Unity project to `-projectPath`.
+
+| Platform | Required flags |
+|----------|----------------|
+| EditMode | `-batchmode -nographics` |
+| PlayMode and visual capture | `-batchmode` with graphics enabled; exclude `-nographics` |
+
 ```bash
-Unity -runTests -projectPath <path> -testPlatform EditMode|PlayMode -testResults <results.xml>
+"<resolved-unity-editor>" -batchmode -nographics -runTests -projectPath "<execution-unity-project>" -testPlatform EditMode -testResults "<absolute-main-checkout>/dev/test-results/<results.xml>" -logFile "<absolute-main-checkout>/dev/test-results/<unity.log>"
+"<resolved-unity-editor>" -batchmode -runTests -projectPath "<execution-unity-project>" -testPlatform PlayMode -testResults "<absolute-main-checkout>/dev/test-results/<results.xml>" -logFile "<absolute-main-checkout>/dev/test-results/<unity.log>"
 ```
 
-- `-batchmode` is optional. Omit it to run against the Editor UI; add it for headless runs.
+- Never pair `-quit` with `-runTests`; Unity can exit before the tests execute and return a false-green zero exit code.
 - **Affected-suite runs use `-testFilter`** — a semicolon-separated list of full test names or a regex, negation supported. Scope it to the suites exercising the changed symbol. Gate runs (wave boundary, phase end) are unfiltered.
-- Write results under `dev/test-results/`.
+- `-testResults` always receives an absolute path under the main checkout's `dev/test-results/`; `-logFile` uses the same absolute artifact directory. The shadow worktree is an execution target only. Never read results from the shadow worktree; never read logs from it either.
 
-**Editor lock.** If `Temp/UnityLockfile` exists or the Editor is open on the project, do NOT launch a CLI run — it will fight the running Editor. Report `not-executed: editor lock` and ask the user to run the suite. Never force it.
+**Precondition.** Commit before testing in a shadow worktree; it can represent only committed code. The normal per-feature commit usually satisfies this precondition. A dirty checkout requires a commit before this procedure begins.
 
-**Reading the results XML.** Root `<test-run total= passed= failed=>` gives the counts; failing test names come from `<test-case result="Failed">`. A run reporting zero tests discovered is `not-executed`.
+### Execution Ladder
+
+1. **Persistent shadow worktree.** From `<main-repo-root>`, run `git worktree prune`, then use the one fixed detached sibling `<project-dir>-agent-tests/` as `<worktree-root>`. Before reuse, verify that an existing path is a registered worktree for this repository; never overwrite foreign content. On first use, announce its path, approximate disk cost, and multi-minute first import, then create it with `git worktree add --detach "<project-dir>-agent-tests/" "<committed-sha>"`. On every use, refresh it with `git -C "<project-dir>-agent-tests/" checkout --detach "<committed-sha>"`. Before running Unity, verify the worktree has no tracked changes or untracked files and no ignored content outside `<execution-unity-project>/Library/` (or its root-layout equivalent); otherwise stop and report `not-executed` without deleting or overwriting anything. Its gitignored `Library/` remains in place. Run the appropriate headless command against `<execution-unity-project>` once while the main Editor remains open and usable.
+2. **Licensing or lock fallback.** If rung 1 fails because of licensing or a project lock, ask the user to close the Editor once. After it closes, the agent runs the headless command once in the main checkout. Never delegate the test run to the user.
+3. **Decline or unattended fallback.** Never launch a GUI and never refuse silently. A decline reports `not-executed`. Treat unattended non-response as a decline and report exactly `not-executed: editor open, user unavailable`.
+
+The one shadow worktree persists indefinitely. Per-run worktree creation is an anti-pattern because it discards `Library/` and repeats the cold import. Teardown is manual only: after validating the fixed path belongs to this repository, the maintainer may run `git -C "<main-checkout>" worktree remove "<project-dir>-agent-tests/"`. Never automate teardown.
+
+**Reading the results XML.** Exit code zero is not evidence. Root `<test-run total= passed= failed=>` gives the counts; failing test names come from `<test-case result="Failed">`. A run reporting zero tests discovered is `not-executed`.
 
 ## Test Authenticity Rules
 
@@ -258,6 +278,8 @@ Batch renderers that only rebuild on add/remove won't reflect per-entity state c
 ## Serialized Assets: Generate via Unity, Never Hand-Author
 
 Unity's serialized assets — `.prefab`, `.unity` scenes, `.mat`, `.asset` (including SRP pipeline/renderer assets), and `.meta` files — are produced by the Unity Editor's serializer. The Editor is the sole authority for GUIDs, fileIDs, class ids, required-component dependencies, and version-correct format. An agent hand-writing these files is impersonating that serializer **blind**: no access to the real GUID database, no enforcement of component dependencies, no way to validate the output. This is the single most common source of "compiles green, tests pass, but nothing renders / NRE every frame" failures.
+
+**Headless asset-database import.** Use `"<resolved-unity-editor>" -batchmode -quit -projectPath "<execution-unity-project>" -logFile -` with the editor and root-or-nested Unity project path resolved by Test Execution; for a controlled main-checkout check, `<execution-unity-project>` is `<main-repo-root>/<unity-project-relative-path>`. This asks Unity's asset database to import and generate missing `.meta`/GUID files without a human-opened or GUI-opened Editor; treat regeneration as unverified until a controlled missing-`.meta` run succeeds on the target Unity version. Unity's serializer remains the sole authority for every generated file.
 
 **Rule: do not hand-author serialized Unity assets from scratch.** Build them by running the Unity Editor API in batch mode (an `Editor/` script Unity executes), so Unity generates the asset, its GUIDs, and its `.meta`:
 
