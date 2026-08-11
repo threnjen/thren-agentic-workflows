@@ -11,7 +11,7 @@ not degrade the codebase it just changed.
 
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
-| 01 | Unity Headless Test Execution | Planned | None | Medium | Make every agent-driven Unity test run headless via a three-rung ladder: a permanent shadow worktree first, then ask-the-user-to-close-the-Editor, never a silent refusal and never a GUI. Ship a reference CI workflow and runbook as copyable assets. |
+| 01 | Unity Headless Test Execution | In Progress — NO-GO | None | Medium | Four source-authoring features define the headless ladder, asset import, consumer alignment, and inert reference assets. Completion is blocked on main-Editor concurrency evidence, a clean controlled `.meta` import, and a green final gate. |
 | 02 | Blind Plan Reviewer | Planned | None | Small | New hidden subagent that reviews a written phase document against a fixed rubric, seeing only the document and the repository — never the planner's reasoning. Blocks the "move on" handoff on High-or-above findings, with one revise-and-recheck. Wired into Project - Planner and Phase - Refiner. |
 | 03 | Phase Execute Audit Bookend | Planned | Phase 01, Phase 02 | Large | Phase - Execute audits at phase start and again at phase end with a byte-identical prompt, compares the two via Auditor - Delta, attributes findings against the known phase baseline commit, and auto-remediates High-or-above drift the phase caused. |
 
@@ -32,7 +32,9 @@ phases improve; it has no code-level dependency on either. Execute them in liste
   of Phase 01's Unity invocations happens against an external reference project,
   `/Users/jennywadkins/github_repos/the-movies` (Unity `6000.3.13f1`), as a maintainer-executed
   manual QA step. Whether that machine's Unity Personal license permits a second concurrent Unity
-  process is unverified and is Phase 01's primary open risk; the phase degrades gracefully if not.
+  process is unverified and is Phase 01's primary open risk. The controlled missing-`.meta` import is
+  also unverified because the reference checkout is not clean. The execution ladder degrades safely,
+  but Phase 01 remains NO-GO until both evidence conditions are recorded.
 - **No new runtime dependencies.** The repo is stdlib-only Python plus Markdown. Nothing in this
   roadmap changes that.
 - **Delegation depth is one.** Only user-invocable root orchestrators spawn agents. Any new
@@ -40,7 +42,8 @@ phases improve; it has no code-level dependency on either. Execute them in liste
 - **Non-goal: reorganizing the agent corpus.** No renumbering, no merging of existing agents, no
   restructuring of `ports/` emitters.
 - **Non-goal: GameCI adoption.** A reference workflow ships as an asset in Phase 01. Whether it is
-  ever installed anywhere is a later, separate decision.
+  ever installed anywhere is a later, separate decision. Before activation, its action references
+  require verified full commit SHAs and the adapted workflow requires `actionlint` validation.
 
 ## Architecture Notes
 

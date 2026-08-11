@@ -1,46 +1,45 @@
 # Phase 1: Unity Headless Test Execution
 
-**Status**: Planned
+**Status**: In Progress
 **Depends on**: None
 **Estimated complexity**: Medium
 **Cross-references**: None — single-repository phase
+**Readiness verdict**: NO-GO — source authoring is implemented; required runtime evidence and a green final gate are outstanding
 
 ## What's New
 
-Unity tests stop taking over your machine. Today an agent asked to run Unity tests either launches
-Unity Hub and hijacks your mouse for the duration, or refuses outright because your Editor is open
-and tells you to run the tests yourself. After this phase, neither happens: every agent-driven Unity
-test run is headless, and it runs against its own persistent copy of the project, so you can leave
-the Editor open and keep working while tests run. If that copy cannot be used, the agent asks you to
-close the Editor and then runs the tests itself — it never hands the job back to you.
+Agent-driven Unity tests use a headless three-rung execution contract. The primary path targets one
+persistent detached shadow worktree, keeps EditMode non-graphical, keeps PlayMode graphics enabled,
+and writes XML and logs to absolute paths in the main checkout. If a license or project lock blocks
+the shadow worktree, the agent asks for the main Editor to close and runs the test itself in the main
+checkout. It never launches a GUI or delegates test execution to the user.
 
-It also removes a false belief that has been steering agents wrong — that Unity needs a human to
-open the app before it will generate `.meta` files. It does not, and agents will stop acting as
-though it does.
+Unity's serializer remains authoritative for `.meta` files and asset GUIDs. The corpus documents a
+headless asset-database import command without requiring a human-opened Editor, while treating actual
+missing-`.meta` regeneration as unverified until a controlled run succeeds on the target project.
 
-Finally, this phase ships a ready-to-copy CI workflow and a runbook for the day you want Unity tests
-running on push instead of on demand. Nothing is installed anywhere by this phase; the assets sit in
-the corpus until you choose to use them.
+The phase contains an inert GameCI workflow template and a 14-step local testing runbook. The
+workflow is not installed anywhere. It requires GitHub Actions semantic validation and full-SHA
+action pinning before activation. The phase has no visual acceptance criteria, so screenshot capture
+is not part of its evidence.
 
 ## Objective
 
-Make every agent-driven Unity test run headless, non-blocking, and independent of the maintainer's
-running Editor, by correcting the rules in `unity-development` and introducing a persistent shadow
-worktree as the standard CLI execution target, with a bounded fallback for the case where a second
-concurrent Unity process is not available.
+Make every agent-driven Unity test run headless and agent-owned by defining a persistent shadow
+worktree as the standard CLI execution target, with a bounded fallback when a second concurrent
+Unity process is unavailable and honest `not-executed` reporting when evidence cannot be obtained.
 
 ## Scope
 
 ### In Scope
 
-- Rewrite the **Test Execution** section of `source_of_truth/skills/unity-development/SKILL.md`:
-  - `-batchmode` is **mandatory** at every execution tier. The current "`-batchmode` is optional"
-    wording is deleted, not softened.
+- The **Test Execution** section of `source_of_truth/skills/unity-development/SKILL.md` defines:
+  - `-batchmode` as **mandatory** at every execution tier.
   - The graphics flag is stated **per test platform, as a two-row table**: EditMode runs use
     `-batchmode -nographics`; PlayMode and visual-capture runs use `-batchmode` with graphics
     enabled, because `-nographics` prevents rendering and would break visual verification.
-  - Restate the existing prohibition on pairing `-quit` with `-runTests`.
-- Replace the Editor-lock refusal rule (`SKILL.md` line 181) with a **three-rung execution ladder**:
+  - The prohibition on pairing `-quit` with `-runTests`.
+- A **three-rung execution ladder** owns lock and licensing behavior:
   1. Commit the working tree, refresh the persistent shadow worktree to that commit, run headless
      in the worktree. The maintainer's Editor stays open and usable.
   2. If the worktree run fails on licensing or a lock, ask the user to close the Editor, then run
@@ -49,29 +48,29 @@ concurrent Unity process is not available.
      declines rung 2, or when the agent is running unattended and no response arrives — a
      non-response is treated as a decline and reported as `not-executed: editor open, user
      unavailable`.
-- State that test results are always written to an **absolute path in the main checkout**
+- Test results are always written to an **absolute path in the main checkout**
   (`dev/test-results/`), never to the worktree's copy of that path. The shadow worktree is a pure
   execution target; nothing ever reads output from it.
-- State that the Unity binary is located by the **existing editor-discovery procedure** used by
+- The Unity binary is located by the **existing editor-discovery procedure** used by
   `04g-unity-visual-verification`, not by assuming a bare `Unity` is on `PATH`.
-- State **commit-before-test as an explicit precondition** of the design: a worktree can only test
+- **Commit-before-test is an explicit precondition** of the design: a worktree can only test
   committed code. In practice most runs need no extra commit because the Feature - Implementer
   already commits per feature; only a mid-feature run adds one.
-- Document the **persistent shadow worktree procedure** in full: detached checkout, sibling
+- The **persistent shadow worktree procedure** covers detached checkout, sibling
   location, first-need creation with announced cost, indefinite persistence, refresh by checkout,
   `Library/` retention, `git worktree prune` on each use, manual teardown command.
-- Add a documented **headless `.meta` / asset-import procedure**
-  (`Unity -batchmode -quit -projectPath <path> -logFile -`) as the sanctioned way to generate missing
-  `.meta` files and asset GUIDs, and correct any corpus text implying a human must open the Editor.
-- Correct the **Refactor / Rewire Test Preservation Rules** section of the same skill, which names
-  `Assets/Tests/EditMode` as the EditMode test path. The reference project keeps EditMode tests in
-  `Assets/Tests/Editor`; the rule must not name a path that does not exist.
-- Ship two copyable reference assets: a GameCI GitHub Actions workflow template, and a
+- The **headless `.meta` / asset-import procedure** uses
+  (`"<resolved-unity-editor>" -batchmode -quit -projectPath "<execution-unity-project>" -logFile -`)
+  to request missing `.meta` and asset GUID generation, with the capability
+  kept conditional until a controlled target-project run succeeds.
+- The **Refactor / Rewire Test Preservation Rules** use the verified reference-project EditMode
+  convention, `Assets/Tests/Editor`, and preserve `Assets/Tests/PlayMode` guidance.
+- Two copyable reference assets exist: a GameCI GitHub Actions workflow template and a
   human-facing local Unity test runbook (TL;DR, then numbered steps).
-- Propagate the rule change to every consuming agent so no agent carries a stale instruction:
+- Every consuming agent follows the canonical contracts:
   `04-phase-execute.agent.md` (Step 2.5 wave test gate), `04g-unity-visual-verification.agent.md`,
   `04h-unity-reviewer.agent.md` (batch import / asset-integrity gate).
-- Structural corpus tests covering the new rules.
+- Structural corpus tests cover every authored contract and include non-vacuous mutation proof.
 
 ### Out of Scope
 
@@ -80,7 +79,7 @@ concurrent Unity process is not available.
 - **Any change to what Unity tests assert.** This phase changes how tests are invoked, never their
   content, and never the Test Authenticity Rules.
 - **Removing the supervisor-attestation escape hatch** in `04-phase-execute` Step 2.5. It stays; it
-  should simply become rare.
+  remains a narrow, explicitly identified evidence exception.
 - **Visual verification redesign.** `04g` keeps its editor-location logic and its capture-config
   bootstrap; only its invocation flags and `-projectPath` target are touched.
 - **Automated worktree teardown.** The shadow worktree is permanent by design. Teardown is a
@@ -92,34 +91,57 @@ concurrent Unity process is not available.
 
 | # | Deliverable | Description | Likely Features |
 |---|-------------|-------------|-----------------|
-| 1 | Corrected Test Execution rules | `unity-development` SKILL.md Test Execution section rewritten: mandatory `-batchmode`, graphics flag as a per-platform two-row table, no `-quit` with `-runTests`, results to an absolute path under the main checkout's `dev/test-results/`, Unity binary located by editor discovery | Skill authoring |
-| 2 | Execution ladder + shadow worktree procedure | Replaces the Editor-lock refusal with the three-rung ladder. Covers commit-before-test, detached creation, sibling location, announced cost, indefinite persistence, refresh, `Library/` retention, prune, manual teardown | Skill authoring |
-| 3 | Headless asset-import procedure | Sanctioned `.meta` / GUID generation without a GUI, plus correction of any corpus text asserting the opposite, plus the `Assets/Tests/Editor` path correction | Skill authoring, corpus sweep |
-| 4 | Consumer agent updates | `04-phase-execute` Step 2.5, `04g-unity-visual-verification`, `04h-unity-reviewer` aligned to the new rules | Agent authoring |
+| 1 | Test Execution rules | `unity-development` Test Execution contract: mandatory `-batchmode`, per-platform graphics flags, no `-quit` with `-runTests`, absolute main-checkout evidence, and deployed editor discovery | Skill authoring |
+| 2 | Execution ladder + shadow worktree procedure | Three-rung ladder covering commit-before-test, detached creation, sibling location, announced cost, indefinite persistence, refresh, `Library/` retention, prune, and manual teardown | Skill authoring |
+| 3 | Headless asset-import procedure | Conditional `.meta` / GUID generation without a GUI, serializer authority, contradiction sweep, and the `Assets/Tests/Editor` convention | Skill authoring, corpus sweep |
+| 4 | Consumer agent alignment | `04-phase-execute` Step 2.5, `04g-unity-visual-verification`, and `04h-unity-reviewer` consume the canonical contracts | Agent authoring |
 | 5 | Reference CI workflow + local runbook | GameCI workflow template at `source_of_truth/skills/unity-development/references/`; runbook at `docs/unity/`. Both copyable, neither active | Asset authoring, docs |
 | 6 | Structural tests | Guards proving the new rules are present and the deleted rule is gone | Testing |
 
+## Execution Readiness
+
+All four source-authoring features have implementation and review records. The current feature
+verdicts are:
+
+| Feature | Review verdict | Current evidence state |
+|---|---|---|
+| `01-unity-test-execution-contract` | Changes Requested | AC7/AC11 are `not-executed (main Editor-open condition unavailable)`; the closed-Editor XML is not concurrency or Editor-usability evidence. |
+| `02-headless-asset-import` | Changes Requested | AC5 is `not-executed (reference project not clean)`; no `.meta` was withheld and Unity was not launched for import. |
+| `03-unity-consumer-alignment` | Approved with Reservations | All 30 focused consumer guards pass; missing capture inputs fail non-green in a future visual phase. PHASE_01 has no visual ACs. |
+| `04-unity-test-reference-assets` | Approved with Reservations | Structural and generic-YAML checks pass; `actionlint` is unavailable and the inert workflow has not run in GitHub Actions. |
+
+The three manifest verification assets contain 99 passing focused guards:
+`tests/test_unity_skill_contract.py`, `tests/test_unity_consumer_contract.py`, and
+`tests/test_unity_reference_assets.py`. The authoritative safe final gate is
+`dev/test-results/phase-01-wave-3-final-safe.xml`: 239 passed, 2 failed, 1 propagation fixed-point
+test deselected, and 63 subtests. Both failures match the pre-phase baseline:
+
+- `tests/test_pr_review_orchestrator.py::test_agent_name_does_not_collide_with_prose_in_any_source_asset`
+- `tests/test_propagate_master_assets.py::InstructionApplyToTests::test_every_enumerated_applyto_target_exists`
+
+The exact unfiltered suite is not run by agents because its fixed-point test invokes propagation
+against the working tree. The final gate remains `executed-failing` even though both failures predate
+this phase. The diff-scoped security verdict is PASS WITH CONDITIONS: 0 Critical, 0 High, and 1
+Medium finding. Before activation, every action in the inert workflow must use a verified full commit
+SHA. Maintainer propagation remains pending.
+
 ## Technical Context
 
-**Files that carry the defect.**
+**Authoritative implementation surfaces.**
 
-- `source_of_truth/skills/unity-development/SKILL.md` lines 169–183 — the Test Execution section.
-  Line 177 is the mouse-hijack cause; line 181 is the refusal cause. Lines 173–175 hold the command
-  template. Line 178 defines `-testFilter` scoping for affected-suite runs, which stays as-is.
-- `source_of_truth/skills/unity-development/SKILL.md` Refactor / Rewire Test Preservation Rules —
-  names `Assets/Tests/EditMode`, a path absent from the reference project.
-- `source_of_truth/skills/unity-development/SKILL.md` lines 257–279 — Serialized Assets section.
-  Already correct that Unity must generate assets, and already prescribes running the Editor API in
-  batch mode. Deliverable 3 extends it with the explicit `.meta` regeneration invocation and must not
-  contradict it.
-- `source_of_truth/agents/04-phase-execute.agent.md` line 107 — points at the skill's Test Execution
-  section for command and `-testFilter` scoping. Line 111 is the `not-executed` handling, which the
-  ladder makes reachable only when the user declines rung 2.
-- `source_of_truth/agents/04g-unity-visual-verification.agent.md` lines 40–69 — editor discovery,
-  the `-runTests` / `-quit` prohibition, and the saved-editor-path behavior. Its PlayMode runs need
-  graphics; do not let a blanket `-nographics` rule reach it.
-- `source_of_truth/agents/04h-unity-reviewer.agent.md` line 34 — serialized-asset validation runs a
-  documented batch compile/import. Align its invocation with Deliverable 3.
+- `source_of_truth/skills/unity-development/SKILL.md` — the Test Execution section owns mandatory
+  batch flags, editor discovery, root-or-nested project paths, absolute evidence, the worktree
+  ladder, filtering, XML interpretation, and manual teardown.
+- `source_of_truth/skills/unity-development/SKILL.md` Refactor / Rewire Test Preservation Rules use
+  the verified `Assets/Tests/Editor` convention for the reference project's EditMode tests.
+- `source_of_truth/skills/unity-development/SKILL.md` Serialized Assets section keeps Unity as the
+  serializer authority and separates plain headless import from Editor-API asset construction.
+- `source_of_truth/agents/04-phase-execute.agent.md` Step 2.5 consumes the canonical Test Execution
+  ladder, preserves `-testFilter` scoping, and keeps non-executed evidence non-green.
+- `source_of_truth/agents/04g-unity-visual-verification.agent.md` owns deployed editor discovery and
+  graphics-enabled PlayMode invocation against the selected root-or-nested Unity project.
+- `source_of_truth/agents/04h-unity-reviewer.agent.md` delegates test execution and conditional
+  serialized-asset import to their distinct canonical skill sections.
 
 **Shadow worktree mechanics, as verified against the reference project.**
 
@@ -156,16 +178,17 @@ concurrent Unity process is not available.
 - **Dependency**: None on prior phases. Requires access to the reference Unity project to *verify*
   the documented invocations; the rules can be authored without a Unity install.
 - **Risk — Unity Personal may not permit a second concurrent Unity process. This is the phase's
-  primary open risk.** The maintainer's license is Unity Personal, a single-seat activation. If a
-  batchmode instance cannot run while the Editor holds the license, rung 1 of the ladder is
-  unavailable on the target machine. *Mitigation*: the ladder is designed to degrade — rung 2
-  (ask the user to close the Editor, then run headless) still eliminates both reported symptoms.
-  Verify empirically against the reference project before finalizing the rules; if rung 1 fails,
-  document it as the expected path on Personal licenses rather than shipping a rule that misleads.
-- **Risk — the Unity CLI behavior is asserted, not empirically verified.** The headless-import and
-  `.meta`-generation claims come from working knowledge, not from a run against Unity 6000.3.13f1.
-  *Mitigation*: verify both invocations against the reference project during execution before the
-  rules are finalized; if a claim fails, correct the rule rather than shipping it.
+  primary open risk.** AC7/AC11 remain unverified because no main-Editor-open run exists. The ladder
+  degrades to an agent-run main-checkout command after the Editor closes, but the phase stays NO-GO
+  until the concurrent condition and Editor usability are recorded honestly.
+- **Risk — missing-`.meta` regeneration is not empirically verified.** AC5 remains
+  `not-executed (reference project not clean)`. The contract keeps the capability conditional until
+  a controlled Unity 6000.3.13f1 import regenerates one selected fixture and restoration returns the
+  checkout to a clean state.
+- **Risk — workflow dependencies are mutable before activation.** The inert GameCI template uses
+  major-version action tags and passes Unity secret references to the test action. *Mitigation*:
+  replace every action reference with a verified full commit SHA and run `actionlint` on the adapted
+  workflow before enabling it.
 - **Risk — shadow worktree cold start.** A fresh worktree has no `Library/`, so its first run does a
   full asset import taking minutes. *Mitigation*: the procedure mandates a persistent, reused
   worktree refreshed by checkout. A per-run throwaway worktree is an explicit anti-pattern and must
@@ -189,41 +212,46 @@ concurrent Unity process is not available.
 
 ## Success Criteria
 
-- [ ] The string asserting `-batchmode` is optional no longer exists anywhere in `source_of_truth/`.
-- [ ] The `unity-development` skill states the graphics flag per test platform as a two-row table —
+- [x] The string asserting `-batchmode` is optional no longer exists anywhere in `source_of_truth/`.
+- [x] The `unity-development` skill states the graphics flag per test platform as a two-row table —
       `-batchmode -nographics` for EditMode, `-batchmode` with graphics for PlayMode/visual —
       unambiguously, and states `-batchmode` as mandatory at every tier.
-- [ ] The skill documents the three-rung execution ladder, and rung 3 forbids silent refusal and
+- [x] The skill documents the three-rung execution ladder, and rung 3 forbids silent refusal and
       forbids launching a GUI.
-- [ ] The Editor-lock rule no longer instructs the agent to refuse and hand the run back to the
+- [x] The Editor-lock rule no longer instructs the agent to refuse and hand the run back to the
       user; it redirects to the shadow worktree, then to close-the-Editor.
-- [ ] The skill states commit-before-test as a precondition of worktree execution.
-- [ ] The skill states that `-testResults` takes an absolute path in the main checkout, and names
+- [x] The skill states commit-before-test as a precondition of worktree execution.
+- [x] The skill states that `-testResults` takes an absolute path in the main checkout, and names
       reading results from inside the worktree as wrong.
-- [ ] The skill names the shadow worktree path convention `<project-dir>-agent-tests/` and states it
+- [x] The skill names the shadow worktree path convention `<project-dir>-agent-tests/` and states it
       is one fixed path per project.
-- [ ] The skill locates the Unity binary via editor discovery rather than a bare `Unity` on `PATH`.
-- [ ] An unattended agent that reaches rung 2 and gets no response reports
+- [x] The skill locates the Unity binary via editor discovery rather than a bare `Unity` on `PATH`.
+- [x] An unattended agent that reaches rung 2 and gets no response reports
       `not-executed: editor open, user unavailable` rather than hanging or escalating to a GUI.
-- [ ] The skill documents the shadow worktree as detached, sibling-located, created on first need
+- [x] The skill documents the shadow worktree as detached, sibling-located, created on first need
       with its cost announced, permanent, refreshed by checkout, pruned on each use, and torn down
       only manually — and names per-run worktree creation as an anti-pattern.
-- [ ] The skill documents a headless `.meta` / asset-import invocation, and no file in
+- [x] The skill documents a headless `.meta` / asset-import invocation, and no file in
       `source_of_truth/` asserts that a human must open the Editor to generate `.meta` files.
-- [ ] No file in `source_of_truth/` names `Assets/Tests/EditMode` as the EditMode test path.
-- [ ] `04-phase-execute`, `04g-unity-visual-verification`, and `04h-unity-reviewer` are consistent
+- [x] No file in `source_of_truth/` names `Assets/Tests/EditMode` as the EditMode test path.
+- [x] `04-phase-execute`, `04g-unity-visual-verification`, and `04h-unity-reviewer` are consistent
       with the new rules, with `04g` still running PlayMode with graphics enabled.
-- [ ] A GameCI reference workflow exists at `source_of_truth/skills/unity-development/references/`
+- [x] A GameCI reference workflow exists at `source_of_truth/skills/unity-development/references/`
       and a local Unity test runbook exists under `docs/unity/`, and the runbook opens with a TL;DR
       of five lines or fewer followed by numbered steps.
-- [ ] Structural tests cover each rule above and each has been shown to fail when the rule is removed.
-- [ ] Both Unity invocations documented by this phase have been executed successfully against
-      `/Users/jennywadkins/github_repos/the-movies`, and the results are recorded — including
-      whether rung 1 of the ladder is available under the maintainer's Unity Personal license.
+- [x] Structural tests cover each rule above and each has been shown to fail when the rule is removed.
+- [ ] The persistent shadow-worktree EditMode command has run against
+      `/Users/jennywadkins/github_repos/the-movies` while its main Editor is open, with concurrency,
+      GUI absence, mouse availability, Editor usability, licensing, and absolute artifacts recorded.
+- [ ] A controlled missing-`.meta` import has run against a clean reference checkout, with generated
+      GUID evidence, no GUI, exact restoration, and final cleanliness recorded.
+- [ ] The final safe repository gate is `executed-green`; the current artifact records 239 passed,
+      2 pre-existing failures, 1 fixed-point test deselected, and 63 subtests.
 
 ## QA Considerations
 
-- **No frontend or UI changes.** This phase produces Markdown assets only; no manual UI QA applies.
+- **No frontend, UI, or visual acceptance criteria.** This phase produces corpus rules, structural
+  guards, documentation, and an inert workflow; record `visual-verification: no visual ACs`.
 - **Manual QA is required for the Unity invocations**, because nothing in this repository can
   execute them — there is no Unity project here. The QA steps are: (a) run the documented headless
   import against `/Users/jennywadkins/github_repos/the-movies` and confirm `.meta` files are
@@ -236,11 +264,13 @@ concurrent Unity process is not available.
   live outside this repository. Plan them as explicitly maintainer-executed checks.
 - Sync tests and any test reading `ports/` will fail until the maintainer propagates. That is
   expected and must be reported plainly, never worked around.
+- The inert GameCI workflow requires `actionlint` and current official-documentation validation
+  before adaptation. Every action reference must be replaced with a verified full commit SHA before
+  activation.
 
 ## Notes for Feature - Decomposer
 
-**Suggested feature boundaries** — roughly four, split by file ownership so they can run in parallel
-where scopes are disjoint:
+**Feature boundaries** — four file-ownership scopes with a shared-skill dependency:
 
 1. **Test Execution rules rewrite** — `unity-development/SKILL.md` Test Execution section only
    (Deliverables 1 and 2). Owns lines 169–183, the per-platform table, the three-rung ladder, the
@@ -248,8 +278,8 @@ where scopes are disjoint:
    feature. Sequential first; everything else reads its output.
 2. **Headless asset-import procedure + corpus sweep** — Deliverable 3. Touches the Serialized Assets
    and Refactor/Rewire sections of the same skill file, so it **cannot** run parallel with feature 1
-   — same file. Also sweeps `source_of_truth/` for text contradicting the headless-import rule and
-   for the `Assets/Tests/EditMode` path.
+   — same file. Its guards sweep `source_of_truth/` for contradictory GUI requirements and verify
+   the `Assets/Tests/Editor` convention in both owning sections.
 3. **Consumer agent alignment** — Deliverable 4. Three separate agent files, disjoint from the skill
    file, but depends on features 1 and 2 being final. Parallel-safe against feature 4.
 4. **Reference assets** — Deliverable 5. New files only, no existing file touched. Parallel-safe
@@ -277,8 +307,9 @@ per the repo's TDD posture.
   separate. That same discovery procedure is what the skill's command template must reference for
   locating the Unity binary — feature 1 points at it, feature 3 confirms `04g` still owns it.
   Neither feature may fork a second discovery implementation.
-- `04-phase-execute` Step 2.5 `not-executed` handling stays, but becomes reachable only when the
-  user declines rung 2. Do not delete it.
+- `04-phase-execute` Step 2.5 keeps `not-executed` non-green for a declined or unattended fallback,
+  genuinely unavailable evidence, and a supervisor-directed skip. The direct-supervisor-attestation
+  exception remains distinct.
 
 **Verification assets.** Structural tests under `tests/`, plus the maintainer-executed Unity
 invocation checks described in QA Considerations. There is no automated way to prove the Unity
