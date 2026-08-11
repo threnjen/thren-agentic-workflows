@@ -170,7 +170,11 @@ This bug has recurred multiple times. It is the single most common UI Toolkit mi
 
 Unity Test Framework is the authoritative runner. Compilation success and focused harnesses are not test execution — see the `test-execution-evidence` instruction.
 
-`-batchmode` is mandatory for every agent-driven Unity test run. Resolve the editor executable through the existing procedure in `source_of_truth/agents/04g-unity-visual-verification.agent.md`. Never assume a bare `Unity` executable is on `PATH`.
+`-batchmode` is mandatory for every agent-driven Unity test run. Never assume a bare `Unity` executable is on `PATH`.
+
+**Editor discovery.** Load Step 1 from the deployed `Visual Verifier` agent definition by display name through the active harness's configured agent catalog. Resolve it there rather than pointing at an authoring-repository path in the consumer checkout. Do not copy its discovery algorithm into this skill; that deployed agent remains the single canonical implementation.
+
+**Project paths.** Resolve `<main-repo-root>` as the Git checkout root and `<unity-project-relative-path>` as `.` for a root Unity layout or the nested directory containing `Assets/` and `ProjectSettings/` (for example `game`). A shadow `<worktree-root>` is a checkout of the whole repository. Set `<execution-unity-project>` to `<worktree-root>/<unity-project-relative-path>`; for the main-checkout fallback use `<main-repo-root>/<unity-project-relative-path>`. Never pass a monorepo root without a Unity project to `-projectPath`.
 
 | Platform | Required flags |
 |----------|----------------|
@@ -178,19 +182,19 @@ Unity Test Framework is the authoritative runner. Compilation success and focuse
 | PlayMode and visual capture | `-batchmode` with graphics enabled; exclude `-nographics` |
 
 ```bash
-"<resolved-unity-editor>" -batchmode -nographics -runTests -projectPath "<execution-checkout>" -testPlatform EditMode -testResults "<absolute-main-checkout>/dev/test-results/<results.xml>"
-"<resolved-unity-editor>" -batchmode -runTests -projectPath "<execution-checkout>" -testPlatform PlayMode -testResults "<absolute-main-checkout>/dev/test-results/<results.xml>"
+"<resolved-unity-editor>" -batchmode -nographics -runTests -projectPath "<execution-unity-project>" -testPlatform EditMode -testResults "<absolute-main-checkout>/dev/test-results/<results.xml>" -logFile "<absolute-main-checkout>/dev/test-results/<unity.log>"
+"<resolved-unity-editor>" -batchmode -runTests -projectPath "<execution-unity-project>" -testPlatform PlayMode -testResults "<absolute-main-checkout>/dev/test-results/<results.xml>" -logFile "<absolute-main-checkout>/dev/test-results/<unity.log>"
 ```
 
 - Never pair `-quit` with `-runTests`; Unity can exit before the tests execute and return a false-green zero exit code.
 - **Affected-suite runs use `-testFilter`** — a semicolon-separated list of full test names or a regex, negation supported. Scope it to the suites exercising the changed symbol. Gate runs (wave boundary, phase end) are unfiltered.
-- `-testResults` always receives an absolute path under the main checkout's `dev/test-results/`. The shadow worktree is an execution target only. Never read results from the shadow worktree.
+- `-testResults` always receives an absolute path under the main checkout's `dev/test-results/`; `-logFile` uses the same absolute artifact directory. The shadow worktree is an execution target only. Never read results from the shadow worktree; never read logs from it either.
 
 **Precondition.** Commit before testing in a shadow worktree; it can represent only committed code. The normal per-feature commit usually satisfies this precondition. A dirty checkout requires a commit before this procedure begins.
 
 ### Execution Ladder
 
-1. **Persistent shadow worktree.** From the main checkout, run `git worktree prune`, then use the one fixed detached sibling `<project-dir>-agent-tests/`. Before reuse, verify that an existing path is a registered worktree for this repository; never overwrite foreign content. On first use, announce its path, approximate disk cost, and multi-minute first import, then create it with `git worktree add --detach "<project-dir>-agent-tests/" "<committed-sha>"`. On every use, refresh it with `git -C "<project-dir>-agent-tests/" checkout --detach "<committed-sha>"`. Its gitignored `Library/` remains in place. Run the appropriate headless command there once while the main Editor remains open and usable.
+1. **Persistent shadow worktree.** From `<main-repo-root>`, run `git worktree prune`, then use the one fixed detached sibling `<project-dir>-agent-tests/` as `<worktree-root>`. Before reuse, verify that an existing path is a registered worktree for this repository; never overwrite foreign content. On first use, announce its path, approximate disk cost, and multi-minute first import, then create it with `git worktree add --detach "<project-dir>-agent-tests/" "<committed-sha>"`. On every use, refresh it with `git -C "<project-dir>-agent-tests/" checkout --detach "<committed-sha>"`. Before running Unity, verify the worktree has no tracked changes or untracked files and no ignored content outside `<execution-unity-project>/Library/` (or its root-layout equivalent); otherwise stop and report `not-executed` without deleting or overwriting anything. Its gitignored `Library/` remains in place. Run the appropriate headless command against `<execution-unity-project>` once while the main Editor remains open and usable.
 2. **Licensing or lock fallback.** If rung 1 fails because of licensing or a project lock, ask the user to close the Editor once. After it closes, the agent runs the headless command once in the main checkout. Never delegate the test run to the user.
 3. **Decline or unattended fallback.** Never launch a GUI and never refuse silently. A decline reports `not-executed`. Treat unattended non-response as a decline and report exactly `not-executed: editor open, user unavailable`.
 

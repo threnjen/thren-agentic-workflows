@@ -63,8 +63,16 @@ def _contract_errors(section: str) -> set[str]:
         or "Gate runs (wave boundary, phase end) are unfiltered" not in normalized
     ):
         errors.add("testFilter semantics")
-    if "source_of_truth/agents/04g-unity-visual-verification.agent.md" not in section:
-        errors.add("editor discovery pointer")
+    if (
+        "deployed `Visual Verifier` agent definition" not in section
+        or "active harness's configured agent catalog" not in section
+        or "Step 1" not in section
+    ):
+        errors.add("deployed editor discovery")
+    if "source_of_truth/agents/04g-unity-visual-verification.agent.md" in section:
+        errors.add("no authoring-only discovery pointer")
+    if "VISUAL_VERIFICATION_UNITY" in section or "ProjectSettings/ProjectVersion.txt" in section:
+        errors.add("no duplicated discovery algorithm")
     if "Never assume a bare `Unity` executable is on `PATH`" not in section:
         errors.add("no bare Unity")
     if (
@@ -78,6 +86,20 @@ def _contract_errors(section: str) -> set[str]:
         or "normal per-feature commit usually satisfies" not in section
     ):
         errors.add("commit precondition")
+    if (
+        "<main-repo-root>" not in section
+        or "<unity-project-relative-path>" not in section
+        or "<execution-unity-project>" not in section
+    ):
+        errors.add("nested project path")
+    if (
+        "no tracked changes or untracked files" not in section
+        or "no ignored content outside" not in section
+        or "stop and report `not-executed`" not in section
+    ):
+        errors.add("clean execution state")
+    if "-logFile" not in section or "<absolute-main-checkout>/dev/test-results/<unity.log>" not in section:
+        errors.add("deterministic Unity log")
 
     ladder_markers = [
         "1. **Persistent shadow worktree",
@@ -151,6 +173,8 @@ def test_commands_are_scoped_and_safe() -> None:
     assert "-nographics" in editmode
     assert "-nographics" not in playmode
     assert all("<absolute-main-checkout>/dev/test-results/" in line for line in test_commands)
+    assert all('-projectPath "<execution-unity-project>"' in line for line in test_commands)
+    assert all('-logFile "<absolute-main-checkout>/dev/test-results/<unity.log>"' in line for line in test_commands)
 
 
 @pytest.mark.parametrize(
@@ -160,18 +184,52 @@ def test_commands_are_scoped_and_safe() -> None:
         ("`-batchmode -nographics`", "`-batchmode`", "EditMode flags"),
         ("exclude `-nographics`", "include `-nographics`", "PlayMode graphics"),
         ("Never pair `-quit` with `-runTests`", "Pair `-quit` with `-runTests`", "no quit with runTests"),
-        ("source_of_truth/agents/04g-unity-visual-verification.agent.md", "another-discovery.md", "editor discovery pointer"),
+        (
+            "semicolon-separated list of full test names or a regex",
+            "one class name",
+            "testFilter semantics",
+        ),
+        (
+            "deployed `Visual Verifier` agent definition",
+            "unavailable authoring definition",
+            "deployed editor discovery",
+        ),
+        (
+            "Resolve it there rather than pointing at an authoring-repository path",
+            "Resolve it from source_of_truth/agents/04g-unity-visual-verification.agent.md",
+            "no authoring-only discovery pointer",
+        ),
+        (
+            "Do not copy its discovery algorithm into this skill",
+            "Copy `VISUAL_VERIFICATION_UNITY` and `ProjectSettings/ProjectVersion.txt` here",
+            "no duplicated discovery algorithm",
+        ),
         ("Never assume a bare `Unity` executable is on `PATH`", "Assume `Unity` is on `PATH`", "no bare Unity"),
         ("absolute path under the main checkout's `dev/test-results/`", "relative results path", "main-checkout results"),
         ("Commit before testing", "Testing a dirty checkout is allowed", "commit precondition"),
+        ("<unity-project-relative-path>", "<repo-root-only>", "nested project path"),
+        ("no tracked changes or untracked files", "untracked files are allowed", "clean execution state"),
+        (
+            "<absolute-main-checkout>/dev/test-results/<unity.log>",
+            "<default-unity-log>",
+            "deterministic Unity log",
+        ),
+        (
+            "1. **Persistent shadow worktree",
+            "4. **Persistent shadow worktree",
+            "ordered ladder",
+        ),
         ("git worktree prune", "git worktree list", "prune registrations"),
         ("git worktree add --detach", "git worktree add", "detached creation"),
         ("checkout --detach", "checkout", "detached refresh"),
+        ("<project-dir>-agent-tests/", "<random-worktree>/", "fixed sibling path"),
         (
             "Its gitignored `Library/` remains in place",
             "Its import cache is deleted",
             "Library retention",
         ),
+        ("approximate disk cost", "no cost information", "cost announcement"),
+        ("multi-minute first import", "instant first import", "cold import announcement"),
         ("persists indefinitely", "is deleted after every run", "indefinite persistence"),
         ("Per-run worktree creation is an anti-pattern", "Create a worktree per run", "per-run anti-pattern"),
         ("worktree remove", "worktree list", "manual teardown"),
@@ -186,5 +244,5 @@ def test_contract_mutations_are_killed(
 ) -> None:
     section = _test_execution_section(SKILL_PATH.read_text(encoding="utf-8"))
     assert needle in section, f"mutation target missing for {obligation}"
-    mutated = section.replace(needle, replacement, 1)
+    mutated = section.replace(needle, replacement)
     assert obligation in _contract_errors(mutated)
