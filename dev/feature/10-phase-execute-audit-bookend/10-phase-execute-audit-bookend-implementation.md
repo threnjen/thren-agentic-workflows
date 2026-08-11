@@ -84,6 +84,14 @@ Feature 08 owns the finalized `audit-comparison` skill consumed here. Feature 09
 - **Affected suites run**: requested focused regression suites and `tests/` full suite; `retry-baseline.xml` captured the pre-retry full run at 316 passed, 15 failed, 331 total
 - **Regressions**: Existing focused failures remain unchanged; the full run adds only the expected generated-output fixed-point failure because propagation is maintainer-owned and pending.
 
+## Wave 2 Gate Remediation Check
+- **Gate command**: `uv run pytest tests/test_agent_corpus_invariants.py tests/test_unity_consumer_contract.py tests/test_propagate_master_assets.py tests/test_pr_review_orchestrator.py --junitxml=dev/feature/10-phase-execute-audit-bookend/wave-2.xml`
+- **Results artifact**: `dev/feature/10-phase-execute-audit-bookend/wave-2.xml`
+- **Artifact result**: 126 total, 121 passed, 5 failed, 0 errors, 0 skipped. The orchestration handoff reports 94 total and 89 passed; the XML is authoritative for this gate and records 126/121/5.
+- **Baseline comparison**: `baseline-focused.xml` records the same five failing testcase entries and failure messages. No new failure appeared in the Wave 2 rerun.
+- **Failure ownership**: None is Phase 03-owned. The three marker-guard count subtests and the enumerated `applyTo` target failure are generated-corpus/propagation debt; the `05 PR - Review` prose-collision failure is an unrelated pre-existing source-corpus guard. `test_unity_consumer_contract.py`, including the Phase Execute wave gate contract, passed.
+- **Remediation**: No source, test, generated output, or propagation changes were made. Generated-output synchronization remains maintainer-owned and pending.
+
 ## Deviations from Plan
 
 - No source or test deviations. Generated output propagation remains pending for the maintainer; `ports/` and `.github/` were not edited or regenerated.

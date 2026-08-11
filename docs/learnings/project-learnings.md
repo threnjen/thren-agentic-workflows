@@ -36,3 +36,7 @@ per entry, appended.
   confirmations, offers, and questions must stay in the agent; only the mechanical contract moves.
   An extraction that carries the confirmations along is unusable by the unattended caller that
   motivated it.
+
+## Final review mode must consume aggregate gate state
+
+- **The Step 6 fast-track branch must key off the aggregate `all-approved` state, not only feature review verdicts.** Features can all be Approved while a wave test, security gate, or audit bookend is non-green; the signal is any downstream gate setting `all-approved: no` before final review.
