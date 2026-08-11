@@ -25,6 +25,18 @@ def _test_execution_section(text: str) -> str:
     return section
 
 
+def _serialized_assets_section(text: str) -> str:
+    match = re.search(
+        r"^## Serialized Assets: Generate via Unity, Never Hand-Author\s*$\n(.*?)(?=^##\s|\Z)",
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    assert match is not None, "Serialized Assets section is missing"
+    section = match.group(1).strip()
+    assert section, "Serialized Assets section is empty"
+    return section
+
+
 def _source_texts() -> list[tuple[Path, str]]:
     text_suffixes = {".json", ".md", ".py", ".toml", ".yaml", ".yml"}
     files = sorted(
@@ -34,6 +46,62 @@ def _source_texts() -> list[tuple[Path, str]]:
     )
     assert files, "source_of_truth sweep is empty"
     return [(path, path.read_text(encoding="utf-8")) for path in files]
+
+
+def _meta_gui_requirement_offenders(
+    source_texts: list[tuple[Path, str]],
+) -> list[Path]:
+    offenders: list[Path] = []
+    for path, text in source_texts:
+        for sentence in re.split(r"(?<=[.!?])\s+", _normalize(text)):
+            lower = sentence.lower()
+            if ".meta" not in lower or not re.search(r"\b(?:human|gui)\b", lower):
+                continue
+            if not re.search(r"\b(?:must|need|require(?:s|d)?)\b", lower):
+                continue
+            if re.search(r"\b(?:no|not|without|never)\b", lower):
+                continue
+            offenders.append(path)
+            break
+    return offenders
+
+
+def _asset_contract_errors(section: str) -> set[str]:
+    normalized = _normalize(section)
+    errors: set[str] = set()
+    import_command = "Unity -batchmode -quit -projectPath <path> -logFile -"
+
+    if import_command not in section:
+        errors.add("plain import command")
+    if "-runTests" in next(
+        (line for line in section.splitlines() if import_command in line), ""
+    ):
+        errors.add("import excludes runTests")
+    if "asset-database import and missing `.meta`/GUID generation" not in normalized:
+        errors.add("meta and GUID generation")
+    if "without a human-opened or GUI-opened Editor" not in normalized:
+        errors.add("no GUI requirement")
+    if (
+        "Unity Editor's serializer" not in section
+        or "sole authority" not in section
+        or "do not hand-author serialized Unity assets" not in section
+        or "raw YAML" not in section
+    ):
+        errors.add("serializer authority")
+    if "`-batchmode -executeMethod <Type>.<Method> -quit`" not in section:
+        errors.add("asset construction command")
+    return errors
+
+
+def _path_contract_errors(combined_source: str) -> set[str]:
+    errors: set[str] = set()
+    if "Assets/Tests/EditMode" in combined_source:
+        errors.add("invalid EditMode path")
+    if "Assets/Tests/Editor" not in combined_source:
+        errors.add("verified Editor path")
+    if "Assets/Tests/PlayMode" not in combined_source:
+        errors.add("preserved PlayMode path")
+    return errors
 
 
 def _contract_errors(section: str) -> set[str]:
@@ -175,6 +243,77 @@ def test_commands_are_scoped_and_safe() -> None:
     assert all("<absolute-main-checkout>/dev/test-results/" in line for line in test_commands)
     assert all('-projectPath "<execution-unity-project>"' in line for line in test_commands)
     assert all('-logFile "<absolute-main-checkout>/dev/test-results/<unity.log>"' in line for line in test_commands)
+
+
+def test_live_serialized_asset_contract() -> None:
+    section = _serialized_assets_section(SKILL_PATH.read_text(encoding="utf-8"))
+    assert not _asset_contract_errors(section), sorted(_asset_contract_errors(section))
+
+
+def test_meta_generation_has_no_human_or_gui_requirement() -> None:
+    offenders = _meta_gui_requirement_offenders(_source_texts())
+    assert not offenders, [str(path.relative_to(REPO_ROOT)) for path in offenders]
+
+
+def test_unity_test_paths_match_the_verified_convention() -> None:
+    source_texts = _source_texts()
+    combined = "\n".join(text for _, text in source_texts)
+    assert not _path_contract_errors(combined), sorted(_path_contract_errors(combined))
+
+
+@pytest.mark.parametrize(
+    ("needle", "replacement", "obligation"),
+    [
+        (
+            "Unity -batchmode -quit -projectPath <path> -logFile -",
+            "Unity -batchmode -projectPath <path>",
+            "plain import command",
+        ),
+        (
+            "Unity -batchmode -quit -projectPath <path> -logFile -",
+            "Unity -batchmode -quit -projectPath <path> -logFile - -runTests",
+            "import excludes runTests",
+        ),
+        (
+            "asset-database import and missing `.meta`/GUID generation",
+            "asset refresh",
+            "meta and GUID generation",
+        ),
+        (
+            "without a human-opened or GUI-opened Editor",
+            "after a human opens the GUI Editor",
+            "no GUI requirement",
+        ),
+        ("sole authority", "one possible authority", "serializer authority"),
+        (
+            "`-batchmode -executeMethod <Type>.<Method> -quit`",
+            "`-executeMethod <Type>.<Method>`",
+            "asset construction command",
+        ),
+    ],
+)
+def test_serialized_asset_contract_mutations_are_killed(
+    needle: str, replacement: str, obligation: str
+) -> None:
+    section = _serialized_assets_section(SKILL_PATH.read_text(encoding="utf-8"))
+    assert needle in section, f"mutation target missing for {obligation}"
+    mutated = section.replace(needle, replacement)
+    assert obligation in _asset_contract_errors(mutated)
+
+
+def test_source_sweep_mutations_are_killed() -> None:
+    source_texts = _source_texts()
+    injected_gui_requirement = source_texts + [
+        (Path("mutation.md"), "A human must open the GUI to generate a missing `.meta` file.")
+    ]
+    assert _meta_gui_requirement_offenders(injected_gui_requirement) == [
+        Path("mutation.md")
+    ]
+
+    combined = "\n".join(text for _, text in source_texts)
+    assert "invalid EditMode path" in _path_contract_errors(
+        f"{combined}\nAssets/Tests/EditMode"
+    )
 
 
 @pytest.mark.parametrize(

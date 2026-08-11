@@ -23,7 +23,7 @@ Before writing any Unity-specific code, read the following project files and doc
 **Record in implementation record:** `activeInputHandler: <value> — using <which API>`.
 
 ### 2. Assembly reference graph
-**Read:** the `.asmdef` file for every assembly you will create or modify. (For the View layer: `Assets/Scripts/View/Combat/View.asmdef`. For Controllers: `Assets/Scripts/Controllers/Controllers.asmdef`. For Tests: `Assets/Tests/EditMode/Tests.EditMode.asmdef`.)
+**Read:** the `.asmdef` file for every assembly you will create or modify. (For the View layer: `Assets/Scripts/View/Combat/View.asmdef`. For Controllers: `Assets/Scripts/Controllers/Controllers.asmdef`. For Tests, discover the project's EditMode test assembly; the verified reference convention places it under `Assets/Tests/Editor/`.)
 
 For each new `using` directive you add to any `.cs` file, confirm the assembly named after `using` appears in that `.asmdef`'s `"references"` array or is a known implicit dependency (e.g., `System`, `System.Collections.Generic`, `UnityEngine` when `noEngineReferences` is `false`).
 
@@ -161,7 +161,7 @@ This bug has recurred multiple times. It is the single most common UI Toolkit mi
 
 ## Refactor / Rewire Test Preservation Rules
 
-- Before planning a refactor, runtime rewire, API change, or behavior change, inventory the affected Unity tests and harnesses (`Assets/Tests/EditMode`, `Assets/Tests/PlayMode`, any phase-scoped or editor tests, and UI Toolkit test root builders). Plan them as part of the work, not as a deferred cleanup.
+- Before planning a refactor, runtime rewire, API change, or behavior change, inventory the affected Unity tests and harnesses: the project's EditMode directory (verified reference convention: `Assets/Tests/Editor`), `Assets/Tests/PlayMode`, any phase-scoped or editor tests, and UI Toolkit test root builders. Plan them as part of the work, not as a deferred cleanup.
 - If the change alters a public API, bootstrap path, serialized asset layout, scene wiring, prefab, event contract, or lifecycle behavior, assume related tests will need updates and include those files in the plan's scope and verification assets.
 - When a Unity test becomes obsolete because production behavior changed, update or retire it in the same feature and document the reason. Leave no orphaned or silently broken tests behind.
 - For controller, UI Toolkit, or scene-wiring changes, include the corresponding test assembly and test root builder files in the planned scope and explicitly note whether each needs test updates.
@@ -277,6 +277,8 @@ Batch renderers that only rebuild on add/remove won't reflect per-entity state c
 ## Serialized Assets: Generate via Unity, Never Hand-Author
 
 Unity's serialized assets — `.prefab`, `.unity` scenes, `.mat`, `.asset` (including SRP pipeline/renderer assets), and `.meta` files — are produced by the Unity Editor's serializer. The Editor is the sole authority for GUIDs, fileIDs, class ids, required-component dependencies, and version-correct format. An agent hand-writing these files is impersonating that serializer **blind**: no access to the real GUID database, no enforcement of component dependencies, no way to validate the output. This is the single most common source of "compiles green, tests pass, but nothing renders / NRE every frame" failures.
+
+**Headless asset-database import.** `Unity -batchmode -quit -projectPath <path> -logFile -` performs asset-database import and missing `.meta`/GUID generation without a human-opened or GUI-opened Editor. Unity's serializer remains the sole authority for every generated file.
 
 **Rule: do not hand-author serialized Unity assets from scratch.** Build them by running the Unity Editor API in batch mode (an `Editor/` script Unity executes), so Unity generates the asset, its GUIDs, and its `.meta`:
 
