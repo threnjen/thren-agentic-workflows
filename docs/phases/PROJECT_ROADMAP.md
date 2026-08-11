@@ -13,7 +13,7 @@ codebase it just changed.
 |-------|------|--------|------------|------------|-------------|
 | 01 | Unity Headless Test Execution | In Progress — NO-GO | None | Medium | Four source-authoring features define the headless ladder, asset import, consumer alignment, and inert reference assets. Completion is blocked on main-Editor concurrency evidence, a clean controlled `.meta` import, and a green final gate. |
 | 02 | Phase Document Final Check | In Progress — CONDITIONAL | None | Small | Source wiring and the 26-test focused guard suite pass. The optional cold-start reviewer reads the phase document and repository from exactly two paths, reports at most five evidence-tied findings, and lets the refiner fold in accepted findings before one-time synchronization. Manual smoke checks and maintainer propagation remain pending; the full repository gate retains baseline failures. |
-| 03 | Phase Execute Audit Bookend | Planned | Phase 01, Phase 02 | Large | Phase - Execute audits at phase start and again at phase end with a byte-identical prompt, compares the two via Auditor - Delta, attributes findings against the known phase baseline commit, and auto-remediates High-or-above drift the phase caused. |
+| 03 | Phase Execute Audit Bookend | Planned | Phase 01, Phase 02 | Large | After the wave loop, Phase - Execute runs two audits back to back under byte-identical prompt text — one against a worktree at the phase baseline commit, one against the finished tree — compares them via Auditor - Delta, settles attribution against both trees, and auto-remediates High-or-above drift attributed to the phase. Scope is the manifest's modified files plus one hop of reference-search dependents, resolved and announced at Step 1 where the single opt-in question is asked; `docs/` prose excluded, tests included under the existing reduced lens. The audit-comparison sequence is extracted out of Audit - Delta into a shared skill that both it and Phase - Execute consume; Phase - Execute carries thin wiring. On by default with an explicit opt-out that records missing evidence. |
 
 Phase 03 depends on 01 and 02 only in the soft sense that it is executed *by* the pipeline those
 phases improve; it has no code-level dependency on either. Execute them in listed order.
@@ -62,3 +62,14 @@ phases improve; it has no code-level dependency on either. Execute them in liste
   (Step 5) and a pre-production gate (Step 6); the PR Review roster covers consistency, cleanliness,
   artifacts, and dependencies. All of it is scoped to the diff. Phase 03 exists to cover
   codebase-wide degradation *outside* the diff, which none of the above can see.
+- **Depth-one forces the bookend into a skill.** `Audit - Delta` is itself an orchestrator, so
+  `Phase - Execute` cannot spawn it. Every agent the bookend needs — `Auditor - Code`,
+  `Auditor - Infra`, `Auditor - Delta`, `Auditor - Attribution`, `Baseline Worktree`,
+  `Feature - Implementer` — is already a leaf and is spawned directly. The audit-comparison sequence
+  is therefore extracted out of `Audit - Delta` into a shared skill both orchestrators consume,
+  rather than copied into `Phase - Execute`, because a rule that exists in two places drifts and
+  nothing fails when it does.
+- **Audit comparability already has a home.** `auditor-conventions` owns the identical-prompt rule,
+  per-run independence, snapshot labels, the `dev/[audit-name]/<snapshot-label>/` layout, and the
+  one-output-root rule, and every auditor loads it directly. Anything that orchestrates a comparison
+  cites that section; restating it is a defect, not thoroughness.

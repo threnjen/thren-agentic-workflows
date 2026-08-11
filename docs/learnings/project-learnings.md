@@ -18,3 +18,21 @@ per entry, appended.
   `test_agent_corpus_invariants.py` states that a check keyed to expected wording goes inert the
   moment someone rephrases a sentence. Proposing a prose-matching guard will be rejected on that
   basis regardless of what it catches.
+
+## Check the shared skill before authoring a new one to hold a contract
+
+- **A contract you are about to write into a new skill may already be owned by a skill the
+  participating agents load for themselves.** `auditor-conventions` already carries multi-target
+  audit comparability — identical prompt text, per-run independence, snapshot labels, the
+  `dev/[audit-name]/<snapshot-label>/` layout, the one-output-root rule. A plan to put those rules
+  in a new orchestration skill would have created the second copy that the plan itself existed to
+  prevent. The signal: the rule is about how a *subagent* behaves, not about how the orchestrator
+  sequences it — subagent behavior almost always already has a home.
+- **Prefer extracting an existing sequence over composing a fresh one.** When a second orchestrator
+  needs what an existing orchestrator already does, the working prose is the asset. Rewriting it
+  loses the rules that read as boilerplate and are load-bearing — release-ordering handshakes,
+  "do not report this count yet" discipline, disjoint-set and sum checks.
+- **When extracting, separate mechanism from conversation first.** An interactive orchestrator's
+  confirmations, offers, and questions must stay in the agent; only the mechanical contract moves.
+  An extraction that carries the confirmations along is unusable by the unattended caller that
+  motivated it.
