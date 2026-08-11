@@ -142,7 +142,9 @@ benchmarks/ packages/ tests/
 
 ## Testing
 
-- 13 Python test modules under `tests/` cover both scripts plus the agent corpus.
+- 16 Python test modules under `tests/` cover both scripts plus the agent corpus. The Unity contract
+  modules are `test_unity_skill_contract.py`, `test_unity_consumer_contract.py`, and
+  `test_unity_reference_assets.py`.
 - Run with `uv run pytest tests/` (or `.venv/bin/python -m pytest tests/`); bare
   `python -m pytest` may lack pytest.
 - `tests/_propagate_env.py` redirects the propagator's directory globals to a temp tree

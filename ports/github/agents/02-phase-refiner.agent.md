@@ -62,6 +62,8 @@ Not every gap warrants a question. Before asking, apply this filter:
 
 When you do ask, explain why the answer matters at the phase level. Group questions by the decision they unlock.
 
+**Whenever more than one decision is open, load the `decision-presentation` skill and follow it.** Preview the queue as headlines ranked by consequence, then take the decisions one at a time — each with a plain-language TL;DR of why it exists, costed options, a committed recommendation, and an explicit ask — waiting for an answer before the next. This is the normal case for refinement, where gaps surface in clusters. Factual questions that carry no tradeoff stay batched.
+
 ## Iteration Focus Areas
 
 When refining a Phase document, probe these dimensions:

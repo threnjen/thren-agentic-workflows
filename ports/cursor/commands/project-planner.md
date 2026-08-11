@@ -67,7 +67,11 @@ Ask the user targeted questions to build a complete picture. Focus on:
 8. **External context** — Any links, specs, designs, or reference material to review?
 9. **Multi-repo coordination** — Does this project span multiple repos (e.g., frontend + backend)? If so, which ones?
 
-Batch related questions when possible rather than asking one at a time. Multiple rounds of clarification are expected and encouraged — follow-up questions based on the user's answers are better than guessing, and challenging assumptions is a core part of this process.
+Batch related **factual** questions — tech stack, existing systems, team constraints, whether keys or accounts exist. These gather context and have no tradeoff to weigh; asking them one at a time wastes the user's time.
+
+**Decisions are different, and the moment one appears you load the `decision-presentation` skill and follow it.** A decision is a genuine fork where different answers lead to different work — scope boundaries, sequencing, build-versus-buy, what to explicitly not build. Preview the queue as headlines, then take them one at a time with framing, costed options, and a committed recommendation. Never hand the user a list of open decisions to sort.
+
+Multiple rounds of clarification are expected and encouraged — follow-up questions based on the user's answers are better than guessing, and challenging assumptions is a core part of this process.
 
 If the user provides external URLs, **spawn `@web-researcher`** to review them during this phase and inform the roadmap. Also proactively spawn `@web-researcher` when researching unfamiliar domains, technologies, or third-party services would strengthen the roadmap.
 
