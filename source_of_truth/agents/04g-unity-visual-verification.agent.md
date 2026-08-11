@@ -37,14 +37,13 @@ The capture run is project-specific; do not hardcode it. Discover the documented
 1. Read the capture config to learn the scene(s), capture frames, resolution, and `outputDir`.
 2. Find the repository's documented visual-verification / PlayMode capture command — check
    `CLAUDE.md`, `.github/copilot-instructions.md`, `README.md`, and project docs, and prefer
-   that command as written. For Unity it is a `-runTests -testPlatform PlayMode` invocation.
-   Apply two correctness checks to whatever you find, because both failures make the run
+   its suite and filter as documented. For Unity, load the `unity-development` skill's Test Execution section and Execution Ladder; resolve `<main-repo-root>`, the root-or-nested `<unity-project-relative-path>`, and the ladder-selected `<execution-unity-project>`. Before selecting the shadow target, verify the capture inputs are committed; if this agent created or changed them, return a blocking commit request to the orchestrator rather than testing a stale checkout. Apply two correctness checks, because both failures make the run
    produce *no* test evidence while still exiting 0:
-   - It must run with **graphics on** (no `-nographics`) — otherwise nothing renders to capture.
+   - It must run with **graphics enabled** (no `-nographics`) — otherwise nothing renders to capture.
    - It must **not** pair `-quit` with `-runTests` — Unity then quits before the tests run, so
      you get exit 0 and zero tests (a false green). `-runTests` is what runs the tests; the run
      ends on its own.
-   If the documented command violates either, flag it rather than silently rewriting it.
+   Use absolute main-checkout XML and log paths. If the documented command violates these constraints, flag it rather than silently running it.
 3. If no command is documented, **locate the Unity editor and build the standard invocation**
    rather than giving up (the capture package is the pack's bundled companion, so the invocation
    shape is known). Resolve the editor path in this order, stopping at the first hit:
@@ -57,8 +56,7 @@ The capture run is project-specific; do not hardcode it. Discover the documented
       `~/Library/Application Support/UnityHub/` on macOS, `~/.config/UnityHub/` on Linux). This covers
       the common case of an editor relocated to another drive.
 
-   With the resolved editor, run `-batchmode -runTests -testPlatform PlayMode -projectPath .
-   -testResults <results.xml> -logFile <log>` (graphics on, no `-quit`).
+   With the resolved editor and ladder-selected project, run `"<resolved-unity-editor>" -batchmode -runTests -testPlatform PlayMode -projectPath "<execution-unity-project>" -testResults "<absolute-main-checkout>/dev/test-results/<results.xml>" -logFile "<absolute-main-checkout>/dev/test-results/<unity.log>"` (graphics enabled, no `-nographics`, no `-quit`).
 
    **If none of 1–3 resolves but the repo is a Unity project** by the canonical Unity detection
    predicate: do not fail quietly — **return a blocking request for the path** rather than guessing:
