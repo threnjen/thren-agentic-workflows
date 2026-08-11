@@ -34,7 +34,7 @@ directory). Hand-maintained files are never touched.
 - **54 agent definitions** in `source_of_truth/agents/` (all `*.agent.md`), of
   which **15 are user-invocable** and **39 are hidden subagents** (`user-invocable: false`)
   that orchestrators spawn automatically.
-- **42 skills** — directory-based capabilities agents load on demand, each rooted at
+- **43 skills** — directory-based capabilities agents load on demand, each rooted at
   `SKILL.md`.
 - **18 instruction files** — cross-cutting guidance applied by `applyTo` file-glob
   matching.
@@ -51,7 +51,7 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ├── CONTRIBUTING.md                 # This file
 ├── source_of_truth/                # THE authoring surface — edit here
 │   ├── agents/                     # 54 agent definitions (catalog lives in USAGE.md)
-│   ├── skills/                     # 42 skill directories, each rooted at SKILL.md
+│   ├── skills/                     # 43 skill directories, each rooted at SKILL.md
 │   ├── instructions/               # 18 instruction files matched by applyTo globs
 │   └── baseline/                   # baseline-instructions.md, rendered at deploy time
 ├── ports/                          # Generated outputs — do not edit by hand
