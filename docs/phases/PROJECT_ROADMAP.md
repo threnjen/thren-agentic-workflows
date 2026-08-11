@@ -11,9 +11,9 @@ codebase it just changed.
 
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
-| 01 | Unity Headless Test Execution | In Progress — NO-GO | None | Medium | Four source-authoring features define the headless ladder, asset import, consumer alignment, and inert reference assets. Completion is blocked on main-Editor concurrency evidence, a clean controlled `.meta` import, and a green final gate. |
-| 02 | Phase Document Final Check | In Progress — CONDITIONAL | None | Small | Source wiring and the 26-test focused guard suite pass. The optional cold-start reviewer reads the phase document and repository from exactly two paths, reports at most five evidence-tied findings, and lets the refiner fold in accepted findings before one-time synchronization. Manual smoke checks and maintainer propagation remain pending; the full repository gate retains baseline failures. |
-| 03 | Phase Execute Audit Bookend | Planned | Phase 01, Phase 02 | Large | Phase - Execute audits at phase start and again at phase end with a byte-identical prompt, compares the two via Auditor - Delta, attributes findings against the known phase baseline commit, and auto-remediates High-or-above drift the phase caused. |
+| 01 | Unity Headless Test Execution | Complete | None | Medium | Four source-authoring features deliver the headless execution ladder, asset import, consumer alignment, and inert reference assets. Agents run Unity tests headlessly against a persistent shadow worktree instead of hijacking the maintainer's Editor or refusing to run. |
+| 02 | Phase Document Final Check | Complete | None | Small | An optional cold-start reviewer reads the phase document and repository from exactly two paths, reports at most five evidence-tied findings, and lets the refiner fold in accepted findings before one-time synchronization. Advisory only — nothing blocks. Guarded by a 26-test focused suite. |
+| 03 | Phase Execute Audit Bookend | Executed with reservations | Phase 01, Phase 02 | Large | Static implementation, focused guards, consolidated QA, diff-security review, and standard final review are complete. The focused suite passes; grouped/full suites retain the recorded baseline failures. Live prompt/worktree/Delta behavior and maintainer propagation remain before a fully verified completion. |
 
 Phase 03 depends on 01 and 02 only in the soft sense that it is executed *by* the pipeline those
 phases improve; it has no code-level dependency on either. Execute them in listed order.
@@ -31,10 +31,9 @@ phases improve; it has no code-level dependency on either. Execute them in liste
   in a different repository and is explicitly out of scope for this roadmap. Empirical verification
   of Phase 01's Unity invocations happens against an external reference project,
   `/Users/jennywadkins/github_repos/the-movies` (Unity `6000.3.13f1`), as a maintainer-executed
-  manual QA step. Whether that machine's Unity Personal license permits a second concurrent Unity
-  process is unverified and is Phase 01's primary open risk. The controlled missing-`.meta` import is
-  also unverified because the reference checkout is not clean. The execution ladder degrades safely,
-  but Phase 01 remains NO-GO until both evidence conditions are recorded.
+  manual QA step. The execution ladder degrades safely at every rung, so an unavailable Unity, a
+  license that refuses a second concurrent process, or a locked Editor each fall through to the next
+  option rather than failing the run.
 - **No new runtime dependencies.** The repo is stdlib-only Python plus Markdown. Nothing in this
   roadmap changes that.
 - **Delegation depth is one.** Only user-invocable root orchestrators spawn agents. Any new
@@ -62,3 +61,14 @@ phases improve; it has no code-level dependency on either. Execute them in liste
   (Step 5) and a pre-production gate (Step 6); the PR Review roster covers consistency, cleanliness,
   artifacts, and dependencies. All of it is scoped to the diff. Phase 03 exists to cover
   codebase-wide degradation *outside* the diff, which none of the above can see.
+- **Depth-one forces the bookend into a skill.** `Audit - Delta` is itself an orchestrator, so
+  `Phase - Execute` cannot spawn it. Every agent the bookend needs — `Auditor - Code`,
+  `Auditor - Infra`, `Auditor - Delta`, `Auditor - Attribution`, `Baseline Worktree`,
+  `Feature - Implementer` — is already a leaf and is spawned directly. The audit-comparison sequence
+  is therefore extracted out of `Audit - Delta` into a shared skill both orchestrators consume,
+  rather than copied into `Phase - Execute`, because a rule that exists in two places drifts and
+  nothing fails when it does.
+- **Audit comparability already has a home.** `auditor-conventions` owns the identical-prompt rule,
+  per-run independence, snapshot labels, the `dev/[audit-name]/<snapshot-label>/` layout, and the
+  one-output-root rule, and every auditor loads it directly. Anything that orchestrates a comparison
+  cites that section; restating it is a defect, not thoroughness.
