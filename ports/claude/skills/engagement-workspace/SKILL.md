@@ -40,7 +40,10 @@ repository** — e.g., analyzing `ssx-surface-capture` puts every output in
 side's repository directory name (branch pairs: the `repo_path` directory
 name); a multi-pair engagement uses the first pair's upgraded repository and
 still gets exactly one root. A user-specified root overrides the standard,
-but it must always be **outside every client repository**. No agent writes
+but it must always be **outside every client repository**. At bootstrap —
+scaffolding before any config exists, so no repository name is available to
+derive from — the engagement name the user supplies sets the root
+(`<name>-engagement/`), created in the current working directory. No agent writes
 deliverables into a client repo; every manifest path must resolve inside
 this root.
 
@@ -74,6 +77,11 @@ exists, so a write that would need a new directory is off-contract by
 definition — the stage stops and reports the path rather than creating it.
 Scaffolding is idempotent (`mkdir -p` semantics); a directory that exists
 but is not in this layout is reported, never adopted.
+
+Bootstrap is the one scaffold that runs **before** a config exists: it
+creates the root, `deliverables/`, `internal/`, and `pairs/` only — the
+per-pair directories are added by the scaffold above once a validated roster
+names them.
 
 ## Path Discipline — Deterministic Output
 
@@ -121,8 +129,16 @@ It contains:
   coverage pointers. Original-side QA absence is recorded; it is not silently
   converted into a claim that the upgraded workflow was untested.
 
+- **Attestation records**: one entry per accepted owner attestation (see the
+  `engagement-evidence-standard` skill's `attested` class) — finding ID, the
+  attestation statement, its date, the repository, and the attestor. This
+  file is the record; downstream stages read the closure from here rather
+  than re-asking the user. A finding whose attestation conflicts with
+  retained evidence is recorded `conflicted-attestation` and blocks
+  finalization for that finding until resolved.
+
 The state may also retain compact Stage E classifications, named with the
-`engagement-evidence-standard` skill's classes (`qa-backed`,
+`engagement-evidence-standard` skill's classes (`qa-backed`, `attested`,
 `comparison-only`, `unverified`, `sow-authorized`, `unresolved`). These are
 statuses and pointers only; never copy QA content or engagement source
 content into the state file.

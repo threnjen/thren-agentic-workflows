@@ -42,23 +42,39 @@ Then proceed directly with preparation — no confirmation gate.
 
 ## Preflight 3: QA Gate and QA Appendix
 
+**Resolving the manual QA target — the one rule.** The manual-QA gate target
+is `docs/QA_USER.md` **only by default**. A caller-supplied manual QA path
+overrides it and is authoritative: use the side's `manual_qa_paths` from the
+config, or, absent that, any manual QA path the orchestrator relays from the
+user. When an override is present, the gate runs against exactly those files
+(all of them) and the default name is never required, never checked, and
+never named in an error. Every other mention of `QA_USER` in this pipeline
+means "the resolved manual QA document(s)" — report the resolved paths, not
+the default name.
+
 **Upgraded side (required).** Every upgraded repository must carry a completed QA package:
 `docs/QA_AUTOMATED.md` whose top `VERDICT:` line reads `PASS` or `FAIL`
 (read only that line — `VERDICT: NOT RUN` or no verdict line means the
-automated QA was never executed), and `docs/QA_USER.md`. If any piece is
-missing or the automated QA was never run, halt for that repository's pairs
-and tell the user to run
+automated QA was never executed), and the resolved manual QA document(s). If
+any piece is missing or the automated QA was never run, halt for that
+repository's pairs and tell the user to run
 the **QA - Bootstrapper** for it (that agent generates both documents and
-executes the automated runbook) — you do not spawn it. A recorded FAIL
+executes the automated runbook) — you do not spawn it. When an override
+supplied a manual QA path that does not exist, the error names **that path**
+and does not suggest `QA_USER.md`. A recorded FAIL
 verdict is a blocker: surface it and continue only after the user reviews
 the QA results and confirms.
 
-QA_USER must also be **executed**, not just written: its checks are Markdown
+Manual QA must also be **executed**, not just written: its checks are Markdown
 checkboxes, checked (`- [x]`) as the tester completes them. Count unchecked
-boxes with exactly this command, anchored to list items so prose and fenced
-examples do not register: `grep -c '^[[:space:]]*- \[ \]' docs/QA_USER.md` —
-any count above zero means manual QA is incomplete: halt for that repository's pairs
-and tell the user to finish and check off QA_USER before re-running.
+boxes in each resolved manual QA document with exactly this command, anchored
+to list items so prose and fenced examples do not register:
+`grep -c '^[[:space:]]*- \[ \]' <resolved-path>` — any count above zero means
+manual QA is incomplete: halt for that repository's pairs and tell the user to
+finish and check off that document before re-running. If a resolved document
+contains no checkboxes at all (both checked and unchecked counts are zero),
+do not treat that as complete: record "no checkboxes found — completion
+unverifiable" as evidence against that document and surface it to the user.
 
 **Original side (optional).** Original/legacy repositories may lack QA docs (docs
 do not exist or are incomplete) — this is not a blocker. Record the original
@@ -69,14 +85,14 @@ side has; original gaps are evidence, not failures.
 Once every **upgraded** repository passes the gate, write the client-facing QA appendix
 at `deliverables/qa-appendix.md` in the engagement workspace (root per the
 `engagement-workspace` skill): one section per repository containing its
-QA_USER acceptance checklist (if present), followed by a summary of its automated QA run
-covering targets QA_USER marks agent-only. For original sides without QA docs, note
+resolved manual QA checklist (if present), followed by a summary of its automated QA run
+covering targets the manual checklist marks agent-only. For original sides without QA docs, note
 their absence. Client voice per the
 `engagement-client-voice` skill; no secrets, no internal paths. This is the
 one workspace document you write; the workspace itself already exists —
 never create it. The appendix is a presentation artifact, not a replacement
 for the source QA package: retain and report the exact `QA_AUTOMATED.md` and
-`QA_USER.md` paths plus the check IDs/statuses that cover the repository's
+resolved manual QA paths plus the check IDs/statuses that cover the repository's
 primary workflows. A generic repository-level PASS without those mappings
 must not be handed to later synthesis stages as workflow evidence.
 
@@ -188,8 +204,10 @@ deduplicated ones.
 Stop and report **which side** and **what failed** for exactly these:
 
 - A configured path or branch does not exist (surfaced by validation).
-- An **upgraded** repository failing the QA gate (missing QA documents, no recorded
-  verdict, unchecked QA_USER boxes, or an unconfirmed FAIL verdict). Missing
+- An **upgraded** repository failing the QA gate (missing QA documents —
+  including a caller-supplied manual QA path that does not exist — no recorded
+  verdict, unchecked boxes in a resolved manual QA document, or an unconfirmed
+  FAIL verdict). Missing
   or incomplete QA on an **original** repository does not halt preparation.
 - A branch-pair repository has a dirty working tree — creating worktrees
   from a dirty state risks contaminating the analysis.
@@ -212,7 +230,7 @@ each re-run produced — a silent no-op is not an acceptable report.
 Return a compact table covering every side of every pair: pair name, side
 role, analysis-branch status, graph status (built / NOT RUN with
 reason), baseline snapshot path, artifact locations (local paths only),
-exact QA_AUTOMATED and QA_USER paths, per-repo QA-gate status, compact
+exact QA_AUTOMATED and resolved manual QA paths, per-repo QA-gate status, compact
 workflow/check coverage pointers, the QA appendix path, and
 the three analysis-branch invariant assertions with their evidence (recorded
 HEAD SHAs). Nothing in this report contains engagement file contents.

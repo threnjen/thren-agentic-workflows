@@ -25,15 +25,44 @@ directory, but any path works. The user authors the file and points the
 orchestrator at it; the orchestrator never scans the filesystem for a config
 nobody pointed at, and never gathers configuration interactively.
 
+## Bootstrapping a New Config
+
+`engagement-template.yaml`, beside this file, is the canonical starting
+config: a commented fill-in-the-blank version of the schema below. The
+Client Deliverable orchestrator copies it into a new workspace as
+`engagement.yaml` and hands the user its path — that copy, not an interview,
+is how a config gets authored. Keep the template in step with the schema:
+every required field appears in it uncommented, every optional field appears
+commented out.
+
+A copy still containing the literal `FILL ME` is **unfilled, not invalid** —
+it has not been authored yet. Do not run the Validation Rules against it or
+emit their errors; say plainly which file is waiting and which lines still
+read `FILL ME`.
+
 ## Schema
 
 Top-level fields:
 
 | Field | Required | Meaning |
 |-------|----------|---------|
-| `sow_document` | yes | Path to the SOW/contract document for the engagement |
+| `sow_document` | yes | The SOW/contract for the engagement: a single path, **or** a list of paths in priority order |
 | `deliverables_spec` | yes | Path to the deliverables-specification document |
 | `pairs` | yes | List of comparison pairs; **any number, one or more** — the schema imposes no upper bound and no expected count |
+
+### Multi-document SOWs
+
+An engagement whose contract spans a base SOW plus updates and amendments
+lists them all under `sow_document`, **lowest priority first**: each entry
+supersedes every entry before it wherever they conflict. A single path is
+shorthand for a one-entry list; consumers treat both forms identically and
+never assume a single document.
+
+No document is merged, rewritten, or combined into a master copy — the list
+*is* the resolution order. A consumer citing a SOW obligation cites the
+specific document it came from, and when two documents cover the same
+obligation it reports the winning one. This ordering is the only conflict
+rule; there is no per-clause negotiation.
 
 `sow_document` and `deliverables_spec` are engagement-confidential. Their
 contents must never be copied into generated outputs, reports, or committed
@@ -69,12 +98,36 @@ Side fields by pair type:
 - **`type: branch`** — the pair contains `repo_path`, and `original` and
   `upgraded` each contain `branch`: the branch name for that side.
 
+Either side may also carry `code_audit_path` and `infra_audit_path`: paths to
+a **directory** holding that side's already-completed audit for that
+dimension. They are how an engagement reuses audits it already ran instead
+of re-scanning. A dimension counts as supplied only when **both** sides
+declare it; one side alone is a validation error, because a comparison needs
+two sides. A supplied dimension is not scanned on either side — see the
+`engagement-pair-loop` skill for what the loop does with it.
+
+`code_audit_path`/`infra_audit_path` (per-side audit directories) and
+`code_delta_path`/`infra_delta_path` (a pair-level delta file, below) are
+two independent ways to supply a dimension, and may both be present: the
+audits are the per-side evidence and the delta is the comparison. Supplying
+either form skips that dimension's scans.
+
+Either side may also carry `manual_qa_paths`: a list of paths, relative to
+that side's repository root, naming that repository's manual QA
+document(s). It **overrides** the default manual-QA gate target
+(`docs/QA_USER.md`) for that side — a repository whose manual QA lives in
+`docs/QA_MICK.md` declares it here and is never asked for `QA_USER.md`.
+Absent, the default applies. This overrides only the manual QA document;
+the automated runbook is always `docs/QA_AUTOMATED.md`.
+
 ### Paths
 
 Paths may be absolute or relative. Relative paths resolve against the
-directory containing the config file. This applies to `sow_document`,
-`deliverables_spec`, `path`, `repo_path`, `code_delta_path`, and
-`infra_delta_path`.
+directory containing the config file. This applies to every path field:
+`sow_document` (each entry), `deliverables_spec`, `path`, `repo_path`,
+`code_delta_path`, `infra_delta_path`, `code_audit_path`, and
+`infra_audit_path`. The exception is `manual_qa_paths`, whose entries
+resolve against **their own side's repository root**, not the config.
 
 ### Annotated example
 
@@ -82,7 +135,10 @@ The example below shows N=2 purely for illustration — a config may declare
 any number of pairs; the pair count is unbounded and never assumed.
 
 ```yaml
-sow_document: docs/sow.pdf            # relative to this file's directory
+sow_document:                         # a list: later entries supersede earlier
+  - docs/sow1.md                      # relative to this file's directory
+  - docs/sow-update-20260707.md
+  - docs/sow-amendments.md            # wins on conflict
 deliverables_spec: docs/deliverables.md
 
 pairs:
@@ -90,8 +146,14 @@ pairs:
     type: repo
     original:
       path: repos/service-api-legacy
+      code_audit_path: repos/service-api-legacy/dev/code-audit/orig/codex
+      infra_audit_path: repos/service-api-legacy/dev/infra-audit/orig/codex
     upgraded:
       path: /abs/path/service-api-v2  # absolute paths are also accepted
+      manual_qa_paths:                # optional; overrides docs/QA_USER.md
+        - docs/QA_MICK.md
+      code_audit_path: /abs/path/service-api-v2/dev/code-audit/20260804/codex
+      infra_audit_path: /abs/path/service-api-v2/dev/infra-audit/20260804/codex
     mode: modernized-and-improved     # optional; omitted -> modernization
     code_delta_path: scans/service-api-code-delta.md    # optional; skips the code scans
     infra_delta_path: scans/service-api-infra-delta.md  # optional; skips the infra scans
@@ -115,7 +177,8 @@ and what was expected:
 
 | Rule | Error emitted |
 |------|---------------|
-| `sow_document` present and path resolves | `sow_document: path '<value>' does not resolve (expected an existing file)` |
+| `sow_document` present, and every entry (one path, or each list entry) resolves | `sow_document: path '<value>' does not resolve (expected an existing file)` |
+| `sow_document`, when a list, is non-empty | `sow_document: empty list (expected at least one document, in priority order)` |
 | `deliverables_spec` present and path resolves | `deliverables_spec: path '<value>' does not resolve (expected an existing file)` |
 | `pairs` is non-empty | `pairs: empty list (expected at least one comparison pair)` |
 | Every pair has a unique `name` | `pair '<name>': duplicate name (expected pair names to be unique)` |
@@ -127,6 +190,9 @@ and what was expected:
 | Branch pair: each side's `branch` exists in the repository | `pair '<name>': <original|upgraded>.branch '<value>' does not exist in '<repo_path>' (expected an existing branch)` |
 | Branch pair: the two branches are not the same ref | `pair '<name>': original.branch and upgraded.branch name the same ref (expected two distinct branches)` |
 | `mode`, when present, is `modernization` or `modernized-and-improved` | `pair '<name>': mode '<value>' (expected 'modernization' or 'modernized-and-improved')` |
+| `code_audit_path` / `infra_audit_path`, when present, resolve to an existing directory | `pair '<name>': <original\|upgraded>.<code\|infra>_audit_path '<value>' does not resolve (expected an existing directory)` |
+| `code_audit_path` / `infra_audit_path`, when present on one side, are present on the other | `pair '<name>': <code\|infra>_audit_path given on '<side>' only (expected it on both sides, or neither)` |
+| `manual_qa_paths`, when present, is a non-empty list (entries are resolved by the preparation stage, not here) | `pair '<name>': <original\|upgraded>.manual_qa_paths is empty (expected at least one path, or omit the field)` |
 | `code_delta_path` / `infra_delta_path`, when present, resolve to an existing non-empty file | `pair '<name>': <code|infra>_delta_path '<value>' does not resolve (expected an existing non-empty file)` |
 
 Explicitly allowed (do not over-validate):

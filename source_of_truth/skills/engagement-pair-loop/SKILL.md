@@ -55,13 +55,21 @@ its reports under
 the canonical filenames from the `engagement-package-manifest` skill, and to
 return its report file pointers.
 
-**Supplied deltas.** If the pair's config carries `code_delta_path` or
-`infra_delta_path`, that dimension is **not scanned on either side**: skip
-both spawns, record the supplied delta's absolute path in the pair's
-working-state entry as that dimension's evidence, and pass it to Stage B in
-place of the two per-side reports. The dimension is `supplied` — never
-`failed`, never re-derived from the trees. A dimension with no supplied
-path is scanned normally.
+**Supplied dimensions.** A dimension is `supplied` when the pair's config
+provides evidence for it in either of two independent forms:
+
+| Form | Config | What Stage B receives |
+|---|---|---|
+| Per-side audits | `code_audit_path` / `infra_audit_path` on **both** sides | the two side audit directories, in place of reports this loop would have produced |
+| Pair-level delta | `code_delta_path` / `infra_delta_path` | the delta file, in place of the two per-side reports |
+
+Both forms may be present for one dimension; pass whatever the config gave.
+A supplied dimension is **not scanned on either side**: skip both spawns and
+record the supplied absolute paths in the pair's working-state entry as that
+dimension's evidence. The dimension is `supplied` — never `failed`, never
+re-derived from the trees. A dimension with neither form is scanned
+normally. Supplied artifacts were authored outside this pipeline: never
+rewrite, relocate, or re-banner them.
 
 **Every dimension not supplied is mandatory on every side.** A scan with no
 findings is a complete scan with an empty findings table — it still writes
@@ -84,9 +92,10 @@ sides**:
   `<dimension>-report.md` and `<dimension>-summary.md`, each non-empty at
   its exact canonical path and name and opening with the internal audience
   banner per the `engagement-workspace` skill
-- for every supplied dimension, the configured delta path resolves to a
-  non-empty file (checked once for the pair, not per side); no banner check
-  applies — the file was authored outside this pipeline
+- for every supplied dimension, each configured path resolves: a delta path
+  to a non-empty file (checked once for the pair, not per side), and each
+  side's audit path to a directory containing at least one non-empty `.md`.
+  No banner check applies — these were authored outside this pipeline
 
 An artifact that fails any check — absent, wrong name, wrong path, empty,
 missing banner — is a stage failure for its producing step: re-run that
@@ -117,7 +126,13 @@ pair, plus its per-pair internal basis documents.
 
 **Re-run invalidation**: any Stage A re-run (either side of any pair)
 invalidates all Stage B–E outputs — after the re-run passes the A3 gate,
-re-run stages B–E in full before finalizing.
+re-run stages B–E in full before finalizing. An accepted owner attestation
+also invalidates B–E, but **not** Stage A: re-run synthesis only, never the
+source audits.
+
+Every B–E spawn carries the working-state file's attestation records (per the
+`engagement-workspace` skill) so each stage can close the named findings per
+the `engagement-evidence-standard` skill's `attested` rules.
 
 ### Stage B: Delta
 

@@ -1,0 +1,88 @@
+# Engagement configuration — fill this out, then resume the Client Deliverable agent.
+#
+# Replace every FILL ME. Delete any optional line you don't need (they are
+# commented out with ##, and each shows a worked example of what goes there).
+# Paths can be absolute, or relative to THIS file.
+# Nothing here is sent anywhere — only paths are ever quoted back to you.
+
+# ---------------------------------------------------------------------------
+# The paperwork
+# ---------------------------------------------------------------------------
+
+# The SOW / contract. Got several — a base SOW, an update, amendments? List
+# them all, LOWEST priority first: each one overrides everything above it
+# wherever they disagree. Don't merge them by hand; the order is the answer.
+sow_document:
+  - FILL ME                 # e.g. /Users/you/repos/ops/projects/acme/acme-sow1.md
+##  - /Users/you/repos/ops/projects/acme/sow-update-20260707.md
+##  - /Users/you/repos/ops/projects/acme/sow-amendments.md   # wins on conflict
+
+deliverables_spec: FILL ME  # the document saying what you owe the client
+                            # e.g. /Users/you/repos/ops/projects/acme/deliverables-spec.md
+
+# ---------------------------------------------------------------------------
+# What you're comparing
+# ---------------------------------------------------------------------------
+# One entry per before/after comparison. Copy the whole block for a second
+# comparison — there is no limit. A second, fully worked example is at the
+# bottom of this file.
+
+pairs:
+  - name: FILL ME           # short label for this comparison, e.g. widget-api
+    type: repo              # 'repo' = two separate folders. See the branch example below.
+
+    original:               # the OLD codebase
+      path: FILL ME         # e.g. /Users/you/repos/acme/widget-api-orig
+
+      ## Already ran the code or infra audits? Point at each side's audit
+      code_audit_path:  /Users/you/repos/acme/widget-api/dev/code-audit/orig-code/codex
+      infra_audit_path: /Users/you/repos/acme/widget-api/dev/infra-audit/orig-code/codex
+
+    upgraded:               # the NEW codebase
+      path: FILL ME         # e.g. /Users/you/repos/acme/widget-api
+
+      ## Already ran the code or infra audits? Point at each side's audit
+      code_audit_path:  /Users/you/repos/acme/widget-api/dev/code-audit/20260804/codex
+      infra_audit_path: /Users/you/repos/acme/widget-api/dev/infra-audit/20260804/codex
+
+      ## Manual QA lives somewhere other than docs/QA_USER.md? Name it here and
+      ## that becomes the file the QA gate checks — you will not be asked for
+      ## QA_USER.md. List as many as apply. The automated runbook is always
+      manual_qa_paths:
+            - docs/QA_USER-MICK.md
+          
+    ## Also have a finished delta report comparing the two sides? Add it too
+      code_delta_path: /Users/you/repos/acme/widget-api/dev/code-audit/20260804/codex/delta.md
+      infra_delta_path: /Users/you/repos/acme/widget-api/dev/infra-audit/20260804/codex/delta.md
+
+# ---------------------------------------------------------------------------
+# A second pair, fully worked, showing every optional field in place.
+# Uncomment and adapt, or delete.
+# ---------------------------------------------------------------------------
+##  - name: widget-uploader
+##    type: repo
+##    mode: modernized-and-improved
+##    original:
+##      path: /Users/you/repos/acme/widget-uploader-orig
+##      code_audit_path:  /Users/you/repos/acme/widget-uploader/dev/code-audit/orig-code/codex
+##      infra_audit_path: /Users/you/repos/acme/widget-uploader/dev/infra-audit/orig-code/codex
+##    upgraded:
+##      path: /Users/you/repos/acme/widget-uploader
+##      manual_qa_paths:
+##        - docs/QA_USER_MICK.md
+##      code_audit_path:  /Users/you/repos/acme/widget-uploader/dev/code-audit/20260806/codex
+##      infra_audit_path: /Users/you/repos/acme/widget-uploader/dev/infra-audit/20260806/codex
+##    code_delta_path: /Users/you/repos/acme/widget-uploader/dev/code-audit/20260806/codex/delta.md
+##    infra_delta_path: /Users/you/repos/acme/widget-uploader/dev/infra-audit/20260806/codex/delta.md
+
+# ---------------------------------------------------------------------------
+# Comparing two branches of ONE repo instead of two folders? It looks like
+# this — uncomment and adapt, and delete the repo-style pair above.
+# ---------------------------------------------------------------------------
+##  - name: web-frontend
+##    type: branch
+##    repo_path: /Users/you/repos/acme/web-frontend   # the repo holding both branches
+##    original:
+##      branch: main
+##    upgraded:
+##      branch: upgrade/framework-bump

@@ -13,11 +13,13 @@ these values.
 
 Comparisons are **docs vs. docs, never git-diff**. The evidence base is the
 retained workspace reports **plus**, per side, the docs-writer set, the code
-graph, and the QA package (`QA_AUTOMATED` with run results, `QA_USER`).
+graph, and the QA package (`QA_AUTOMATED` with run results, plus the manual QA
+checklist — `QA_USER` by default, or the engagement's configured manual QA
+document(s)).
 
 Docs sets, code graphs, and QA packages live at the passed analysis-branch
 checkout paths **inside the client repositories** (e.g.,
-`docs/CODEBASE_CONTEXT.md`, `docs/QA_AUTOMATED.md`, `docs/QA_USER.md` on the
+`docs/CODEBASE_CONTEXT.md`, `docs/QA_AUTOMATED.md`, the manual QA checklist on the
 side's analysis branch); the workspace holds only retained reports and is not
 the whole evidence universe. Never infer absence from the workspace alone —
 declare a source absent only after checking its passed pointer path, and name
@@ -27,7 +29,8 @@ the path checked in the absence note.
 
 | Class | Requires |
 |---|---|
-| `qa-backed` | a completed PASS on an **exact matching** QA check on the upgraded side — a `QA_AUTOMATED` check ID with a run result, or a checked (`- [x]`) `QA_USER` expected result |
+| `qa-backed` | a completed PASS on an **exact matching** QA check on the upgraded side — a `QA_AUTOMATED` check ID with a run result, or a checked (`- [x]`) expected result in the manual QA checklist |
+| `attested` | an accepted remediation statement from the engagement owner closing a specific finding (rules below) |
 | `comparison-only` | before/after comparison evidence (docs sets, graphs, retained reports) with no matching QA check |
 | `unverified` | neither |
 
@@ -46,6 +49,37 @@ the path checked in the absence note.
   comparison evidence. It never means the codebase has no changes, and never
   means QA was absent.
 
+## `attested` — owner-stated remediation
+
+An explicit remediation statement from the engagement owner closes the
+identified finding **without** rerunning audits, scans, or QA.
+
+**What qualifies.** An attestation must identify the finding, state the
+corrected behavior, and confirm the outcome. "The security items are fixed"
+is insufficient — no finding identified, no behavior stated. "SEC-05 has been
+remediated. JWT audience validation is now enforced." qualifies.
+
+**How it is recorded.** The closure is `remediated (attested)` — never
+`qa-backed`. The `engagement-workspace` working-state file retains the
+finding ID, the attestation statement, its date, the repository, and the
+attestor.
+
+**What it closes, and only that.** The attested finding leaves the
+introduced, residual-remediation, and open-work counts. It verifies no
+unrelated behavior and provides no repository-wide assurance. Client
+documents may describe the finding as remediated; their methodology note must
+distinguish owner-attested remediation from independently executed QA.
+
+**Finalization.** `attested` satisfies the finalization gate for its own
+finding. Never require refreshed audits solely to confirm an accepted
+attestation — after accepting one, re-run synthesis only (findings, security,
+narratives, compliance, manifest, gap review), never the source audits unless
+the user explicitly asks.
+
+**Conflict.** Retained evidence that directly contradicts an attestation is
+`conflicted-attestation`: pause finalization for that finding and request
+resolution. Never silently prefer either source.
+
 ## Scope classes — how an observed change is treated
 
 Read the SOW's explicit exceptions and scope boundaries before classifying
@@ -56,5 +90,5 @@ any delta.
 | `sow-authorized` | expressly required or permitted by the SOW — cite the clause or explicit scope exception | An approved scoped delta under any pair `mode`. Narrated as such; never a framing discrepancy, never an unverified nonconformance |
 | `unresolved` | outside SOW scope, or an ambiguity the SOW does not resolve | A framing discrepancy and a compliance risk |
 
-Only an `unresolved` change or an `unverified` required behavior blocks
-finalization.
+Only an `unresolved` change, an `unverified` required behavior, or a
+`conflicted-attestation` finding blocks finalization. `attested` never does.

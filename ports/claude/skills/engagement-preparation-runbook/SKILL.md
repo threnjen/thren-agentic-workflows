@@ -30,13 +30,16 @@ Per the `engagement-workspace` skill's Security Boundary section.
 
 ## Step 1: Declare the Engagement Configuration
 
-Preparation is config-file-driven; there is no interactive Q&A. Author the
-config file per the `engagement-configuration` skill before invoking
-anything: a `sow_document` pointer, a `deliverables_spec` pointer, and any
-number of comparison pairs (each with `name`, `type`, `original`,
-`upgraded`, and — for branch pairs — `repo_path`). By convention it is
-`engagement.yaml` at the root of the engagement's working directory; any
-path works, and relative paths inside it resolve against its own directory.
+Preparation is config-file-driven; there is no interactive Q&A.
+
+**Starting fresh?** Invoke the **Client Deliverable** agent with no config.
+It asks for an engagement name, creates the workspace, and leaves a
+fill-in-the-blank `engagement.yaml` at its root — it tells you the path.
+Fill in every `FILL ME`, then continue at Step 2.
+
+**Already have a config?** Any path works; relative paths inside it resolve
+against its own directory. The `engagement-configuration` skill is the
+schema and validation reference if you need it.
 
 The config is the single declaration of the run, which is what makes the run
 repeatable: the same config re-invoked produces the same preparation.

@@ -39,6 +39,11 @@ order, citing evidence exclusively from the on-disk evidence base above
 - Record each criterion's evidence class. A "preserved from the original"
   statement requires `comparison-only` or better — comparative before/after
   evidence, not an upgraded-side QA result alone.
+- A criterion closed by an accepted attestation (records passed from the
+  working-state file) is satisfied for the corrected behavior that
+  attestation names, and for nothing else. Record it `attested`, never
+  `qa-backed`, and cite the attestation record rather than a QA check. Never
+  record it NOT VERIFIED for want of a refreshed audit.
 - No SOW configured: the walkthrough is a short document recording the
   missing input honestly — no criteria are invented.
 
@@ -49,7 +54,9 @@ It contains the **functional-preservation statement**, referencing the
 engagement's intended-behavior specification
 (`deliverables/intended-behavior-spec.md`) as the warranty baseline, plus
 a compact statement of what was verified, at what standard, and what
-remains NOT VERIFIED.
+remains NOT VERIFIED. Its statement of standards must distinguish
+owner-attested remediation from independently executed QA — a reader must
+never take an `attested` closure for a QA result.
 
 ## Compliance Basis — Internal
 

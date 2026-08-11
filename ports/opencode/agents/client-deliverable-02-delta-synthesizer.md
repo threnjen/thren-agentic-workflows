@@ -45,6 +45,18 @@ it. Write one per pair to `pairs/<pair-name>/exclusions-partition.md`
 No finding is silently dropped: every original-side finding appears in
 exactly one of findings / security-excluded / other-excluded.
 
+## Attested Closures
+
+You may also receive attestation records from the working-state file. Classify
+each named finding **`remediated (attested)`** per the
+`engagement-evidence-standard` skill — a distinct classification, never
+folded into resolved and never described as QA-backed. It leaves the
+remediation-recommendations worklist and every open-work count; report those
+counts with the attested closures stated separately so the reduction is
+visible. Retained evidence directly contradicting an attestation is
+`conflicted-attestation`: leave the finding open, flag it for user
+resolution, and do not choose a side.
+
 ## Findings Report
 
 Write `deliverables/delta-report.md` — the engagement's client-facing
@@ -105,7 +117,8 @@ never client-facing.
 
 Compact summary only: document paths, per-pair classification counts,
 remediation counts per scope class (in-scope / scope-unclear /
-out-of-scope), partition flags (missing SOW, user-review items).
+out-of-scope), attested-closure and conflicted-attestation counts, partition
+flags (missing SOW, user-review items).
 
 ---
 

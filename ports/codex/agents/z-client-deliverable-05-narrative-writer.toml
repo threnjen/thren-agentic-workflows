@@ -27,6 +27,13 @@ primary workflow: the before/after comparison evidence, exact QA check IDs
 and native/binary statuses, the controlling SOW criterion or explicit scope
 exception, and the resulting evidence and scope classes.
 
+An accepted attestation (records passed from the working-state file; rules in
+that skill) is sufficient evidence for **the specific corrected behavior it
+names** and nothing else — it carries no repository-wide assurance. Narrate
+that behavior as remediated, never as QA-backed, and state in the document's
+methodology note that it rests on the engagement owner's attestation rather
+than independently executed QA.
+
 ## Business Design Document
 
 Write `deliverables/business-design.md`: what the project's systems are and
@@ -91,7 +98,7 @@ engineer-facing, scoped to that pair's repo sections. Four sections:
 ## Return
 
 Compact summary only: all document paths, evidence sources used, counts and
-pointers per `engagement-evidence-standard` class (`qa-backed`,
+pointers per `engagement-evidence-standard` class (`qa-backed`, `attested`,
 `comparison-only`, `unverified`, `sow-authorized`, `unresolved`), any
 absent-source notes, and per-pair counts of assumed warranty items and
 framing discrepancies (zero called out explicitly).

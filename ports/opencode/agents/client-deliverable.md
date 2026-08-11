@@ -55,8 +55,8 @@ as the run progresses: resolved inputs after config validation, then each
 per-pair/per-side status and pointers as results arrive. It is the run's
 sole observability surface and final run record.
 
-For every side, retain the exact QA package paths (`QA_AUTOMATED.md` and
-`QA_USER.md` when present), the recorded QA status, and compact coverage
+For every side, retain the exact QA package paths (`QA_AUTOMATED.md` and the
+resolved manual QA document(s) when present), the recorded QA status, and compact coverage
 metadata returned by preparation. Do not reduce QA evidence to the client
 QA appendix or to an overall PASS/FAIL label; later stages need the source
 paths and the checks that cover each claimed workflow.
@@ -76,13 +76,43 @@ working-state file.
 
 ## Run Flow
 
+### 0. Bootstrap — No Config Yet
+
+If the user handed you a config path, skip this step entirely.
+
+Otherwise the engagement has not been set up. Do **not** explain the schema,
+list fields, quote paths from other skills, or interview the user about
+pairs. Ask exactly one question:
+
+> "What's this engagement called? (short name, e.g. `acme-billing`)"
+
+Then, with the answer:
+
+1. Scaffold the workspace per the `engagement-workspace` skill, rooted at
+   `<name>-engagement/`.
+2. Copy `engagement-template.yaml` from the `engagement-configuration` skill
+   to `<root>/engagement.yaml`, verbatim. If a filled `engagement.yaml`
+   already exists there, never overwrite it — report it and stop.
+3. Tell the user, in three lines or fewer: the absolute path to the file,
+   that every `FILL ME` needs a value, and to re-run you with that path when
+   done.
+
+Then **stop**. Nothing else runs on this invocation — no validation, no
+preparation, no state file beyond the scaffold.
+
+If you are re-invoked with a config still containing `FILL ME`, do not run
+validation or emit its errors. Say which file is waiting and which lines are
+still blank, and stop again.
+
 ### 1. Configuration
 
 Load the `engagement-configuration` skill; obtain and validate the config
-per its rules (including the per-pair `mode` field and its default, and the
-optional per-pair `code_delta_path` / `infra_delta_path` — when either is
-present that dimension is not scanned on either side and the supplied delta
-is used instead). Then
+per its rules (including the per-pair `mode` field and its default; the
+priority-ordered `sow_document` list; and the two ways a dimension arrives
+already scanned — per-side `code_audit_path` / `infra_audit_path` or a
+pair-level `code_delta_path` / `infra_delta_path`, either of which means
+that dimension is not scanned on either side and the supplied evidence is
+used instead). Then
 scaffold the workspace per the `engagement-workspace` skill's Creation
 section — you are its sole creator; no subagent makes directories. Record
 resolved inputs in the working-state file.
@@ -91,11 +121,16 @@ resolved inputs in the working-state file.
 
 Spawn **client-deliverable-01-prepare** with the config, unchanged from its own
 definition — it owns validation gates, the QA gate (each **upgraded**
-repository's completed QA_AUTOMATED/QA_USER package, halting to send the user
+repository's completed automated runbook plus manual QA checklist, halting to send the user
 to the **qa-bootstrap** when incomplete; original-side QA is optional and
 its absence is recorded as evidence, never a blocked pair) and the workspace's
 `deliverables/qa-appendix.md`, analysis-branch setup, graph builds, and
-baseline snapshots. It spawns nothing; documentation is produced in
+baseline snapshots. If the user named specific manual QA filenames for any
+repository, relay those paths in the spawn prompt — Prepare treats a
+caller-supplied manual QA path as an override of its default
+`docs/QA_USER.md` gate target, and you never re-impose the default name over
+a path the user gave. Config-declared `manual_qa_paths` reach Prepare with
+the config itself. It spawns nothing; documentation is produced in
 Stage A of the pair loop. Consume its compact final report; record per-side
 preparation status, exact QA package paths, compact workflow/check coverage,
 the QA appendix pointer, and the remaining artifact pointers.
@@ -138,8 +173,18 @@ artifacts.
 
 Evidence gate: Stage E must return an `engagement-evidence-standard` class
 for every primary workflow and every mode-straining change. Only an
-`unresolved` change or an `unverified` required behavior blocks stage 5 —
-`comparison-only` and “no identifiable delta” do not.
+`unresolved` change, an `unverified` required behavior, or a
+`conflicted-attestation` finding blocks stage 5 — `comparison-only`,
+`attested`, and “no identifiable delta” do not.
+
+**Owner attestations.** When the user states that a finding is remediated,
+judge it against the `engagement-evidence-standard` skill's `attested` rules;
+if it qualifies, record the attestation in the working-state file and treat
+that finding as closed at both the Stage E and stage-5 gates. Never require a
+refreshed audit solely to confirm an accepted attestation. Accepting one
+invalidates synthesis only: re-run stages B–E and stage 5, never Stage A's
+source audits unless the user explicitly asks. This is the one exception to
+§4's re-run invalidation rule.
 
 1. **client-deliverable-06-compliance-writer** — spawn with the workspace root, the
    SOW path (or "none configured"), the deliverables-spec path, the pair
@@ -147,7 +192,8 @@ for every primary workflow and every mode-straining change. Only an
    file, the A3-verified per-side concrete paths (analysis-branch checkout
    path, docs-set paths, code-graph pointer, exact QA package paths and
    check-coverage pointers — the evidence inside the client repos), the
-   Stage E QA/scope classifications, and the boundaries above. It writes the
+   Stage E QA/scope classifications, the attestation records, and the
+   boundaries above. It writes the
    SOW compliance walkthrough and the verification summary. Record its
    document pointers.
 2. **client-deliverable-07-manifest-assembler** — spawn after the compliance writer
@@ -158,7 +204,7 @@ for every primary workflow and every mode-straining change. Only an
    `internal/gap-review.md` row** (which the next step writes) stops the run
    here — resolve it and re-run before the gap review.
 3. **client-deliverable-08-gap-reviewer** — spawn with the workspace root, the
-   manifest path, and the boundaries above. Record its report pointer and
+   manifest path, the attestation records, and the boundaries above. Record its report pointer and
    gap count; surface flagged gaps to the user.
 
 ## Fail Fast

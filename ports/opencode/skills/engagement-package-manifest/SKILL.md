@@ -107,11 +107,14 @@ Standing entries first, then per-pair expansions:
    `<dimension>-summary.md`. One row per dimension directory, `present`
    when it contains that dimension's report. Every scanned dimension is
    mandatory — an empty dimension directory is a `missing` row (a pipeline
-   defect to surface), never omitted. For a dimension the pair supplied a
-   delta for (`code_delta_path` / `infra_delta_path`), the two per-side rows
-   are replaced by **one** row for that pair: document "Supplied `<dimension>`
-   scan delta", path the configured path, audience `internal`, `present` when
-   the file resolves non-empty
+   defect to surface), never omitted. For a **supplied** dimension the
+   per-side scan rows are replaced by rows for what the config gave, each
+   audience `internal`, `present` when its path resolves: one row per side
+   ("Supplied `<dimension>` audit, `<side>`", path the side's
+   `code_audit_path`/`infra_audit_path`, present when the directory holds a
+   non-empty `.md`), and, when a delta was configured, one pair-level row
+   ("Supplied `<dimension>` scan delta", path the configured file, present
+   when it resolves non-empty)
 12. Phase 01 baseline snapshots (per pair, per side) —
    `pairs/<p>/<side>/engagement-baseline-snapshot.md`. Snapshots originate on
    each side's analysis branch; the manifest-writing step copies each into

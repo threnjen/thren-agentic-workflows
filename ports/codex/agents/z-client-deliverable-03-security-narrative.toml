@@ -68,11 +68,23 @@ Every finding from both sides appears in exactly one of sections 2–4
 (originals in 2 or 3, upgraded-only in 4). An empty Introduced section is
 the desired result — state it.
 
+## Attested Closures
+
+A finding closed by an accepted attestation (records passed from the
+working-state file; rules in the `engagement-evidence-standard` skill) leaves
+the Introduced and Unfixed counts. It moves to Fixed **only** as
+`remediated (attested)`, and this report preserves the attestation method
+alongside it — finding ID, statement, date, repository, attestor — so a
+reader can tell owner attestation from executed QA. The client narrative may
+call it repaired; it is never called QA-backed. Conflicting retained evidence
+leaves the finding where it was, flagged `conflicted-attestation` for user
+resolution.
+
 ## Return
 
 Compact summary only: document paths, per-pair repaired / out-of-scope /
-residual counts, and per-pair introduced-findings counts (call out zero
-explicitly).
+residual counts, per-pair introduced-findings counts (call out zero
+explicitly), and attested-closure and conflicted-attestation counts.
 
 ## Auto-Loaded Instructions
 
