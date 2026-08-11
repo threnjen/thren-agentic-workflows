@@ -50,7 +50,7 @@ The capture run is project-specific; do not hardcode it. Discover the documented
    1. The `VISUAL_VERIFICATION_UNITY` environment variable (a machine-wide editor path), if set.
    2. A machine-local override file `dev/com.threnjen.visual-verification.local.json` containing
       `{ "unityEditorPath": "…" }`, if present.
-   3. Derive from the project's Unity version in `ProjectSettings/ProjectVersion.txt` plus the Unity
+   3. Derive from the project's Unity version in `<execution-unity-project>/ProjectSettings/ProjectVersion.txt` plus the Unity
       Hub layout — both the default location (`…/Hub/Editor/<version>/Editor/Unity.exe`) **and** any
       custom editor-install location Hub records in its own config (`%APPDATA%/UnityHub/` on Windows,
       `~/Library/Application Support/UnityHub/` on macOS, `~/.config/UnityHub/` on Linux). This covers

@@ -84,7 +84,6 @@ def _visual_verifier_errors(section: str) -> set[str]:
     for token in (
         "VISUAL_VERIFICATION_UNITY",
         "dev/com.threnjen.visual-verification.local.json",
-        "ProjectSettings/ProjectVersion.txt",
         "UnityHub",
         ".gitignore",
     ):
@@ -101,6 +100,8 @@ def _visual_verifier_errors(section: str) -> set[str]:
         or "<execution-unity-project>" not in section
     ):
         errors.add("root or nested project path")
+    if "<execution-unity-project>/ProjectSettings/ProjectVersion.txt" not in section:
+        errors.add("nested editor version path")
     if "capture inputs are committed" not in normalized:
         errors.add("committed capture inputs")
 
@@ -127,6 +128,28 @@ def _visual_verifier_errors(section: str) -> set[str]:
         errors.add("graphics enabled without quit")
     if "graphics enabled" not in normalized:
         errors.add("graphics enabled without quit")
+    return errors
+
+
+def _phase_visual_gate_errors(section: str, full_text: str) -> set[str]:
+    normalized = " ".join(section.split())
+    errors: set[str] = set()
+
+    if (
+        "Visual Verification Wiring" not in full_text
+        or "before returning so the A1 checkpoint commits those inputs" not in full_text
+    ):
+        errors.add("implementation-owned visual wiring")
+    if "Never create or modify capture inputs after the wave checkpoints" not in normalized:
+        errors.add("no dirty post-wave bootstrap")
+    if (
+        "visual-verification: not configured (capture inputs missing at implementation checkpoint)"
+        not in normalized
+        or "all-approved: no" not in section
+    ):
+        errors.add("missing-input non-green status")
+    if "perform the minimal wiring yourself" in normalized:
+        errors.add("no dirty post-wave bootstrap")
     return errors
 
 
@@ -189,6 +212,13 @@ def test_phase_execute_wave_gate_contract() -> None:
     text = _consumer_texts()["phase_execute"]
     section = _section(text, "### Step 2.5: Wave Test Gate", 3)
     assert not _phase_execute_errors(section), sorted(_phase_execute_errors(section))
+
+
+def test_phase_execute_visual_gate_commit_contract() -> None:
+    text = _consumer_texts()["phase_execute"]
+    section = _section(text, "### Step 3: Visual Verification Gate (conditional)", 3)
+    errors = _phase_visual_gate_errors(section, text)
+    assert not errors, sorted(errors)
 
 
 def test_visual_verifier_invocation_contract() -> None:
@@ -287,6 +317,11 @@ def test_phase_execute_mutations_are_killed(
             "capture inputs may remain dirty",
             "committed capture inputs",
         ),
+        (
+            "<execution-unity-project>/ProjectSettings/ProjectVersion.txt",
+            "ProjectSettings/ProjectVersion.txt",
+            "nested editor version path",
+        ),
     ],
 )
 def test_visual_verifier_mutations_are_killed(
@@ -350,3 +385,36 @@ def test_canonical_mechanics_duplication_mutations_are_killed() -> None:
     assert "unity_reviewer duplicates editor discovery" in _duplication_errors(
         discovery_mutation
     )
+
+
+@pytest.mark.parametrize(
+    ("needle", "replacement", "obligation"),
+    [
+        (
+            "before returning so the A1 checkpoint commits those inputs",
+            "after the wave checkpoints",
+            "implementation-owned visual wiring",
+        ),
+        (
+            "Never create or modify capture inputs after the wave checkpoints",
+            "Create capture inputs after the wave checkpoints",
+            "no dirty post-wave bootstrap",
+        ),
+        (
+            "visual-verification: not configured (capture inputs missing at implementation checkpoint)",
+            "visual-verification: Pass",
+            "missing-input non-green status",
+        ),
+    ],
+)
+def test_phase_visual_gate_mutations_are_killed(
+    needle: str, replacement: str, obligation: str
+) -> None:
+    text = _consumer_texts()["phase_execute"]
+    section = _section(text, "### Step 3: Visual Verification Gate (conditional)", 3)
+    assert needle in text, f"mutation target missing for {obligation}"
+    mutated_text = text.replace(needle, replacement, 1)
+    mutated_section = _section(
+        mutated_text, "### Step 3: Visual Verification Gate (conditional)", 3
+    )
+    assert obligation in _phase_visual_gate_errors(mutated_section, mutated_text)
