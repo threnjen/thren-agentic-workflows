@@ -133,7 +133,7 @@ diff looked fine."
 - **Full-codebase auditing by default.** Scope is manifest-derived. Full-codebase remains an
   explicit opt-in, not the default.
 - **Auditing standalone documentation files.**
-- **Multi-hop dependents.** One hop, capped. A transitive closure over a corpus this
+- **Multi-hop dependents.** One hop, no cap. A transitive closure over a corpus this
   cross-referential is most of the repository, which is the full-codebase audit this phase exists to
   avoid.
 - **Security and refactor audit types in the bookend.** Code always, infra conditionally. The

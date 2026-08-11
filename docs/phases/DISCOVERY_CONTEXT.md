@@ -73,15 +73,19 @@ document.
 
 ## Phase 03 — how dependents are derived, and what it cannot see
 
-**One hop of reference search, capped, with the cap declared.** For each file the manifest lists as
-modified, find the files that name it by path, import it as a module, or use the names it defines.
-Stop at one hop. Apply a file-count cap. Both the cap and what it excluded must reach the auditors'
-Coverage and Limitations section, because that is where the delta is required to read them.
+**One hop of reference search, uncapped, with the resolved scope declared.** For each file the
+manifest lists as modified, find the files that name it by path, import it as a module, or use the
+names it defines. Stop at one hop. The resolved file list must reach the auditors' Coverage and
+Limitations section, because that is where the delta is required to read it.
 
-Two degenerate cases are handled rather than assumed away. A modified file nothing references yields
-no dependents: fall back to auditing the modified files alone and say so. A widely-referenced file
-blows the cap: state the cap and what it excluded. Narrower evidence is recoverable; silently-wrong
-scope is not.
+Cost is bounded at the Step 1 ask, not by a file cap — the user sees the resolved file count and the
+audit types before anything runs, and accepts, widens to full-codebase, or declines. A cap was
+rejected because no defensible value exists and it drops the most-referenced dependents, which are
+the ones most worth auditing.
+
+The degenerate case is handled rather than assumed away: a modified file nothing references yields no
+dependents, so fall back to auditing the modified files alone and say so. Narrower evidence is
+recoverable; silently-wrong scope is not.
 
 ## Context Not Gathered
 
