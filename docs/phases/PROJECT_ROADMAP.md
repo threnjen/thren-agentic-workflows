@@ -12,7 +12,7 @@ codebase it just changed.
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
 | 01 | Unity Headless Test Execution | In Progress — NO-GO | None | Medium | Four source-authoring features define the headless ladder, asset import, consumer alignment, and inert reference assets. Completion is blocked on main-Editor concurrency evidence, a clean controlled `.meta` import, and a green final gate. |
-| 02 | Phase Document Final Check | Planned | None | Small | Optional advisory pass at the end of phase refinement. Once the document is written, Phase - Refiner offers to spawn a new hidden leaf subagent that starts cold — reading the phase document and the repository as a newcomer would, never the refinement conversation — and reports at most five findings, each tied to a specific place in the document or a concrete repository fact. Findings are transient and shown verbatim; the refiner then offers to fold in the ones the user accepts, and only afterward syncs the roadmap. Nothing blocks, and declining is a normal outcome. |
+| 02 | Phase Document Final Check | In Progress — CONDITIONAL | None | Small | Source wiring and the 26-test focused guard suite pass. The optional cold-start reviewer reads the phase document and repository from exactly two paths, reports at most five evidence-tied findings, and lets the refiner fold in accepted findings before one-time synchronization. Manual smoke checks and maintainer propagation remain pending; the full repository gate retains baseline failures. |
 | 03 | Phase Execute Audit Bookend | Planned | Phase 01, Phase 02 | Large | Phase - Execute audits at phase start and again at phase end with a byte-identical prompt, compares the two via Auditor - Delta, attributes findings against the known phase baseline commit, and auto-remediates High-or-above drift the phase caused. |
 
 Phase 03 depends on 01 and 02 only in the soft sense that it is executed *by* the pipeline those
@@ -47,8 +47,8 @@ phases improve; it has no code-level dependency on either. Execute them in liste
 
 ## Architecture Notes
 
-- **Corpus shape.** 54 agent definitions in `source_of_truth/agents/*.agent.md` (39 hidden
-  subagents, 15 user-invocable), 43 skills, 18 instructions. Agents declare their spawnable children
+- **Corpus shape.** 55 agent definitions in `source_of_truth/agents/*.agent.md` (40 hidden
+  subagents, 15 user-invocable), 44 skills, 18 instructions. Agents declare their spawnable children
   in an `agents:` frontmatter list; adding a child to an orchestrator means editing that list.
 - **Two-stage pipeline.** transform (`source_of_truth/` → `ports/`) then deploy (`ports/` → real
   harness directories). Five harnesses: Claude Code, Codex, OpenCode, Cursor, GitHub Copilot.

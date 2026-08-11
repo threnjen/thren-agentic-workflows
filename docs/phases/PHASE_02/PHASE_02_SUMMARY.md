@@ -1,9 +1,10 @@
 # Phase 2: Phase Document Final Check
 
-**Status**: Planned
+**Status**: In Progress
 **Depends on**: None
 **Estimated complexity**: Small
 **Cross-references**: None — single-repository phase
+**Readiness verdict**: CONDITIONAL — source wiring and the 26-test focused guard suite pass; manual smoke checks and maintainer propagation remain pending, and the full repository gate retains its baseline failures.
 
 ## What's New
 
@@ -58,25 +59,17 @@ while the document is still cheap to change.
 - **Review scope is the document's own content.** The state of surrounding files — whether the
   roadmap row has been synced, whether discovery context has been written — is explicitly not
   reviewable, because the check runs before those steps.
-- **A split of Phase - Refiner's Phase 6**, in `source_of_truth/agents/02-phase-refiner.agent.md`.
-  The current Phase 6 writes the phase document, writes the phase-scoped discovery context, and
-  syncs the roadmap in one pass; Phase 7 opens the working branch and commits. The new order is:
-  1. **Write the phase document.** Unchanged, but no longer bundled with the sync steps.
-  2. **Offer the final check.** Accept, decline, and no-answer are all terminal — none of them
-     blocks progression.
-  3. **Report and fold in.** Present the findings verbatim, without editorializing or
-     pre-filtering. Ask which the user wants applied. Rewrite the document in place for the
-     accepted ones only, following the refiner's existing clean-rewrite rule — no change-log
-     framing, no preserved old wording.
-  4. **Sync the roadmap and write the phase discovery context.** Moved to here so both are
-     generated from final content and written exactly once.
-  5. **Open the working branch and commit.** Unchanged.
+- **The Phase - Refiner Phase 6 workflow**, in `source_of_truth/agents/02-phase-refiner.agent.md`,
+  persists the phase document in 6A, offers the optional check and folds in only accepted findings
+  in 6B, and synchronizes the roadmap and phase discovery context exactly once in 6C. Phase 7
+  opens the working branch and commits.
 - **Both refiner entry paths reach the offer.** Phase - Refiner refines an existing document
   (Entry A) or drafts one from scratch for a standalone feature (Entry B). Both converge before the
   write step, so the offer is shared workflow. Entry B is the weaker document — one agent, one
   conversation, no upstream planner pass — and is where the check is worth the most.
-- Structural tests covering the new wiring: the subagent file exists and parses, Phase - Refiner
-  declares it in its `agents:` frontmatter list, and the skill is referenced by both consumers.
+- `tests/test_phase_refiner_final_check.py` contains 26 focused topology, workflow, mutation, and
+  non-vacuity guards for the reviewer, shared skill, path-only spawn boundary, continuation
+  branches, fold-in behavior, and synchronization order.
 
 ### Out of Scope
 
@@ -106,14 +99,11 @@ while the document is still cheap to change.
 
 ## Technical Context
 
-- **Insertion point.** `source_of_truth/agents/02-phase-refiner.agent.md` currently has Phase 5
-  (Present Refined Document), Phase 6 (Write Document — document, discovery context, and roadmap
-  sync together), and Phase 7 (Open Working Branch, which commits `eval: phase-affirmed`). Phase 6
-  splits as described in Scope. The check must run after the document exists on disk, so the
-  reviewer has a real file to read, and before the sync steps, so the roadmap is written once from
-  final content.
-- **Frontmatter.** Phase - Refiner declares `agents: [Web Researcher, Docs Writer]`. The new
-  subagent's display name joins that list. An orchestrator can only spawn what it declares.
+- **Workflow.** `source_of_truth/agents/02-phase-refiner.agent.md` persists the document before
+  the optional check, relays usable findings for explicit fold-in, synchronizes the roadmap and
+  discovery context once, and then opens the working branch with the existing commit step.
+- **Frontmatter.** Phase - Refiner declares `Web Researcher`, `Docs Writer`, and `02a Phase -
+  Final-Check Reviewer` in its `agents:` list. An orchestrator can only spawn what it declares.
 - **Delegation depth is one.** Phase - Refiner is user-invocable, so it may spawn a leaf. The new
   subagent must declare no `agents:` of its own.
 - **Naming convention.** Hidden subagents take their parent's pipeline number plus a letter, as
@@ -137,8 +127,9 @@ while the document is still cheap to change.
 
 ## Dependencies & Risks
 
-- **Dependency**: None. This phase touches two agent files, one new skill, and tests. It shares no
-  surface with Phase 01 or Phase 03.
+- **Dependency**: None. This phase touches two agent files, one shared skill, one existing
+  instruction allowlist, and one focused test module. It shares no surface with Phase 01 or Phase
+  03.
 - **Risk — the spawner briefs the reviewer anyway.** The single highest-value property of this
   phase is the cold start, and it is also the easiest thing to erode: a helpful spawning agent
   naturally wants to summarize context. *Mitigation*: state the prohibition in the spawn contract
@@ -171,41 +162,38 @@ step and the working branch, with the phase document exactly as the user left it
 
 ## Success Criteria
 
-- [ ] `source_of_truth/agents/02a-phase-final-check.agent.md` exists, parses, declares no child
+- [x] `source_of_truth/agents/02a-phase-final-check.agent.md` exists, parses, declares no child
       agents, and carries `user-invocable: false`.
-- [ ] The new subagent's display name appears in Phase - Refiner's `agents:` frontmatter list.
-- [ ] The contract skill exists and is referenced by both the subagent and Phase - Refiner.
-- [ ] The contract states the reading boundary, the six finding categories, the cap of five, and
+- [x] The new subagent's display name appears in Phase - Refiner's `agents:` frontmatter list.
+- [x] The contract skill exists and is referenced by both the subagent and Phase - Refiner.
+- [x] The contract states the reading boundary, the six finding categories, the cap of five, and
       that finding nothing is a valid result.
-- [ ] The spawn contract explicitly prohibits passing conversation context, session summaries, or
+- [x] The spawn contract explicitly prohibits passing conversation context, session summaries, or
       the refiner's own assessment of what matters.
-- [ ] Phase - Refiner's workflow writes the phase document, then offers the check, then folds in
+- [x] Phase - Refiner's workflow writes the phase document, then offers the check, then folds in
       accepted findings, then syncs the roadmap and discovery context, then opens the branch — in
       that order.
-- [ ] The roadmap and phase discovery context are written exactly once per session, after any
+- [x] The roadmap and phase discovery context are written exactly once per session, after any
       fold-in.
-- [ ] Declining the check, receiving no answer, and a reviewer that fails outright all allow the
+- [x] Declining the check, receiving no answer, and a reviewer that fails outright all allow the
       workflow to reach the branch step with the document unchanged.
-- [ ] The offer is reached from both refiner entry paths — refining an existing document and
+- [x] The offer is reached from both refiner entry paths — refining an existing document and
       drafting one from scratch.
-- [ ] No agent or skill file added by this phase repeats a 10+ line block found in three or more
+- [x] No agent or skill file added by this phase repeats a 10+ line block found in three or more
       other agent files.
-- [ ] Every new test is demonstrated to fail when its target is deleted or negated, per the
+- [x] Every new test is demonstrated to fail when its target is deleted or negated, per the
       `guard-integrity` skill.
-- [ ] No file under `ports/` or `.github/` is hand-edited.
+- [x] No file under `ports/` or `.github/` is hand-edited.
 
 ## QA Considerations
 
-- **No UI, no manual QA document required.** This is pure corpus authoring — Markdown definitions
-  and structural Python tests. No frontend, no API contract, no user-visible runtime behavior.
-- **Affected test suites**: `tests/test_agent_corpus_invariants.py` and
-  `tests/test_propagate_master_assets.py` see a new agent and a new skill. Neither asserts on
-  corpus totals, so no count updates are expected. The duplicate-block guard is the one that can
-  bite if contract text is inlined.
-- **The behavior this phase adds is not automatically testable.** Whether the reviewer produces
-  useful findings, and whether the spawner honors the blindness rule at runtime, can only be judged
-  by running a real refinement session. Worth one manual exercise against an existing phase
-  document before the phase is called complete.
+- **No Unity visual gate.** The repository is not a Unity project and Phase 02 has no visual
+  acceptance criteria.
+- **Automated evidence.** `tests/test_phase_refiner_final_check.py` passes 26/26 focused guards.
+  The corpus and propagation checks retain their recorded baseline failures, and generated output
+  synchronization remains pending maintainer propagation.
+- **Manual evidence.** Entry A and Entry B smoke sessions, including accepted findings and reviewer
+  failure/continuation branches, remain pending before the phase is complete.
 
 ## Notes for Feature - Decomposer
 

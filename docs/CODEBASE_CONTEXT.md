@@ -12,8 +12,8 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 54 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 39 hidden subagents (`user-invocable: false`) and 15 user-invocable.
-- 42 skills in `source_of_truth/skills/`.
+- 55 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 40 hidden subagents (`user-invocable: false`) and 15 user-invocable.
+- 44 skills in `source_of_truth/skills/`.
 - 18 instructions in `source_of_truth/instructions/`.
 - `ports/claude/agents` = 41, `ports/claude/commands` = 15.
 
@@ -26,8 +26,8 @@ README.md USAGE.md CONTRIBUTING.md         # overview, agent catalog, contributo
 INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
-    *.agent.md                             # 54 agent definitions
-  skills/                                  # 42 skill dirs, each rooted at SKILL.md
+    *.agent.md                             # 55 agent definitions
+  skills/                                  # 44 skill dirs, each rooted at SKILL.md
   instructions/                            # 18 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
@@ -119,7 +119,7 @@ benchmarks/ packages/ tests/
   plus a subagent file only if an orchestrator names it as a child (dual-use). So
   `ports/claude/agents` = 39 hidden + 2 dual-use (docs-writer, web-researcher)
   = 41, while `ports/claude/commands` = 15.
-- Codex and OpenCode emit all 54 agents; only Claude and Cursor split commands out.
+- Codex and OpenCode emit every source agent; only Claude and Cursor split commands out.
 - `ports/cursor/rules` = any instruction whose `applyTo` globs are
   not all agent-targeted. Agent-targeted instructions are excluded because they ship
   inside the agents; the exclusion test in `propagate_cursor_rules_once` matches patterns
@@ -142,9 +142,9 @@ benchmarks/ packages/ tests/
 
 ## Testing
 
-- 16 Python test modules under `tests/` cover both scripts plus the agent corpus. The Unity contract
+- 17 Python test modules under `tests/` cover both scripts plus the agent corpus. The Unity contract
   modules are `test_unity_skill_contract.py`, `test_unity_consumer_contract.py`, and
-  `test_unity_reference_assets.py`.
+  `test_unity_reference_assets.py`; Phase 02 uses `test_phase_refiner_final_check.py`.
 - Run with `uv run pytest tests/` (or `.venv/bin/python -m pytest tests/`); bare
   `python -m pytest` may lack pytest.
 - `tests/_propagate_env.py` redirects the propagator's directory globals to a temp tree
