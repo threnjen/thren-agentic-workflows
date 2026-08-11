@@ -170,17 +170,33 @@ This bug has recurred multiple times. It is the single most common UI Toolkit mi
 
 Unity Test Framework is the authoritative runner. Compilation success and focused harnesses are not test execution — see the `test-execution-evidence` instruction.
 
+`-batchmode` is mandatory for every agent-driven Unity test run. Resolve the editor executable through the existing procedure in `source_of_truth/agents/04g-unity-visual-verification.agent.md`. Never assume a bare `Unity` executable is on `PATH`.
+
+| Platform | Required flags |
+|----------|----------------|
+| EditMode | `-batchmode -nographics` |
+| PlayMode and visual capture | `-batchmode` with graphics enabled; exclude `-nographics` |
+
 ```bash
-Unity -runTests -projectPath <path> -testPlatform EditMode|PlayMode -testResults <results.xml>
+"<resolved-unity-editor>" -batchmode -nographics -runTests -projectPath "<execution-checkout>" -testPlatform EditMode -testResults "<absolute-main-checkout>/dev/test-results/<results.xml>"
+"<resolved-unity-editor>" -batchmode -runTests -projectPath "<execution-checkout>" -testPlatform PlayMode -testResults "<absolute-main-checkout>/dev/test-results/<results.xml>"
 ```
 
-- `-batchmode` is optional. Omit it to run against the Editor UI; add it for headless runs.
+- Never pair `-quit` with `-runTests`; Unity can exit before the tests execute and return a false-green zero exit code.
 - **Affected-suite runs use `-testFilter`** — a semicolon-separated list of full test names or a regex, negation supported. Scope it to the suites exercising the changed symbol. Gate runs (wave boundary, phase end) are unfiltered.
-- Write results under `dev/test-results/`.
+- `-testResults` always receives an absolute path under the main checkout's `dev/test-results/`. The shadow worktree is an execution target only. Never read results from the shadow worktree.
 
-**Editor lock.** If `Temp/UnityLockfile` exists or the Editor is open on the project, do NOT launch a CLI run — it will fight the running Editor. Report `not-executed: editor lock` and ask the user to run the suite. Never force it.
+**Precondition.** Commit before testing in a shadow worktree; it can represent only committed code. The normal per-feature commit usually satisfies this precondition. A dirty checkout requires a commit before this procedure begins.
 
-**Reading the results XML.** Root `<test-run total= passed= failed=>` gives the counts; failing test names come from `<test-case result="Failed">`. A run reporting zero tests discovered is `not-executed`.
+### Execution Ladder
+
+1. **Persistent shadow worktree.** From the main checkout, run `git worktree prune`, then use the one fixed detached sibling `<project-dir>-agent-tests/`. Before reuse, verify that an existing path is a registered worktree for this repository; never overwrite foreign content. On first use, announce its path, approximate disk cost, and multi-minute first import, then create it with `git worktree add --detach "<project-dir>-agent-tests/" "<committed-sha>"`. On every use, refresh it with `git -C "<project-dir>-agent-tests/" checkout --detach "<committed-sha>"`. Its gitignored `Library/` remains in place. Run the appropriate headless command there once while the main Editor remains open and usable.
+2. **Licensing or lock fallback.** If rung 1 fails because of licensing or a project lock, ask the user to close the Editor once. After it closes, the agent runs the headless command once in the main checkout. Never delegate the test run to the user.
+3. **Decline or unattended fallback.** Never launch a GUI and never refuse silently. A decline reports `not-executed`. Treat unattended non-response as a decline and report exactly `not-executed: editor open, user unavailable`.
+
+The one shadow worktree persists indefinitely. Per-run worktree creation is an anti-pattern because it discards `Library/` and repeats the cold import. Teardown is manual only: after validating the fixed path belongs to this repository, the maintainer may run `git -C "<main-checkout>" worktree remove "<project-dir>-agent-tests/"`. Never automate teardown.
+
+**Reading the results XML.** Exit code zero is not evidence. Root `<test-run total= passed= failed=>` gives the counts; failing test names come from `<test-case result="Failed">`. A run reporting zero tests discovered is `not-executed`.
 
 ## Test Authenticity Rules
 
