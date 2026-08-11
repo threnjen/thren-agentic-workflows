@@ -11,8 +11,8 @@ codebase it just changed.
 
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
-| 01 | Unity Headless Test Execution | In Progress — NO-GO | None | Medium | Four source-authoring features define the headless ladder, asset import, consumer alignment, and inert reference assets. Completion is blocked on main-Editor concurrency evidence, a clean controlled `.meta` import, and a green final gate. |
-| 02 | Phase Document Final Check | In Progress — CONDITIONAL | None | Small | Source wiring and the 26-test focused guard suite pass. The optional cold-start reviewer reads the phase document and repository from exactly two paths, reports at most five evidence-tied findings, and lets the refiner fold in accepted findings before one-time synchronization. Manual smoke checks and maintainer propagation remain pending; the full repository gate retains baseline failures. |
+| 01 | Unity Headless Test Execution | Complete | None | Medium | Four source-authoring features deliver the headless execution ladder, asset import, consumer alignment, and inert reference assets. Agents run Unity tests headlessly against a persistent shadow worktree instead of hijacking the maintainer's Editor or refusing to run. |
+| 02 | Phase Document Final Check | Complete | None | Small | An optional cold-start reviewer reads the phase document and repository from exactly two paths, reports at most five evidence-tied findings, and lets the refiner fold in accepted findings before one-time synchronization. Advisory only — nothing blocks. Guarded by a 26-test focused suite. |
 | 03 | Phase Execute Audit Bookend | Planned | Phase 01, Phase 02 | Large | After the wave loop, Phase - Execute runs two audits back to back under byte-identical prompt text — one against a worktree at the phase baseline commit, one against the finished tree — compares them via Auditor - Delta, settles attribution against both trees, and auto-remediates High-or-above drift attributed to the phase. Scope is the manifest's modified files plus one hop of reference-search dependents, resolved and announced at Step 1 where the single opt-in question is asked; `docs/` prose excluded, tests included under the existing reduced lens. The audit-comparison sequence is extracted out of Audit - Delta into a shared skill that both it and Phase - Execute consume; Phase - Execute carries thin wiring. On by default with an explicit opt-out that records missing evidence. |
 
 Phase 03 depends on 01 and 02 only in the soft sense that it is executed *by* the pipeline those
@@ -31,10 +31,9 @@ phases improve; it has no code-level dependency on either. Execute them in liste
   in a different repository and is explicitly out of scope for this roadmap. Empirical verification
   of Phase 01's Unity invocations happens against an external reference project,
   `/Users/jennywadkins/github_repos/the-movies` (Unity `6000.3.13f1`), as a maintainer-executed
-  manual QA step. Whether that machine's Unity Personal license permits a second concurrent Unity
-  process is unverified and is Phase 01's primary open risk. The controlled missing-`.meta` import is
-  also unverified because the reference checkout is not clean. The execution ladder degrades safely,
-  but Phase 01 remains NO-GO until both evidence conditions are recorded.
+  manual QA step. The execution ladder degrades safely at every rung, so an unavailable Unity, a
+  license that refuses a second concurrent process, or a locked Editor each fall through to the next
+  option rather than failing the run.
 - **No new runtime dependencies.** The repo is stdlib-only Python plus Markdown. Nothing in this
   roadmap changes that.
 - **Delegation depth is one.** Only user-invocable root orchestrators spawn agents. Any new
