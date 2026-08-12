@@ -32,11 +32,12 @@ and native/binary statuses, the controlling SOW criterion or explicit scope
 exception, and the resulting evidence and scope classes.
 
 An accepted attestation (records passed from the working-state file; rules in
-that skill) is sufficient evidence for **the specific corrected behavior it
-names** and nothing else — it carries no repository-wide assurance. Narrate
-that behavior as remediated, never as QA-backed, and state in the document's
-methodology note that it rests on the engagement owner's attestation rather
-than independently executed QA.
+that skill) is sufficient evidence for **the one finding it names** and nothing
+else — it carries no repository-wide assurance. Narrate that finding as
+remediated, or at the severity the owner's research established, never as
+QA-backed and never as open; state in the document's methodology note that it
+rests on the engagement owner's attestation rather than independently executed
+QA.
 
 ## Business Design Document
 

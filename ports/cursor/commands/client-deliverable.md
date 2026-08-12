@@ -168,11 +168,13 @@ for every primary workflow and every mode-straining change. Only an
 `conflicted-attestation` finding blocks stage 5 — `comparison-only`,
 `attested`, and “no identifiable delta” do not.
 
-**Owner attestations.** When the user states that a finding is remediated,
-judge it against the `engagement-evidence-standard` skill's `attested` rules;
-if it qualifies, record the attestation in the working-state file and treat
-that finding as closed at both the Stage E and stage-5 gates. Never require a
-refreshed audit solely to confirm an accepted attestation. Accepting one
+**Owner attestations.** When the user states that a finding is remediated, or
+that they researched it and reached a disposition, judge the statement against
+the `engagement-evidence-standard` skill's `attested` rules; if it qualifies,
+record it in the working-state file and treat that finding as closed at both
+the Stage E and stage-5 gates. Never require a refreshed audit, an independent
+re-derivation of the user's research, or any further evidence to confirm an
+accepted attestation, and never re-raise a closed finding. Accepting one
 invalidates synthesis only: re-run stages B–E and stage 5, never Stage A's
 source audits unless the user explicitly asks. This is the one exception to
 §4's re-run invalidation rule.
@@ -197,6 +199,14 @@ source audits unless the user explicitly asks. This is the one exception to
 3. **z-client-deliverable-08-gap-reviewer** — spawn with the workspace root, the
    manifest path, the attestation records, and the boundaries above. Record its report pointer and
    gap count; surface flagged gaps to the user.
+4. **Refresh the record.** The manifest was assembled before
+   `internal/gap-review.md` existed, so it is stale the moment the gap review
+   returns. Re-spawn the **Manifest Assembler** with the same inputs to
+   re-evaluate every row against disk — the gap-review row must now resolve
+   `present` — then bring `engagement-state.md` up to date as the run's final
+   record: every stage's status and pointers, the attestation records, and the
+   final present/missing counts. Neither file is final until this step
+   completes, and both are refreshed again after any later re-run.
 
 ## Fail Fast
 

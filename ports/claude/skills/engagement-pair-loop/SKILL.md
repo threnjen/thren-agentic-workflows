@@ -65,12 +65,19 @@ provides evidence for it in either of two independent forms:
 | Pair-level delta | `code_delta_path` / `infra_delta_path` | the delta file, in place of the two per-side reports |
 
 Both forms may be present for one dimension; pass whatever the config gave.
-A supplied dimension is **not scanned on either side**: skip both spawns and
-record the supplied absolute paths in the pair's working-state entry as that
-dimension's evidence. The dimension is `supplied` — never `failed`, never
-re-derived from the trees. A dimension with neither form is scanned
-normally. Supplied artifacts were authored outside this pipeline: never
-rewrite, relocate, or re-banner them.
+A supplied dimension is **not scanned on either side**: skip both spawns. The
+dimension is `supplied` — never `failed`, never re-derived from the trees. A
+dimension with neither form is scanned normally.
+
+**Copy supplied artifacts into the workspace.** A supplied path may point
+anywhere on disk; the engagement keeps its own copy so the package is
+self-contained and the evidence cannot move or change underneath it. Copy every
+supplied file **verbatim** — same filenames, no edits, no re-banner — into the
+pair's contract location: per-side audits into
+`pairs/<pair-name>/<side-role>/audits/<dimension>/`, a pair-level delta into
+`pairs/<pair-name>/`. Record both the source path and the workspace copy in the
+pair's working-state entry; every later stage consumes the copy. Never modify
+the original, and never write back to it.
 
 **Every dimension not supplied is mandatory on every side.** A scan with no
 findings is a complete scan with an empty findings table — it still writes
@@ -93,10 +100,12 @@ sides**:
   `<dimension>-report.md` and `<dimension>-summary.md`, each non-empty at
   its exact canonical path and name and opening with the internal audience
   banner per the `engagement-workspace` skill
-- for every supplied dimension, each configured path resolves: a delta path
-  to a non-empty file (checked once for the pair, not per side), and each
-  side's audit path to a directory containing at least one non-empty `.md`.
-  No banner check applies — these were authored outside this pipeline
+- for every supplied dimension, the workspace copy exists and is non-empty at
+  its contract location — a delta file (checked once for the pair, not per
+  side), and per side at least one `.md` under the dimension's audits
+  directory — and matches its source. No banner check applies: these were
+  authored outside this pipeline. A configured source path that does not
+  resolve is a config failure, not a missing artifact
 
 An artifact that fails any check — absent, wrong name, wrong path, empty,
 missing banner — is a stage failure for its producing step: re-run that
@@ -138,7 +147,7 @@ the `engagement-evidence-standard` skill's `attested` rules.
 ### Stage B: Delta
 
 Spawn **Client Deliverable - Delta Synthesizer** with every pair's audit report
-pointers, and for any supplied dimension the configured delta path in place
+pointers, and for any supplied dimension the workspace delta copy in place
 of that dimension's two per-side reports — labelled as a supplied delta so
 the synthesizer consumes its classifications rather than re-comparing. Record its client document pointers, each pair's
 exclusions-partition and remediation-recommendations pointers, and any

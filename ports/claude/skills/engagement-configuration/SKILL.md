@@ -112,6 +112,11 @@ two independent ways to supply a dimension, and may both be present: the
 audits are the per-side evidence and the delta is the comparison. Supplying
 either form skips that dimension's scans.
 
+Every supplied path may point anywhere on disk — inside a repository, in some
+other engagement's output, anywhere. The loop copies each supplied document
+into the engagement's `pairs/` tree and works from that copy; the original is
+never modified or written back to.
+
 Either side may also carry `manual_qa_paths`: a list of paths, relative to
 that side's repository root, naming that repository's manual QA
 document(s). It **overrides** the default manual-QA gate target

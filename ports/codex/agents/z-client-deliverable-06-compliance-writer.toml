@@ -43,7 +43,7 @@ order, citing evidence exclusively from the on-disk evidence base above
   working-state file) is satisfied for the corrected behavior that
   attestation names, and for nothing else. Record it `attested`, never
   `qa-backed`, and cite the attestation record rather than a QA check. Never
-  record it NOT VERIFIED for want of a refreshed audit.
+  record it NOT VERIFIED for want of a refreshed audit, and never reopen it.
 - No SOW configured: the walkthrough is a short document recording the
   missing input honestly — no criteria are invented.
 

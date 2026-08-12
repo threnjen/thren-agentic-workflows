@@ -34,6 +34,10 @@ workspace root per its schema:
 Also write `deliverables/table-of-contents.md` per the skill's Package
 Table of Contents section, from the same derived client-facing entries.
 
+You are re-invoked to refresh the manifest after the gap review — its report is
+itself a row — and after any later re-run. Every invocation rebuilds both files
+whole from disk; never patch a prior manifest or carry a stale row forward.
+
 ## Manifest Basis — Internal
 
 Also write `internal/manifest-basis.md`, engineer-facing:

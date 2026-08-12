@@ -31,7 +31,7 @@ the path checked in the absence note.
 | Class | Requires |
 |---|---|
 | `qa-backed` | a completed PASS on an **exact matching** QA check on the upgraded side — a `QA_AUTOMATED` check ID with a run result, or a checked (`- [x]`) expected result in the manual QA checklist |
-| `attested` | an accepted remediation statement from the engagement owner closing a specific finding (rules below) |
+| `attested` | an accepted statement from the engagement owner closing a specific finding — remediated, or researched and dispositioned (rules below) |
 | `comparison-only` | before/after comparison evidence (docs sets, graphs, retained reports) with no matching QA check |
 | `unverified` | neither |
 
@@ -50,26 +50,41 @@ the path checked in the absence note.
   comparison evidence. It never means the codebase has no changes, and never
   means QA was absent.
 
-## `attested` — owner-stated remediation
+## `attested` — owner-stated closure
 
-An explicit remediation statement from the engagement owner closes the
-identified finding **without** rerunning audits, scans, or QA.
+An explicit statement from the engagement owner closes the identified finding
+**without** rerunning audits, scans, or QA. Two forms qualify.
 
-**What qualifies.** An attestation must identify the finding, state the
-corrected behavior, and confirm the outcome. "The security items are fixed"
-is insufficient — no finding identified, no behavior stated. "SEC-05 has been
+**Remediation.** The statement identifies the finding, states the corrected
+behavior, and confirms the outcome. "The security items are fixed" is
+insufficient — no finding identified, no behavior stated. "SEC-05 has been
 remediated. JWT audience validation is now enforced." qualifies.
 
-**How it is recorded.** The closure is `remediated (attested)` — never
-`qa-backed`. The `engagement-workspace` working-state file retains the
-finding ID, the attestation statement, its date, the repository, and the
-attestor.
+**Researched disposition.** The owner researched the finding and reached a
+conclusion about it — invalid, already-correct behavior, immaterial, or real
+but accepted at a stated severity. The statement identifies the finding, gives
+the conclusion, and gives the basis in one line. "I researched INFRA-014; the
+path is unreachable in the deployed configuration, so it is trivial" qualifies.
+A bare severity opinion with no basis does not. The owner's own research is
+sufficient basis — never demand an independent re-derivation of it.
+
+**Settled means settled.** An accepted attestation of either form ends the
+matter. No stage re-argues it, re-raises it as an open finding, asks for
+further evidence, or re-surfaces it to the user for reconsideration. The only
+thing that reopens it is retained evidence that directly contradicts it (see
+Conflict below) or the user reopening it.
+
+**How it is recorded.** The closure is `remediated (attested)` or
+`dispositioned (attested)` — never `qa-backed`. The `engagement-workspace`
+working-state file retains the finding ID, the statement, its form, its date,
+the repository, and the attestor.
 
 **What it closes, and only that.** The attested finding leaves the
 introduced, residual-remediation, and open-work counts. It verifies no
-unrelated behavior and provides no repository-wide assurance. Client
-documents may describe the finding as remediated; their methodology note must
-distinguish owner-attested remediation from independently executed QA.
+unrelated behavior and provides no repository-wide assurance. Client documents
+may describe the finding as remediated, or at the severity the owner's research
+established; their methodology note must distinguish an owner attestation from
+independently executed QA.
 
 **Finalization.** `attested` satisfies the finalization gate for its own
 finding. Never require refreshed audits solely to confirm an accepted

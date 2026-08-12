@@ -48,9 +48,12 @@ exactly one of findings / security-excluded / other-excluded.
 ## Attested Closures
 
 You may also receive attestation records from the working-state file. Classify
-each named finding **`remediated (attested)`** per the
+each named finding **`remediated (attested)`** or
+**`dispositioned (attested)`** per the record's form and the
 `engagement-evidence-standard` skill — a distinct classification, never
-folded into resolved and never described as QA-backed. It leaves the
+folded into resolved and never described as QA-backed. Take the record's
+disposition, including any severity it establishes, as given: never re-derive
+it, re-rank the finding, or restate it as open. It leaves the
 remediation-recommendations worklist and every open-work count; report those
 counts with the attested closures stated separately so the reduction is
 visible. Retained evidence directly contradicting an attestation is

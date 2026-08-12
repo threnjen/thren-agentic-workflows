@@ -54,3 +54,16 @@ under `internal/`, `pairs/`, and `notes/` are exempt.
   documents — never alternate synonyms for variety.
 - Sentence-case headings that say what the section contains, not clever
   titles. No exclamation marks anywhere.
+
+## Proportion — report a finding once
+
+State a finding **once**, in the one section that owns it, at the weight its
+severity earns. Repeat it only where a document's own contract requires the
+entry — a QA appendix, a compliance criterion, a manifest row — and there state
+it plainly rather than re-arguing it. Never carry a finding into the executive
+summary, an unrelated section, or another document's narrative for emphasis.
+
+A finding is reported truthfully and completely, never softened or omitted; it
+is also never inflated. A low or trivial finding gets a low or trivial amount
+of the package's attention, and a closed finding is described as closed rather
+than relitigated.

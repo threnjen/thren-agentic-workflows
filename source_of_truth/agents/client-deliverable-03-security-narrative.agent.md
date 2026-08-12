@@ -76,10 +76,12 @@ the desired result — state it.
 A finding closed by an accepted attestation (records passed from the
 working-state file; rules in the `engagement-evidence-standard` skill) leaves
 the Introduced and Unfixed counts. It moves to Fixed **only** as
-`remediated (attested)`, and this report preserves the attestation method
-alongside it — finding ID, statement, date, repository, attestor — so a
-reader can tell owner attestation from executed QA. The client narrative may
-call it repaired; it is never called QA-backed. Conflicting retained evidence
+`remediated (attested)` or `dispositioned (attested)` per the record's form,
+and this report preserves the attestation method alongside it — finding ID,
+statement, date, repository, attestor — so a reader can tell owner attestation
+from executed QA. The client narrative may call it repaired, or carry it at the
+severity the owner's research established; it is never called QA-backed, and it
+is never re-raised as a residual risk. Conflicting retained evidence
 leaves the finding where it was, flagged `conflicted-attestation` for user
 resolution.
 

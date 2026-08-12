@@ -98,6 +98,11 @@ names them.
   outside the workspace root is a defect.
 - An owed document or section with nothing to report is still written,
   stating its empty state plainly — absence is never the signal.
+- **`pairs/` is retained evidence, not scratch.** Its audit and delta
+  documents — produced by this pipeline or copied in from a supplied path —
+  are the basis every client-facing claim traces to. Never delete, prune,
+  consolidate, or recommend cleaning up anything under `pairs/`, and never
+  treat its contents as intermediate files. Only `notes/` is disposable.
 - Audience is fixed by directory: `deliverables/` is client-facing;
   `internal/`, `pairs/`, `notes/`, and the root-level state/manifest
   files are internal. A stage never reclassifies a document by relocating it.
@@ -130,11 +135,16 @@ It contains:
 
 - **Attestation records**: one entry per accepted owner attestation (see the
   `engagement-evidence-standard` skill's `attested` class) — finding ID, the
-  attestation statement, its date, the repository, and the attestor. This
-  file is the record; downstream stages read the closure from here rather
-  than re-asking the user. A finding whose attestation conflicts with
-  retained evidence is recorded `conflicted-attestation` and blocks
-  finalization for that finding until resolved.
+  statement, its form (remediation or researched disposition), its date, the
+  repository, and the attestor. This file is the record; downstream stages
+  read the closure from here rather than re-asking the user or re-opening the
+  finding. A finding whose attestation conflicts with retained evidence is
+  recorded `conflicted-attestation` and blocks finalization for that finding
+  until resolved.
+
+Both this file and `manifest.md` are refreshed **after** the gap review, whose
+report is itself a manifest row: neither is the run's final record until that
+refresh runs, and both are refreshed again after any later re-run.
 
 The state may also retain compact Stage E classifications, named with the
 `engagement-evidence-standard` skill's classes (`qa-backed`, `attested`,
