@@ -179,6 +179,15 @@ invalidates synthesis only: re-run stages B–E and stage 5, never Stage A's
 source audits unless the user explicitly asks. This is the one exception to
 §4's re-run invalidation rule.
 
+0. **Engagement team document.** Before spawning anything below, check
+   `deliverables/engagement-team.md`. If it exists with content, leave it
+   exactly as it is — it is user-authored and no agent rewrites it. If it is
+   missing or empty, ask the user, in one question: who worked this
+   engagement and what each person did. Write their answer to that path in
+   the shape the `engagement-package-manifest` skill's Engagement Team
+   section gives, adding nothing they did not say. If the user declines or
+   does not answer, proceed — the manifest will carry the row as `missing`,
+   which is the correct signal.
 1. **z-client-deliverable-06-compliance-writer** — spawn with the workspace root, the
    SOW path (or "none configured"), the deliverables-spec path, the pair
    roster with `mode`s, retained-artifact pointers from the working-state
@@ -195,7 +204,10 @@ source audits unless the user explicitly asks. This is the one exception to
    `deliverables/table-of-contents.md`. Record both paths and the
    present/missing counts. Any `missing` row **other than the standing
    `internal/gap-review.md` row** (which the next step writes) stops the run
-   here — resolve it and re-run before the gap review.
+   here — resolve it and re-run before the gap review. A missing
+   `deliverables/engagement-team.md` row is the one further exception, and
+   only when the user declined step 0: report it to the user as an
+   outstanding client document and continue.
 3. **z-client-deliverable-08-gap-reviewer** — spawn with the workspace root, the
    manifest path, the attestation records, and the boundaries above. Record its report pointer and
    gap count; surface flagged gaps to the user.

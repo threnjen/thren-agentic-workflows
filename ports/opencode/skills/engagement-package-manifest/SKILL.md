@@ -64,6 +64,9 @@ under `deliverables/`:
 9. QA appendix — `deliverables/qa-appendix.md` (one section per repository:
    its QA_USER acceptance checklist plus an automated-QA run summary for
    agent-only targets; written by Client Deliverable - Prepare at its QA gate)
+10. Engagement team — `deliverables/engagement-team.md` (who worked the
+    engagement and what they did; content comes from the user, per the
+    Engagement Team section below)
 
 Metrics in holistic documents are reported **per pair**; an engagement-wide
 roll-up appears only when no repository is shared across pairs — otherwise
@@ -82,6 +85,33 @@ path. It lists every expected client
 document whether or not it is present on disk; present/missing lives in the
 manifest, never here. It is client-facing (client-deliverable banner) and
 contains no internal entries.
+
+## Engagement Team
+
+`deliverables/engagement-team.md` names the people who worked the engagement
+and what each did. Its content is **not derivable** from any repository or
+audit — the orchestrator collects it from the user (see the Client Deliverable
+orchestrator's stage 5) and writes the file. No other stage writes it, and an
+existing file is never overwritten or rewritten by an agent.
+
+Shape — the client banner, one heading, one table, one contact line:
+
+```markdown
+> **AUDIENCE: CLIENT DELIVERABLE** — hand off to design for client PDF.
+
+# Engagement team
+
+| Name | Role |
+|---|---|
+| <name> | <short list of what they did> |
+
+Questions about any part of this package can be directed to the engagement
+team at `<contact>`.
+```
+
+One row per person, in the order the user gave them. Keep each role cell to a
+short phrase or two — this is a credits page, not a responsibility matrix.
+Omit the contact line when the user gives no contact address.
 
 ### Technical / Internal (ordered)
 
