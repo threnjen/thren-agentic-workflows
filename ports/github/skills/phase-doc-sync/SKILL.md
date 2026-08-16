@@ -14,7 +14,7 @@ After completing any code change in a repo with a `docs/phases/` directory:
 1. **Identify the affected phase.** Determine which phase the changed files belong to. Use the current branch name, the phase docs' scope/deliverables sections, or ask the user if genuinely ambiguous.
 2. **Update the phase document.** Edit `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` so every section it contains (scope, deliverables, acceptance criteria, technical decisions, What's New) describes the **current, post-change state** of the phase.
 3. **Update the roadmap entry.** If the change alters anything visible at the roadmap level (scope, status, deliverables, dependencies), update this phase's entry in `docs/phases/PROJECT_ROADMAP.md` — or `docs/phases/PHASES_OVERVIEW.md` in legacy repos. Touch only this phase's section(s); never restructure or rewrite other phases.
-4. **Update the QA doc if one exists.** If the phase has a QA plan (`docs/phases/PHASE_0N/PHASE_0N_QA.md`) and the change alters a step's expected behavior, update that step to match the new behavior.
+4. **Update the QA docs if they exist.** If the phase has a manual QA plan (`docs/phases/PHASE_0N/PHASE_0N_QA.md`) or an automated QA document (`docs/phases/PHASE_0N/PHASE_0N_QA_AUTOMATED.md`) and the change alters a step's expected behavior, update that step to match. Changing an automated check's expected result invalidates its recorded run — clear that check's status so the runner produces a fresh one.
 
 Load the `phase-document-writing` skill for the Phase Document Template and Phases Overview Template when the structure of a section needs to change.
 

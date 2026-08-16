@@ -49,7 +49,8 @@ The core development workflow. **You drive steps 1–4, step 4 runs hands-free t
 │  │  Feature - Review and Fix     → Review + fixes     │                │
 │  │  Loop back for next feature                  │                │
 │  └──────────────────────────────────────────────┘                │
-│  Feature - QA Writer    → Consolidated QA plan                │
+│  Feature - QA Writer    → Manual + automated QA plans         │
+│  Feature - QA Runner    → Runs the automated QA plan          │
 │  04e Diff Security Scan → Diff-scoped security report         │
 │  Prod Code Review       → GO / NO-GO verdict                  │
 │                                                                   │
@@ -58,6 +59,7 @@ The core development workflow. **You drive steps 1–4, step 4 runs hands-free t
 │  │  Feature - Implementer  → Code + tests       │                │
 │  │  Feature - Review and Fix     → Review + fixes     │                │
 │  │  Feature - QA Writer    → QA for this feature │                │
+│  │  Feature - QA Runner    → Runs the automated one│               │
 │  │  Prod Code Review       → GO / NO-GO verdict │                │
 │  └──────────────────────────────────────────────┘                │
 │  → "Merge this PR, then re-spawn for next feature"              │
@@ -106,7 +108,7 @@ Required before Step 4 — `04 Phase - Execute` fails immediately if these artif
 4. For each feature in manifest wave order, runs the full cycle:
    - **Implement** → Red-Green-Refactor TDD, writes implementation record
    - **Review** → Finds bugs, applies fixes, writes review record
-5. Runs the **QA Writer**
+5. Runs the **QA Writer**, then the **QA Runner** on the automated QA document it produced
 6. Runs the **04e Diff Security Scan** across all files changed by the phase
 7. Runs the **Prod Code Review** with the security report
 8. Reports the verdict back to you
@@ -184,7 +186,8 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **Feature - Plan Expander** | Feature - Decomposer | Generate context and tasks files from existing plan files |
 | **Feature - Implementer** | Phase - Execute, Audit orchestrator, Test orchestrator | Implement a feature plan using Red-Green-Refactor TDD |
 | **Feature - Review and Fix** | Phase - Execute, Audit orchestrator, Test orchestrator | Review implementation, apply fixes, produce review record |
-| **Feature - QA Writer** | Phase - Execute, Audit orchestrator | Write manual QA plan for non-automatable test cases |
+| **Feature - QA Writer** | Phase - Execute, Audit orchestrator | Write the automated QA document and the manual QA plan, sorting every check between them |
+| **Feature - QA Runner** | Phase - Execute, Audit orchestrator | Execute the automated QA document and record per-check results into it |
 | **QA - Doc Generator** | QA - Bootstrapper | Generate the QA_AUTOMATED runbook and QA_USER checklist from repository, manual QA, and acceptance inputs |
 | **QA - Runner** | QA - Bootstrapper | Execute the QA_AUTOMATED runbook and all test suites, then record binary pass/fail results into the runbook |
 | **Baseline Worktree** | 05 PR - Review | Create or reuse a clean detached worktree at a caller-specified baseline commit and return its path |
@@ -275,7 +278,9 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **Feature - Review and Fix** *(subagent of Phase - Execute, Audit orchestrator, Test orchestrator)* — Reads plan and implementation docs, reviews all changed code, applies fixes for High/Blocker issues directly, and writes `[0N-task-name]-review.md` with verdict and remaining concerns.
 
-**Feature - QA Writer** *(subagent of Phase - Execute, Audit orchestrator)* — In batch mode: reads all pipeline docs from every feature in a phase and writes a single consolidated QA plan. In per-feature mode: reads pipeline docs from a single feature and writes QA plan and coverage map to that feature's directory.
+**Feature - QA Writer** *(subagent of Phase - Execute, Audit orchestrator)* — Reads the pipeline docs and sorts every check three ways. A command with a deterministic expected result goes to the automated QA document. A human-only check goes to the manual QA plan. A hybrid check is split: the command goes to the automated document, the judgment to the manual one. Batch mode writes one set covering the whole phase; per-feature mode writes into the feature's own directory.
+
+**Feature - QA Runner** *(subagent of Phase - Execute, Audit orchestrator)* — Executes the automated QA document, compares each check's actual output to its stated expected result, and records per-check status plus a Run results section back into that document. Never fixes what a check exposes. Not to be confused with `QA - Runner`, which executes the repository-wide `docs/QA_AUTOMATED.md` runbook.
 
 **04e Diff Security Scan** *(subagent of Phase - Execute and 05 PR - Review)* — Performs a diff-scoped security review of only the files changed by an implementation pass (from an implementation record's "Files Changed" table or a git diff range), plus their immediate security-relevant context. Writes a compact report with verdict, findings, and the categories not assessable at diff scope. It does not replace the full-codebase Auditor - Security scan.
 
@@ -417,6 +422,7 @@ dev/feature/[0N-task-name]/
 
 ```
 docs/phases/[phase-name]/[phase-name]_QA.md                # Consolidated manual QA checklist
+docs/phases/[phase-name]/[phase-name]_QA_AUTOMATED.md      # Automated checks, run by Feature - QA Runner
 docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md   # AC coverage map (automated vs manual)
 ```
 
@@ -425,7 +431,8 @@ If `docs/phases/` does not exist, the QA doc falls back to `dev/feature/[phase-n
 **Per-feature mode:** QA and review documents are written inside the feature's own directory:
 
 ```
-dev/feature/[0N-task-name]/[0N-task-name]-qa.md                 # QA plan for this feature
+dev/feature/[0N-task-name]/[0N-task-name]-qa.md                 # Manual QA plan for this feature
+dev/feature/[0N-task-name]/[0N-task-name]-qa-automated.md       # Automated QA checks for this feature
 dev/feature/[0N-task-name]/[0N-task-name]-coverage-map-qa.md    # Coverage map for this feature
 dev/feature/[0N-task-name]/[0N-task-name]-qa-analysis.md        # GO/NO-GO verdict for this feature
 ```
@@ -523,7 +530,7 @@ Do not hand-copy files out of `ports/` or `.github/` — both are generated. Edi
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each generated agent file is complete on its own — applicable instruction content is inlined at propagation time rather than referenced.
 - **Orchestrators**: **04 Phase - Execute**, **05 PR - Review**, **Audit - Code, Infra, Refactor, Security**, **Audit - Delta**, **Test - Orchestrator**, **QA - Bootstrapper**, **Instructions Manager**, and **Client Deliverable** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
-- **Shared subagents**: **Feature - Implementer** and **Feature - Review and Fix** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** is used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned at the end of the Phase - Execute, Audit, Test, and Client Deliverable pipelines to update stale documentation, and by the Planner and Refiner when critical docs are missing (it remains user-invocable for standalone use as well). **Unity Reviewer** and **Visual Verifier** are spawned on Unity repositories — Unity Reviewer by Phase - Execute, PR - Review, and Single Feature - Agent, Visual Verifier by Phase - Execute alone. Both are hidden-only.
+- **Shared subagents**: **Feature - Implementer** and **Feature - Review and Fix** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** and **Feature - QA Runner** are used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned at the end of the Phase - Execute, Audit, Test, and Client Deliverable pipelines to update stale documentation, and by the Planner and Refiner when critical docs are missing (it remains user-invocable for standalone use as well). **Unity Reviewer** and **Visual Verifier** are spawned on Unity repositories — Unity Reviewer by Phase - Execute, PR - Review, and Single Feature - Agent, Visual Verifier by Phase - Execute alone. Both are hidden-only.
 - **Dual-use agents**: two agents are user-invocable *and* declared as children by an orchestrator, so they emit both a slash command and a spawnable subagent file — **Docs Writer** (Planner, Refiner, Phase - Execute, Audit, Test, Client Deliverable) and **Web Researcher** (Planner, Refiner, Debugger). **03 Feature - Decomposer** is not among them: Phase - Execute fails on missing bundles rather than spawning the decomposer.
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
 - **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Security**, **Auditor - Delta**, **Auditor - Remediation Research**, **Auditor - Remediation Reconciler**, **Test - Analyst**, **Unity Reviewer**, **Visual Verifier**, **04e Diff Security Scan**, and the **05x PR Review evaluators** do not modify production code. They analyze and write only their assigned reports or audit artifacts. **Unity Reviewer** and **Baseline Worktree** are the two that hold no write tool at all.

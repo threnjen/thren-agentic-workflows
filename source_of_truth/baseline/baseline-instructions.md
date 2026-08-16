@@ -64,36 +64,51 @@ Do not spawn an agent merely because the user asks {harness_title} to act in tha
 <!-- know-the-audience -->
 ## Know The Audience
 
-**Dense is correct for machine-facing docs and spawned subagents** — phase summaries,
-discovery context, roadmaps, feature plan/context/tasks bundles. The workflow consumes
-these to decompose work, so spelling out every constraint helps.
+Every piece of English you write has a reader. Pick the mode from the reader, not from
+the surrounding style. Style-matching applies to **code, not prose.**
 
-**Simple is mandatory for human-facing docs and interaction** — QA plans, checklists,
-runbooks, chat replies. A runbook's only job is that someone follows it and succeeds.
-If it has to be parsed, it failed.
+**Strict** — procedures, error messages, tool and agent descriptions, agent-to-agent
+instructions, safety text. Anything parsed without a human present to resolve ambiguity.
 
-Never carry the machine-facing register into a human-facing doc or a reply.
-Style-matching applies to **code, not prose.**
+**Flavored** — READMEs, PR descriptions, changelogs, explanatory prose, replies to a
+human. Same sentence discipline, but word choice stays free.
+
+**Neither** — client-facing deliverables, marketing copy, creative writing. Never apply
+these rules there. Client deliverables follow `engagement-client-voice` instead.
+
+Dense is still correct for machine-facing planning docs — phase summaries, discovery
+context, roadmaps, feature plan/context/tasks bundles. The workflow consumes these to
+decompose work, so spelling out every constraint helps. Dense is never an excuse for
+ambiguous.
+
+Sentence rules, both modes:
+
+- Active voice. One instruction per sentence.
+- 20 words for an instruction, 25 for a description.
+- No semicolons. Plain verbs — start, not spin up; contact, not reach out.
+- Three words maximum in a noun stack. Keep the subject, verb, and article explicit.
+- Simple tenses, unless the compound tense carries information the simple one cannot.
+
+Strict mode adds: one word per action, one name per thing, verbs over noun forms, and
+every domain term unpacked inline on first use.
+
+Human-facing documents also need:
+
+- Answer first: the conclusion and what it changes. Evidence after, or behind a link.
+- Decision-driving numbers translated into words, then given as numbers.
+- One caveat, not three. Bold the decision, not the vocabulary.
+- Runbooks and checklists: TL;DR of five lines or fewer, then numbered steps — one action
+  each, with the exact command and what a correct result looks like. Rationale below the
+  steps. Warnings where the mistake happens, not in a preamble. When a step changes,
+  rewrite the step — no correction-log narration in the body.
+
+Never weaken or strengthen a hedge to save words. "May have failed" is not "failed", and
+confidence is content.
 
 - BAD: "prose is the one thing this corpus needs to be free to reword"
 - GOOD: "We need to be able to rewrite the words freely"
 
-Rules for replies and human-facing docs:
-
-- Answer first: open with the conclusion and what it changes. Tables and citations come
-  after, or behind a link.
-- Unpack every unfamiliar term inline on first use — "monotone (moves one direction, no zigzag)".
-- Translate any decision-driving number into plain words, then give the number.
-- One idea per sentence. One caveat, not three.
-- Bold the decision, not the vocabulary.
-
-Extra rules for runbooks and checklists:
-
-- Open with a TL;DR of five lines or fewer, then numbered steps — one action each, with the
-  exact command and what a correct result looks like. Rationale goes below the steps.
-- Put warnings where the mistake happens, not in a preamble.
-- When a step changes, rewrite the step — no correction-log narration in the body.
-
 Write to a colleague who is sharp, busy, and has not read the rest of the phase. If the
-reader asks for a simpler version, the first version was wrong.
+reader asks for a simpler version, the first version was wrong. For a full rewrite pass
+over existing text, load the `plain-technical-english` skill.
 <!-- know-the-audience -->

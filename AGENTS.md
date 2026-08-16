@@ -8,30 +8,52 @@ A library of AI development agents (planning, implementation, review, testing, a
 
 ## Know The Audience
 
-**Dense is correct for machine-facing docs or spawned subagents** — phase summaries, discovery context, roadmaps, feature
-plan/context/tasks bundles. The agentic workflow consumes these to decompose work, and spelling out
-every constraint helps it.
+Every piece of English here has a reader. Pick the mode from the reader, not from the surrounding
+style. Style-matching applies to **code, not prose.**
 
-**Simple is mandatory for human-facing docs or interaction** — QA plans, operator checklists, human interaction, chat replies.
-These must be **simple, concise, readable, easily followed.** 
+**Strict** — procedures, error messages, tool and agent descriptions, agent-to-agent instructions,
+safety text. Anything parsed without a human present to resolve ambiguity.
+
+**Flavored** — READMEs, PR descriptions, changelogs, explanatory prose, replies to a human. Same
+sentence discipline, but word choice stays free.
+
+**Neither** — client-facing deliverables, marketing copy, creative writing. Never apply these rules
+there. Voice and persuasion are the point, and this removes both. Client deliverables follow
+`engagement-client-voice` instead.
+
+Dense is still correct for machine-facing planning docs — phase summaries, discovery context,
+roadmaps, feature plan/context/tasks bundles. The agentic workflow consumes these to decompose
+work, and spelling out every constraint helps it. Dense is never an excuse for ambiguous.
+
 A runbook's only job is that someone follows it and succeeds. If it has to be parsed, it failed.
-
-Never carry the machine-facing register into a human-facing doc, and never into a reply.
-Style-matching applies to **code, not prose.**
 
 **BAD**: "prose is the one thing this corpus needs to be free to reword"
 **GOOD**: "We need to be able to rewrite the words freely"
 
-- Lead with the answer and what it changes. Evidence after, or behind a link.
-- Unpack jargon inline on first use — "monotone (moves one direction, no zigzag)".
-- Translate any decision-driving number into plain words.
-- One idea per sentence. One caveat, not three.
-- Runbooks: TL;DR in 5 lines, then numbered steps. Rationale below the steps, not between them.
-- No "corrected on <date>" narration — rewrite the step instead.
-
 If the reader has to ask for a simpler version, the first version was wrong.
 
 Write to a colleague who is sharp, busy, and has not read the rest of the phase.
+
+For a full rewrite pass over existing text, load the `plain-technical-english` skill.
+
+### Sentence Rules — Both Modes
+
+- **Active voice.** One instruction per sentence.
+- **20 words for an instruction, 25 for a description.**
+- **No semicolons.** An em dash is allowed, but usually marks a sentence that wants splitting.
+- **Plain verbs.** Start, not spin up. Contact, not reach out. Read, not dive into.
+- **Three words maximum in a noun stack.** "The handler that sets task-queue priority", not
+  "the agent task queue priority handler".
+- **Keep the subject, verb, and article explicit** even when dropping them would read shorter.
+- **Simple tenses**, unless the compound tense carries information the simple one cannot —
+  "the job has completed" says its output is available now; "the job completed" does not.
+
+Strict mode adds: one word per action (never rotate check / verify / confirm), one name per thing,
+verbs over noun forms ("analyze the log", not "perform an analysis of the log"), and every domain
+term unpacked inline on first use.
+
+**Never weaken or strengthen a hedge to save words.** "May have failed" is not "failed", and
+confidence is content. A length cap is exactly what tempts you to cut it.
 
 ### Concrete Rules — Replies And Human-Facing Docs Alike
 
@@ -41,10 +63,10 @@ Write to a colleague who is sharp, busy, and has not read the rest of the phase.
   Especially: monotone, spread, saturated, inverted, pooled, per-path, degenerate, control.
 - **Translate any number that drives a decision.** "0.0034 spread" is not an answer; "too small
   to pick a winner from" is. Give both, in that order.
-- **One idea per sentence.** No stacked subordinate clauses, no three-hedge qualifiers. State the
-  claim, then the single caveat that could change what the reader does.
+- **One caveat, not three.** State the claim, then the single caveat that could change what the
+  reader does.
 - **Reach for a physical analogy** when explaining whether a measurement or instrument is
-  trustworthy. Analogies land; abstractions do not.
+  trustworthy. Analogies land, abstractions do not.
 - **Bold the decision, not the vocabulary.**
 - **Lead with the plain version even when a precise version follows.** If a summary is needed
   after the fact, the first pass was too dense.
@@ -111,7 +133,7 @@ Both stages are safe by construction: a destination file is only overwritten or 
 
 ### Content model
 
-- **Agents** (`source_of_truth/agents/`) — 55 definitions (15 user-invocable, 40 hidden) following an orchestrator + subagent pattern: user-invocable primary agents (planner → refiner → decomposer → phase-execute pipeline, PR review, audits, test orchestrator, standalone specialists) plus hidden `user-invocable: false` subagents (deployed with a `z-` prefix) that orchestrators spawn. Full catalog: `USAGE.md`.
+- **Agents** (`source_of_truth/agents/`) — 56 definitions (15 user-invocable, 41 hidden) following an orchestrator + subagent pattern: user-invocable primary agents (planner → refiner → decomposer → phase-execute pipeline, PR review, audits, test orchestrator, standalone specialists) plus hidden `user-invocable: false` subagents (deployed with a `z-` prefix) that orchestrators spawn. Full catalog: `USAGE.md`.
 - **Skills** (`source_of_truth/skills/`) — directory-based capabilities, each rooted at `SKILL.md`, loaded on demand by agents.
 - **Instructions** (`source_of_truth/instructions/`) — cross-cutting guidance matched by `applyTo` globs. Agent-targeted instructions are inlined into the rendered agent body for every harness; source-file-glob instructions reach Cursor (`.mdc` rules) and Copilot (native) only.
 

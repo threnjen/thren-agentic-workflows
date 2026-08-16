@@ -60,7 +60,7 @@ Execute waves in numeric wave order according to the execution schedule from the
 Record each reviewer's verdict as it returns:
 - `[0N-task-name]`: Approved | Approved with Reservations | Changes Requested
 
-After ALL waves complete, determine: are all recorded verdicts Approved or Approved with Reservations? Store as `all-approved: yes/no` — it controls Prod Review mode at the Phase Final Review (Step 6). (The wave test gate at Step 2.5, the visual verification verdict from Step 3 if that step runs, and the diff security verdict from Step 5 also feed `all-approved`.)
+After ALL waves complete, determine: are all recorded verdicts Approved or Approved with Reservations? Store as `all-approved: yes/no` — it controls Prod Review mode at the Phase Final Review (Step 6). (The wave test gate at Step 2.5, the visual verification verdict from Step 3 if that step runs, the automated QA run at Step 4b, and the diff security verdict from Step 5 also feed `all-approved`.)
 
 ---
 
@@ -142,20 +142,41 @@ After the subagent returns:
 
 ### Step 4: QA
 
-Produce a QA document covering the scope of the current execution.
+Produce the QA documents for this execution, then run the automated one. The user is never asked to run a command this pipeline could have run itself.
 
-Load the `pipeline-artifacts` skill and determine QA output paths from its Consolidated QA Documents table. Check for existing QA files at those paths.
+Load the `pipeline-artifacts` skill and determine all three QA output paths from its Consolidated QA Documents table. Check for existing QA files at those paths.
 
-#### spawn QA Writer
+#### Step 4a: spawn QA Writer
 
 spawn the **z-feature-qa-writer** subagent:
 
-> "Write a consolidated release QA plan covering ALL features in this phase. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following feature folders: [list all dev/feature/[0N-task-name]/ paths]. Use these manifest verification assets as a required coverage checklist: [verification-assets extracted from manifest, or `not provided`]. Write the consolidated QA plan to `[determined QA output path]` and the coverage map to `[determined coverage map path]`. If the QA file already exists, merge new coverage into it. Return a summary of what manual QA is needed across all features."
+> "Write the consolidated release QA documents covering ALL features in this phase. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following feature folders: [list all dev/feature/[0N-task-name]/ paths]. Use these manifest verification assets as a required coverage checklist: [verification-assets extracted from manifest, or `not provided`]. Write the manual QA plan to `[determined manual QA path]`, the automated QA document to `[determined automated QA path]`, and the coverage map to `[determined coverage map path]`. Sort every check: a command with a deterministic expected result belongs in the automated document, not on a human's checklist. If a QA file already exists, merge new coverage into it. Return both document paths, the automated/hybrid/manual counts, and a summary of what manual QA remains."
 
 After the subagent returns:
-- Verify the QA document exists at the determined path
-- Verify the coverage map exists at the determined path
-- Stage only the consolidated QA outputs and any phase-level pipeline documents updated by this step. Do not stage feature-local source files or files from unrelated feature directories. Do not stage the Step 3 visual-verification report (`docs/phases/[phase-name]/[phase-name]-visual-verification.md`) here — it belongs to the Phase Final Review checkpoint (Step 6). Commit this checkpoint once with the exact message `eval: qa`.
+- Verify the manual QA document exists at the determined path.
+- Verify the coverage map exists at the determined path.
+- Check whether the automated QA document exists. Record `automated-qa: written | none`.
+
+#### Step 4b: spawn QA Runner
+
+Run this only when the automated QA document exists. If it does not, record `automated-qa-run: N/A (no automated checks)` and go to Step 4c. This is not a gate failure — a phase whose every check needs a human is a valid outcome.
+
+spawn the **z-feature-qa-runner** subagent:
+
+> "[SUBAGENT-MODE] Execute the automated QA document at `[determined automated QA path]` for phase [phase-name]. Repository root: [absolute repository path]. Evidence directory: [an untracked directory outside the source tree]. Run every check, compare actual output to each stated expected result, and record per-check status plus the Run results section back into that document. Modify nothing else, and do not fix any defect a check exposes. Return the verdict, per-status counts, the evidence directory, and the decisive reason."
+
+After the subagent returns:
+- Record `automated-qa-run: PASS | FAIL | NOT RUN (<reason>)`, using the runner's own upper-case strings verbatim.
+- On `FAIL` or `NOT RUN`, set `all-approved: no`. The Phase Final Review then runs in standard mode and carries it as a blocker.
+- Do not remediate. An automated QA failure escalates to Step 6, exactly like the security scan and the visual gate. Re-spawning an implementer here would let this step edit code the review gates already approved.
+- An `UNRUNNABLE` check is a defect in the QA document, not in the phase. Name it as such when you report — the reroute target is `z-feature-qa-writer`, not the implementer.
+- Record how many `EVIDENCE ONLY` checks now have evidence waiting for the human. These do not block.
+
+#### Step 4c: Checkpoint
+
+Stage only the three QA outputs and any phase-level pipeline documents updated by this step. Do not stage the evidence directory — it is untracked run output, not a deliverable. Do not stage feature-local source files or files from unrelated feature directories. Do not stage the Step 3 visual-verification report (`docs/phases/[phase-name]/[phase-name]-visual-verification.md`) here — it belongs to the Phase Final Review checkpoint (Step 6). Commit this checkpoint once with the exact message `eval: qa`.
+
+The QA checkpoint lands after the run, so the committed automated document carries its own results.
 
 ### Step 5: Diff Security Review
 
@@ -193,21 +214,21 @@ spawn the **z-prod-code-review** subagent. Build the prompt from the applicable 
 
 **If QA was generated and the complete pipeline is `all-approved: yes`:**
 
-> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan: `[QA output path]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
+> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. Manual QA plan: `[manual QA path]`. Automated QA: `[automated QA path, or `none written`]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-wave status and results artifact paths from Step 2.5]. Visual verification: [Pass | skip reason]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode."
+> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-wave status and results artifact paths from Step 2.5]. Visual verification: [Pass | skip reason]. Automated QA run: [PASS | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode."
 >
 > Bookend evidence: [Step 1 scoped/full/declined decision and reason; resolved file count; Code and Infra run/skip reasons; baseline/current roots and short-SHA labels; report, delta, queue, attribution, reconciliation, remediation, targeted non-comparable verification, cleanup paths/status; all missing-evidence reasons]. A declined or incomplete bookend is `all-approved: no` even when other verdicts are Approved.
 
 **If QA was generated and the complete pipeline is `all-approved: no`:**
 
-> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. QA plan: `[QA output path]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
+> "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. Manual QA plan: `[manual QA path]`. Automated QA: `[automated QA path, or `none written`]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-wave status and results artifact paths from Step 2.5]. Visual verification: [Pass | Fail | Unverified | skip reason]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode."
+> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-wave status and results artifact paths from Step 2.5]. Visual verification: [Pass | Fail | Unverified | skip reason]. Automated QA run: [PASS | FAIL | NOT RUN | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode."
 >
 > Bookend evidence: [Step 1 scoped/full/declined decision and reason; resolved file count; Code and Infra run/skip reasons; baseline/current roots and short-SHA labels; report, delta, queue, attribution, reconciliation, remediation, targeted non-comparable verification, cleanup paths/status; all missing-evidence reasons]. A declined or incomplete bookend is `all-approved: no` even when other verdicts are Approved.
 
@@ -218,7 +239,8 @@ After the z-prod-code-review subagent returns, stage only the final review artif
 Present results using the Pipeline Completion Report format from the auto-loaded orchestrator conventions. Use these field labels:
 - Scope label: **Phase**
 - Items label: **Features completed**
-- Include the QA document path and security scan report path
+- Include the manual QA document path, the automated QA document path, and the security scan report path
+- Include the automated QA verdict and how many checks a human still has to judge. Never present an unrun automated QA document as passing QA
 - Include the final test-execution status and results artifact path
 
 Do not report the phase as implementation-complete unless the final gate is `executed-green`. If it is `executed-failing` or `not-executed`, say so plainly and name what remains — an unrun suite is not a completed phase.

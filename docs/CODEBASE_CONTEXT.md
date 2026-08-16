@@ -12,7 +12,7 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 55 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 40 hidden subagents (`user-invocable: false`) and 15 user-invocable.
+- 56 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 41 hidden subagents (`user-invocable: false`) and 15 user-invocable.
 - 45 skills in `source_of_truth/skills/`.
 - 18 instructions in `source_of_truth/instructions/`.
 - `ports/claude/agents` = 41, `ports/claude/commands` = 15.
@@ -26,7 +26,7 @@ README.md USAGE.md CONTRIBUTING.md         # overview, agent catalog, contributo
 INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
-    *.agent.md                             # 55 agent definitions
+    *.agent.md                             # 56 agent definitions
   skills/                                  # 45 skill dirs, each rooted at SKILL.md
   instructions/                            # 18 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time

@@ -31,8 +31,8 @@ directory). Hand-maintained files are never touched.
 
 ## What's in the Repo
 
-- **55 agent definitions** in `source_of_truth/agents/` (all `*.agent.md`), of
-  which **15 are user-invocable** and **40 are hidden subagents** (`user-invocable: false`)
+- **56 agent definitions** in `source_of_truth/agents/` (all `*.agent.md`), of
+  which **15 are user-invocable** and **41 are hidden subagents** (`user-invocable: false`)
   that orchestrators spawn automatically.
 - **45 skills** — directory-based capabilities agents load on demand, each rooted at
   `SKILL.md`.
@@ -50,7 +50,7 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ├── README.md                       # User-facing overview
 ├── CONTRIBUTING.md                 # This file
 ├── source_of_truth/                # THE authoring surface — edit here
-│   ├── agents/                     # 55 agent definitions (catalog lives in USAGE.md)
+│   ├── agents/                     # 56 agent definitions (catalog lives in USAGE.md)
 │   ├── skills/                     # 45 skill directories, each rooted at SKILL.md
 │   ├── instructions/               # 18 instruction files matched by applyTo globs
 │   └── baseline/                   # baseline-instructions.md, rendered at deploy time
@@ -102,7 +102,7 @@ outputs drift; a sync failure means "rerun propagation," not "edit the output."
 
 `source_of_truth/agents/` follows an orchestrator + subagent pattern: the project
 planning pipeline (planner, refiner, decomposer, phase executor), the feature
-implementation pipeline (plan expander, implementer, reviewer, QA writer), PR Review
+implementation pipeline (plan expander, implementer, reviewer, QA writer, QA runner), PR Review
 orchestration and evaluators, the audit orchestrator and its auditors
 (code, infra, refactor, security, delta, remediation research, remediation
 reconciler), the Client Deliverable

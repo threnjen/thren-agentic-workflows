@@ -68,16 +68,36 @@ handled by that skill's Test Failure Handling section.
 
 After every task is implemented and reviewed, spawn **Feature - QA Writer**:
 
-> "Write a consolidated release QA plan covering ALL tasks in this audit
+> "Write the consolidated release QA documents covering ALL tasks in this audit
 > remediation. Read all documents (plan, context, tasks, implementation record,
 > review record) and source code from the following task folders: [list all
-> `dev/[audit-name]/[task-name]/` paths]. Write the consolidated QA plan to
-> `dev/[audit-name]/[audit-name]-qa.md` and the coverage map to
-> `dev/[audit-name]/[audit-name]-coverage-map-qa.md`. If the QA file already
-> exists, merge new coverage into it. Return a summary of what manual QA is
-> needed across all tasks."
+> `dev/[audit-name]/[task-name]/` paths]. Write the manual QA plan to
+> `dev/[audit-name]/[audit-name]-qa.md`, the automated QA document to
+> `dev/[audit-name]/[audit-name]-qa-automated.md`, and the coverage map to
+> `dev/[audit-name]/[audit-name]-coverage-map-qa.md`. Sort every check: a command
+> with a deterministic expected result belongs in the automated document, not on
+> a human's checklist. If a QA file already exists, merge new coverage into it.
+> Return both document paths, the automated/hybrid/manual counts, and a summary
+> of what manual QA remains."
 
-Verify both documents exist.
+Verify the manual QA plan and the coverage map exist.
+
+Then, **only when the automated QA document exists**, spawn **Feature - QA Runner**:
+
+> "[SUBAGENT-MODE] Execute the automated QA document at
+> `dev/[audit-name]/[audit-name]-qa-automated.md`. Repository root: [absolute
+> repository path]. Evidence directory: [an untracked directory outside the
+> source tree]. Run every check, compare actual output to each stated expected
+> result, and record per-check status plus the Run results section back into that
+> document. Modify nothing else, and do not fix any defect a check exposes.
+> Return the verdict, per-status counts, the evidence directory, and the decisive
+> reason."
+
+Record the verdict and carry a `FAIL` into the final review as a blocker. Do not
+remediate here. When no automated document was written, record
+`automated-qa-run: N/A (no automated checks)` and continue.
+
+Never hand the user a command this step could have run.
 
 ## 6. Final review
 
@@ -85,8 +105,10 @@ Spawn **Prod Code Review**:
 
 > "Perform the final pre-production readiness analysis for the audit
 > remediation. The following task folders contain all pipeline documents: [list
-> all `dev/[audit-name]/[task-name]/` paths]. The consolidated QA plan is at
-> `dev/[audit-name]/[audit-name]-qa.md`. Cross-validate all documents, verify
+> all `dev/[audit-name]/[task-name]/` paths]. The manual QA plan is at
+> `dev/[audit-name]/[audit-name]-qa.md`. The automated QA document, with its run
+> results, is at `dev/[audit-name]/[audit-name]-qa-automated.md`, or none was
+> written. Cross-validate all documents, verify
 > implementations, run tests, and evaluate QA plan completeness. Write the
 > analysis to `dev/[audit-name]/[audit-name]-qa-analysis.md`. Return the verdict
 > (GO / GO WITH CONDITIONS / NO-GO) and a summary of findings."

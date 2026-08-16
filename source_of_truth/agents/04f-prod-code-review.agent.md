@@ -43,7 +43,8 @@ Never halt or ask for a missing document — you run unattended and no one is th
 
 | Document | Source Agent | Expected Location |
 |----------|-------------|-------------------|
-| Consolidated QA plan | Feature - QA Writer | Path provided by orchestrator (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/[audit-name]/[audit-name]-qa.md`) |
+| Consolidated manual QA plan | Feature - QA Writer | Path provided by orchestrator (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/[audit-name]/[audit-name]-qa.md`) |
+| Consolidated automated QA document | Feature - QA Writer, run by Feature - QA Runner | Path provided by orchestrator (e.g., `docs/phases/[phase-name]/[phase-name]_QA_AUTOMATED.md`). May not exist when every check needs a human |
 | Consolidated coverage map | Feature - QA Writer | Alongside QA plan (e.g., `[phase-name]_QA_COVERAGE_MAP.md`) |
 
 Load the `pipeline-artifacts` skill for the canonical producer/artifact table and the consolidated-QA locations when an expected input is not where the orchestrator said, or when you must resolve your own analysis output path.
@@ -203,7 +204,8 @@ Three to five sentences covering:
 
 | Document | File | Source | Present | Notes |
 |----------|------|--------|---------|-------|
-| QA Plan | `[QA output path]` | Feature - QA Writer | Yes/No | — |
+| Manual QA Plan | `[manual QA path]` | Feature - QA Writer | Yes/No | — |
+| Automated QA | `[automated QA path]` | Feature - QA Writer | Yes/No/N/A | Run verdict and per-status counts, or why it was not run |
 | Coverage Map | `[coverage map path]` | Feature - QA Writer | Yes/No | — |
 
 ### Traceability Matrix
@@ -258,7 +260,7 @@ Use this table to determine where the user should return:
 | **03 Feature - Decomposer** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
 | **Feature - Implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
 | **Feature - Review and Fix** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
-| **Feature - QA Writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites |
+| **Feature - QA Writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites, a command sorted onto the human checklist, or a check the runner marked `UNRUNNABLE` |
 
 #### Blocking Items List
 
