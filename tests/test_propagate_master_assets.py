@@ -1148,11 +1148,104 @@ class CursorPropagationTests(unittest.TestCase):
             command = repo_root / "ports" / "cursor" / "commands" / "captain.md"
             self.assertTrue(command.is_file())
             text = command.read_text(encoding="utf-8")
-            self.assertTrue(text.startswith(mod.GENERATED_AGENT_MARKDOWN_HEADER))
+            self.assertIn(mod.GENERATED_AGENT_MARKDOWN_HEADER, text)
+            self.assertTrue(text.startswith("---\nname: captain\n"))
+            self.assertIn('description: "Fixture orchestrator."', text)
             self.assertIn("01 Captain", text)
             self.assertFalse(
                 (repo_root / "ports" / "cursor" / "commands" / "z-hidden.md").exists(),
                 "non-invocable agents must not become Cursor commands",
+            )
+
+    def test_non_invocable_agent_becomes_a_cursor_subagent(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+
+            mod.propagate_once(verbose=False)
+
+            agent = repo_root / "ports" / "cursor" / "agents" / "z-hidden.md"
+            self.assertTrue(agent.is_file())
+            text = agent.read_text(encoding="utf-8")
+            self.assertIn("name: z-hidden", text)
+            self.assertIn("model: inherit", text)
+            # tools: [read] grants no edit permission, so Cursor must enforce it.
+            self.assertIn("readonly: true", text)
+            self.assertIn(mod.GENERATED_AGENT_MARKDOWN_HEADER, text)
+
+    def test_cursor_subagent_names_never_collide_with_command_names(self) -> None:
+        """Cursor invokes commands and subagents alike as `/name`.
+
+        A dual-use agent - user-invocable and spawned as a child - emits both, so
+        the subagent must carry the `z-` prefix or `/name` would be ambiguous.
+        """
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+            agents_dir = repo_root / "source_of_truth" / "agents"
+            # Captain spawns Deputy; Deputy is itself user-invocable (dual-use).
+            (agents_dir / "01-captain.agent.md").write_text(
+                "---\n"
+                "name: 01 Captain\n"
+                'description: "Fixture orchestrator."\n'
+                "tools: [read, search]\n"
+                "agents: [03 Deputy]\n"
+                "user-invocable: true\n"
+                "---\n\nYou are the **01 Captain** fixture agent. Spawn **03 Deputy**.\n",
+                encoding="utf-8",
+            )
+            (agents_dir / "03-deputy.agent.md").write_text(
+                "---\n"
+                "name: 03 Deputy\n"
+                'description: "Fixture dual-use agent."\n'
+                "tools: [read, edit]\n"
+                "user-invocable: true\n"
+                "---\n\nYou are the **03 Deputy** fixture agent.\n",
+                encoding="utf-8",
+            )
+
+            mod.propagate_once(verbose=False)
+
+            cursor = repo_root / "ports" / "cursor"
+            command_names = {path.stem for path in (cursor / "commands").glob("*.md")}
+            agent_names = {path.stem for path in (cursor / "agents").glob("*.md")}
+            self.assertIn("deputy", command_names)
+            self.assertIn("z-deputy", agent_names)
+            self.assertEqual(
+                command_names & agent_names,
+                set(),
+                "a Cursor command and a Cursor subagent must never share a name",
+            )
+            # An orchestrator's child reference resolves to the subagent, not itself.
+            captain = (cursor / "commands" / "captain.md").read_text(encoding="utf-8")
+            self.assertIn("z-deputy", captain)
+            # tools include edit, so the subagent is not readonly.
+            deputy = (cursor / "agents" / "z-deputy.md").read_text(encoding="utf-8")
+            self.assertNotIn("readonly:", deputy)
+
+    def test_skills_are_emitted_for_cursor(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+            skill_dir = repo_root / "source_of_truth" / "skills" / "tidy-up"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                "---\nname: tidy-up\ndescription: \"Fixture skill.\"\n---\n\nTidy the tree.\n",
+                encoding="utf-8",
+            )
+            (skill_dir / "reference.md").write_text("Reference.\n", encoding="utf-8")
+
+            mod.propagate_once(verbose=False)
+
+            emitted = repo_root / "ports" / "cursor" / "skills" / "tidy-up"
+            self.assertTrue((emitted / "SKILL.md").is_file())
+            self.assertTrue((emitted / "reference.md").is_file())
+            self.assertIn(
+                mod.GENERATED_SKILL_HEADER,
+                (emitted / "SKILL.md").read_text(encoding="utf-8"),
             )
 
     def test_glob_instruction_becomes_a_rule_agent_plumbing_does_not(self) -> None:
@@ -1269,17 +1362,43 @@ class CursorPropagationTests(unittest.TestCase):
             mod.propagate_once(verbose=False)
             command = repo_root / "ports" / "cursor" / "commands" / "captain.md"
             rule = repo_root / "ports" / "cursor" / "rules" / "style.mdc"
+            subagent = repo_root / "ports" / "cursor" / "agents" / "z-hidden.md"
             self.assertTrue(command.exists())
             self.assertTrue(rule.exists())
+            self.assertTrue(subagent.exists())
 
             (repo_root / "source_of_truth" / "agents" / "01-captain.agent.md").unlink()
+            (repo_root / "source_of_truth" / "agents" / "02-hidden.agent.md").unlink()
             (repo_root / "source_of_truth" / "instructions" / "style.instructions.md").unlink()
             result = mod.propagate_once(verbose=False)
 
             self.assertFalse(command.exists())
             self.assertFalse(rule.exists())
+            self.assertFalse(subagent.exists())
             self.assertEqual(result["cursor_command_orphans_removed"], 1)
             self.assertEqual(result["cursor_rule_orphans_removed"], 1)
+            self.assertEqual(result["cursor_agent_orphans_removed"], 1)
+
+
+class TestEnvironmentCoverageTests(unittest.TestCase):
+    """The temp-root redirect must cover every directory global.
+
+    A global the redirect misses stays pinned to the real repository, so an
+    isolated test would read or delete files here instead of in its temp tree.
+    """
+
+    def test_every_directory_global_is_redirected(self) -> None:
+        overrides = set(env.repo_dir_overrides(Path("/tmp/example")))
+        globals_needing_redirect = {
+            name
+            for name, value in vars(mod).items()
+            if isinstance(value, Path) and name.isupper()
+        }
+        self.assertEqual(
+            globals_needing_redirect - overrides,
+            set(),
+            "add the missing directory global to tests/_propagate_env.repo_dir_overrides",
+        )
 
 
 class GithubMirrorTests(unittest.TestCase):

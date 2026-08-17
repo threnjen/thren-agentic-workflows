@@ -38,8 +38,10 @@ def repo_dir_overrides(root: Path) -> dict:
         "CODEX_AGENTS_DIR": ports / "codex" / "agents",
         "CODEX_PROFILES_DIR": ports / "codex" / "profiles",
         "CODEX_SKILLS_DIR": ports / "codex" / "skills",
+        "CURSOR_AGENTS_DIR": ports / "cursor" / "agents",
         "CURSOR_COMMANDS_DIR": ports / "cursor" / "commands",
         "CURSOR_RULES_DIR": ports / "cursor" / "rules",
+        "CURSOR_SKILLS_DIR": ports / "cursor" / "skills",
         "GITHUB_PORT_DIR": ports / "github",
         "DOT_GITHUB_DIR": root / ".github",
     }

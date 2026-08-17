@@ -87,7 +87,10 @@ def harness_mappings(
         return [(port / sub, base / sub) for sub in ("agents", "skills")]
     if harness == "cursor":
         base = home / ".cursor"
-        return [(port / sub, base / sub) for sub in ("commands", "rules")]
+        return [
+            (port / sub, base / sub)
+            for sub in ("agents", "commands", "rules", "skills")
+        ]
     if harness == "github":
         base = REPO_ROOT / ".github"
         return [(port / sub, base / sub) for sub in GITHUB_MIRRORED_SUBDIRS]

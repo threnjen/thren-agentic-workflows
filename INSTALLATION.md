@@ -56,6 +56,28 @@ Do not use `codex -p feature-decomposer` to select an agent. Codex defines
 ordinary session with a profile layer rather than adopting the feature
 decomposer workflow.
 
+## Using Named Agents in Cursor
+
+Cursor needs version 2.4 or later: subagents arrived in 2.0 and skills in 2.4.
+
+Deploy writes four directories under `~/.cursor`:
+
+| Directory | Contents |
+|-----------|----------|
+| `commands/` | The user-facing agents. Type `/agent-name` to adopt that role. |
+| `agents/` | The worker subagents an orchestrator delegates to, each named `z-...`. |
+| `skills/` | Shared skills, loaded on demand by name. |
+| `rules/` | Instruction files with source-file globs, plus the baseline rule. |
+
+Subagent names carry a `z-` prefix because Cursor invokes commands and subagents
+alike as `/name`. An agent that is both user-facing and spawned as a child would
+otherwise claim the same name twice.
+
+Cursor also reads `~/.claude/skills` and `~/.claude/agents` for compatibility, so
+deploying both harnesses lands each asset twice. The copies are identical and
+`~/.cursor` wins, but Cursor's Claude-compatible view of `~/.claude/agents` exposes
+dual-use agents under their unprefixed names as well.
+
 ## Companion Tools
 
 Unless `--skip-tools` is passed, deploy also installs and configures two optional

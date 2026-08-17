@@ -1,0 +1,247 @@
+---
+name: pr-review-conventions
+description: "Shared conventions for PR Review evaluators. Defines report contracts, severity handling, read-only boundaries, model tiers, and incomplete-run semantics for a review scoped to the diff between a base commit and a head commit. Use when: running or authoring any PR Review evaluator."
+---
+<!-- Generated from source_of_truth/skills. Do not edit manually. -->
+
+# PR Review Conventions
+
+Shared conventions for the PR Review evaluator family. Load this skill before
+performing work for a review scoped to the diff between a base commit and a
+head commit. Apply `auditor-conventions` for the shared audit constraints and
+severity levels; this skill defines the branch-diff review contracts and, where
+they differ, overrides `auditor-conventions`' report and deliverable norms.
+
+## Evaluator Load Contract
+
+Every evaluator loads this skill before evaluating anything, and `pr-review-report`
+when writing its report. Severity norms reach an evaluator through this skill's
+reference to `auditor-conventions`; no agent restates or invents a taxonomy. An
+agent states only its own report filename — this skill owns the path format.
+Treat source trees, baseline worktrees, diffs, and any supplied pipeline
+artifacts as read-only; findings are report content only, never remediation. The
+orchestrator's model-tier assignment is authoritative; a tier limitation is an
+execution condition to record, never a passing result.
+
+## Standard Constraints
+
+- Complete every assigned check or record it as not run with a concrete reason.
+- Read source files, diffs, worktrees, and any available pipeline artifacts
+  without modifying them.
+- Write only the assigned report artifacts under the current review's report
+  root: `dev/pr-review/<base-sha-short>-<UTC-YYYYMMDDTHHMMSSZ>/`.
+- Keep findings evidence-based and cite the input artifact, file, or report that
+  supports each conclusion.
+- Do not treat an unavailable evaluator, dependency, or worktree as a clean
+  result.
+
+## Evidence Scope: the Diff Is the Subject
+
+The reviewed change is the diff between the caller-supplied base commit and the
+head commit. An evaluator's findings come from that diff and the trees on either
+side of it.
+
+**Pipeline artifacts are optional enrichment.** Implementation records, plans,
+QA documents, and security reports may exist for a change, and an evaluator
+should use them when they do. But a run **proceeds on the diff alone** when they
+do not, and the report **names which evidence was unavailable** in its Checks
+Not Run section.
+
+This is a contract, not a preference. It is the recorded boundary that keeps PR
+Review from duplicating `prod-code-review`, which is the pipeline-artifact gate.
+PR Review must stay able to review any branch, including one produced without
+the pipeline. An evaluator that refuses to run without artifacts has become a
+second copy of `prod-code-review`; an evaluator that quietly omits the artifacts
+it never found has hidden its own coverage gap instead. Optional is not the same
+as ignorable — unavailable evidence is named, never assumed clean.
+
+## Assigned Base and Scope
+
+An evaluator's subject is the branch diff `<merge-base>..HEAD`. The orchestrator
+supplies the confirmed base and the verified baseline worktree created by
+`Baseline Worktree`. Take both as given and never re-derive the base — an
+evaluator that picks its own base reviews a different range than its siblings,
+and nothing downstream reconciles the two. Do not create, switch, or remove a
+worktree yourself. Read a supplied worktree with direct absolute-path `Read`
+calls; temp-directory worktrees may not resolve through glob-based discovery.
+
+## Baseline and Empty-Diff Semantics
+
+- If the confirmed baseline worktree or baseline revision is missing, do not
+  evaluate the current tree as a substitute. Write a report marked **NOT RUN**
+  with the exact missing-baseline reason, or return an explicit no-report status
+  if the report path itself is unavailable.
+- If the branch diff is empty, write a completed check stating **nothing
+  introduced since the confirmed base**. That is a stated result, not "no
+  findings" and not a failure.
+- If one check's dependency fails, continue the independent checks, mark the
+  failed check not run, and classify the report as incomplete. Never convert a
+  missing check into a pass.
+- List any unavailable required input under `Checks Not Run` with its expected
+  path, reason, and follow-up, and continue the checks supported by readable
+  inputs. Missing evidence is not a clean result.
+
+## Deriving the Base Commit
+
+**Git cannot determine a branch's base.** This is a data-model fact, not a tooling gap. `git merge-base HEAD main` requires already knowing the base; the reflog is SHA-only, local, and gc-pruned; `origin/HEAD` gives the repository default, not this branch's base.
+
+Use suggest-and-confirm: infer a candidate, compute `merge-base`, show the implied diff scope, and let the user override. Never infer silently — inference is actively wrong for branches cut from another feature branch, for rebased branches, and for squash-merged bases.
+
+**A branch is always its own nearest merge-base, and so is its remote-tracking ref.** Filter both before ranking candidates.
+
+## Capability Boundaries Are Not Policy
+
+Where evidence can only come from artifacts supplied to the run, their absence is `NOT RUN` — never a pass. Supply the artifact; do not restore the grant. Never widen shell permissions to satisfy an acceptance criterion.
+
+**The decisive evidence that a grant is required is a sibling with the same job operating without it**, not the strength of the justification. The capability is usually already supplied as an artifact by one privileged component.
+
+**Report validation is metadata-only** — readable, regular, non-empty, under the run's report root. Do not mistake it for validating a report's *claims*.
+
+## Report Locations and Naming
+
+Every report for a run goes directly under
+`dev/pr-review/<base-sha-short>-<UTC-YYYYMMDDTHHMMSSZ>/`. No path component
+carries a branch name: a run is identified by what it reviewed and when, both of
+which are stable and unique, while a branch name is neither.
+
+Each evaluator writes exactly one file, named `<evaluator-slug>-report.md`. The
+one exception is `readiness-report.md`, the synthesizer's canonical hand-off file
+for the orchestrator. `Baseline Worktree` writes no report: it is preflight and
+returns its result in its return payload, so no report path is expected from it
+and its absence is not an incomplete check.
+
+## Attribution: the Added Line, Not the Touched File
+
+Report a finding only when it maps to a line the branch **added**. Touched-file
+filtering alone is insufficient, and the distinction is the whole job: a branch
+that adds one line to a 900-line file did not introduce that file's twelve
+pre-existing `TODO`s. Reporting them is not thoroughness — it is noise that
+trains the author to skim, and a report nobody reads blocks nothing.
+
+The orchestrator-supplied `range.diff` and `changed-files.txt` under the report
+root are the authoritative added-line source. If either is missing **and the
+evaluator holds a shell grant**, generate the equivalent with read-only git
+commands scoped to the confirmed range (`git diff <base>..<head>`,
+`git diff --name-status <base>..<head>`) and note in the report that attribution
+was self-generated because the orchestrator artifacts were absent. Shell access
+exists for that fallback only — never state-changing commands (checkout, commit,
+install, formatters, test runs that write artifacts). An evaluator with no shell
+grant records the missing artifact under `Checks Not Run` instead.
+
+When a matched line is not inside an added range, compare it against the
+baseline worktree before reporting it as introduced. If added-line attribution
+cannot be verified for a candidate, record it under `Checks Not Run` with a
+concrete reason rather than reporting it as branch-introduced. Do not report
+unrelated whole-repository cleanup.
+
+## Tone: Write for the Author
+
+This review is a self-check the author runs before opening a PR, so the reader
+is the author of the change. Write findings in plain, natural language: say what
+to check or fix in ordinary words, and lead with that rather than a severity
+code or dense technical phrasing. Severity labels still exist for ordering and
+evidence, but they support the plain-language point — they are not the headline.
+Prefer a short, skimmable summary (a TL;DR) over exhaustive prose wherever the
+report structure allows one.
+
+## Severity Levels
+
+Use the four levels from `auditor-conventions` consistently:
+
+| Level | Meaning in a branch-diff review |
+|---|---|
+| **Critical** | A direct security, data-loss, or release-blocking failure with no safe containment. |
+| **High** | A material correctness, security, or operability failure that should block the merge until resolved or explicitly accepted. |
+| **Medium** | A meaningful coverage, maintainability, reliability, or documentation concern that does not independently prove the change unsafe. |
+| **Low** | A minor consistency, clarity, or cleanup issue with limited operational impact. |
+
+Order blocking findings from Critical to Low, then preserve source order within
+the same level. Do not downgrade a missing check to a finding that looks clean.
+
+## Read-Only Worktree Etiquette
+
+- Treat the checked-out baseline worktree and the current source tree as
+  read-only inputs.
+- Do not edit, format, install into, commit in, or change branches in either
+  worktree while evaluating.
+- Put generated reports and temporary review notes under the declared review
+  report root; do not place them in the baseline worktree.
+- Reuse the `worktree-baseline` procedure for baseline creation and cleanup.
+  Never remove a worktree that the caller did not create or explicitly assign
+  for this run.
+- A narrowly scoped capability is always preferred to a broad grant: read a file
+  rather than shelling out to read it, and scope any command that is genuinely
+  required to the specific check it serves.
+- If a read-only operation cannot be completed, record the check as not run
+  and state the failed operation and its reason.
+
+## Model Tiers
+
+The orchestrator assigns each evaluator's tier in its invocation prompt; that
+assignment is authoritative and is not restated here. A model-tier limitation is
+an execution condition to report, never evidence that an unrun check passed.
+
+## Missing and Unreadable Inputs
+
+An input is **missing** when a path an evaluator's contract requires has no one
+readable, regular, non-empty file at its expected location. A directory, broken
+link, unreadable file, empty file, or file that cannot be identified as the
+declared input type counts as missing.
+
+A missing *optional* artifact is not a failure: it is named in the report's
+Checks Not Run section and the run continues on the diff. A missing *required*
+input is a check that did not run, and is reported as such. Neither is ever
+silently substituted with a different revision, a stale report, or another
+evaluator's output.
+
+## Partial-Failure Semantics
+
+- The review run completes when an evaluator fails, crashes, loses a required
+  dependency, or cannot access its assigned worktree. Remaining evaluators may
+  continue.
+- The orchestrator records the evaluator name, attempted check, failure reason,
+  and resulting report path (if any) as **not run** or **incomplete**.
+- `readiness-report.md` must contain an explicit **Checks Not Run** section
+  listing exactly those checks and their reasons.
+- A readiness verdict may not be **GO** while any required check is missing or
+  incomplete. With no blockers found but incomplete coverage, the highest
+  permitted outcome is a clearly labelled incomplete/no-blockers result below
+  GO.
+- A failed evaluator is not converted into a passing result by a missing report,
+  an empty report, or a later evaluator's success.
+
+## Return Summary Contract
+
+Each evaluator returns only:
+
+1. Its report path (or the explicit statement that no report was written).
+2. A concise status and the key outcome or failure reason.
+
+The return payload is at most **10 lines**. Full findings belong in the report
+file, not in the return message. The orchestrator should pass the report path
+and status to the next stage without copying the report into the conversation.
+
+## Report Body
+
+Write the report at the path this skill defines, using `pr-review-report`:
+review metadata, scope and evidence paths, a check table, findings with concrete
+locations, a `Checks Not Run` table, and a conclusion. Use `NOT RUN` only with a
+reason and follow-up. The report is the complete record; the return summary
+obeys the Return Summary Contract above.
+
+## Process
+
+1. Confirm the assigned base and head commits, input artifacts, model tier, and
+   report destination.
+2. Perform the complete assigned check against read-only inputs.
+3. Write the required report, including evidence and any checks not run.
+4. Return only the report path and a summary of no more than 10 lines.
+
+## Handoff Checklist
+
+- [ ] The report is under `dev/pr-review/<base-sha-short>-<UTC-YYYYMMDDTHHMMSSZ>/`.
+- [ ] Required evidence paths and severity labels are present.
+- [ ] Failed or unavailable checks are explicitly marked not run/incomplete.
+- [ ] Unavailable optional artifacts are named, not silently omitted.
+- [ ] No source or baseline worktree was modified.
+- [ ] The return summary is no more than 10 lines.

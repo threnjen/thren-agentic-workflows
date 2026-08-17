@@ -36,7 +36,12 @@ class HarnessMappingTests(unittest.TestCase):
                 home / ".config" / "opencode" / "agents",
                 home / ".config" / "opencode" / "skills",
             },
-            "cursor": {home / ".cursor" / "commands", home / ".cursor" / "rules"},
+            "cursor": {
+                home / ".cursor" / "agents",
+                home / ".cursor" / "commands",
+                home / ".cursor" / "rules",
+                home / ".cursor" / "skills",
+            },
         }
         for harness, destinations in expected.items():
             with self.subTest(harness=harness):
@@ -99,13 +104,17 @@ class DeployTests(unittest.TestCase):
     def test_deploy_copies_and_is_idempotent(self) -> None:
         self._write_port_file("cursor/commands/captain.md", self._marked())
         self._write_port_file("cursor/rules/style.mdc", self._marked())
+        self._write_port_file("cursor/agents/z-hidden.md", self._marked())
+        self._write_port_file("cursor/skills/tidy-up/SKILL.md", self._marked())
 
         first = mod.deploy_harness("cursor", home=self.home, environ={})
         second = mod.deploy_harness("cursor", home=self.home, environ={})
 
-        self.assertEqual(first["copied"], 2)
+        self.assertEqual(first["copied"], 4)
         self.assertEqual(second, {"copied": 0, "pruned": 0, "skipped_unmanaged": 0})  # no skipped_paths key when clean
         self.assertTrue((self.home / ".cursor" / "commands" / "captain.md").is_file())
+        self.assertTrue((self.home / ".cursor" / "agents" / "z-hidden.md").is_file())
+        self.assertTrue((self.home / ".cursor" / "skills" / "tidy-up" / "SKILL.md").is_file())
 
     def test_owned_stale_copy_is_pruned_but_unmarked_file_survives(self) -> None:
         self._write_port_file("claude/agents/keeper.md", self._marked())

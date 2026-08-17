@@ -11,7 +11,7 @@ These agents deploy to Claude Code, Codex, OpenCode, Cursor, and GitHub Copilot.
 | Harness | How to invoke |
 |---------|---------------|
 | Claude Code | `/agent-name` slash command, or ask for the agent by name |
-| Cursor | `/agent-name` slash command |
+| Cursor | `/agent-name` slash command (needs Cursor 2.4 or later) |
 | GitHub Copilot | Agent picker dropdown at the top of the Copilot Chat panel in VS Code |
 | Codex | Name the agent explicitly in the prompt: `as feature-decomposer, ...'` |
 | OpenCode | Name the agent in the prompt |

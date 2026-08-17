@@ -58,7 +58,7 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 │   ├── claude/                     # agents, commands, skills
 │   ├── codex/                      # agents, profiles, skills (TOML agents)
 │   ├── opencode/                   # agents, skills
-│   ├── cursor/                     # commands, rules (.mdc)
+│   ├── cursor/                     # agents, commands, rules (.mdc), skills
 │   └── github/                     # verbatim mirror of the source subdirs
 ├── .github/                        # Real mirror of ports/github (for Copilot)
 ├── scripts/

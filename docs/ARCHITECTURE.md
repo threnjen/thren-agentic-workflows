@@ -56,14 +56,14 @@ flowchart LR
     Script --> ClaudeOut[ports/claude agents commands skills]
     Script --> CodexOut[ports/codex agents skills TOML]
     Script --> OpenCodeOut[ports/opencode agents skills]
-    Script --> CursorOut[ports/cursor commands rules]
+    Script --> CursorOut[ports/cursor agents commands rules skills]
     Script --> GithubPort[ports/github verbatim mirror]
     GithubPort --> DotGithub[.github mirror at repo root]
 ```
 
 The transform runs to a fixed point: `propagate_until_converged` repeats a single pass
 until a pass makes zero changes (max 25 passes). Each pass rewrites agents per platform,
-regenerates skills, emits Cursor commands and rules, and mirrors the source subdirs
+regenerates skills, emits Cursor agents, commands, rules, and skills, and mirrors the source subdirs
 (`agents`, `hooks`, `instructions`, `skills`) to `ports/github` and `.github/`. Only
 `agents`, `instructions`, and `skills` exist under `source_of_truth/`; a mirrored subdir
 that is absent is simply skipped.
@@ -154,10 +154,14 @@ platform-specific transformations:
   Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
   support `instructions/` directly
-- Cursor: user-invocable agents become `commands/*.md`; instructions
+- Cursor: user-invocable agents become `commands/*.md`; the agents an orchestrator
+  spawns become `agents/*.md` subagents under a `z-` prefix (commands and subagents
+  share the `/name` namespace, so the prefix keeps a dual-use agent from claiming one
+  name twice); skills mirror the source verbatim into `skills/`; instructions
   become `rules/*.mdc` (agent-targeted instructions are excluded, since their content
-  ships inside the rendered agents; the exclusion test matches `applyTo` globs ending in
-  `.agent.md` or `agents`, so a glob naming a plain-`.md` agent is not caught by it)
+  ships inside the rendered agents; the exclusion test resolves each `applyTo` glob
+  against the loaded source agents with the same `fnmatch` semantics used for inlining,
+  so naming form does not matter)
 
 Known filename aliases preserved during propagation: `docs-writer` → `docs-writer`,
 `web-research-specialist` → `web-researcher`, `audit-code-or-infra` →

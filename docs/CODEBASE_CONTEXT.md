@@ -34,7 +34,7 @@ ports/                                     # GENERATED — do not hand-edit
   claude/  {agents, commands, skills}
   codex/   {agents, profiles, skills}   # TOML agents
   opencode/{agents, skills}
-  cursor/  {commands, rules}               # commands=*.md, rules=*.mdc
+  cursor/  {agents, commands, rules, skills}  # commands/agents=*.md, rules=*.mdc
   github/  {agents, instructions, skills}          # verbatim mirror
 .github/                                   # real deployed mirror of ports/github; gitignored
 scripts/
@@ -71,7 +71,7 @@ benchmarks/ packages/ tests/
   - claude → `$CLAUDE_CONFIG_DIR` or `~/.claude` (agents, commands, skills)
   - codex → `$CODEX_HOME` or `~/.codex` (agents) + `~/.agents/skills` (skills)
   - opencode → `$OPENCODE_CONFIG_DIR` or `~/.config/opencode` (agents, skills)
-  - cursor → `~/.cursor` (commands, rules)
+  - cursor → `~/.cursor` (agents, commands, rules, skills; needs Cursor 2.4+)
   - github → `<repo>/.github` (verbatim mirror of the mirrored subdirs)
 - Deploy selection persists to `.deploy-config.json` (gitignored) unless `--no-save`.
 - Deploy also splices a baseline instructions file per harness (`deploy_baseline`),
@@ -120,6 +120,8 @@ benchmarks/ packages/ tests/
   `ports/claude/agents` = 39 hidden + 2 dual-use (docs-writer, web-researcher)
   = 41, while `ports/claude/commands` = 15.
 - Codex and OpenCode emit every source agent; only Claude and Cursor split commands out.
+- Cursor subagent names are the Claude identifier with a `z-` prefix always applied, because
+  Cursor resolves commands and subagents from one `/name` namespace.
 - `ports/cursor/rules` = any instruction whose `applyTo` globs are
   not all agent-targeted. Agent-targeted instructions are excluded because they ship
   inside the agents; the exclusion test in `propagate_cursor_rules_once` matches patterns

@@ -101,7 +101,7 @@ out with a usage hint rather than guessing.
 | claude | `~/.claude` | `CLAUDE_CONFIG_DIR` | agents, commands, skills |
 | codex | `~/.codex` + `~/.agents/skills` | `CODEX_HOME` | agents; skills |
 | opencode | `~/.config/opencode` | `OPENCODE_CONFIG_DIR` | agents, skills |
-| cursor | `~/.cursor` | — | commands, rules |
+| cursor | `~/.cursor` | — | agents, commands, rules, skills |
 | github | `<repo>/.github` | — | verbatim mirror of `agents`, `hooks`, `instructions`, `skills` |
 
 Learnings are not deployed at all. Agents read and write `docs/learnings/` in the

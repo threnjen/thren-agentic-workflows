@@ -52,8 +52,10 @@ CODEX_AGENTS_DIR = PORTS_DIR / "codex" / "agents"
 # profiles are configuration layers, not custom-agent entry points.
 CODEX_PROFILES_DIR = PORTS_DIR / "codex" / "profiles"
 CODEX_SKILLS_DIR = PORTS_DIR / "codex" / "skills"
+CURSOR_AGENTS_DIR = PORTS_DIR / "cursor" / "agents"
 CURSOR_COMMANDS_DIR = PORTS_DIR / "cursor" / "commands"
 CURSOR_RULES_DIR = PORTS_DIR / "cursor" / "rules"
+CURSOR_SKILLS_DIR = PORTS_DIR / "cursor" / "skills"
 GITHUB_PORT_DIR = PORTS_DIR / "github"
 DOT_GITHUB_DIR = REPO_ROOT / ".github"
 
@@ -950,6 +952,7 @@ def propagate_skills_once() -> Dict[str, int]:
             "claude_changed": 0,
             "opencode_changed": 0,
             "codex_changed": 0,
+            "cursor_changed": 0,
             "skills_changed": 0,
             "skill_orphans_removed": 0,
         }
@@ -957,13 +960,16 @@ def propagate_skills_once() -> Dict[str, int]:
     CLAUDE_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
     OPENCODE_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
     CODEX_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
+    CURSOR_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
 
     changed_claude = 0
     changed_opencode = 0
     changed_codex = 0
+    changed_cursor = 0
     expected_claude_dirs: set[Path] = set()
     expected_opencode_dirs: set[Path] = set()
     expected_codex_dirs: set[Path] = set()
+    expected_cursor_dirs: set[Path] = set()
 
     for source_skill_dir in sorted(SOT_SKILLS_DIR.iterdir()):
         if not source_skill_dir.is_dir():
@@ -1025,6 +1031,23 @@ def propagate_skills_once() -> Dict[str, int]:
             if _write_if_changed(dest_file, _read_text(source_file)):
                 changed_codex += 1
 
+        # Cursor reads Claude-shaped SKILL.md frontmatter directly, so the source
+        # ships verbatim the way it does for Claude and OpenCode.
+        dest_cursor_dir = CURSOR_SKILLS_DIR / skill_name
+        expected_cursor_dirs.add(dest_cursor_dir)
+        dest_cursor_dir.mkdir(parents=True, exist_ok=True)
+        if source_skill_md.exists():
+            dest_content = _with_generated_marker(_read_text(source_skill_md), GENERATED_SKILL_HEADER)
+            if _write_if_changed(dest_cursor_dir / "SKILL.md", dest_content):
+                changed_cursor += 1
+        for source_file in sorted(source_skill_dir.rglob("*")):
+            if not source_file.is_file() or source_file.name == "SKILL.md":
+                continue
+            rel = source_file.relative_to(source_skill_dir)
+            dest_file = dest_cursor_dir / rel
+            if _write_if_changed(dest_file, _read_text(source_file)):
+                changed_cursor += 1
+
     # Pruning runs only after every skill has been emitted.
     orphans_removed = (
         _prune_orphaned_skill_dirs(
@@ -1036,13 +1059,17 @@ def propagate_skills_once() -> Dict[str, int]:
         + _prune_orphaned_skill_dirs(
             CODEX_SKILLS_DIR, expected_codex_dirs, GENERATED_SKILL_HEADER
         )
+        + _prune_orphaned_skill_dirs(
+            CURSOR_SKILLS_DIR, expected_cursor_dirs, GENERATED_SKILL_HEADER
+        )
     )
 
     return {
         "claude_changed": changed_claude,
         "opencode_changed": changed_opencode,
         "codex_changed": changed_codex,
-        "skills_changed": changed_claude + changed_opencode + changed_codex,
+        "cursor_changed": changed_cursor,
+        "skills_changed": changed_claude + changed_opencode + changed_codex + changed_cursor,
         "skill_orphans_removed": orphans_removed,
     }
 
@@ -1061,18 +1088,77 @@ def _first_sentence(text: str, limit: int = 200) -> str:
     return ""
 
 
+def _cursor_agent_identifier_for(claude_identifier: str) -> str:
+    """Subagent name for Cursor: the Claude identifier, always `z-` prefixed.
+
+    Cursor invokes both commands and subagents as `/name`, so the two share one
+    namespace. Dual-use agents (user-invocable and spawned as a child) would
+    otherwise emit a command and a subagent under the same name and the `/name`
+    that resolves would be ambiguous. Prefixing every subagent keeps the command
+    name free for the role the user types.
+    """
+    return (
+        claude_identifier
+        if claude_identifier.startswith("z-")
+        else f"z-{claude_identifier}"
+    )
+
+
+def render_cursor_agent(
+    agent: SourceAgent,
+    docs: List[InstructionDoc],
+    reference_map: Dict[str, str],
+    identifier: str,
+) -> str:
+    """Render a Cursor subagent (`.cursor/agents/<name>.md`).
+
+    `model: inherit` keeps the parent's model rather than pinning one the user may
+    not have. `readonly: true` is set for agents whose source tools grant no edit
+    permission, so Cursor enforces the same boundary the source declares.
+    """
+    appendix = _build_instruction_appendix(agent, docs)
+    body = _rewrite_agent_references(agent.body.strip(), reference_map, preserve_at_sign=True)
+
+    lines = [
+        "---",
+        f"name: {identifier}",
+        f"description: {json.dumps(agent.description, ensure_ascii=False)}",
+        "model: inherit",
+    ]
+    if "edit" not in agent.tools:
+        lines.append("readonly: true")
+    lines.extend(["---", "", body])
+
+    if appendix:
+        lines.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
+
+    return _with_generated_marker("\n".join(lines).rstrip() + "\n", GENERATED_AGENT_MARKDOWN_HEADER)
+
+
 def render_cursor_command(
     agent: SourceAgent,
     docs: List[InstructionDoc],
     reference_map: Dict[str, str],
     identifier: str,
 ) -> str:
-    """Render a Cursor command (plain markdown, no frontmatter) adopting this role."""
+    """Render a Cursor command (`.cursor/commands/<name>.md`) adopting this role.
+
+    Child-agent references resolve to `z-` prefixed Cursor subagent names, so an
+    orchestrator command can delegate to the real subagents rather than doing
+    every worker's job inline.
+    """
     appendix = _build_instruction_appendix(agent, docs)
     body = _rewrite_agent_references(agent.body.strip(), reference_map, preserve_at_sign=True)
-    body = _inject_claude_command_instruction(agent, identifier, body)
+    body = _inject_claude_command_instruction(agent, _cursor_agent_identifier_for(identifier), body)
 
-    parts = [body]
+    parts = [
+        "---",
+        f"name: {identifier}",
+        f"description: {json.dumps(agent.description, ensure_ascii=False)}",
+        "---",
+        "",
+        body,
+    ]
     if appendix:
         parts.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
 
@@ -1205,6 +1291,8 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     OPENCODE_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
     CODEX_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
     CODEX_PROFILES_DIR.mkdir(parents=True, exist_ok=True)
+    CURSOR_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
+    CURSOR_COMMANDS_DIR.mkdir(parents=True, exist_ok=True)
 
     referenced_names = _referenced_agent_names(agents)
     claude_existing_stems = _discover_existing_stems(CLAUDE_AGENTS_DIR)
@@ -1218,6 +1306,12 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         lambda agent: _opencode_identifier_for(agent, opencode_existing_stems),
     )
     codex_reference_map = _build_agent_reference_map(agents, _codex_identifier_for)
+    cursor_reference_map = _build_agent_reference_map(
+        agents,
+        lambda agent: _cursor_agent_identifier_for(
+            _claude_identifier_for(agent, claude_existing_stems)
+        ),
+    )
 
     changed_claude = 0
     changed_opencode = 0
@@ -1228,6 +1322,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     expected_opencode_files: set[Path] = set()
     expected_codex_files: set[Path] = set()
     expected_cursor_command_files: set[Path] = set()
+    expected_cursor_agent_files: set[Path] = set()
 
     for agent in agents:
         docs = applicable_instructions(agent, instructions)
@@ -1272,7 +1367,19 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
             expected_cursor_command_files.add(cursor_file)
             if _write_if_changed(
                 cursor_file,
-                render_cursor_command(agent, docs, claude_reference_map, claude_identifier),
+                render_cursor_command(agent, docs, cursor_reference_map, claude_identifier),
+            ):
+                changed_cursor += 1
+
+        # Cursor subagents follow the Claude emission rule: a worker, or a
+        # user-invocable role some orchestrator spawns as a child.
+        if emit_claude_agent:
+            cursor_agent_identifier = _cursor_agent_identifier_for(claude_identifier)
+            cursor_agent_file = CURSOR_AGENTS_DIR / f"{cursor_agent_identifier}.md"
+            expected_cursor_agent_files.add(cursor_agent_file)
+            if _write_if_changed(
+                cursor_agent_file,
+                render_cursor_agent(agent, docs, cursor_reference_map, cursor_agent_identifier),
             ):
                 changed_cursor += 1
 
@@ -1313,6 +1420,12 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         expected_cursor_command_files,
         GENERATED_AGENT_MARKDOWN_HEADER,
     )
+    cursor_agent_orphans = _prune_orphaned_outputs(
+        CURSOR_AGENTS_DIR,
+        "*.md",
+        expected_cursor_agent_files,
+        GENERATED_AGENT_MARKDOWN_HEADER,
+    )
 
     skill_result = propagate_skills_once()
     changed_skills = skill_result["skills_changed"]
@@ -1325,7 +1438,11 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         "claude_changed": changed_claude + skill_result["claude_changed"],
         "opencode_changed": changed_opencode + skill_result["opencode_changed"],
         "codex_changed": changed_codex + skill_result["codex_changed"],
-        "cursor_changed": changed_cursor + cursor_rules_result["cursor_changed"],
+        "cursor_changed": (
+            changed_cursor
+            + cursor_rules_result["cursor_changed"]
+            + skill_result["cursor_changed"]
+        ),
         "skills_changed": changed_skills,
         "github_changed": github_result["github_changed"],
         # Deletions are reported on their own keys rather than folded into the
@@ -1338,6 +1455,7 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
         "codex_orphans_removed": codex_orphans,
         "codex_profile_orphans_removed": codex_profile_orphans,
         "cursor_command_orphans_removed": cursor_command_orphans,
+        "cursor_agent_orphans_removed": cursor_agent_orphans,
         "cursor_rule_orphans_removed": cursor_rules_result["cursor_rule_orphans_removed"],
         "skill_orphans_removed": skill_result["skill_orphans_removed"],
     }
