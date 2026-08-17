@@ -1,6 +1,7 @@
 ---
 name: engagement-configuration
 description: "Schema and validation rules for an engagement configuration file — the declaration of an engagement's comparison pairs, SOW/contract pointer, and deliverables-spec pointer. Use when: loading or validating an engagement config, authoring one for a new engagement, or referencing the canonical field vocabulary for preparation orchestration and baseline capture."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

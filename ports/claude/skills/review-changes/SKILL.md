@@ -1,6 +1,7 @@
 ---
 name: review-changes
 description: Perform a structured code review using change detection and impact
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

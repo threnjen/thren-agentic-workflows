@@ -1,6 +1,7 @@
 ---
 name: engagement-preparation-runbook
 description: "Repeatable runbook for preparing a client engagement for comparison analysis — author an engagement configuration file, invoke the Client Deliverable orchestrator with it, verify what a successful run produced per side, re-run safely (idempotent), and diagnose failures. Use when: starting preparation for any engagement, re-running preparation after changes or a partial failure, or verifying that a preparation run left every engagement repo's history untouched."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

@@ -1,6 +1,7 @@
 ---
 name: engagement-workspace
 description: "Layout contract for an engagement's output workspace — the single per-engagement root outside every client repository where all engagement outputs land (client-facing docs, internal artifacts, manifest, working-state file) — plus the working-state file shape. Use when: writing or locating any engagement output, maintaining or resuming from the working-state file, or resolving manifest paths."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

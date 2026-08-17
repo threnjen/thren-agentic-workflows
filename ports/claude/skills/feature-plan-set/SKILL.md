@@ -1,6 +1,7 @@
 ---
 name: feature-plan-set
 description: "Write feature plan documents for implementation. Use when: decomposing phases into features, creating plan/context/tasks files, writing acceptance criteria, producing traceability matrices, defining test plans for features, or any task that outputs planning documents to dev/feature/[0N-task-name]/."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

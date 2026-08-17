@@ -1248,6 +1248,81 @@ class CursorPropagationTests(unittest.TestCase):
                 (emitted / "SKILL.md").read_text(encoding="utf-8"),
             )
 
+    def test_skills_are_hidden_from_claude_and_cursor_slash_menus(self) -> None:
+        """Skills are agent capabilities, so no harness may offer them as commands.
+
+        Claude and Cursor honour `user-invocable: false`; the flag is injected at
+        emission rather than authored, so the source and the spec-clean mirrors
+        must not carry it.
+        """
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+            skill_dir = repo_root / "source_of_truth" / "skills" / "tidy-up"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                "---\nname: tidy-up\ndescription: \"Fixture skill.\"\n---\n\nTidy the tree.\n",
+                encoding="utf-8",
+            )
+
+            mod.propagate_once(verbose=False)
+
+            for harness in ("claude", "cursor"):
+                emitted = (
+                    repo_root / "ports" / harness / "skills" / "tidy-up" / "SKILL.md"
+                ).read_text(encoding="utf-8")
+                fm, _ = mod._parse_frontmatter(emitted)
+                self.assertEqual(
+                    fm.get("user-invocable"),
+                    "false",
+                    f"{harness} skills must stay out of the slash menu",
+                )
+                self.assertIn('description: "Fixture skill."', emitted)
+
+            for path in (
+                repo_root / "ports" / "opencode" / "skills" / "tidy-up" / "SKILL.md",
+                repo_root / "ports" / "codex" / "skills" / "tidy-up" / "SKILL.md",
+                repo_root / "ports" / "github" / "skills" / "tidy-up" / "SKILL.md",
+            ):
+                self.assertNotIn(
+                    "user-invocable",
+                    path.read_text(encoding="utf-8"),
+                    f"{path.parts[-4]} has no slash surface and takes only spec fields",
+                )
+
+            self.assertNotIn(
+                "user-invocable",
+                (skill_dir / "SKILL.md").read_text(encoding="utf-8"),
+                "the flag is injected at emission, never written back to source",
+            )
+
+    def test_authored_skill_visibility_wins_over_the_injected_default(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            env.use(self, repo_root)
+            self._seed(repo_root)
+            skill_dir = repo_root / "source_of_truth" / "skills" / "tidy-up"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                "---\n"
+                "name: tidy-up\n"
+                'description: "Fixture skill."\n'
+                "user-invocable: true\n"
+                "---\n\nTidy the tree.\n",
+                encoding="utf-8",
+            )
+
+            mod.propagate_once(verbose=False)
+
+            for harness in ("claude", "cursor"):
+                emitted = (
+                    repo_root / "ports" / harness / "skills" / "tidy-up" / "SKILL.md"
+                ).read_text(encoding="utf-8")
+                fm, _ = mod._parse_frontmatter(emitted)
+                self.assertEqual(fm.get("user-invocable"), "true")
+                self.assertNotIn("user-invocable: false", emitted)
+
     def test_glob_instruction_becomes_a_rule_agent_plumbing_does_not(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)

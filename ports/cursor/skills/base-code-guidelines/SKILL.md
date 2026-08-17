@@ -2,6 +2,7 @@
 name: base-code-guidelines
 description: Activate when writing, adding, reviewing, refactoring, or fixing any code, or when choosing libraries and dependencies. Provides behavioral guidelines to avoid common LLM coding mistakes — overcomplication, untargeted edits, hidden assumptions, and missing success criteria — and enforces an escalation ladder that exhausts cheaper sources of a solution before new code gets written. Also activate when the user asks for the simplest or most minimal solution, or complains about bloat, boilerplate, or unnecessary dependencies.
 license: MIT
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

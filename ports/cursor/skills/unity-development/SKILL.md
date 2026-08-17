@@ -1,6 +1,7 @@
 ---
 name: unity-development
 description: "Implementation and review rules for Unity C# projects. Covers runtime wiring, MonoBehaviour lifecycle, UI Toolkit pitfalls, test authenticity, bootstrap verification, and batch compilation gates. Load when: implementing or reviewing code in a Unity project - detected by the canonical Unity predicate in tech-stack-detection: Assets/ + ProjectSettings/ at the repo root or inside one nested directory (e.g. game/Assets/), or .github/copilot-instructions.md identifying the project as Unity, or a plan or phase document targeting Unity, MonoBehaviour, or Unity-specific systems. *.asmdef files corroborate but are not required."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

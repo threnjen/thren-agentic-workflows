@@ -5,6 +5,7 @@ description:
   validating every item, correcting false or stale audit artifacts, and
   producing one draft-to-final index plus one detailed report per subsystem. Use
   when preparing, researching, reconciling, or finalizing remediation research."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

@@ -1,6 +1,7 @@
 ---
 name: engagement-client-voice
 description: "House style for every client-facing engagement deliverable — plain, direct, evidence-tied language with no corporate buzzwords, shared by all engagement agents that write under `deliverables/`. Use when: writing or revising any client-facing engagement document."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

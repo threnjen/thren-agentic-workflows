@@ -1,6 +1,7 @@
 ---
 name: pr-review-conventions
 description: "Shared conventions for PR Review evaluators. Defines report contracts, severity handling, read-only boundaries, model tiers, and incomplete-run semantics for a review scoped to the diff between a base commit and a head commit. Use when: running or authoring any PR Review evaluator."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

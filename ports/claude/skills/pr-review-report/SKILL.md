@@ -1,6 +1,7 @@
 ---
 name: pr-review-report
 description: "Template for the PR Review go/no-go readiness report, the canonical hand-off for a review scoped to the diff between a base commit and a head commit. Use when: writing or reviewing a PR Review report."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

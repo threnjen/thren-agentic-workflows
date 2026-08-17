@@ -1,6 +1,7 @@
 ---
 name: ai-instruction-framework
 description: "Rule taxonomy (Judgment / Knowledge / Pointer), rule-quality standard, anti-patterns, and file template for AI coding instruction files. The single shared definition the Instructions Writer authors against and the Instructions Evaluator scores against. Use when: writing, evaluating, or reasoning about instruction files (.instructions.md, copilot-instructions.md, CLAUDE.md, .cursorrules)."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

@@ -167,6 +167,35 @@ def _write_if_changed(path: Path, content: str) -> bool:
     return True
 
 
+def _with_hidden_skill_flag(text: str) -> str:
+    """Append `user-invocable: false` to a skill's frontmatter.
+
+    Skills in this repository are agent capabilities, not user commands. Claude
+    Code and Cursor otherwise expose every skill as `/skill-name`. The flag hides
+    the skill from both slash menus while leaving its description in context, so
+    model auto-invocation by description is unaffected.
+
+    The field is a Claude/Cursor extension rather than part of the Agent Skills
+    spec, so it is injected here instead of authored into `source_of_truth/` —
+    that keeps the spec-clean source mirrored verbatim to `.github/` and Codex.
+
+    A source skill that sets `user-invocable` itself wins. Text with no parsable
+    frontmatter is returned unchanged.
+    """
+    if not text.startswith("---\n"):
+        return text
+
+    end = text.find("\n---\n", 4)
+    if end == -1:
+        return text
+
+    fm, _ = _parse_frontmatter(text)
+    if "user-invocable" in fm:
+        return text
+
+    return text[:end] + "\nuser-invocable: false" + text[end:]
+
+
 def _with_generated_marker(text: str, marker: str) -> str:
     """Insert `marker` immediately below the YAML frontmatter block.
 
@@ -982,7 +1011,9 @@ def propagate_skills_once() -> Dict[str, int]:
         expected_claude_dirs.add(dest_claude_dir)
         dest_claude_dir.mkdir(parents=True, exist_ok=True)
         if source_skill_md.exists():
-            dest_content = _with_generated_marker(_read_text(source_skill_md), GENERATED_SKILL_HEADER)
+            dest_content = _with_generated_marker(
+                _with_hidden_skill_flag(_read_text(source_skill_md)), GENERATED_SKILL_HEADER
+            )
             if _write_if_changed(dest_claude_dir / "SKILL.md", dest_content):
                 changed_claude += 1
         for source_file in sorted(source_skill_dir.rglob("*")):
@@ -1037,7 +1068,9 @@ def propagate_skills_once() -> Dict[str, int]:
         expected_cursor_dirs.add(dest_cursor_dir)
         dest_cursor_dir.mkdir(parents=True, exist_ok=True)
         if source_skill_md.exists():
-            dest_content = _with_generated_marker(_read_text(source_skill_md), GENERATED_SKILL_HEADER)
+            dest_content = _with_generated_marker(
+                _with_hidden_skill_flag(_read_text(source_skill_md)), GENERATED_SKILL_HEADER
+            )
             if _write_if_changed(dest_cursor_dir / "SKILL.md", dest_content):
                 changed_cursor += 1
         for source_file in sorted(source_skill_dir.rglob("*")):

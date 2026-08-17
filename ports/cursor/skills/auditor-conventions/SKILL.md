@@ -1,6 +1,7 @@
 ---
 name: auditor-conventions
 description: "Shared conventions for all auditor subagents and any agent that produces or compares audit findings. Defines standard constraints, deliverables, scope determination, Unity detection, file-type taxonomy, common exclusions, process flow, report structure, severity levels, open-items queue entries, and output format. Each auditor extends this with domain-specific content. Use when: performing any type of audit."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

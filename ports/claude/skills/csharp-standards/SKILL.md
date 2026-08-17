@@ -1,6 +1,7 @@
 ---
 name: csharp-standards
 description: "The complete non-Unity C# standard — hard rules plus depth: naming and member order, formatting, access control and immutability, nullability, async discipline, error handling, collections, `var`, and the test for when a service class or an abstraction is earned. Use when: writing or reviewing C# outside a Unity assembly, or needing the rationale or edge case behind a rule below. Unity C# is governed by `unity-development` instead."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

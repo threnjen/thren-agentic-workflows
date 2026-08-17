@@ -1,6 +1,7 @@
 ---
 name: sdlc-standards
 description: "Copper Forge delivery standard: branch naming and the forbidden-branch list, PR and semver tag rules, the hotfix path, CI/CD deploy gates and OIDC role derivation, AWS account and ECR promotion model, Terraform policy (version pin, state layout, tags, prevent_destroy, plan-before-apply), S3-based secrets and config, database migration backward compatibility, coverage floors, rollback, cost guardrails, lockfile policy, repo layout, ARN naming, deploy-log hygiene, and commit standards. Use when: naming a branch or tag, writing or changing a CI/CD workflow, provisioning infrastructure, wiring config or secrets, writing a migration, setting a coverage threshold, or scaffolding a new repo."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

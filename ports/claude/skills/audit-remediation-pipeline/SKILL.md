@@ -4,6 +4,7 @@ description:
   "Contract for driving confirmed audit findings through implementation, review,
   consolidated QA, and a pre-production gate. Use when an audit orchestrator has
   presented findings and the user has approved automated remediation."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

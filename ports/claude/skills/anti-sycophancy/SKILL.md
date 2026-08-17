@@ -1,6 +1,7 @@
 ---
 name: anti-sycophancy
 description: Activate when the user shares an idea, plan, decision, interpretation, technical architecture/high level architecture, or creative/written work for feedback or review — or asks for an opinion. Do NOT activate for code-level review, debugging, refactoring, or technical implementation discussions. Provides a critical thinking partner mode that leads with constructive disagreement, surfaces untested assumptions, and avoids flattery or hedged retreats.
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

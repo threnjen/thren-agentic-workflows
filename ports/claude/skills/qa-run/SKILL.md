@@ -1,6 +1,7 @@
 ---
 name: qa-run
 description: "Contract for executing a repository's automated QA runbook (`docs/QA_AUTOMATED.md`): read-only validation run over every runbook check plus every independently discovered test suite, strict binary PASS/FAIL status mapping, captured evidence, and one evidence-backed validation report ending in a single FINAL VALIDATION line. Use when: running or auditing an automated QA validation pass."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

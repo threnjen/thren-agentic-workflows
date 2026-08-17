@@ -1,6 +1,7 @@
 ---
 name: worktree-baseline
 description: "Reusable procedure for creating a detached, read-only git worktree at a requested baseline commit and returning its path. Use when: an evaluator or grading workflow needs an isolated local baseline checkout."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

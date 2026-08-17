@@ -1,6 +1,7 @@
 ---
 name: explore-codebase
 description: Navigate and understand codebase structure using the knowledge graph
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

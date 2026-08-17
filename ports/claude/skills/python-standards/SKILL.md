@@ -1,6 +1,7 @@
 ---
 name: python-standards
 description: "The complete Python standard — hard rules plus depth: uv command cookbook, pyproject/hatchling packaging layout, when a class is justified, classmethod factories, truthiness intent, generators over nested comprehensions, import scope, global state, custom context managers, and the escape hatch for blocking calls in async. Use when: setting up or debugging a Python environment or package layout, deciding between a class and a module of functions, or needing the rationale or edge case behind a rule below."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

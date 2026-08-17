@@ -1,6 +1,7 @@
 ---
 name: implementation-record
 description: "Template for the implementation record artifact produced by the 04b-feature-implementer. Load when writing a task's [task-name]-implementation.md record."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

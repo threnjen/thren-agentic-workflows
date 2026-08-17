@@ -1,6 +1,7 @@
 ---
 name: typescript-standards
 description: "The complete TypeScript standard — hard rules plus depth: naming conventions, `interface` vs `type`, optionality and `readonly`, when a class is justified, static factories, control-flow and coercion details, function form and `this` capture, modelling absence in the return type, catch narrowing, property-based testing with fast-check, and the tsconfig/eslint enforcement stack. Use when: writing or reviewing TypeScript and needing a convention the rules don't state, deciding between a class and a module of functions, shaping an options object or error type, or setting up the strict toolchain."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

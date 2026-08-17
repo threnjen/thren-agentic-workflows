@@ -1,6 +1,7 @@
 ---
 name: audit-comparison
 description: "Runs the caller-neutral sequence for independent multi-target audits, per-type deltas, attribution, reconciliation, and worktree cleanup. Use when a caller supplies audit targets and comparison inputs."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

@@ -1,6 +1,6 @@
 ---
 name: plain-technical-english
-description: Use when English will be parsed without a human present to resolve ambiguity — error messages, tool and agent descriptions, procedures, agent-to-agent instructions — or when prose reads as dense, hedged, or easy to misread. Two modes: Strict for machine-read text, Flavored for READMEs, PR descriptions, and replies. Never use on client-facing deliverables, marketing copy, or creative writing — client deliverables are governed by `engagement-client-voice` instead.
+description: Use in all communication to resolve ambiguity or when prose reads as dense, hedged, or easy to misread. Two modes: Strict for machine-read text, error messages, tool and agent descriptions, procedures, agent-to-agent instructions. Flavored for READMEs, PR descriptions, and replies. Never use on client-facing deliverables, marketing copy, or creative writing — client deliverables are governed by `engagement-client-voice` instead.
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

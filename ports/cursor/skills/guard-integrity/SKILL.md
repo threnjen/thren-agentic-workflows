@@ -2,6 +2,7 @@
 name: guard-integrity
 description: Verify that a test or guard asserting on file content — documentation, config, generated output, prose contracts — can actually fail. Covers inert assertions, mutation and negation sweeps, untracked-file blind spots, exemption drift, and derived-vs-enumerated coverage. Use when writing or reviewing a test that pins text rather than behavior, adding a repo sweep or tripwire, or auditing whether an existing guard proves anything.
 license: MIT
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

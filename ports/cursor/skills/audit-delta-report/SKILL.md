@@ -1,6 +1,7 @@
 ---
 name: audit-delta-report
 description: "Produces a delta document comparing two audit reports of the same codebase taken at different points in time — what was resolved, improved, unchanged, transformed, and newly introduced, with a reconciled count of every finding on both sides and defects the newer work caused separated from pre-existing ones only the newer audit raised. Use when: asked for the delta, changes, fixes, or residuals between two reports in a dev audit directory, or to compare a baseline audit against a current one."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

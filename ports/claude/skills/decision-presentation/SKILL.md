@@ -1,6 +1,7 @@
 ---
 name: decision-presentation
 description: Activate when several decisions, open questions, or unresolved tradeoffs need to be put to the user in one sitting — planning, refinement, design review, or any point where a list of "things we need to settle" has accumulated. Presents a headline preview of everything queued, then walks the items one at a time, each with framing, costed options, and a committed recommendation. Do NOT activate for factual or context-gathering questions, which should be batched instead.
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

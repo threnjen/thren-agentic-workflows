@@ -1,6 +1,7 @@
 ---
 name: aws-sam
 description: "Conventions for AWS SAM templates (Python and Node.js runtimes). Use when: authoring or reviewing SAM template.yaml files, adding Lambda functions, configuring API Gateway, setting up CloudWatch log groups, or deploying serverless stacks."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

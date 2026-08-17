@@ -1,6 +1,7 @@
 ---
 name: phase-doc-sync
 description: "Reconcile phase documents after any code fix, tweak, or small update made during phase work or phase QA. Use when: making fixes, tweaks, or small updates to a project that has a docs/phases/ directory; when the user references a phase QA doc, _QA.md checklist, QA failures, or asks for project fixes on a phase branch; after any change that alters what a phase delivers or how it behaves."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

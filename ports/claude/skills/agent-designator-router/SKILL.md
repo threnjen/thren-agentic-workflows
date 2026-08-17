@@ -1,6 +1,7 @@
 ---
 name: agent-designator-router
 description: Use whenever the user mentions an agent with @agent-name, [@agent-name](subagent://agent-name), subagent://, or asks Codex to act as a named agent. Ensures Codex adopts the selected agent role/workflow before doing work.
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

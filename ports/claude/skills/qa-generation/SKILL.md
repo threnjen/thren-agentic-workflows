@@ -1,6 +1,7 @@
 ---
 name: qa-generation
 description: "Contract for generating a repository's two complementary QA documents — `docs/QA_AUTOMATED.md` (evidence-producing technical runbook for an agent or release engineer) and `docs/QA_USER.md` (plain-language manual acceptance checklist for an operator or client) — from the repository plus optional manual QA, SOW/contract, and plan acceptance inputs. Use when: writing or updating either QA document."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

@@ -1,6 +1,7 @@
 ---
 name: pipeline-artifacts
 description: "Producer/artifact table and consolidated-QA locations for the pipeline. Load when deciding where to write a pipeline artifact or what to name it — QA plan, coverage map, or pre-production analysis — when choosing between batch mode and per-feature mode QA placement, or when locating the artifacts another pipeline agent produced. Does not cover the client-deliverable engagement workspace or docs/QA_*.md."
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 

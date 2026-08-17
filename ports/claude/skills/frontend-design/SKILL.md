@@ -2,6 +2,7 @@
 name: frontend-design
 description: Activate when the user asks to build, redesign, or improve any front-facing UI — pages, components, landing pages, dashboards, forms, modals, or any visual element a user will see. Provides guidance on distinctive, intentional visual design: aesthetic direction, typography, palette, layout, and copy — helping avoid templated defaults in favor of choices specific to the brief.
 license: Complete terms in LICENSE.txt
+user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 
