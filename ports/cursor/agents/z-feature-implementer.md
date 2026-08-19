@@ -98,6 +98,8 @@ For each active AC in plan order:
 3. **Refactor** — Clean up the code while keeping all tests passing. Include error handling and logging where applicable
 4. Move to the next AC
 
+An AC that delivers documentation, prose, or configuration gets no Red-Green-Refactor cycle. There is no behavior to drive out, so write the deliverable and verify it with a QA check or a review step. Never manufacture a test that asserts on the text you just wrote. The `test-target-scope` instruction governs this.
+
 Do not batch multiple ACs into a single Red-Green-Refactor cycle. Each AC gets its own cycle. If the orchestrator scoped this run to a single AC, complete only that AC and stop.
 
 After the active AC scope is green, run the affected suites per the `test-execution-evidence` instruction — the manifest verification assets the orchestrator passed you, plus any suite exercising a symbol whose contract you changed. Your own new tests do not cover callers written before your change.
@@ -357,3 +359,23 @@ When a change alters a shared API signature or constructor contract, a serialize
 - Every suite exercising the changed symbol
 
 The feature's own new tests are not sufficient. A contract change that fails closed breaks callers written before it — those callers' tests are the ones that prove it.
+
+### Test Target Scope
+
+# Test Target Scope
+
+A test asserts on executable behavior — inputs, outputs, side effects. Nothing else earns a test.
+
+## Never a test target
+
+- `docs/` and any README-style prose
+- `dev/` and every other gitignored or scratch directory, whose contents are ephemeral pipeline artifacts
+- Markdown files in general
+
+A pipeline document, a phase summary, or a plan file is an artifact of the work, not a unit under test. Verify it with a QA check or a review step.
+
+## The one exception
+
+Assert on file content only when the repository's own deliverable **is** that content — a prose corpus, an agent-definition set, a generated-output contract. Then the guard is a real guard: commit it to the tracked suite and follow the `guard-integrity` skill, which exists for exactly this case.
+
+Deciding the exception applies requires the repository to ship the text as its product. "The change I made was in a `.md` file" is not that.

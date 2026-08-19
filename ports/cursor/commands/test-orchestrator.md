@@ -289,3 +289,23 @@ Delegation depth is one. Only the user-invocable root orchestrator may spawn
 agents. Child agents never spawn agents. When work requires fan-out, the root
 spawns sibling agents and coordinates them through exclusive artifact ownership
 and compact returns.
+
+### Test Target Scope
+
+# Test Target Scope
+
+A test asserts on executable behavior — inputs, outputs, side effects. Nothing else earns a test.
+
+## Never a test target
+
+- `docs/` and any README-style prose
+- `dev/` and every other gitignored or scratch directory, whose contents are ephemeral pipeline artifacts
+- Markdown files in general
+
+A pipeline document, a phase summary, or a plan file is an artifact of the work, not a unit under test. Verify it with a QA check or a review step.
+
+## The one exception
+
+Assert on file content only when the repository's own deliverable **is** that content — a prose corpus, an agent-definition set, a generated-output contract. Then the guard is a real guard: commit it to the tracked suite and follow the `guard-integrity` skill, which exists for exactly this case.
+
+Deciding the exception applies requires the repository to ship the text as its product. "The change I made was in a `.md` file" is not that.

@@ -40,7 +40,7 @@ Treat `dev/feature/[phase-name]-execution-manifest.md` as the single source of t
 5. For each feature listed in the manifest, verify that `dev/feature/[0N-task-name]/` exists and contains all three required files: `-plan.md`, `-context.md`, and `-tasks.md`.
 6. If any required file is missing, stop immediately and tell the user to rerun `feature-decomposer` for this phase.
 7. After manifest and bundle validation succeeds, resolve the bookend scope from every `key files modified` path. Reject duplicate, outside-repository, or otherwise unusable paths as a bookend-scope limitation; retain deleted or renamed starting paths and state when current-tree reference search cannot resolve them. For each valid path, add exactly one uncapped reference-search hop: files that name the path, import its module, or use names it defines. Do not expand transitively and do not impose a numeric cap.
-8. Treat every file under `source_of_truth/` and `tests/` as source. Exclude standalone `docs/`, README-style files, and equivalent documentation prose. If the dependent search is empty, retain the valid modified files alone and record the narrower-evidence limitation in each auditor's Coverage and Limitations. Keep the resolved paths and count for the bookend.
+8. Treat the repository's authoring surface and its tracked test directories as source. Exclude standalone `docs/`, `dev/` and other gitignored scratch, README-style files, and equivalent documentation prose. If the dependent search is empty, retain the valid modified files alone and record the narrower-evidence limitation in each auditor's Coverage and Limitations. Keep the resolved paths and count for the bookend.
 9. Always select `z-auditor-code`. Select `z-auditor-infra` if and only if a validated manifest path touches CI, Docker, IaC, or build configuration; record the explicit run or skip reason, and record an ambiguity as missing evidence rather than silently skipping it.
 10. Ask exactly once, here, whether to run the resolved scoped bookend, run the full-codebase alternative, or decline. State the resolved file count and selected audit types in the question. Record the choice and any decline or scope-unusable reason; never infer full-codebase scope from size and never ask again later:
 
@@ -509,3 +509,23 @@ When a change alters a shared API signature or constructor contract, a serialize
 - Every suite exercising the changed symbol
 
 The feature's own new tests are not sufficient. A contract change that fails closed breaks callers written before it — those callers' tests are the ones that prove it.
+
+### Test Target Scope
+
+# Test Target Scope
+
+A test asserts on executable behavior — inputs, outputs, side effects. Nothing else earns a test.
+
+## Never a test target
+
+- `docs/` and any README-style prose
+- `dev/` and every other gitignored or scratch directory, whose contents are ephemeral pipeline artifacts
+- Markdown files in general
+
+A pipeline document, a phase summary, or a plan file is an artifact of the work, not a unit under test. Verify it with a QA check or a review step.
+
+## The one exception
+
+Assert on file content only when the repository's own deliverable **is** that content — a prose corpus, an agent-definition set, a generated-output contract. Then the guard is a real guard: commit it to the tracked suite and follow the `guard-integrity` skill, which exists for exactly this case.
+
+Deciding the exception applies requires the repository to ship the text as its product. "The change I made was in a `.md` file" is not that.

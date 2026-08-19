@@ -48,7 +48,7 @@ Identify what needs tests and prioritize:
 3. **Error paths** — Validation, error handling, edge cases
 4. **Integration points** — Database calls, external services (mock these)
 
-Skip: Constants, simple getters, framework boilerplate, generated code.
+Skip: Constants, simple getters, framework boilerplate, generated code, and everything the `test-target-scope` instruction excludes — `docs/`, `dev/`, README-style prose, and Markdown files.
 
 ### Phase 3: Plan
 

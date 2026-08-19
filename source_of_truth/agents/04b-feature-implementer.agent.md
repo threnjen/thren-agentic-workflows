@@ -98,6 +98,8 @@ For each active AC in plan order:
 3. **Refactor** — Clean up the code while keeping all tests passing. Include error handling and logging where applicable
 4. Move to the next AC
 
+An AC that delivers documentation, prose, or configuration gets no Red-Green-Refactor cycle. There is no behavior to drive out, so write the deliverable and verify it with a QA check or a review step. Never manufacture a test that asserts on the text you just wrote. The `test-target-scope` instruction governs this.
+
 Do not batch multiple ACs into a single Red-Green-Refactor cycle. Each AC gets its own cycle. If the orchestrator scoped this run to a single AC, complete only that AC and stop.
 
 After the active AC scope is green, run the affected suites per the `test-execution-evidence` instruction — the manifest verification assets the orchestrator passed you, plus any suite exercising a symbol whose contract you changed. Your own new tests do not cover callers written before your change.

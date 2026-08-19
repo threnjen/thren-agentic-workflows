@@ -7,6 +7,8 @@ license: MIT
 
 # Guard Integrity
 
+**When this applies.** A content guard is legitimate only where the repository's deliverable *is* the text — a prose corpus, an agent-definition set, a generated-output contract. In a code repository, `docs/`, `dev/`, and Markdown are not test targets; see the `test-target-scope` instruction. This skill hardens guards that have already earned their place. It does not license new ones.
+
 A guard that asserts on file *content* fails silently in a way a behavior test does not: it stays green whether or not the thing it protects is present. Behavior tests break when the code breaks. Content guards break only when the *text* moves — and text moves for reasons unrelated to the obligation being enforced.
 
 One question: **can this guard fail, for the right reason?** Answer it by making it fail, not by reading it.
