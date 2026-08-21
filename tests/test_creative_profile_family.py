@@ -214,7 +214,6 @@ class CanonGuardHookTests(unittest.TestCase):
     def test_a_write_outside_the_prose_is_allowed(self) -> None:
         for target in (
             "/vault/_editor-notes/context/index.md",
-            "/vault/_editor-notes/project-context.md",
             "/vault/scene-summaries/ch01.md",
             "/vault/_editor-notes/session-logs/2026-08-20.md",
         ):

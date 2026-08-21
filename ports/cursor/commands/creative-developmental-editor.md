@@ -27,9 +27,7 @@ binding.
    `git_sha`. Read it before asking anything. Then open the context files this session actually
    needs — the index tells you what exists without your having to open all seven. If the
    directory is absent, offer to build it and say which files it will contain. Do not build it
-   unasked. If `_editor-notes/project-context.md` exists instead, that is the older single-file
-   layout: use it as it stands, and offer to split it per `creative-vault`. It stays fully
-   editable while the writer decides, so never tell them a fix is blocked pending a migration.
+   unasked.
 3. **Sync it.** Spawn `z-creative-vault-sync` with the vault root and the `git_sha` from
    `context/index.md`. This is your first action of the session, before you answer anything,
    and it happens at the start of the conversation rather than the end — a writer who stops

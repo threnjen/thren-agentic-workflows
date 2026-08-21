@@ -219,27 +219,6 @@ is normal, and the sync check simply reports nothing to compare.
 The SHA is what makes the directory self-dating. Without it the only way to know whether the
 record still matches the vault is to re-read every canon file at every session start.
 
-### Migrating A Single-File Layout
-
-An earlier layout kept all of this in one file, `_editor-notes/project-context.md`. A vault
-built under it still works, and it is not broken. It is just not split.
-
-When `project-context.md` exists and `context/` does not:
-
-1. Say what you found and offer to split it. Do not split it unasked — it is the writer's file
-   and the single-file layout is a legitimate way to keep it.
-2. On agreement, write each `context/` file from the material already in `project-context.md`,
-   re-deriving every reading section from canon rather than copying the old paraphrase forward.
-   An old reading was written under different rules and may carry phrasing the current ones
-   forbid.
-3. Build `index.md`, including a row per file written and the current `git_sha`.
-4. Replace `project-context.md` with a one-line pointer to `context/`. Do not delete it —
-   deleting the writer's file is not yours to do, and a pointer costs nothing.
-
-Until the writer agrees, keep using `project-context.md` as it stands. The scribe can rewrite
-it in place, so the older layout stays fully maintainable and no correction is blocked while a
-vault waits to be split.
-
 ### Sync At Session Start
 
 Do this at the **start** of the conversation, before the first substantive response and before

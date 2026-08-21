@@ -137,20 +137,6 @@ material under it moved, touches only the files a change actually reaches, and a
 write. Like everything under `_editor-notes/`, these are plain Markdown you can read, correct,
 or delete. When the record disagrees with canon, canon wins.
 
-### If You Already Have A `project-context.md`
-
-An earlier version of this toolkit kept everything in one file. That vault still works and
-nothing about it is broken — it just isn't split.
-
-The editor will notice, say so, and offer to split it. It won't do it unasked, because the
-single-file layout is a legitimate way to keep this. Until you agree, that file stays fully
-editable: the scribe can rewrite it in place, so no correction is ever blocked waiting on a
-migration.
-
-If you do agree, it re-derives each reading section from canon rather than copying the old
-paraphrase across — the old text was written under different rules — and leaves
-`project-context.md` behind as a one-line pointer to `context/`. It won't delete your file.
-
 ### Staying Current
 
 The last line of `index.md` — the same file the editor loads first — is the commit the
