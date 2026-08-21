@@ -41,7 +41,12 @@ HARNESSES = ("claude", "codex", "opencode", "cursor", "github")
 # home directory, then spliced into the destination file between sentinel
 # comments — content outside the sentinels is never touched.
 BASELINE_TEMPLATE = REPO_ROOT / "source_of_truth" / "baseline" / "baseline-instructions.md"
-BASELINE_SECTIONS = ("context7", "code-review-graph", "phase-doc-sync", "agent-discovery", "know-the-audience")
+BASELINE_SECTIONS = ("phase-doc-sync", "agent-discovery", "know-the-audience")
+# Sections this repo used to splice and no longer does. Dropping a name from
+# BASELINE_SECTIONS only stops rewriting the block; the stale one already in a
+# deployed file would sit there forever. Listing it here deletes it on the next
+# deploy. A name stays here until every machine has deployed past it.
+RETIRED_BASELINE_SECTIONS = ("context7", "code-review-graph")
 # Cursor has no user-global AGENTS.md; its native global channel is a rule file.
 CURSOR_BASELINE_FRONTMATTER = "---\nalwaysApply: true\n---\n\n"
 
@@ -270,6 +275,16 @@ def _parse_baseline_sections(template: str) -> Dict[str, str]:
     return sections
 
 
+def _strip_section(existing: str, name: str) -> str:
+    """Remove a retired sentinel-delimited section, and the blank line it left."""
+    sentinel = f"<!-- {name} -->"
+    pattern = re.compile(r"\n*" + re.escape(sentinel) + r"\n?.*?" + re.escape(sentinel) + r"\n*", re.DOTALL)
+    if not pattern.search(existing):
+        return existing
+    stripped = pattern.sub("\n\n", existing, count=1)
+    return stripped.lstrip("\n")
+
+
 def _splice_section(existing: str, name: str, body: str) -> str:
     """Replace the sentinel-delimited section in `existing`, or append it."""
     sentinel = f"<!-- {name} -->"
@@ -314,6 +329,8 @@ def deploy_baseline(
     updated = existing
     if created and harness == "cursor":
         updated = CURSOR_BASELINE_FRONTMATTER
+    for name in RETIRED_BASELINE_SECTIONS:
+        updated = _strip_section(updated, name)
     for name, body in sections.items():
         for placeholder, value in substitutions.items():
             body = body.replace(placeholder, value)

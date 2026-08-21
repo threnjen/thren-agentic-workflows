@@ -166,6 +166,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **QA - Bootstrapper** | Bootstrap a repository's QA package — generate QA_AUTOMATED and QA_USER from available starter inputs, run the automated runbook, and stamp pass/fail results |
 | **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
 | **Web Researcher** | Research a topic and produce a structured findings report and executive summary saved to `dev/research/[topic-name]/` |
+| **Creative - Developmental Editor** | Developmental editing for fiction against an Obsidian vault — interrogates, diagnoses, and pressure-tests your material under a mode gate. Isolated from the engineering corpus; see `docs/CREATIVE_TOOLKIT.md` |
 
 ### Hidden Subagents
 

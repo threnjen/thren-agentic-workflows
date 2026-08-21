@@ -1,3 +1,4 @@
+import fnmatch
 import hashlib
 import json
 import re
@@ -838,11 +839,18 @@ class OrphanPruningTests(unittest.TestCase):
         # the newer work) added one file to claude agents (40 -> 41) and
         # opencode/codex agents (53 -> 54); claude commands unchanged (not
         # user-invocable). Counts recounted from disk.
+        # The creative writing family adds three source agents. Only the scribe
+        # and the compliance check are hidden, so claude agents gain two and
+        # claude commands gain one, while codex and opencode gain all three.
+        # `Creative - Vault Sync` (hidden, the family's read-only git probe)
+        # added one file to claude agents (45 -> 46) and opencode/codex agents
+        # (60 -> 61); claude commands unchanged (not user-invocable). Counts
+        # recounted from disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 15),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 54),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 54),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 46),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 17),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 61),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 61),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:
@@ -1537,11 +1545,11 @@ class GithubMirrorTests(unittest.TestCase):
 class InstructionApplyToTests(unittest.TestCase):
     """Every enumerated `applyTo` filename must resolve to an agent on disk.
 
-    Thirteen of the sixteen instruction files hand-enumerate their target agents
-    by filename; three use a directory glob. An enumerated path that no longer
-    resolves — a renamed or deleted agent — fails open: the instruction simply
-    stops being injected, the agent still runs, and nothing reports it. This
-    asserts the enumerations still point at real files.
+    Most instruction files hand-enumerate their target agents by filename; a few
+    use a directory glob or a filename glob. A target that no longer resolves —
+    a renamed or deleted agent, or a glob that selects nothing — fails open: the
+    instruction simply stops being injected, the agent still runs, and nothing
+    reports it. This asserts every target still selects a real file.
     """
 
     INSTRUCTIONS_DIR = REPO_ROOT / "source_of_truth" / "instructions"
@@ -1570,7 +1578,13 @@ class InstructionApplyToTests(unittest.TestCase):
                     # Source-file glob (e.g. "**/*.py", "**/pyproject.toml") —
                     # matches code being edited, not an agent definition.
                     continue
-                if target not in agent_names:
+                if any(ch in target for ch in "*?["):
+                    # Filename glob (e.g. "04?-*.agent.md") — it resolves as
+                    # long as it still selects at least one agent. A glob that
+                    # matches nothing fails open exactly like a stale literal.
+                    if not fnmatch.filter(agent_names, target):
+                        unresolved.append(f"{instruction.name} -> {target}")
+                elif target not in agent_names:
                     unresolved.append(f"{instruction.name} -> {target}")
 
         self.assertEqual(
@@ -1587,6 +1601,123 @@ class InstructionApplyToTests(unittest.TestCase):
             if not self._apply_to_patterns(p)
         ]
         self.assertEqual([], missing, f"instructions with no applyTo: {missing}")
+
+
+class AuthoringProfileGateTests(unittest.TestCase):
+    """The profile gate partitions instruction inlining.
+
+    `technical` is the implicit default and is never written in a source file.
+    `creative` is opt-in, and the gate is symmetric: a technical instruction is
+    never inlined into a creative agent, and a creative instruction is never
+    inlined into a technical one.
+    """
+
+    @staticmethod
+    def _agent(rel_path: str, profile: str = mod.DEFAULT_PROFILE):
+        return mod.SourceAgent(
+            path=mod.REPO_ROOT / rel_path,
+            rel_path=rel_path,
+            source_slug=Path(rel_path).name.replace(".agent.md", ""),
+            name="Test Agent",
+            description="test",
+            tools=["read"],
+            subagents=[],
+            user_invocable=True,
+            body="body\n",
+            profile=profile,
+        )
+
+    @staticmethod
+    def _doc(name: str, pattern: str, profile: str = mod.DEFAULT_PROFILE):
+        return mod.InstructionDoc(
+            path=mod.SOT_INSTRUCTIONS_DIR / f"{name}.instructions.md",
+            apply_to_patterns=[pattern],
+            body=f"{name} body\n",
+            description=name,
+            profile=profile,
+        )
+
+    def test_absent_profile_key_means_technical(self) -> None:
+        self.assertEqual(mod.DEFAULT_PROFILE, mod._parse_profile("x.md", None))
+        self.assertEqual(mod.DEFAULT_PROFILE, mod._parse_profile("x.md", ""))
+        self.assertEqual(mod.CREATIVE_PROFILE, mod._parse_profile("x.md", '"creative"'))
+
+    def test_unrecognized_profile_is_a_propagation_failure(self) -> None:
+        with self.assertRaises(ValueError):
+            mod._parse_profile("x.md", "technicl")
+
+    def test_technical_instruction_is_withheld_from_creative_agent(self) -> None:
+        blanket = self._doc("dev-task-folder", "source_of_truth/agents/**")
+        creative_agent = self._agent(
+            "source_of_truth/agents/creative-scene-writer.agent.md",
+            mod.CREATIVE_PROFILE,
+        )
+        technical_agent = self._agent("source_of_truth/agents/debugger.agent.md")
+
+        # The glob matches both agents; only the profile separates them.
+        self.assertEqual([], mod.applicable_instructions(creative_agent, [blanket]))
+        self.assertEqual(
+            [blanket], mod.applicable_instructions(technical_agent, [blanket])
+        )
+
+    def test_creative_instruction_is_withheld_from_technical_agent(self) -> None:
+        creative_doc = self._doc(
+            "creative-profile", "source_of_truth/agents/**", mod.CREATIVE_PROFILE
+        )
+        technical_agent = self._agent("source_of_truth/agents/debugger.agent.md")
+        creative_agent = self._agent(
+            "source_of_truth/agents/creative-scene-writer.agent.md",
+            mod.CREATIVE_PROFILE,
+        )
+
+        self.assertEqual(
+            [], mod.applicable_instructions(technical_agent, [creative_doc])
+        )
+        self.assertEqual(
+            [creative_doc], mod.applicable_instructions(creative_agent, [creative_doc])
+        )
+
+    def test_creative_instruction_never_becomes_a_global_cursor_rule(self) -> None:
+        """A creative doc must be skipped even with no creative agent on disk.
+
+        With no creative agent loaded, its applyTo patterns resolve against
+        nothing, and the agent-definition check alone would render it as an
+        `alwaysApply` user-global rule.
+        """
+        creative_doc = self._doc(
+            "creative-profile",
+            "source_of_truth/agents/creative-*.agent.md",
+            mod.CREATIVE_PROFILE,
+        )
+        technical_agent = self._agent("source_of_truth/agents/debugger.agent.md")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            env.use(self, root)
+            rules_dir = mod.CURSOR_RULES_DIR
+            rules_dir.mkdir(parents=True)
+            mod.propagate_cursor_rules_once([creative_doc], [technical_agent])
+            self.assertEqual([], sorted(rules_dir.glob("*.mdc")))
+
+            # The same call with the doc left technical writes the rule, so the
+            # assertion above is proving the profile skip, not an inert path.
+            technical_doc = self._doc(
+                "unscoped-rule", "**/*.py", mod.DEFAULT_PROFILE
+            )
+            mod.propagate_cursor_rules_once([technical_doc], [technical_agent])
+            self.assertEqual(
+                ["unscoped-rule.mdc"],
+                [path.name for path in sorted(rules_dir.glob("*.mdc"))],
+            )
+
+    def test_corpus_on_disk_carries_only_valid_profiles(self) -> None:
+        """No contributor step: every source file resolves to a valid profile."""
+        for agent in mod.load_source_agents():
+            with self.subTest(agent=agent.rel_path):
+                self.assertIn(agent.profile, mod.VALID_PROFILES)
+        for doc in mod.load_instruction_docs():
+            with self.subTest(doc=doc.path.name):
+                self.assertIn(doc.profile, mod.VALID_PROFILES)
 
 
 if __name__ == "__main__":

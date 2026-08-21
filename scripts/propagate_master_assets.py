@@ -92,6 +92,33 @@ CLAUDE_FILE_ALIASES = {
 }
 
 
+# Authoring profiles partition the corpus. `technical` is the whole corpus as it
+# stands and is never written down: an absent `profile:` key means technical, so
+# contributors adding technical agents, skills, or instructions learn nothing new.
+# `creative` is the only opt-in token, and it is opt-in in both directions --
+# a technical instruction never reaches a creative agent, and vice versa.
+DEFAULT_PROFILE = "technical"
+CREATIVE_PROFILE = "creative"
+VALID_PROFILES = frozenset({DEFAULT_PROFILE, CREATIVE_PROFILE})
+
+
+def _parse_profile(rel_path: str, raw: object) -> str:
+    """Read a `profile:` frontmatter value; absent means technical.
+
+    An unrecognized value is a propagation failure, not a silent fallback: a
+    typo would otherwise quietly ship a creative asset into the technical set.
+    """
+    value = str(raw or "").strip().strip('"').strip("'").lower()
+    if not value:
+        return DEFAULT_PROFILE
+    if value not in VALID_PROFILES:
+        raise ValueError(
+            f"unrecognized profile in {rel_path}: {value}; "
+            f"valid profiles are: {', '.join(sorted(VALID_PROFILES))}"
+        )
+    return value
+
+
 @dataclass
 class SourceAgent:
     path: Path
@@ -103,6 +130,7 @@ class SourceAgent:
     subagents: List[str]
     user_invocable: bool
     body: str
+    profile: str = DEFAULT_PROFILE
 
 
 @dataclass
@@ -111,6 +139,7 @@ class InstructionDoc:
     apply_to_patterns: List[str]
     body: str
     description: str = ""
+    profile: str = DEFAULT_PROFILE
 
 
 @dataclass(frozen=True)
@@ -465,6 +494,7 @@ def load_source_agents() -> List[SourceAgent]:
         _validate_tool_keys(rel_path, tools)
         subagents = _parse_list_value(fm.get("agents", ""))
         user_invocable = _parse_bool(fm.get("user-invocable"), default=True)
+        profile = _parse_profile(rel_path, fm.get("profile"))
 
         agents.append(
             SourceAgent(
@@ -477,6 +507,7 @@ def load_source_agents() -> List[SourceAgent]:
                 subagents=subagents,
                 user_invocable=user_invocable,
                 body=body.strip() + "\n",
+                profile=profile,
             )
         )
     return agents
@@ -498,6 +529,7 @@ def load_instruction_docs() -> List[InstructionDoc]:
                 apply_to_patterns=patterns,
                 body=body.strip() + "\n",
                 description=str(fm.get("description", "")).strip().strip('"').strip("'"),
+                profile=_parse_profile(path.relative_to(REPO_ROOT).as_posix(), fm.get("profile")),
             )
         )
     return docs
@@ -506,6 +538,8 @@ def load_instruction_docs() -> List[InstructionDoc]:
 def applicable_instructions(agent: SourceAgent, instruction_docs: List[InstructionDoc]) -> List[InstructionDoc]:
     applicable: List[InstructionDoc] = []
     for doc in instruction_docs:
+        if doc.profile != agent.profile:
+            continue
         if any(fnmatch.fnmatch(agent.rel_path, pattern) for pattern in doc.apply_to_patterns):
             applicable.append(doc)
     return applicable
@@ -1236,6 +1270,12 @@ def propagate_cursor_rules_once(
         return any(fnmatch.fnmatch(rel_path, pattern) for rel_path in agent_paths)
 
     for doc in instructions:
+        # Cursor rules deploy user-globally. A non-technical doc has no business
+        # in that scope, and the agent-definition check below cannot be trusted
+        # to catch it: before the first creative agent exists its patterns match
+        # nothing, which would render it as an always-apply global rule.
+        if doc.profile != DEFAULT_PROFILE:
+            continue
         globs = [
             pattern
             for pattern in doc.apply_to_patterns

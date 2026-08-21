@@ -12,10 +12,13 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 56 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 41 hidden subagents (`user-invocable: false`) and 15 user-invocable.
-- 45 skills in `source_of_truth/skills/`.
-- 18 instructions in `source_of_truth/instructions/`.
-- `ports/claude/agents` = 41, `ports/claude/commands` = 15.
+- 61 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 44 hidden subagents (`user-invocable: false`) and 17 user-invocable.
+- 49 skills in `source_of_truth/skills/`.
+- 20 instructions in `source_of_truth/instructions/`.
+- 1 installable hook in `source_of_truth/hooks/`, mirrored verbatim to `ports/github/hooks/` and `.github/hooks/`. `creative-canon-guard.py` is installed by the writer into their own vault's `.claude/`; see `docs/CREATIVE_TOOLKIT.md`.
+- `ports/claude/agents` = 45, `ports/claude/commands` = 17.
+- Three of the agents, four of the skills, and one of the instructions belong to the
+  creative writing family (`profile: creative`); see **Authoring profiles** below.
 
 ## Key Paths
 
@@ -26,9 +29,9 @@ README.md USAGE.md CONTRIBUTING.md         # overview, agent catalog, contributo
 INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
-    *.agent.md                             # 56 agent definitions
-  skills/                                  # 45 skill dirs, each rooted at SKILL.md
-  instructions/                            # 18 applyTo-glob instruction files
+    *.agent.md                             # 60 agent definitions
+  skills/                                  # 49 skill dirs, each rooted at SKILL.md
+  instructions/                            # 20 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
   claude/  {agents, commands, skills}
@@ -83,11 +86,15 @@ benchmarks/ packages/ tests/
   - cursor → `~/.cursor/rules/baseline-instructions.mdc` (`alwaysApply: true` frontmatter)
   - github → `<repo>/.github/copilot-instructions.md` (a `.github/AGENTS.md` would only
     scope to files under `.github/`)
-- Baseline splice model: five sections delimited by sentinel comments
-  (`<!-- context7 -->`, `<!-- code-review-graph -->`, `<!-- phase-doc-sync -->`,
-  `<!-- agent-discovery -->`, `<!-- know-the-audience -->`);
+- Baseline splice model: three sections delimited by sentinel comments
+  (`<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`, `<!-- know-the-audience -->`);
   only sentinel blocks are replaced/appended, content outside them is never touched;
   idempotent (second run → `unchanged`); every failure returns a status, never raises.
+- `RETIRED_BASELINE_SECTIONS` (`deploy_agents.py`) names sections this repo no longer splices.
+  Dropping a name from `BASELINE_SECTIONS` only stops rewriting the block; listing it as
+  retired deletes the stale one a previous deploy already wrote. `context7` and
+  `code-review-graph` are retired — their rules now live in this repo's `AGENTS.md`. The
+  companion-tool bootstrap still installs both MCP servers; the trim removed text, not tooling.
 - The cursor baseline `.mdc` deliberately carries NO generated marker so the
   `~/.cursor/rules` prune pass treats it as foreign and leaves it alone.
 
@@ -135,6 +142,26 @@ benchmarks/ packages/ tests/
   durable project knowledge belongs beside the other docs, not in `.github/`, which is
   GitHub's own machine-config surface. Nothing seeds or propagates that directory.
 
+## Authoring Profiles
+
+- `profile:` frontmatter partitions the corpus. `technical` is the default and is **never
+  written down** — an absent key means technical, so contributors adding engineering assets
+  need to know nothing about this. `creative` is the only opt-in token.
+- The gate lives in `applicable_instructions` (`scripts/propagate_master_assets.py`) and is
+  symmetric: a technical instruction is never inlined into a creative agent, and a creative
+  instruction is never inlined into a technical one. An unrecognized value raises rather than
+  falling back, so a typo cannot ship a creative asset into the technical set.
+- `propagate_cursor_rules_once` skips every non-technical doc unconditionally, so a creative
+  instruction can never deploy as a user-global Cursor rule.
+- Because instruction bodies are inlined as literal text at propagation time, the isolation
+  holds on every harness with no per-harness feature involved.
+- Creative agents are named `creative-*.agent.md` — the agent glob is flat, so the family is a
+  filename prefix and not a subdirectory. `creative-profile.instructions.md` carries the skill
+  allow-list. Skill isolation stays soft: `map_tools_for_claude` hardcodes `Skill` into every
+  Claude agent. `docs/CREATIVE_TOOLKIT.md` states which guarantees are hard and which are soft.
+- `tests/test_creative_profile_family.py` holds the family's guards, derived from disk rather
+  than enumerated: adding a creative skill without allow-listing it fails.
+
 ## Platform Surface Rules
 
 - `source_of_truth/` is the only shared source-of-truth for agents, skills, and instructions.
@@ -144,7 +171,7 @@ benchmarks/ packages/ tests/
 
 ## Testing
 
-- 17 Python test modules under `tests/` cover both scripts plus the agent corpus. The Unity contract
+- 18 Python test modules under `tests/` cover both scripts plus the agent corpus. The Unity contract
   modules are `test_unity_skill_contract.py`, `test_unity_consumer_contract.py`, and
   `test_unity_reference_assets.py`; Phase 02 uses `test_phase_refiner_final_check.py`.
 - Run with `uv run pytest tests/` (or `.venv/bin/python -m pytest tests/`); bare
@@ -155,6 +182,10 @@ benchmarks/ packages/ tests/
   roster entry names a real agent and is spawnable, frontmatter is well-formed for agents
   and skills, every instruction declares an `applyTo` that matches at least one real file,
   and no large block is duplicated across three or more agents.
+- `tests/test_creative_profile_family.py` guards the creative writing family: the filename
+  prefix and `profile: creative` must agree in both directions, only the scribe holds a write
+  tool, no instruction crosses the profile boundary, and the allow-list matches the creative
+  skills on disk.
 - Corpus checks are structural only — they compare frontmatter, paths, and tool grants.
   Never add a check keyed to agent prose; it goes inert the moment someone rewords.
 
