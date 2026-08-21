@@ -1589,5 +1589,122 @@ class InstructionApplyToTests(unittest.TestCase):
         self.assertEqual([], missing, f"instructions with no applyTo: {missing}")
 
 
+class AuthoringProfileGateTests(unittest.TestCase):
+    """The profile gate partitions instruction inlining.
+
+    `technical` is the implicit default and is never written in a source file.
+    `creative` is opt-in, and the gate is symmetric: a technical instruction is
+    never inlined into a creative agent, and a creative instruction is never
+    inlined into a technical one.
+    """
+
+    @staticmethod
+    def _agent(rel_path: str, profile: str = mod.DEFAULT_PROFILE):
+        return mod.SourceAgent(
+            path=mod.REPO_ROOT / rel_path,
+            rel_path=rel_path,
+            source_slug=Path(rel_path).name.replace(".agent.md", ""),
+            name="Test Agent",
+            description="test",
+            tools=["read"],
+            subagents=[],
+            user_invocable=True,
+            body="body\n",
+            profile=profile,
+        )
+
+    @staticmethod
+    def _doc(name: str, pattern: str, profile: str = mod.DEFAULT_PROFILE):
+        return mod.InstructionDoc(
+            path=mod.SOT_INSTRUCTIONS_DIR / f"{name}.instructions.md",
+            apply_to_patterns=[pattern],
+            body=f"{name} body\n",
+            description=name,
+            profile=profile,
+        )
+
+    def test_absent_profile_key_means_technical(self) -> None:
+        self.assertEqual(mod.DEFAULT_PROFILE, mod._parse_profile("x.md", None))
+        self.assertEqual(mod.DEFAULT_PROFILE, mod._parse_profile("x.md", ""))
+        self.assertEqual(mod.CREATIVE_PROFILE, mod._parse_profile("x.md", '"creative"'))
+
+    def test_unrecognized_profile_is_a_propagation_failure(self) -> None:
+        with self.assertRaises(ValueError):
+            mod._parse_profile("x.md", "technicl")
+
+    def test_technical_instruction_is_withheld_from_creative_agent(self) -> None:
+        blanket = self._doc("dev-task-folder", "source_of_truth/agents/**")
+        creative_agent = self._agent(
+            "source_of_truth/agents/creative-scene-writer.agent.md",
+            mod.CREATIVE_PROFILE,
+        )
+        technical_agent = self._agent("source_of_truth/agents/debugger.agent.md")
+
+        # The glob matches both agents; only the profile separates them.
+        self.assertEqual([], mod.applicable_instructions(creative_agent, [blanket]))
+        self.assertEqual(
+            [blanket], mod.applicable_instructions(technical_agent, [blanket])
+        )
+
+    def test_creative_instruction_is_withheld_from_technical_agent(self) -> None:
+        creative_doc = self._doc(
+            "creative-profile", "source_of_truth/agents/**", mod.CREATIVE_PROFILE
+        )
+        technical_agent = self._agent("source_of_truth/agents/debugger.agent.md")
+        creative_agent = self._agent(
+            "source_of_truth/agents/creative-scene-writer.agent.md",
+            mod.CREATIVE_PROFILE,
+        )
+
+        self.assertEqual(
+            [], mod.applicable_instructions(technical_agent, [creative_doc])
+        )
+        self.assertEqual(
+            [creative_doc], mod.applicable_instructions(creative_agent, [creative_doc])
+        )
+
+    def test_creative_instruction_never_becomes_a_global_cursor_rule(self) -> None:
+        """A creative doc must be skipped even with no creative agent on disk.
+
+        With no creative agent loaded, its applyTo patterns resolve against
+        nothing, and the agent-definition check alone would render it as an
+        `alwaysApply` user-global rule.
+        """
+        creative_doc = self._doc(
+            "creative-profile",
+            "source_of_truth/agents/creative-*.agent.md",
+            mod.CREATIVE_PROFILE,
+        )
+        technical_agent = self._agent("source_of_truth/agents/debugger.agent.md")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            env.use(self, root)
+            rules_dir = mod.CURSOR_RULES_DIR
+            rules_dir.mkdir(parents=True)
+            mod.propagate_cursor_rules_once([creative_doc], [technical_agent])
+            self.assertEqual([], sorted(rules_dir.glob("*.mdc")))
+
+            # The same call with the doc left technical writes the rule, so the
+            # assertion above is proving the profile skip, not an inert path.
+            technical_doc = self._doc(
+                "unscoped-rule", "**/*.py", mod.DEFAULT_PROFILE
+            )
+            mod.propagate_cursor_rules_once([technical_doc], [technical_agent])
+            self.assertEqual(
+                ["unscoped-rule.mdc"],
+                [path.name for path in sorted(rules_dir.glob("*.mdc"))],
+            )
+
+    def test_corpus_on_disk_carries_only_valid_profiles(self) -> None:
+        """No contributor step: every source file resolves to a valid profile."""
+        for agent in mod.load_source_agents():
+            with self.subTest(agent=agent.rel_path):
+                self.assertIn(agent.profile, mod.VALID_PROFILES)
+        for doc in mod.load_instruction_docs():
+            with self.subTest(doc=doc.path.name):
+                self.assertIn(doc.profile, mod.VALID_PROFILES)
+
+
 if __name__ == "__main__":
     unittest.main()
