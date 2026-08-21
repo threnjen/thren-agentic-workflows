@@ -8,7 +8,7 @@ One authored corpus of agents, skills, and instructions that propagates to every
 
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
-| 01 | Creative Writing Profile and Developmental Editor Toolkit | Planned | None | Large | Creative agent roster, profile instruction with skill allow-list, four creative skills, baseline trim, guard tests, and user documentation. |
+| 01 | Creative Writing Profile and Developmental Editor Toolkit | Complete | None | Large | Creative agent roster, profile instruction with skill allow-list, four creative skills, baseline trim, guard tests, and user documentation. |
 
 ## Constraints & Non-Goals
 
@@ -24,3 +24,4 @@ One authored corpus of agents, skills, and instructions that propagates to every
 - The agent glob is flat (`*.md`), so asset families are filename prefixes rather than subdirectories.
 - Tool grants are all-or-nothing and never path-scoped. Write protection is achieved by withholding `edit` from an agent entirely, and by isolating the write bit in the smallest possible agent.
 - The user-global baseline (`source_of_truth/baseline/baseline-instructions.md`, spliced by `deploy_agents.py`) is profile-blind by construction. Anything that must not reach a creative session cannot live there.
+- A baseline section is retired in two moves: drop it from `BASELINE_SECTIONS` to stop rewriting it, and list it in `RETIRED_BASELINE_SECTIONS` to delete the block a previous deploy already wrote. Dropping alone leaves a retired rule in force on every machine that already deployed it.

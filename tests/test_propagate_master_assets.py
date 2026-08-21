@@ -1,3 +1,4 @@
+import fnmatch
 import hashlib
 import json
 import re
@@ -838,11 +839,14 @@ class OrphanPruningTests(unittest.TestCase):
         # the newer work) added one file to claude agents (40 -> 41) and
         # opencode/codex agents (53 -> 54); claude commands unchanged (not
         # user-invocable). Counts recounted from disk.
+        # The creative writing family adds three source agents. Only the scribe
+        # and the compliance check are hidden, so claude agents gain two and
+        # claude commands gain one, while codex and opencode gain all three.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 41),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 15),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 54),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 54),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 45),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 17),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 60),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 60),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:
@@ -1537,11 +1541,11 @@ class GithubMirrorTests(unittest.TestCase):
 class InstructionApplyToTests(unittest.TestCase):
     """Every enumerated `applyTo` filename must resolve to an agent on disk.
 
-    Thirteen of the sixteen instruction files hand-enumerate their target agents
-    by filename; three use a directory glob. An enumerated path that no longer
-    resolves — a renamed or deleted agent — fails open: the instruction simply
-    stops being injected, the agent still runs, and nothing reports it. This
-    asserts the enumerations still point at real files.
+    Most instruction files hand-enumerate their target agents by filename; a few
+    use a directory glob or a filename glob. A target that no longer resolves —
+    a renamed or deleted agent, or a glob that selects nothing — fails open: the
+    instruction simply stops being injected, the agent still runs, and nothing
+    reports it. This asserts every target still selects a real file.
     """
 
     INSTRUCTIONS_DIR = REPO_ROOT / "source_of_truth" / "instructions"
@@ -1570,7 +1574,13 @@ class InstructionApplyToTests(unittest.TestCase):
                     # Source-file glob (e.g. "**/*.py", "**/pyproject.toml") —
                     # matches code being edited, not an agent definition.
                     continue
-                if target not in agent_names:
+                if any(ch in target for ch in "*?["):
+                    # Filename glob (e.g. "04?-*.agent.md") — it resolves as
+                    # long as it still selects at least one agent. A glob that
+                    # matches nothing fails open exactly like a stale literal.
+                    if not fnmatch.filter(agent_names, target):
+                        unresolved.append(f"{instruction.name} -> {target}")
+                elif target not in agent_names:
                     unresolved.append(f"{instruction.name} -> {target}")
 
         self.assertEqual(

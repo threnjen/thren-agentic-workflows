@@ -49,6 +49,8 @@ Reach for these individually, whenever you need them — no pipeline required:
 - **Debugger** — diagnose and fix a frontend or backend error
 - **Docs Writer** — create or update your repo's documentation
 - **Web Researcher** — research a topic and produce a cited findings report
+- **Creative - Developmental Editor** — developmental editing for fiction against an Obsidian
+  vault, isolated from every engineering agent here (`docs/CREATIVE_TOOLKIT.md`)
 - **Audit - Code, Infra, Refactor, Security** — health-check your code, infra, structure, or
   security posture; audit two repos or two branches and get a reconciled delta of what changed
   between them

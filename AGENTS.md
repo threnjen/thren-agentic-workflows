@@ -91,6 +91,26 @@ confidence is content. A length cap is exactly what tempts you to cut it.
 - Could the reader act on this after one read, without backtracking?
 - For a runbook: could someone follow it start to finish without stopping to interpret anything?
 
+## Companion tools
+
+These rules used to ship in the user-global baseline. They now live here, so they apply to
+this repository and not to every repository on the machine.
+
+**Context7.** Fetch current documentation through the Context7 MCP whenever the question is
+about a library, framework, SDK, API, CLI tool, or cloud service — including well-known ones.
+Resolve the library ID first, then query with the full question scoped to one concept. Use it
+even when you think you know the answer. Do not use it for refactoring, business-logic
+debugging, code review, or general programming concepts.
+
+**code-review-graph.** Use the code-review-graph MCP tools before Grep, Glob, and Read when
+exploring this codebase. `semantic_search_nodes` or `query_graph` to find code,
+`get_impact_radius` for blast radius, `detect_changes` plus `get_review_context` for review,
+`get_architecture_overview` for structure. Fall back to file search when the graph does not
+cover what you need.
+
+`deploy_agents.py` still installs and configures both servers; `--skip-tools` suppresses that.
+
+
 ## Agents: never run propagation
 
 **Propagation is the maintainer's manual step. Do not run `scripts/propagate_master_assets.py` (`--once` or `--watch`) as part of agent work**, even to make tests pass. It regenerates every file under `ports/` and `.github/`, which swamps the diff and makes authored source changes impossible to review.

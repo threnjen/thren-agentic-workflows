@@ -439,7 +439,7 @@ class BaselineDeployTests(unittest.TestCase):
             dest = home / ".codex" / "AGENTS.md"
             dest.parent.mkdir(parents=True)
             dest.write_text(
-                "# My own notes\n\n<!-- context7 -->\nstale content\n<!-- context7 -->\n\nTrailing custom text.\n",
+                "# My own notes\n\n<!-- phase-doc-sync -->\nstale content\n<!-- phase-doc-sync -->\n\nTrailing custom text.\n",
                 encoding="utf-8",
             )
             result = mod.deploy_baseline("codex", home=home, environ={})
@@ -448,8 +448,32 @@ class BaselineDeployTests(unittest.TestCase):
         self.assertIn("# My own notes", content)
         self.assertIn("Trailing custom text.", content)
         self.assertNotIn("stale content", content)
-        self.assertIn("resolve-library-id", content)
-        self.assertIn("<!-- code-review-graph -->", content)
+        self.assertIn("phase-doc-sync", content)
+        self.assertIn("<!-- know-the-audience -->", content)
+
+    def test_retired_sections_are_deleted_from_an_already_deployed_file(self) -> None:
+        """Dropping a section from BASELINE_SECTIONS stops rewriting it.
+
+        Only RETIRED_BASELINE_SECTIONS removes the block a previous deploy
+        already wrote, so a retired rule stops applying on real machines.
+        """
+        self.assertTrue(mod.RETIRED_BASELINE_SECTIONS, "nothing retired; this guard is inert")
+        retired = mod.RETIRED_BASELINE_SECTIONS[0]
+        self.assertNotIn(retired, mod.BASELINE_SECTIONS)
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            dest = home / ".codex" / "AGENTS.md"
+            dest.parent.mkdir(parents=True)
+            dest.write_text(
+                f"# Keep me\n\n<!-- {retired} -->\nretired rule body\n<!-- {retired} -->\n\nKeep me too.\n",
+                encoding="utf-8",
+            )
+            mod.deploy_baseline("codex", home=home, environ={})
+            content = dest.read_text(encoding="utf-8")
+        self.assertNotIn(f"<!-- {retired} -->", content)
+        self.assertNotIn("retired rule body", content)
+        self.assertIn("# Keep me", content)
+        self.assertIn("Keep me too.", content)
 
     def test_second_run_is_unchanged(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

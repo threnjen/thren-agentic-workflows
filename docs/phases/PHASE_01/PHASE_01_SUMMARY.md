@@ -1,6 +1,6 @@
 # Phase 1: Creative Writing Profile and Developmental Editor Toolkit
 
-**Status**: Planned
+**Status**: Complete
 **Depends on**: None (the profile gate mechanism it builds on is already merged on this branch)
 **Estimated complexity**: Large
 **Cross-references**: `/Users/jennywadkins/github_repos/copperforge/cf-app-crucible-harness-extension/creative-editor-toolkit-master-spec.md`
@@ -29,7 +29,7 @@ Deliver the corpus-native subset of the Creative Editor Toolkit spec — modes, 
   - `creative-compliance` — per-mode violation rules, shared by the editor's inline self-check and the compliance agent.
   - `creative-vault` — vault detection, canon/notes boundary, session-log and `user-patterns.md` formats, scene-summary rollups, macro/micro zoom.
   - `creative-question-banks` — worldbuilding, plot, character, pacing, theme.
-- **Baseline trim** (separable workstream) — remove `context7` and `code-review-graph` from `BASELINE_SECTIONS` in `deploy_agents.py:44` and from `source_of_truth/baseline/baseline-instructions.md`. Keep `phase-doc-sync`, `agent-discovery`, `know-the-audience`.
+- **Baseline trim** (separable workstream) — remove the `context7` and `code-review-graph` **instruction sections** from `BASELINE_SECTIONS` (`deploy_agents.py:44`), and list them in `RETIRED_BASELINE_SECTIONS` so the blocks a previous deploy already wrote are deleted rather than left stale and from `source_of_truth/baseline/baseline-instructions.md`. Keep `phase-doc-sync`, `agent-discovery`, `know-the-audience`. The companion-tool bootstrap is deliberately untouched: `ensure_code_review_graph` (`deploy_agents.py:333`), `ensure_context7` (`deploy_agents.py:358`), their registration at lines 383-384, and the `--skip-tools` flag at line 503 all keep working exactly as they do now. A repository-local rule can only be honored if the tool it names is installed, so removing the global rule must not remove the tool.
 - **Corpus guard tests** — derived, not enumerated: no `creative-*` agent except the scribe grants `edit`; the allow-list covers every creative skill on disk; creative instructions reach only creative agents.
 - **`docs/CREATIVE_TOOLKIT.md`** — the hard/soft guarantee table, vault setup, mode reference.
 
@@ -41,6 +41,7 @@ Deliver the corpus-native subset of the Creative Editor Toolkit spec — modes, 
 - A forced compliance pass. No agent definition can compel a subagent call every turn.
 - Line editing as a primary purpose. Copyedit exists as a bounded mode, nothing more.
 - Removing the stray `/Users/jennywadkins/CLAUDE.md`. Flagged, not this repository's file.
+- Uninstalling or un-registering the Context7 and code-review-graph MCP servers. The trim removes instruction text, never tooling.
 
 ## Key Deliverables
 
@@ -55,11 +56,12 @@ Deliver the corpus-native subset of the Creative Editor Toolkit spec — modes, 
 
 ## Technical Context
 
-- **Profile gate** — `scripts/propagate_master_assets.py:506` (`applicable_instructions`). Already merged on this branch. `DEFAULT_PROFILE` is implicit; `profile: creative` is the only opt-in token. Instruction bodies are inlined as literal text at propagation time, so isolation holds on every harness with no per-harness feature involved.
-- **Flat agent glob** — `SOT_AGENTS_DIR.glob("*.md")` at line 448 does not recurse. The creative family is a filename prefix, not a subdirectory.
-- **Forced `Skill` tool** — `map_tools_for_claude:556` hardcodes `Skill` into every Claude agent. This is why skill isolation is an allow-list in prose rather than a tool grant, and why it stays soft.
+- **Profile gate** — `scripts/propagate_master_assets.py:538` (`applicable_instructions`). Already merged on this branch. `DEFAULT_PROFILE` is implicit; `profile: creative` is the only opt-in token. Instruction bodies are inlined as literal text at propagation time, so isolation holds on every harness with no per-harness feature involved.
+- **Flat agent glob** — `SOT_AGENTS_DIR.glob("*.md")` at `scripts/propagate_master_assets.py:477` does not recurse. The creative family is a filename prefix, not a subdirectory.
+- **Forced `Skill` tool** — `map_tools_for_claude` (`scripts/propagate_master_assets.py:591`) hardcodes `Skill` at line 592 into every Claude agent. This is why skill isolation is an allow-list in prose rather than a tool grant, and why it stays soft.
 - **Cursor rules** — `propagate_cursor_rules_once` already skips non-technical docs unconditionally, so a creative instruction can never deploy as a user-global Cursor rule.
-- **Baseline splice** — `deploy_agents.py:44`, `BASELINE_SECTIONS`, spliced between sentinels into `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, and a Cursor always-apply rule.
+- **Claude emission rule** (`docs/CODEBASE_CONTEXT.md:118-121`) — a user-invocable agent emits a slash command under `ports/claude/commands/`, and an agent file only when an orchestrator names it as a child. Hidden subagents emit under `ports/claude/agents/` renamed `z-*`. So the editor lands at `ports/claude/commands/creative-developmental-editor.md`; the scribe and compliance agents land at `ports/claude/agents/z-creative-scribe.md` and `ports/claude/agents/z-creative-compliance-check.md`.
+- **Baseline splice** — `BASELINE_SECTIONS` (`deploy_agents.py:44`), spliced between sentinels into `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, and a Cursor always-apply rule.
 
 ## Dependencies & Risks
 
@@ -67,18 +69,21 @@ Deliver the corpus-native subset of the Creative Editor Toolkit spec — modes, 
 - **Risk — the allow-list is prose, not a gate.** A technical skill whose description matches a creative prompt can still surface. *Mitigation*: allow-list phrased as "load only these, ignore all others regardless of match"; a guard test keeps it in sync with the skills on disk; `docs/CREATIVE_TOOLKIT.md` states this is soft.
 - **Risk — the compliance pass cannot be forced.** *Mitigation*: inline mandatory self-check in the editor body **plus** the compliance subagent for substantive responses. Two soft layers, honestly labeled.
 - **Risk — the scribe holds `edit` with no path scoping.** *Mitigation*: keep its body minimal and auditable, forbid manuscript reasoning, restrict it to append-only operations under `_editor-notes/` and `scene-summaries/`. Documented as the toolkit's one genuine write surface.
-- **Risk — baseline trim degrades technical work.** Removing `context7` and `code-review-graph` globally means repositories wanting them must carry them locally, including this one. *Mitigation*: ship the trim with the replacement rules added to this repository's `CLAUDE.md` in the same change.
+- **Risk — baseline trim degrades technical work.** Removing `context7` and `code-review-graph` globally means repositories wanting them must carry them locally, including this one. *Mitigation*: ship the trim with the replacement rules added to this repository's `AGENTS.md` in the same change. They go in `AGENTS.md`, not `CLAUDE.md` — the committed `CLAUDE.md` exists solely as a pointer and forbids restating `AGENTS.md` content, so duplicating rules there would violate its own contract.
 - **Risk — vault detection guesses wrong.** *Mitigation*: walk up from the working directory for `.obsidian/`; on no match, ask for the path and never assume; on a match without a `canon/` directory, ask before treating anything as canon.
 
 ## Success Criteria
 
-- [ ] `grep -c "Unity\|dev/feature\|code-review-graph" ports/claude/agents/creative-developmental-editor.md` returns `0`.
+- [ ] `ports/claude/commands/creative-developmental-editor.md` exists, and `grep -c "Unity\|dev/feature\|code-review-graph"` against it returns `0`. Apply the same two checks to `ports/claude/agents/z-creative-scribe.md` and `ports/claude/agents/z-creative-compliance-check.md`. File existence is asserted first: `grep -c` on a missing file errors rather than returning `0`.
 - [ ] No generated `creative-*` agent except the scribe lists `Edit` or `Write` in its tools, on any of the five ports.
 - [ ] A creative session asked to write into `canon/` reports a missing capability, not a policy refusal.
 - [ ] Each of the six modes has explicitly enumerated permitted output and at least one worked violation example.
 - [ ] Generate mode returns to the prior mode automatically after one scoped answer.
 - [ ] Vault detection resolves from a working directory inside a vault, and asks rather than guessing outside one.
-- [ ] `~/.claude/CLAUDE.md` contains no Context7 or code-review-graph section after deploy; the other three survive intact.
+- [ ] `creative-compliance` states, for each of the six modes, what counts as a violation and what the repair action is, and the compliance agent and the editor's inline self-check both cite it as their single source rather than restating the rules.
+- [ ] `creative-question-banks` covers all five named areas — worldbuilding, plot, character, pacing, theme — and every question in it is answerable only by the writer, introducing no content of its own.
+- [ ] `~/.claude/CLAUDE.md` contains no Context7 or code-review-graph section after deploy; the `phase-doc-sync`, `agent-discovery`, and `know-the-audience` sections survive intact, as does all content outside the splice sentinels.
+- [ ] `deploy_agents.py` still installs and configures both companion tools after the trim, and `--skip-tools` still suppresses both.
 - [ ] Guard tests derive their coverage from disk — adding a creative skill without allow-listing it fails a test.
 - [ ] `docs/CREATIVE_TOOLKIT.md` states, per guarantee, whether it is hard or soft and why.
 
