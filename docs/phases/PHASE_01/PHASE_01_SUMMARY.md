@@ -19,10 +19,11 @@ Deliver the corpus-native subset of the Creative Editor Toolkit spec — modes, 
 
 ### In Scope
 
-- **Creative agent roster** (three agents, `creative-*` prefix, `profile: creative`):
+- **Creative agent roster** (four agents, `creative-*` prefix, `profile: creative`):
   - `Creative - Developmental Editor` — user-invocable, `tools: [read, search, todo, agent]`. **No `edit`.**
   - `Creative - Scribe` — `tools: [read, edit]`. Sole holder of the write bit; appends to `_editor-notes/` and `scene-summaries/` only. Never reasons about the manuscript.
   - `Creative - Compliance Check` — `tools: [read]`. Scans a draft response against the active mode's rules.
+  - `Creative - Vault Sync` — `tools: [execute]`. Resolves the vault's current git SHA, compares it to the one recorded in `project-context.md`, and returns the file-level diff. Read-only git subcommands only. **No `edit`.**
 - **`creative-profile.instructions.md`** — `profile: creative`, `applyTo: **/creative-*.agent.md`. Carries the skill **allow-list** (load only the named creative skills; ignore every other catalog entry regardless of description match), the canon boundary, and the honest-limits statement.
 - **Creative skills** (all `profile: creative`):
   - `creative-modes` — the six-mode gate (Interrogate, Reflect, Diagnose, Adversarial, Generate, Copyedit), permitted output per mode, delivery presets, mid-session switch commands, auto-exit from Generate.
@@ -31,7 +32,8 @@ Deliver the corpus-native subset of the Creative Editor Toolkit spec — modes, 
   - `creative-question-banks` — worldbuilding, plot, character, pacing, theme.
 - **Baseline trim** (separable workstream) — remove the `context7` and `code-review-graph` **instruction sections** from `BASELINE_SECTIONS` (`deploy_agents.py:44`), and list them in `RETIRED_BASELINE_SECTIONS` so the blocks a previous deploy already wrote are deleted rather than left stale and from `source_of_truth/baseline/baseline-instructions.md`. Keep `phase-doc-sync`, `agent-discovery`, `know-the-audience`. The companion-tool bootstrap is deliberately untouched: `ensure_code_review_graph` (`deploy_agents.py:333`), `ensure_context7` (`deploy_agents.py:358`), their registration at lines 383-384, and the `--skip-tools` flag at line 503 all keep working exactly as they do now. A repository-local rule can only be honored if the tool it names is installed, so removing the global rule must not remove the tool.
 - **Corpus guard tests** — derived, not enumerated: no `creative-*` agent except the scribe grants `edit`; the allow-list covers every creative skill on disk; creative instructions reach only creative agents.
-- **`docs/CREATIVE_TOOLKIT.md`** — the hard/soft guarantee table, vault setup, mode reference.
+- **Canon guard hook** — `source_of_truth/hooks/creative-canon-guard.py`, a `PreToolUse` hook the writer installs into their own vault's `.claude/`. Denies every write into `canon/` and `drafts/` from any tool, including a shell command that would reach them. Fails closed on an unreadable payload. This is what makes the canon boundary an enforcement rather than a promise, which matters because generated text carries provenance watermarking: one agent write into a manuscript can mark the writer's own prose as machine-authored with nothing visible afterward. Mirrors verbatim to `ports/github/hooks/` and `.github/hooks/` through the existing hook pipeline.
+- **`docs/CREATIVE_TOOLKIT.md`** — the hard/soft guarantee table, vault setup, mode reference, and the hook's install steps.
 
 ### Out of Scope
 
@@ -85,7 +87,10 @@ Deliver the corpus-native subset of the Creative Editor Toolkit spec — modes, 
 - [ ] `~/.claude/CLAUDE.md` contains no Context7 or code-review-graph section after deploy; the `phase-doc-sync`, `agent-discovery`, and `know-the-audience` sections survive intact, as does all content outside the splice sentinels.
 - [ ] `deploy_agents.py` still installs and configures both companion tools after the trim, and `--skip-tools` still suppresses both.
 - [ ] Guard tests derive their coverage from disk — adding a creative skill without allow-listing it fails a test.
-- [ ] `docs/CREATIVE_TOOLKIT.md` states, per guarantee, whether it is hard or soft and why.
+- [ ] `docs/CREATIVE_TOOLKIT.md` states, per guarantee, whether it is hard or soft and why, and gives copy-paste install steps for the canon guard hook.
+- [ ] The canon guard denies `Write`, `Edit`, and shell writes into `canon/` and `drafts/`, allows writes under `_editor-notes/` and `scene-summaries/`, allows every read of the manuscript, and denies an unreadable payload. Asserted by running the hook, not by reading its source.
+- [ ] `_editor-notes/project-context.md` carries a `git_sha` trailer, and the editor's first session action is a sync against it.
+- [ ] No `creative-*` agent except the vault-sync probe holds `execute`, and the probe holds no `edit`.
 
 ## QA Considerations
 

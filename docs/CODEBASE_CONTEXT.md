@@ -12,9 +12,10 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 60 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 43 hidden subagents (`user-invocable: false`) and 17 user-invocable.
+- 61 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 44 hidden subagents (`user-invocable: false`) and 17 user-invocable.
 - 49 skills in `source_of_truth/skills/`.
 - 20 instructions in `source_of_truth/instructions/`.
+- 1 installable hook in `source_of_truth/hooks/`, mirrored verbatim to `ports/github/hooks/` and `.github/hooks/`. `creative-canon-guard.py` is installed by the writer into their own vault's `.claude/`; see `docs/CREATIVE_TOOLKIT.md`.
 - `ports/claude/agents` = 45, `ports/claude/commands` = 17.
 - Three of the agents, four of the skills, and one of the instructions belong to the
   creative writing family (`profile: creative`); see **Authoring profiles** below.

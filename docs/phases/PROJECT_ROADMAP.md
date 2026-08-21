@@ -20,6 +20,8 @@ One authored corpus of agents, skills, and instructions that propagates to every
 
 ## Architecture Notes
 
+A tool grant cannot be scoped to a path, so a boundary that must hold for a specific directory is enforced by a `PreToolUse` hook rather than by the grant. `source_of_truth/hooks/creative-canon-guard.py` is the first of these. Hooks mirror verbatim to `ports/github/hooks/` and `.github/hooks/`; installing one into a target directory's `.claude/` is the user's step.
+
 - Authoring profiles partition instruction inlining in `applicable_instructions` (`scripts/propagate_master_assets.py`). The gate is symmetric: a technical instruction never reaches a creative agent, and a creative instruction never reaches a technical one.
 - The agent glob is flat (`*.md`), so asset families are filename prefixes rather than subdirectories.
 - Tool grants are all-or-nothing and never path-scoped. Write protection is achieved by withholding `edit` from an agent entirely, and by isolating the write bit in the smallest possible agent.

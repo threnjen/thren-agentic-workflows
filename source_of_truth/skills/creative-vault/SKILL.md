@@ -61,6 +61,9 @@ shows the writer whether the agent has actually understood the world — and a w
 worth more than no summary at all, because it is diagnostic. The writer should read it as a
 comprehension check and correct it.
 
+The file ends with the commit SHA it was built from, so the next session can tell in one
+command whether it is still current.
+
 Write both halves under Reflect discipline: restate, never extend. `creative-compliance`
 governs what that permits.
 
@@ -104,11 +107,20 @@ in this file. If the distinction is unclear for a given item, leave it out and a
 | Synopsis | What is known of the story so far, in the agent's own words. What happens, who it happens to, where it stands. Say plainly what is unwritten or undecided rather than smoothing over the gap. |
 | Worldbuilding as understood | The world restated in the agent's own words — how it works, what governs it, what is scarce, who holds power. This is the comprehension check. Getting it wrong visibly is the point. |
 | Key scenes | Scenes that exist in `drafts/` or `scene-summaries/`, each with a one- or two-line synopsis and its file. Scenes only, not chapters the writer has merely planned. |
+| Tone | How the book reads, in the agent's own words — register, distance, humor, how much dread it carries, what genre a reader would shelve it under. Describe the tone the prose actually produces, not the tone it seems to aim for. |
 
 Each reading section restates. None of them proposes, extends, resolves, or evaluates. The
 test for any sentence: could the writer read it and say *"no, that's not what I wrote"*? If
 so it is a restatement and belongs. If instead they would say *"huh, I hadn't thought of
 that"*, it is a contribution and does not.
+
+Tone is the exception that proves the rule, and it is worth stating why it is allowed. Naming
+the tone is a report on the prose the writer has already written, the way a reader would
+describe it after finishing. It stays restatement as long as it describes the effect and stops
+short of prescribing one. *"Wry, close third, more dread than the plot has yet earned"* is a
+reading. *"This should be funnier"* is a diagnosis, and Diagnose is a live response, not a
+stored verdict. Tone read wrong is as useful as worldbuilding read wrong: it tells the writer
+their subtext is not landing.
 
 ### What Never Goes In
 
@@ -120,6 +132,38 @@ that"*, it is a contribution and does not.
 - A theme or meaning the writer has not stated. Describing what happens is restatement;
   declaring what it is *about* is interpretation. Quote their words if they wrote it.
 - A question the agent thought of. See the record above.
+
+### The Trailer
+
+The last line of the file is the commit the file was built from:
+
+```markdown
+git_sha: 4f2a9c1e8b3d5a70c26f18e94b0d7a3c5e2f8b19
+```
+
+Write it whenever any part of the file is written, from the vault's current `HEAD`. When the
+vault is not a git repository, write `git_sha: none` and leave it there — an unversioned vault
+is normal, and the sync check simply reports nothing to compare.
+
+The SHA is what makes the file self-dating. Without it the only way to know whether the record
+still matches the vault is to re-read every canon file at every session start.
+
+### Sync At Session Start
+
+Before the first substantive response, and before trusting anything in this file:
+
+1. Spawn `Creative - Vault Sync` with the vault root and the recorded `git_sha`.
+2. On `up-to-date`, the record stands. Read on.
+3. On `no-baseline` or `not-a-git-repo`, the file cannot be dated. Say so in one line and
+   treat the record as unverified until it is checked against canon.
+4. On a newer commit, read the canon and draft files the diff names — those files only, not
+   the whole vault. Update the record for what changed, rewrite whole any reading section the
+   changes made wrong, and write the new SHA. Say what you are updating and why, then spawn
+   the scribe.
+
+A dirty working tree means the writer has uncommitted changes. Say so and read the changed
+files, but do not advance the SHA past `HEAD` — the recorded SHA names a commit, never a
+working state.
 
 ### Maintaining It
 

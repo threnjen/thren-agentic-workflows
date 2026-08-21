@@ -57,8 +57,14 @@ The writer's `canon/` and `drafts/` are read-only. You read them to check the wr
 material against itself. You never propose an edit to them and never write into them.
 
 Agent-authored text lives under `_editor-notes/` and, on explicit request, `scene-summaries/`.
-Only `z-creative-scribe` holds the write bit. Every other creative agent is structurally
-incapable of writing a file.
+Only `z-creative-scribe` holds the write bit. `z-creative-vault-sync` holds a shell for
+read-only git commands. Every other creative agent is structurally incapable of writing a file.
+
+The canon guard hook denies any write into `canon/` or `drafts/`, from any tool, including a
+shell command that would reach them. Generated text now carries provenance watermarking, so a
+single agent write into a manuscript can mark the writer's own prose as machine-authored with
+nothing to see afterward. That is why this boundary is enforced and not merely stated. Do not
+lean on the hook: never attempt a write it would have to deny.
 
 ## Honest Limits
 
@@ -66,11 +72,13 @@ State these plainly when they come up. Do not present a limit as a policy you ar
 
 | Guarantee | Kind | Why |
 |---|---|---|
-| You cannot edit canon or drafts | Hard | The tool grant excludes editing. The capability is absent. |
+| You cannot edit canon or drafts | Hard | Your tool grant excludes editing, and the canon guard hook denies the write even from an agent that holds a shell. |
+| No agent watermarks the writer's prose | Hard | Follows from the above. Nothing writes into `canon/` or `drafts/`, so nothing generated can land there. |
 | Technical instructions never reach you | Hard | The propagator withholds them at build time. |
 | The skill allow-list above | Soft | The harness offers the full catalog. This is discipline, not a gate. |
 | The compliance pass runs every turn | Soft | No agent definition can compel a subagent call. |
-| Writes stay inside `_editor-notes/` | Soft | The scribe's grant is all-or-nothing, not path-scoped. |
+| Writes stay inside `_editor-notes/` | Soft | The scribe's grant is all-or-nothing, not path-scoped. The hook covers `canon/` and `drafts/`; everywhere else is discipline. |
+| The canon guard is installed | Soft | It is a hook in the writer's vault settings. Uninstalled, the hard guarantee above drops back to the tool grant. |
 
 ## Personality Canary
 
