@@ -31,7 +31,7 @@ vault/
   drafts/                 # manuscript material                   READ ONLY
   scene-summaries/        # macro rollups                         writable on explicit request
   _editor-notes/          # agent-authored, non-canonical         writable
-    project-context.md
+    context/              # one file per content type
     session-logs/
     user-patterns.md
 ```
@@ -47,27 +47,42 @@ scribe; the guarantee that the editor cannot write is the absent tool grant.
 
 ## Project Context
 
-`_editor-notes/project-context.md` is the agent's orientation file. Read it at the start of
-every session, before the first substantive response. It exists so the writer can leave a
-project for six months, come back, and have both of you re-oriented in one read.
+`_editor-notes/context/` is what the editor reads first, so the writer can leave a project for
+six months, come back, and have both of you re-oriented in one read.
 
-It has two halves, and the difference between them is the whole design.
+It is a directory, not one file. One file per content type, so a change to the cast does not
+rewrite the plot, and the writer can correct one of them without reading the rest.
+
+```text
+_editor-notes/context/
+  index.md            # vault map, what was read to build it, git_sha
+  characters.md       # cast
+  setting.md          # places, factions, how the world works
+  plot.md             # threads, settled decisions, contradictions, synopsis
+  scenes.md           # scenes that exist, one or two lines each
+  style.md            # tone and voice as the prose reads
+  open-questions.md   # questions the WRITER left open
+  themes.md           # interpretive layer only, absent by default
+```
+
+Every file except `index.md` and `themes.md` has the same two halves, and the difference
+between them is the whole design.
 
 **The record** is fact: names, files, threads, decisions the writer declared, contradictions
 with both halves cited. Everything in it is something the writer stated or something that
 exists on disk.
 
-**The reading** is the agent's own words: the synopsis, the worldbuilding restatement, the
-scene list. These are paraphrase, and they are deliberate. A restatement in the agent's words
-shows the writer whether the agent has actually understood the world — and a wrong one is
-worth more than no summary at all, because it is diagnostic. The writer should read it as a
-comprehension check and correct it.
+**The reading** is the agent's own words. A restatement in the agent's words shows the writer
+whether the agent has actually understood the material — and a wrong one is worth more than no
+summary at all, because it is diagnostic. The writer should read it as a comprehension check
+and correct it.
 
-The file ends with the commit SHA it was built from, so the next session can tell in one
-command whether it is still current.
+`index.md` holds the one `git_sha` trailer for the whole directory. `themes.md` exists only
+while the interpretive layer is on; see `creative-modes`.
 
 Write both halves under Reflect discipline: restate, never extend. `creative-compliance`
-governs what that permits.
+governs what that permits, and it also governs the two rules below on how the restatement is
+worded.
 
 ### Marking and Trust
 
@@ -84,45 +99,56 @@ writer's fact three sessions later, and a misunderstanding hardens into canon no
 
 The record half is citable, because it holds the writer's own statements.
 
-### The Record
+### Plainer Than The Writer
 
-| Section | Content | Source |
+Every reading section is written **below** the writer's natural level. This is a hard rule and
+it is counterintuitive, so here is the reason: a polished phrasing of the writer's own material,
+read back at the start of every session, becomes the phrasing they reach for. The summary is
+supposed to remind them what they wrote, not offer them a better way to have written it.
+
+- Use the writer's nouns for the writer's things. Their spellings, their labels, their terms.
+- For every other word, choose the plainest one that is still accurate.
+- Short declarative sentences. One fact per sentence.
+- No metaphor, no image, and no figure of speech the writer did not write first.
+- No word the writer has not used, unless there is no plainer accurate substitute.
+
+The test: if a sentence in a reading section is more elegant than the writer's own prose, it is
+wrong even though it is accurate. Rewrite it flatter.
+
+`style.md` is the one place a precise term is allowed over a plain one, because naming a
+register needs the word for that register. It still takes the plainest word that is accurate.
+
+### The Files
+
+| File | Record half | Reading half |
 |---|---|---|
-| Vault map | Canon subdirectories and what each holds | Directory listing |
-| Cast | Character names, spelled as the writer spells them, with the canon file each is defined in | `canon/characters/` |
-| Places and factions | Same shape as Cast | `canon/world/` |
-| Threads | Plot thread labels the writer uses, and where each is established | `canon/plot/`, writer's own words |
-| Stated decisions | Choices the writer declared settled, quoted or near-verbatim | Session logs |
-| Open contradictions | Two canon statements that cannot both hold, both cited | Canon reads |
-| Open questions | Questions the **writer** left open, quoted with a citation | The writer's own docs and session logs |
-| Built from | The canon and draft files read to build it, and the date | Mechanical |
+| `index.md` | Canon subdirectories and what each holds; the canon and draft files read to build the directory, and the date; the `git_sha` trailer | none |
+| `characters.md` | Character names, spelled as the writer spells them, with the canon file each is defined in | Who each one is and what they want, in the agent's own words |
+| `setting.md` | Places and factions, same shape as characters | How the world works, what governs it, what is scarce, who holds power. This is the comprehension check. Getting it wrong visibly is the point. |
+| `plot.md` | Thread labels the writer uses and where each is established; decisions the writer declared settled, quoted or near-verbatim; contradictions where two canon statements cannot both hold, both cited | The synopsis: what is known of the story so far, what happens, who it happens to, where it stands. Say plainly what is unwritten or undecided rather than smoothing over the gap. |
+| `scenes.md` | none | Scenes that exist in `drafts/` or `scene-summaries/`, each with a one- or two-line synopsis and its file. Scenes only, not chapters the writer has merely planned. |
+| `style.md` | Any statement the writer made about their own voice or intent, quoted | Tone as the prose reads: register, distance, humor, how much dread it carries, what shelf a reader would put it on. Describe the tone the prose produces, not the tone it seems to aim for. |
+| `open-questions.md` | Questions the **writer** left open, quoted with a citation | none |
+| `themes.md` | none | Interpretive layer only. Absent unless the writer turned it on. |
 
-**Open questions is the writer's list, not the agent's.** Record only a question the writer
-actually posed — a `TODO`, a note to self, an unanswered question in a canon file, something
-they said in session. A gap the agent noticed is a diagnosis and belongs in a response, not
-in this file. If the distinction is unclear for a given item, leave it out and ask.
+**`open-questions.md` is the writer's list, not the agent's.** Record only a question the
+writer actually posed — a `TODO`, a note to self, an unanswered question in a canon file,
+something they said in session. A gap the agent noticed is a diagnosis and belongs in a
+response, not in this directory. If the distinction is unclear for a given item, leave it out
+and ask.
 
-### The Reading
-
-| Section | Content |
-|---|---|
-| Synopsis | What is known of the story so far, in the agent's own words. What happens, who it happens to, where it stands. Say plainly what is unwritten or undecided rather than smoothing over the gap. |
-| Worldbuilding as understood | The world restated in the agent's own words — how it works, what governs it, what is scarce, who holds power. This is the comprehension check. Getting it wrong visibly is the point. |
-| Key scenes | Scenes that exist in `drafts/` or `scene-summaries/`, each with a one- or two-line synopsis and its file. Scenes only, not chapters the writer has merely planned. |
-| Tone | How the book reads, in the agent's own words — register, distance, humor, how much dread it carries, what genre a reader would shelve it under. Describe the tone the prose actually produces, not the tone it seems to aim for. |
+Tone in `style.md` is the exception that proves the restatement rule, and it is worth stating
+why it is allowed. Naming the tone is a report on prose the writer has already written, the way
+a reader would describe it after finishing. It stays restatement as long as it describes the
+effect and stops short of prescribing one. *"Wry, close third, more dread than the plot has yet
+earned"* is a reading. *"This should be funnier"* is a diagnosis, and Diagnose is a live
+response, not a stored verdict. Tone read wrong is as useful as worldbuilding read wrong: it
+tells the writer their subtext is not landing.
 
 Each reading section restates. None of them proposes, extends, resolves, or evaluates. The
-test for any sentence: could the writer read it and say *"no, that's not what I wrote"*? If
-so it is a restatement and belongs. If instead they would say *"huh, I hadn't thought of
-that"*, it is a contribution and does not.
-
-Tone is the exception that proves the rule, and it is worth stating why it is allowed. Naming
-the tone is a report on the prose the writer has already written, the way a reader would
-describe it after finishing. It stays restatement as long as it describes the effect and stops
-short of prescribing one. *"Wry, close third, more dread than the plot has yet earned"* is a
-reading. *"This should be funnier"* is a diagnosis, and Diagnose is a live response, not a
-stored verdict. Tone read wrong is as useful as worldbuilding read wrong: it tells the writer
-their subtext is not landing.
+test for any sentence: could the writer read it and say *"no, that's not what I wrote"*? If so
+it is a restatement and belongs. If instead they would say *"huh, I hadn't thought of that"*,
+it is a contribution and does not.
 
 ### What Never Goes In
 
@@ -131,37 +157,44 @@ their subtext is not landing.
 - A resolution to a listed contradiction. List both halves and stop.
 - An assessment of quality, readiness, or what needs work. That is Diagnose, and Diagnose is
   a live response to the writer, not a stored verdict about their book.
-- A theme or meaning the writer has not stated. Describing what happens is restatement;
-  declaring what it is *about* is interpretation. Quote their words if they wrote it.
-- A question the agent thought of. See the record above.
+- A theme, symbol, or meaning the writer has not stated. Describing what happens is
+  restatement; declaring what it is *about* is interpretation. That belongs in `themes.md`,
+  which exists only when the writer turned the interpretive layer on.
+- A question the agent thought of. See `open-questions.md` above.
 
 ### The Trailer
 
-The last line of the file is the commit the file was built from:
+The last line of `index.md` is the commit the directory was built from:
 
 ```markdown
 git_sha: 4f2a9c1e8b3d5a70c26f18e94b0d7a3c5e2f8b19
 ```
 
-Write it whenever any part of the file is written, from the vault's current `HEAD`. When the
-vault is not a git repository, write `git_sha: none` and leave it there — an unversioned vault
+Write it whenever any file in the directory is written, from the vault's current `HEAD`. One
+SHA covers the whole directory — the files are updated together and dated together. When the
+vault is not a git repository, write `git_sha: none` and leave it there. An unversioned vault
 is normal, and the sync check simply reports nothing to compare.
 
-The SHA is what makes the file self-dating. Without it the only way to know whether the record
-still matches the vault is to re-read every canon file at every session start.
+The SHA is what makes the directory self-dating. Without it the only way to know whether the
+record still matches the vault is to re-read every canon file at every session start.
 
 ### Sync At Session Start
 
-Before the first substantive response, and before trusting anything in this file:
+Do this at the **start** of the conversation, before the first substantive response and before
+trusting anything in the directory. Not at the end: writers stop talking, and a wrap-up step
+that depends on the session ending cleanly will not run.
 
-1. Spawn `Creative - Vault Sync` with the vault root and the recorded `git_sha`.
+1. Spawn `Creative - Vault Sync` with the vault root and the `git_sha` from `index.md`.
 2. On `up-to-date`, the record stands. Read on.
-3. On `no-baseline` or `not-a-git-repo`, the file cannot be dated. Say so in one line and
+3. On `no-baseline` or `not-a-git-repo`, the directory cannot be dated. Say so in one line and
    treat the record as unverified until it is checked against canon.
 4. On a newer commit, read the canon and draft files the diff names — those files only, not
-   the whole vault. Update the record for what changed, rewrite whole any reading section the
-   changes made wrong, and write the new SHA. Say what you are updating and why, then spawn
-   the scribe.
+   the whole vault. Update the record in whichever files the changes touch, rewrite whole any
+   reading section the changes made wrong, and write the new SHA to `index.md`. Say what you
+   are updating and why, then spawn the scribe.
+
+Only the files the diff touches are rewritten. A commit that changes one character file does
+not rewrite `plot.md`, and that separation is the reason the directory is split.
 
 A dirty working tree means the writer has uncommitted changes. Say so and read the changed
 files, but do not advance the SHA past `HEAD` — the recorded SHA names a commit, never a
@@ -180,19 +213,20 @@ Update the **record** when a turn produces something the next session would othe
 Rewrite a **reading** section when the material under it moved enough that the restatement is
 now wrong — a scene drafted, a rule of the world changed, a thread resolved. Rewrite it whole
 rather than patching a sentence, and re-derive it from canon rather than from the version on
-the page. Restamp the date.
+the page.
 
-Do not update for an ordinary exchange. Most turns change nothing.
+Do not update for an ordinary exchange. Most turns change nothing. Touch only the files the
+change actually reaches.
 
-Every update is a visible action: name what you are writing and why, then spawn the scribe.
-Never write to this file silently.
+Every update is a visible action: name which file you are writing and why, then spawn the
+scribe. Never write to this directory silently.
 
-Keep the record short enough to scan at session start. When a section outgrows that, replace
-the detail with a pointer to the canon file — the record's job is to say where a thing lives,
-not to hold a second copy of it. The reading is allowed to be longer, because re-orientation
-is what it is for, but it is a page and not a treatment.
+Keep each record short enough to scan. When one outgrows that, replace the detail with a
+pointer to the canon file — the record's job is to say where a thing lives, not to hold a
+second copy of it. A reading is allowed to be longer, because re-orientation is what it is for,
+but each is a page and not a treatment.
 
-When the file is missing, offer to build it and say what it will contain. When the record
+When a file is missing, offer to build it and say what it will contain. When the record
 disagrees with canon, canon wins and the file gets corrected — flag the disagreement rather
 than quietly overwriting. When the writer corrects a reading section, that correction is a
 statement by the writer: record it.

@@ -28,6 +28,9 @@ absent, so no instruction can talk the agent into it. **Soft** means a rule the 
 | No creative instruction reaches a technical agent | **Hard** | The same filter, in the other direction. |
 | No creative instruction becomes a global Cursor rule | **Hard** | `propagate_cursor_rules_once` skips every non-technical doc unconditionally. |
 | The skill allow-list | Soft | Every harness offers its whole skill catalog and matches by description. The allow-list is prose in the profile instruction; a technical skill whose description happens to match can still surface. A guard test keeps the list in sync with the skills on disk, which is a different thing from enforcing it at runtime. |
+| The interpretive layer stays off until you ask | Soft | It is a rule in `creative-modes` and a violation class in `creative-compliance`, checked by the same two-layer compliance pass. Nothing at the harness level can compel it. |
+| Output does not read as AI-generated prose | Soft | A named violation class with an explicit tell list, caught by the compliance pass. Judgment, not a gate. |
+| Reading sections stay plainer than your prose | Soft | Same mechanism: a violation class with a worked example, checked, not enforced. |
 | The compliance pass runs every turn | Soft | No agent definition can compel a subagent call. The editor self-checks inline and spawns the compliance agent for substantive responses. Two layers of discipline, not a gate. |
 | The scribe writes only under `_editor-notes/` and `scene-summaries/` | Soft | Tool grants in this corpus are all-or-nothing. The scribe holds the write bit for the whole filesystem and is instructed to refuse everything else. |
 
@@ -45,7 +48,7 @@ vault/
   drafts/                 # manuscript                 READ ONLY
   scene-summaries/        # macro rollups              written on request
   _editor-notes/          # agent-authored             written freely
-    project-context.md
+    context/              # one file per content type
     session-logs/
     user-patterns.md
 ```
@@ -59,38 +62,73 @@ announced as an action.
 
 ## Project Context
 
-`_editor-notes/project-context.md` is what the editor reads first, so you can leave a project
-for six months, come back, and have both of you re-oriented in one read.
+`_editor-notes/context/` is what the editor reads first, so you can leave a project for six
+months, come back, and have both of you re-oriented in one read.
 
-It has two halves.
+It is a directory, not one document, so a change to your cast does not rewrite your plot and
+you can correct one file without reading the rest.
 
-**The record** is fact — your cast and place names spelled your way, the thread labels you use,
-decisions you declared settled, open contradictions with both halves cited, and the questions
-*you* left open. That last one is strict: a question the editor noticed is a diagnosis and
-belongs in a response, not in your file. Only questions you actually posed get recorded, with a
-citation.
+```text
+_editor-notes/context/
+  index.md            # vault map, what was read, git_sha
+  characters.md       # your cast
+  setting.md          # places, factions, how the world works
+  plot.md             # threads, settled decisions, contradictions, synopsis
+  scenes.md           # the scenes that exist, a line or two each
+  style.md            # tone and voice as your prose reads
+  open-questions.md   # the questions YOU left open
+  themes.md           # only if you turn the interpretive layer on
+```
 
-**The reading** is the editor's own words — a synopsis of the story so far, the worldbuilding as
-it understands it, a list of the scenes that exist with a line or two each, and the tone the
-book reads as. This is a comprehension check you can grade. If the worldbuilding section
-describes a world you don't recognize, that is the most useful thing the file will ever tell
-you. Correct it, and the correction becomes a statement of yours in the record.
+Every file except `index.md` and `themes.md` has two halves.
 
-The tone section is there for subtext. It says how the book actually reads — register,
-distance, humor, how much dread it carries, what shelf a reader would put it on — not how it
-seems to be aiming. Tone read wrong tells you the same thing worldbuilding read wrong does:
-what you intended is not on the page yet.
+**The record** is fact — your names spelled your way, the thread labels you use, decisions you
+declared settled, contradictions with both halves cited. **The reading** is the editor's own
+words, and it is a comprehension check you can grade. If `setting.md` describes a world you
+don't recognize, that is the most useful thing the directory will ever tell you. Correct it,
+and the correction becomes a statement of yours in the record.
+
+`open-questions.md` is strict about whose questions: only ones you actually posed, with a
+citation. A question the editor noticed is a diagnosis and belongs in a response, not in your
+files.
+
+`style.md` is there for subtext. It says how the book actually reads — register, distance,
+humor, how much dread it carries, what shelf a reader would put it on — not how it seems to be
+aiming. Tone read wrong tells you what you intended is not on the page yet.
 
 Every reading section is stamped and marked as restatement, and the editor is forbidden from
 citing one or building a later reading on an earlier one. It re-derives from canon each time.
 That rule is what stops the editor's own paraphrase from being read back as your fact three
 sessions later and hardening into canon nobody wrote.
 
-Neither half proposes, resolves, or evaluates. No name or event you didn't write. No resolution
-to a contradiction it lists. No verdict on whether the book is working — that's Diagnose, and
-Diagnose is a live conversation, not a stored opinion about your book.
+### Written Plainer Than You Write
 
-The last line of the file is the commit it was built from:
+Every reading section is deliberately written **below** your natural level: your nouns for your
+things, the plainest accurate word for everything else, one fact per sentence, no metaphor you
+didn't write first.
+
+This is on purpose and it is the same principle as the interpretive layer. A polished phrasing
+of your own material, read back at the start of every session, becomes the phrasing you reach
+for. The summary should remind you what you wrote, not offer you a better way to have written
+it. If a line in a reading section reads more elegantly than your prose, that's a bug — tell the
+editor and it will rewrite it flatter.
+
+### Neither Half Interprets
+
+No name or event you didn't write. No resolution to a contradiction it lists. No verdict on
+whether the book is working — that's Diagnose, and Diagnose is a live conversation, not a stored
+opinion about your book. No theme, symbol, or meaning you haven't stated: that lives in
+`themes.md`, and only if you turn the layer on.
+
+It is offered, not imposed. The editor builds the directory when you ask, updates the record
+when a turn settles something a future session would re-ask, rewrites a reading when the
+material under it moved, touches only the files a change actually reaches, and announces every
+write. Like everything under `_editor-notes/`, these are plain Markdown you can read, correct,
+or delete. When the record disagrees with canon, canon wins.
+
+### Staying Current
+
+The last line of `index.md` is the commit the directory was built from:
 
 ```markdown
 git_sha: 4f2a9c1e8b3d5a70c26f18e94b0d7a3c5e2f8b19
@@ -99,14 +137,47 @@ git_sha: 4f2a9c1e8b3d5a70c26f18e94b0d7a3c5e2f8b19
 If your vault is a git repository, the editor's first action of every session is to compare
 that SHA against your current `HEAD`. When you have committed work since, it reads the files
 the diff names — those files only — updates the record, rewrites any reading section the
-changes made wrong, and tells you in one line what moved. It never advances the SHA past a
-commit, so uncommitted work is reported as uncommitted rather than silently absorbed. An
-unversioned vault records `git_sha: none` and simply skips the check.
+changes made wrong, and tells you in one line what moved.
 
-It is offered, not imposed. The editor builds it when you ask, updates the record when a turn
-settles something a future session would re-ask, rewrites a reading section when the material
-under it moved, and announces every change. Like everything under `_editor-notes/`, it is plain
-Markdown you can read, correct, or delete. When the record disagrees with canon, canon wins.
+This runs at the **start** of the conversation, not the end. A wrap-up step that depends on you
+saying goodbye never runs, because you'll just stop talking. It never advances the SHA past a
+commit, so uncommitted work is reported as uncommitted rather than silently absorbed. An
+unversioned vault records `git_sha: none` and skips the check.
+
+## The Interpretive Layer
+
+Off by default, in every session, including one where it was on last time.
+
+While it's off, the editor will not tell you what your story is about — no themes, no symbols,
+no reading of what a relationship is *really* doing. It also won't hint that it has one, and
+won't ask whether you'd like to hear it. Offering is a way of delivering.
+
+Turn it on with `layer: interpretive on`, "read the themes", or "what do you think this is
+about". Turn it off with `layer: interpretive off`, or by starting a new session.
+
+The reason for the default is not caution. An unrequested reading of your own story either
+spoils a discovery you were walking toward, or plants an idea you didn't originate and can no
+longer tell apart from your own. The second is worse and it's silent — you can't audit your own
+sense of authorship after the fact. Think with you, not for you.
+
+While the layer is on, interpretation is stored in `context/themes.md`. Turn it off and the
+editor stops writing there. It leaves what's already written, because it's yours now, but won't
+update it or read it back to you unprompted.
+
+## Prose That Doesn't Read As Generated
+
+A hard constraint, not a preference. It covers Generate, Copyedit, and every word the editor
+writes into `_editor-notes/`.
+
+`creative-compliance` names the tells the compliance pass checks for: the *"it's not X, it's
+Y"* pivot, the rule-of-three where two would do, a closing sentence that restates the paragraph
+more resonantly, stacked hedges, uniform sentence length, and a vocabulary list starting with
+*delve* and *tapestry*. The repair is to rewrite flat — state it once, in the shortest true
+sentence. Notes that come out dull are correct; a note isn't supposed to be good prose.
+
+This is a soft guarantee in the same sense the compliance pass is: it's checked, by the editor
+inline and by the compliance agent on substantive responses, but nothing enforces it at the
+harness level.
 
 ## Installing the Canon Guard
 

@@ -23,11 +23,11 @@ Deliver the corpus-native subset of the Creative Editor Toolkit spec — modes, 
   - `Creative - Developmental Editor` — user-invocable, `tools: [read, search, todo, agent]`. **No `edit`.**
   - `Creative - Scribe` — `tools: [read, edit]`. Sole holder of the write bit; appends to `_editor-notes/` and `scene-summaries/` only. Never reasons about the manuscript.
   - `Creative - Compliance Check` — `tools: [read]`. Scans a draft response against the active mode's rules.
-  - `Creative - Vault Sync` — `tools: [execute]`. Resolves the vault's current git SHA, compares it to the one recorded in `project-context.md`, and returns the file-level diff. Read-only git subcommands only. **No `edit`.**
+  - `Creative - Vault Sync` — `tools: [execute]`. Resolves the vault's current git SHA, compares it to the one recorded in `context/index.md`, and returns the file-level diff. Read-only git subcommands only. **No `edit`.**
 - **`creative-profile.instructions.md`** — `profile: creative`, `applyTo: **/creative-*.agent.md`. Carries the skill **allow-list** (load only the named creative skills; ignore every other catalog entry regardless of description match), the canon boundary, and the honest-limits statement.
 - **Creative skills** (all `profile: creative`):
-  - `creative-modes` — the six-mode gate (Interrogate, Reflect, Diagnose, Adversarial, Generate, Copyedit), permitted output per mode, delivery presets, mid-session switch commands, auto-exit from Generate.
-  - `creative-compliance` — per-mode violation rules, shared by the editor's inline self-check and the compliance agent.
+  - `creative-modes` — the six-mode gate (Interrogate, Reflect, Diagnose, Adversarial, Generate, Copyedit), permitted output per mode, delivery presets, mid-session switch commands, auto-exit from Generate, and the interpretive layer that sits across every mode and is off by default.
+  - `creative-compliance` — per-mode violation rules plus three cross-mode ones (unrequested interpretation, prose that reads as generated, reading level in restatement), shared by the editor's inline self-check and the compliance agent.
   - `creative-vault` — vault detection, canon/notes boundary, session-log and `user-patterns.md` formats, scene-summary rollups, macro/micro zoom.
   - `creative-question-banks` — worldbuilding, plot, character, pacing, theme.
 - **Baseline trim** (separable workstream) — remove the `context7` and `code-review-graph` **instruction sections** from `BASELINE_SECTIONS` (`deploy_agents.py:44`), and list them in `RETIRED_BASELINE_SECTIONS` so the blocks a previous deploy already wrote are deleted rather than left stale and from `source_of_truth/baseline/baseline-instructions.md`. Keep `phase-doc-sync`, `agent-discovery`, `know-the-audience`. The companion-tool bootstrap is deliberately untouched: `ensure_code_review_graph` (`deploy_agents.py:333`), `ensure_context7` (`deploy_agents.py:358`), their registration at lines 383-384, and the `--skip-tools` flag at line 503 all keep working exactly as they do now. A repository-local rule can only be honored if the tool it names is installed, so removing the global rule must not remove the tool.
@@ -89,7 +89,11 @@ Deliver the corpus-native subset of the Creative Editor Toolkit spec — modes, 
 - [ ] Guard tests derive their coverage from disk — adding a creative skill without allow-listing it fails a test.
 - [ ] `docs/CREATIVE_TOOLKIT.md` states, per guarantee, whether it is hard or soft and why, and gives copy-paste install steps for the canon guard hook.
 - [ ] The canon guard denies `Write`, `Edit`, and shell writes into `canon/` and `drafts/`, allows writes under `_editor-notes/` and `scene-summaries/`, allows every read of the manuscript, and denies an unreadable payload. Asserted by running the hook, not by reading its source.
-- [ ] `_editor-notes/project-context.md` carries a `git_sha` trailer, and the editor's first session action is a sync against it.
+- [ ] `_editor-notes/context/` is a directory of one file per content type — index, characters, setting, plot, scenes, style, open questions — and a change that touches one leaves the others unwritten.
+- [ ] `_editor-notes/context/index.md` carries a `git_sha` trailer, and the editor's first session action is a sync against it, at the start of the conversation rather than the end.
+- [ ] The interpretive layer is off by default in every session, has explicit on and off commands, does not persist across sessions, and is a named violation class in `creative-compliance` that covers offering and hinting as well as stating.
+- [ ] `creative-compliance` names the prose tells that mark text as machine-written and gives the repair, and the rule covers `_editor-notes/` as well as Generate and Copyedit.
+- [ ] `creative-compliance` states the reading-level floor for restatement with a worked example, and `creative-vault` carries the full rule.
 - [ ] No `creative-*` agent except the vault-sync probe holds `execute`, and the probe holds no `edit`.
 
 ## QA Considerations

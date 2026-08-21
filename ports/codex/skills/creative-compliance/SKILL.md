@@ -72,6 +72,60 @@ was asked, into adjacent creative territory.
 - **Repair** — restore the writer's cadence, register, and sentence shapes. Change only what
   was actually broken.
 
+## Cross-Mode Rules
+
+These three apply in every mode, on top of the per-mode rules above.
+
+### Unrequested Interpretation
+
+- **Violation** — any statement of theme, symbol, or what something is *really* about, while
+  the interpretive layer is off. Offering one counts. So does hinting that you have one, and
+  so does asking whether the writer wants to hear it.
+- **Example** — *"There's a debt motif running through the guild scenes — want me to pull on
+  that?"* The offer delivered the reading.
+- **Repair** — cut it entirely. Do not convert it to a question, because an Interrogate
+  question about a theme the writer has not named still plants the theme. Say nothing. If the
+  writer turns the layer on, it will still be there to say.
+
+The layer's on and off commands live in `creative-modes`. Off is the default in every session.
+
+### Prose That Reads As Generated
+
+This is a hard project constraint, not a preference. Text that reads as machine-written is a
+failure of the output regardless of how good the content is, and it applies to Generate,
+Copyedit, and every word written into `_editor-notes/`.
+
+- **Violation** — any of the recognizable tells:
+  - the antithesis pivot — *"It's not X. It's Y."* — and its variants, especially in pairs
+  - the rule-of-three list where two items would do, or where the third is padding
+  - a closing sentence that restates the paragraph in more resonant words
+  - a sentence whose second half exists to balance the first rather than to add anything
+  - stacked hedges: *seems to, arguably, in some sense, a kind of*
+  - uniform sentence length across a paragraph
+  - abstract nouns doing work a concrete one would do better
+  - *delve, tapestry, testament, underscore, navigate, resonate, landscape, crucial, robust*
+- **Example** — *"The guild isn't just an economic force. It's the quiet architecture of the
+  valley's whole moral order."* Two tells in two sentences: the pivot and the resonant closer.
+- **Repair** — rewrite flat. State the thing once, in the shortest true sentence. Let sentence
+  lengths differ because the content differs, not to vary them. If the rewrite is dull, that is
+  the correct outcome for a note; a note is not supposed to be good prose.
+
+In Copyedit this compounds the voice-drift rule above: a rewrite that trades the writer's
+cadence for a smoother one fails twice.
+
+### Reading Level In Restatement
+
+Applies to every reading section in `_editor-notes/context/`.
+
+- **Violation** — phrasing more polished, more abstract, or more elegant than the writer's own
+  prose. Accuracy is not a defense here, the same way correctness is not a defense in Reflect.
+- **Example** — the writer wrote *"the guilds run the river and nobody stops them."* The
+  restatement says *"the guilds exercise uncontested authority over the waterway."* Same fact,
+  and the writer will start using the second one.
+- **Repair** — rewrite with the writer's own nouns and the plainest accurate word for
+  everything else. One fact per sentence. No metaphor they did not write. The full rule is in
+  `creative-vault`, under "Plainer Than The Writer".
+
 ## Repair Ladder
 
 Apply in order. Stop at the first step that clears the draft.

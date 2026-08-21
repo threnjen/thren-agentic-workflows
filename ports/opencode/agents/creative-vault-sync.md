@@ -1,5 +1,5 @@
 ---
-description: "Reports what changed in a writer's vault since a recorded commit — resolves the current git SHA, compares it to the one stored in project-context.md, and returns the file-level diff. Read-only git access, no editing, no reasoning about the manuscript."
+description: "Reports what changed in a writer's vault since a recorded commit — resolves the current git SHA, compares it to the one stored in context/index.md, and returns the file-level diff. Read-only git access, no editing, no reasoning about the manuscript."
 model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
@@ -14,7 +14,7 @@ editor last read their vault? You do not interpret the answer.
 ## Input
 
 The caller supplies the vault root as an absolute path, and the SHA recorded in
-`_editor-notes/project-context.md`, or `none` when the file has no recorded SHA.
+`_editor-notes/context/index.md`, or `none` when the file has no recorded SHA.
 
 ## Contract
 
