@@ -70,7 +70,7 @@ you can correct one file without reading the rest.
 
 ```text
 _editor-notes/context/
-  index.md            # vault map, what was read, git_sha
+  index.md            # the map: what every other file holds, and the git_sha
   characters.md       # your cast
   setting.md          # places, factions, how the world works
   plot.md             # threads, settled decisions, contradictions, synopsis
@@ -79,6 +79,17 @@ _editor-notes/context/
   open-questions.md   # the questions YOU left open
   themes.md           # only if you turn the interpretive layer on
 ```
+
+`index.md` is the entry point — the one file the editor loads when a session starts. It is a
+table of contents: one row per context file saying what that file holds and when it was last
+written, plus your vault map and the SHA. Nothing else. A row names the file that describes
+your cast; it never describes your cast. The moment it starts doing that it has become an
+eighth summary drifting from the seven it points at.
+
+The index is what lets the editor open the two files a session needs instead of all seven, and
+it is how it knows a file is missing and worth offering to build. Every write to a context file
+updates that file's row in the same action, so a date you see in the index is a date the editor
+just wrote.
 
 Every file except `index.md` and `themes.md` has two halves.
 
@@ -126,9 +137,24 @@ material under it moved, touches only the files a change actually reaches, and a
 write. Like everything under `_editor-notes/`, these are plain Markdown you can read, correct,
 or delete. When the record disagrees with canon, canon wins.
 
+### If You Already Have A `project-context.md`
+
+An earlier version of this toolkit kept everything in one file. That vault still works and
+nothing about it is broken — it just isn't split.
+
+The editor will notice, say so, and offer to split it. It won't do it unasked, because the
+single-file layout is a legitimate way to keep this. Until you agree, that file stays fully
+editable: the scribe can rewrite it in place, so no correction is ever blocked waiting on a
+migration.
+
+If you do agree, it re-derives each reading section from canon rather than copying the old
+paraphrase across — the old text was written under different rules — and leaves
+`project-context.md` behind as a one-line pointer to `context/`. It won't delete your file.
+
 ### Staying Current
 
-The last line of `index.md` is the commit the directory was built from:
+The last line of `index.md` — the same file the editor loads first — is the commit the
+directory was built from:
 
 ```markdown
 git_sha: 4f2a9c1e8b3d5a70c26f18e94b0d7a3c5e2f8b19

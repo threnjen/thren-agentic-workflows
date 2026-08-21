@@ -53,7 +53,7 @@ rewrite the plot, and the writer can correct one of them without reading the res
 
 ```text
 _editor-notes/context/
-  index.md            # vault map, what was read to build it, git_sha
+  index.md            # the map: what every other file holds, and the git_sha
   characters.md       # cast
   setting.md          # places, factions, how the world works
   plot.md             # threads, settled decisions, contradictions, synopsis
@@ -75,8 +75,9 @@ whether the agent has actually understood the material — and a wrong one is wo
 summary at all, because it is diagnostic. The writer should read it as a comprehension check
 and correct it.
 
-`index.md` holds the one `git_sha` trailer for the whole directory. `themes.md` exists only
-while the interpretive layer is on; see `creative-modes`.
+`index.md` is the entry point. It is the file the editor loads when a session starts, and it
+holds the one `git_sha` trailer for the whole directory. `themes.md` exists only while the
+interpretive layer is on; see `creative-modes`.
 
 Write both halves under Reflect discipline: restate, never extend. `creative-compliance`
 governs what that permits, and it also governs the two rules below on how the restatement is
@@ -116,11 +117,51 @@ wrong even though it is accurate. Rewrite it flatter.
 `style.md` is the one place a precise term is allowed over a plain one, because naming a
 register needs the word for that register. It still takes the plainest word that is accurate.
 
+### index.md
+
+`index.md` is a table of contents, not a summary. It is the one file loaded on every session
+start, and its job is to say what exists and where, so the editor can open the two files a
+session actually needs instead of all seven.
+
+It holds three things and nothing else:
+
+1. **The map** — one row per context file.
+
+   ```markdown
+   | File | Holds | Last written |
+   |---|---|---|
+   | `characters.md` | Cast, with the canon file each is defined in | 2026-08-20 |
+   | `setting.md` | Places, factions, how the world works | 2026-08-18 |
+   | `plot.md` | Threads, settled decisions, contradictions, synopsis | 2026-08-20 |
+   | `scenes.md` | Scenes that exist, one or two lines each | 2026-08-11 |
+   | `style.md` | Tone and voice as the prose reads | 2026-08-11 |
+   | `open-questions.md` | Questions the writer left open | 2026-08-20 |
+   ```
+
+   List a file only if it exists. A missing row means a missing file, which is how the editor
+   knows to offer to build it.
+
+2. **The vault map** — the canon subdirectories and what each holds, plus the canon and draft
+   files the directory was built from, and the date.
+
+3. **The trailer** — the `git_sha`, on the last line.
+
+**A row says where a thing lives. It never says what the thing says.** The moment `Holds`
+starts describing the cast rather than naming the file that describes the cast, the index has
+become an eighth summary that drifts from the seven it points at. Keep every `Holds` cell to a
+noun phrase.
+
+`index.md` has no reading half. It restates nothing, so the reading-level rule and the
+marking line do not apply to it.
+
+Update a row's `Last written` in the same action that writes the file it points at. An index
+that dates a file it did not just write is worse than no date, because it will be believed.
+
 ### The Files
 
 | File | Record half | Reading half |
 |---|---|---|
-| `index.md` | Canon subdirectories and what each holds; the canon and draft files read to build the directory, and the date; the `git_sha` trailer | none |
+| `index.md` | The map above: one row per context file, the vault map, and the `git_sha` trailer | none |
 | `characters.md` | Character names, spelled as the writer spells them, with the canon file each is defined in | Who each one is and what they want, in the agent's own words |
 | `setting.md` | Places and factions, same shape as characters | How the world works, what governs it, what is scarce, who holds power. This is the comprehension check. Getting it wrong visibly is the point. |
 | `plot.md` | Thread labels the writer uses and where each is established; decisions the writer declared settled, quoted or near-verbatim; contradictions where two canon statements cannot both hold, both cited | The synopsis: what is known of the story so far, what happens, who it happens to, where it stands. Say plainly what is unwritten or undecided rather than smoothing over the gap. |
@@ -176,20 +217,45 @@ is normal, and the sync check simply reports nothing to compare.
 The SHA is what makes the directory self-dating. Without it the only way to know whether the
 record still matches the vault is to re-read every canon file at every session start.
 
+### Migrating A Single-File Layout
+
+An earlier layout kept all of this in one file, `_editor-notes/project-context.md`. A vault
+built under it still works, and it is not broken. It is just not split.
+
+When `project-context.md` exists and `context/` does not:
+
+1. Say what you found and offer to split it. Do not split it unasked — it is the writer's file
+   and the single-file layout is a legitimate way to keep it.
+2. On agreement, write each `context/` file from the material already in `project-context.md`,
+   re-deriving every reading section from canon rather than copying the old paraphrase forward.
+   An old reading was written under different rules and may carry phrasing the current ones
+   forbid.
+3. Build `index.md`, including a row per file written and the current `git_sha`.
+4. Replace `project-context.md` with a one-line pointer to `context/`. Do not delete it —
+   deleting the writer's file is not yours to do, and a pointer costs nothing.
+
+Until the writer agrees, keep using `project-context.md` as it stands. The scribe can rewrite
+it in place, so the older layout stays fully maintainable and no correction is blocked while a
+vault waits to be split.
+
 ### Sync At Session Start
 
 Do this at the **start** of the conversation, before the first substantive response and before
 trusting anything in the directory. Not at the end: writers stop talking, and a wrap-up step
 that depends on the session ending cleanly will not run.
 
-1. Spawn `Creative - Vault Sync` with the vault root and the `git_sha` from `index.md`.
-2. On `up-to-date`, the record stands. Read on.
-3. On `no-baseline` or `not-a-git-repo`, the directory cannot be dated. Say so in one line and
+1. Read `index.md`. It is the map: what exists, when each file was last written, and the
+   `git_sha`. Read it before anything else in the directory, and open the other files as the
+   session needs them rather than all at once.
+2. Spawn `Creative - Vault Sync` with the vault root and that `git_sha`.
+3. On `up-to-date`, the record stands. Read on.
+4. On `no-baseline` or `not-a-git-repo`, the directory cannot be dated. Say so in one line and
    treat the record as unverified until it is checked against canon.
-4. On a newer commit, read the canon and draft files the diff names — those files only, not
+5. On a newer commit, read the canon and draft files the diff names — those files only, not
    the whole vault. Update the record in whichever files the changes touch, rewrite whole any
    reading section the changes made wrong, and write the new SHA to `index.md`. Say what you
-   are updating and why, then spawn the scribe.
+   are updating and why, then spawn the scribe. Update each rewritten file's `Last written`
+   row in `index.md` in the same pass.
 
 Only the files the diff touches are rewritten. A commit that changes one character file does
 not rewrite `plot.md`, and that separation is the reason the directory is split.
@@ -217,7 +283,8 @@ Do not update for an ordinary exchange. Most turns change nothing. Touch only th
 change actually reaches.
 
 Every update is a visible action: name which file you are writing and why, then spawn the
-scribe. Never write to this directory silently.
+scribe. Never write to this directory silently. Every write to a context file also updates that
+file's row in `index.md` — a new file gets a row, a rewritten one gets a fresh date.
 
 Keep each record short enough to scan. When one outgrows that, replace the detail with a
 pointer to the canon file — the record's job is to say where a thing lives, not to hold a

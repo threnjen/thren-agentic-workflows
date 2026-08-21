@@ -23,10 +23,18 @@ The caller supplies:
    **Refuse anything under `canon/` or `drafts/`, or outside the vault entirely.** Refuse by
    returning the refusal and the path — do not find a nearby writable location instead.
 2. On `append`, append. Never rewrite, reorder, deduplicate, or delete an existing line.
-3. `replace` is permitted for files directly under `_editor-notes/context/` only, because
-   those are maintained files rather than records and a correction to one must land in place.
-   Refuse `replace` for any other path, including anything nested deeper than that directory.
+3. `replace` is permitted for two destinations, because both are maintained files rather than
+   records and a correction to one must land in place:
+   - any file directly under `_editor-notes/context/`
+   - `_editor-notes/project-context.md`, the single-file layout this directory replaced
+
+   Refuse `replace` for any other path, including anything nested deeper than `context/`.
    Session logs are a record of what was said and are append-only without exception.
+
+   The second destination is why a vault built under the older layout can still be edited and
+   migrated. Without it the scribe refuses every fix to that file, and the writer's existing
+   notes become read-only with no way forward. Keep it until the layout is gone from real
+   vaults, not until it is gone from this repository.
 4. Create the file and its parent directories if absent.
 5. Write the text as given. Do not summarize it, tighten it, correct its grammar, or fix the
    writer's spelling. A verbatim capture of the writer's words is the entire point. This

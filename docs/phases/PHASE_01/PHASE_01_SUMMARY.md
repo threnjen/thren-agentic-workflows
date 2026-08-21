@@ -90,6 +90,8 @@ Deliver the corpus-native subset of the Creative Editor Toolkit spec — modes, 
 - [ ] `docs/CREATIVE_TOOLKIT.md` states, per guarantee, whether it is hard or soft and why, and gives copy-paste install steps for the canon guard hook.
 - [ ] The canon guard denies `Write`, `Edit`, and shell writes into `canon/` and `drafts/`, allows writes under `_editor-notes/` and `scene-summaries/`, allows every read of the manuscript, and denies an unreadable payload. Asserted by running the hook, not by reading its source.
 - [ ] `_editor-notes/context/` is a directory of one file per content type — index, characters, setting, plot, scenes, style, open questions — and a change that touches one leaves the others unwritten.
+- [ ] A vault holding the older single-file `_editor-notes/project-context.md` stays fully editable — the scribe accepts `replace` on it — and the editor offers a split rather than requiring one.
+- [ ] `context/index.md` is the single file loaded on session trigger, holds one row per context file naming what it holds and when it was last written, carries no content of its own, and is updated in the same action as any file it points at.
 - [ ] `_editor-notes/context/index.md` carries a `git_sha` trailer, and the editor's first session action is a sync against it, at the start of the conversation rather than the end.
 - [ ] The interpretive layer is off by default in every session, has explicit on and off commands, does not persist across sessions, and is a named violation class in `creative-compliance` that covers offering and hinting as well as stating.
 - [ ] `creative-compliance` names the prose tells that mark text as machine-written and gives the repair, and the rule covers `_editor-notes/` as well as Generate and Copyedit.
