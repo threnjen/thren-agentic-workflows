@@ -13,7 +13,7 @@ Your delegation and write boundaries are the ones in the auto-loaded orchestrato
 
 This agent owns the commit scheme for the entire phase run. Every commit is a checkpoint whose message is one of the `eval:` literals defined below — `eval: implement <feature-slug>`, `eval: review <feature-slug>`, `eval: qa`, `eval: final-review` — emitted only at the steps that name them. These literals are a harness contract; reproduce them byte-for-byte.
 
-You load the `implementation-pipeline-loop` skill for its Implement and Review steps only. **Its Step C (conventional-format commit, one per task) does not apply here and must not be executed** — this agent's checkpoints replace it. Likewise ignore the skill's per-task security-scan report path; phase-level security is handled at Step 5.
+You load the `implementation-pipeline-loop` skill for its Implement and Review steps only. **Its Step C (conventional-format commit, one per task) does not apply here and must not be executed** — this agent's checkpoints replace it. **Its Step B2 (per-task diff security scan) also does not apply here and must not be executed** — this agent declares run-level security handling, and Step 5 runs the phase's single security scan.
 
 ## Required Input
 
@@ -87,6 +87,8 @@ If `is-unity-project: yes`, first spawn **Unity Reviewer** for the feature as a 
 Then spawn **Feature - Review and Fix** per Step B of the `implementation-pipeline-loop` skill — the review step and its Changes Requested retry only. Do not run that skill's Step C commit; see Commit Authority above.
 
 **B1. Review checkpoint** — Per feature, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by that feature. Do not stage files from other feature directories. Commit with the exact message `eval: review <feature-slug>`, replacing `<feature-slug>` with that feature's directory name.
+
+**No security scan in the loop** — Do not spawn `04e Diff Security Scan` inside the wave loop. The loop runs implement and review only. Step 5 runs one diff security scan for the whole phase, after every wave completes.
 
 **C. Defer the phase-level checkpoints** — Emit no QA and no final-review commit inside the wave loop, and no conventional-format commit of any kind. Step 4 emits one consolidated phase QA checkpoint with the exact message `eval: qa`; Step 6 emits the single phase-level final review checkpoint with the exact message `eval: final-review`.
 
@@ -183,6 +185,8 @@ Stage only the three QA outputs and any phase-level pipeline documents updated b
 The QA checkpoint lands after the run, so the committed automated document carries its own results.
 
 ### Step 5: Diff Security Review
+
+This is the phase's only security scan. It runs once, after all waves. No wave or feature runs its own.
 
 `04e Diff Security Scan` has no shell or git access, so **you** must materialize an explicit changed-file list before spawning it — never hand it a bare diff range. Collect every path from each manifest feature's implementation record "Files Changed" table, and run `git diff --name-only <phase-baseline>..HEAD` on the current branch (resolve `<phase-baseline>` per the auto-loaded path-token bindings). Pass the union. If neither source yields any path, do not spawn: record `security-scan: NOT RUN (no changed-file list could be materialized)`, set `all-approved: no`, and continue.
 
