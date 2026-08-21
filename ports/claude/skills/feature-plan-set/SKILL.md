@@ -9,11 +9,6 @@ user-invocable: false
 
 The three-file plan convention: `-plan.md` is produced by the Feature - Decomposer; `-context.md` and `-tasks.md` are produced by the 04a-feature-plan-expander. All three files are consumed by 04b-feature-implementer, 04c-feature-review-and-fix, 04d-feature-qa-writer, and orchestrators.
 
-For a phase-decomposition request, producing `-plan.md` files does not finish
-the request. The Feature - Decomposer must invoke the plan expanders, verify all
-three files in every bundle, write and validate the manifest, and complete its
-commit gate in the same uninterrupted workflow.
-
 When decomposing a phase, the Feature - Decomposer must also produce the phase-level execution manifest at `dev/feature/[phase-name]-execution-manifest.md`. This manifest is not part of any single feature bundle; it is the schedule and dependency contract consumed by Phase - Execute.
 
 ## File Structure
@@ -68,7 +63,7 @@ Those five values are the evidence taxonomy for the whole plan set; §F reuses t
 - Identify existing patterns to follow (naming, structure, libraries)
 - Call out any deviations and justify them
 - Define interfaces/contracts (inputs, outputs, schemas, config)
-- For any new concrete API, file, config key, schema field, or test helper name that is not verified in the codebase and not copied exactly from the phase/request, label it `[PROPOSED - name TBD]`. Use this marker to signal that the implementer must choose the final idiomatic name and record it in implementation notes.
+- Name every concrete symbol under the Concrete Name Rule below
 - When a downstream feature depends on a new public API from a sibling feature, include that API contract in the upstream feature's acceptance criteria. Do not leave cross-feature API requirements only in relationship notes.
 - For compatibility, import/export, migration, or backfill features, identify the upstream generation, normalization, or validation API the downstream feature should reuse. If that API is new, include it in the upstream feature's acceptance criteria.
 
@@ -90,7 +85,30 @@ Those five values are the evidence taxonomy for the whole plan set; §F reuses t
 - Write top 5 high-value test cases or evidence checks (Given/When/Then where applicable)
 - For refactors, rewires, API changes, or any behavior-changing work, include a dedicated note on impacted existing tests, new tests required, and any Unity EditMode/PlayMode or manual QA coverage still needed. Test maintenance is in scope, not a deferred follow-up.
 - List test data, mocks, or fixtures needed
-- A planned test method name is a concrete name under §C's `[PROPOSED - name TBD]` rule; the third option here is to omit the name and describe the scenario instead.
+- A planned test method name is a concrete name under the Concrete Name Rule; the third option there is to omit the name and describe the scenario instead.
+
+## Concrete Name Rule
+
+This is the single definition. Every agent that writes or validates a plan applies it here; no other file restates it.
+
+A concrete name is any file path, method, class, field, XML element, USS class, UXML element, config key, schema field, test helper, test method, or log API named in a plan. Every one must satisfy exactly one of:
+
+- Verified to exist in the codebase — cite the exact existing name
+- Copied exactly from the Phase document or the request, and preserved
+- Labeled `[PROPOSED - name TBD]` when the name is neither verified nor copied
+
+For a test method, a fourth option applies: omit the name and describe the scenario instead. Never present an invented name as established fact. The implementer chooses the final idiomatic name for a `[PROPOSED - name TBD]` symbol and records it in implementation notes.
+
+## Phase-Level Discovery
+
+Some discovery results describe the phase, not one feature, and are identical across every feature bundle. The Feature - Decomposer captures each one **once** and passes it to every Plan Expander it spawns. An Expander writes the supplied values through and does not rediscover them:
+
+| Result | Used in |
+|---|---|
+| Tech stack, test runner command, test pass/fail baseline, lint command, format command | `-context.md` **Environment State** |
+| Phase-scoped test directory pattern found, and whether a current-phase consolidated test file is recommended | Discovery Delta, manifest verification assets |
+
+Running the test suite once per feature to produce the same baseline table is waste. An Expander runs its own detection only when the Decomposer supplied no block, and says so in its return.
 
 ## Stage Format
 

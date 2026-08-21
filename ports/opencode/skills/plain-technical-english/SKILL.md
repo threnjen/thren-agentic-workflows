@@ -1,6 +1,6 @@
 ---
 name: plain-technical-english
-description: Use in all communication to resolve ambiguity or when prose reads as dense, hedged, or easy to misread. Two modes: Strict for machine-read text, error messages, tool and agent descriptions, procedures, agent-to-agent instructions. Flavored for READMEs, PR descriptions, and replies. Never use on client-facing deliverables, marketing copy, or creative writing — client deliverables are governed by `engagement-client-voice` instead.
+description: "Rewrite existing text into plain technical English — a full pass that names the mode, flags each violation, and reports rule/original/rewrite per change. Use when asked to rewrite, tighten, clarify, or de-jargon a document, or when prose reads as dense, hedged, or easy to misread. The rules for text you are writing now are already carried by the `prose-standards` instruction; load this skill for the rewrite procedure and the full vocabulary rules. Never use on client-facing deliverables, marketing copy, or creative writing — client deliverables are governed by `engagement-client-voice` instead."
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 
@@ -9,6 +9,8 @@ description: Use in all communication to resolve ambiguity or when prose reads a
 Two things make English hard to parse: words with more than one meaning, and sentences with more than one possible structure. Controlled-language standards in aerospace maintenance (ASD-STE100 is the best known) exist to remove both, because a technician who misreads a step damages an aircraft. An agent that misreads a tool description calls the wrong tool. Same failure, same fix.
 
 This skill applies that discipline. It is not the ASD standard and does not claim compliance with it — no approved-word dictionary is used here.
+
+The `prose-standards` instruction already carries the mode gate, the sentence rules, and the hard limits into every user-invocable agent. This skill is the deep reference: the rewrite procedure, the full vocabulary rules, and the findings format. Load it to rewrite text that already exists.
 
 ## Never apply this to
 
