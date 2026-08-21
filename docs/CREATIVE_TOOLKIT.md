@@ -43,6 +43,7 @@ vault/
   drafts/                 # manuscript                 READ ONLY
   scene-summaries/        # macro rollups              written on request
   _editor-notes/          # agent-authored             written freely
+    project-context.md
     session-logs/
     user-patterns.md
 ```
@@ -53,6 +54,39 @@ before anything is treated as established fact.
 
 `_editor-notes/user-patterns.md` is yours. Read it, edit it, delete it. Every write to it is
 announced as an action.
+
+## Project Context
+
+`_editor-notes/project-context.md` is what the editor reads first, so you can leave a project
+for six months, come back, and have both of you re-oriented in one read.
+
+It has two halves.
+
+**The record** is fact — your cast and place names spelled your way, the thread labels you use,
+decisions you declared settled, open contradictions with both halves cited, and the questions
+*you* left open. That last one is strict: a question the editor noticed is a diagnosis and
+belongs in a response, not in your file. Only questions you actually posed get recorded, with a
+citation.
+
+**The reading** is the editor's own words — a synopsis of the story so far, the worldbuilding as
+it understands it, and a list of the scenes that exist with a line or two each. This is a
+comprehension check you can grade. If the worldbuilding section describes a world you don't
+recognize, that is the most useful thing the file will ever tell you. Correct it, and the
+correction becomes a statement of yours in the record.
+
+Every reading section is stamped and marked as restatement, and the editor is forbidden from
+citing one or building a later reading on an earlier one. It re-derives from canon each time.
+That rule is what stops the editor's own paraphrase from being read back as your fact three
+sessions later and hardening into canon nobody wrote.
+
+Neither half proposes, resolves, or evaluates. No name or event you didn't write. No resolution
+to a contradiction it lists. No verdict on whether the book is working — that's Diagnose, and
+Diagnose is a live conversation, not a stored opinion about your book.
+
+It is offered, not imposed. The editor builds it when you ask, updates the record when a turn
+settles something a future session would re-ask, rewrites a reading section when the material
+under it moved, and announces every change. Like everything under `_editor-notes/`, it is plain
+Markdown you can read, correct, or delete. When the record disagrees with canon, canon wins.
 
 ## Modes
 
