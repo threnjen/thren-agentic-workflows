@@ -848,13 +848,14 @@ class OrphanPruningTests(unittest.TestCase):
         # claude commands gain one, while codex and opencode gain all three.
         # `Creative - Vault Sync` (hidden, the family's read-only git probe)
         # added one file to claude agents (45 -> 46) and opencode/codex agents
-        # (60 -> 61); claude commands unchanged (not user-invocable). Counts
+        # (60 -> 61); claude commands unchanged (not user-invocable). Phase 02
+        # then added four hidden committee agents to the agent roots. Counts
         # recounted from disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 46),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 17),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 61),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 61),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 50),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 16),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 64),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 64),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:

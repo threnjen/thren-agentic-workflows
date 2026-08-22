@@ -74,7 +74,7 @@ Treat `dev/feature/[phase-name]-execution-manifest.md` as the single source of t
 2. If the manifest is absent, research the phase and create one lightweight plan per candidate feature before scheduling. Each plan states acceptance criteria, scope, dependency hypotheses, and expected file impact. Lightweight plans contain no context or task document.
 3. Build the dependency graph from runtime prerequisites and shared file scope. Derive dependency levels from that graph. Recompute the graph and order after every closed level.
 4. Keep the manifest path stable. Record every plan rewrite, reorder, split, merge, or delay with evidence naming the changed file, symbol, acceptance criterion, or dependency edge.
-5. Read each manifest entry and validate its status, dependency level, dependency edges, expected read and write sets, plan revision, last validation commit, stale reason, and resolved model status. Read the full field contract from `feature-plan-set`.
+5. Read each manifest entry and validate its `status`, `dependency_level`, `depends_on`, `expected_read_set`, `expected_write_set`, `plan_revision`, `last_validation_commit`, `stale_reason`, and `resolved_model_status`. Read the full field contract from `feature-plan-set`.
 6. Validate every selected feature bundle. Each bundle must contain `-plan.md`, `-context.md`, and `-tasks.md`. Expand only the selected feature against the repository state at selection time by spawning **Feature - Plan Expander** when its context or tasks are absent or stale.
 7. Capture phase-level discovery once: environment state, test baseline, lint and format commands, and the phase-scoped test directory pattern. Pass the captured values to every Plan Expander. Do not rediscover them per feature.
 8. Build an internal phase-to-feature fidelity table before writing plans. Preserve phase wording, concrete names, and deliverable order unless code evidence requires a change. Record each moved, deferred, renamed, reordered, split, merged, or delayed requirement in the manifest or affected plan with its reason.
@@ -166,6 +166,17 @@ Spawn **Feature - Review and Fix** as Reviewer A with the plan and diff for plan
 For a firing Unity row, spawn **Unity Reviewer**. For a firing visual row, spawn **Visual Verifier** using the selected plan flag and phase visual acceptance criteria. For the other firing specialist rows, spawn **05h Cleanliness Auditor**, **04e Diff Security Scan**, or **05e Dependency Auditor** with the scope named by its row.
 
 After every committee report returns, spawn **03m Finding Consolidator** with all four committee report paths. It writes one deduplicated, severity-ranked fix list and adjudicates disagreements. The orchestrator does not merge or rank findings.
+
+The committee artifact contract stays stable across the producer and consumer:
+
+| Lane | Report path | Finding fields |
+|---|---|---|
+| Reviewer B | `03j-reviewer-blast-radius-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
+| Reviewer C | `03k-reviewer-test-falsification-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
+| Reviewer D | `03l-reviewer-plan-blind-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
+| Consolidator | `03m-finding-consolidator-fix-list.md` | `id`, `severity`, `lane`, `finding`, `evidence`, `reviewers`, `action`, `status` |
+
+The consolidator consumes every committee report. The implementer consumes the consolidated fix list.
 
 **C. Consolidated fix loop** — Keep the implementer that wrote the feature addressable across review and fixes. Pass it the consolidator fix list without requiring rediscovery. If the harness cannot resume that handle, spawn a fresh implementer with the implementation record and the same fix list, and record the fallback. Only `Blocker` and `High` findings drive a fix round. Carry `Medium` and `Low` findings to phase final review. Run at most two fix rounds and re-review only the lanes that filed the findings being fixed. After two unsuccessful rounds, rewrite the feature plan once using the fix list as evidence and rebuild the feature. If the rebuilt feature still fails, mark the feature and its dependents blocked, then continue independent features.
 
