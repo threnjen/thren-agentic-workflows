@@ -151,6 +151,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
     def test_phase_review_agents_match_all_generated_harness_outputs(self) -> None:
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
         instructions = mod.load_instruction_docs()
+        routing = mod.load_model_routing()
         expected_slugs = tuple(sorted(PR_REVIEW_EVALUATOR_TOOLS))
 
         claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
@@ -178,7 +179,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 claude_path = mod.CLAUDE_AGENTS_DIR / f"{claude_identifier}.md"
                 self.assertEqual(
                     mod.render_claude_agent(
-                        agent, docs, claude_references, claude_identifier
+                        agent, docs, claude_references, claude_identifier, routing
                     ),
                     claude_path.read_text(encoding="utf-8"),
                 )
@@ -187,19 +188,20 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                     agent, opencode_stems
                 )
                 self.assertEqual(
-                    mod.render_opencode_agent(agent, docs, opencode_references),
+                    mod.render_opencode_agent(agent, docs, opencode_references, routing),
                     opencode_path.read_text(encoding="utf-8"),
                 )
 
                 codex_path = mod.CODEX_AGENTS_DIR / mod._codex_filename_for(agent)
                 self.assertEqual(
-                    mod.render_codex_agent(agent, docs, codex_references),
+                    mod.render_codex_agent(agent, docs, codex_references, routing),
                     codex_path.read_text(encoding="utf-8"),
                 )
 
     def test_diff_security_scan_agent_matches_all_generated_harness_outputs(self) -> None:
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
         instructions = mod.load_instruction_docs()
+        routing = mod.load_model_routing()
 
         agent = agents["04e-diff-security-scan"]
         self.assertFalse(agent.user_invocable)
@@ -224,7 +226,9 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         self.assertEqual(claude_identifier, "z-diff-security-scan")
         claude_path = mod.CLAUDE_AGENTS_DIR / f"{claude_identifier}.md"
         self.assertEqual(
-            mod.render_claude_agent(agent, docs, claude_references, claude_identifier),
+            mod.render_claude_agent(
+                agent, docs, claude_references, claude_identifier, routing
+            ),
             claude_path.read_text(encoding="utf-8"),
         )
 
@@ -233,14 +237,14 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         )
         self.assertEqual(opencode_path.name, "04e-diff-security-scan.md")
         self.assertEqual(
-            mod.render_opencode_agent(agent, docs, opencode_references),
+            mod.render_opencode_agent(agent, docs, opencode_references, routing),
             opencode_path.read_text(encoding="utf-8"),
         )
 
         codex_path = mod.CODEX_AGENTS_DIR / mod._codex_filename_for(agent)
         self.assertEqual(codex_path.name, "z-diff-security-scan.toml")
         self.assertEqual(
-            mod.render_codex_agent(agent, docs, codex_references),
+            mod.render_codex_agent(agent, docs, codex_references, routing),
             codex_path.read_text(encoding="utf-8"),
         )
 

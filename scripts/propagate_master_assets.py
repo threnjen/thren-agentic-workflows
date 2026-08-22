@@ -40,6 +40,7 @@ SOT_AGENTS_DIR = SOT_DIR / "agents"
 SOT_INSTRUCTIONS_DIR = SOT_DIR / "instructions"
 SOT_SKILLS_DIR = SOT_DIR / "skills"
 SOT_HOOKS_DIR = SOT_DIR / "hooks"
+SOT_CONFIG_DIR = SOT_DIR / "config"
 
 # Generated platform output roots under `ports/`.
 CLAUDE_AGENTS_DIR = PORTS_DIR / "claude" / "agents"
@@ -68,13 +69,23 @@ WATCH_DIRS = [
     SOT_SKILLS_DIR,
     SOT_INSTRUCTIONS_DIR,
     SOT_HOOKS_DIR,
+    SOT_CONFIG_DIR,
 ]
 # Agents that should not be propagated to any platform output directory.
 # Add a source slug string here to exclude an agent during propagation.
 # Currently empty — all source agents are propagated.
 PROPAGATION_EXCLUDE: set[str] = set()
 
-INVENTORY_COUNTERS = frozenset({"source_agents"})
+INVENTORY_COUNTERS = frozenset(
+    {
+        "source_agents",
+        "claude_tiered_agents",
+        "codex_tiered_agents",
+        "opencode_tiered_agents",
+        "cursor_tiered_agents",
+        "github_tiered_agents",
+    }
+)
 DEFAULT_CONVERGENCE_PASSES = 5
 MAX_CONVERGENCE_PASSES = 25
 
@@ -100,6 +111,85 @@ CLAUDE_FILE_ALIASES = {
 DEFAULT_PROFILE = "technical"
 CREATIVE_PROFILE = "creative"
 VALID_PROFILES = frozenset({DEFAULT_PROFILE, CREATIVE_PROFILE})
+MODEL_TIERS = ("low", "medium", "high")
+MODEL_HARNESSES = ("claude", "codex", "opencode", "cursor", "github")
+
+
+def _model_routing_path() -> Path:
+    """Return the routing path from the active source-of-truth root."""
+    return SOT_DIR / "config" / "model-routing.json"
+
+
+def load_model_routing() -> Dict[str, Dict[str, Dict[str, str]]]:
+    """Load and validate the central tier-to-harness model routing table."""
+    path = _model_routing_path()
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise ValueError(f"model routing configuration is missing: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"model routing configuration is invalid JSON: {path}") from exc
+
+    if not isinstance(raw, dict):
+        raise ValueError(f"model routing configuration must be an object: {path}")
+
+    if any(not isinstance(key, str) for key in raw):
+        raise ValueError(f"model routing configuration has a non-string tier key: {path}")
+
+    unknown_tiers = sorted(set(raw) - set(MODEL_TIERS))
+    if unknown_tiers:
+        raise ValueError(
+            f"model routing configuration has unknown tier(s) in {path}: "
+            f"{', '.join(unknown_tiers)}"
+        )
+
+    routing: Dict[str, Dict[str, Dict[str, str]]] = {}
+    for tier in MODEL_TIERS:
+        tier_config = raw.get(tier)
+        if not isinstance(tier_config, dict):
+            raise ValueError(f"model routing configuration is missing tier `{tier}`: {path}")
+        if any(not isinstance(key, str) for key in tier_config):
+            raise ValueError(
+                f"model routing configuration has a non-string harness key in {path}"
+            )
+        unknown_harnesses = sorted(set(tier_config) - set(MODEL_HARNESSES))
+        if unknown_harnesses:
+            raise ValueError(
+                f"model routing configuration has unknown harness(es) in {path}: "
+                f"{', '.join(unknown_harnesses)}"
+            )
+
+        routing[tier] = {}
+        for harness in MODEL_HARNESSES:
+            harness_config = tier_config.get(harness)
+            if not isinstance(harness_config, dict):
+                raise ValueError(
+                    f"model routing configuration is missing `{tier}.{harness}` in {path}"
+                )
+            unknown_fields = sorted(set(harness_config) - {"model", "reasoning_effort"})
+            if unknown_fields:
+                raise ValueError(
+                    f"model routing configuration has unknown field(s) for "
+                    f"`{tier}.{harness}` in {path}: {', '.join(unknown_fields)}"
+                )
+            model = harness_config.get("model")
+            if not isinstance(model, str) or not model.strip() or model.strip() == "inherit":
+                raise ValueError(
+                    f"model routing configuration has an invalid model for "
+                    f"`{tier}.{harness}` in {path}"
+                )
+            entry = {"model": model.strip()}
+            reasoning_effort = harness_config.get("reasoning_effort")
+            if reasoning_effort is not None:
+                if not isinstance(reasoning_effort, str) or not reasoning_effort.strip():
+                    raise ValueError(
+                        f"model routing configuration has an invalid reasoning effort for "
+                        f"`{tier}.{harness}` in {path}"
+                    )
+                entry["reasoning_effort"] = reasoning_effort.strip()
+            routing[tier][harness] = entry
+
+    return routing
 
 
 def _parse_profile(rel_path: str, raw: object) -> str:
@@ -119,6 +209,19 @@ def _parse_profile(rel_path: str, raw: object) -> str:
     return value
 
 
+def _parse_model_tier(rel_path: str, raw: object) -> str | None:
+    """Read the optional abstract model tier from agent frontmatter."""
+    value = str(raw or "").strip().strip('"').strip("'").lower()
+    if not value:
+        return None
+    if value not in MODEL_TIERS:
+        raise ValueError(
+            f"invalid model_tier in {rel_path}: {value}; "
+            f"valid tiers are: {', '.join(MODEL_TIERS)}"
+        )
+    return value
+
+
 @dataclass
 class SourceAgent:
     path: Path
@@ -131,6 +234,7 @@ class SourceAgent:
     user_invocable: bool
     body: str
     profile: str = DEFAULT_PROFILE
+    model_tier: str | None = None
 
 
 @dataclass
@@ -495,6 +599,7 @@ def load_source_agents() -> List[SourceAgent]:
         subagents = _parse_list_value(fm.get("agents", ""))
         user_invocable = _parse_bool(fm.get("user-invocable"), default=True)
         profile = _parse_profile(rel_path, fm.get("profile"))
+        model_tier = _parse_model_tier(rel_path, fm.get("model_tier"))
 
         agents.append(
             SourceAgent(
@@ -508,6 +613,7 @@ def load_source_agents() -> List[SourceAgent]:
                 user_invocable=user_invocable,
                 body=body.strip() + "\n",
                 profile=profile,
+                model_tier=model_tier,
             )
         )
     return agents
@@ -763,6 +869,19 @@ def _inject_claude_selected_agent_instruction(agent: SourceAgent, body: str, ide
     return _insert_clause_after_intro(body, clause)
 
 
+def _model_route_for(
+    agent: SourceAgent,
+    harness: str,
+    routing: Dict[str, Dict[str, Dict[str, str]]] | None = None,
+) -> Dict[str, str] | None:
+    if agent.model_tier is None:
+        return None
+    if harness not in MODEL_HARNESSES:
+        raise ValueError(f"unsupported model routing harness: {harness}")
+    table = routing if routing is not None else load_model_routing()
+    return table[agent.model_tier][harness]
+
+
 def _inject_claude_command_instruction(agent: SourceAgent, identifier: str, body: str) -> str:
     """Adoption clause for slash-command output: the main persona becomes this role inline."""
     clause = (
@@ -779,11 +898,13 @@ def render_claude_agent(
     docs: List[InstructionDoc],
     reference_map: Dict[str, str],
     identifier: str,
+    routing: Dict[str, Dict[str, Dict[str, str]]] | None = None,
 ) -> str:
     tools = ", ".join(map_tools_for_claude(agent.tools))
     appendix = _build_instruction_appendix(agent, docs)
     body = _rewrite_agent_references(agent.body.strip(), reference_map, preserve_at_sign=True)
     body = _inject_claude_selected_agent_instruction(agent, body, identifier)
+    model_route = _model_route_for(agent, "claude", routing)
 
     parts = [
         "---",
@@ -795,6 +916,8 @@ def render_claude_agent(
         "",
         body,
     ]
+    if model_route:
+        parts.insert(4, f"model: {model_route['model']}")
 
     if appendix:
         parts.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
@@ -844,16 +967,23 @@ def _referenced_agent_names(agents: List[SourceAgent]) -> set[str]:
     return referenced
 
 
-def render_opencode_agent(agent: SourceAgent, docs: List[InstructionDoc], reference_map: Dict[str, str]) -> str:
+def render_opencode_agent(
+    agent: SourceAgent,
+    docs: List[InstructionDoc],
+    reference_map: Dict[str, str],
+    routing: Dict[str, Dict[str, Dict[str, str]]] | None = None,
+) -> str:
     permissions = map_permissions_for_opencode(agent.tools)
     appendix = _build_instruction_appendix(agent, docs)
     body = _rewrite_agent_references(agent.body.strip(), reference_map, preserve_at_sign=True)
+    model_route = _model_route_for(agent, "opencode", routing)
 
     lines: List[str] = [
         "---",
         f"description: \"{agent.description}\"",
-        "model: deepseek/deepseek-v4-pro",
     ]
+    if model_route:
+        lines.append(f"model: {model_route['model']}")
 
     if not agent.user_invocable:
         lines.append("mode: subagent")
@@ -949,7 +1079,12 @@ def _inject_codex_todo_override(agent: SourceAgent, body: str) -> str:
     return body + note
 
 
-def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc], reference_map: Dict[str, str]) -> str:
+def render_codex_agent(
+    agent: SourceAgent,
+    docs: List[InstructionDoc],
+    reference_map: Dict[str, str],
+    routing: Dict[str, Dict[str, Dict[str, str]]] | None = None,
+) -> str:
     combined = agent.body.strip()
     appendix = _build_instruction_appendix(agent, docs)
     if appendix:
@@ -962,13 +1097,20 @@ def render_codex_agent(agent: SourceAgent, docs: List[InstructionDoc], reference
 
     name_value = _codex_identifier_for(agent)
     description = json.dumps(agent.description, ensure_ascii=False)
+    model_route = _model_route_for(agent, "codex", routing)
 
     lines = [
         GENERATED_AGENT_HEADER,
         f'name = "{name_value}"',
         f"description = {description}",
-        "developer_instructions = ",
     ]
+    if model_route:
+        lines.append(f"model = {json.dumps(model_route['model'])}")
+        if "reasoning_effort" in model_route:
+            lines.append(
+                f"model_reasoning_effort = {json.dumps(model_route['reasoning_effort'])}"
+            )
+    lines.append("developer_instructions = ")
     lines[-1] += _render_toml_string(combined)[0]
     lines.extend(_render_toml_string(combined)[1:])
     return "\n".join(lines).rstrip() + "\n"
@@ -1176,6 +1318,7 @@ def render_cursor_agent(
     docs: List[InstructionDoc],
     reference_map: Dict[str, str],
     identifier: str,
+    routing: Dict[str, Dict[str, Dict[str, str]]] | None = None,
 ) -> str:
     """Render a Cursor subagent (`.cursor/agents/<name>.md`).
 
@@ -1185,12 +1328,13 @@ def render_cursor_agent(
     """
     appendix = _build_instruction_appendix(agent, docs)
     body = _rewrite_agent_references(agent.body.strip(), reference_map, preserve_at_sign=True)
+    model_route = _model_route_for(agent, "cursor", routing)
 
     lines = [
         "---",
         f"name: {identifier}",
         f"description: {json.dumps(agent.description, ensure_ascii=False)}",
-        "model: inherit",
+        f"model: {model_route['model'] if model_route else 'inherit'}",
     ]
     if "edit" not in agent.tools:
         lines.append("readonly: true")
@@ -1301,7 +1445,47 @@ def propagate_cursor_rules_once(
     return {"cursor_changed": changed, "cursor_rule_orphans_removed": orphans}
 
 
-def _mirror_tree(source: Path, destination: Path) -> int:
+def _github_agent_bytes(
+    source_file: Path,
+    data: bytes,
+    routing: Dict[str, Dict[str, Dict[str, str]]] | None,
+) -> bytes:
+    """Add the GitHub custom-agent model field without changing source files."""
+    if not source_file.name.endswith(".agent.md"):
+        return data
+
+    text = data.decode("utf-8")
+    frontmatter, _body = _parse_frontmatter(text)
+    tier = _parse_model_tier(
+        source_file.relative_to(SOT_DIR.parent).as_posix(), frontmatter.get("model_tier")
+    )
+    if tier is None:
+        return data
+
+    table = routing if routing is not None else load_model_routing()
+    model = table[tier]["github"]["model"]
+    lines = text.splitlines(keepends=True)
+    closing_index = next(
+        (index for index, line in enumerate(lines[1:], start=1) if line.rstrip("\r\n") == "---"),
+        None,
+    )
+    if closing_index is None:
+        return data
+
+    for index in range(1, closing_index):
+        if lines[index].startswith("model:"):
+            lines[index] = f"model: {model}\n"
+            return "".join(lines).encode("utf-8")
+
+    lines.insert(closing_index, f"model: {model}\n")
+    return "".join(lines).encode("utf-8")
+
+
+def _mirror_tree(
+    source: Path,
+    destination: Path,
+    transform: Callable[[Path, bytes], bytes] | None = None,
+) -> int:
     """Mirror `source` into `destination` byte-for-byte; delete stale files.
 
     Deletion is scoped to `destination` itself (validated inside the repository),
@@ -1319,6 +1503,8 @@ def _mirror_tree(source: Path, destination: Path) -> int:
             dest_file = destination / source_file.relative_to(source)
             expected.add(dest_file)
             data = source_file.read_bytes()
+            if transform is not None:
+                data = transform(source_file, data)
             if dest_file.is_file() and not dest_file.is_symlink():
                 try:
                     if dest_file.read_bytes() == data:
@@ -1341,8 +1527,10 @@ def _mirror_tree(source: Path, destination: Path) -> int:
     return changed
 
 
-def mirror_github_once() -> Dict[str, int]:
-    """Mirror the source subdirs verbatim to ports/github and .github.
+def mirror_github_once(
+    routing: Dict[str, Dict[str, Dict[str, str]]] | None = None,
+) -> Dict[str, int]:
+    """Mirror source subdirs to GitHub outputs with routed agent model fields.
 
     Only `GITHUB_MIRRORED_SUBDIRS` are touched; anything else under the
     destinations (e.g. `.github/workflows/`) is never enumerated or deleted.
@@ -1351,13 +1539,18 @@ def mirror_github_once() -> Dict[str, int]:
     for subdir in GITHUB_MIRRORED_SUBDIRS:
         source = SOT_DIR / subdir
         for destination_root in (GITHUB_PORT_DIR, DOT_GITHUB_DIR):
-            changed += _mirror_tree(source, destination_root / subdir)
+            transform = None
+            if subdir == "agents":
+                transform = lambda path, data: _github_agent_bytes(path, data, routing)
+            changed += _mirror_tree(source, destination_root / subdir, transform)
     return {"github_changed": changed}
 
 
 def propagate_once(verbose: bool = True) -> Dict[str, int]:
     agents = load_source_agents()
     instructions = load_instruction_docs()
+    routing = load_model_routing() if any(agent.model_tier for agent in agents) else None
+    tiered_agent_count = sum(agent.model_tier is not None for agent in agents)
 
     CLAUDE_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
     CLAUDE_COMMANDS_DIR.mkdir(parents=True, exist_ok=True)
@@ -1419,7 +1612,9 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
             expected_claude_files.add(claude_file)
             if _write_if_changed(
                 claude_file,
-                render_claude_agent(agent, docs, claude_reference_map, claude_identifier),
+                render_claude_agent(
+                    agent, docs, claude_reference_map, claude_identifier, routing
+                ),
             ):
                 changed_claude += 1
         elif claude_file.exists():
@@ -1452,13 +1647,25 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
             expected_cursor_agent_files.add(cursor_agent_file)
             if _write_if_changed(
                 cursor_agent_file,
-                render_cursor_agent(agent, docs, cursor_reference_map, cursor_agent_identifier),
+                render_cursor_agent(
+                    agent,
+                    docs,
+                    cursor_reference_map,
+                    cursor_agent_identifier,
+                    routing,
+                ),
             ):
                 changed_cursor += 1
 
-        if _write_if_changed(opencode_file, render_opencode_agent(agent, docs, opencode_reference_map)):
+        if _write_if_changed(
+            opencode_file,
+            render_opencode_agent(agent, docs, opencode_reference_map, routing),
+        ):
             changed_opencode += 1
-        if _write_if_changed(codex_file, render_codex_agent(agent, docs, codex_reference_map)):
+        if _write_if_changed(
+            codex_file,
+            render_codex_agent(agent, docs, codex_reference_map, routing),
+        ):
             changed_codex += 1
 
     # Every prune runs only after all emission above has completed. `_claude_filename_for`
@@ -1504,10 +1711,15 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     changed_skills = skill_result["skills_changed"]
 
     cursor_rules_result = propagate_cursor_rules_once(instructions, agents)
-    github_result = mirror_github_once()
+    github_result = mirror_github_once(routing)
 
     result = {
         "source_agents": len(agents),
+        "claude_tiered_agents": tiered_agent_count,
+        "codex_tiered_agents": tiered_agent_count,
+        "opencode_tiered_agents": tiered_agent_count,
+        "cursor_tiered_agents": tiered_agent_count,
+        "github_tiered_agents": tiered_agent_count,
         "claude_changed": changed_claude + skill_result["claude_changed"],
         "opencode_changed": changed_opencode + skill_result["opencode_changed"],
         "codex_changed": changed_codex + skill_result["codex_changed"],
@@ -1607,7 +1819,10 @@ def propagate_until_converged(
 
 
 def watch_loop(interval_seconds: float = 1.0) -> None:
-    print("Starting master asset watcher for source_of_truth/{agents,skills,instructions,hooks} ...")
+    print(
+        "Starting master asset watcher for "
+        "source_of_truth/{agents,skills,instructions,hooks,config} ..."
+    )
     print(json.dumps(_convergence_payload(propagate_until_converged()), indent=2))
 
     def _on_change(changes: List[str]) -> None:

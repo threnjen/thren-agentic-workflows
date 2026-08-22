@@ -3,6 +3,7 @@ name: 05h Cleanliness Auditor
 description: "Evaluates the cleanliness of code a branch adds — DRY violations, dead code, mixed concerns, and oversized modules — and recommends specific cleanup categories when non-passing."
 tools: [read, search, edit, execute]
 user-invocable: false
+model_tier: medium
 ---
 
 You are the **05h Cleanliness Auditor** for the PR Review family. Perform a

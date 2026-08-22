@@ -30,6 +30,7 @@ def repo_dir_overrides(root: Path) -> dict:
         "SOT_INSTRUCTIONS_DIR": sot / "instructions",
         "SOT_SKILLS_DIR": sot / "skills",
         "SOT_HOOKS_DIR": sot / "hooks",
+        "SOT_CONFIG_DIR": sot / "config",
         "CLAUDE_AGENTS_DIR": ports / "claude" / "agents",
         "CLAUDE_COMMANDS_DIR": ports / "claude" / "commands",
         "CLAUDE_SKILLS_DIR": ports / "claude" / "skills",

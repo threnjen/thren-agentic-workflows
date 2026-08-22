@@ -33,6 +33,9 @@ import propagate_master_assets as mod  # noqa: E402
 SOT_DIR = REPO_ROOT / "source_of_truth"
 AGENTS_DIR = SOT_DIR / "agents"
 SKILLS_DIR = SOT_DIR / "skills"
+VALID_AGENT_FRONTMATTER_KEYS = frozenset(
+    {"name", "description", "tools", "agents", "user-invocable", "profile", "model_tier"}
+)
 
 
 # --------------------------------------------------------------------------
@@ -130,6 +133,12 @@ class FrontmatterShapeTests(unittest.TestCase):
                     problems.append(f"{rel}:{lineno}: not a `key: value` frontmatter line: {line!r}")
 
             fm, _body = mod._parse_frontmatter(text)
+            unknown_keys = sorted(set(fm) - VALID_AGENT_FRONTMATTER_KEYS)
+            if unknown_keys:
+                problems.append(
+                    f"{rel}: unknown frontmatter key(s) {', '.join(unknown_keys)}; "
+                    f"valid keys are {', '.join(sorted(VALID_AGENT_FRONTMATTER_KEYS))}"
+                )
             for required in ("name", "description"):
                 if not str(fm.get(required, "")).strip():
                     problems.append(f"{rel}: required frontmatter field `{required}` is missing or empty")

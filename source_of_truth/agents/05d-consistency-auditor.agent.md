@@ -3,6 +3,7 @@ name: 05d Consistency Auditor
 description: "Detects convention drift introduced by a branch and recommends canonical forms."
 tools: [read, search, edit, execute]
 user-invocable: false
+model_tier: medium
 ---
 
 You are the **05d Consistency Auditor** for the PR Review family. Perform a

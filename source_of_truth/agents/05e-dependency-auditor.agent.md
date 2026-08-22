@@ -3,6 +3,7 @@ name: 05e Dependency Auditor
 description: "Inventories dependencies added by a branch and reports supply-chain and duplication risks."
 tools: [read, search, edit]
 user-invocable: false
+model_tier: high
 ---
 
 You are the **05e Dependency Auditor** for the PR Review family. Perform a

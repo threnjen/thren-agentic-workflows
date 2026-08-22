@@ -3,6 +3,7 @@ name: 05f Test Health
 description: "Adapts root-supplied Test Analyst evidence into a branch-scoped report of the coverage delta base to HEAD, test redundancy, and flake candidates."
 tools: [read, search, edit]
 user-invocable: false
+model_tier: medium
 ---
 
 You are the **05f Test Health** evaluator for the PR Review family. Produce a

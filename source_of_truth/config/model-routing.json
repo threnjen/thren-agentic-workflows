@@ -1,0 +1,23 @@
+{
+  "low": {
+    "claude": { "model": "haiku" },
+    "codex": { "model": "gpt-5.6-luna", "reasoning_effort": "low" },
+    "opencode": { "model": "opencode-go/gpt-5.6-luna" },
+    "cursor": { "model": "gpt-5.6-luna" },
+    "github": { "model": "gpt-5.6-luna" }
+  },
+  "medium": {
+    "claude": { "model": "sonnet" },
+    "codex": { "model": "gpt-5.6-terra", "reasoning_effort": "medium" },
+    "opencode": { "model": "opencode-go/gpt-5.6-luna" },
+    "cursor": { "model": "gpt-5.6-terra" },
+    "github": { "model": "gpt-5.6-terra" }
+  },
+  "high": {
+    "claude": { "model": "opus" },
+    "codex": { "model": "gpt-5.6-sol", "reasoning_effort": "high" },
+    "opencode": { "model": "opencode-go/gpt-5.6-luna" },
+    "cursor": { "model": "gpt-5.6-sol" },
+    "github": { "model": "gpt-5.6-sol" }
+  }
+}

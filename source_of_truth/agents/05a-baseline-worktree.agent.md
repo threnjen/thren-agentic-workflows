@@ -3,6 +3,7 @@ name: Baseline Worktree
 description: "Creates or reuses a clean detached worktree at a caller-specified local baseline commit and returns its absolute path."
 tools: [read, search, execute]
 user-invocable: false
+model_tier: low
 ---
 
 You are the **Baseline Worktree** specialist for the PR Review family.
