@@ -126,6 +126,16 @@ def _pattern_matches_any(pattern: str, agent_paths: set[str]) -> bool:
     return any(fnmatch.fnmatch(agent_path, pattern) for agent_path in agent_paths)
 
 
+def _unresolved_agent_targeting_patterns(
+    patterns: list[tuple[Path, str]], agent_paths: set[str]
+) -> list[str]:
+    return [
+        f"{path.relative_to(REPO_ROOT)}: {pattern}"
+        for path, pattern in patterns
+        if not _pattern_matches_any(pattern, agent_paths)
+    ]
+
+
 def test_phase_consumers_resolve_producer_contracts() -> None:
     """Every named Phase 02 handoff has a producer and a consumer."""
     agents = _agents()
@@ -178,30 +188,24 @@ def test_phase_spawn_roster_and_frontmatter_references_resolve() -> None:
 
 def test_agent_targeting_apply_to_globs_resolve_and_mutation_fails() -> None:
     agent_paths = _source_agent_paths()
-    unresolved = [
-        f"{path.relative_to(REPO_ROOT)}: {pattern}"
-        for path, pattern in _agent_targeting_patterns()
-        if not _pattern_matches_any(pattern, agent_paths)
-    ]
+    patterns = _agent_targeting_patterns()
+    unresolved = _unresolved_agent_targeting_patterns(patterns, agent_paths)
     assert not unresolved, f"agent-targeting applyTo glob resolves to no agent: {unresolved}"
 
-    document, pattern = _agent_targeting_patterns()[0]
+    document, pattern = patterns[0]
     mutated = [
         candidate
         for candidate in propagator.load_instruction_docs()
         if candidate.path == document
     ][0]
+    invalid_pattern = "source_of_truth/agents/does-not-exist.agent.md"
     mutated_patterns = [
-        "source_of_truth/agents/does-not-exist.agent.md"
-        if candidate == pattern
-        else candidate
+        (document, invalid_pattern if candidate == pattern else candidate)
         for candidate in mutated.apply_to_patterns
+        if candidate not in FILE_TYPE_PATTERNS
     ]
-    assert not _pattern_matches_any(
-        "source_of_truth/agents/does-not-exist.agent.md", agent_paths
-    )
-    assert _pattern_matches_any(pattern, agent_paths)
-    assert pattern not in mutated_patterns
+    mutated_errors = _unresolved_agent_targeting_patterns(mutated_patterns, agent_paths)
+    assert f"{document.relative_to(REPO_ROOT)}: {invalid_pattern}" in mutated_errors
 
 
 def test_all_generated_harness_agent_sets_and_routes_match_source() -> None:
