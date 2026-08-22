@@ -113,6 +113,7 @@ CREATIVE_PROFILE = "creative"
 VALID_PROFILES = frozenset({DEFAULT_PROFILE, CREATIVE_PROFILE})
 MODEL_TIERS = ("low", "medium", "high")
 MODEL_HARNESSES = ("claude", "codex", "opencode", "cursor", "github")
+MODEL_IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._/-]*[A-Za-z0-9])?$")
 
 
 def _model_routing_path() -> Path:
@@ -173,12 +174,17 @@ def load_model_routing() -> Dict[str, Dict[str, Dict[str, str]]]:
                     f"`{tier}.{harness}` in {path}: {', '.join(unknown_fields)}"
                 )
             model = harness_config.get("model")
-            if not isinstance(model, str) or not model.strip() or model.strip() == "inherit":
+            normalized_model = model.strip() if isinstance(model, str) else ""
+            if (
+                not normalized_model
+                or normalized_model == "inherit"
+                or not MODEL_IDENTIFIER_PATTERN.fullmatch(normalized_model)
+            ):
                 raise ValueError(
                     f"model routing configuration has an invalid model for "
                     f"`{tier}.{harness}` in {path}"
                 )
-            entry = {"model": model.strip()}
+            entry = {"model": normalized_model}
             reasoning_effort = harness_config.get("reasoning_effort")
             if reasoning_effort is not None:
                 if not isinstance(reasoning_effort, str) or not reasoning_effort.strip():

@@ -44,7 +44,7 @@ Each per-feature entry records:
 | `plan_revision` | The revision identifier for the feature's current plan. |
 | `last_validation_commit` | The commit used for the feature's most recent validation. |
 | `stale_reason` | The reason the feature's plan or schedule entry is stale. |
-| `resolved_model_status` | The outcome of resolving the feature's model route: `enforced`, `fallback`, or `unverified`. |
+| `resolved_model_status` | The preflight record's `resolution_status` for the Feature - Implementer tier: `enforced`, `fallback`, or `unverified`. |
 
 Expected read and write sets are revalidation evidence only. They never authorize concurrent feature builds.
 

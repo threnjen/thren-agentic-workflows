@@ -13,6 +13,25 @@ Orchestrators coordinate subagents — they do not perform work directly. These 
 - Orchestrators normally delegate plan documents, review records, and QA plans. `04 Phase - Execute` may write its lightweight plans and living manifest because it owns decomposition and scheduling. It still delegates context, tasks, review records, and QA plans.
 - ALWAYS ask the user before proceeding to the fix/remediation phase
 
+## Session Model Preflight
+
+Before an orchestrator selects work that uses tiered child models, run one session model preflight. Reuse
+`load_model_routing()` as the only routing loader. Do not parse the routing JSON again or persist a run override.
+
+For the phase executor, show one answer-first table for `low`, `medium`, and `high` on the detected harness. Each tier
+record has four distinct fields: `requested_model`, `user_override`, `resolved_route`, and `resolution_status`.
+Accept a tier override for the current run only. Keep it in memory and leave the source routing file byte-identical.
+
+Use exactly three disjoint resolution statuses:
+
+- `enforced`: the harness reports that it used the effective route.
+- `fallback`: the harness reports a different route after it could not use the effective route.
+- `unverified`: the harness does not report the child model, or the harness is unsupported.
+
+Generated configuration proves configuration only. It never proves `enforced`. An unsupported harness must disclose a
+`fallback` reason while setting every route to `unverified`. The display may contain model identifiers only. Reject a
+missing route or malformed identifier before execution starts.
+
 ## Working Branch
 
 Before modifying any files, create a dedicated Git branch for the pipeline run so all changes are isolated from the default branch.

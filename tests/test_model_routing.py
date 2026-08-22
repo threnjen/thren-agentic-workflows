@@ -168,6 +168,21 @@ def test_missing_route_fails_before_output_directory_is_created(tmp_path: Path, 
     assert not (tmp_path / "ports").exists()
 
 
+def test_malformed_model_identifier_fails_before_execution(tmp_path: Path, monkeypatch) -> None:
+    source_root = tmp_path / "source_of_truth"
+    config_path = source_root / "config" / "model-routing.json"
+    config_path.parent.mkdir(parents=True)
+    routing = json.loads((REPO_ROOT / "source_of_truth/config/model-routing.json").read_text())
+    routing["low"]["claude"]["model"] = "not a model identifier"
+    config_path.write_text(json.dumps(routing), encoding="utf-8")
+    monkeypatch.setattr(mod, "SOT_DIR", source_root)
+
+    with pytest.raises(ValueError, match=r"invalid model"):
+        mod.load_model_routing()
+
+    assert not (tmp_path / "ports").exists()
+
+
 def test_routing_file_contains_no_credential_shaped_value() -> None:
     text = (REPO_ROOT / "source_of_truth/config/model-routing.json").read_text(encoding="utf-8")
     assert not re.search(r"(?:sk-|ghp_|Bearer\s+|api[_-]?key\s*[:=])", text, re.IGNORECASE)

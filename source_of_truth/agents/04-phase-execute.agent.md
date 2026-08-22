@@ -29,6 +29,41 @@ If the manifest exists, use it as resume state. If it does not exist, research t
 
 Generate QA documentation by default for every phase execution. Do not ask the user whether QA should be generated.
 
+### Session Model Preflight
+
+Run this preflight after reading the phase input and before selecting or expanding any feature. Detect the current
+harness, call feature 02's `load_model_routing()` loader, and validate every `low`, `medium`, and `high` route before
+execution begins. The preflight reads the loader result. It does not parse `model-routing.json` a second time.
+
+Accept one optional override for each tier for this run. Accept `low`, `medium`, and `high` overrides independently.
+Validate each override as a model identifier before proceeding. Keep overrides in an in-memory copy of the loader
+result. Never write an override to `source_of_truth/config/model-routing.json`, an environment variable, a generated
+asset, or any persistent session setting. An omitted override still receives a resolution status.
+
+Display the answer first in one table with exactly one row for each tier and these four record fields:
+
+| Tier | `requested_model` | `user_override` | `resolved_route` | `resolution_status` |
+|---|---|---|---|---|
+| `low` | loader value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
+| `medium` | loader value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
+| `high` | loader value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
+
+Treat the tier as the record key. Keep the four fields distinct. `requested_model` is the central route,
+`user_override` is the optional run-only replacement, `resolved_route` is what the harness reports, and
+`resolution_status` describes the evidence for that report.
+
+Use the status values as disjoint outcomes:
+
+- `enforced` means the harness reports that it used the effective requested route.
+- `fallback` means the harness reports a different route because it could not use the effective requested route.
+- `unverified` means the harness does not report the child model, or the harness is unsupported. Generated
+  configuration containing the requested model is not evidence of enforcement.
+
+For an unsupported harness, disclose `fallback` with the concrete unsupported-harness reason, set every route to
+`unverified`, and never report `enforced`. Do not invent a model result. Display model identifiers only. Reject a
+missing route, malformed identifier, or unavailable configured route before the first feature is selected and report
+the validation error instead of proceeding.
+
 ## Execution Pipeline
 
 ### Step 1: Research, Decompose, and Validate the Schedule
@@ -140,7 +175,7 @@ The per-feature table owns `04e Diff Security Scan` entry. Do not spawn it for a
 
 **D. Defer the phase-level checkpoints** — Emit no QA and no final-review commit inside the feature loop, and no conventional-format commit of any kind. Step 4 emits one consolidated phase QA checkpoint with the exact message `eval: qa`; Step 6 emits the single phase-level final review checkpoint with the exact message `eval: final-review`.
 
-**E. Complete** — Mark the feature complete in the todo list and update its manifest entry with the implementation result, resolved review agents, fix-round count, carry-forward findings, commit, review verdict, and validation evidence.
+**E. Complete** — Mark the feature complete in the todo list and update its manifest entry with the implementation result, resolved review agents, fix-round count, carry-forward findings, commit, review verdict, validation evidence, and the preflight `resolution_status` under `resolved_model_status` for the Feature - Implementer tier.
 
 ### Step 2.5: Dependency-Level Test Gate
 
