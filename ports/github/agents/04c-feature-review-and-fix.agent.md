@@ -27,6 +27,8 @@ Read in this order from `dev/feature/[0N-task-name]/`:
 
 **Exception — affected tests.** When the change alters a shared API signature or constructor contract, a serialized schema, a bootstrap path, or a data/def file, you may read **and run** the affected test suites even though they are outside the "Files Changed" table. Those callers' tests are the only evidence a fail-closed contract change did not break them. This exception covers tests and their fixtures only, not a general codebase scan.
 
+**Exception — reuse candidates.** For each added or expanded function, class, or helper, search for existing code with the same responsibility. Read only plausible candidates and their callers. Do not edit a candidate outside the implementation record. Report confirmed duplication as `Changes Requested` so the Implementer can widen the recorded scope.
+
 **Skip:** `[0N-task-name]-context.md` and `[0N-task-name]-tasks.md` — these are for the Implementer and are already synthesized into the implementation record. Also skip `docs/CODEBASE_CONTEXT.md` under the `codebase-context-bootstrap` instruction's handed-scope exception — the implementation record hands you the exact file list, so you read no source beyond it.
 
 ## Review Categories

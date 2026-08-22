@@ -52,12 +52,14 @@ A broad test-failure set spanning multiple features is not a phase re-plan — r
 - Inspect relevant configuration files (package.json, requirements.txt, pyproject.toml, .env, tsconfig.json)
 - For backend: examine database connection settings and migration status
 - Look for recent changes that might have introduced the issue
+- Search for existing code that owns the same responsibility
 - Run the failing command or test to reproduce the error firsthand
 - Use web-researcher sub-agent to search for the error message and related symptoms to find similar issues and solutions from the community
 
 ### Step 4 — Fix
 
-- Make minimal, targeted changes to resolve the specific error
+- Make the smallest coherent change at the boundary that owns the error
+- Update and test every affected caller when a shared contract changes
 - Preserve existing functionality while fixing the issue
 - Add proper error handling where it's missing (try/catch, error middleware, exception handlers, error boundaries)
 - Ensure types are correct (TypeScript types, Python type hints)
@@ -80,9 +82,9 @@ After completing a fix, route the entry per the auto-loaded learnings routing ta
 - **Watch for** — A sentence on how to spot this pattern early next time
 
 **Key Principles:**
-- Never make changes beyond what's necessary to fix the error
+- Never change responsibilities unrelated to the error
 - Always preserve existing code structure and patterns
-- Add defensive programming only where the error occurs
+- Add defensive programming at the narrowest shared boundary that owns the error
 - Document complex fixes with brief inline comments
 - If an error seems systemic, identify the root cause rather than patching symptoms
 - Check both application code and configuration/environment when diagnosing issues
@@ -90,6 +92,22 @@ After completing a fix, route the entry per the auto-loaded learnings routing ta
 ---
 
 ## Auto-Loaded Instructions
+
+### Code Change Strategy
+
+# Code Change Strategy
+
+## Hard Requirements
+
+- MUST load `base-code-guidelines` before writing, fixing, or reviewing code. Missing this step can create duplicate implementations.
+- MUST define scope by the responsibility being changed, not by changed-line count. Required caller updates remain in scope.
+- MUST search for an existing implementation of the same responsibility before adding a sibling function, class, fixture, or helper.
+
+## Common Traps
+
+- An existing implementation almost fits: compare extending its contract with adding a sibling. Reuse it only when both consumers keep one cohesive responsibility.
+- Reuse changes several callers: update and test every affected caller. File count does not make a required contract change into scope creep.
+- Similar syntax hides different semantics: keep implementations separate when reuse would couple responsibilities that change for different reasons.
 
 ### Codebase Context Bootstrap
 

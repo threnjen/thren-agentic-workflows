@@ -106,7 +106,7 @@ As you work through this phase, keep a running list of any additional context ga
 
 #### Documentation Freshness Check
 
-Run the auto-loaded Documentation Freshness Check before continuing to Phase 3.
+Run the auto-loaded Documentation Freshness Check before continuing to Phase 2C.
 
 ### Phase 2B: Draft a New Phase Document (standalone feature)
 
@@ -121,6 +121,21 @@ When the user comes directly with a feature idea:
 Determine the appropriate path:
 - If a `docs/phases/` directory and `PROJECT_ROADMAP.md` (or `PHASES_OVERVIEW.md`) already exist, assign the next phase number and plan to update the overview.
 - If no phase structure exists, use `docs/phases/PHASE_01/PHASE_01_SUMMARY.md` as the path. Create a minimal `PROJECT_ROADMAP.md` alongside it.
+
+### Phase 2C: Scope Intake
+
+Run this stage after 2A or 2B and before Phase 3. The user is still composing scope while you are forming opinions. Analysis delivered during intake is not read, and it competes with what the user is trying to say.
+
+1. **Present a TL;DR of the phase as it stands.** Give the objective, the current scope, and the gaps you already see. Keep it under twenty lines. This is orientation, not assessment.
+2. **Ask the user to add scope.** Say plainly that you are holding your analysis until they close intake.
+3. **Stay quiet while they add.** Reply to each scope item in a few lines: what you recorded, plus at most one line when a new item collides with an earlier one. Do not argue the collision. Do not present options, costs, tradeoffs, or recommendations.
+4. **Remind the user after every message that intake is open.** One short line naming the stage and how to leave it.
+5. **Leave intake only on the user's signal.** Treat "close intake", "start refinement", or "that is everything" as the signal. Never exit on your own judgment.
+6. **Then study everything at once.** Re-read the phase document with every recorded scope item, fold them together, and continue to Phase 3.
+
+Assume the user did not read your intake replies. Restate anything the assessment depends on.
+
+Call this stage "scope intake" and the next one "refinement". Never describe your own review to the user as adversarial.
 
 ### Phase 3: Initial Assessment
 

@@ -43,6 +43,8 @@ Rules:
 - Prefer deletion to addition; boring constructs over clever ones; fewest new files possible.
 - When two same-size options exist, take the one that is correct on edge cases — minimalism means less code, not a flimsier algorithm.
 - Bug fixes target the root cause, not the reported symptom: check every caller of the function being touched, and put one guard where all callers route through rather than a patch on the one path the report named.
+- Measure scope by responsibility, not by diff size. Extending an existing implementation and updating its affected callers are in scope when they prevent a sibling implementation.
+- An almost-fitting implementation is a design decision, not automatic reuse. Extend it only when both consumers share one responsibility and its contract stays cohesive. Otherwise, keep the implementations separate.
 - When a request looks over-specified, ship the minimal version and question the rest in the same response ("Did X; Y already covers the rest — say the word if you need full X").
 
 **Never minimized** — cutting these is negligence, not minimalism: input validation at trust boundaries; error handling that prevents data loss or corruption; security measures; accessibility basics; tests for non-trivial logic; anything the user explicitly asked for (if they insist on the full version after hearing the alternative, build it well — no re-litigating). If one of these *looks* over-built, raise it as a question, never as a cut.

@@ -14,6 +14,7 @@ You do **not** produce pipeline artifacts (implementation records, review record
 Before broad discovery:
 
 1. Limit exploration to files directly relevant to the user request.
+2. Treat existing implementations of the same responsibility as directly relevant.
 
 ## Step 2 - Investigate
 
@@ -21,7 +22,7 @@ Understand request scope and impact:
 
 - **Clarify**: Ask one round of focused questions if intent is ambiguous.
 - **Scope**: Identify exact files, symbols, and call sites affected.
-- **Patterns**: Note naming, structure, error handling, dependencies in surrounding code.
+- **Patterns**: Search for existing code that owns the same responsibility. Note its naming, structure, error handling, dependencies, and callers.
 - **Tests**: Check if project has tests and if the affected area is covered.
 - **Lint**: Note any linter or formatter requirements.
 
@@ -86,7 +87,9 @@ Implementation standards:
 
 **Testing**: Write tests if the project has tests AND the change is non-trivial (new logic, new function, behavior change). Skip for trivial changes or projects without test infrastructure. Never break existing tests.
 
-**Don't**: Refactor outside scope, add annotations/docstrings to unchanged code, create helper functions for one-time operations, or "improve" adjacent code.
+**Don't**: Refactor outside the requested responsibility, add annotations/docstrings to unchanged code, create one-use helpers, or improve unrelated code.
+
+Extending a suitable existing implementation and updating its affected callers is not an outside refactor.
 
 ## Step 6 - Verify
 
