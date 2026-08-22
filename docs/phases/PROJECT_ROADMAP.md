@@ -9,6 +9,7 @@ One authored corpus of agents, skills, and instructions that propagates to every
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
 | 01 | Creative Writing Profile and Developmental Editor Toolkit | Complete | None | Large | Creative agent roster, profile instruction with skill allow-list, four creative skills, baseline trim, guard tests, and user documentation. |
+| 02 | Merged Feature Scheduling and Phase Execution | Planned | 01 | Large | Merges feature decomposition and execution into one living-schedule orchestrator with just-in-time plan expansion, post-wave stale-plan revalidation, and per-harness model-tier routing. |
 
 ## Constraints & Non-Goals
 
