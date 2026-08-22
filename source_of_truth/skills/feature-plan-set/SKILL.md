@@ -26,14 +26,34 @@ Each decomposed phase also gets one manifest:
 dev/feature/[phase-name]-execution-manifest.md
 ```
 
-The manifest must list the phase document path, ordered feature task names, wave schedule, dependencies, parallel safety, key files modified, sequential reasons, expected bundle files, and verification assets.
+The manifest must list the phase document path, ordered feature task names, dependency-level schedule, dependencies, parallel safety, key files modified, sequential reasons, expected bundle files, and verification assets.
+
+The manifest is a living execution schedule. It is rewritten during execution, not frozen after decomposition. Phase - Execute rewrites it when it selects a feature, expands or changes its plan, records an implementation result, resolves the feature's model route, closes a dependency level, or completes revalidation of affected future features.
+
+A dependency level is the set of features whose dependencies are all satisfied at the same point in the graph. It is a checkpoint unit, never a concurrency unit.
+
+Each per-feature entry records:
+
+| Field | Meaning |
+|-------|---------|
+| `status` | The feature's current lifecycle state. |
+| `dependency_level` | The dependency level at which the feature is eligible for execution. |
+| `depends_on` | The feature's direct dependency edges. |
+| `expected_read_set` | The files the feature is expected to read during revalidation. |
+| `expected_write_set` | The files the feature is expected to write during revalidation. |
+| `plan_revision` | The revision identifier for the feature's current plan. |
+| `last_validation_commit` | The commit used for the feature's most recent validation. |
+| `stale_reason` | The reason the feature's plan or schedule entry is stale. |
+| `resolved_model_status` | The outcome of resolving the feature's model route: `enforced`, `fallback`, or `unverified`. |
+
+Expected read and write sets are revalidation evidence only. They never authorize concurrent feature builds.
 
 **Naming**: `[0N-task-name]` is a zero-padded two-digit prefix followed by a short, descriptive, kebab-case identifier (e.g., `01-auth-login`, `02-rate-limiter`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order. `[phase-name]` is always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number (e.g., `PHASE_03`), matching the phase directory under `docs/phases/`.
 
 **Numbering rules**:
 - Start numbering at `01`
-- Features that can be executed in parallel may share the same wave number in execution metadata, but each feature directory still gets a unique sequential `0N-` prefix
-- Features with prerequisites must have a higher directory prefix and a higher wave number than their dependencies
+- Features that can be executed at the same dependency level may share that dependency-level number in execution metadata, but each feature directory still gets a unique sequential `0N-` prefix
+- Features with prerequisites must have a higher directory prefix and a higher dependency-level number than their dependencies
 - If only one feature exists, still use the `01-` prefix for consistency
 
 ## Plan Template (`-plan.md`)
@@ -204,7 +224,7 @@ The `- [ ] ` checkbox syntax is consumed by the Implementer, which checks tasks 
 - If items share prerequisites, note the dependency in each context file but keep plans separate
 - Only combine items when tightly coupled (implementing one without the other leaves the codebase broken)
 - Assign numeric prefixes based on dependency order: prerequisites get lower numbers, dependents get higher numbers
-- Sequential dependency chains must be represented as separate waves. Do not rely on "sequential within one wave" for features where B depends on A; the wave depth should match the dependency depth.
+- Sequential dependency chains must be represented as separate dependency levels. Do not rely on "sequential within one dependency level" for features where B depends on A; the dependency-level depth should match the dependency depth.
 - **Integration feature rule**: When a phase produces multiple features that must work together at runtime (e.g., a data system, a renderer, and a UI that all need to be wired into a running application), the **final numbered feature** must be an integration/bootstrap task. This feature initializes and connects the other features into a runnable application entry point (e.g., a scene bootstrap script, an app startup module, a main entry point). Its acceptance criteria must include: the application launches and all features operate together, and a human or automated smoke test can verify the combined output. Without this, individual features may pass review in isolation but never actually run together.
 
 ## Quality Checklist
@@ -223,4 +243,4 @@ Before delivering plan documents, verify:
 - [ ] Refactor/rewire changes include an explicit test-impact plan and maintenance tasks for affected tests
 - [ ] Observability and operability considered; any new normal-path logs are justified
 - [ ] **Integration check**: If the phase has multiple features that must run together, an integration/bootstrap feature exists as the final numbered task with acceptance criteria verifying the combined output is launchable and observable
-- [ ] **Manifest check**: For phase decomposition, `dev/feature/[phase-name]-execution-manifest.md` exists and includes the ordered feature list, wave schedule, dependency graph, expected bundle files, and `## Verification Assets`
+- [ ] **Manifest check**: For phase decomposition, `dev/feature/[phase-name]-execution-manifest.md` exists and includes the ordered feature list, dependency-level schedule, dependency graph, expected bundle files, and `## Verification Assets`

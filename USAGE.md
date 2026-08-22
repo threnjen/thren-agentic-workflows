@@ -105,7 +105,7 @@ Required before Step 4 — `04 Phase - Execute` fails immediately if these artif
 1. Reads `dev/feature/[phase-name]-execution-manifest.md`
 2. Verifies each listed feature has `-plan.md`, `-context.md`, and `-tasks.md`
 3. Fails immediately if those prepared artifacts are missing, instead of invoking planning agents
-4. For each feature in manifest wave order, runs the full cycle:
+4. For each feature in manifest dependency-level order, runs the full cycle:
    - **Implement** → Red-Green-Refactor TDD, writes implementation record
    - **Review** → Finds bugs, applies fixes, writes review record
 5. Runs the **QA Writer**, then the **QA Runner** on the automated QA document it produced
@@ -231,7 +231,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 > Give it a refined Phase document or describe a feature. It scans the codebase, decomposes the work into independent features, writes a structured `-plan.md` file for each to `dev/feature/[0N-task-name]/`, spawns the Plan Expander to generate companion `-context.md` and `-tasks.md` files, and writes `dev/feature/[phase-name]-execution-manifest.md` as the execution schedule. In standalone mode, it asks for approval before writing.
 
 **04 Phase - Execute** (orchestrator — delegates to subagents)
-> Give it a refined Phase document after 03 has already prepared the feature bundles. It reads `dev/feature/[phase-name]-execution-manifest.md`, verifies each listed feature has `-plan.md`, `-context.md`, and `-tasks.md`, and fails immediately if those prepared artifacts are missing. When the bundle set is complete, it implements features by manifest wave order, then runs consolidated QA, the diff security scan, and Prod Code Review.
+> Give it a refined Phase document after 03 has already prepared the feature bundles. It reads `dev/feature/[phase-name]-execution-manifest.md`, verifies each listed feature has `-plan.md`, `-context.md`, and `-tasks.md`, and fails immediately if those prepared artifacts are missing. When the bundle set is complete, it implements features by manifest dependency-level order, then runs consolidated QA, the diff security scan, and Prod Code Review.
 
 **05 PR - Review** (orchestrator — delegates to evaluators)
 > Point it at a change you are about to open a PR for — this is an author self-review, not a reviewer critiquing someone else's open PR. In a single upfront interaction it warns on a below-par model tier, confirms the base commit (suggest-and-confirm — git cannot derive a branch's base), and asks whether the report should be posted to a draft PR if one already exists (posting is opt-in; the default recommendation keeps you between the finding and the audience). It then fans out the PR Review evaluators over that diff and returns a readiness verdict without reading code or diffs itself. Advisory only: it changes no code and records no verdict in any document.

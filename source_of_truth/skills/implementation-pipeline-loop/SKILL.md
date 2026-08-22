@@ -41,7 +41,7 @@ Read the Implementer's and Reviewer's reported test-execution status. Statuses a
 - **`executed-failing`** → re-spawn the Implementer with the failing test names, then re-spawn the Reviewer. Retry once. If still failing, record it as a blocking status and proceed — the final review surfaces it.
 - **`not-executed`** → do NOT treat this as green. Record `test-execution: not-executed (<reason>)` for the task and report it to the orchestrator as a blocking status. A task with unrun tests cannot be reported complete. The direct-supervisor-attestation exception in the Test Execution Evidence instruction applies only when the user-invocable root orchestrator itself receives an explicit supervisor assertion; subagents still report `not-executed` without an artifact.
 
-Carry the per-task status forward: the orchestrator gates its wave and phase completion on it.
+Carry the per-task status forward: the orchestrator gates dependency-level and phase completion on it.
 
 ### Step B2: Diff Security Scan (conditional)
 
