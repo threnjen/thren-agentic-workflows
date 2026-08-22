@@ -9,7 +9,7 @@ One authored corpus of agents, skills, and instructions that propagates to every
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
 | 01 | Creative Writing Profile and Developmental Editor Toolkit | Complete | None | Large | Creative agent roster, profile instruction with skill allow-list, four creative skills, baseline trim, guard tests, and user documentation. |
-| 02 | Merged Feature Scheduling and Phase Execution | Planned | 01 | Large | Merges feature decomposition and execution into one living-schedule orchestrator with just-in-time plan expansion and revalidation at each dependency level. Replaces the single reviewer with a four-reviewer committee plus a consolidator under one trigger table covering every review agent, rewrites the manifest schema skill, holds the implementer open to apply its own fixes, adds dependency-level checks for emergent defects, adds per-harness model-tier routing, and renumbers the agent corpus to close all gaps. |
+| 02 | Merged Feature Scheduling and Phase Execution | Implemented with eleven known pre-existing test failures | 01 | Large | Provides one living-schedule orchestrator with just-in-time plan expansion, dependency-level revalidation, a four-reviewer committee, consolidated fix loops, model-tier routing, session preflight, integration guards, and post-renumber harness outputs. |
 
 ## Constraints & Non-Goals
 

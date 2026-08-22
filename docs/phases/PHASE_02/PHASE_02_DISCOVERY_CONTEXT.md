@@ -39,11 +39,10 @@ Context gathered during refinement that lives outside this repository.
 
 ## Current repository findings
 
-- `source_of_truth/agents/03-feature-decomposer.agent.md` researches the phase, creates feature plans, expands all feature bundles, validates them, and writes an execution manifest.
-- `source_of_truth/agents/04-phase-execute.agent.md` validates the manifest, executes waves, runs implementation and review subagents, runs wave gates, and completes consolidated QA and final review.
-- `source_of_truth/agents/04a-feature-plan-expander.agent.md` writes context and task documents before implementation.
-- `source_of_truth/agents/04b-feature-implementer.agent.md` treats plan claims as hypotheses but has no required mid-phase replan gate.
-- `source_of_truth/agents/04c-feature-review-and-fix.agent.md` reviews and fixes each implemented feature.
+- `source_of_truth/agents/03-phase-execute.agent.md` researches the phase, creates feature plans, validates the manifest, and runs the implementation pipeline.
+- `source_of_truth/agents/03a-feature-plan-expander.agent.md` writes context and task documents before implementation.
+- `source_of_truth/agents/03b-feature-implementer.agent.md` treats plan claims as hypotheses and follows the required mid-phase replan gate.
+- `source_of_truth/agents/03c-feature-review-and-fix.agent.md` reviews each implemented feature while the implementer owns fixes.
 - `scripts/propagate_master_assets.py` currently renders Codex agent metadata without model fields, hardcodes an OpenCode model, and emits `model: inherit` for Cursor.
 - The current source agent frontmatter has no model-tier field.
 - The current execution manifest is static after decomposition. This phase changes it into the living schedule.

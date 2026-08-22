@@ -60,7 +60,7 @@ Reach for these individually, whenever you need them — no pipeline required:
   narratives, compliance package) from an engagement configuration file
 
 Behind these, a set of automated subagents and on-demand skills do the detailed work —
-you never invoke them directly. The library ships 55 source agent definitions in
+you never invoke them directly. The library ships 64 source agent definitions in
 `source_of_truth/agents/`. For the complete catalog and how the pipeline flows,
 see [USAGE.md](USAGE.md).
 

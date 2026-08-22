@@ -55,7 +55,7 @@ this — the defect lives in the *relationship* between a body and the tree it l
 
 Definitions distinguishable from documentation only by frontmatter get silently excluded,
 invisibly to reviewers scanning for the expected extension. `auditor`, `delta-auditor`,
-`docs-writer`, and `04f-prod-code-review` shipped for a long time without the `.agent.md`
+`docs-writer`, and `03f-prod-code-review` shipped for a long time without the `.agent.md`
 suffix and were still agents, because loading keys off `name`/`description` frontmatter,
 not the extension. They have since been renamed for consistency, but the loader remains
 frontmatter-driven — the glob must stay `*.md`.

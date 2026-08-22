@@ -16,7 +16,7 @@ These agents deploy to Claude Code, Codex, OpenCode, Cursor, and GitHub Copilot.
 | Codex | Name the agent explicitly in the prompt: `as phase-execute, ...'` |
 | OpenCode | Name the agent in the prompt |
 
-Only the 15 user-facing agents are reachable this way. The rest are spawned by orchestrators.
+Only the 16 user-facing agents are reachable this way. The rest are spawned by orchestrators.
 
 Be specific in your request. Each agent produces structured output — plan documents, implementation summaries, review tables, audit reports.
 

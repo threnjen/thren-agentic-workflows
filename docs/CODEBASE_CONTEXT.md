@@ -12,12 +12,12 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 61 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 44 hidden subagents (`user-invocable: false`) and 17 user-invocable.
+- 64 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 48 hidden subagents (`user-invocable: false`) and 16 user-invocable.
 - 49 skills in `source_of_truth/skills/`.
-- 20 instructions in `source_of_truth/instructions/`.
+- 22 instructions in `source_of_truth/instructions/`.
 - 1 installable hook in `source_of_truth/hooks/`, mirrored verbatim to `ports/github/hooks/` and `.github/hooks/`. `creative-canon-guard.py` is installed by the writer into their own vault's `.claude/`; see `docs/CREATIVE_TOOLKIT.md`.
-- `ports/claude/agents` = 45, `ports/claude/commands` = 17.
-- Three of the agents, four of the skills, and one of the instructions belong to the
+- `ports/claude/agents` = 50, `ports/claude/commands` = 16.
+- Four of the agents, five of the skills, and one of the instructions belong to the
   creative writing family (`profile: creative`); see **Authoring profiles** below.
 
 ## Key Paths
@@ -29,9 +29,9 @@ README.md USAGE.md CONTRIBUTING.md         # overview, agent catalog, contributo
 INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
-    *.agent.md                             # 60 agent definitions
+    *.agent.md                             # 64 agent definitions
   skills/                                  # 49 skill dirs, each rooted at SKILL.md
-  instructions/                            # 20 applyTo-glob instruction files
+  instructions/                            # 22 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
   claude/  {agents, commands, skills}
@@ -119,13 +119,13 @@ benchmarks/ packages/ tests/
   `web-researcher`, `audit-code-or-infra` → `audit-code-infra-refactor` (legacy: the
   source file is now `auditor.agent.md`, which emits under its own name).
 - Hidden (non-user-invocable) subagents become `z-*` in Claude and Codex outputs, except
-  where a pre-existing generated stem is reused: `04f-prod-code-review` stays
-  `prod-code-review.md` and `04h-unity-reviewer` stays `unity-reviewer.md` in
+  where a pre-existing generated stem is reused: `03f-prod-code-review` stays
+  `prod-code-review.md` and `03h-unity-reviewer` stays `unity-reviewer.md` in
   `ports/claude/agents` for that reason.
 - Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
   plus a subagent file only if an orchestrator names it as a child (dual-use). So
-  `ports/claude/agents` = 39 hidden + 2 dual-use (docs-writer, web-researcher)
-  = 41, while `ports/claude/commands` = 15.
+  `ports/claude/agents` = 48 hidden subagents plus two dual-use agents = 50, while
+  `ports/claude/commands` = 16.
 - Codex and OpenCode emit every source agent; only Claude and Cursor split commands out.
 - Cursor subagent names are the Claude identifier with a `z-` prefix always applied, because
   Cursor resolves commands and subagents from one `/name` namespace.
@@ -136,7 +136,7 @@ benchmarks/ packages/ tests/
   suffix, so any glob naming an agent is recognized as agent-targeted.
 - `applyTo` globs are matched with `fnmatch` against each agent's repo-relative path, so
   `**/x.agent.md` only matches when a `/` immediately precedes `x`. Numbered agents must
-  be named in full (`**/04b-feature-implementer.agent.md`). A pattern that matches nothing
+  be named in full (`**/03b-feature-implementer.agent.md`). A pattern that matches nothing
   fails silently — no error, the instruction simply ships to no agent.
 - Agents read and write a working repo's learnings at `docs/learnings/` in that repo —
   durable project knowledge belongs beside the other docs, not in `.github/`, which is

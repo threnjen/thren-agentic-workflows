@@ -1,13 +1,13 @@
 # Phase 02: Merged Feature Scheduling and Phase Execution
 
-**Status**: Planned
+**Status**: Implementation complete. Full suite has eleven known pre-existing failures.
 **Depends on**: Phase 01
 **Estimated complexity**: Large
-**Cross-references**: `source_of_truth/agents/03-feature-decomposer.agent.md`, `source_of_truth/agents/04-phase-execute.agent.md`, `source_of_truth/agents/04a-feature-plan-expander.agent.md`, `source_of_truth/agents/04b-feature-implementer.agent.md`, `source_of_truth/agents/04c-feature-review-and-fix.agent.md`, `source_of_truth/agents/05d-consistency-auditor.agent.md`, `source_of_truth/agents/05e-dependency-auditor.agent.md`, `source_of_truth/agents/05f-test-health.agent.md`, `source_of_truth/agents/05g-readiness-synthesizer.agent.md`, `source_of_truth/agents/05h-cleanliness-auditor.agent.md`, `source_of_truth/agents/auditor-refactor.agent.md`, `source_of_truth/skills/implementation-pipeline-loop/SKILL.md`, `source_of_truth/skills/feature-plan-set/SKILL.md`, `source_of_truth/skills/guard-integrity/SKILL.md`
+**Cross-references**: `source_of_truth/agents/03-phase-execute.agent.md`, `source_of_truth/agents/03a-feature-plan-expander.agent.md`, `source_of_truth/agents/03b-feature-implementer.agent.md`, `source_of_truth/agents/03c-feature-review-and-fix.agent.md`, `source_of_truth/agents/04d-consistency-auditor.agent.md`, `source_of_truth/agents/04e-dependency-auditor.agent.md`, `source_of_truth/agents/04f-test-health.agent.md`, `source_of_truth/agents/04g-readiness-synthesizer.agent.md`, `source_of_truth/agents/04h-cleanliness-auditor.agent.md`, `source_of_truth/agents/auditor-refactor.agent.md`, `source_of_truth/skills/implementation-pipeline-loop/SKILL.md`, `source_of_truth/skills/feature-plan-set/SKILL.md`, `source_of_truth/skills/guard-integrity/SKILL.md`
 
 ## What's New
 
-The feature decomposer and phase executor become one user-facing orchestrator. The orchestrator researches the phase once, writes lightweight feature plans, then executes one feature at a time. It expands each plan against the current repository state and revalidates affected future features after every dependency level.
+Feature decomposition and phase execution now share one user-facing orchestrator. The orchestrator researches the phase once, writes lightweight feature plans, then executes one feature at a time. It expands each plan against the current repository state and revalidates affected future features after every dependency level.
 
 A review committee replaces the single blind reviewer. Reviewers run concurrently against each implemented feature, and two trigger tables name the entry condition for every review agent. A consolidator merges their reports into one ranked fix list. The implementer that wrote the feature stays open and applies the fixes without rediscovering its own work.
 
@@ -41,7 +41,7 @@ Deliver one phase workflow that keeps decomposition quality high, prevents stale
 **Review committee**
 
 - Replace the single post-implementation reviewer with a committee of concurrent reviewers, each differentiated by the evidence it may read.
-- Reviewer A, plan conformance: the existing `04c-feature-review-and-fix` agent, narrowed to review only. Its fix authority moves to the held-open implementer, so it edits no source. Reads the plan and the diff. Maps every acceptance criterion to code. Blocks approval while the authoritative tests are unrun.
+- Reviewer A, plan conformance: the existing `03c-feature-review-and-fix` agent, narrowed to review only. Its fix authority moves to the held-open implementer, so it edits no source. Reads the plan and the diff. Maps every acceptance criterion to code. Blocks approval while the authoritative tests are unrun.
 - Reviewer B, blast radius: reads outward from the diff and never evaluates the feature itself. Reports affected suites that did not run, callers with no coverage, non-code references such as schemas and config and name-based cross-references, and semantic breaks a caller's assertion is too loose to detect.
 - Reviewer C, test falsification: reads the tests, not the code. Reports assertions that cannot fail, mocks the test configured itself, tests that pin implementation rather than behavior, and tests that would survive deleting the feature.
 - Reviewer D, plan-blind: reads only the code and tests and never the plan. Reports what the code actually does, so a faithful implementation of a wrong plan is still caught.
@@ -344,7 +344,7 @@ Test that the phase-end audit records committee misses, and that the record is a
 
 Run harness smoke checks where each platform exposes a local or CLI contract. Mark cloud-only behavior as verified, fallback, or unverified based on observed evidence rather than generated file content alone.
 
-## Notes for Feature - Decomposer
+## Notes for Phase - Execute
 
 Treat decomposition as an internal stage of the merged orchestrator. Produce candidate features and lightweight plans, not fully expanded bundles for the entire phase.
 
@@ -358,4 +358,4 @@ Assign the discovery context's verification questions to the features whose succ
 
 When defining the reviewer agents, carry the evidence-scope rule into each agent body. A reviewer whose contract does not forbid reading outside its scope will drift into general review and dissolve the committee's value.
 
-> Suggested implementation shape, to be verified by Feature Decomposer against current code and tests: the reference lookup that decides whether the blast-radius reviewer fires may be answerable from the existing code-graph tooling rather than a fresh scan.
+> The blast-radius reviewer can use the existing code-graph tooling to resolve reference impact rather than running a fresh scan.
