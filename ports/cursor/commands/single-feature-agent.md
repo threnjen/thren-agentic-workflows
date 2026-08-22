@@ -15,6 +15,7 @@ You do **not** produce pipeline artifacts (implementation records, review record
 Before broad discovery:
 
 1. Limit exploration to files directly relevant to the user request.
+2. Treat existing implementations of the same responsibility as directly relevant.
 
 ## Step 2 - Investigate
 
@@ -22,7 +23,7 @@ Understand request scope and impact:
 
 - **Clarify**: Ask one round of focused questions if intent is ambiguous.
 - **Scope**: Identify exact files, symbols, and call sites affected.
-- **Patterns**: Note naming, structure, error handling, dependencies in surrounding code.
+- **Patterns**: Search for existing code that owns the same responsibility. Note its naming, structure, error handling, dependencies, and callers.
 - **Tests**: Check if project has tests and if the affected area is covered.
 - **Lint**: Note any linter or formatter requirements.
 
@@ -87,7 +88,9 @@ Implementation standards:
 
 **Testing**: Write tests if the project has tests AND the change is non-trivial (new logic, new function, behavior change). Skip for trivial changes or projects without test infrastructure. Never break existing tests.
 
-**Don't**: Refactor outside scope, add annotations/docstrings to unchanged code, create helper functions for one-time operations, or "improve" adjacent code.
+**Don't**: Refactor outside the requested responsibility, add annotations/docstrings to unchanged code, create one-use helpers, or improve unrelated code.
+
+Extending a suitable existing implementation and updating its affected callers is not an outside refactor.
 
 ## Step 6 - Verify
 
@@ -110,6 +113,22 @@ If verification cannot run locally, state that clearly and explain why.
 ---
 
 ## Auto-Loaded Instructions
+
+### Code Change Strategy
+
+# Code Change Strategy
+
+## Hard Requirements
+
+- MUST load `base-code-guidelines` before writing, fixing, or reviewing code. Missing this step can create duplicate implementations.
+- MUST define scope by the responsibility being changed, not by changed-line count. Required caller updates remain in scope.
+- MUST search for an existing implementation of the same responsibility before adding a sibling function, class, fixture, or helper.
+
+## Common Traps
+
+- An existing implementation almost fits: compare extending its contract with adding a sibling. Reuse it only when both consumers keep one cohesive responsibility.
+- Reuse changes several callers: update and test every affected caller. File count does not make a required contract change into scope creep.
+- Similar syntax hides different semantics: keep implementations separate when reuse would couple responsibilities that change for different reasons.
 
 ### Codebase Context Bootstrap
 
