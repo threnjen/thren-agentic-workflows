@@ -5,9 +5,9 @@ description: "Write feature plan documents for implementation. Use when: decompo
 
 # Feature Plan Set
 
-The three-file plan convention: `-plan.md` is produced by the Feature - Decomposer; `-context.md` and `-tasks.md` are produced by the 04a-feature-plan-expander. All three files are consumed by 04b-feature-implementer, 04c-feature-review-and-fix, 04d-feature-qa-writer, and orchestrators.
+The three-file plan convention: `-plan.md` is produced by Phase - Execute; `-context.md` and `-tasks.md` are produced by the 04a-feature-plan-expander. All three files are consumed by 04b-feature-implementer, 04c-feature-review-and-fix, 04d-feature-qa-writer, and orchestrators.
 
-When decomposing a phase, the Feature - Decomposer must also produce the phase-level execution manifest at `dev/feature/[phase-name]-execution-manifest.md`. This manifest is not part of any single feature bundle; it is the schedule and dependency contract consumed by Phase - Execute.
+When Phase - Execute decomposes a phase, it must also produce the phase-level execution manifest at `dev/feature/[phase-name]-execution-manifest.md`. This manifest is not part of any single feature bundle. It is the living schedule and dependency contract consumed by Phase - Execute.
 
 ## File Structure
 
@@ -47,6 +47,10 @@ Each per-feature entry records:
 | `resolved_model_status` | The outcome of resolving the feature's model route: `enforced`, `fallback`, or `unverified`. |
 
 Expected read and write sets are revalidation evidence only. They never authorize concurrent feature builds.
+
+## Lightweight Plan
+
+Before scheduling, Phase - Execute writes one lightweight `-plan.md` per candidate feature. Each plan carries acceptance criteria, scope, dependency hypotheses, and expected file impact. It contains no context or task document. The Plan Expander adds those companion files only for the selected feature.
 
 **Naming**: `[0N-task-name]` is a zero-padded two-digit prefix followed by a short, descriptive, kebab-case identifier (e.g., `01-auth-login`, `02-rate-limiter`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order. `[phase-name]` is always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number (e.g., `PHASE_03`), matching the phase directory under `docs/phases/`.
 
@@ -119,14 +123,14 @@ For a test method, a fourth option applies: omit the name and describe the scena
 
 ## Phase-Level Discovery
 
-Some discovery results describe the phase, not one feature, and are identical across every feature bundle. The Feature - Decomposer captures each one **once** and passes it to every Plan Expander it spawns. An Expander writes the supplied values through and does not rediscover them:
+Some discovery results describe the phase, not one feature, and are identical across every feature bundle. Phase - Execute captures each one **once** and passes it to every Plan Expander it spawns. An Expander writes the supplied values through and does not rediscover them:
 
 | Result | Used in |
 |---|---|
 | Tech stack, test runner command, test pass/fail baseline, lint command, format command | `-context.md` **Environment State** |
 | Phase-scoped test directory pattern found, and whether a current-phase consolidated test file is recommended | Discovery Delta, manifest verification assets |
 
-Running the test suite once per feature to produce the same baseline table is waste. An Expander runs its own detection only when the Decomposer supplied no block, and says so in its return.
+Running the test suite once per feature to produce the same baseline table is waste. An Expander runs its own detection only when Phase - Execute supplied no block, and says so in its return.
 
 ## Stage Format
 

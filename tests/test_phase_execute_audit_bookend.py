@@ -113,7 +113,7 @@ def _delta_errors(text: str) -> set[str]:
 
 def _phase_errors(text: str) -> set[str]:
     errors: set[str] = set()
-    step1 = _section(text, "### Step 1: Validate Prepared Feature Bundles", "### Step 2:")
+    step1 = _section(text, "### Step 1: Research, Decompose, and Validate the Schedule", "### Step 2:")
     step5 = _section(text, "### Step 5: Diff Security Review", "### Step 5.5:")
     bookend = _section(text, "### Step 5.5: Audit Bookend", "### Step 6:")
     step6 = _section(text, "### Step 6: Phase Final Review", "### Step 7:")
@@ -122,7 +122,10 @@ def _phase_errors(text: str) -> set[str]:
         "scope resolution": (step1, "one uncapped reference-search hop"),
         "code selection": (step1, "Always select `Auditor - Code`"),
         "infra conditional": (step1, "Auditor - Infra` if and only if"),
-        "wave before bookend": (text, "Run the accepted bookend only after all waves"),
+        "dependency level before bookend": (
+            text,
+            "Run the accepted bookend only after all dependency levels",
+        ),
         "step five before bookend": (text, "existing Step 5 Diff Security Review have completed"),
         "skill handoff": (bookend, "Load the exact `audit-comparison` skill"),
         "prompt identity": (bookend, "only snapshot-varying fields are `target_root`, `snapshot_label`, and `output_directory`"),
@@ -215,7 +218,11 @@ def test_load_bearing_deletion_is_red(
 @pytest.mark.parametrize(
     ("label", "replacement", "expected"),
     [
-        ("premature audit", "Run the accepted bookend only after all waves", "wave before bookend"),
+        (
+            "premature audit",
+            "Run the accepted bookend only after all dependency levels",
+            "dependency level before bookend",
+        ),
         ("early cleanup", "release only a worktree created by this run after attribution", "cleanup ordering"),
         ("regression before attribution", "Do not present a regression before attribution", "pre-attribution regression"),
         ("false fast track", "Complete pipeline `all-approved: yes`", "fast-track branch"),
@@ -228,7 +235,11 @@ def test_semantic_negation_kills_the_named_guard(
     original = _read(PHASE_EXECUTE_PATH)
     assert replacement in original, f"mutation target missing: {label}"
     if label == "premature audit":
-        mutated = original.replace(replacement, "Run the accepted bookend before all waves", 1)
+        mutated = original.replace(
+            replacement,
+            "Run the accepted bookend before all dependency levels",
+            1,
+        )
     elif label == "early cleanup":
         mutated = original.replace(replacement, "release only a worktree created by this run before attribution", 1)
     elif label == "regression before attribution":

@@ -10,7 +10,7 @@ Orchestrators coordinate subagents — they do not perform work directly. These 
 ## Common Constraints
 
 - DO NOT write source code, test files, or configuration directly
-- DO NOT write plan documents, review records, or QA plans directly — delegate to subagents
+- Orchestrators normally delegate plan documents, review records, and QA plans. `04 Phase - Execute` may write its lightweight plans and living manifest because it owns decomposition and scheduling. It still delegates context, tasks, review records, and QA plans.
 - ALWAYS ask the user before proceeding to the fix/remediation phase
 
 ## Working Branch
@@ -34,7 +34,7 @@ Before modifying any files, create a dedicated Git branch for the pipeline run s
 
 ## Pipeline Discipline
 
-- DO NOT skip steps or reorder the pipeline — the sequence matters
+- DO NOT skip steps or reorder the pipeline — the sequence matters. Phase - Execute may recompute dependency order only at its documented level-closure boundary.
 - DO NOT proceed past a subagent failure without attempting remediation
 - Complete ALL steps for one task/feature before starting the next
 

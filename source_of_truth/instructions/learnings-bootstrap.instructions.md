@@ -1,6 +1,6 @@
 ---
 description: "Read AND write learnings in the repository being worked on - past mistakes, review patterns, debugging fixes, cross-phase decisions. Owns the learnings file-routing table. Audience is ENUMERATED deliberately - an arbitrary subset with no filename family. Add any agent that writes code or plans against prior-phase history."
-applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-feature-decomposer.agent.md,**/04a-feature-plan-expander.agent.md,**/04b-feature-implementer.agent.md,**/04c-feature-review-and-fix.agent.md,**/04h-unity-reviewer.agent.md,**/debugger.agent.md,**/single-feature-agent.agent.md"
+applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/04-phase-execute.agent.md,**/04a-feature-plan-expander.agent.md,**/04b-feature-implementer.agent.md,**/04c-feature-review-and-fix.agent.md,**/04h-unity-reviewer.agent.md,**/debugger.agent.md,**/single-feature-agent.agent.md"
 ---
 
 **Learnings live in the repository you are working on — the repo whose code, plans, or docs you were invoked to change. Every `docs/learnings/` path below is relative to that repo's root (or its worktree/checkout root). NEVER write learnings into the agent-definition / source-of-truth repo.**

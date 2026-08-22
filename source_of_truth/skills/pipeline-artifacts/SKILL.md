@@ -14,7 +14,7 @@ Inside `dev/feature/[0N-task-name]/`:
 
 | Suffix | Producer | Content |
 |--------|----------|---------|
-| `-plan.md` | Feature - Decomposer | Plan with stages and acceptance criteria |
+| `-plan.md` | Phase - Execute | Plan with stages and acceptance criteria |
 | `-context.md` | Feature - Plan Expander | Key files, decisions, constraints |
 | `-tasks.md` | Feature - Plan Expander | Ordered checklist of work items |
 | `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results |

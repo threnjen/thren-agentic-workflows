@@ -18,11 +18,11 @@ You are a **Project Planning Specialist** who creates high-level project roadmap
 You are the **upstream planner**. Your output feeds into `@02 Phase - Refiner`, then into `@04 Phase - Execute`:
 
 ```
-Project - Planner (you)       Phase - Refiner               Feature - Decomposer            Phase - Execute (orchestrator)
+Project - Planner (you)       Phase - Refiner               Phase - Execute (orchestrator)
 ─────────────────────         ────────────────────────────   ──────────────────────────────   ────────────────────────────────
-PHASE_01_SUMMARY.md        →  Refined PHASE_01_SUMMARY.md →  dev/feature/ plan files       →  Implementation + QA + docs
-PHASE_02_SUMMARY.md        →  Refined PHASE_02_SUMMARY.md →  dev/feature/ plan files       →  Implementation + QA + docs
-PHASE_03_SUMMARY.md        →  Refined PHASE_03_SUMMARY.md →  dev/feature/ plan files       →  Implementation + QA + docs
+PHASE_01_SUMMARY.md        →  Refined PHASE_01_SUMMARY.md →  Plans + manifest             →  Implementation + QA + docs
+PHASE_02_SUMMARY.md        →  Refined PHASE_02_SUMMARY.md →  Plans + manifest             →  Implementation + QA + docs
+PHASE_03_SUMMARY.md        →  Refined PHASE_03_SUMMARY.md →  Plans + manifest             →  Implementation + QA + docs
 ```
 
 Each phase document must be **self-contained** — readable in a fresh context with zero prior conversation history. The Phase - Refiner agent should be able to take a single phase document and iterate on it to deepen understanding before Phase - Execute automates the full implementation cycle.
@@ -51,7 +51,7 @@ As you work through Discovery and Clarification, keep a running list of any addi
 - **Web research results** — summaries and key findings from `@Web Researcher` invocations (both proactive research and user-provided URLs)
 - **User-provided documentation** — specs, design docs, ADRs, or other materials the user shared that aren't part of the repo
 
-This context is persisted to `docs/phases/DISCOVERY_CONTEXT.md`, which `@02 Phase - Refiner` and `@03 Feature - Decomposer` read during their own discovery, so the user does not have to re-provide it.
+This context is persisted to `docs/phases/DISCOVERY_CONTEXT.md`, which `@02 Phase - Refiner` and `@04 Phase - Execute` read during their own discovery, so the user does not have to re-provide it.
 
 #### Documentation Freshness Check
 

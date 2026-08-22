@@ -211,7 +211,6 @@ evaluation and QA stages.
 flowchart TD
     Planner[01 Project - Planner]
     Refiner[02 Phase - Refiner]
-    Decomposer[03 Feature - Decomposer]
     PhaseExecute[04 Phase - Execute]
     Audit[Audit - Code, Infra, Refactor, Security]
     Test[Test - Orchestrator]
@@ -227,8 +226,7 @@ flowchart TD
     Security[Diff Security Scan]
 
     Planner --> Refiner
-    Refiner --> Decomposer
-    Decomposer --> PhaseExecute
+    Refiner --> PhaseExecute
 
     PhaseExecute --> PlanExpander
     PhaseExecute --> Implementer

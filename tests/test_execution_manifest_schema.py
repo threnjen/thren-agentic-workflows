@@ -21,26 +21,25 @@ MANIFEST_FIELDS = (
 )
 SCHEDULING_TOKEN = "wa" + "ve"
 SCAN_ROOTS = (
+    REPO_ROOT / "source_of_truth/agents",
     REPO_ROOT / "source_of_truth/skills",
     REPO_ROOT / "source_of_truth/instructions",
     REPO_ROOT / "tests",
 )
 
-# The scan excludes source_of_truth/agents/03-feature-decomposer.agent.md and
-# source_of_truth/agents/04-phase-execute.agent.md because Feature 04 owns their rewrite.
-# These test phrases target the same untouched agent and are exempted narrowly, not by file.
-FEATURE_04_OWNED_TEST_PHRASES = {
-    REPO_ROOT / "tests/test_phase_execute_audit_bookend.py": (
-        SCHEDULING_TOKEN + " before bookend",
-        "Run the accepted bookend only after all " + SCHEDULING_TOKEN + "s",
-        "Run the accepted bookend before all " + SCHEDULING_TOKEN + "s",
+# Unity visual verification retains this term for its committed-input checkpoint.
+# Every exempted phrase is a non-scheduling Unity contract phrase.
+NON_SCHEDULING_CAPTURE_PHRASES = {
+    REPO_ROOT / "source_of_truth/agents/04-phase-execute.agent.md": (
+        "Never create or modify capture inputs after the "
+        + SCHEDULING_TOKEN
+        + " checkpoints",
     ),
     REPO_ROOT / "tests/test_unity_consumer_contract.py": (
         "Never create or modify capture inputs after the "
         + SCHEDULING_TOKEN
         + " checkpoints",
         "no dirty post-" + SCHEDULING_TOKEN + " bootstrap",
-        "### Step 2.5: " + SCHEDULING_TOKEN.capitalize() + " Test Gate",
         "after the " + SCHEDULING_TOKEN + " checkpoints",
         "Create capture inputs after the " + SCHEDULING_TOKEN + " checkpoints",
     ),
@@ -85,7 +84,7 @@ def _scheduling_term_errors(overrides: dict[Path, str] | None = None) -> list[st
             continue
         for line_number, line in enumerate(text.splitlines(), start=1):
             scan_line = line
-            for phrase in FEATURE_04_OWNED_TEST_PHRASES.get(path, ()):
+            for phrase in NON_SCHEDULING_CAPTURE_PHRASES.get(path, ()):
                 scan_line = scan_line.replace(phrase, "")
             if SCHEDULING_TERM_PATTERN.search(scan_line):
                 relative_path = path.relative_to(REPO_ROOT)
@@ -139,9 +138,9 @@ def test_scheduling_term_scan_detects_an_in_scope_mutation() -> None:
     assert any(error.startswith("USAGE.md:") for error in errors)
 
 
-def test_scheduling_term_scan_keeps_feature_04_exemptions_narrow() -> None:
-    target = REPO_ROOT / "tests/test_phase_execute_audit_bookend.py"
+def test_scheduling_term_scan_keeps_unity_gate_allowlist_narrow() -> None:
+    target = REPO_ROOT / "tests/test_unity_consumer_contract.py"
     original = target.read_text(encoding="utf-8")
     mutated = original + f"\nA {SCHEDULING_TOKEN} schedule is invalid.\n"
     errors = _scheduling_term_errors({target: mutated})
-    assert any(error.startswith("tests/test_phase_execute_audit_bookend.py:") for error in errors)
+    assert any(error.startswith("tests/test_unity_consumer_contract.py:") for error in errors)

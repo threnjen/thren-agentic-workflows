@@ -19,8 +19,8 @@ Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
-| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
-| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Phase - Execute |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Phase - Execute |
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
