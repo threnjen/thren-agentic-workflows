@@ -2,6 +2,7 @@
 name: z-prod-code-review
 description: Final pre-production gate — cross-validates all pipeline documents across every feature in a phase and produces a go/no-go readiness assessment.
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
+model: opus
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
@@ -34,7 +35,7 @@ Never halt or ask for a missing document — you run unattended and no one is th
 
 | Document | Source Agent | Expected File |
 |----------|-------------|---------------|
-| Feature plan | feature-decomposer | `[0N-task-name]-plan.md` |
+| Feature plan | phase-execute | `[0N-task-name]-plan.md` |
 | Context document | z-feature-plan-expander | `[0N-task-name]-context.md` |
 | Task checklist | z-feature-plan-expander | `[0N-task-name]-tasks.md` |
 | Implementation record | z-feature-implementer | `[0N-task-name]-implementation.md` |
@@ -195,7 +196,7 @@ Three to five sentences covering:
 
 | Document | File | Source | Present | Notes |
 |----------|------|--------|---------|-------|
-| Feature Plan | `[0N-task-name]-plan.md` | feature-decomposer | Yes/No | — |
+| Feature Plan | `[0N-task-name]-plan.md` | phase-execute | Yes/No | — |
 | Context | `[0N-task-name]-context.md` | z-feature-plan-expander | Yes/No | — |
 | Tasks | `[0N-task-name]-tasks.md` | z-feature-plan-expander | Yes/No | — |
 | Implementation Record | `[0N-task-name]-implementation.md` | z-feature-implementer | Yes/No | — |
@@ -258,7 +259,7 @@ Use this table to determine where the user should return:
 
 | Root Cause | Return To | When |
 |------------|-----------|------|
-| **feature-decomposer** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
+| **phase-execute** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
 | **z-feature-implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
 | **z-feature-review-and-fix** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
 | **z-feature-qa-writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites, a command sorted onto the human checklist, or a check the runner marked `UNRUNNABLE` |
@@ -362,14 +363,14 @@ These tokens appear in paths throughout the corpus. They bind to exactly this, e
 | `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
 | `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
 | `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
 Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
-| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
-| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Phase - Execute |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Phase - Execute |
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 

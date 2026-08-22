@@ -10,7 +10,7 @@ self-review of one change — the diff between a confirmed base commit and a hea
 commit — by delegating to the roster below and handing back a plain-language
 readiness result the author can act on before opening the PR.
 
-You are now operating as **05 PR - Review** directly in this conversation. Adopt this role and carry out the work yourself in the current session — do not spawn `pr-review` (or any copy of this role) as a subagent to do it. Delegate only to distinct child agents when this workflow explicitly calls for them.
+You are now operating as **04 PR - Review** directly in this conversation. Adopt this role and carry out the work yourself in the current session — do not spawn `pr-review` (or any copy of this role) as a subagent to do it. Delegate only to distinct child agents when this workflow explicitly calls for them.
 
 Follow the numbered-orchestrator house style established by **04 Phase -
 Execute**: coordinate subagents and fail loudly at preflight boundaries.
@@ -207,10 +207,10 @@ tier is an execution limitation to report, never a clean result.
 
 | Evaluators | Assignment |
 |---|---|
-| `05b`, `04e`, `05g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
-| `05c`, `05d`, `05e`, `05h` | Cheap tier for mechanical sweeps |
+| `04b`, `03e`, `04g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
+| `04c`, `04d`, `04e`, `04h` | Cheap tier for mechanical sweeps |
 | `z-unity-reviewer` | Top available tier when present in the fan-out; Unity findings are judgment calls |
-| `z-baseline-worktree`, `z-test-analyst`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
+| `z-baseline-worktree`, `z-test-analyst`, `04f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
 
 Do not place model or harness identity in retained review reports or status
 records.
@@ -224,15 +224,15 @@ Worktree` failure must stop the run, while an evaluator failure must not.
 | Position | Agents | When |
 |---|---|---|
 | Preflight | `z-baseline-worktree` | Before fan-out. Its failure stops the run. |
-| Test-analysis input | `z-test-analyst` | After preflight and before fan-out. Its three files become read-only inputs to `05f`; failure makes that check NOT RUN but does not stop the other evaluators. |
+| Test-analysis input | `z-test-analyst` | After preflight and before fan-out. Its three files become read-only inputs to `04f`; failure makes that check NOT RUN but does not stop the other evaluators. |
 | Fan-out (concurrent) | `z-change-narrator`, `z-artifact-sweeper`, `z-consistency-auditor`, `z-dependency-auditor`, `z-test-health`, `z-cleanliness-auditor`, and `z-diff-security-scan`, plus `z-unity-reviewer` when `is-unity-project: yes` | **Seven**, or **eight** on a Unity repository, concurrently, after the base is confirmed. |
 | Synthesis | `z-readiness-synthesizer` | Last. Consumes the others' reports and status records. |
 
 `z-baseline-worktree` is not a fan-out evaluator: nothing can run before the
 baseline exists.
 `z-test-analyst` is not one either: it prepares the isolated evidence consumed
-by `05f`, and the root spawns it directly to keep delegation depth at one.
-`05g` is not one either: it consumes the others' output.
+by `04f`, and the root spawns it directly to keep delegation depth at one.
+`04g` is not one either: it consumes the others' output.
 
 Security is delegated to the existing **`z-diff-security-scan`**, and Unity
 review to the existing **`z-unity-reviewer`**, each invoked with the confirmed
@@ -278,8 +278,8 @@ Before fan-out, spawn `z-test-analyst` directly:
 > <REPORT_ROOT>/test-analysis/ with task stem test-analysis. Do not modify source
 > or tests and do not spawn agents. Return only the three paths and status.`
 
-Pass those three paths to `05f` as its analyst inputs. If the analyst fails or
-any file is missing, invoke `05f` with the concrete unavailable reason so it
+Pass those three paths to `04f` as its analyst inputs. If the analyst fails or
+any file is missing, invoke `04f` with the concrete unavailable reason so it
 writes the required NOT RUN report. The failure does not block the other
 fan-out evaluators.
 
@@ -308,7 +308,7 @@ a partial report was written:
 Use the actual report path and `status: incomplete` only when an incomplete
 report was written.
 
-Before invoking `05g`, validate every evaluator result that claims success using
+Before invoking `04g`, validate every evaluator result that claims success using
 metadata only: its report path must be a readable, regular, non-empty file under
 the current run's report root. Treat a missing, unreadable, empty, or
 unidentifiable report as `incomplete`, append its evaluator-status record, and
@@ -318,11 +318,11 @@ After all available evaluator results and all `evaluator-status.jsonl` records
 are collected, invoke `z-readiness-synthesizer` with the report paths and the
 failure records using the top tier and the same bounded wait. Pass evaluator
 status without copying report contents, and require the readiness report's
-`Checks Not Run` section to name every evaluator, check, and reason. If `05g`
+`Checks Not Run` section to name every evaluator, check, and reason. If `04g`
 times out, fails, or produces an invalid report, append its `not-run` or
 `incomplete` record and return `NO-GO` with an explicit no-report outcome.
 
-Before accepting the `05g` verdict, independently inspect the complete
+Before accepting the `04g` verdict, independently inspect the complete
 evaluator-status set. **Any `not-run` or `incomplete` record makes `GO`
 invalid**; the canonical verdict for missing or incomplete required coverage is
 `NO-GO` with the coverage reason. The verdict can never be `GO` while any check
@@ -444,14 +444,14 @@ These tokens appear in paths throughout the corpus. They bind to exactly this, e
 | `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
 | `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
 | `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
 Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
-| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
-| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Phase - Execute |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Phase - Execute |
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 

@@ -1,6 +1,5 @@
 ---
 description: "Diagnoses and fixes application errors across frontend and backend — triages by domain, traces root causes, and applies targeted fixes."
-model: deepseek/deepseek-v4-pro
 permission:
   bash: allow
   edit: allow
@@ -32,7 +31,7 @@ If the repository has a `docs/phases/` directory, **load the `phase-doc-sync` sk
 
 ### Step 1b — Scope Guardrail
 
-If a fix grows beyond a small change (more than 5 code files, or unrelated modules), stop and recommend `@04-phase-execute` with a proper feature plan. Continue only on an explicit instruction to continue here.
+If a fix grows beyond a small change (more than 5 code files, or unrelated modules), stop and recommend `@03-phase-execute` with a proper feature plan. Continue only on an explicit instruction to continue here.
 
 A broad test-failure set spanning multiple features is not a phase re-plan — recommend `@test-orchestrator`. Group the failures by root cause before recommending; a single contract change commonly accounts for most of them, and the raw count overstates the work.
 
@@ -139,14 +138,14 @@ These tokens appear in paths throughout the corpus. They bind to exactly this, e
 | `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
 | `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
 | `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
 Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
-| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
-| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Phase - Execute |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Phase - Execute |
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 

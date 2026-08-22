@@ -1,6 +1,6 @@
 ---
 description: "Subagent autonomy: do not ask questions or wait for confirmation. Make sensible defaults and proceed. Audience is ENUMERATED deliberately - 'user-invocable: false' is a frontmatter property with no filename marker in source. Add every non-user-invocable subagent."
-applyTo: "**/04?-*.agent.md,**/05?-*.agent.md,**/auditor-*.agent.md,**/client-deliverable-*.agent.md,**/instructions-evaluator.agent.md,**/instructions-writer.agent.md,**/qa-doc-generator.agent.md,**/qa-runner.agent.md,**/test-analyst.agent.md,**/test-fixer.agent.md,**/test-writer.agent.md"
+applyTo: "**/03?-*.agent.md,**/04?-*.agent.md,**/auditor-*.agent.md,**/client-deliverable-*.agent.md,**/instructions-evaluator.agent.md,**/instructions-writer.agent.md,**/qa-doc-generator.agent.md,**/qa-runner.agent.md,**/test-analyst.agent.md,**/test-fixer.agent.md,**/test-writer.agent.md"
 ---
 
 You operate autonomously — do not ask questions or wait for confirmation. Make sensible defaults and proceed.

@@ -34,6 +34,14 @@ After the subagent returns:
   - **Approved** or **Approved with Reservations** → apply the Test Execution Gate below
   - **Changes Requested** → apply the Review Reject Loop from the auto-loaded orchestrator conventions (retry once, then log both summaries, proceed, and note the unresolved review in the final report)
 
+### Committee Review and Fix Loop
+
+When a phase caller supplies review trigger tables, keep the implementer addressable from Step A through review and fixes. Resolve the tables against the changed-file list and plan metadata. Run every committee lane whose condition holds. Run the four committee reviewers concurrently at `medium`, wait for every return, then spawn the consolidator with every committee report path. The consolidator writes one deduplicated, severity-ranked fix list and adjudicates disagreements. A non-firing lane is complete evidence, not a missing reviewer.
+
+Pass the consolidated fix list to the implementer that wrote the feature. Do not make that implementer rediscover its own work. If the harness cannot resume the handle, spawn a fresh implementer with the implementation record and the same fix list. Record that fallback in the implementation record.
+
+Only `Blocker` and `High` findings open a fix round. Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two fix rounds. Re-review only the lanes that filed the findings being fixed. After two unsuccessful rounds, rewrite the feature plan once using the fix list as evidence and rebuild the feature. If the rebuilt feature still fails, mark it and its dependents blocked, then continue independent features.
+
 ### Test Execution Gate
 
 Read the Implementer's and Reviewer's reported test-execution status. Statuses are defined in the `test-execution-evidence` instruction.
@@ -42,11 +50,11 @@ Read the Implementer's and Reviewer's reported test-execution status. Statuses a
 - **`executed-failing`** → re-spawn the Implementer with the failing test names, then re-spawn the Reviewer. Retry once. If still failing, record it as a blocking status and proceed — the final review surfaces it.
 - **`not-executed`** → do NOT treat this as green. Record `test-execution: not-executed (<reason>)` for the task and report it to the orchestrator as a blocking status. A task with unrun tests cannot be reported complete. The direct-supervisor-attestation exception in the Test Execution Evidence instruction applies only when the user-invocable root orchestrator itself receives an explicit supervisor assertion; subagents still report `not-executed` without an artifact.
 
-Carry the per-task status forward: the orchestrator gates its wave and phase completion on it.
+Carry the per-task status forward: the orchestrator gates dependency-level and phase completion on it.
 
 ### Step B2: Diff Security Scan (conditional)
 
-Run this step **only when the caller has not declared run-level security handling**. `04-phase-execute` declares it (one phase-level scan at its own Step 5) and skips B2 entirely. Callers that execute Steps A through D without such a declaration — `test-orchestrator` and `audit-remediation-pipeline` — run B2 once per task. Never produce both a per-task and a run-level verdict for the same change.
+Run this step **only when the caller has not declared run-level security handling**. `03-phase-execute` declares it (one phase-level scan at its own Step 5) and skips B2 entirely. Callers that execute Steps A through D without such a declaration — `test-orchestrator` and `audit-remediation-pipeline` — run B2 once per task. Never produce both a per-task and a run-level verdict for the same change.
 
 When it runs, spawn the **z-diff-security-scan** subagent:
 

@@ -43,7 +43,7 @@ analysis-branch checkout:
 | Dimension | Agent |
 |-----------|-------|
 | code | Auditor - Code |
-| dependencies | 05e Dependency Auditor |
+| dependencies | 04e Dependency Auditor |
 | infra | Auditor - Infra |
 
 There is no separate security scan. The code and infra audits surface

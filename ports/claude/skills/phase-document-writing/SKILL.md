@@ -47,7 +47,7 @@ Each `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` must include:
 ## Technical Context
 
 [Existing code, patterns, libraries, or infrastructure relevant to this phase.
-Reference specific files/modules so the Feature - Decomposer knows where to look.]
+Reference specific files/modules so Phase - Execute knows where to look.]
 
 ## Dependencies & Risks
 
@@ -66,7 +66,7 @@ Reference specific files/modules so the Feature - Decomposer knows where to look
 - [For pure backend work, note if API contracts or integration behavior changes]
 - [If backend changes require frontend testing, note coordination with frontend repos]
 
-## Notes for Feature - Decomposer
+## Notes for Phase - Execute
 
 [Guidance on how to decompose this phase: suggested feature boundaries,
 areas that need careful separation of concerns, integration points between features.]
@@ -108,7 +108,7 @@ Before presenting or writing any Phase document, verify:
 - [ ] Success criteria are testable
 - [ ] For phases that render UI, success criteria include discrete, visually-checkable on-screen statements (color, layout, element presence) — not just "looks correct"
 - [ ] Technical context references specific files, modules, or patterns
-- [ ] "Notes for Feature - Decomposer" section provides decomposition guidance
+- [ ] "Notes for Phase - Execute" section provides decomposition guidance
 - [ ] Non-goals are defined at both project and phase level
 - [ ] Edge cases, failure modes, and key user flows documented
 - [ ] Dependencies (internal, external, cross-phase) and risks have mitigations

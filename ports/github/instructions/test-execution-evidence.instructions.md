@@ -1,6 +1,6 @@
 ---
 description: "Defines what counts as test execution evidence and forbids treating unexecuted tests as passing. Audience is ENUMERATED deliberately - an arbitrary subset with no filename family. Add any agent that runs or reports on tests."
-applyTo: "**/04b-feature-implementer.agent.md,**/04c-feature-review-and-fix.agent.md,**/04-phase-execute.agent.md"
+applyTo: "**/03b-feature-implementer.agent.md,**/03c-feature-review-and-fix.agent.md,**/03-phase-execute.agent.md"
 ---
 
 # Test Execution Evidence

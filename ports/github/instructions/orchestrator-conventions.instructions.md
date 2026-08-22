@@ -1,6 +1,6 @@
 ---
 description: "Shared conventions for orchestrator agents that coordinate subagent pipelines, including the end-of-run graph rebuild (merged from graph-rebuild-hook). Audience is ENUMERATED deliberately - the four pipeline orchestrators are an arbitrary subset with no filename family. Add any new agent that coordinates a subagent pipeline, and inline this file into its claude/agents/ counterpart."
-applyTo: "**/auditor.agent.md,**/delta-auditor.agent.md,**/04-phase-execute.agent.md,**/test-orchestrator.agent.md"
+applyTo: "**/auditor.agent.md,**/delta-auditor.agent.md,**/03-phase-execute.agent.md,**/test-orchestrator.agent.md"
 ---
 
 # Orchestrator Conventions
@@ -10,8 +10,27 @@ Orchestrators coordinate subagents — they do not perform work directly. These 
 ## Common Constraints
 
 - DO NOT write source code, test files, or configuration directly
-- DO NOT write plan documents, review records, or QA plans directly — delegate to subagents
+- Orchestrators normally delegate plan documents, review records, and QA plans. `03 Phase - Execute` may write its lightweight plans and living manifest because it owns decomposition and scheduling. It still delegates context, tasks, review records, and QA plans.
 - ALWAYS ask the user before proceeding to the fix/remediation phase
+
+## Session Model Preflight
+
+Before an orchestrator selects work that uses tiered child models, run one session model preflight. Reuse
+`load_model_routing()` as the only routing loader. Do not parse the routing JSON again or persist a run override.
+
+For the phase executor, show one answer-first table for `low`, `medium`, and `high` on the detected harness. Each tier
+record has four distinct fields: `requested_model`, `user_override`, `resolved_route`, and `resolution_status`.
+Accept a tier override for the current run only. Keep it in memory and leave the source routing file byte-identical.
+
+Use exactly three disjoint resolution statuses:
+
+- `enforced`: the harness reports that it used the effective route.
+- `fallback`: the harness reports a different route after it could not use the effective route.
+- `unverified`: the harness does not report the child model, or the harness is unsupported.
+
+Generated configuration proves configuration only. It never proves `enforced`. An unsupported harness must disclose a
+`fallback` reason while setting every route to `unverified`. The display may contain model identifiers only. Reject a
+missing route or malformed identifier before execution starts.
 
 ## Working Branch
 
@@ -34,7 +53,7 @@ Before modifying any files, create a dedicated Git branch for the pipeline run s
 
 ## Pipeline Discipline
 
-- DO NOT skip steps or reorder the pipeline — the sequence matters
+- DO NOT skip steps or reorder the pipeline — the sequence matters. Phase - Execute may recompute dependency order only at its documented level-closure boundary.
 - DO NOT proceed past a subagent failure without attempting remediation
 - Complete ALL steps for one task/feature before starting the next
 

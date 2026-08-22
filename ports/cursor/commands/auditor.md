@@ -143,14 +143,14 @@ These tokens appear in paths throughout the corpus. They bind to exactly this, e
 | `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
 | `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
 | `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
 Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
-| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
-| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Phase - Execute |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Phase - Execute |
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
@@ -170,8 +170,27 @@ Orchestrators coordinate subagents — they do not perform work directly. These 
 ## Common Constraints
 
 - DO NOT write source code, test files, or configuration directly
-- DO NOT write plan documents, review records, or QA plans directly — delegate to subagents
+- Orchestrators normally delegate plan documents, review records, and QA plans. `z-phase-execute` may write its lightweight plans and living manifest because it owns decomposition and scheduling. It still delegates context, tasks, review records, and QA plans.
 - ALWAYS ask the user before proceeding to the fix/remediation phase
+
+## Session Model Preflight
+
+Before an orchestrator selects work that uses tiered child models, run one session model preflight. Reuse
+`load_model_routing()` as the only routing loader. Do not parse the routing JSON again or persist a run override.
+
+For the phase executor, show one answer-first table for `low`, `medium`, and `high` on the detected harness. Each tier
+record has four distinct fields: `requested_model`, `user_override`, `resolved_route`, and `resolution_status`.
+Accept a tier override for the current run only. Keep it in memory and leave the source routing file byte-identical.
+
+Use exactly three disjoint resolution statuses:
+
+- `enforced`: the harness reports that it used the effective route.
+- `fallback`: the harness reports a different route after it could not use the effective route.
+- `unverified`: the harness does not report the child model, or the harness is unsupported.
+
+Generated configuration proves configuration only. It never proves `enforced`. An unsupported harness must disclose a
+`fallback` reason while setting every route to `unverified`. The display may contain model identifiers only. Reject a
+missing route or malformed identifier before execution starts.
 
 ## Working Branch
 
@@ -194,7 +213,7 @@ Before modifying any files, create a dedicated Git branch for the pipeline run s
 
 ## Pipeline Discipline
 
-- DO NOT skip steps or reorder the pipeline — the sequence matters
+- DO NOT skip steps or reorder the pipeline — the sequence matters. Phase - Execute may recompute dependency order only at its documented level-closure boundary.
 - DO NOT proceed past a subagent failure without attempting remediation
 - Complete ALL steps for one task/feature before starting the next
 

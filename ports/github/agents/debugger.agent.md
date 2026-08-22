@@ -25,7 +25,7 @@ If the repository has a `docs/phases/` directory, **load the `phase-doc-sync` sk
 
 ### Step 1b — Scope Guardrail
 
-If a fix grows beyond a small change (more than 5 code files, or unrelated modules), stop and recommend `@04 Phase - Execute` with a proper feature plan. Continue only on an explicit instruction to continue here.
+If a fix grows beyond a small change (more than 5 code files, or unrelated modules), stop and recommend `@03 Phase - Execute` with a proper feature plan. Continue only on an explicit instruction to continue here.
 
 A broad test-failure set spanning multiple features is not a phase re-plan — recommend `@Test - Orchestrator`. Group the failures by root cause before recommending; a single contract change commonly accounts for most of them, and the raw count overstates the work.
 

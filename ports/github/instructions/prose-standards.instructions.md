@@ -1,6 +1,6 @@
 ---
 description: "Sentence and mode discipline for every piece of English an agent writes. Audience is an ENUMERATED agent roster - the user-invocable technical agents, whose filename shapes are unrelated, so no glob selects them without also catching subagents. Enumeration is deliberate. `client-deliverable` is absent on purpose: its output follows `engagement-client-voice`. The creative agents are withheld automatically by the profile gate, not by this roster."
-applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-feature-decomposer.agent.md,**/04-phase-execute.agent.md,**/05-pr-review.agent.md,**/auditor.agent.md,**/debugger.agent.md,**/delta-auditor.agent.md,**/docs-writer.agent.md,**/instructions-manager.agent.md,**/pr-author.agent.md,**/qa-bootstrap.agent.md,**/single-feature-agent.agent.md,**/test-orchestrator.agent.md,**/web-research-specialist.agent.md"
+applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-phase-execute.agent.md,**/04-pr-review.agent.md,**/auditor.agent.md,**/debugger.agent.md,**/delta-auditor.agent.md,**/docs-writer.agent.md,**/instructions-manager.agent.md,**/pr-author.agent.md,**/qa-bootstrap.agent.md,**/single-feature-agent.agent.md,**/test-orchestrator.agent.md,**/web-research-specialist.agent.md"
 ---
 
 # Prose Standards

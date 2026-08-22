@@ -1,7 +1,7 @@
 ---
 name: z-test-health
 description: "Adapts root-supplied Test Analyst evidence into a branch-scoped report of the coverage delta base to HEAD, test redundancy, and flake candidates."
-model: inherit
+model: gpt-5.6-terra
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 
@@ -13,7 +13,7 @@ branch-scoped test-health hand-off by adapting evidence from the existing
 
 Apply `pr-review-conventions` in full — load contract, assigned base and scope,
 attribution, baseline/empty-diff semantics, report body, and return contract.
-Write only `05f-test-health-report.md`. Tests and analyst inputs are additional
+Write only `04f-test-health-report.md`. Tests and analyst inputs are additional
 read-only inputs; do not modify tests or the `z-test-analyst` agent.
 
 ## Assigned Scope
@@ -62,7 +62,7 @@ against later work.
 - Preserve analyst evidence paths and distinguish an incomplete health report
   from a clean result. Do not infer coverage, redundancy, or flake outcomes from
   missing evidence.
-- Report evidence, never a verdict. `05g` decides.
+- Report evidence, never a verdict. `04g` decides.
 
 The return summary names the coverage, redundancy, and flake outcome.
 
@@ -100,14 +100,14 @@ These tokens appear in paths throughout the corpus. They bind to exactly this, e
 | `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
 | `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
 | `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
 Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
-| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
-| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Phase - Execute |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Phase - Execute |
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 

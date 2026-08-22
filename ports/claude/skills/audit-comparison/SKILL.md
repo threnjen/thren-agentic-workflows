@@ -50,7 +50,7 @@ returned state; never stash, switch, reset, or otherwise mutate it.
 ### 2. Materialize ref targets
 
 Resolve each ref to a commit and record both values. For each ref target,
-invoke [Baseline Worktree](../../agents/05a-baseline-worktree.agent.md) with
+invoke [Baseline Worktree](../../agents/04a-baseline-worktree.agent.md) with
 the repository root and resolved commit, then use only its returned absolute
 root. Return materialization failures with their concrete remediation after
 cleaning any worktree this run already created; do not invent continuation

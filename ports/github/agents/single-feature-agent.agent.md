@@ -49,7 +49,7 @@ Use this invocation template when Unity is detected:
 
 If the change grows beyond a small feature (more than 5 code files, or unrelated modules), stop and say:
 
-> "This is expanding beyond a small feature. I recommend using `@04 Phase - Execute` with a proper feature plan for full pipeline coverage (implementation, review, QA, and final validation). Do you want to continue here anyway, or switch to that flow?"
+> "This is expanding beyond a small feature. I recommend using `@03 Phase - Execute` with a proper feature plan for full pipeline coverage (implementation, review, QA, and final validation). Do you want to continue here anyway, or switch to that flow?"
 
 Continue only on an explicit instruction to continue here.
 

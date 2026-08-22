@@ -2,6 +2,7 @@
 name: z-cleanliness-auditor
 description: Evaluates the cleanliness of code a branch adds — DRY violations, dead code, mixed concerns, and oversized modules — and recommends specific cleanup categories when non-passing.
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
+model: sonnet
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
@@ -17,7 +18,7 @@ limitation as a passing result.
 Apply `pr-review-conventions` in full — load contract, assigned base and scope,
 attribution (including its read-only shell restriction), baseline/empty-diff
 semantics, report body, and return contract. Write only
-`05h-cleanliness-auditor-report.md`. You recommend cleanup categories; the author
+`04h-cleanliness-auditor-report.md`. You recommend cleanup categories; the author
 performs them.
 
 ## Attribution: Introduced or Worsened
@@ -64,7 +65,7 @@ silently skipped.
    written longhand across several classes. Recommend a shared module-level
    validator matching the model's existing helper idiom.
 7. **Dead and unreachable code.** This evaluator is the family's sole owner of
-   reachability-based dead-code detection; `05c` reports commented-out text only.
+   reachability-based dead-code detection; `04c` reports commented-out text only.
    The subject is code the branch added earlier in its life and then made
    unreachable by a later change on the same branch — a branch of a dispatch that
    a newer code path now intercepts, handlers for cases that can no longer occur,
@@ -107,7 +108,7 @@ missing evidence itself is a finding.
 ## Pass / Non-Passing Semantics
 
 Passing and Non-passing are this evaluator's own report vocabulary, not a
-verdict. `05g` consumes only severity-rated findings and release conditions, so
+verdict. `04g` consumes only severity-rated findings and release conditions, so
 every non-passing category must also appear there as a rated finding.
 
 - **Passing**: every inventory check ran and produced no branch-attributed
@@ -163,14 +164,14 @@ These tokens appear in paths throughout the corpus. They bind to exactly this, e
 | `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
 | `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
 | `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
 Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
-| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
-| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Phase - Execute |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Phase - Execute |
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 

@@ -1,6 +1,6 @@
 ---
 name: z-artifact-sweeper
-description: Finds debug statements, TODO/FIXME markers, temporary feature flags, and commented-out code added by a branch. Reachability-based dead code belongs to 05h Cleanliness Auditor.
+description: Finds debug statements, TODO/FIXME markers, temporary feature flags, and commented-out code added by a branch. Reachability-based dead code belongs to 04h Cleanliness Auditor.
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 user-invocable: false
 ---
@@ -15,7 +15,7 @@ limitation as a passing result.
 
 Apply `pr-review-conventions` in full — load contract, assigned base and scope,
 attribution, baseline/empty-diff semantics, report body, and return contract.
-Write only `05c-artifact-sweeper-report.md`.
+Write only `04c-artifact-sweeper-report.md`.
 
 ## Assigned Scope
 
@@ -29,7 +29,7 @@ Sweep the branch diff's added lines for all of these categories:
 
 Reachability-based dead code is **not** yours: `z-cleanliness-auditor` owns
 that check (inventory item 7). Report commented-out code as a textual artifact
-and leave unreachable live code to `05h` — do not run a dead-code analysis here.
+and leave unreachable live code to `04h` — do not run a dead-code analysis here.
 
 Pre-existing markers in a file the branch merely touched are never findings here.
 
@@ -67,14 +67,14 @@ These tokens appear in paths throughout the corpus. They bind to exactly this, e
 | `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
 | `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
 | `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
 Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
-| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
-| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Phase - Execute |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Phase - Execute |
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 

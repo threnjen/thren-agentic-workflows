@@ -1,6 +1,5 @@
 ---
 description: "Handles small, focused code changes with one clear concern. Investigates, proposes, waits for explicit approval, then implements and verifies."
-model: deepseek/deepseek-v4-pro
 permission:
   bash: allow
   edit: allow
@@ -44,9 +43,9 @@ If the repository has a `docs/phases/` directory, **load the `phase-doc-sync` sk
 Before proposing implementation, apply the auto-loaded canonical Unity detection predicate.
 
 - If a Unity project is detected, **load the `unity-development` skill** before planning or writing code, so Unity authoring rules (runtime wiring, lifecycle, serialized-asset generation) apply during implementation — not only at review.
-- If a Unity project is detected, spawn `04h-unity-reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
+- If a Unity project is detected, spawn `03h-unity-reviewer` in subagent mode to review the affected Unity C# files before implementation planning.
 - Include the reviewer findings in your proposal as risks and constraints.
-- If no Unity layout is detected, continue without invoking `04h-unity-reviewer`.
+- If no Unity layout is detected, continue without invoking `03h-unity-reviewer`.
 
 Use this invocation template when Unity is detected:
 
@@ -56,7 +55,7 @@ Use this invocation template when Unity is detected:
 
 If the change grows beyond a small feature (more than 5 code files, or unrelated modules), stop and say:
 
-> "This is expanding beyond a small feature. I recommend using `@04-phase-execute` with a proper feature plan for full pipeline coverage (implementation, review, QA, and final validation). Do you want to continue here anyway, or switch to that flow?"
+> "This is expanding beyond a small feature. I recommend using `@03-phase-execute` with a proper feature plan for full pipeline coverage (implementation, review, QA, and final validation). Do you want to continue here anyway, or switch to that flow?"
 
 Continue only on an explicit instruction to continue here.
 
@@ -166,14 +165,14 @@ These tokens appear in paths throughout the corpus. They bind to exactly this, e
 | `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
 | `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
 | `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
 Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
-| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
-| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Phase - Execute |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Phase - Execute |
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
