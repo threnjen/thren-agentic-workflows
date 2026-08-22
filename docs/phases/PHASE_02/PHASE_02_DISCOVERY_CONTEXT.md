@@ -27,6 +27,15 @@ Context gathered during refinement that lives outside this repository.
 - Renumber the corpus so no gaps remain: `04*` becomes `03*` and `05*` becomes `04*`. Execute it last.
 - Accept a review step roughly four to six times the current cost, against the cost of dedicated cleanup phases.
 - Measure which reviewer caught what, so the roster can be pruned later on evidence.
+- Keep renumbering inside Phase 02 as its final feature rather than splitting it into its own phase.
+- Define one trigger table with an entry condition for every review agent, in place of an always-on roster plus a separate conditional list.
+- Test the review step by comparing the agent set that ran against the set the trigger table predicts, not by counting reviewers.
+- Trigger the visual verifier from a plan-level visual-acceptance flag, and state in the phase that this one trigger is plan-derived while the rest are file-derived.
+- Trigger the Unity reviewer from the canonical Unity predicate combined with a changed `.cs` file under `Assets/`.
+- Make Phase 02 own the `feature-plan-set` skill rewrite and retire the term "wave" in favor of "dependency level".
+- Decide the model-tier rule by an agent's own invocability. Docs Writer is user-invocable, so it carries no tier and leaves the pipeline tier count at twenty-three.
+- Keep tests and documentation in scope for every change, including the rename. Test modules asserting old identifiers are fixed, never skipped.
+- Exclude `docs/` from the mechanical rename pass. Docs Writer updates documentation at phase end, including this phase document's own cross-references.
 
 ## Current repository findings
 
