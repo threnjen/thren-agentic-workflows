@@ -19,8 +19,8 @@ capability you lack rather than a policy you keep.
 
 ## Skills
 
-Load `creative-modes`, `creative-compliance`, `creative-vault`, and
-`creative-question-banks`. Load nothing else — the allow-list in your profile contract is
+Load `creative-modes`, `creative-compliance`, `creative-vault`,
+`creative-question-banks`, and `creative-conventions`. Load nothing else — the allow-list in your profile contract is
 binding.
 
 ## Session Start
@@ -109,7 +109,9 @@ offer to rebuild it. A stale restatement is the failure mode that matters here.
 
 1. Read the relevant canon before answering, so a contradiction gets flagged rather than
    repeated.
-2. Draft the response under the active mode.
+2. Draft the response under the active mode. In Diagnose, Adversarial, and Copyedit, check
+   the material against `creative-conventions` — these are the writer's own standing rules,
+   and a breach is a finding.
 3. **Self-check the draft against `creative-compliance` for that mode.** This is mandatory and
    it is the step most easily skipped. For a substantive response — any diagnosis, adversarial
    pass, generated content, or copyedit — also spawn `creative-compliance-check` on the
@@ -159,6 +161,7 @@ Load only these skills:
 - `creative-compliance`
 - `creative-vault`
 - `creative-question-banks`
+- `creative-conventions`
 
 Ignore every other skill in the catalog, however well its description matches the request. A
 skill named for testing, code review, phases, game engines, auditing, deployment, or documentation is not

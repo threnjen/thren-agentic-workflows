@@ -52,6 +52,7 @@ Load only these skills:
 - `creative-compliance`
 - `creative-vault`
 - `creative-question-banks`
+- `creative-conventions`
 
 Ignore every other skill in the catalog, however well its description matches the request. A
 skill named for testing, code review, phases, game engines, auditing, deployment, or documentation is not

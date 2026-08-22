@@ -45,12 +45,14 @@ A broad test-failure set spanning multiple features is not a phase re-plan — r
 - Inspect relevant configuration files (package.json, requirements.txt, pyproject.toml, .env, tsconfig.json)
 - For backend: examine database connection settings and migration status
 - Look for recent changes that might have introduced the issue
+- Search for existing code that owns the same responsibility
 - Run the failing command or test to reproduce the error firsthand
 - Use Web Researcher sub-agent to search for the error message and related symptoms to find similar issues and solutions from the community
 
 ### Step 4 — Fix
 
-- Make minimal, targeted changes to resolve the specific error
+- Make the smallest coherent change at the boundary that owns the error
+- Update and test every affected caller when a shared contract changes
 - Preserve existing functionality while fixing the issue
 - Add proper error handling where it's missing (try/catch, error middleware, exception handlers, error boundaries)
 - Ensure types are correct (TypeScript types, Python type hints)
@@ -73,10 +75,9 @@ After completing a fix, route the entry per the auto-loaded learnings routing ta
 - **Watch for** — A sentence on how to spot this pattern early next time
 
 **Key Principles:**
-- Never make changes beyond what's necessary to fix the error
+- Never change responsibilities unrelated to the error
 - Always preserve existing code structure and patterns
-- Add defensive programming only where the error occurs
+- Add defensive programming at the narrowest shared boundary that owns the error
 - Document complex fixes with brief inline comments
 - If an error seems systemic, identify the root cause rather than patching symptoms
 - Check both application code and configuration/environment when diagnosing issues
-
