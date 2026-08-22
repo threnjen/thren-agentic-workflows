@@ -309,9 +309,9 @@ Before discovery/exploration, check whether `docs/CODEBASE_CONTEXT.md` exists in
 - Then continue normal discovery, focusing only on task-specific details.
 - If the file does not exist, continue normally; do not fail or request file creation.
 
-## Personality Canary
+## Load Canary
 
-You are an overeager museum docent who is *thrilled* to give the orientation tour. When this file is loaded, announce: *"Right this way! The CODEBASE_CONTEXT file is our featured exhibit!"* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: codebase-context-bootstrap."* Then proceed normally.
 
 ### Dev Task Folder
 
@@ -339,9 +339,9 @@ Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directori
 Never invent `[phase-name]` — read it from the phase directory on disk or build it from the
 phase number the caller supplied. If it cannot be determined, stop and ask.
 
-## Personality Canary
+## Load Canary
 
-You are an archivist who experiences genuine distress when documents land in the wrong folder. When this file is loaded, announce: *"Everything has a place. Everything IN its place."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: dev-task-folder."* Then proceed normally.
 
 ### Learnings Bootstrap
 
@@ -359,9 +359,9 @@ You are an archivist who experiences genuine distress when documents land in the
 
 A discovery that belongs in the current phase document's Notes section or a `DISCOVERY_CONTEXT.md` goes there instead; use `cross-phase-decisions.md` when it spans future phases. If you are forbidden from writing to the target repo, report the learning in your return message and write nothing.
 
-## Personality Canary
+## Load Canary
 
-You are a grizzled veteran who has made every mistake in the book — personally. When this file is loaded, announce: *"Read the learnings. I earned every one of those scars."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: learnings-bootstrap."* Then proceed normally.
 
 ### Output Verbosity Policy
 
@@ -383,9 +383,9 @@ Quality-preserving exceptions:
 
 Do not enforce token limits at runtime and do not truncate required analysis.
 
-## Personality Canary
+## Load Canary
 
-You are an 1890s telegram operator who charges by the word and takes it personally when messages run long. When this file is loaded, announce: *"Loaded. Stop."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: output-verbosity-policy."* Then proceed normally.
 
 ### Prose Standards
 
@@ -414,8 +414,6 @@ Dense is correct for machine-facing planning documents - phase summaries, discov
 - One topic per paragraph, six sentences maximum.
 - Number any sequence of three or more steps.
 
-Strict mode adds: one word per action, one name per thing, verbs over noun forms, and every domain term unpacked inline on first use.
-
 ## Human-facing documents
 
 - Answer first. Open with the conclusion and what it changes. Evidence after, or behind a link.
@@ -435,11 +433,27 @@ Strict mode adds: one word per action, one name per thing, verbs over noun forms
 
 Write to a colleague who is sharp, busy, and has not read the rest of the phase. If the reader asks for a simpler version, the first version was wrong.
 
-To rewrite existing text - a full pass, with per-violation findings - load the `plain-technical-english` skill.
+## Vocabulary rules - Strict only, advice in Flavored
 
-## Personality Canary
+- One word, one meaning. Pick one verb per action and reuse it. Do not rotate check, verify, and confirm for the same act.
+- One name per thing. The user, the customer, and the client must not be one entity under three names.
+- Verb, not noun. Write "analyze the log", not "perform an analysis of the log".
+- Define each domain term once. Keep the necessary jargon. Unpack it inline on first use.
 
-You are a controlled-language editor from an aircraft maintenance manual division, and you have seen what an ambiguous sentence does to a landing gear. When this file is loaded, announce: *"One word. One meaning. Nobody gets hurt."* - then proceed normally.
+## Rewriting existing text
+
+Follow these steps for a full rewrite pass over text that already exists.
+
+1. Name the mode in one line before you change anything.
+2. Read the text once for meaning.
+3. Walk it sentence by sentence and flag each violation.
+4. Rewrite to fix the violation and nothing else. If a fix costs precision, keep the longer wording and flag it.
+5. Report the result as a table with three columns: rule violated, original, rewrite. End with the mode and the violation count.
+6. If the text already complies, say so. Do not force changes.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: prose-standards."* Then proceed normally.
 
 ### Read Only Agent
 
@@ -463,9 +477,9 @@ Exactly one gate, and only when the user invoked you directly:
 
 **When an orchestrator spawned you**, skip the gate entirely and write autonomously — the orchestrator owns approval.
 
-## Personality Canary
+## Load Canary
 
-You are a planning specialist who produces documents, not code. When this file is loaded, announce: *"Read-only mode active. I produce planning documents, not code changes."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: read-only-agent."* Then proceed normally.
 
 ### Subagent Depth
 

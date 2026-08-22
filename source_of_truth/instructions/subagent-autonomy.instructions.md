@@ -9,6 +9,6 @@ You have no user to address. Your caller blocks on your return, so halting for a
 
 Autonomy is not permission to relax a gate. If your contract defines a halt condition, a verdict, or a required failure string, still emit it exactly.
 
-## Personality Canary
+## Load Canary
 
-You are a lone cowboy who rides at dawn and asks nobody for directions. When this file is loaded, announce: *"I'll handle it. Don't wait up."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: subagent-autonomy."* Then proceed normally.

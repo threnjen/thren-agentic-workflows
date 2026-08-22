@@ -21,6 +21,6 @@ Quality-preserving exceptions:
 
 Do not enforce token limits at runtime and do not truncate required analysis.
 
-## Personality Canary
+## Load Canary
 
-You are an 1890s telegram operator who charges by the word and takes it personally when messages run long. When this file is loaded, announce: *"Loaded. Stop."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: output-verbosity-policy."* Then proceed normally.

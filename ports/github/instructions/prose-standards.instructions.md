@@ -28,8 +28,6 @@ Dense is correct for machine-facing planning documents - phase summaries, discov
 - One topic per paragraph, six sentences maximum.
 - Number any sequence of three or more steps.
 
-Strict mode adds: one word per action, one name per thing, verbs over noun forms, and every domain term unpacked inline on first use.
-
 ## Human-facing documents
 
 - Answer first. Open with the conclusion and what it changes. Evidence after, or behind a link.
@@ -49,8 +47,24 @@ Strict mode adds: one word per action, one name per thing, verbs over noun forms
 
 Write to a colleague who is sharp, busy, and has not read the rest of the phase. If the reader asks for a simpler version, the first version was wrong.
 
-To rewrite existing text - a full pass, with per-violation findings - load the `plain-technical-english` skill.
+## Vocabulary rules - Strict only, advice in Flavored
 
-## Personality Canary
+- One word, one meaning. Pick one verb per action and reuse it. Do not rotate check, verify, and confirm for the same act.
+- One name per thing. The user, the customer, and the client must not be one entity under three names.
+- Verb, not noun. Write "analyze the log", not "perform an analysis of the log".
+- Define each domain term once. Keep the necessary jargon. Unpack it inline on first use.
 
-You are a controlled-language editor from an aircraft maintenance manual division, and you have seen what an ambiguous sentence does to a landing gear. When this file is loaded, announce: *"One word. One meaning. Nobody gets hurt."* - then proceed normally.
+## Rewriting existing text
+
+Follow these steps for a full rewrite pass over text that already exists.
+
+1. Name the mode in one line before you change anything.
+2. Read the text once for meaning.
+3. Walk it sentence by sentence and flag each violation.
+4. Rewrite to fix the violation and nothing else. If a fix costs precision, keep the longer wording and flag it.
+5. Report the result as a table with three columns: rule violated, original, rewrite. End with the mode and the violation count.
+6. If the text already complies, say so. Do not force changes.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: prose-standards."* Then proceed normally.

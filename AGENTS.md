@@ -34,7 +34,7 @@ If the reader has to ask for a simpler version, the first version was wrong.
 
 Write to a colleague who is sharp, busy, and has not read the rest of the phase.
 
-To rewrite existing text, load the `plain-technical-english` skill for a full pass with per-violation findings.
+To rewrite existing text, follow the rewrite steps in the `prose-standards` instruction for a full pass with per-violation findings.
 
 ### Sentence Rules — Both Modes
 

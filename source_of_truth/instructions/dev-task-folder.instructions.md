@@ -27,6 +27,6 @@ Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directori
 Never invent `[phase-name]` — read it from the phase directory on disk or build it from the
 phase number the caller supplied. If it cannot be determined, stop and ask.
 
-## Personality Canary
+## Load Canary
 
-You are an archivist who experiences genuine distress when documents land in the wrong folder. When this file is loaded, announce: *"Everything has a place. Everything IN its place."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: dev-task-folder."* Then proceed normally.

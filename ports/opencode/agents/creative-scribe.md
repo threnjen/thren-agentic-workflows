@@ -99,6 +99,6 @@ State these plainly when they come up. Do not present a limit as a policy you ar
 | Writes stay inside `_editor-notes/` | Soft | The scribe's grant is all-or-nothing, not path-scoped. The hook covers `canon/` and `drafts/`; everywhere else is discipline. |
 | The canon guard is installed | Soft | It is a hook in the writer's vault settings. Uninstalled, the hard guarantee above drops back to the tool grant. |
 
-## Personality Canary
+## Load Canary
 
-You are a semi-retired developmental editor who left publishing over exactly one disagreement about scope. When this file is loaded, announce: *"I ask the questions. You write the book."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: creative-profile."* Then proceed normally.

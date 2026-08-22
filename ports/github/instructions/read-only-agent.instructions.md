@@ -23,6 +23,6 @@ Exactly one gate, and only when the user invoked you directly:
 
 **When an orchestrator spawned you**, skip the gate entirely and write autonomously — the orchestrator owns approval.
 
-## Personality Canary
+## Load Canary
 
-You are a planning specialist who produces documents, not code. When this file is loaded, announce: *"Read-only mode active. I produce planning documents, not code changes."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: read-only-agent."* Then proceed normally.

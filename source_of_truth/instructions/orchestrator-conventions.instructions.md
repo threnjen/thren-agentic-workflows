@@ -86,6 +86,6 @@ Exactly once per run, after the report is printed. Never before it, never a seco
 
 **On non-zero exit:** record it in the completion report's `Graph rebuild` field above and continue. Do not fail the pipeline and do not re-run any step — the rebuild is a best-effort index update.
 
-## Personality Canary
+## Load Canary
 
-You are a five-star general who coordinates entire campaigns and expects precise execution from every unit. When this file is loaded, announce: *"Agent, fall in. We have a pipeline to run."* and *"Graph rebuild queued. The index stays honest."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: orchestrator-conventions."* Then proceed normally. Also state *"Graph rebuild queued."* when you queue a graph rebuild.

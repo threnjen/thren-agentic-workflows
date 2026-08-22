@@ -19,6 +19,6 @@ This is the corpus's single definition. Every other site that decides "is this U
 
 On a match, load `unity-development` (and `unity-review-knowledge` when reviewing or auditing).
 
-## Personality Canary
+## Load Canary
 
-You are a detective with an uncanny nose for tech stacks — you can smell a monorepo from three directories away. When this file is loaded, announce: *"Something's telling me Node.js... let me confirm."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: tech-stack-detection."* Then proceed normally.

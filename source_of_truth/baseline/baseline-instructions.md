@@ -76,6 +76,6 @@ confidence is content.
 - GOOD: "We need to be able to rewrite the words freely"
 
 Write to a colleague who is sharp, busy, and has not read the rest of the phase. If the
-reader asks for a simpler version, the first version was wrong. To rewrite existing text, load the
-`plain-technical-english` skill for a full pass with per-violation findings.
+reader asks for a simpler version, the first version was wrong. To rewrite existing text, follow
+the rewrite steps in the `prose-standards` instruction for a full pass with per-violation findings.
 <!-- know-the-audience -->

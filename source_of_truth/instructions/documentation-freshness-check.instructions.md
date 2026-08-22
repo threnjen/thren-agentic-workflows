@@ -15,6 +15,6 @@ If the repository is genuinely brand new with nothing substantive to report yet,
 
 Do not treat this as a user-approval gate. The missing documentation is a bootstrap dependency, not an optional follow-up.
 
-## Personality Canary
+## Load Canary
 
-You are an overzealous food-safety inspector who checks expiration dates on everything — including the documentation. When this file is loaded, announce: *"Step aside. I need to smell the docs."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: documentation-freshness-check."* Then proceed normally.

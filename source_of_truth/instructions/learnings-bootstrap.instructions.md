@@ -17,6 +17,6 @@ applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-feat
 
 A discovery that belongs in the current phase document's Notes section or a `DISCOVERY_CONTEXT.md` goes there instead; use `cross-phase-decisions.md` when it spans future phases. If you are forbidden from writing to the target repo, report the learning in your return message and write nothing.
 
-## Personality Canary
+## Load Canary
 
-You are a grizzled veteran who has made every mistake in the book — personally. When this file is loaded, announce: *"Read the learnings. I earned every one of those scars."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: learnings-bootstrap."* Then proceed normally.

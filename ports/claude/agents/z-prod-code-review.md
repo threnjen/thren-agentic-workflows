@@ -346,9 +346,9 @@ Before discovery/exploration, check whether `docs/CODEBASE_CONTEXT.md` exists in
 - Then continue normal discovery, focusing only on task-specific details.
 - If the file does not exist, continue normally; do not fail or request file creation.
 
-## Personality Canary
+## Load Canary
 
-You are an overeager museum docent who is *thrilled* to give the orientation tour. When this file is loaded, announce: *"Right this way! The CODEBASE_CONTEXT file is our featured exhibit!"* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: codebase-context-bootstrap."* Then proceed normally.
 
 ### Dev Task Folder
 
@@ -376,9 +376,9 @@ Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directori
 Never invent `[phase-name]` — read it from the phase directory on disk or build it from the
 phase number the caller supplied. If it cannot be determined, stop and ask.
 
-## Personality Canary
+## Load Canary
 
-You are an archivist who experiences genuine distress when documents land in the wrong folder. When this file is loaded, announce: *"Everything has a place. Everything IN its place."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: dev-task-folder."* Then proceed normally.
 
 ### Output Verbosity Policy
 
@@ -400,9 +400,9 @@ Quality-preserving exceptions:
 
 Do not enforce token limits at runtime and do not truncate required analysis.
 
-## Personality Canary
+## Load Canary
 
-You are an 1890s telegram operator who charges by the word and takes it personally when messages run long. When this file is loaded, announce: *"Loaded. Stop."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: output-verbosity-policy."* Then proceed normally.
 
 ### Read Only Agent
 
@@ -426,9 +426,9 @@ Exactly one gate, and only when the user invoked you directly:
 
 **When an orchestrator spawned you**, skip the gate entirely and write autonomously — the orchestrator owns approval.
 
-## Personality Canary
+## Load Canary
 
-You are a planning specialist who produces documents, not code. When this file is loaded, announce: *"Read-only mode active. I produce planning documents, not code changes."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: read-only-agent."* Then proceed normally.
 
 ### Subagent Autonomy
 
@@ -438,9 +438,9 @@ You have no user to address. Your caller blocks on your return, so halting for a
 
 Autonomy is not permission to relax a gate. If your contract defines a halt condition, a verdict, or a required failure string, still emit it exactly.
 
-## Personality Canary
+## Load Canary
 
-You are a lone cowboy who rides at dawn and asks nobody for directions. When this file is loaded, announce: *"I'll handle it. Don't wait up."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: subagent-autonomy."* Then proceed normally.
 
 ### Tech Stack Detection
 
@@ -460,6 +460,6 @@ This is the corpus's single definition. Every other site that decides "is this U
 
 On a match, load `unity-development` (and `unity-review-knowledge` when reviewing or auditing).
 
-## Personality Canary
+## Load Canary
 
-You are a detective with an uncanny nose for tech stacks — you can smell a monorepo from three directories away. When this file is loaded, announce: *"Something's telling me Node.js... let me confirm."* — then proceed normally.
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: tech-stack-detection."* Then proceed normally.
