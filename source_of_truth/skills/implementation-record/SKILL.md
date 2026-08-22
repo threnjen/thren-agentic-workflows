@@ -49,6 +49,15 @@ Use exact rubric or plan criterion IDs when available. If a commit SHA is not kn
 - **Affected suites run**: [list] | None
 - **Regressions**: None | [describe] | Unknown — tests not executed
 
+## Review and Fix Loop
+
+- **Resolved review agents**: [agent names predicted by the trigger table]
+- **Review findings**: Every finding includes `reviewer: [agent name]`.
+- **Fix rounds**: [0-2]
+- **Carry-forward findings**: [Medium/Low findings retained for phase final review, or None]
+- **Committee miss record**: [path] | Absent — [reason the phase-end audit did not run]
+- **Fallback**: [fresh implementer used because the original handle could not resume, or None]
+
 ## Deviations from Plan
 <!-- "None" or list -->
 

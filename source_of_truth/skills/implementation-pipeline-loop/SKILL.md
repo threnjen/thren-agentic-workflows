@@ -33,6 +33,14 @@ After the subagent returns:
   - **Approved** or **Approved with Reservations** → apply the Test Execution Gate below
   - **Changes Requested** → apply the Review Reject Loop from the auto-loaded orchestrator conventions (retry once, then log both summaries, proceed, and note the unresolved review in the final report)
 
+### Committee Review and Fix Loop
+
+When a phase caller supplies review trigger tables, keep the implementer addressable from Step A through review and fixes. Resolve the tables against the changed-file list and plan metadata. Run every committee lane whose condition holds. Run the four committee reviewers concurrently at `medium`, wait for every return, then spawn the consolidator with every committee report path. The consolidator writes one deduplicated, severity-ranked fix list and adjudicates disagreements. A non-firing lane is complete evidence, not a missing reviewer.
+
+Pass the consolidated fix list to the implementer that wrote the feature. Do not make that implementer rediscover its own work. If the harness cannot resume the handle, spawn a fresh implementer with the implementation record and the same fix list. Record that fallback in the implementation record.
+
+Only `Blocker` and `High` findings open a fix round. Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two fix rounds. Re-review only the lanes that filed the findings being fixed. After two unsuccessful rounds, rewrite the feature plan once using the fix list as evidence and rebuild the feature. If the rebuilt feature still fails, mark it and its dependents blocked, then continue independent features.
+
 ### Test Execution Gate
 
 Read the Implementer's and Reviewer's reported test-execution status. Statuses are defined in the `test-execution-evidence` instruction.

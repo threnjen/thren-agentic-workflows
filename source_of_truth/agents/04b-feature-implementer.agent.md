@@ -166,6 +166,10 @@ This is the **primary deliverable**. Write or update it in `[plan-path]/` as des
 
 After writing the implementation record, return a brief summary to the orchestrator. **Keep this under 100 words** — all detail is in the written artifact on disk.
 
+## Review Fix Handoff
+
+When Phase - Execute keeps this implementation handle open for review, remain addressable after the implementation return. Apply the supplied consolidated fix list without rediscovering the feature. Update the implementation record with the resolved review agents, reviewer-attributed findings, fix-round count, carry-forward findings, and fallback status. If a fresh invocation is supplied instead, read the existing implementation record and consolidated fix list before changing anything.
+
 Required fields only:
 - **AC scope**: exact AC labels completed in this invocation
 - **Status**: Done / Blocked (and what is blocking)

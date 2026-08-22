@@ -13,6 +13,7 @@ import propagate_master_assets as mod  # noqa: E402
 
 
 AGENTS_DIR = REPO_ROOT / "source_of_truth" / "agents"
+PHASE_EXECUTE = AGENTS_DIR / "04-phase-execute.agent.md"
 COMMITTEE_SLUGS = (
     "04c-feature-review-and-fix",
     "03j-reviewer-blast-radius",
@@ -124,3 +125,17 @@ def test_required_instruction_membership_matches_each_lane() -> None:
             fnmatch.fnmatch(agent_paths["04c-feature-review-and-fix"], pattern)
             for pattern in instruction.apply_to_patterns
         ), f"{name} stopped reaching Reviewer A's test gate"
+
+
+def test_phase_execute_plan_blind_spawn_does_not_pass_the_plan() -> None:
+    body = PHASE_EXECUTE.read_text(encoding="utf-8")
+    required = (
+        "Spawn **03l Reviewer - Plan Blind** with changed code and tests only.",
+        "Do not pass the feature plan, context, tasks, or a plan-derived summary to Reviewer D.",
+    )
+    def missing(text: str) -> set[str]:
+        return {phrase for phrase in required if phrase not in text}
+
+    assert not missing(body)
+    for phrase in required:
+        assert phrase in missing(body.replace(phrase, "", 1))
