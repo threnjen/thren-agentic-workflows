@@ -1,6 +1,6 @@
 # PR Review Pinned Fixture: Base/Head Diff Range
 
-Reproducible input for the `05 PR - Review` fixture dry run. Both commits are
+Reproducible input for the `04 PR - Review` fixture dry run. Both commits are
 reachable from `main`, so the range resolves in every clone of this repository.
 
 - **Base SHA**: `f5ab960e5697756538f94430327e2a68eb113822`
@@ -20,7 +20,7 @@ packaging metadata, and docs — a representative spread for the evaluator roste
 
 ## Usage
 
-Run `05 PR - Review` with the base and head SHAs above. Reports land under
+Run `04 PR - Review` with the base and head SHAs above. Reports land under
 `dev/pr-review/<base-sha-short>-<UTC-timestamp>/`, which stays gitignored; this
 fixture lives under `tests/fixtures/`, outside `dev/`, so it stays tracked.
 

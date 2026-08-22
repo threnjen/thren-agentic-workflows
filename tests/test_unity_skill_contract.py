@@ -191,7 +191,7 @@ def _contract_errors(section: str) -> set[str]:
         or "Step 1" not in section
     ):
         errors.add("deployed editor discovery")
-    if "source_of_truth/agents/04g-unity-visual-verification.agent.md" in section:
+    if "source_of_truth/agents/03g-unity-visual-verification.agent.md" in section:
         errors.add("no authoring-only discovery pointer")
     if "VISUAL_VERIFICATION_UNITY" in section or "ProjectSettings/ProjectVersion.txt" in section:
         errors.add("no duplicated discovery algorithm")
@@ -438,7 +438,7 @@ def test_source_sweep_mutations_are_killed() -> None:
         ),
         (
             "Resolve it there rather than pointing at an authoring-repository path",
-            "Resolve it from source_of_truth/agents/04g-unity-visual-verification.agent.md",
+            "Resolve it from source_of_truth/agents/03g-unity-visual-verification.agent.md",
             "no authoring-only discovery pointer",
         ),
         (

@@ -11,9 +11,9 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 AGENT_ROOT = REPO_ROOT / "source_of_truth/agents"
 CONSUMER_PATHS = {
-    "phase_execute": AGENT_ROOT / "04-phase-execute.agent.md",
-    "visual_verifier": AGENT_ROOT / "04g-unity-visual-verification.agent.md",
-    "unity_reviewer": AGENT_ROOT / "04h-unity-reviewer.agent.md",
+    "phase_execute": AGENT_ROOT / "03-phase-execute.agent.md",
+    "visual_verifier": AGENT_ROOT / "03g-unity-visual-verification.agent.md",
+    "unity_reviewer": AGENT_ROOT / "03h-unity-reviewer.agent.md",
 }
 
 

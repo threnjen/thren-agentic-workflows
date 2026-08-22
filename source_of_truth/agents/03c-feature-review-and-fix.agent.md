@@ -16,4 +16,4 @@ Do not approve while authoritative tests are unrun. Mark the review `Changes Req
 
 Review plan conformance only. File findings only in this lane and stay silent outside it.
 
-Use this finding shape: `severity`, `lane: plan-conformance`, `evidence`, and `reviewer: 04c-feature-review-and-fix`.
+Use this finding shape: `severity`, `lane: plan-conformance`, `evidence`, and `reviewer: 03c-feature-review-and-fix`.

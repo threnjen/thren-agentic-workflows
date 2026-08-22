@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-PHASE_PATH = REPO_ROOT / "source_of_truth/agents/04-phase-execute.agent.md"
+PHASE_PATH = REPO_ROOT / "source_of_truth/agents/03-phase-execute.agent.md"
 PLAN_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/feature-plan-set/SKILL.md"
 LOOP_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/implementation-pipeline-loop/SKILL.md"
 RECORD_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/implementation-record/SKILL.md"
@@ -16,16 +16,16 @@ PER_FEATURE_AGENTS = {
     "03j Reviewer - Blast Radius",
     "03k Reviewer - Test Falsification",
     "03l Reviewer - Plan Blind",
-    "05h Cleanliness Auditor",
-    "04e Diff Security Scan",
-    "05e Dependency Auditor",
+    "04h Cleanliness Auditor",
+    "03e Diff Security Scan",
+    "04e Dependency Auditor",
     "Unity Reviewer",
     "Visual Verifier",
 }
 BOUNDARY_AGENTS = {
     "Auditor - Refactor",
-    "05d Consistency Auditor",
-    "05f Test Health",
+    "04d Consistency Auditor",
+    "04f Test Health",
     "Prod Code Review",
 }
 
@@ -216,26 +216,26 @@ def test_changed_file_scenarios_resolve_the_predicted_agent_set() -> None:
             "imported symbol",
             ["src/core.py"],
             {"imports_reference": True},
-            always | {"03j Reviewer - Blast Radius", "05h Cleanliness Auditor"},
+            always | {"03j Reviewer - Blast Radius", "04h Cleanliness Auditor"},
         ),
-        ("lockfile", ["uv.lock"], {}, always | {"05e Dependency Auditor"}),
+        ("lockfile", ["uv.lock"], {}, always | {"04e Dependency Auditor"}),
         (
             "authentication",
             ["src/auth.py"],
             {},
-            always | {"05h Cleanliness Auditor", "04e Diff Security Scan"},
+            always | {"04h Cleanliness Auditor", "03e Diff Security Scan"},
         ),
         (
             "Unity C#",
             ["Assets/Runtime/Spawner.cs"],
             {"is_unity_project": True},
-            always | {"05h Cleanliness Auditor", "Unity Reviewer"},
+            always | {"04h Cleanliness Auditor", "Unity Reviewer"},
         ),
         (
             "non-Unity C#",
             ["Assets/Runtime/Spawner.cs"],
             {},
-            always | {"05h Cleanliness Auditor"},
+            always | {"04h Cleanliness Auditor"},
         ),
     )
     for label, files, options, expected in cases:
@@ -260,14 +260,14 @@ def test_visual_and_security_rows_have_one_entry_point() -> None:
     security_section = text.split("### Step 5: Diff Security Review", 1)[1]
     security_section = security_section.split("### Step 5.5: Audit Bookend", 1)[0]
     assert "Collect the reports from every feature" in security_section
-    assert "spawn the **04e Diff Security Scan**" not in security_section
+    assert "spawn the **03e Diff Security Scan**" not in security_section
 
 
 def test_boundary_events_resolve_the_predicted_agent_set() -> None:
     text = _read(PHASE_PATH)
     assert _predicted_boundary_agents(
         text, dependency_level_closed=True, phase_closing=False
-    ) == {"Auditor - Refactor", "05d Consistency Auditor", "05f Test Health"}
+    ) == {"Auditor - Refactor", "04d Consistency Auditor", "04f Test Health"}
     assert _predicted_boundary_agents(
         text, dependency_level_closed=False, phase_closing=True
     ) == {"Auditor - Refactor", "Prod Code Review"}

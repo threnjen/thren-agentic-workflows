@@ -32,9 +32,9 @@ The core development workflow. **You drive steps 1–2, step 3 runs hands-free t
 │                                                                 │
 │  Step 1: 01 Project - Planner     → Phase documents             │
 │  Step 2: 02 Phase - Refiner       → Refined phase document      │
-│  Step 3: 04 Phase - Execute       → Plan, build, QA ────────┐    │
+│  Step 3: 03 Phase - Execute       → Plan, build, QA ────────┐    │
 │                                                            │    │
-│  Step 4: 05 PR - Review           → Self-review before PR  │    │
+│  Step 4: 04 PR - Review           → Self-review before PR  │    │
 │          (after the automated run reports back)            │    │
 └────────────────────────────────────────────────────────────│────┘
                                                              │
@@ -50,7 +50,7 @@ The core development workflow. **You drive steps 1–2, step 3 runs hands-free t
 │  └──────────────────────────────────────────────┘                │
 │  Feature - QA Writer    → Manual + automated QA plans         │
 │  Feature - QA Runner    → Runs the automated QA plan          │
-│  04e Diff Security Scan → Diff-scoped security report         │
+│  03e Diff Security Scan → Diff-scoped security report         │
 │  Prod Code Review       → GO / NO-GO verdict                  │
 │                                                                   │
 │  PER-FEATURE MODE (one feature, one branch, one PR):             │
@@ -89,7 +89,7 @@ Interactive — you iterate to probe edge cases and dependencies before executio
 
 | Agent | Prompt | Output |
 |-------|--------|--------|
-| **04 Phase - Execute** | "Execute this phase" + attach refined phase doc | Feature plans, implementation, review, QA, and final verdict |
+| **03 Phase - Execute** | "Execute this phase" + attach refined phase doc | Feature plans, implementation, review, QA, and final verdict |
 
 **Hands-free from here.** The orchestrator researches the phase, writes the plans and manifest, expands one selected feature at a time, and automatically:
 
@@ -100,7 +100,7 @@ Interactive — you iterate to probe edge cases and dependencies before executio
    - **Implement** → Red-Green-Refactor TDD, writes implementation record
    - **Review** → Finds bugs, applies fixes, writes review record
 5. Runs the **QA Writer**, then the **QA Runner** on the automated QA document it produced
-6. Runs the **04e Diff Security Scan** across all files changed by the phase
+6. Runs the **03e Diff Security Scan** across all files changed by the phase
 7. Runs the **Prod Code Review** with the security report
 8. Reports the verdict back to you
 9. Runs the **Docs Writer** to update any stale documentation
@@ -109,7 +109,7 @@ Interactive — you iterate to probe edge cases and dependencies before executio
 
 | Agent | Prompt | Output |
 |-------|--------|--------|
-| **05 PR - Review** | "Review my change before I open the PR" | Readiness report on the diff between a confirmed base and head commit |
+| **04 PR - Review** | "Review my change before I open the PR" | Readiness report on the diff between a confirmed base and head commit |
 
 Asks its three questions once — model tier, the base commit, and whether to post the
 report to an already-open draft PR — then runs its evaluator roster over that diff and
@@ -126,12 +126,12 @@ Prefer to write your own code? Use the planning agents, then implement yourself:
 Step 1: 01 Project - Planner   → Phase documents
 Step 2: 02 Phase - Refiner      → Refined phase document
 Step 3: (you write the code from the phase plan)
-Step 4: 05 PR - Review          → Readiness report on what you wrote
+Step 4: 04 PR - Review          → Readiness report on what you wrote
 ```
 
-The refined Phase document from Step 2 contains detailed scope, requirements, and acceptance criteria — enough to implement directly. When you're ready for validation, run **05 PR - Review** to get a readiness verdict on your diff.
+The refined Phase document from Step 2 contains detailed scope, requirements, and acceptance criteria — enough to implement directly. When you're ready for validation, run **04 PR - Review** to get a readiness verdict on your diff.
 
-**Tip:** The refined Phase document contains the scope and acceptance criteria. Use **04 Phase - Execute** when you want the agent to create the feature schedule and run the implementation pipeline.
+**Tip:** The refined Phase document contains the scope and acceptance criteria. Use **03 Phase - Execute** when you want the agent to create the feature schedule and run the implementation pipeline.
 
 ---
 
@@ -143,8 +143,8 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 |-------|---------|
 | **01 Project - Planner** | Create a project roadmap broken into phases |
 | **02 Phase - Refiner** | Refine and deepen an individual Phase document |
-| **04 Phase - Execute** | Orchestrate full phase execution from a prepared manifest and feature bundles |
-| **05 PR - Review** | Self-review a change before opening the PR — readiness report on the diff between a base commit and a head commit |
+| **03 Phase - Execute** | Orchestrate full phase execution from a prepared manifest and feature bundles |
+| **04 PR - Review** | Self-review a change before opening the PR — readiness report on the diff between a base commit and a head commit |
 | **Client Deliverable** | Produce the client deliverable package for a modernization engagement — audits each before/after repository pair and compares the two sides |
 | **Audit - Code, Infra, Refactor, Security** | Audit code quality, infrastructure, architecture, or security in one repository, with optional fix research and automated fix pipeline |
 | **Audit - Delta** | Audit two revisions or checkouts of the same product and reconcile them into a delta of what changed, with optional fix research and automated fix pipeline |
@@ -180,18 +180,18 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **Feature - QA Runner** | Phase - Execute, Audit orchestrator | Execute the automated QA document and record per-check results into it |
 | **QA - Doc Generator** | QA - Bootstrapper | Generate the QA_AUTOMATED runbook and QA_USER checklist from repository, manual QA, and acceptance inputs |
 | **QA - Runner** | QA - Bootstrapper | Execute the QA_AUTOMATED runbook and all test suites, then record binary pass/fail results into the runbook |
-| **Baseline Worktree** | 05 PR - Review | Create or reuse a clean detached worktree at a caller-specified baseline commit and return its path |
-| **05b Change Narrator** | 05 PR - Review | Build the base-to-head narrative for the diff under review and identify churn hotspots |
-| **05c Artifact Sweeper** | 05 PR - Review | Sweep the branch diff for debug artifacts, TODO/FIXME markers, and dead code added by the branch |
-| **05d Consistency Auditor** | 05 PR - Review | Compare the branch diff against established repository conventions and recommend canonical forms |
-| **05e Dependency Auditor** | 05 PR - Review, Client Deliverable | Inventory dependencies added by the branch and report supply-chain and duplication risks, offline |
-| **04e Diff Security Scan** | Phase - Execute, 05 PR - Review | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
+| **Baseline Worktree** | 04 PR - Review | Create or reuse a clean detached worktree at a caller-specified baseline commit and return its path |
+| **04b Change Narrator** | 04 PR - Review | Build the base-to-head narrative for the diff under review and identify churn hotspots |
+| **04c Artifact Sweeper** | 04 PR - Review | Sweep the branch diff for debug artifacts, TODO/FIXME markers, and dead code added by the branch |
+| **04d Consistency Auditor** | 04 PR - Review | Compare the branch diff against established repository conventions and recommend canonical forms |
+| **04e Dependency Auditor** | 04 PR - Review, Client Deliverable | Inventory dependencies added by the branch and report supply-chain and duplication risks, offline |
+| **03e Diff Security Scan** | Phase - Execute, 04 PR - Review | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
 | **Unity Reviewer** | Phase - Execute, PR - Review, Single Feature - Agent | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
 | **Visual Verifier** | Phase - Execute | Produce deterministic runtime screenshots and assess them against a phase's visual acceptance criteria (does it actually render?) |
 | **Prod Code Review** | Phase - Execute, Audit orchestrator | Final pre-production readiness gate — cross-validate every pipeline document in a phase and produce a GO / NO-GO verdict |
-| **05f Test Health** | 05 PR - Review | Adapt root-supplied Test Analyst evidence into a test health report |
-| **05h Cleanliness Auditor** | 05 PR - Review | Evaluate the cleanliness of branch-added code and recommend specific cleanup categories when non-passing |
-| **05g Readiness Synthesizer** | 05 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
+| **04f Test Health** | 04 PR - Review | Adapt root-supplied Test Analyst evidence into a test health report |
+| **04h Cleanliness Auditor** | 04 PR - Review | Evaluate the cleanliness of branch-added code and recommend specific cleanup categories when non-passing |
+| **04g Readiness Synthesizer** | 04 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
 | **Client Deliverable - Prepare** | Client Deliverable | Prepare a client engagement for comparison analysis — validate the engagement config, then ensure an analysis branch, a code graph, and a baseline snapshot per side |
 | **Client Deliverable - Delta Synthesizer** | Client Deliverable | Produce the client-facing findings report, the SOW-exclusions partition, and the internal remediation recommendations for a pair |
 | **Client Deliverable - Security Narrative** | Client Deliverable | Write the four-section client-facing security narrative and the internal engineer-facing security-delta report from the pair's reports and exclusions partition |
@@ -200,7 +200,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **Client Deliverable - Compliance Writer** | Client Deliverable | Walk SOW acceptance criteria against retained artifacts; write the compliance walkthrough, verification summary, and internal compliance-basis report |
 | **Client Deliverable - Manifest Assembler** | Client Deliverable | Assemble the package manifest per its schema, evaluating every row's present/missing status from disk, plus the internal manifest-basis report |
 | **Client Deliverable - Gap Reviewer** | Client Deliverable | Review the deliverable set from the client's perspective against the manifest; always emit the internal gap-review report |
-| **Test - Analyst** | Test orchestrator, 05 PR - Review | Evaluate test suite for redundancy, coverage gaps, and consolidation |
+| **Test - Analyst** | Test orchestrator, 04 PR - Review | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
 | **Test - Writer** | Test orchestrator | Bootstrap a test suite from scratch for untested code |
 
@@ -216,10 +216,10 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 **02 Phase - Refiner** (document-only — does not write code)
 > Give it a single Phase document from the 01 Project - Planner (or describe a standalone feature). It iterates with you to refine scope, probe edge cases, surface hidden dependencies, stress-test decomposition readiness, and walk through user flows — deepening the Phase document until it's fully ready for automated execution. It updates the Phase document in place and will not write changes until you explicitly approve.
 
-**04 Phase - Execute** (orchestrator — delegates to subagents)
+**03 Phase - Execute** (orchestrator — delegates to subagents)
 > Give it a refined Phase document. It researches the phase, writes lightweight feature plans and the living execution manifest, expands one selected feature at a time, implements features by dependency-level order, then runs consolidated QA, the diff security scan, and Prod Code Review.
 
-**05 PR - Review** (orchestrator — delegates to evaluators)
+**04 PR - Review** (orchestrator — delegates to evaluators)
 > Point it at a change you are about to open a PR for — this is an author self-review, not a reviewer critiquing someone else's open PR. In a single upfront interaction it warns on a below-par model tier, confirms the base commit (suggest-and-confirm — git cannot derive a branch's base), and asks whether the report should be posted to a draft PR if one already exists (posting is opt-in; the default recommendation keeps you between the finding and the audience). It then fans out the PR Review evaluators over that diff and returns a readiness verdict without reading code or diffs itself. Advisory only: it changes no code and records no verdict in any document.
 
 **Client Deliverable** (orchestrator — delegates to the engagement subagents)
@@ -232,7 +232,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 > The comparative counterpart. Confirms the targets, snapshot labels, and which side is the baseline; materializes any git refs into read-only worktrees via Baseline Worktree; runs the full type × target matrix of auditors under identical prompts; then spawns Auditor - Delta per (type, pair) to reconcile each into a delta plus an open-items queue. All deliverables land on the newer side. Shares the same optional fix-research and remediation pipeline as the single-target orchestrator.
 
 **Single Feature - Agent** (direct implementation path)
-> Handles small-scope changes (typically up to a few files) without full pipeline artifacts. It investigates, proposes a focused plan, asks for explicit permission before implementation, executes minimal changes, and verifies results. When scope expands, it recommends switching to **04 Phase - Execute**.
+> Handles small-scope changes (typically up to a few files) without full pipeline artifacts. It investigates, proposes a focused plan, asks for explicit permission before implementation, executes minimal changes, and verifies results. When scope expands, it recommends switching to **03 Phase - Execute**.
 
 **Test - Orchestrator** (orchestrator — delegates to subagents)
 > Asks which test operation to run (ANALYZE, WRITE, or FIX), delegates to the appropriate test subagent, and presents results. Optionally drives remediation of findings through the Feature - Implementer → Feature - Review and Fix pipeline. After remediation, updates documentation via the Docs Writer.
@@ -269,9 +269,9 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **Feature - QA Runner** *(subagent of Phase - Execute, Audit orchestrator)* — Executes the automated QA document, compares each check's actual output to its stated expected result, and records per-check status plus a Run results section back into that document. Never fixes what a check exposes. Not to be confused with `QA - Runner`, which executes the repository-wide `docs/QA_AUTOMATED.md` runbook.
 
-**04e Diff Security Scan** *(subagent of Phase - Execute and 05 PR - Review)* — Performs a diff-scoped security review of only the files changed by an implementation pass (from an implementation record's "Files Changed" table or a git diff range), plus their immediate security-relevant context. Writes a compact report with verdict, findings, and the categories not assessable at diff scope. It does not replace the full-codebase Auditor - Security scan.
+**03e Diff Security Scan** *(subagent of Phase - Execute and 04 PR - Review)* — Performs a diff-scoped security review of only the files changed by an implementation pass (from an implementation record's "Files Changed" table or a git diff range), plus their immediate security-relevant context. Writes a compact report with verdict, findings, and the categories not assessable at diff scope. It does not replace the full-codebase Auditor - Security scan.
 
-**Prod Code Review** *(subagent of Phase - Execute and the Audit orchestrator)* — Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Pipeline-internal only (`user-invocable: false`): orchestrators spawn it as the automated gate at the end of a phase. For an on-demand readiness check of your own, use **05 PR - Review** instead.
+**Prod Code Review** *(subagent of Phase - Execute and the Audit orchestrator)* — Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Pipeline-internal only (`user-invocable: false`): orchestrators spawn it as the automated gate at the end of a phase. For an on-demand readiness check of your own, use **04 PR - Review** instead.
 
 **QA - Doc Generator** *(subagent of QA - Bootstrapper)* — Generates the `QA_AUTOMATED` runbook and the `QA_USER` manual acceptance checklist from the repository plus optional manual-QA, SOW/contract, and plan-acceptance inputs, per the `qa-generation` skill.
 
@@ -283,7 +283,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **Auditor - Refactor** *(subagent of Audit orchestrator)* — Evaluates codebase-level organization: module structure, dependency graphs, component decomposition, coupling, cohesion, and separation of concerns.
 
-**Auditor - Security** *(subagent of Audit orchestrator and Client Deliverable)* — Audits every in-scope file against ten fixed security categories: secrets, dependencies and supply chain, attack surface and injection, authentication and authorization, data protection and cryptography, API and input boundaries, filesystem/process/runtime safety, infrastructure and CI/CD, observability, and cross-cutting security architecture. Redacts every secret value, records each category as assessed-clean or not-assessed so the two are never confused, and produces a structured report plus executive summary. (Distinct from the hidden **04e Diff Security Scan**, which only covers a single pass's diff.)
+**Auditor - Security** *(subagent of Audit orchestrator and Client Deliverable)* — Audits every in-scope file against ten fixed security categories: secrets, dependencies and supply chain, attack surface and injection, authentication and authorization, data protection and cryptography, API and input boundaries, filesystem/process/runtime safety, infrastructure and CI/CD, observability, and cross-cutting security architecture. Redacts every secret value, records each category as assessed-clean or not-assessed so the two are never confused, and produces a structured report plus executive summary. (Distinct from the hidden **03e Diff Security Scan**, which only covers a single pass's diff.)
 
 **Auditor - Delta** *(subagent of Audit - Delta orchestrator)* — Compares two completed audit reports of the same product — a baseline snapshot and a current one — and produces a delta document classifying every finding as resolved, improved, unchanged, transformed, or unverified, with the counts reconciled against both reports, plus a standalone open-items queue. Current-side findings with no baseline counterpart are marked `PROVISIONAL` and handed off; it attributes nothing itself and raises no findings of its own.
 
@@ -313,7 +313,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **Client Deliverable - Gap Reviewer** *(subagent of Client Deliverable)* — Reviews the complete deliverable set from the client's perspective using the manifest as its completeness checklist and unconditionally emits `internal/gap-review.md`, even when no gaps are found.
 
-**Test - Analyst** *(subagent of Test orchestrator and PR Review)* — Classifies tests by value, flags redundancy and over-mocking, and writes a categorized inventory with a staged reduction plan. PR Review spawns it directly and passes its files to 05f as sibling evidence.
+**Test - Analyst** *(subagent of Test orchestrator and PR Review)* — Classifies tests by value, flags redundancy and over-mocking, and writes a categorized inventory with a staged reduction plan. PR Review spawns it directly and passes its files to 04f as sibling evidence.
 
 **Test - Writer** *(subagent of Test orchestrator)* — Bootstraps a test suite from scratch. Scans the codebase, creates test files with meaningful coverage, and verifies the suite passes.
 
@@ -384,7 +384,7 @@ Not everything needs a pipeline. These agents work well on their own:
 - **Audit - Code, Infra, Refactor, Security** — Run anytime for a code, infrastructure, structural, or security health check
 - **Single Feature - Agent** — Implement a focused change with an explicit approval gate and minimal churn
 - **Test - Orchestrator** — Analyze, write, or fix tests on demand
-- **05 PR - Review** — Get a readiness verdict on any diff, without running a pipeline first
+- **04 PR - Review** — Get a readiness verdict on any diff, without running a pipeline first
 - **QA - Bootstrapper** — Generate a repository's QA_AUTOMATED and QA_USER package and run it
 - **Debugger** — Fix a specific frontend or backend error without a full pipeline
 - **Web Researcher** — Research a technical question or debug a tricky issue
@@ -516,11 +516,11 @@ Do not hand-copy files out of `ports/` or `.github/` — both are generated. Edi
 
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each generated agent file is complete on its own — applicable instruction content is inlined at propagation time rather than referenced.
-- **Orchestrators**: **04 Phase - Execute**, **05 PR - Review**, **Audit - Code, Infra, Refactor, Security**, **Audit - Delta**, **Test - Orchestrator**, **QA - Bootstrapper**, **Instructions Manager**, and **Client Deliverable** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
+- **Orchestrators**: **03 Phase - Execute**, **04 PR - Review**, **Audit - Code, Infra, Refactor, Security**, **Audit - Delta**, **Test - Orchestrator**, **QA - Bootstrapper**, **Instructions Manager**, and **Client Deliverable** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
 - **Shared subagents**: **Feature - Implementer** and **Feature - Review and Fix** are used by the implementation, audit, and test orchestrators. **Feature - QA Writer** and **Feature - QA Runner** are used by Phase - Execute and the Audit orchestrator. **Docs Writer** is spawned at the end of the Phase - Execute, Audit, Test, and Client Deliverable pipelines to update stale documentation, and by the Planner and Refiner when critical docs are missing (it remains user-invocable for standalone use as well). **Unity Reviewer** and **Visual Verifier** are spawned on Unity repositories — Unity Reviewer by Phase - Execute, PR - Review, and Single Feature - Agent, Visual Verifier by Phase - Execute alone. Both are hidden-only. The review committee uses **03j Blast Radius**, **03k Test Falsification**, **03l Plan Blind**, and **03m Finding Consolidator** as read-only lanes.
 - **Dual-use agents**: two agents are user-invocable *and* declared as children by an orchestrator, so they emit both a slash command and a spawnable subagent file — **Docs Writer** (Planner, Refiner, Phase - Execute, Audit, Test, Client Deliverable) and **Web Researcher** (Planner, Refiner, Debugger).
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
-- **Read-only subagents**: **Feature - Review and Fix**, **03j Blast Radius**, **03k Test Falsification**, **03l Plan Blind**, **03m Finding Consolidator**, **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Security**, **Auditor - Delta**, **Auditor - Remediation Research**, **Auditor - Remediation Reconciler**, **Test - Analyst**, **Unity Reviewer**, **Visual Verifier**, **04e Diff Security Scan**, and the **05x PR Review evaluators** do not modify production code. They analyze and write only their assigned reports or audit artifacts. **Unity Reviewer** and **Baseline Worktree** are the two that hold no write tool at all.
+- **Read-only subagents**: **Feature - Review and Fix**, **03j Blast Radius**, **03k Test Falsification**, **03l Plan Blind**, **03m Finding Consolidator**, **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Security**, **Auditor - Delta**, **Auditor - Remediation Research**, **Auditor - Remediation Reconciler**, **Test - Analyst**, **Unity Reviewer**, **Visual Verifier**, **03e Diff Security Scan**, and the **04x PR Review evaluators** do not modify production code. They analyze and write only their assigned reports or audit artifacts. **Unity Reviewer** and **Baseline Worktree** are the two that hold no write tool at all.
 - **Approval-gated agents**: **01 Project - Planner** and **02 Phase - Refiner** present findings and ask for explicit approval before creating files. They also check for missing critical documentation (`README.md`, `docs/CODEBASE_CONTEXT.md`) and recommend running the **Docs Writer** before continuing. The **Audit** and **Test** orchestrators ask before proceeding to the remediation phase.
 - **Code-writing agents**: **Debugger**, **Test - Writer**, **Test - Fixer**, and **Feature - Implementer** have full tool access to create and modify files.
 - **Prod Code Review** does not modify code — it analyzes and reports only, producing a GO / NO-GO verdict.

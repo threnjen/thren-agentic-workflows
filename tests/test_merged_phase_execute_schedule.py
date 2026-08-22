@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-PHASE_EXECUTE_PATH = REPO_ROOT / "source_of_truth/agents/04-phase-execute.agent.md"
+PHASE_EXECUTE_PATH = REPO_ROOT / "source_of_truth/agents/03-phase-execute.agent.md"
 SOURCE_AGENT_ROOT = REPO_ROOT / "source_of_truth/agents"
 INSTRUCTION_ROOT = REPO_ROOT / "source_of_truth/instructions"
 

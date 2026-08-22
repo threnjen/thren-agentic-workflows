@@ -12,7 +12,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 import propagate_master_assets as routing_module  # noqa: E402
 
 
-PHASE_PATH = REPO_ROOT / "source_of_truth/agents/04-phase-execute.agent.md"
+PHASE_PATH = REPO_ROOT / "source_of_truth/agents/03-phase-execute.agent.md"
 CONVENTIONS_PATH = (
     REPO_ROOT / "source_of_truth/instructions/orchestrator-conventions.instructions.md"
 )

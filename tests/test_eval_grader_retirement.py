@@ -71,7 +71,7 @@ EXEMPT_PREFIXES = (
     "eval/",
     # Historical phase records -- they describe what was built.
     "docs/phases/",
-    # Decision history and its propagated copies. `05-pr-review` records its own
+    # Decision history and its propagated copies. `04-pr-review` records its own
     # earlier ledger removal there; that note is the reason, not a regression.
     "ports/cursor/rules/",
     "dev/feature/",

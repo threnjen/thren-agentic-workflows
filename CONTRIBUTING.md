@@ -125,7 +125,7 @@ there and never seeded from this repository.
 
 An instruction's `applyTo` globs are matched with `fnmatch` against each agent's
 repo-relative path, so `**/name.agent.md` only matches when a `/` immediately precedes
-`name`. A numbered agent must be named in full (`**/04b-feature-implementer.agent.md`); a
+`name`. A numbered agent must be named in full (`**/03b-feature-implementer.agent.md`); a
 pattern that matches nothing fails silently.
 
 ### Distributable package

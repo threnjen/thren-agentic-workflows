@@ -1,5 +1,5 @@
 ---
-name: 04e Diff Security Scan
+name: 03e Diff Security Scan
 description: "Performs a diff-scoped security scan of only the files changed by an implementation pass, plus their immediate security-relevant context. Writes a compact security report with evidence, severity, and diff-scope limitations. Does not replace the full-codebase Auditor - Security scan."
 tools: [read, search, edit]
 user-invocable: false

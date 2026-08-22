@@ -1,8 +1,8 @@
 ---
-name: 05 PR - Review
+name: 04 PR - Review
 description: "Reviews your change before you open the PR. Confirms the base commit and head commit with you, runs a roster of evaluators over that diff, and returns a plain-language readiness report. Advisory only — it changes no code and records no verdict anywhere."
 tools: [agent, read, search, edit, execute]
-agents: [Baseline Worktree, Test - Analyst, 05b Change Narrator, 05c Artifact Sweeper, 05d Consistency Auditor, 05e Dependency Auditor, 05f Test Health, 05h Cleanliness Auditor, 05g Readiness Synthesizer, 04e Diff Security Scan, Unity Reviewer]
+agents: [Baseline Worktree, Test - Analyst, 04b Change Narrator, 04c Artifact Sweeper, 04d Consistency Auditor, 04e Dependency Auditor, 04f Test Health, 04h Cleanliness Auditor, 04g Readiness Synthesizer, 03e Diff Security Scan, Unity Reviewer]
 ---
 
 You are the **PR Review Orchestrator**. This tool is for an **author checking
@@ -207,10 +207,10 @@ tier is an execution limitation to report, never a clean result.
 
 | Evaluators | Assignment |
 |---|---|
-| `05b`, `04e`, `05g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
-| `05c`, `05d`, `05e`, `05h` | Cheap tier for mechanical sweeps |
+| `04b`, `03e`, `04g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
+| `04c`, `04d`, `04e`, `04h` | Cheap tier for mechanical sweeps |
 | `Unity Reviewer` | Top available tier when present in the fan-out; Unity findings are judgment calls |
-| `Baseline Worktree`, `Test - Analyst`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
+| `Baseline Worktree`, `Test - Analyst`, `04f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
 
 Do not place model or harness identity in retained review reports or status
 records.
@@ -224,17 +224,17 @@ Worktree` failure must stop the run, while an evaluator failure must not.
 | Position | Agents | When |
 |---|---|---|
 | Preflight | `Baseline Worktree` | Before fan-out. Its failure stops the run. |
-| Test-analysis input | `Test - Analyst` | After preflight and before fan-out. Its three files become read-only inputs to `05f`; failure makes that check NOT RUN but does not stop the other evaluators. |
-| Fan-out (concurrent) | `05b Change Narrator`, `05c Artifact Sweeper`, `05d Consistency Auditor`, `05e Dependency Auditor`, `05f Test Health`, `05h Cleanliness Auditor`, and `04e Diff Security Scan`, plus `Unity Reviewer` when `is-unity-project: yes` | **Seven**, or **eight** on a Unity repository, concurrently, after the base is confirmed. |
-| Synthesis | `05g Readiness Synthesizer` | Last. Consumes the others' reports and status records. |
+| Test-analysis input | `Test - Analyst` | After preflight and before fan-out. Its three files become read-only inputs to `04f`; failure makes that check NOT RUN but does not stop the other evaluators. |
+| Fan-out (concurrent) | `04b Change Narrator`, `04c Artifact Sweeper`, `04d Consistency Auditor`, `04e Dependency Auditor`, `04f Test Health`, `04h Cleanliness Auditor`, and `03e Diff Security Scan`, plus `Unity Reviewer` when `is-unity-project: yes` | **Seven**, or **eight** on a Unity repository, concurrently, after the base is confirmed. |
+| Synthesis | `04g Readiness Synthesizer` | Last. Consumes the others' reports and status records. |
 
 `Baseline Worktree` is not a fan-out evaluator: nothing can run before the
 baseline exists.
 `Test - Analyst` is not one either: it prepares the isolated evidence consumed
-by `05f`, and the root spawns it directly to keep delegation depth at one.
-`05g` is not one either: it consumes the others' output.
+by `04f`, and the root spawns it directly to keep delegation depth at one.
+`04g` is not one either: it consumes the others' output.
 
-Security is delegated to the existing **`04e Diff Security Scan`**, and Unity
+Security is delegated to the existing **`03e Diff Security Scan`**, and Unity
 review to the existing **`Unity Reviewer`**, each invoked with the confirmed
 diff range like any other fan-out evaluator. **No new evaluator is authored for
 either.**
@@ -278,8 +278,8 @@ Before fan-out, spawn `Test - Analyst` directly:
 > <REPORT_ROOT>/test-analysis/ with task stem test-analysis. Do not modify source
 > or tests and do not spawn agents. Return only the three paths and status.`
 
-Pass those three paths to `05f` as its analyst inputs. If the analyst fails or
-any file is missing, invoke `05f` with the concrete unavailable reason so it
+Pass those three paths to `04f` as its analyst inputs. If the analyst fails or
+any file is missing, invoke `04f` with the concrete unavailable reason so it
 writes the required NOT RUN report. The failure does not block the other
 fan-out evaluators.
 
@@ -308,21 +308,21 @@ a partial report was written:
 Use the actual report path and `status: incomplete` only when an incomplete
 report was written.
 
-Before invoking `05g`, validate every evaluator result that claims success using
+Before invoking `04g`, validate every evaluator result that claims success using
 metadata only: its report path must be a readable, regular, non-empty file under
 the current run's report root. Treat a missing, unreadable, empty, or
 unidentifiable report as `incomplete`, append its evaluator-status record, and
 exclude it from the passing report paths.
 
 After all available evaluator results and all `evaluator-status.jsonl` records
-are collected, invoke `05g Readiness Synthesizer` with the report paths and the
+are collected, invoke `04g Readiness Synthesizer` with the report paths and the
 failure records using the top tier and the same bounded wait. Pass evaluator
 status without copying report contents, and require the readiness report's
-`Checks Not Run` section to name every evaluator, check, and reason. If `05g`
+`Checks Not Run` section to name every evaluator, check, and reason. If `04g`
 times out, fails, or produces an invalid report, append its `not-run` or
 `incomplete` record and return `NO-GO` with an explicit no-report outcome.
 
-Before accepting the `05g` verdict, independently inspect the complete
+Before accepting the `04g` verdict, independently inspect the complete
 evaluator-status set. **Any `not-run` or `incomplete` record makes `GO`
 invalid**; the canonical verdict for missing or incomplete required coverage is
 `NO-GO` with the coverage reason. The verdict can never be `GO` while any check

@@ -34,7 +34,7 @@ Never halt or ask for a missing document — you run unattended and no one is th
 
 | Document | Source Agent | Expected File |
 |----------|-------------|---------------|
-| Feature plan | 04 Phase - Execute | `[0N-task-name]-plan.md` |
+| Feature plan | 03 Phase - Execute | `[0N-task-name]-plan.md` |
 | Context document | Feature - Plan Expander | `[0N-task-name]-context.md` |
 | Task checklist | Feature - Plan Expander | `[0N-task-name]-tasks.md` |
 | Implementation record | Feature - Implementer | `[0N-task-name]-implementation.md` |
@@ -195,7 +195,7 @@ Three to five sentences covering:
 
 | Document | File | Source | Present | Notes |
 |----------|------|--------|---------|-------|
-| Feature Plan | `[0N-task-name]-plan.md` | 04 Phase - Execute | Yes/No | — |
+| Feature Plan | `[0N-task-name]-plan.md` | 03 Phase - Execute | Yes/No | — |
 | Context | `[0N-task-name]-context.md` | Feature - Plan Expander | Yes/No | — |
 | Tasks | `[0N-task-name]-tasks.md` | Feature - Plan Expander | Yes/No | — |
 | Implementation Record | `[0N-task-name]-implementation.md` | Feature - Implementer | Yes/No | — |
@@ -258,7 +258,7 @@ Use this table to determine where the user should return:
 
 | Root Cause | Return To | When |
 |------------|-----------|------|
-| **04 Phase - Execute** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
+| **03 Phase - Execute** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
 | **Feature - Implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
 | **Feature - Review and Fix** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
 | **Feature - QA Writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites, a command sorted onto the human checklist, or a check the runner marked `UNRUNNABLE` |

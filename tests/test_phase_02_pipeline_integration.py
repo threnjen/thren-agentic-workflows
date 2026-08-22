@@ -17,7 +17,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 import propagate_master_assets as propagator  # noqa: E402
 
 
-PHASE_PATH = REPO_ROOT / "source_of_truth/agents/04-phase-execute.agent.md"
+PHASE_PATH = REPO_ROOT / "source_of_truth/agents/03-phase-execute.agent.md"
 MANIFEST_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/feature-plan-set/SKILL.md"
 LOOP_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/implementation-pipeline-loop/SKILL.md"
 RECORD_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/implementation-record/SKILL.md"
@@ -178,7 +178,7 @@ def test_phase_spawn_roster_and_frontmatter_references_resolve() -> None:
     agents = _agents()
     assert not _unresolved_agent_references(agents)
 
-    phase = agents["04-phase-execute"]
+    phase = agents["03-phase-execute"]
     assert set(phase.subagents) <= {agent.name for agent in agents.values()}
 
     for slug in PHASE_CREATED_AGENTS:

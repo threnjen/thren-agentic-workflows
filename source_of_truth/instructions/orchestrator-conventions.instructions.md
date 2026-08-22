@@ -1,6 +1,6 @@
 ---
 description: "Shared conventions for orchestrator agents that coordinate subagent pipelines, including the end-of-run graph rebuild (merged from graph-rebuild-hook). Audience is ENUMERATED deliberately - the four pipeline orchestrators are an arbitrary subset with no filename family. Add any new agent that coordinates a subagent pipeline, and inline this file into its claude/agents/ counterpart."
-applyTo: "**/auditor.agent.md,**/delta-auditor.agent.md,**/04-phase-execute.agent.md,**/test-orchestrator.agent.md"
+applyTo: "**/auditor.agent.md,**/delta-auditor.agent.md,**/03-phase-execute.agent.md,**/test-orchestrator.agent.md"
 ---
 
 # Orchestrator Conventions
@@ -10,7 +10,7 @@ Orchestrators coordinate subagents — they do not perform work directly. These 
 ## Common Constraints
 
 - DO NOT write source code, test files, or configuration directly
-- Orchestrators normally delegate plan documents, review records, and QA plans. `04 Phase - Execute` may write its lightweight plans and living manifest because it owns decomposition and scheduling. It still delegates context, tasks, review records, and QA plans.
+- Orchestrators normally delegate plan documents, review records, and QA plans. `03 Phase - Execute` may write its lightweight plans and living manifest because it owns decomposition and scheduling. It still delegates context, tasks, review records, and QA plans.
 - ALWAYS ask the user before proceeding to the fix/remediation phase
 
 ## Session Model Preflight

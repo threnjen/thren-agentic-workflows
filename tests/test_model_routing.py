@@ -16,24 +16,24 @@ import propagate_master_assets as mod  # noqa: E402
 
 
 PIPELINE_AGENT_SLUGS = (
-    "04a-feature-plan-expander",
-    "04b-feature-implementer",
-    "04c-feature-review-and-fix",
-    "04h-unity-reviewer",
-    "04g-unity-visual-verification",
-    "04d-feature-qa-writer",
-    "04i-feature-qa-runner",
-    "04e-diff-security-scan",
-    "04f-prod-code-review",
+    "03a-feature-plan-expander",
+    "03b-feature-implementer",
+    "03c-feature-review-and-fix",
+    "03h-unity-reviewer",
+    "03g-unity-visual-verification",
+    "03d-feature-qa-writer",
+    "03i-feature-qa-runner",
+    "03e-diff-security-scan",
+    "03f-prod-code-review",
     "auditor-code",
     "auditor-infra",
     "auditor-delta",
     "auditor-attribution",
-    "05a-baseline-worktree",
-    "05h-cleanliness-auditor",
-    "05e-dependency-auditor",
-    "05d-consistency-auditor",
-    "05f-test-health",
+    "04a-baseline-worktree",
+    "04h-cleanliness-auditor",
+    "04e-dependency-auditor",
+    "04d-consistency-auditor",
+    "04f-test-health",
     "auditor-refactor",
 )
 
@@ -109,7 +109,7 @@ def test_source_agent_bodies_do_not_contain_routed_model_identifiers() -> None:
 
 
 def test_renderers_emit_the_route_for_a_tiered_agent() -> None:
-    agent = _agent("04c-feature-review-and-fix")
+    agent = _agent("03c-feature-review-and-fix")
     docs = mod.applicable_instructions(agent, mod.load_instruction_docs())
     routing = mod.load_model_routing()
     claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)

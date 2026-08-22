@@ -23,7 +23,7 @@ SOURCE_AGENTS = REPO_ROOT / "source_of_truth" / "agents"
 SOURCE_SKILLS = REPO_ROOT / "source_of_truth" / "skills"
 SKILL_PATH = SOURCE_SKILLS / "audit-comparison" / "SKILL.md"
 DELTA_PATH = SOURCE_AGENTS / "delta-auditor.agent.md"
-PHASE_EXECUTE_PATH = SOURCE_AGENTS / "04-phase-execute.agent.md"
+PHASE_EXECUTE_PATH = SOURCE_AGENTS / "03-phase-execute.agent.md"
 
 
 def _read(path: Path) -> str:
@@ -158,7 +158,7 @@ def _topology_errors() -> set[str]:
     agents = propagator.load_source_agents()
     assert agents, "source corpus loader returned no agents"
     by_name = {agent.name: agent for agent in agents}
-    phase = by_name.get("04 Phase - Execute")
+    phase = by_name.get("03 Phase - Execute")
     assert phase is not None, "Phase Execute is absent from the source corpus"
     expected = {
         "Auditor - Code",

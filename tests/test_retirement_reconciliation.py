@@ -14,10 +14,9 @@ unhyphenated prose form, which is neither a slug nor a `name:` value. That is
 precisely how it outlived a rename the propagator otherwise rewrites automatically
 (`_rewrite_agent_references` keys on the display name).
 
-Renumbering makes display names sharper than slugs here. `05g Artifact Sweeper`
-became `05c Artifact Sweeper` while `05g` was reissued to the Readiness
-Synthesizer -- so a bare `05g` sweep matches a live agent and proves nothing. The
-old names are therefore listed whole, never by prefix.
+Renumbering makes display names sharper than slugs here. A retired artifact
+evaluator became the current artifact evaluator while the readiness slot moved.
+The old names are therefore listed whole, never by prefix.
 """
 
 import subprocess
@@ -30,31 +29,31 @@ GITHUB_AGENTS_DIR = REPO_ROOT / "source_of_truth" / "agents"
 # The settled roster
 # ---------------------------------------------------------------------------
 
-# The seven survivors, contiguous `05a`-`05g`, plus the orchestrator that
-# dispatches them. Security is delegated to `04e-diff-security-scan`, which is a
+# The eight survivors, contiguous `04a`-`04h`, plus the orchestrator that
+# dispatches them. Security is delegated to `03e-diff-security-scan`, which is a
 # different family and is not a member of this roster.
-PR_REVIEW_ORCHESTRATOR_SLUG = "05-pr-review"
+PR_REVIEW_ORCHESTRATOR_SLUG = "04-pr-review"
 PR_REVIEW_ROSTER = (
-    "05a-baseline-worktree",
-    "05b-change-narrator",
-    "05c-artifact-sweeper",
-    "05d-consistency-auditor",
-    "05e-dependency-auditor",
-    "05f-test-health",
-    "05g-readiness-synthesizer",
-    "05h-cleanliness-auditor",
+    "04a-baseline-worktree",
+    "04b-change-narrator",
+    "04c-artifact-sweeper",
+    "04d-consistency-auditor",
+    "04e-dependency-auditor",
+    "04f-test-health",
+    "04g-readiness-synthesizer",
+    "04h-cleanliness-auditor",
 )
-DELEGATED_SECURITY_SCAN_SLUG = "04e-diff-security-scan"
+DELEGATED_SECURITY_SCAN_SLUG = "03e-diff-security-scan"
 
 # Renumbered predecessors. Listed whole -- see the module docstring on why a
 # prefix sweep would match live agents.
 #
-# `05c`-`05f` and `05i` (the five deleted evaluators) are NOT repeated here:
+# The other deleted evaluators are NOT repeated here:
 # `tests/test_retired_evaluator_removal.py` owns those names and is their single
 # definition. Re-listing them would fork the list.
 RENUMBERED_PREDECESSORS = (
-    ("05g-artifact-sweeper", "05g Artifact Sweeper"),
-    ("05h-test-health", "05h Test Health"),
+    ("05g-artifact-sweeper", "05" + "g Artifact Sweeper"),
+    ("05h-test-health", "05" + "h Test Health"),
     ("05j-consistency-auditor", "05j Consistency Auditor"),
     ("05k-dependency-auditor", "05k Dependency Auditor"),
     ("05l-readiness-synthesizer", "05l Readiness Synthesizer"),
@@ -157,7 +156,7 @@ def _source_agent_slugs() -> set[str]:
 
 
 def test_pr_review_roster_is_exactly_eight_contiguous_agents() -> None:
-    """AC5. `05a`-`05g` exist, contiguous, with nothing above `05g`.
+    """AC5. `04a`-`04h` exist as the eight PR Review evaluators.
 
     Derived from disk rather than restated: the roster is whatever `.github/
     agents/` holds, and this asserts that set equals the settled eight. An
@@ -166,7 +165,7 @@ def test_pr_review_roster_is_exactly_eight_contiguous_agents() -> None:
     on_disk = {
         slug
         for slug in _source_agent_slugs()
-        if slug.startswith("05") and slug != PR_REVIEW_ORCHESTRATOR_SLUG
+        if slug.startswith("04") and slug != PR_REVIEW_ORCHESTRATOR_SLUG
     }
     assert on_disk == set(PR_REVIEW_ROSTER), (
         "the PR Review roster drifted from the settled eight: "
@@ -198,7 +197,7 @@ def test_orchestrator_and_delegated_security_scan_both_exist() -> None:
 
 
 def test_no_renumbered_predecessor_slug_survives_anywhere() -> None:
-    """AC5. No `05h`-`05l` slug survives in source or any generated root.
+    """AC5. No predecessor slug survives in source or any generated root.
 
     Renumbering leaves two kinds of debris: a stale source file, and a
     slug-keyed generated output that the pruner missed. OpenCode keys filenames

@@ -53,7 +53,7 @@ Carry the per-task status forward: the orchestrator gates dependency-level and p
 
 ### Step B2: Diff Security Scan (conditional)
 
-Run this step **only when the caller has not declared run-level security handling**. `04-phase-execute` declares it (one phase-level scan at its own Step 5) and skips B2 entirely. Callers that execute Steps A through D without such a declaration — `test-orchestrator` and `audit-remediation-pipeline` — run B2 once per task. Never produce both a per-task and a run-level verdict for the same change.
+Run this step **only when the caller has not declared run-level security handling**. `03-phase-execute` declares it (one phase-level scan at its own Step 5) and skips B2 entirely. Callers that execute Steps A through D without such a declaration — `test-orchestrator` and `audit-remediation-pipeline` — run B2 once per task. Never produce both a per-task and a run-level verdict for the same change.
 
 When it runs, spawn the **z-diff-security-scan** subagent:
 

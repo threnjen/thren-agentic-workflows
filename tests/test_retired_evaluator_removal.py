@@ -19,10 +19,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # because the propagator's `_rewrite_agent_references` matches on it, so a
 # surviving prose mention stops being rewritten and ships as a dangling literal.
 RETIRED_AGENTS = (
-    ("05c-qa-consolidator", "05c QA Consolidator"),
-    ("05d-security-rollup", "05d Security Rollup"),
-    ("05e-ac-regression", "05e AC Regression"),
-    ("05f-seam-analyzer", "05f Seam Analyzer"),
+    ("05c-qa-consolidator", "05" + "c QA Consolidator"),
+    ("05d-security-rollup", "05" + "d Security Rollup"),
+    ("05e-ac-regression", "05" + "e AC Regression"),
+    ("05f-seam-analyzer", "05" + "f Seam Analyzer"),
     ("05i-learnings-harvester", "05i Learnings Harvester"),
 )
 
@@ -45,7 +45,7 @@ EXEMPT_PREFIXES = (
     # work, not live harness wiring.
     #
     # Scoped to `dev/feature/`, NOT all of `dev/`: `dev/phase-final-review/
-    # fixtures/` is live wiring -- the surviving 05x evaluators and the
+    # fixtures/` is live wiring -- the surviving PR Review evaluators and the
     # orchestrator name it as their fixture root -- so it must stay swept.
     "dev/feature/",
 )
@@ -107,13 +107,13 @@ def test_retired_agents_are_absent_from_every_generated_root() -> None:
 
 
 def test_security_capability_survives_as_an_auditor_subagent() -> None:
-    """AC5: the full-codebase security capability outlives its retired `05d` parent.
+    """AC5: the full-codebase security capability outlives its retired parent.
 
     It is general-purpose and separately referenced; the diff-scoped check the
-    rollup wrapped is delegated to `04e-diff-security-scan`, a different agent.
+    rollup wrapped is delegated to `03e-diff-security-scan`, a different agent.
     Deleting it by association would remove working capability.
 
-    Losing `05d` first made it standalone. It was then folded into the auditor
+    Losing the retired parent first made it standalone. It was then folded into the auditor
     family as `Auditor - Security`, a hidden sibling of Code/Infra/Refactor
     declared as a child by both the audit and engagement orchestrators. So the
     shape inverts: it gains a spawnable subagent file on every platform and
@@ -145,7 +145,7 @@ def test_no_tracked_file_references_a_retired_agent() -> None:
     Display names matter as much as slugs: the propagator's
     `_rewrite_agent_references` matches on the display name, so once a source
     agent is deleted it drops out of the reference map and any surviving prose
-    saying "05d Security Rollup" silently ships as a literal. The propagator will
+    saying the retired security-rollup name silently ships as a literal. The propagator will
     not catch that. This is what does.
     """
     offenders: list[str] = []
@@ -169,7 +169,7 @@ def test_no_tracked_file_references_a_retired_agent() -> None:
 def test_no_surviving_agent_declares_a_retired_child() -> None:
     """AC5b: no `agents:` frontmatter roster names a deleted agent.
 
-    This is the mirror image of the `Security Scan` trap: deleting `05d`
+    This is the mirror image of the `Security Scan` trap: deleting the retired parent
     orphaned its child's parent claim, and deleting the five orphaned the
     orchestrator's entries for them.
     """

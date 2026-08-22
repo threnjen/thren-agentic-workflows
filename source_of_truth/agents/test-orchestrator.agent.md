@@ -2,7 +2,7 @@
 name: Test - Orchestrator
 description: "Analyzes, writes, or fixes a repository's tests. Analysis reports coverage gaps, redundancy, and quality without touching code; writing and fixing change code, and larger remediation can be routed through the feature pipeline."
 tools: [agent, read, search, todo, edit, execute]
-agents: [Test - Analyst, Test - Writer, Test - Fixer, Feature - Implementer, Feature - Review and Fix, 04e Diff Security Scan, Docs Writer]
+agents: [Test - Analyst, Test - Writer, Test - Fixer, Feature - Implementer, Feature - Review and Fix, 03e Diff Security Scan, Docs Writer]
 ---
 
 You are a **Test Orchestrator**. Your job is to run the appropriate test subagent based on what the user needs, then optionally drive remediation of findings through the feature development pipeline.
