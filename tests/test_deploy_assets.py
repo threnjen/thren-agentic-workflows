@@ -563,5 +563,46 @@ class BaselineDeployTests(unittest.TestCase):
             self.assertEqual(real.read_text(encoding="utf-8"), "hands off\n")
 
 
+class BaselineCanaryTests(unittest.TestCase):
+    """The baseline announces itself, and says which sections it carries."""
+
+    def _deploy(self, home):
+        return mod.deploy_baseline("claude", home=home, environ={})
+
+    def test_deployed_baseline_carries_a_canary_naming_every_section(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            self._deploy(home)
+            text = (home / ".claude" / "CLAUDE.md").read_text(encoding="utf-8")
+
+        self.assertIn(f"<!-- {mod.BASELINE_CANARY_SECTION} -->", text)
+        self.assertIn("Baseline loaded:", text)
+        for name in mod.baseline_section_names():
+            self.assertIn(name, text, f"canary omits deployed section {name}")
+
+    def test_redeploy_leaves_exactly_one_canary_block(self) -> None:
+        """A canary that accumulated a copy per deploy would be worse than none."""
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            self._deploy(home)
+            self._deploy(home)
+            text = (home / ".claude" / "CLAUDE.md").read_text(encoding="utf-8")
+
+        self.assertEqual(2, text.count(f"<!-- {mod.BASELINE_CANARY_SECTION} -->"))
+        self.assertEqual(1, text.count("Baseline loaded:"))
+
+    def test_canary_reports_the_section_count_it_was_given(self) -> None:
+        """The count is what makes a stale deploy visible rather than silent."""
+        body = mod._baseline_canary_body(("alpha", "beta"))
+        self.assertIn("Baseline loaded: 2 sections", body)
+        self.assertIn("alpha, beta", body)
+
+    def test_per_instruction_canaries_are_still_stripped_from_bodies(self) -> None:
+        """Only the aggregate canary fires; 11 per-section ones would say nothing."""
+        for name in mod.baseline_section_names():
+            with self.subTest(name=name):
+                self.assertNotIn("Instruction loaded:", mod._instruction_body(name))
+
+
 if __name__ == "__main__":
     unittest.main()
