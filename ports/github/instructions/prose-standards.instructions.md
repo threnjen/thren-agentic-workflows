@@ -57,14 +57,7 @@ Write to a colleague who is sharp, busy, and has not read the rest of the phase.
 
 ## Rewriting existing text
 
-Follow these steps for a full rewrite pass over text that already exists.
-
-1. Name the mode in one line before you change anything.
-2. Read the text once for meaning.
-3. Walk it sentence by sentence and flag each violation.
-4. Rewrite to fix the violation and nothing else. If a fix costs precision, keep the longer wording and flag it.
-5. Report the result as a table with three columns: rule violated, original, rewrite. End with the mode and the violation count.
-6. If the text already complies, say so. Do not force changes.
+Load the `prose-rewrite` skill. It holds the pass order, the report format, and the limits on what a rewrite may change.
 
 ## Load Canary
 

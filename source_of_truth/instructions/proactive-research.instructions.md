@@ -4,24 +4,22 @@ applyTo: "source_of_truth/agents/0[12]-*.agent.md,**/debugger.agent.md"
 baseline: true
 ---
 
-# Proactive Research Over Asking the User
+# Research Before Asking the User
 
-When you encounter an unfamiliar technology, API, service, pattern, constraint, error, or version-specific issue, **spawn `@Web Researcher` immediately** rather than asking the user to explain it. The user expects you to look things up yourself. Only ask the user for information that is inherently project-specific and cannot be found online (e.g., business priorities, internal team decisions, undocumented requirements). Default to researching first, then presenting what you found alongside any remaining questions that truly require the user's input.
+When you meet an unfamiliar technology, API, service, pattern, constraint, error, or version-specific issue, spawn `@Web Researcher` instead of asking the user to explain it. Ask the user only for what cannot be found online — business priorities, internal team decisions, undocumented requirements. Research first, then present what you found alongside the questions that still need the user.
 
 ## Library Documentation Comes From Context7
 
-Use the Context7 MCP server whenever the user asks about a library, framework, SDK, API, CLI tool, or cloud service. This covers API syntax, configuration, version migration, library-specific debugging, setup, and CLI usage. Use it for well-known tools too. Your training data may not reflect recent releases. Prefer Context7 over a web search for library documentation.
+Use the Context7 MCP server for any question about a library, framework, SDK, API, CLI tool, or cloud service. That covers API syntax, configuration, version migration, library-specific debugging, setup, and CLI usage. Use it for well-known tools too, because your training data may not reflect recent releases. Prefer it over a web search.
 
 Do not use Context7 for refactoring, writing a script from scratch, debugging business logic, code review, or general programming concepts.
 
-Follow these steps.
-
-1. Call `resolve-library-id` with the library name and the user's question. Skip this step only when the user supplies an exact `/org/project` identifier.
-2. Pick the best match by exact name, description relevance, snippet count, source reputation, and benchmark score. Try an alternate name or phrasing when no result fits. Use a version-specific identifier when the user names a version.
+1. Call `resolve-library-id` with the library name and the user's question. Skip this step only when the user gives an exact `/org/project` identifier.
+2. Pick the best match by exact name, description relevance, snippet count, source reputation, and benchmark score. Try another name or phrasing when nothing fits. Use a version-specific identifier when the user names a version.
 3. Call `query-docs` with that identifier and the user's full question. Scope each call to one concept.
-4. Answer from the fetched documentation.
+4. Answer from the documentation you fetched.
 
-Split a question that spans several concepts into one `query-docs` call per concept, reusing the same identifier. A combined query dilutes ranking and returns shallow results for each topic. Keep the concepts in one call only when the question is about how they interact.
+Split a question that spans several concepts into one `query-docs` call per concept, reusing the same identifier. A combined query dilutes ranking and returns shallow results for every topic in it. Keep the concepts in one call only when the question is about how they interact.
 
 ## Load Canary
 

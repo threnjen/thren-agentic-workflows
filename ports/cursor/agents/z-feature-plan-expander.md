@@ -111,15 +111,9 @@ Required fields only:
 
 # Codebase Context Bootstrap
 
-Before discovery/exploration, check whether `docs/CODEBASE_CONTEXT.md` exists in the repository root. If it exists, **read it first**.
+Read `docs/CODEBASE_CONTEXT.md` first when it exists in the repository root. Use it as your starting orientation to avoid a broad rescan, then explore only for task-specific detail. If the file does not exist, continue normally. Do not fail and do not ask for it to be created.
 
-**Skip this step** if your task is purely mechanical and requires no codebase exploration — for example: creating a git commit from pipeline records, generating file templates from a provided plan with explicit file references already listed, or producing a commit message. If you will not be scanning or reading source files beyond what was explicitly handed to you, skip this step — this **handed-scope exception** covers any agent whose file list arrives in its input (for example, a reviewer scoped to an implementation record's "Files Changed" table). An agent body may invoke this exception by name; it may not otherwise override this instruction.
-
-## How to Use It
-
-- Use it as your **starting orientation** to avoid broad rescans.
-- Then continue normal discovery, focusing only on task-specific details.
-- If the file does not exist, continue normally; do not fail or request file creation.
+Skip this step when the task needs no exploration at all — writing a commit message, committing pipeline records, or generating templates from a plan that already lists its files. This **handed-scope exception** covers any agent whose file list arrives in its input, such as a reviewer scoped to an implementation record's "Files Changed" table. An agent body may invoke the exception by name. It may not override this instruction any other way.
 
 ## Load Canary
 
@@ -129,17 +123,17 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 # Path Token Bindings
 
-These tokens appear in paths throughout the corpus. They bind to exactly this, everywhere.
+These tokens appear in paths across the corpus. They bind to exactly this, everywhere.
 
 | Token | Binding | Example |
 |-------|---------|---------|
-| `[0N-task-name]` | Zero-padded two-digit prefix, then a short kebab-case identifier. The prefix indicates recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
-| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
-| `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
-| `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `[0N-task-name]` | A zero-padded two-digit prefix, then a short kebab-case identifier. The prefix gives the recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
+| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
+| `[audit-name]` | A kebab-case audit identifier the audit orchestrator chooses. It is also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
+| `[topic-name]` | A descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
+| `<phase-baseline>` | The git commit the phase branch started from. Resolve it with `git merge-base HEAD <default-branch>`. Not a path — used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
-Two distinct discovery-context artifacts exist; they are not interchangeable:
+Two discovery-context artifacts exist. They are not interchangeable.
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
@@ -148,8 +142,7 @@ Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
-Never invent `[phase-name]` — read it from the phase directory on disk or build it from the
-phase number the caller supplied. If it cannot be determined, stop and ask.
+Never invent `[phase-name]`. Read it from the phase directory on disk, or build it from the phase number the caller supplied. When you cannot determine it, stop and ask.
 
 ## Load Canary
 
@@ -157,19 +150,19 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 ### Learnings Bootstrap
 
-**Learnings live in the repository you are working on — the repo whose code, plans, or docs you were invoked to change. Every `docs/learnings/` path below is relative to that repo's root (or its worktree/checkout root). NEVER write learnings into the agent-definition / source-of-truth repo.**
+**Learnings live in the repository you were invoked to change — the repo whose code, plans, or docs you are touching. Every `docs/learnings/` path below is relative to that repo's root or worktree root. Never write learnings into the agent-definition or source-of-truth repo.**
 
-**Read first.** Read every `docs/learnings/*.md` that exists before starting. Apply documented fix patterns proactively.
+**Read first.** Read every `docs/learnings/*.md` that exists before you start. Apply the fix patterns you find there.
 
-**Write when you learn something durable.** Append (never rewrite) a concise, dateless, reusable entry: one bolded claim per bullet plus the signal that reveals it. Create the file and `docs/learnings/` if absent. Skip one-off bugs. Never ask "should I note this?" — the answer is yes; a downstream agent can ignore an irrelevant note but cannot consult one never written.
+**Write when you learn something durable.** Append a short, dateless, reusable entry — one bolded claim per bullet plus the signal that reveals it. Never rewrite an existing entry. Create the file and `docs/learnings/` when they are missing. Skip one-off bugs. Never ask whether to write a note. A downstream agent can ignore a note it does not need, but cannot read one you never wrote.
 
 | File | Write here when you find… |
 |---|---|
-| `cross-phase-decisions.md` | a decision, constraint, risk, deferred capability, scope gap, or documented deviation affecting a later phase. Tag blockers `Must-do before Phase N`. |
+| `cross-phase-decisions.md` | a decision, constraint, risk, deferred capability, scope gap, or documented deviation that affects a later phase. Tag blockers `Must-do before Phase N`. |
 | `review-learnings.md` | a recurring review finding — a defect class you expect to see again. |
-| `project-learnings.md` | anything that bit you and will bite again — a framework behavior, config trap, or library gotcha, and any diagnosed root-cause pattern, pipeline gap, or agent-workflow failure. One `##` section per entry, appended; never merge into or overwrite an existing section. |
+| `project-learnings.md` | anything that bit you and will bite again: a framework behavior, config trap, library gotcha, diagnosed root cause, pipeline gap, or agent-workflow failure. One `##` section per entry, appended. Never merge into or overwrite an existing section. |
 
-A discovery that belongs in the current phase document's Notes section or a `DISCOVERY_CONTEXT.md` goes there instead; use `cross-phase-decisions.md` when it spans future phases. If you are forbidden from writing to the target repo, report the learning in your return message and write nothing.
+Put a discovery in the current phase document's Notes section or in a `DISCOVERY_CONTEXT.md` when it belongs there instead. Use `cross-phase-decisions.md` when it spans future phases. If you may not write to the target repo, report the learning in your return message and write nothing.
 
 ## Load Canary
 
@@ -177,23 +170,15 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 ### Output Verbosity Policy
 
-Use concise defaults for high-frequency responses as soft targets, never hard limits.
+Treat every target below as a soft default, never a hard limit.
 
-Default response shape:
-- Lead with delta-first content: changes made, findings, decisions, blockers, and next actions.
-- Keep supporting background brief unless needed for correctness.
+Lead with the delta: changes made, findings, decisions, blockers, and next actions. Keep background short unless correctness needs it.
 
-Soft targets (advisory):
-- Simple status or direct answers: 1-3 sentences.
-- Standard implementation/review updates: concise summary plus short evidence bullets.
-- Complex debugging, audits, or design tradeoffs: expand only where needed to keep reasoning correct and actionable.
+- Status reports and direct answers: one to three sentences.
+- Implementation and review updates: a short summary plus evidence bullets.
+- Debugging, audits, and design trade-offs: expand only where brevity would break the reasoning.
 
-Quality-preserving exceptions:
-- Expand detail when safety, correctness, compliance, or production-risk review would be weakened by brevity.
-- Expand detail when user instructions explicitly request depth.
-- Never omit required constraints, caveats, or validation outcomes to hit a length target.
-
-Do not enforce token limits at runtime and do not truncate required analysis.
+Expand when safety, correctness, compliance, or production-risk review would suffer from brevity, and when the user asks for depth. Never drop a required constraint, caveat, or validation outcome to hit a length target. Do not enforce token limits at runtime and do not truncate required analysis.
 
 ## Load Canary
 
@@ -207,19 +192,19 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 | | |
 |---|---|
-| ✅ **Write** | Only the deliverable documents your contract or caller assigns you, at the paths they assign — phase summaries, discovery context, audit and delta reports, review reports, research reports, test analysis plans, QA documents. Writing your own report is always permitted; nothing else is. |
-| ❌ **Never write** | Anything in the repository under analysis: source code, test files, configuration, dependency manifests, lock files. Never remediate a finding you report. |
-| ❌ **Never author** | New or proposed code, or code-level design that belongs downstream — function signatures, schemas, API contracts. Quoting **existing** code as evidence at a cited path and line is required, not prohibited. |
+| ✅ **Write** | Only the deliverable documents your contract or caller assigns you, at the paths they assign — phase summaries, discovery context, audit and delta reports, review reports, research reports, test analysis plans, QA documents. Writing your own report is always allowed. Nothing else is. |
+| ❌ **Never write** | Anything in the repository under analysis: source code, test files, configuration, dependency manifests, lock files. Never fix a finding you report. |
+| ❌ **Never author** | New or proposed code, or code-level design that belongs downstream — function signatures, schemas, API contracts. Quoting **existing** code as evidence at a cited path and line is required, not forbidden. |
 
 ## Approval gate
 
-Exactly one gate, and only when the user invoked you directly:
+One gate, and only when the user invoked you directly.
 
 1. Present the proposed document content in chat.
-2. Wait for the user to signal ready — any of "yes", "ready", "go ahead", "approved", "looks good", "proceed", "write it", or equivalent.
+2. Wait for the user to signal ready — "yes", "ready", "go ahead", "approved", "looks good", "proceed", "write it", or anything equivalent.
 3. Write the files. Do not ask a second time.
 
-**When an orchestrator spawned you**, skip the gate entirely and write autonomously — the orchestrator owns approval.
+**When an orchestrator spawned you**, skip the gate and write autonomously. The orchestrator owns approval.
 
 ## Load Canary
 
@@ -227,11 +212,11 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 ### Subagent Autonomy
 
-You operate autonomously — do not ask questions or wait for confirmation. Make sensible defaults and proceed.
+You work autonomously. Do not ask questions and do not wait for confirmation. Choose sensible defaults and proceed.
 
-You have no user to address. Your caller blocks on your return, so halting for an answer deadlocks the run. When something is ambiguous, take the reading most consistent with the repository, record it as an assumption in your output, and proceed. When you are genuinely blocked, return the blocker to your caller — never prompt.
+You have no user to address. Your caller blocks on your return, so halting for an answer deadlocks the run. When something is ambiguous, take the reading that fits the repository best, record it as an assumption in your output, and continue. When you are genuinely blocked, return the blocker to your caller. Never prompt.
 
-Autonomy is not permission to relax a gate. If your contract defines a halt condition, a verdict, or a required failure string, still emit it exactly.
+Autonomy does not relax a gate. When your contract defines a halt condition, a verdict, or a required failure string, emit it exactly.
 
 ## Load Canary
 
@@ -239,11 +224,11 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 ### Tech Stack Detection
 
-Check whether the project uses a specialized tech stack with a corresponding skill. Look for indicators: `.github/copilot-instructions.md` naming a stack, or framework-specific project files (`package.json` for Node.js, `pyproject.toml` for Python, and the Unity predicate below). If a matching skill exists, **load and read it before proceeding** — it contains stack-specific rules and known pitfalls.
+Check whether the project uses a specialized tech stack with a matching skill. Look for `.github/copilot-instructions.md` naming a stack, or framework-specific project files: `package.json` for Node.js, `pyproject.toml` for Python, and the Unity predicate below. When a matching skill exists, **load and read it before you proceed**. It holds stack-specific rules and known pitfalls.
 
 ## Canonical Unity Detection Predicate
 
-This is the corpus's single definition. Every other site that decides "is this Unity?" states it in these terms; if one disagrees, this one wins.
+This is the corpus's single definition. Every other site that decides "is this Unity?" states it in these terms. If one disagrees, this one wins.
 
 > The repository is a Unity project if **any** of these holds:
 > - `Assets/` and `ProjectSettings/` both exist at the repository root (standard layout)
@@ -253,7 +238,7 @@ This is the corpus's single definition. Every other site that decides "is this U
 >
 > `*.asmdef` files corroborate a match but are **never required** — small Unity projects have none.
 
-On a match, load `unity-development` (and `unity-review-knowledge` when reviewing or auditing).
+On a match, load `unity-development`, and load `unity-review-knowledge` too when you are reviewing or auditing.
 
 ## Load Canary
 

@@ -70,15 +70,9 @@ remaining manual work.
 
 # Codebase Context Bootstrap
 
-Before discovery/exploration, check whether `docs/CODEBASE_CONTEXT.md` exists in the repository root. If it exists, **read it first**.
+Read `docs/CODEBASE_CONTEXT.md` first when it exists in the repository root. Use it as your starting orientation to avoid a broad rescan, then explore only for task-specific detail. If the file does not exist, continue normally. Do not fail and do not ask for it to be created.
 
-**Skip this step** if your task is purely mechanical and requires no codebase exploration — for example: creating a git commit from pipeline records, generating file templates from a provided plan with explicit file references already listed, or producing a commit message. If you will not be scanning or reading source files beyond what was explicitly handed to you, skip this step — this **handed-scope exception** covers any agent whose file list arrives in its input (for example, a reviewer scoped to an implementation record's "Files Changed" table). An agent body may invoke this exception by name; it may not otherwise override this instruction.
-
-## How to Use It
-
-- Use it as your **starting orientation** to avoid broad rescans.
-- Then continue normal discovery, focusing only on task-specific details.
-- If the file does not exist, continue normally; do not fail or request file creation.
+Skip this step when the task needs no exploration at all — writing a commit message, committing pipeline records, or generating templates from a plan that already lists its files. This **handed-scope exception** covers any agent whose file list arrives in its input, such as a reviewer scoped to an implementation record's "Files Changed" table. An agent body may invoke the exception by name. It may not override this instruction any other way.
 
 ## Load Canary
 
@@ -88,17 +82,17 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 # Path Token Bindings
 
-These tokens appear in paths throughout the corpus. They bind to exactly this, everywhere.
+These tokens appear in paths across the corpus. They bind to exactly this, everywhere.
 
 | Token | Binding | Example |
 |-------|---------|---------|
-| `[0N-task-name]` | Zero-padded two-digit prefix, then a short kebab-case identifier. The prefix indicates recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
-| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
-| `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
-| `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `[0N-task-name]` | A zero-padded two-digit prefix, then a short kebab-case identifier. The prefix gives the recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
+| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
+| `[audit-name]` | A kebab-case audit identifier the audit orchestrator chooses. It is also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
+| `[topic-name]` | A descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
+| `<phase-baseline>` | The git commit the phase branch started from. Resolve it with `git merge-base HEAD <default-branch>`. Not a path — used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
-Two distinct discovery-context artifacts exist; they are not interchangeable:
+Two discovery-context artifacts exist. They are not interchangeable.
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
@@ -107,8 +101,7 @@ Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
-Never invent `[phase-name]` — read it from the phase directory on disk or build it from the
-phase number the caller supplied. If it cannot be determined, stop and ask.
+Never invent `[phase-name]`. Read it from the phase directory on disk, or build it from the phase number the caller supplied. When you cannot determine it, stop and ask.
 
 ## Load Canary
 
@@ -116,23 +109,15 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 ### Output Verbosity Policy
 
-Use concise defaults for high-frequency responses as soft targets, never hard limits.
+Treat every target below as a soft default, never a hard limit.
 
-Default response shape:
-- Lead with delta-first content: changes made, findings, decisions, blockers, and next actions.
-- Keep supporting background brief unless needed for correctness.
+Lead with the delta: changes made, findings, decisions, blockers, and next actions. Keep background short unless correctness needs it.
 
-Soft targets (advisory):
-- Simple status or direct answers: 1-3 sentences.
-- Standard implementation/review updates: concise summary plus short evidence bullets.
-- Complex debugging, audits, or design tradeoffs: expand only where needed to keep reasoning correct and actionable.
+- Status reports and direct answers: one to three sentences.
+- Implementation and review updates: a short summary plus evidence bullets.
+- Debugging, audits, and design trade-offs: expand only where brevity would break the reasoning.
 
-Quality-preserving exceptions:
-- Expand detail when safety, correctness, compliance, or production-risk review would be weakened by brevity.
-- Expand detail when user instructions explicitly request depth.
-- Never omit required constraints, caveats, or validation outcomes to hit a length target.
-
-Do not enforce token limits at runtime and do not truncate required analysis.
+Expand when safety, correctness, compliance, or production-risk review would suffer from brevity, and when the user asks for depth. Never drop a required constraint, caveat, or validation outcome to hit a length target. Do not enforce token limits at runtime and do not truncate required analysis.
 
 ## Load Canary
 
@@ -193,14 +178,7 @@ Write to a colleague who is sharp, busy, and has not read the rest of the phase.
 
 ## Rewriting existing text
 
-Follow these steps for a full rewrite pass over text that already exists.
-
-1. Name the mode in one line before you change anything.
-2. Read the text once for meaning.
-3. Walk it sentence by sentence and flag each violation.
-4. Rewrite to fix the violation and nothing else. If a fix costs precision, keep the longer wording and flag it.
-5. Report the result as a table with three columns: rule violated, original, rewrite. End with the mode and the violation count.
-6. If the text already complies, say so. Do not force changes.
+Load the `prose-rewrite` skill. It holds the pass order, the report format, and the limits on what a rewrite may change.
 
 ## Load Canary
 
@@ -210,10 +188,7 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 # Subagent Delegation Depth
 
-Delegation depth is one. Only the user-invocable root orchestrator may spawn
-agents. Child agents never spawn agents. When work requires fan-out, the root
-spawns sibling agents and coordinates them through exclusive artifact ownership
-and compact returns.
+Delegation depth is one. Only the user-invocable root orchestrator may spawn agents. Child agents never spawn agents. When work needs fan-out, the root spawns sibling agents and coordinates them through exclusive artifact ownership and compact returns.
 
 ## Load Canary
 

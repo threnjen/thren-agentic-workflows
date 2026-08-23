@@ -4,19 +4,19 @@ applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-feat
 baseline: true
 ---
 
-**Learnings live in the repository you are working on — the repo whose code, plans, or docs you were invoked to change. Every `docs/learnings/` path below is relative to that repo's root (or its worktree/checkout root). NEVER write learnings into the agent-definition / source-of-truth repo.**
+**Learnings live in the repository you were invoked to change — the repo whose code, plans, or docs you are touching. Every `docs/learnings/` path below is relative to that repo's root or worktree root. Never write learnings into the agent-definition or source-of-truth repo.**
 
-**Read first.** Read every `docs/learnings/*.md` that exists before starting. Apply documented fix patterns proactively.
+**Read first.** Read every `docs/learnings/*.md` that exists before you start. Apply the fix patterns you find there.
 
-**Write when you learn something durable.** Append (never rewrite) a concise, dateless, reusable entry: one bolded claim per bullet plus the signal that reveals it. Create the file and `docs/learnings/` if absent. Skip one-off bugs. Never ask "should I note this?" — the answer is yes; a downstream agent can ignore an irrelevant note but cannot consult one never written.
+**Write when you learn something durable.** Append a short, dateless, reusable entry — one bolded claim per bullet plus the signal that reveals it. Never rewrite an existing entry. Create the file and `docs/learnings/` when they are missing. Skip one-off bugs. Never ask whether to write a note. A downstream agent can ignore a note it does not need, but cannot read one you never wrote.
 
 | File | Write here when you find… |
 |---|---|
-| `cross-phase-decisions.md` | a decision, constraint, risk, deferred capability, scope gap, or documented deviation affecting a later phase. Tag blockers `Must-do before Phase N`. |
+| `cross-phase-decisions.md` | a decision, constraint, risk, deferred capability, scope gap, or documented deviation that affects a later phase. Tag blockers `Must-do before Phase N`. |
 | `review-learnings.md` | a recurring review finding — a defect class you expect to see again. |
-| `project-learnings.md` | anything that bit you and will bite again — a framework behavior, config trap, or library gotcha, and any diagnosed root-cause pattern, pipeline gap, or agent-workflow failure. One `##` section per entry, appended; never merge into or overwrite an existing section. |
+| `project-learnings.md` | anything that bit you and will bite again: a framework behavior, config trap, library gotcha, diagnosed root cause, pipeline gap, or agent-workflow failure. One `##` section per entry, appended. Never merge into or overwrite an existing section. |
 
-A discovery that belongs in the current phase document's Notes section or a `DISCOVERY_CONTEXT.md` goes there instead; use `cross-phase-decisions.md` when it spans future phases. If you are forbidden from writing to the target repo, report the learning in your return message and write nothing.
+Put a discovery in the current phase document's Notes section or in a `DISCOVERY_CONTEXT.md` when it belongs there instead. Use `cross-phase-decisions.md` when it spans future phases. If you may not write to the target repo, report the learning in your return message and write nothing.
 
 ## Load Canary
 

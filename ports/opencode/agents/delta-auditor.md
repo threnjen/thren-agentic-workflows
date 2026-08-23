@@ -184,15 +184,9 @@ Remediation lands on the **current** side only. Never write code to a baseline c
 
 # Codebase Context Bootstrap
 
-Before discovery/exploration, check whether `docs/CODEBASE_CONTEXT.md` exists in the repository root. If it exists, **read it first**.
+Read `docs/CODEBASE_CONTEXT.md` first when it exists in the repository root. Use it as your starting orientation to avoid a broad rescan, then explore only for task-specific detail. If the file does not exist, continue normally. Do not fail and do not ask for it to be created.
 
-**Skip this step** if your task is purely mechanical and requires no codebase exploration — for example: creating a git commit from pipeline records, generating file templates from a provided plan with explicit file references already listed, or producing a commit message. If you will not be scanning or reading source files beyond what was explicitly handed to you, skip this step — this **handed-scope exception** covers any agent whose file list arrives in its input (for example, a reviewer scoped to an implementation record's "Files Changed" table). An agent body may invoke this exception by name; it may not otherwise override this instruction.
-
-## How to Use It
-
-- Use it as your **starting orientation** to avoid broad rescans.
-- Then continue normal discovery, focusing only on task-specific details.
-- If the file does not exist, continue normally; do not fail or request file creation.
+Skip this step when the task needs no exploration at all — writing a commit message, committing pipeline records, or generating templates from a plan that already lists its files. This **handed-scope exception** covers any agent whose file list arrives in its input, such as a reviewer scoped to an implementation record's "Files Changed" table. An agent body may invoke the exception by name. It may not override this instruction any other way.
 
 ## Load Canary
 
@@ -202,17 +196,17 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 # Path Token Bindings
 
-These tokens appear in paths throughout the corpus. They bind to exactly this, everywhere.
+These tokens appear in paths across the corpus. They bind to exactly this, everywhere.
 
 | Token | Binding | Example |
 |-------|---------|---------|
-| `[0N-task-name]` | Zero-padded two-digit prefix, then a short kebab-case identifier. The prefix indicates recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
-| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
-| `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
-| `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `[0N-task-name]` | A zero-padded two-digit prefix, then a short kebab-case identifier. The prefix gives the recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
+| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
+| `[audit-name]` | A kebab-case audit identifier the audit orchestrator chooses. It is also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
+| `[topic-name]` | A descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
+| `<phase-baseline>` | The git commit the phase branch started from. Resolve it with `git merge-base HEAD <default-branch>`. Not a path — used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
-Two distinct discovery-context artifacts exist; they are not interchangeable:
+Two discovery-context artifacts exist. They are not interchangeable.
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
@@ -221,8 +215,7 @@ Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
-Never invent `[phase-name]` — read it from the phase directory on disk or build it from the
-phase number the caller supplied. If it cannot be determined, stop and ask.
+Never invent `[phase-name]`. Read it from the phase directory on disk, or build it from the phase number the caller supplied. When you cannot determine it, stop and ask.
 
 ## Load Canary
 
@@ -232,52 +225,51 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 # Orchestrator Conventions
 
-Orchestrators coordinate subagents — they do not perform work directly. These conventions apply to all orchestrator agents.
+Orchestrators coordinate subagents. They do not do the work themselves. These conventions apply to every orchestrator agent.
 
-## Common Constraints
+## Constraints
 
-- DO NOT write source code, test files, or configuration directly
-- DO NOT write plan documents, review records, or QA plans directly — delegate to subagents
-- ALWAYS ask the user before proceeding to the fix/remediation phase
+- Do not write source code, test files, or configuration.
+- Do not write plan documents, review records, or QA plans. Delegate them to subagents.
+- Always ask the user before you start the fix or remediation phase.
 
 ## Working Branch
 
-Before modifying any files, create a dedicated Git branch for the pipeline run so all changes are isolated from the default branch.
+Create a dedicated git branch for the run before you modify any file, so the changes stay off the default branch.
 
-- Use type-based prefixes: `phase/<name>`, `audit/<type>-<name>`, `test/<operation>-<name>`
-- Use kebab-case for the branch name, derived from the task/phase/audit name
-- Run `git checkout -b <branch-name>` to create and switch to the branch
-- **If the branch already exists, resume it: `git checkout <branch-name>`.** An existing branch means an upstream agent already opened it for this work (the Phase Refiner commits the planning docs onto `phase/<slug>` before handing off). Never create a variant name such as `-2` — that splits planning documents and implementation commits across two branches
-- If the checkout fails for any other reason (e.g., uncommitted changes), report the error to the user and **stop** — do not proceed with the pipeline until the user resolves it
+- Prefix by type: `phase/<name>`, `audit/<type>-<name>`, `test/<operation>-<name>`.
+- Use kebab-case, derived from the task, phase, or audit name.
+- Run `git checkout -b <branch-name>`.
+- **If the branch already exists, resume it with `git checkout <branch-name>`.** An existing branch means an upstream agent opened it for this work — the Phase Refiner commits planning docs onto `phase/<slug>` before handing off. Never create a variant name such as `-2`. That splits planning documents and implementation commits across two branches.
+- If the checkout fails for any other reason, such as uncommitted changes, report the error to the user and **stop**. Do not run the pipeline until the user resolves it.
 
 ## Progress Tracking
 
-- ALWAYS track progress using the todo tool — create an entry for each task/feature before starting, mark in-progress when starting, mark completed immediately after finishing
+Track progress with the todo tool. Create an entry per task or feature before you start it, mark it in-progress when you start, and mark it complete as soon as it finishes.
 
 ## Subagent Output Verification
 
-- ALWAYS verify subagent outputs exist on disk before proceeding to the next pipeline step
-- If a subagent returns but the expected output file doesn't exist: re-spawn once with an explicit reminder about the expected output path. If still missing after retry, report the failure to the user and stop
+Verify that a subagent's output exists on disk before you move to the next step. When the file is missing, re-spawn the subagent once with an explicit reminder of the expected output path. If it is still missing, report the failure to the user and stop.
 
 ## Pipeline Discipline
 
-- DO NOT skip steps or reorder the pipeline — the sequence matters
-- DO NOT proceed past a subagent failure without attempting remediation
-- Complete ALL steps for one task/feature before starting the next
+- Do not skip or reorder steps. The sequence matters.
+- Do not move past a subagent failure without attempting remediation.
+- Finish every step for one task or feature before you start the next.
 
 ## Review Reject Loop
 
-This is the complete rule; other documents reference it rather than restating it.
+This is the complete rule. Other documents reference it rather than restate it.
 
-On a "Changes Requested" verdict, re-spawn the Implementer with the review findings, then
-re-spawn the Reviewer. **Retry once.** If the second review is also "Changes Requested":
-1. Log both review summaries
-2. Continue to the next pipeline step — the final review (if present) will surface unresolved issues
-3. Note the unresolved review in the final report to the user
+On a "Changes Requested" verdict, re-spawn the Implementer with the review findings, then re-spawn the Reviewer. **Retry once.** If the second review is also "Changes Requested":
+
+1. Log both review summaries.
+2. Continue to the next pipeline step. The final review, where one exists, will surface what is unresolved.
+3. Note the unresolved review in the final report to the user.
 
 ## Pipeline Completion Report
 
-After the final review subagent returns, present results using this structure. Adapt field labels to your domain (Phase/Audit/Operation, Features/Tasks).
+Present results in this structure after the final review subagent returns. Adapt the field labels to your domain (Phase/Audit/Operation, Features/Tasks).
 
 **If GO or GO WITH CONDITIONS:**
 
@@ -297,21 +289,19 @@ After the final review subagent returns, present results using this structure. A
 >
 > [If GO WITH CONDITIONS: list the conditions]
 
-**If NO-GO:**
-
-Report the blocking items from the Final Review and recommend specific remediation. Do NOT retry automatically — the user should review the NO-GO findings before deciding how to proceed.
+**If NO-GO:** report the blocking items from the Final Review and recommend specific remediation. Do not retry automatically. The user reviews the NO-GO findings and decides.
 
 ## Graph Rebuild Hook
 
-Immediately after printing the user-facing completion report — whichever step produces it, including an aborted, partial, or NO-GO run — run this once via the `execute` tool, without asking for confirmation:
+Run this once through the `execute` tool, without asking for confirmation, immediately after you print the user-facing completion report — including an aborted, partial, or NO-GO run:
 
 ```
 code-review-graph build
 ```
 
-Exactly once per run, after the report is printed. Never before it, never a second time.
+Exactly once per run, after the report. Never before it, never a second time.
 
-**On non-zero exit:** record it in the completion report's `Graph rebuild` field above and continue. Do not fail the pipeline and do not re-run any step — the rebuild is a best-effort index update.
+**On a non-zero exit,** record it in the report's `Graph rebuild` field and continue. Do not fail the pipeline and do not re-run any step. The rebuild is a best-effort index update.
 
 ## Load Canary
 
@@ -319,23 +309,15 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 ### Output Verbosity Policy
 
-Use concise defaults for high-frequency responses as soft targets, never hard limits.
+Treat every target below as a soft default, never a hard limit.
 
-Default response shape:
-- Lead with delta-first content: changes made, findings, decisions, blockers, and next actions.
-- Keep supporting background brief unless needed for correctness.
+Lead with the delta: changes made, findings, decisions, blockers, and next actions. Keep background short unless correctness needs it.
 
-Soft targets (advisory):
-- Simple status or direct answers: 1-3 sentences.
-- Standard implementation/review updates: concise summary plus short evidence bullets.
-- Complex debugging, audits, or design tradeoffs: expand only where needed to keep reasoning correct and actionable.
+- Status reports and direct answers: one to three sentences.
+- Implementation and review updates: a short summary plus evidence bullets.
+- Debugging, audits, and design trade-offs: expand only where brevity would break the reasoning.
 
-Quality-preserving exceptions:
-- Expand detail when safety, correctness, compliance, or production-risk review would be weakened by brevity.
-- Expand detail when user instructions explicitly request depth.
-- Never omit required constraints, caveats, or validation outcomes to hit a length target.
-
-Do not enforce token limits at runtime and do not truncate required analysis.
+Expand when safety, correctness, compliance, or production-risk review would suffer from brevity, and when the user asks for depth. Never drop a required constraint, caveat, or validation outcome to hit a length target. Do not enforce token limits at runtime and do not truncate required analysis.
 
 ## Load Canary
 
@@ -396,14 +378,7 @@ Write to a colleague who is sharp, busy, and has not read the rest of the phase.
 
 ## Rewriting existing text
 
-Follow these steps for a full rewrite pass over text that already exists.
-
-1. Name the mode in one line before you change anything.
-2. Read the text once for meaning.
-3. Walk it sentence by sentence and flag each violation.
-4. Rewrite to fix the violation and nothing else. If a fix costs precision, keep the longer wording and flag it.
-5. Report the result as a table with three columns: rule violated, original, rewrite. End with the mode and the violation count.
-6. If the text already complies, say so. Do not force changes.
+Load the `prose-rewrite` skill. It holds the pass order, the report format, and the limits on what a rewrite may change.
 
 ## Load Canary
 
@@ -413,10 +388,7 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 # Subagent Delegation Depth
 
-Delegation depth is one. Only the user-invocable root orchestrator may spawn
-agents. Child agents never spawn agents. When work requires fan-out, the root
-spawns sibling agents and coordinates them through exclusive artifact ownership
-and compact returns.
+Delegation depth is one. Only the user-invocable root orchestrator may spawn agents. Child agents never spawn agents. When work needs fan-out, the root spawns sibling agents and coordinates them through exclusive artifact ownership and compact returns.
 
 ## Load Canary
 

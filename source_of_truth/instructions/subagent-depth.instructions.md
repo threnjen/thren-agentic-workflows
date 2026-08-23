@@ -5,10 +5,7 @@ applyTo: "source_of_truth/agents/0?-*.agent.md,**/05-pr-review.agent.md,**/audit
 
 # Subagent Delegation Depth
 
-Delegation depth is one. Only the user-invocable root orchestrator may spawn
-agents. Child agents never spawn agents. When work requires fan-out, the root
-spawns sibling agents and coordinates them through exclusive artifact ownership
-and compact returns.
+Delegation depth is one. Only the user-invocable root orchestrator may spawn agents. Child agents never spawn agents. When work needs fan-out, the root spawns sibling agents and coordinates them through exclusive artifact ownership and compact returns.
 
 ## Load Canary
 

@@ -5,52 +5,51 @@ applyTo: "**/auditor.agent.md,**/delta-auditor.agent.md,**/04-phase-execute.agen
 
 # Orchestrator Conventions
 
-Orchestrators coordinate subagents — they do not perform work directly. These conventions apply to all orchestrator agents.
+Orchestrators coordinate subagents. They do not do the work themselves. These conventions apply to every orchestrator agent.
 
-## Common Constraints
+## Constraints
 
-- DO NOT write source code, test files, or configuration directly
-- DO NOT write plan documents, review records, or QA plans directly — delegate to subagents
-- ALWAYS ask the user before proceeding to the fix/remediation phase
+- Do not write source code, test files, or configuration.
+- Do not write plan documents, review records, or QA plans. Delegate them to subagents.
+- Always ask the user before you start the fix or remediation phase.
 
 ## Working Branch
 
-Before modifying any files, create a dedicated Git branch for the pipeline run so all changes are isolated from the default branch.
+Create a dedicated git branch for the run before you modify any file, so the changes stay off the default branch.
 
-- Use type-based prefixes: `phase/<name>`, `audit/<type>-<name>`, `test/<operation>-<name>`
-- Use kebab-case for the branch name, derived from the task/phase/audit name
-- Run `git checkout -b <branch-name>` to create and switch to the branch
-- **If the branch already exists, resume it: `git checkout <branch-name>`.** An existing branch means an upstream agent already opened it for this work (the Phase Refiner commits the planning docs onto `phase/<slug>` before handing off). Never create a variant name such as `-2` — that splits planning documents and implementation commits across two branches
-- If the checkout fails for any other reason (e.g., uncommitted changes), report the error to the user and **stop** — do not proceed with the pipeline until the user resolves it
+- Prefix by type: `phase/<name>`, `audit/<type>-<name>`, `test/<operation>-<name>`.
+- Use kebab-case, derived from the task, phase, or audit name.
+- Run `git checkout -b <branch-name>`.
+- **If the branch already exists, resume it with `git checkout <branch-name>`.** An existing branch means an upstream agent opened it for this work — the Phase Refiner commits planning docs onto `phase/<slug>` before handing off. Never create a variant name such as `-2`. That splits planning documents and implementation commits across two branches.
+- If the checkout fails for any other reason, such as uncommitted changes, report the error to the user and **stop**. Do not run the pipeline until the user resolves it.
 
 ## Progress Tracking
 
-- ALWAYS track progress using the todo tool — create an entry for each task/feature before starting, mark in-progress when starting, mark completed immediately after finishing
+Track progress with the todo tool. Create an entry per task or feature before you start it, mark it in-progress when you start, and mark it complete as soon as it finishes.
 
 ## Subagent Output Verification
 
-- ALWAYS verify subagent outputs exist on disk before proceeding to the next pipeline step
-- If a subagent returns but the expected output file doesn't exist: re-spawn once with an explicit reminder about the expected output path. If still missing after retry, report the failure to the user and stop
+Verify that a subagent's output exists on disk before you move to the next step. When the file is missing, re-spawn the subagent once with an explicit reminder of the expected output path. If it is still missing, report the failure to the user and stop.
 
 ## Pipeline Discipline
 
-- DO NOT skip steps or reorder the pipeline — the sequence matters
-- DO NOT proceed past a subagent failure without attempting remediation
-- Complete ALL steps for one task/feature before starting the next
+- Do not skip or reorder steps. The sequence matters.
+- Do not move past a subagent failure without attempting remediation.
+- Finish every step for one task or feature before you start the next.
 
 ## Review Reject Loop
 
-This is the complete rule; other documents reference it rather than restating it.
+This is the complete rule. Other documents reference it rather than restate it.
 
-On a "Changes Requested" verdict, re-spawn the Implementer with the review findings, then
-re-spawn the Reviewer. **Retry once.** If the second review is also "Changes Requested":
-1. Log both review summaries
-2. Continue to the next pipeline step — the final review (if present) will surface unresolved issues
-3. Note the unresolved review in the final report to the user
+On a "Changes Requested" verdict, re-spawn the Implementer with the review findings, then re-spawn the Reviewer. **Retry once.** If the second review is also "Changes Requested":
+
+1. Log both review summaries.
+2. Continue to the next pipeline step. The final review, where one exists, will surface what is unresolved.
+3. Note the unresolved review in the final report to the user.
 
 ## Pipeline Completion Report
 
-After the final review subagent returns, present results using this structure. Adapt field labels to your domain (Phase/Audit/Operation, Features/Tasks).
+Present results in this structure after the final review subagent returns. Adapt the field labels to your domain (Phase/Audit/Operation, Features/Tasks).
 
 **If GO or GO WITH CONDITIONS:**
 
@@ -70,21 +69,19 @@ After the final review subagent returns, present results using this structure. A
 >
 > [If GO WITH CONDITIONS: list the conditions]
 
-**If NO-GO:**
-
-Report the blocking items from the Final Review and recommend specific remediation. Do NOT retry automatically — the user should review the NO-GO findings before deciding how to proceed.
+**If NO-GO:** report the blocking items from the Final Review and recommend specific remediation. Do not retry automatically. The user reviews the NO-GO findings and decides.
 
 ## Graph Rebuild Hook
 
-Immediately after printing the user-facing completion report — whichever step produces it, including an aborted, partial, or NO-GO run — run this once via the `execute` tool, without asking for confirmation:
+Run this once through the `execute` tool, without asking for confirmation, immediately after you print the user-facing completion report — including an aborted, partial, or NO-GO run:
 
 ```
 code-review-graph build
 ```
 
-Exactly once per run, after the report is printed. Never before it, never a second time.
+Exactly once per run, after the report. Never before it, never a second time.
 
-**On non-zero exit:** record it in the completion report's `Graph rebuild` field above and continue. Do not fail the pipeline and do not re-run any step — the rebuild is a best-effort index update.
+**On a non-zero exit,** record it in the report's `Graph rebuild` field and continue. Do not fail the pipeline and do not re-run any step. The rebuild is a best-effort index update.
 
 ## Load Canary
 
