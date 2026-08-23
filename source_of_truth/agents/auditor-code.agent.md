@@ -105,6 +105,8 @@ Evaluate EVERY file against ALL of the following:
 
 - Unstructured logging vs. structured (key-value, JSON); incorrect log levels
 - Insufficient context for diagnosis; sensitive data leaking into logs
+- Under-instrumented paths: boundary calls, fallbacks, retries, early returns, and caught exceptions that log nothing
+- Log lines naming an event without the values — ids, counts, statuses — needed to diagnose it
 
 ### 13. Performance Anti-Patterns
 

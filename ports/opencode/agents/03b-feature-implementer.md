@@ -104,7 +104,7 @@ For each active AC in plan order:
 
 1. **Red** — Write tests for the AC. Run them. Confirm they fail (this validates the tests are meaningful)
 2. **Green** — Write the minimal implementation code to make all tests pass (both new and existing)
-3. **Refactor** — Clean up the code while keeping all tests passing. Include error handling and logging where applicable
+3. **Refactor** — Clean up the code while keeping all tests passing. Add error handling, and instrument every boundary call, branch, and caught exception per `base-code-guidelines` §5
 4. Move to the next AC
 
 An AC that delivers documentation, prose, or configuration gets no Red-Green-Refactor cycle. There is no behavior to drive out, so write the deliverable and verify it with a QA check or a review step. Never manufacture a test that asserts on the text you just wrote. The `test-target-scope` instruction governs this.

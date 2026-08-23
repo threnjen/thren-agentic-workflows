@@ -21,6 +21,7 @@ Baseline: the [Google TypeScript Style Guide](https://google.github.io/styleguid
 - **Async:** every promise is awaited or explicitly handled — never disable `no-floating-promises`. Independent operations run under `Promise.all`. Never mix `.then()` and `await` in one function. No `*Sync` calls outside startup scripts.
 - **Errors:** throw only `Error` subclasses, always with `new`. An empty catch block requires a comment saying why swallowing is correct.
 - **Logging:** a structured logger (Pino) with context as fields. `console.*` only for deliberate CLI output.
+- **Observability:** log every boundary call, its outcome, every unpredictable branch, and every caught exception, with the values as fields. Instrument on the way in, never after a bug appears.
 - **Variables:** `const`/`let` only, never `var`. `===`/`!==` always — `== null` is the one exception.
 - **Dependencies:** commit `package-lock.json`; CI installs with `npm ci`.
 - **Tooling:** `tsc --noEmit` strict and typescript-eslint strict are enforced. Never disable them.
@@ -103,6 +104,16 @@ void sendConfirmationEmail(order).catch((e) => logger.error({ err: e }, 'email f
 ```
 
 Configure the logger — level, transport, redaction — at the application entry point only, never inside a library module.
+
+Instrument densely. Put the identifying values in the fields, not the message:
+
+```typescript
+logger.debug({ orderId, url }, 'fetching order');
+const res = await fetch(url);
+logger.debug({ orderId, status: res.status, ms: Date.now() - t0 }, 'order fetched');
+```
+
+Log every boundary call and its outcome, every fallback, retry, cache miss, and early return, and every caught error with `{ err }` plus the state that produced it. Configure Pino redaction for secret-bearing fields at the entry point.
 
 ## Tests
 
