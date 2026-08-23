@@ -1725,5 +1725,42 @@ class AuthoringProfileGateTests(unittest.TestCase):
                 self.assertIn(doc.profile, mod.VALID_PROFILES)
 
 
+class BaselineTemplateIsNotPropagatedTests(unittest.TestCase):
+    """The baseline template is a deploy-time manifest, not a portable asset."""
+
+    def test_propagation_reads_no_source_directory_holding_the_template(self) -> None:
+        """source_of_truth/baseline/ sits outside every directory propagation reads.
+
+        deploy_agents.py renders the template against the deploying machine's
+        home directory. Copying it into ports/ would ship a second, unrendered
+        copy of every baseline rule under a name nothing reads.
+        """
+        template_dir = mod.SOT_DIR / "baseline"
+        self.assertTrue(template_dir.is_dir(), "baseline template directory is missing")
+        for source_dir in (
+            mod.SOT_AGENTS_DIR,
+            mod.SOT_INSTRUCTIONS_DIR,
+            mod.SOT_SKILLS_DIR,
+            mod.SOT_HOOKS_DIR,
+        ):
+            with self.subTest(source_dir=source_dir.name):
+                self.assertFalse(
+                    template_dir == source_dir or template_dir.is_relative_to(source_dir),
+                    f"baseline template now sits under {source_dir.name}/, "
+                    "which propagation copies into ports/",
+                )
+
+    def test_no_port_carries_a_copy_of_the_baseline_template(self) -> None:
+        """Nothing under ports/ or .github/ reproduces the template's contents."""
+        stray = [
+            str(path)
+            for root in (mod.PORTS_DIR, mod.DOT_GITHUB_DIR)
+            if root.is_dir()
+            for path in root.rglob("baseline-instructions.*")
+            if "deploy_agents.py" in path.read_text(encoding="utf-8")
+        ]
+        self.assertEqual([], stray, f"baseline template was propagated: {stray}")
+
+
 if __name__ == "__main__":
     unittest.main()
