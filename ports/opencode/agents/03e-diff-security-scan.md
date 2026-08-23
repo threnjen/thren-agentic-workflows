@@ -1,6 +1,6 @@
 ---
 description: "Performs a diff-scoped security scan of only the files changed by an implementation pass, plus their immediate security-relevant context. Writes a compact security report with evidence, severity, and diff-scope limitations. Does not replace the full-codebase Auditor - Security scan."
-model: opencode-go/gpt-5.6-luna
+model: opencode-go/deepseek-v4-pro
 reasoningEffort: high
 mode: subagent
 hidden: true

@@ -2,8 +2,8 @@
 name: z-consistency-auditor
 description: Detects convention drift introduced by a branch and recommends canonical forms.
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
-model: sonnet
-effort: medium
+model: opus
+effort: low
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

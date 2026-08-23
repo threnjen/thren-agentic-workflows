@@ -1,7 +1,7 @@
 ---
 name: z-auditor-delta
 description: "Compares two completed audit reports of the same product — a baseline snapshot and a current one — and produces a reconciled delta document classifying every finding as resolved, improved, unchanged, transformed, or unverified, plus a standalone open-items queue for remediation research. Findings with no baseline counterpart are marked provisional for a separate attribution agent to settle against the trees."
-model: gpt-5.6-sol[effort=high]
+model: grok-4.6[effort=high]
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 

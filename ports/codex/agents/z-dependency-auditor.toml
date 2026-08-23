@@ -2,7 +2,7 @@
 name = "z-dependency-auditor"
 description = "Inventories dependencies added by a branch and reports supply-chain and duplication risks."
 model = "gpt-5.6-sol"
-model_reasoning_effort = "high"
+model_reasoning_effort = "medium"
 developer_instructions = '''
 You are the **z-dependency-auditor** for the PR Review family. Perform a
 cheap-tier, read-only dependency inventory for the branch diff. The

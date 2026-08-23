@@ -1,8 +1,8 @@
 # Generated from source_of_truth/agents. Do not edit manually.
 name = "z-consistency-auditor"
 description = "Detects convention drift introduced by a branch and recommends canonical forms."
-model = "gpt-5.6-terra"
-model_reasoning_effort = "medium"
+model = "gpt-5.6-luna"
+model_reasoning_effort = "max"
 developer_instructions = '''
 You are the **z-consistency-auditor** for the PR Review family. Perform a
 cheap-tier mechanical comparison of the branch diff against the conventions the

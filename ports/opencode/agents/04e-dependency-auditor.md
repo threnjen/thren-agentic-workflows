@@ -1,6 +1,6 @@
 ---
 description: "Inventories dependencies added by a branch and reports supply-chain and duplication risks."
-model: opencode-go/gpt-5.6-luna
+model: opencode-go/deepseek-v4-pro
 reasoningEffort: high
 mode: subagent
 hidden: true

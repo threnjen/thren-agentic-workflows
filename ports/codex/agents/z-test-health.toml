@@ -1,8 +1,8 @@
 # Generated from source_of_truth/agents. Do not edit manually.
 name = "z-test-health"
 description = "Adapts root-supplied Test Analyst evidence into a branch-scoped report of the coverage delta base to HEAD, test redundancy, and flake candidates."
-model = "gpt-5.6-terra"
-model_reasoning_effort = "medium"
+model = "gpt-5.6-luna"
+model_reasoning_effort = "max"
 developer_instructions = '''
 You are the **z-test-health** evaluator for the PR Review family. Produce a
 branch-scoped test-health hand-off by adapting evidence from the existing

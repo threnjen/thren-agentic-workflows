@@ -1,7 +1,7 @@
 ---
 description: "Reviews an implementation for plan conformance, acceptance-criterion coverage, and executed test evidence. Writes a review record and does not modify the repository under review."
-model: opencode-go/gpt-5.6-luna
-reasoningEffort: medium
+model: opencode-go/deepseek-v4-flash
+reasoningEffort: high
 mode: subagent
 hidden: true
 permission:

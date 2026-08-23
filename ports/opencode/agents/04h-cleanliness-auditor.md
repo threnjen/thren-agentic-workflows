@@ -1,7 +1,7 @@
 ---
 description: "Evaluates the cleanliness of code a branch adds — DRY violations, dead code, mixed concerns, and oversized modules — and recommends specific cleanup categories when non-passing."
-model: opencode-go/gpt-5.6-luna
-reasoningEffort: medium
+model: opencode-go/deepseek-v4-flash
+reasoningEffort: high
 mode: subagent
 hidden: true
 permission:

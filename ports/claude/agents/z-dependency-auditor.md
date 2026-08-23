@@ -3,7 +3,7 @@ name: z-dependency-auditor
 description: Inventories dependencies added by a branch and reports supply-chain and duplication risks.
 tools: Skill, Read, Grep, Glob, Edit, Write
 model: opus
-effort: high
+effort: low
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

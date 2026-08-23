@@ -3,7 +3,7 @@ name: z-diff-security-scan
 description: Performs a diff-scoped security scan of only the files changed by an implementation pass, plus their immediate security-relevant context. Writes a compact security report with evidence, severity, and diff-scope limitations. Does not replace the full-codebase Auditor - Security scan.
 tools: Skill, Read, Grep, Glob, Edit, Write
 model: opus
-effort: high
+effort: low
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

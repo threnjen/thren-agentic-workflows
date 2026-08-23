@@ -1,7 +1,7 @@
 ---
 description: "Reviews tests for authentic failure power without reading the implementation code."
-model: opencode-go/gpt-5.6-luna
-reasoningEffort: medium
+model: opencode-go/deepseek-v4-flash
+reasoningEffort: high
 mode: subagent
 hidden: true
 permission:

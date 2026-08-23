@@ -1,8 +1,8 @@
 # Generated from source_of_truth/agents. Do not edit manually.
 name = "z-reviewer-plan-blind"
 description = "Reports the behavior the changed code actually exposes without reading the feature plan."
-model = "gpt-5.6-terra"
-model_reasoning_effort = "medium"
+model = "gpt-5.6-luna"
+model_reasoning_effort = "max"
 developer_instructions = '''
 You are Reviewer D for plan-blind behavior.
 

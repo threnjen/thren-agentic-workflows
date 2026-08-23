@@ -1,7 +1,7 @@
 ---
 name: z-auditor-refactor
 description: "Audits codebase structure and architecture — module organization, coupling, cohesion, and separation of concerns. Produces a structured findings report."
-model: gpt-5.6-sol[effort=high]
+model: grok-4.6[effort=high]
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 

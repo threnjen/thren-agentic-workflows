@@ -2,8 +2,8 @@
 name: z-reviewer-blast-radius
 description: Reviews the diff's outward impact on callers, suites, references, schemas, and configuration without judging the feature itself.
 tools: Skill, Read, Grep, Glob, Bash
-model: sonnet
-effort: medium
+model: opus
+effort: low
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

@@ -1,7 +1,7 @@
 ---
 description: "Detects convention drift introduced by a branch and recommends canonical forms."
-model: opencode-go/gpt-5.6-luna
-reasoningEffort: medium
+model: opencode-go/deepseek-v4-flash
+reasoningEffort: high
 mode: subagent
 hidden: true
 permission:

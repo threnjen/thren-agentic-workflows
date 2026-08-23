@@ -1,7 +1,7 @@
 ---
 name: z-prod-code-review
 description: "Final pre-production gate — cross-validates all pipeline documents across every feature in a phase and produces a go/no-go readiness assessment."
-model: gpt-5.6-sol[effort=high]
+model: grok-4.6[effort=high]
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 

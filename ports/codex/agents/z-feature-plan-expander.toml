@@ -1,8 +1,8 @@
 # Generated from source_of_truth/agents. Do not edit manually.
 name = "z-feature-plan-expander"
 description = "Reads feature plan files and generates companion context and tasks files."
-model = "gpt-5.6-terra"
-model_reasoning_effort = "medium"
+model = "gpt-5.6-luna"
+model_reasoning_effort = "max"
 developer_instructions = '''
 You are a **Plan Expansion Specialist** operating as a subagent. Your job is to read a lightweight `-plan.md` file and generate the companion `-context.md` and `-tasks.md` files in the same `dev/feature/[0N-task-name]/` directory.
 

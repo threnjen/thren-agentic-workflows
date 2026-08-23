@@ -1,6 +1,6 @@
 ---
 description: "Audits source code for quality, security, readability, DRY, type hints, and dependencies. Produces a structured findings report."
-model: opencode-go/gpt-5.6-luna
+model: opencode-go/deepseek-v4-pro
 reasoningEffort: high
 mode: subagent
 hidden: true

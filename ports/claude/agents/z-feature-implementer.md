@@ -2,8 +2,8 @@
 name: z-feature-implementer
 description: Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record.
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
-model: haiku
-effort: low
+model: sonnet
+effort: medium
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

@@ -1,8 +1,8 @@
 # Generated from source_of_truth/agents. Do not edit manually.
 name = "z-reviewer-test-falsification"
 description = "Reviews tests for authentic failure power without reading the implementation code."
-model = "gpt-5.6-terra"
-model_reasoning_effort = "medium"
+model = "gpt-5.6-luna"
+model_reasoning_effort = "max"
 developer_instructions = '''
 You are Reviewer C for test falsification.
 

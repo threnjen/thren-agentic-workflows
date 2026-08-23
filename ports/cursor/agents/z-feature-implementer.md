@@ -1,7 +1,7 @@
 ---
 name: z-feature-implementer
 description: "Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record."
-model: gpt-5.6-luna[effort=low]
+model: grok-4.6[effort=low]
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 

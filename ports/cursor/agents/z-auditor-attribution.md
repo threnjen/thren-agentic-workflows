@@ -1,7 +1,7 @@
 ---
 name: z-auditor-attribution
 description: "Settles whether each provisionally-attributed finding in an audit delta pre-dates the newer work, by probing both source trees for the construct it names, then rewrites only the attribution fields of the delta and its open-items queue."
-model: gpt-5.6-sol[effort=high]
+model: grok-4.6[effort=high]
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 

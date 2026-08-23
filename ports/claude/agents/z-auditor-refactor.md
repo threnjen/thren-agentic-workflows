@@ -3,7 +3,7 @@ name: z-auditor-refactor
 description: Audits codebase structure and architecture — module organization, coupling, cohesion, and separation of concerns. Produces a structured findings report.
 tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch
 model: opus
-effort: high
+effort: low
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

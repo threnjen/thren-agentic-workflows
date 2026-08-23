@@ -1,7 +1,7 @@
 ---
 name: z-baseline-worktree
 description: "Creates or reuses a clean detached worktree at a caller-specified local baseline commit and returns its absolute path."
-model: gpt-5.6-luna[effort=low]
+model: grok-4.6[effort=low]
 readonly: true
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

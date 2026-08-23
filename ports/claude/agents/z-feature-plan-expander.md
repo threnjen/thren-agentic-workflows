@@ -2,8 +2,8 @@
 name: z-feature-plan-expander
 description: Reads feature plan files and generates companion context and tasks files.
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
-model: sonnet
-effort: medium
+model: opus
+effort: low
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

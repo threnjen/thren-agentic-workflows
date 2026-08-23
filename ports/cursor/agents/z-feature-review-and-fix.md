@@ -1,7 +1,7 @@
 ---
 name: z-feature-review-and-fix
 description: "Reviews an implementation for plan conformance, acceptance-criterion coverage, and executed test evidence. Writes a review record and does not modify the repository under review."
-model: gpt-5.6-terra[effort=medium]
+model: grok-4.6[effort=medium]
 readonly: true
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

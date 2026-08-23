@@ -2,8 +2,8 @@
 name: z-feature-qa-writer
 description: Writes two consolidated QA documents from a pipeline run — an automated QA document of checks a machine can run and judge, and a manual QA checklist of what genuinely needs a human. Sorts every check between them.
 tools: Skill, Read, Edit, Write, Grep, Glob, Bash
-model: sonnet
-effort: medium
+model: opus
+effort: low
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

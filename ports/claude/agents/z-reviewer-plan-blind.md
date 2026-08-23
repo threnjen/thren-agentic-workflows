@@ -2,8 +2,8 @@
 name: z-reviewer-plan-blind
 description: Reports the behavior the changed code actually exposes without reading the feature plan.
 tools: Skill, Read, Grep, Glob, Bash
-model: sonnet
-effort: medium
+model: opus
+effort: low
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

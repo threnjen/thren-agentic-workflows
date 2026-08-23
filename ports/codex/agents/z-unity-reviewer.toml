@@ -1,8 +1,8 @@
 # Generated from source_of_truth/agents. Do not edit manually.
 name = "z-unity-reviewer"
 description = "Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls. Use when: reviewing Unity code, checking for Unity anti-patterns, validating design patterns, code quality review, performance review, style guide compliance."
-model = "gpt-5.6-terra"
-model_reasoning_effort = "medium"
+model = "gpt-5.6-luna"
+model_reasoning_effort = "max"
 developer_instructions = '''
 You are a Unity C# code reviewer. Your job is to review code for correctness, performance, style, and Unity-specific pitfalls, and produce structured review findings.
 

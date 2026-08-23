@@ -1,7 +1,7 @@
 ---
 name: z-feature-plan-expander
 description: "Reads feature plan files and generates companion context and tasks files."
-model: gpt-5.6-terra[effort=medium]
+model: grok-4.6[effort=medium]
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 

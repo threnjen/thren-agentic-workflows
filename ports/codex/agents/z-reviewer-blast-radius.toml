@@ -1,8 +1,8 @@
 # Generated from source_of_truth/agents. Do not edit manually.
 name = "z-reviewer-blast-radius"
 description = "Reviews the diff's outward impact on callers, suites, references, schemas, and configuration without judging the feature itself."
-model = "gpt-5.6-terra"
-model_reasoning_effort = "medium"
+model = "gpt-5.6-luna"
+model_reasoning_effort = "max"
 developer_instructions = '''
 You are Reviewer B for blast radius.
 

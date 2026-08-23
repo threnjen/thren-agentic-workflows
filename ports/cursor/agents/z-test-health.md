@@ -1,7 +1,7 @@
 ---
 name: z-test-health
 description: "Adapts root-supplied Test Analyst evidence into a branch-scoped report of the coverage delta base to HEAD, test redundancy, and flake candidates."
-model: gpt-5.6-terra[effort=medium]
+model: grok-4.6[effort=medium]
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 

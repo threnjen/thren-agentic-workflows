@@ -2,8 +2,8 @@
 name: z-test-health
 description: Adapts root-supplied Test Analyst evidence into a branch-scoped report of the coverage delta base to HEAD, test redundancy, and flake candidates.
 tools: Skill, Read, Grep, Glob, Edit, Write
-model: sonnet
-effort: medium
+model: opus
+effort: low
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

@@ -1,7 +1,7 @@
 ---
 description: "Reports the behavior the changed code actually exposes without reading the feature plan."
-model: opencode-go/gpt-5.6-luna
-reasoningEffort: medium
+model: opencode-go/deepseek-v4-flash
+reasoningEffort: high
 mode: subagent
 hidden: true
 permission:

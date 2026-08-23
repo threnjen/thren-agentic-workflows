@@ -1,7 +1,7 @@
 ---
 name: z-finding-consolidator
 description: "Merges committee reports into one deduplicated, severity-ranked fix list for the implementer."
-model: gpt-5.6-terra[effort=medium]
+model: grok-4.6[effort=medium]
 readonly: true
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
