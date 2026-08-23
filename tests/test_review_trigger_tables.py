@@ -178,10 +178,12 @@ def _missing_fix_loop_contract(text: str) -> set[str]:
     return {phrase for phrase in FIX_LOOP_CONTRACT if phrase not in text}
 
 
+# The committee-miss record left this contract with the audit bookend: it
+# compared phase-end audit findings against the committee fix lists, and there
+# is no phase-end audit any more.
 BACKSTOP_CONTRACT = (
     "architecture-backstop: executed",
     "architecture-backstop: absent",
-    "committee-miss-record: absent",
 )
 
 
@@ -302,7 +304,6 @@ def test_fix_loop_and_record_contracts_are_present_and_load_bearing() -> None:
         "reviewer:",
         "Fix rounds",
         "Carry-forward findings",
-        "Committee miss record",
     ):
         assert field in record
 

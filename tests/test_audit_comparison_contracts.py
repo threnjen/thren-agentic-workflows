@@ -1,9 +1,12 @@
-"""Focused Phase 03 guards for the audit-comparison bookend contracts.
+"""Focused guards for the audit-comparison skill and its Audit - Delta consumer.
 
 The generic corpus tests cover frontmatter and generated topology.  These
 guards own the semantic contract, keep checks bounded to the source sections
 that carry each obligation, and exercise their load-bearing text in memory so
 that a green result is not vacuous.
+
+Phase - Execute was a third consumer until its audit bookend was removed.  The
+guards below now assert the opposite: that the bookend has not crept back in.
 """
 
 from __future__ import annotations
@@ -112,45 +115,26 @@ def _delta_errors(text: str) -> set[str]:
 
 
 def _phase_errors(text: str) -> set[str]:
+    """Phase - Execute must carry no audit bookend and must keep the backstop.
+
+    The bookend ran a two-snapshot audit matrix, a delta, and an attribution
+    pass at every phase close. It was removed because it was declined every
+    time. The phase-close architecture backstop is a boundary-table row that
+    predates it and must survive its removal.
+    """
     errors: set[str] = set()
-    step1 = _section(text, "### Step 1: Research, Decompose, and Validate the Schedule", "### Step 2:")
-    step5 = _section(text, "### Step 5: Diff Security Review", "### Step 5.5:")
-    bookend = _section(text, "### Step 5.5: Audit Bookend", "### Step 6:")
-    step6 = _section(text, "### Step 6: Phase Final Review", "### Step 7:")
-    required = {
-        "one-time choice": (step1, "This is the only bookend decision"),
-        "scope resolution": (step1, "one uncapped reference-search hop"),
-        "code selection": (step1, "Always select `Auditor - Code`"),
-        "infra conditional": (step1, "Auditor - Infra` if and only if"),
-        "dependency level before bookend": (
-            text,
-            "Run the accepted bookend only after all dependency levels",
-        ),
-        "step five before bookend": (text, "existing Step 5 Diff Security Review have completed"),
-        "skill handoff": (bookend, "Load the exact `audit-comparison` skill"),
-        "prompt identity": (bookend, "only snapshot-varying fields are `target_root`, `snapshot_label`, and `output_directory`"),
-        "manifest intent": (bookend, "manifest supplies scope and intent"),
-        "docs exclusion": (bookend, "standalone documentation is excluded"),
-        "test lens": (bookend, "Categories 2, 5, 8, and 9"),
-        "full report gate": (bookend, "Require both corresponding full findings reports"),
-        "attribution gate": (bookend, "disjoint subsystem batches whose assigned counts sum"),
-        "pre-attribution regression": (bookend, "Do not present a regression before attribution"),
-        "cleanup ordering": (bookend, "release only a worktree created by this run after attribution"),
-        "bounded remediation": (bookend, "only High/Critical findings settled as caused by this phase"),
-        "non-comparable addendum": (bookend, "explicitly non-comparable verification addendum"),
-        "step six evidence": (step6, "complete Step 5.5 bookend evidence"),
-        "fast-track branch": (step6, "Complete pipeline `all-approved: yes`"),
-        "standard fallback": (step6, "Complete pipeline `all-approved: no`"),
-    }
-    for obligation, (scope, phrase) in required.items():
-        if phrase not in scope:
-            errors.add(obligation)
-    if step1.count("The resolved audit bookend contains") != 1:
-        errors.add("scope choice appears exactly once")
-    if text.find("### Step 5.5:") < text.find("### Step 5: Diff Security Review"):
-        errors.add("bookend precedes Step 5")
-    if re.search(r"\b(?:spawn|delegate|delegates|dispatch)\b[^\n]*Audit - Delta", bookend):
-        errors.add("bookend delegates to Audit - Delta")
+    for phrase in ("bookend", "audit-comparison", "Auditor - Delta", "Auditor - Attribution", "Baseline Worktree"):
+        if phrase in text:
+            errors.add(f"audit bookend residue: {phrase}")
+    heading = "### Step 5.5: Phase-Close Architecture Backstop"
+    if heading not in text:
+        errors.add("architecture backstop")
+        return errors
+    backstop = _section(text, heading, "### Step 6:")
+    if "Spawn **Auditor - Refactor** for the final architecture backstop" not in backstop:
+        errors.add("architecture backstop")
+    if "architecture-backstop: absent" not in backstop:
+        errors.add("absent backstop is not clean")
     return errors
 
 
@@ -160,7 +144,9 @@ def _topology_errors() -> set[str]:
     by_name = {agent.name: agent for agent in agents}
     phase = by_name.get("03 Phase - Execute")
     assert phase is not None, "Phase Execute is absent from the source corpus"
-    expected = {
+    # Leaves the removed bookend owned. A roster entry with no prose to spawn it
+    # is how a removed stage half-returns.
+    removed = {
         "Auditor - Code",
         "Auditor - Infra",
         "Auditor - Delta",
@@ -168,14 +154,11 @@ def _topology_errors() -> set[str]:
         "Baseline Worktree",
     }
     errors: set[str] = set()
-    if set(phase.subagents) & {"Audit - Delta"}:
-        errors.add("Phase Execute delegates to Audit - Delta")
-    if not expected <= set(phase.subagents):
-        errors.add("Phase Execute leaf roster")
-    for name in expected:
-        leaf = by_name.get(name)
-        if leaf is None or leaf.user_invocable:
-            errors.add(f"hidden leaf topology: {name}")
+    stale = removed & set(phase.subagents)
+    if stale:
+        errors.add(f"Phase Execute still rosters bookend leaves: {sorted(stale)}")
+    if "Auditor - Refactor" not in set(phase.subagents):
+        errors.add("Phase Execute dropped the architecture backstop leaf")
     return errors
 
 
@@ -189,7 +172,7 @@ def test_finalized_skill_and_consumers_have_no_contract_errors() -> None:
     assert not _topology_errors()
     assert skill.count("name: audit-comparison") == 1
     assert delta.count("audit-comparison") == 1
-    assert phase.count("audit-comparison") == 1
+    assert phase.count("audit-comparison") == 0
 
 
 @pytest.mark.parametrize(
@@ -198,9 +181,7 @@ def test_finalized_skill_and_consumers_have_no_contract_errors() -> None:
         ("skill output root", SKILL_PATH, "Every report, summary, delta, queue, and attribution update is written below\n  this root.", _skill_errors, "output root confinement"),
         ("skill cleanup", SKILL_PATH, "After the attribution stage completes", _skill_errors, "cleanup after attribution"),
         ("delta matrix", DELTA_PATH, "State the matrix back to the user", _delta_errors, "delta matrix confirmation"),
-        ("phase scope choice", PHASE_EXECUTE_PATH, "The resolved audit bookend contains", _phase_errors, "scope choice appears exactly once"),
-        ("phase report gate", PHASE_EXECUTE_PATH, "Require both corresponding full findings reports", _phase_errors, "full report gate"),
-        ("phase remediation", PHASE_EXECUTE_PATH, "only High/Critical findings settled as caused by this phase", _phase_errors, "bounded remediation"),
+        ("phase backstop", PHASE_EXECUTE_PATH, "Spawn **Auditor - Refactor** for the final architecture backstop", _phase_errors, "architecture backstop"),
     ],
 )
 def test_load_bearing_deletion_is_red(
@@ -216,39 +197,34 @@ def test_load_bearing_deletion_is_red(
 
 
 @pytest.mark.parametrize(
-    ("label", "replacement", "expected"),
+    ("label", "replacement", "mutation", "expected"),
     [
         (
-            "premature audit",
-            "Run the accepted bookend only after all dependency levels",
-            "dependency level before bookend",
+            "bookend returns",
+            "Spawn **Auditor - Refactor** for the final architecture backstop",
+            "Run the accepted audit bookend, then spawn **Auditor - Refactor** for the final architecture backstop",
+            "audit bookend residue: bookend",
         ),
-        ("early cleanup", "release only a worktree created by this run after attribution", "cleanup ordering"),
-        ("regression before attribution", "Do not present a regression before attribution", "pre-attribution regression"),
-        ("false fast track", "Complete pipeline `all-approved: yes`", "fast-track branch"),
-        ("broad remediation", "only High/Critical findings settled as caused by this phase", "bounded remediation"),
+        (
+            "backstop heading dropped",
+            "### Step 5.5: Phase-Close Architecture Backstop",
+            "### Step 5.5: Notes",
+            "architecture backstop",
+        ),
+        (
+            "absent backstop reads clean",
+            "architecture-backstop: absent",
+            "architecture-backstop: fine",
+            "absent backstop is not clean",
+        ),
     ],
 )
 def test_semantic_negation_kills_the_named_guard(
-    label: str, replacement: str, expected: str,
+    label: str, replacement: str, mutation: str, expected: str,
 ) -> None:
     original = _read(PHASE_EXECUTE_PATH)
     assert replacement in original, f"mutation target missing: {label}"
-    if label == "premature audit":
-        mutated = original.replace(
-            replacement,
-            "Run the accepted bookend before all dependency levels",
-            1,
-        )
-    elif label == "early cleanup":
-        mutated = original.replace(replacement, "release only a worktree created by this run before attribution", 1)
-    elif label == "regression before attribution":
-        mutated = original.replace(replacement, "Present a regression before attribution", 1)
-    elif label == "false fast track":
-        mutated = original.replace(replacement, "Complete pipeline `all-approved: no`", 1)
-    else:
-        mutated = original.replace(replacement, "all findings settled as caused by this phase", 1)
-    errors = _phase_errors(mutated)
+    errors = _phase_errors(original.replace(replacement, mutation))
     assert expected in errors, f"{label} did not trip {expected}: {sorted(errors)}"
     assert not _phase_errors(original)
 
