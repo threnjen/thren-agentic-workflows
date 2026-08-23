@@ -165,7 +165,11 @@ def test_missing_route_fails_before_output_directory_is_created(tmp_path: Path, 
     routing = json.loads((REPO_ROOT / "source_of_truth/config/model-routing.json").read_text())
     del routing["high"]["codex"]
     config_path.write_text(json.dumps(routing), encoding="utf-8")
-    monkeypatch.setattr(mod, "SOT_DIR", source_root)
+    # Rebase every root, not just SOT_DIR. These tests assert that validation
+    # fails before any output directory is created; with the output roots left
+    # on the real repository, a regression that writes first would write here.
+    for _name, _value in mod.directory_overrides(tmp_path).items():
+        monkeypatch.setattr(mod, _name, _value)
     agent = mod.SourceAgent(
         path=tmp_path / "example.agent.md",
         rel_path="source_of_truth/agents/example.agent.md",
@@ -194,7 +198,11 @@ def test_malformed_model_identifier_fails_before_execution(tmp_path: Path, monke
     routing = json.loads((REPO_ROOT / "source_of_truth/config/model-routing.json").read_text())
     routing["low"]["claude"]["model"] = "not a model identifier"
     config_path.write_text(json.dumps(routing), encoding="utf-8")
-    monkeypatch.setattr(mod, "SOT_DIR", source_root)
+    # Rebase every root, not just SOT_DIR. These tests assert that validation
+    # fails before any output directory is created; with the output roots left
+    # on the real repository, a regression that writes first would write here.
+    for _name, _value in mod.directory_overrides(tmp_path).items():
+        monkeypatch.setattr(mod, _name, _value)
 
     with pytest.raises(ValueError, match=r"invalid model"):
         mod.load_model_routing()

@@ -510,12 +510,28 @@ def test_committed_tree_is_at_a_propagation_fixed_point() -> None:
     tree, which is why "I ran the propagator" is not evidence and this asserts
     the settled state instead.
 
-    This writes to the working tree only when it is already wrong, in which case
-    the write is the repair and the failure is the report.
+    The committed roots are copied into a throwaway tree and the run happens
+    there. Running against this repository would make the test a propagation:
+    a non-converged tree would be silently repaired instead of reported, and
+    every unrelated test in the session would inherit regenerated output it
+    never asked for.
     """
+    import shutil
+    import tempfile
+
     import _propagate_env as env
 
-    counters = env.mod.propagate_once(verbose=False)
+    with tempfile.TemporaryDirectory() as tmp:
+        replica = Path(tmp) / "replica"
+        replica.mkdir()
+        for name in ("source_of_truth", "ports", ".github"):
+            committed = REPO_ROOT / name
+            if committed.is_dir():
+                shutil.copytree(committed, replica / name, symlinks=True)
+
+        with env.redirect(replica):
+            counters = env.mod.propagate_once(verbose=False)
+
     assert not _changes(counters), (
         "the committed tree is not at a propagation fixed point; a run still "
         f"changed things: {_changes(counters)}. Run propagation repeatedly until "

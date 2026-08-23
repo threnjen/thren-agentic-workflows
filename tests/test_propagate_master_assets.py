@@ -1767,5 +1767,61 @@ class BaselineTemplateIsNotPropagatedTests(unittest.TestCase):
         self.assertEqual([], stray, f"baseline template was propagated: {stray}")
 
 
+class RetargetTests(unittest.TestCase):
+    """`retarget` and `--target` keep a run out of this repository."""
+
+    def test_retarget_rebinds_every_directory_global(self) -> None:
+        with mod.retarget(Path("/tmp/example-root")) as root:
+            self.assertEqual(mod.REPO_ROOT, root)
+            self.assertEqual(mod.SOT_AGENTS_DIR, root / "source_of_truth" / "agents")
+            self.assertEqual(mod.CLAUDE_AGENTS_DIR, root / "ports" / "claude" / "agents")
+            self.assertEqual(mod.DOT_GITHUB_DIR, root / ".github")
+
+    def test_retarget_restores_real_roots_even_when_the_body_raises(self) -> None:
+        """A leaked root would silently aim the next run at the temp tree."""
+        before = {name: getattr(mod, name) for name in mod.directory_overrides(Path("/x"))}
+        with self.assertRaises(RuntimeError):
+            with mod.retarget(Path("/tmp/example-root")):
+                raise RuntimeError("boom")
+        for name, value in before.items():
+            self.assertEqual(getattr(mod, name), value, f"{name} was not restored")
+
+    def test_target_propagates_into_the_given_tree_and_not_the_repository(self) -> None:
+        import shutil
+        import tempfile
+
+        repo_ports = mod.REPO_ROOT / "ports"
+        before = sorted(p.name for p in repo_ports.rglob("*") if p.is_file())
+
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "elsewhere"
+            target.mkdir()
+            shutil.copytree(mod.SOT_DIR, target / "source_of_truth")
+
+            with mock.patch.object(
+                sys, "argv", ["propagate", "--once", "--target", str(target)]
+            ):
+                self.assertEqual(mod.main(), 0)
+
+            self.assertTrue((target / "ports" / "claude" / "agents").is_dir())
+            self.assertTrue(any((target / "ports").rglob("*.md")))
+
+        self.assertEqual(
+            before,
+            sorted(p.name for p in repo_ports.rglob("*") if p.is_file()),
+            "a --target run wrote into this repository's ports/",
+        )
+
+    def test_target_without_a_source_tree_fails_instead_of_propagating(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(
+                sys, "argv", ["propagate", "--once", "--target", tmp]
+            ):
+                self.assertEqual(mod.main(), 1)
+            self.assertFalse((Path(tmp) / "ports").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

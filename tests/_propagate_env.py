@@ -18,34 +18,12 @@ import propagate_master_assets as mod  # noqa: E402
 
 
 def repo_dir_overrides(root: Path) -> dict:
-    """Every directory global the propagator reads, rebased onto `root`."""
-    root = Path(root)
-    sot = root / "source_of_truth"
-    ports = root / "ports"
-    return {
-        "REPO_ROOT": root,
-        "SOT_DIR": sot,
-        "PORTS_DIR": ports,
-        "SOT_AGENTS_DIR": sot / "agents",
-        "SOT_INSTRUCTIONS_DIR": sot / "instructions",
-        "SOT_SKILLS_DIR": sot / "skills",
-        "SOT_HOOKS_DIR": sot / "hooks",
-        "SOT_CONFIG_DIR": sot / "config",
-        "CLAUDE_AGENTS_DIR": ports / "claude" / "agents",
-        "CLAUDE_COMMANDS_DIR": ports / "claude" / "commands",
-        "CLAUDE_SKILLS_DIR": ports / "claude" / "skills",
-        "OPENCODE_AGENTS_DIR": ports / "opencode" / "agents",
-        "OPENCODE_SKILLS_DIR": ports / "opencode" / "skills",
-        "CODEX_AGENTS_DIR": ports / "codex" / "agents",
-        "CODEX_PROFILES_DIR": ports / "codex" / "profiles",
-        "CODEX_SKILLS_DIR": ports / "codex" / "skills",
-        "CURSOR_AGENTS_DIR": ports / "cursor" / "agents",
-        "CURSOR_COMMANDS_DIR": ports / "cursor" / "commands",
-        "CURSOR_RULES_DIR": ports / "cursor" / "rules",
-        "CURSOR_SKILLS_DIR": ports / "cursor" / "skills",
-        "GITHUB_PORT_DIR": ports / "github",
-        "DOT_GITHUB_DIR": root / ".github",
-    }
+    """Every directory global the propagator reads, rebased onto `root`.
+
+    Delegates to the propagator's own `directory_overrides`, so the redirect map
+    and the `--target` flag can never disagree about which roots exist.
+    """
+    return mod.directory_overrides(root)
 
 
 def use(testcase, root: Path) -> None:

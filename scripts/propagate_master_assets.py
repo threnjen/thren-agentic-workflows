@@ -14,6 +14,7 @@ the separate `deploy_assets.py` script.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import fnmatch
 import json
 import re
@@ -59,6 +60,67 @@ CURSOR_RULES_DIR = PORTS_DIR / "cursor" / "rules"
 CURSOR_SKILLS_DIR = PORTS_DIR / "cursor" / "skills"
 GITHUB_PORT_DIR = PORTS_DIR / "github"
 DOT_GITHUB_DIR = REPO_ROOT / ".github"
+
+def directory_overrides(root: Union[str, Path]) -> Dict[str, object]:
+    """Every source and output root this module reads, rebased onto `root`.
+
+    The roots are module-level constants pinned to the real repository at import
+    time. Retargeting means rebinding all of them together: a root left behind
+    still points here, so a run meant for a throwaway tree would read from or
+    delete files in this repository instead.
+    """
+    root = Path(root)
+    sot = root / "source_of_truth"
+    ports = root / "ports"
+    return {
+        "REPO_ROOT": root,
+        "SOT_DIR": sot,
+        "PORTS_DIR": ports,
+        "SOT_AGENTS_DIR": sot / "agents",
+        "SOT_INSTRUCTIONS_DIR": sot / "instructions",
+        "SOT_SKILLS_DIR": sot / "skills",
+        "SOT_HOOKS_DIR": sot / "hooks",
+        "SOT_CONFIG_DIR": sot / "config",
+        "CLAUDE_AGENTS_DIR": ports / "claude" / "agents",
+        "CLAUDE_COMMANDS_DIR": ports / "claude" / "commands",
+        "CLAUDE_SKILLS_DIR": ports / "claude" / "skills",
+        "OPENCODE_AGENTS_DIR": ports / "opencode" / "agents",
+        "OPENCODE_SKILLS_DIR": ports / "opencode" / "skills",
+        "CODEX_AGENTS_DIR": ports / "codex" / "agents",
+        "CODEX_PROFILES_DIR": ports / "codex" / "profiles",
+        "CODEX_SKILLS_DIR": ports / "codex" / "skills",
+        "CURSOR_AGENTS_DIR": ports / "cursor" / "agents",
+        "CURSOR_COMMANDS_DIR": ports / "cursor" / "commands",
+        "CURSOR_RULES_DIR": ports / "cursor" / "rules",
+        "CURSOR_SKILLS_DIR": ports / "cursor" / "skills",
+        "GITHUB_PORT_DIR": ports / "github",
+        "DOT_GITHUB_DIR": root / ".github",
+        "WATCH_DIRS": [
+            sot / "agents",
+            sot / "skills",
+            sot / "instructions",
+            sot / "hooks",
+            sot / "config",
+        ],
+    }
+
+
+@contextlib.contextmanager
+def retarget(root: Union[str, Path]):
+    """Run propagation against `root` instead of this repository.
+
+    Restores the real roots on exit, including when the body raises, so one
+    retargeted run cannot leak its roots into whatever runs next.
+    """
+    overrides = directory_overrides(root)
+    module = globals()
+    previous = {name: module[name] for name in overrides}
+    module.update(overrides)
+    try:
+        yield Path(root)
+    finally:
+        module.update(previous)
+
 
 # Subdirectories mirrored verbatim to ports/github and .github. Anything else in
 # .github/ (e.g. workflows/) is never touched.
@@ -1885,11 +1947,37 @@ def main() -> int:
         action="store_true",
         help="Watch source_of_truth/ folders and propagate on changes.",
     )
+    parser.add_argument(
+        "--target",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help=(
+            "Propagate into DIR instead of this repository. DIR must contain a "
+            "source_of_truth/ directory; outputs are written to DIR/ports and "
+            "DIR/.github. Use this to inspect a run without touching the repository."
+        ),
+    )
     args = parser.parse_args()
 
     if not args.watch:
         args.once = True
 
+    if args.target is not None:
+        target = args.target.resolve()
+        if not (target / "source_of_truth").is_dir():
+            print(
+                f"--target {target} has no source_of_truth/ directory to propagate from.",
+                file=sys.stderr,
+            )
+            return 1
+        with retarget(target):
+            return _run(args)
+
+    return _run(args)
+
+
+def _run(args: argparse.Namespace) -> int:
     if args.once:
         try:
             result = propagate_until_converged()
