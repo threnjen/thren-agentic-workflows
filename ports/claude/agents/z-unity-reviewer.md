@@ -100,38 +100,6 @@ Followed by a one-paragraph assessment of overall code quality.
 
 ## Auto-Loaded Instructions
 
-### Code Change Strategy
-
-# Code Change Strategy
-
-## Requirements
-
-- Load `base-code-guidelines` before you write, fix, or review code. Skipping it creates duplicate implementations.
-- Scope a change by the responsibility it changes, not by lines touched. Caller updates the change forces stay in scope.
-- Search for an existing implementation of the same responsibility before you add a sibling function, class, fixture, or helper.
-
-## Traps
-
-- An existing implementation almost fits. Weigh extending its contract against adding a sibling. Reuse it only when both callers keep one cohesive responsibility.
-- Reuse touches several callers. Update and test every one. File count does not turn a required contract change into scope creep.
-- Similar syntax hides different meaning. Keep implementations apart when reuse would couple responsibilities that change for different reasons.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: code-change-strategy."* Then proceed normally.
-
-### Codebase Context Bootstrap
-
-# Codebase Context Bootstrap
-
-Read `docs/CODEBASE_CONTEXT.md` first when it exists in the repository root. Use it as your starting orientation to avoid a broad rescan, then explore only for task-specific detail. If the file does not exist, continue normally. Do not fail and do not ask for it to be created.
-
-Skip this step when the task needs no exploration at all — writing a commit message, committing pipeline records, or generating templates from a plan that already lists its files. This **handed-scope exception** covers any agent whose file list arrives in its input, such as a reviewer scoped to an implementation record's "Files Changed" table. An agent body may invoke the exception by name. It may not override this instruction any other way.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: codebase-context-bootstrap."* Then proceed normally.
-
 ### Dev Task Folder
 
 # Path Token Bindings
@@ -160,58 +128,6 @@ Never invent `[phase-name]`. Read it from the phase directory on disk, or build 
 ## Load Canary
 
 When this file is loaded, state once, before your first substantive output: *"Instruction loaded: dev-task-folder."* Then proceed normally.
-
-### Language Standards
-
-# Language Standards
-
-Before writing or reviewing code, load the skill for its language and follow it — the skill is that language's authoritative standard.
-
-| Language | Skill |
-|---|---|
-| Python | `python-standards` |
-| TypeScript / JavaScript | `typescript-standards` |
-| C# | `csharp-standards` |
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: language-standards."* Then proceed normally.
-
-### Learnings Bootstrap
-
-**Learnings live in the repository you were invoked to change — the repo whose code, plans, or docs you are touching. Every `docs/learnings/` path below is relative to that repo's root or worktree root. Never write learnings into the agent-definition or source-of-truth repo.**
-
-**Read first.** Read every `docs/learnings/*.md` that exists before you start. Apply the fix patterns you find there.
-
-**Write when you learn something durable.** Append a short, dateless, reusable entry — one bolded claim per bullet plus the signal that reveals it. Never rewrite an existing entry. Create the file and `docs/learnings/` when they are missing. Skip one-off bugs. Never ask whether to write a note. A downstream agent can ignore a note it does not need, but cannot read one you never wrote.
-
-| File | Write here when you find… |
-|---|---|
-| `cross-phase-decisions.md` | a decision, constraint, risk, deferred capability, scope gap, or documented deviation that affects a later phase. Tag blockers `Must-do before Phase N`. |
-| `review-learnings.md` | a recurring review finding — a defect class you expect to see again. |
-| `project-learnings.md` | anything that bit you and will bite again: a framework behavior, config trap, library gotcha, diagnosed root cause, pipeline gap, or agent-workflow failure. One `##` section per entry, appended. Never merge into or overwrite an existing section. |
-
-Put a discovery in the current phase document's Notes section or in a `DISCOVERY_CONTEXT.md` when it belongs there instead. Use `cross-phase-decisions.md` when it spans future phases. If you may not write to the target repo, report the learning in your return message and write nothing.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: learnings-bootstrap."* Then proceed normally.
-
-### Output Verbosity Policy
-
-Treat every target below as a soft default, never a hard limit.
-
-Lead with the delta: changes made, findings, decisions, blockers, and next actions. Keep background short unless correctness needs it.
-
-- Status reports and direct answers: one to three sentences.
-- Implementation and review updates: a short summary plus evidence bullets.
-- Debugging, audits, and design trade-offs: expand only where brevity would break the reasoning.
-
-Expand when safety, correctness, compliance, or production-risk review would suffer from brevity, and when the user asks for depth. Never drop a required constraint, caveat, or validation outcome to hit a length target. Do not enforce token limits at runtime and do not truncate required analysis.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: output-verbosity-policy."* Then proceed normally.
 
 ### Read Only Agent
 

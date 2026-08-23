@@ -421,6 +421,26 @@ class BaselineDeployTests(unittest.TestCase):
                     f"{name} deploys to the global file but its frontmatter omits baseline: true",
                 )
 
+    def test_every_baseline_instruction_is_listed(self) -> None:
+        """A baseline: true instruction that the template omits reaches nobody.
+
+        Propagation refuses to inline any baseline instruction into an agent,
+        so the template list is that instruction's only delivery route. An
+        unlisted one is silently dropped from every harness.
+        """
+        listed = set(mod.baseline_section_names())
+        unlisted = sorted(
+            path.name.replace(".instructions.md", "")
+            for path in mod.BASELINE_INSTRUCTIONS_DIR.glob("*.instructions.md")
+            if "baseline: true" in path.read_text(encoding="utf-8").split("---")[1]
+            and path.name.replace(".instructions.md", "") not in listed
+        )
+        self.assertEqual(
+            [],
+            unlisted,
+            f"baseline instructions missing from the template list: {unlisted}",
+        )
+
     def test_no_name_is_both_listed_and_retired(self) -> None:
         """A name cannot be listed and retired at once.
 

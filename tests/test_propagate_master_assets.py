@@ -1599,6 +1599,24 @@ class InstructionApplyToTests(unittest.TestCase):
             "silently stops being injected):\n  " + "\n  ".join(unresolved),
         )
 
+    def test_baseline_instructions_are_never_inlined_into_an_agent(self) -> None:
+        """The user-global file already carries them; inlining ships them twice.
+
+        Duplicated rules waste runtime context and fire each Load Canary twice,
+        which makes the canary useless as a load check.
+        """
+        docs = mod.load_instruction_docs()
+        agents = mod.load_source_agents()
+        offenders = sorted(
+            {
+                f"{agent.source_slug} <- {doc.path.name}"
+                for agent in agents
+                for doc in mod.applicable_instructions(agent, docs)
+                if doc.baseline
+            }
+        )
+        self.assertEqual([], offenders, f"baseline instructions inlined: {offenders}")
+
     def test_every_instruction_declares_applyto(self) -> None:
         # A baseline instruction deploys through the user-global file instead of
         # being inlined into agents, so it carries no roster by design.

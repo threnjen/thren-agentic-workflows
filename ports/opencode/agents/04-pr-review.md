@@ -419,18 +419,6 @@ verdict; do not record it anywhere.
 
 ## Auto-Loaded Instructions
 
-### Codebase Context Bootstrap
-
-# Codebase Context Bootstrap
-
-Read `docs/CODEBASE_CONTEXT.md` first when it exists in the repository root. Use it as your starting orientation to avoid a broad rescan, then explore only for task-specific detail. If the file does not exist, continue normally. Do not fail and do not ask for it to be created.
-
-Skip this step when the task needs no exploration at all — writing a commit message, committing pipeline records, or generating templates from a plan that already lists its files. This **handed-scope exception** covers any agent whose file list arrives in its input, such as a reviewer scoped to an implementation record's "Files Changed" table. An agent body may invoke the exception by name. It may not override this instruction any other way.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: codebase-context-bootstrap."* Then proceed normally.
-
 ### Dev Task Folder
 
 # Path Token Bindings
@@ -459,83 +447,6 @@ Never invent `[phase-name]`. Read it from the phase directory on disk, or build 
 ## Load Canary
 
 When this file is loaded, state once, before your first substantive output: *"Instruction loaded: dev-task-folder."* Then proceed normally.
-
-### Output Verbosity Policy
-
-Treat every target below as a soft default, never a hard limit.
-
-Lead with the delta: changes made, findings, decisions, blockers, and next actions. Keep background short unless correctness needs it.
-
-- Status reports and direct answers: one to three sentences.
-- Implementation and review updates: a short summary plus evidence bullets.
-- Debugging, audits, and design trade-offs: expand only where brevity would break the reasoning.
-
-Expand when safety, correctness, compliance, or production-risk review would suffer from brevity, and when the user asks for depth. Never drop a required constraint, caveat, or validation outcome to hit a length target. Do not enforce token limits at runtime and do not truncate required analysis.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: output-verbosity-policy."* Then proceed normally.
-
-### Prose Standards
-
-# Prose Standards
-
-Every piece of English you write has a reader. Pick the mode from the reader, not from the surrounding style. Style-matching applies to code, not prose.
-
-**Strict** - procedures, error messages, tool and agent descriptions, agent-to-agent instructions, safety text. Anywhere a wrong reading costs something.
-
-**Flavored** - READMEs, PR descriptions, changelogs, explanatory prose, replies to a human. Sentence rules apply in full. Word choice stays free.
-
-**Neither** - client-facing deliverables, marketing copy, creative writing. Never apply these rules there. Client deliverables follow `engagement-client-voice`.
-
-Dense is correct for machine-facing planning documents - phase summaries, discovery context, roadmaps, plan and context and tasks bundles. The pipeline reads these to decompose work, so spelling out every constraint helps. Dense never excuses ambiguous.
-
-## Sentence rules - both modes
-
-- Active voice. Use the passive only when the actor is genuinely unknown.
-- One instruction per sentence.
-- 20 words for an instruction, 25 for a description.
-- No semicolons. An em dash is allowed but usually marks a sentence that wants splitting.
-- Plain verbs - start, not spin up; contact, not reach out.
-- Three words maximum in a noun stack.
-- Keep the subject, verb, and article explicit. Imply nothing.
-- Simple tenses, unless the compound tense carries information the simple one cannot.
-- One topic per paragraph, six sentences maximum.
-- Number any sequence of three or more steps.
-
-## Human-facing documents
-
-- Answer first. Open with the conclusion and what it changes. Evidence after, or behind a link.
-- Translate a decision-driving number into words, then give the number.
-- One caveat, not three. Bold the decision, not the vocabulary.
-- Put a warning where the mistake happens, not in a preamble.
-- Runbooks and checklists: a TL;DR of five lines or fewer, then numbered steps. One action each, with the exact command and what a correct result looks like. Rationale below the steps.
-- When a step changes, rewrite the step. No correction-log narration in the body.
-
-## Hard limits
-
-- Never weaken or strengthen a hedge to save words. "May have failed" is not "failed". Confidence is content.
-- Never add a fact the source did not state - a cause, a frequency, a mechanism.
-- Never drop a safety condition, exception, or scope qualifier to shorten a sentence. Flag the trade-off instead.
-- Form is not substance. Say the text has nothing to say rather than polishing it.
-- Stop at unambiguous, not at shortest.
-
-Write to a colleague who is sharp, busy, and has not read the rest of the phase. If the reader asks for a simpler version, the first version was wrong.
-
-## Vocabulary rules - Strict only, advice in Flavored
-
-- One word, one meaning. Pick one verb per action and reuse it. Do not rotate check, verify, and confirm for the same act.
-- One name per thing. The user, the customer, and the client must not be one entity under three names.
-- Verb, not noun. Write "analyze the log", not "perform an analysis of the log".
-- Define each domain term once. Keep the necessary jargon. Unpack it inline on first use.
-
-## Rewriting existing text
-
-Load the `prose-rewrite` skill. It holds the pass order, the report format, and the limits on what a rewrite may change.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: prose-standards."* Then proceed normally.
 
 ### Subagent Depth
 

@@ -716,6 +716,11 @@ def applicable_instructions(agent: SourceAgent, instruction_docs: List[Instructi
     for doc in instruction_docs:
         if doc.profile != agent.profile:
             continue
+        # A baseline instruction reaches every agent through the harness's
+        # user-global file, which deploy_agents.py writes. Inlining it here
+        # would ship the same rules twice and fire its canary twice.
+        if doc.baseline:
+            continue
         if any(fnmatch.fnmatch(agent.rel_path, pattern) for pattern in doc.apply_to_patterns):
             applicable.append(doc)
     return applicable
