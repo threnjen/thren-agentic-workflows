@@ -402,22 +402,68 @@ class BaselineDeployTests(unittest.TestCase):
             Path("/opt/codex/AGENTS.md"),
         )
 
-    def test_baseline_sections_matches_template_sentinels(self) -> None:
-        """Every sentinel block in the template must be spliced, and vice versa.
+    def test_every_listed_name_resolves_to_a_baseline_instruction(self) -> None:
+        """Each listed name must be a real instruction file carrying baseline: true.
 
-        The other baseline tests iterate BASELINE_SECTIONS, so a section authored
-        in the template but missing from the tuple is silently never deployed.
-        Derive the expected set from the template instead of trusting the list.
+        The list is the only thing naming what deploys, so a typo or a name whose
+        instruction lost its baseline flag would otherwise surface as a deploy
+        failure on a user's machine rather than here.
         """
-        template = mod.BASELINE_TEMPLATE.read_text(encoding="utf-8")
-        authored = set(re.findall(r"<!-- ([a-z0-9-]+) -->", template))
-        self.assertEqual(
-            authored,
-            set(mod.BASELINE_SECTIONS),
-            "baseline template sentinels and BASELINE_SECTIONS have drifted: "
-            f"authored-but-not-spliced={sorted(authored - set(mod.BASELINE_SECTIONS))}, "
-            f"spliced-but-not-authored={sorted(set(mod.BASELINE_SECTIONS) - authored)}",
+        names = mod.baseline_section_names()
+        self.assertTrue(names, "baseline template lists no instructions; deploys are inert")
+        for name in names:
+            with self.subTest(name=name):
+                path = mod.BASELINE_INSTRUCTIONS_DIR / f"{name}.instructions.md"
+                self.assertTrue(path.is_file(), f"{name} is listed but {path} does not exist")
+                self.assertIn(
+                    "baseline: true",
+                    path.read_text(encoding="utf-8").split("---")[1],
+                    f"{name} deploys to the global file but its frontmatter omits baseline: true",
+                )
+
+    def test_no_name_is_both_listed_and_retired(self) -> None:
+        """A name cannot be listed and retired at once.
+
+        deploy_baseline strips retired sections before splicing listed ones, so
+        a name in both lists survives only by loop order. Reordering those two
+        loops would silently stop deploying it.
+        """
+        overlap = set(mod.baseline_section_names()) & set(mod.RETIRED_BASELINE_SECTIONS)
+        self.assertFalse(
+            overlap,
+            f"listed and retired at the same time: {sorted(overlap)}. "
+            "Remove the name from RETIRED_BASELINE_SECTIONS -- splicing already "
+            "replaces the block a past deploy wrote.",
         )
+
+    def test_rendered_section_drops_frontmatter_and_canary_and_demotes_heading(self) -> None:
+        """The instruction body is reshaped for a user-global file.
+
+        A Load Canary left in place would fire in every session, which is the
+        opposite of what it proves: that one agent inlined one instruction.
+        """
+        body = mod._instruction_body("prose-standards")
+        self.assertTrue(body.startswith("## Prose Standards"), body[:40])
+        self.assertNotIn("applyTo:", body)
+        self.assertNotIn("baseline: true", body)
+        self.assertNotIn("Load Canary", body)
+        self.assertNotIn("Instruction loaded:", body)
+        source = (mod.BASELINE_INSTRUCTIONS_DIR / "prose-standards.instructions.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Load Canary", source, "canary removed from the source file, not just the render")
+
+    def test_listed_name_without_an_instruction_file_fails_the_deploy(self) -> None:
+        """A missing instruction must fail loudly, not deploy a partial baseline."""
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            original = mod.BASELINE_TEMPLATE.read_text(encoding="utf-8")
+            template = home / "baseline-instructions.md"
+            template.write_text(original + "\n- no-such-instruction\n", encoding="utf-8")
+            with mock.patch.object(mod, "BASELINE_TEMPLATE", template):
+                result = mod.deploy_baseline("codex", home=home, environ={})
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("no-such-instruction", result["detail"])
 
     def test_creates_file_with_all_sections_and_real_paths(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -425,7 +471,7 @@ class BaselineDeployTests(unittest.TestCase):
             result = mod.deploy_baseline("codex", home=home, environ={})
             self.assertEqual(result["status"], "created")
             content = (home / ".codex" / "AGENTS.md").read_text(encoding="utf-8")
-        for name in mod.BASELINE_SECTIONS:
+        for name in mod.baseline_section_names():
             self.assertIn(f"<!-- {name} -->", content)
         self.assertIn("asks Codex to act as a named agent", content)
         self.assertIn(str(home / ".codex" / "agents"), content)
@@ -439,7 +485,7 @@ class BaselineDeployTests(unittest.TestCase):
             dest = home / ".codex" / "AGENTS.md"
             dest.parent.mkdir(parents=True)
             dest.write_text(
-                "# My own notes\n\n<!-- phase-doc-sync -->\nstale content\n<!-- phase-doc-sync -->\n\nTrailing custom text.\n",
+                "# My own notes\n\n<!-- agent-discovery -->\nstale content\n<!-- agent-discovery -->\n\nTrailing custom text.\n",
                 encoding="utf-8",
             )
             result = mod.deploy_baseline("codex", home=home, environ={})
@@ -448,18 +494,18 @@ class BaselineDeployTests(unittest.TestCase):
         self.assertIn("# My own notes", content)
         self.assertIn("Trailing custom text.", content)
         self.assertNotIn("stale content", content)
-        self.assertIn("phase-doc-sync", content)
-        self.assertIn("<!-- know-the-audience -->", content)
+        self.assertIn("agent-discovery", content)
+        self.assertIn("<!-- prose-standards -->", content)
 
     def test_retired_sections_are_deleted_from_an_already_deployed_file(self) -> None:
-        """Dropping a section from BASELINE_SECTIONS stops rewriting it.
+        """Dropping a name from the baseline list stops rewriting its section.
 
         Only RETIRED_BASELINE_SECTIONS removes the block a previous deploy
         already wrote, so a retired rule stops applying on real machines.
         """
         self.assertTrue(mod.RETIRED_BASELINE_SECTIONS, "nothing retired; this guard is inert")
         retired = mod.RETIRED_BASELINE_SECTIONS[0]
-        self.assertNotIn(retired, mod.BASELINE_SECTIONS)
+        self.assertNotIn(retired, mod.baseline_section_names())
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
             dest = home / ".codex" / "AGENTS.md"

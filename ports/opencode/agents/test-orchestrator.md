@@ -364,6 +364,10 @@ agents. Child agents never spawn agents. When work requires fan-out, the root
 spawns sibling agents and coordinates them through exclusive artifact ownership
 and compact returns.
 
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: subagent-depth."* Then proceed normally.
+
 ### Test Target Scope
 
 # Test Target Scope
@@ -383,3 +387,7 @@ A pipeline document, a phase summary, or a plan file is an artifact of the work,
 Assert on file content only when the repository's own deliverable **is** that content — a prose corpus, an agent-definition set, a generated-output contract. Then the guard is a real guard: commit it to the tracked suite and follow the `guard-integrity` skill, which exists for exactly this case.
 
 Deciding the exception applies requires the repository to ship the text as its product. "The change I made was in a `.md` file" is not that.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: test-target-scope."* Then proceed normally.

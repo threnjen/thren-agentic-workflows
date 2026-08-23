@@ -151,6 +151,10 @@ Modules that could not be tested or need attention:
 - Reuse changes several callers: update and test every affected caller. File count does not make a required contract change into scope creep.
 - Similar syntax hides different semantics: keep implementations separate when reuse would couple responsibilities that change for different reasons.
 
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: code-change-strategy."* Then proceed normally.
+
 ### Codebase Context Bootstrap
 
 # Codebase Context Bootstrap
@@ -211,6 +215,10 @@ Before writing or reviewing code, load the skill for its language and follow it 
 | TypeScript / JavaScript | `typescript-standards` |
 | C# | `csharp-standards` |
 
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: language-standards."* Then proceed normally.
+
 ### Output Verbosity Policy
 
 Use concise defaults for high-frequency responses as soft targets, never hard limits.
@@ -266,3 +274,7 @@ A pipeline document, a phase summary, or a plan file is an artifact of the work,
 Assert on file content only when the repository's own deliverable **is** that content — a prose corpus, an agent-definition set, a generated-output contract. Then the guard is a real guard: commit it to the tracked suite and follow the `guard-integrity` skill, which exists for exactly this case.
 
 Deciding the exception applies requires the repository to ship the text as its product. "The change I made was in a `.md` file" is not that.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: test-target-scope."* Then proceed normally.

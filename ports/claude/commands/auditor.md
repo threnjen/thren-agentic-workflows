@@ -349,3 +349,7 @@ Delegation depth is one. Only the user-invocable root orchestrator may spawn
 agents. Child agents never spawn agents. When work requires fan-out, the root
 spawns sibling agents and coordinates them through exclusive artifact ownership
 and compact returns.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: subagent-depth."* Then proceed normally.

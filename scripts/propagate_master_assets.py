@@ -140,6 +140,7 @@ class InstructionDoc:
     body: str
     description: str = ""
     profile: str = DEFAULT_PROFILE
+    baseline: bool = False
 
 
 @dataclass(frozen=True)
@@ -530,6 +531,7 @@ def load_instruction_docs() -> List[InstructionDoc]:
                 body=body.strip() + "\n",
                 description=str(fm.get("description", "")).strip().strip('"').strip("'"),
                 profile=_parse_profile(path.relative_to(REPO_ROOT).as_posix(), fm.get("profile")),
+                baseline=str(fm.get("baseline", "")).strip().strip('"').strip("'").lower() == "true",
             )
         )
     return docs
@@ -1275,6 +1277,11 @@ def propagate_cursor_rules_once(
         # to catch it: before the first creative agent exists its patterns match
         # nothing, which would render it as an always-apply global rule.
         if doc.profile != DEFAULT_PROFILE:
+            continue
+        # Baseline instructions reach Cursor through deploy_agents.py, which
+        # splices them into the user-global rule file. Emitting them here too
+        # would ship the same rules twice under two different names.
+        if doc.baseline:
             continue
         globs = [
             pattern

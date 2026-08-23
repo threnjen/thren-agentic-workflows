@@ -1,6 +1,7 @@
 ---
 description: "Requires interrogating agents to make every decision question self-contained: plain-language framing, inline context, and spelled-out option trade-offs. Audience is DERIVED: pipeline stages 01-02, the agents that interrogate the user."
 applyTo: "source_of_truth/agents/0[12]-*.agent.md"
+baseline: true
 ---
 
 # Question Hygiene
@@ -25,3 +26,7 @@ Multiple-choice questions are the highest-risk format for context-free asking. B
 ## Self-Check
 
 Before sending any question, apply this test: *If this question were the only text the user could see, could they answer it confidently?* If no, rewrite it until yes.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: question-hygiene."* Then proceed normally.

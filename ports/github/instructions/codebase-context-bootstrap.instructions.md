@@ -1,6 +1,7 @@
 ---
 description: "Bootstraps agent context by reading docs/CODEBASE_CONTEXT.md before discovery. Reduces redundant codebase scanning for all agents."
 applyTo: "source_of_truth/agents/**"
+baseline: true
 ---
 
 # Codebase Context Bootstrap

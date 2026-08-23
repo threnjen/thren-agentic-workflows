@@ -45,3 +45,7 @@ When a change alters a shared API signature or constructor contract, a serialize
 - Every suite exercising the changed symbol
 
 The feature's own new tests are not sufficient. A contract change that fails closed breaks callers written before it — those callers' tests are the ones that prove it.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: test-execution-evidence."* Then proceed normally.

@@ -279,6 +279,21 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 When you encounter an unfamiliar technology, API, service, pattern, constraint, error, or version-specific issue, **spawn `@web-researcher` immediately** rather than asking the user to explain it. The user expects you to look things up yourself. Only ask the user for information that is inherently project-specific and cannot be found online (e.g., business priorities, internal team decisions, undocumented requirements). Default to researching first, then presenting what you found alongside any remaining questions that truly require the user's input.
 
+## Library Documentation Comes From Context7
+
+Use the Context7 MCP server whenever the user asks about a library, framework, SDK, API, CLI tool, or cloud service. This covers API syntax, configuration, version migration, library-specific debugging, setup, and CLI usage. Use it for well-known tools too. Your training data may not reflect recent releases. Prefer Context7 over a web search for library documentation.
+
+Do not use Context7 for refactoring, writing a script from scratch, debugging business logic, code review, or general programming concepts.
+
+Follow these steps.
+
+1. Call `resolve-library-id` with the library name and the user's question. Skip this step only when the user supplies an exact `/org/project` identifier.
+2. Pick the best match by exact name, description relevance, snippet count, source reputation, and benchmark score. Try an alternate name or phrasing when no result fits. Use a version-specific identifier when the user names a version.
+3. Call `query-docs` with that identifier and the user's full question. Scope each call to one concept.
+4. Answer from the fetched documentation.
+
+Split a question that spans several concepts into one `query-docs` call per concept, reusing the same identifier. A combined query dilutes ranking and returns shallow results for each topic. Keep the concepts in one call only when the question is about how they interact.
+
 ## Load Canary
 
 When this file is loaded, state once, before your first substantive output: *"Instruction loaded: proactive-research."* Then proceed normally.
@@ -376,6 +391,10 @@ Multiple-choice questions are the highest-risk format for context-free asking. B
 
 Before sending any question, apply this test: *If this question were the only text the user could see, could they answer it confidently?* If no, rewrite it until yes.
 
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: question-hygiene."* Then proceed normally.
+
 ### Read Only Agent
 
 # Read-Only Agent Constraints
@@ -410,3 +429,7 @@ Delegation depth is one. Only the user-invocable root orchestrator may spawn
 agents. Child agents never spawn agents. When work requires fan-out, the root
 spawns sibling agents and coordinates them through exclusive artifact ownership
 and compact returns.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: subagent-depth."* Then proceed normally.

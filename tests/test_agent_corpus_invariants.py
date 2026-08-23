@@ -171,11 +171,17 @@ class FrontmatterShapeTests(unittest.TestCase):
 
 class ApplyToTests(unittest.TestCase):
     def test_every_instruction_declares_a_non_empty_apply_to(self) -> None:
+        """Only a baseline instruction may omit applyTo.
+
+        A baseline instruction reaches agents through the user-global file
+        deploy_agents.py writes, so it has an effect with no roster. Any other
+        instruction with no roster is inlined into nothing.
+        """
         problems = [
             f"{_rel(doc.path)}: `applyTo:` is missing or empty -- the file is "
             f"inlined into nothing and silently has no effect"
             for doc in mod.load_instruction_docs()
-            if not doc.apply_to_patterns
+            if not doc.apply_to_patterns and not doc.baseline
         ]
         self.assertFalse(problems, _fail_report("Instructions with no applyTo:", problems))
 

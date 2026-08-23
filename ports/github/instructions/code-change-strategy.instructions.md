@@ -16,3 +16,7 @@ applyTo: "**/04b-feature-implementer.agent.md,**/04c-feature-review-and-fix.agen
 - An existing implementation almost fits: compare extending its contract with adding a sibling. Reuse it only when both consumers keep one cohesive responsibility.
 - Reuse changes several callers: update and test every affected caller. File count does not make a required contract change into scope creep.
 - Similar syntax hides different semantics: keep implementations separate when reuse would couple responsibilities that change for different reasons.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: code-change-strategy."* Then proceed normally.

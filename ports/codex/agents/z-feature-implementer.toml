@@ -188,6 +188,10 @@ Required fields only:
 - Reuse changes several callers: update and test every affected caller. File count does not make a required contract change into scope creep.
 - Similar syntax hides different semantics: keep implementations separate when reuse would couple responsibilities that change for different reasons.
 
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: code-change-strategy."* Then proceed normally.
+
 ### Codebase Context Bootstrap
 
 # Codebase Context Bootstrap
@@ -247,6 +251,10 @@ Before writing or reviewing code, load the skill for its language and follow it 
 | Python | `python-standards` |
 | TypeScript / JavaScript | `typescript-standards` |
 | C# | `csharp-standards` |
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: language-standards."* Then proceed normally.
 
 ### Learnings Bootstrap
 
@@ -371,6 +379,10 @@ When a change alters a shared API signature or constructor contract, a serialize
 
 The feature's own new tests are not sufficient. A contract change that fails closed breaks callers written before it — those callers' tests are the ones that prove it.
 
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: test-execution-evidence."* Then proceed normally.
+
 ### Test Target Scope
 
 # Test Target Scope
@@ -390,6 +402,10 @@ A pipeline document, a phase summary, or a plan file is an artifact of the work,
 Assert on file content only when the repository's own deliverable **is** that content — a prose corpus, an agent-definition set, a generated-output contract. Then the guard is a real guard: commit it to the tracked suite and follow the `guard-integrity` skill, which exists for exactly this case.
 
 Deciding the exception applies requires the repository to ship the text as its product. "The change I made was in a `.md` file" is not that.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: test-target-scope."* Then proceed normally.
 
 ## Codex Compatibility Notes
 

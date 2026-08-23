@@ -1,6 +1,7 @@
 ---
 description: "Requires planning agents to push back on user requests that break patterns or add unnecessary complexity. Audience is DERIVED: pipeline stages 01-02, the interrogating planning agents."
 applyTo: "source_of_truth/agents/0[12]-*.agent.md"
+baseline: true
 ---
 
 # Challenge User Assumptions

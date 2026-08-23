@@ -159,6 +159,10 @@ Follow the output format from the `auditor-conventions` skill. Use the severity 
 - Reuse changes several callers: update and test every affected caller. File count does not make a required contract change into scope creep.
 - Similar syntax hides different semantics: keep implementations separate when reuse would couple responsibilities that change for different reasons.
 
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: code-change-strategy."* Then proceed normally.
+
 ### Codebase Context Bootstrap
 
 # Codebase Context Bootstrap
@@ -218,6 +222,10 @@ Before writing or reviewing code, load the skill for its language and follow it 
 | Python | `python-standards` |
 | TypeScript / JavaScript | `typescript-standards` |
 | C# | `csharp-standards` |
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: language-standards."* Then proceed normally.
 
 ### Output Verbosity Policy
 

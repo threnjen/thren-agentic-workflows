@@ -1595,10 +1595,15 @@ class InstructionApplyToTests(unittest.TestCase):
         )
 
     def test_every_instruction_declares_applyto(self) -> None:
+        # A baseline instruction deploys through the user-global file instead of
+        # being inlined into agents, so it carries no roster by design.
+        baseline = {
+            doc.path.name for doc in mod.load_instruction_docs() if doc.baseline
+        }
         missing = [
             p.name
             for p in sorted(self.INSTRUCTIONS_DIR.glob("*.instructions.md"))
-            if not self._apply_to_patterns(p)
+            if not self._apply_to_patterns(p) and p.name not in baseline
         ]
         self.assertEqual([], missing, f"instructions with no applyTo: {missing}")
 

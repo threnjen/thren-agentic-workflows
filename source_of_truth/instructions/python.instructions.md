@@ -13,3 +13,7 @@ applyTo: "**/*.py,**/pyproject.toml"
 - **SQL:** parameterized queries only — never f-strings.
 - **Async:** never call blocking I/O inside an `async` function.
 - **Tooling:** Ruff and Pyright (`strict` on greenfield) are enforced. Never disable them, never add ignore comments.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: python."* Then proceed normally.

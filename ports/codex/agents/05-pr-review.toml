@@ -560,6 +560,10 @@ agents. Child agents never spawn agents. When work requires fan-out, the root
 spawns sibling agents and coordinates them through exclusive artifact ownership
 and compact returns.
 
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: subagent-depth."* Then proceed normally.
+
 ### Tech Stack Detection
 
 Check whether the project uses a specialized tech stack with a corresponding skill. Look for indicators: `.github/copilot-instructions.md` naming a stack, or framework-specific project files (`package.json` for Node.js, `pyproject.toml` for Python, and the Unity predicate below). If a matching skill exists, **load and read it before proceeding** — it contains stack-specific rules and known pitfalls.

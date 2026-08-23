@@ -14,3 +14,7 @@ applyTo: "**/*.ts,**/*.tsx,**/*.mts,**/*.cts"
 - **Variables:** `const`/`let` only, never `var`. `===`/`!==` always — `== null` is the one exception.
 - **Dependencies:** commit `package-lock.json`; CI installs with `npm ci`.
 - **Tooling:** `tsc --noEmit` strict and typescript-eslint strict are enforced. Never disable them.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: typescript."* Then proceed normally.
