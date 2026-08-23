@@ -250,7 +250,7 @@ def test_phase_refiner_workflow_contract() -> None:
         ("phase document path", "Refiner assessment", "exact reviewer paths"),
         ("conversation content", "conversation content is required", "blindness boundary"),
         ("error, timeout, or unusable output", "successful output", "reviewer failure states"),
-        ("one line", "a detailed report", "one-line failure report"),
+        ("failure in one line", "failure in a detailed report", "one-line failure report"),
         ("do not retry", "retry as needed", "no retry or inline review"),
         ("usable findings", "unusable notes", "verbatim findings relay"),
         ("verbatim", "summarized", "verbatim findings relay"),
