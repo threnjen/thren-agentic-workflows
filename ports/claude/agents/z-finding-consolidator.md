@@ -3,6 +3,7 @@ name: z-finding-consolidator
 description: Merges committee reports into one deduplicated, severity-ranked fix list for the implementer.
 tools: Skill, Read, Grep, Glob, Bash
 model: sonnet
+effort: medium
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

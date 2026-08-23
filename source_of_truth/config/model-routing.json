@@ -1,23 +1,23 @@
 {
   "low": {
-    "claude": { "model": "haiku" },
+    "claude": { "model": "haiku", "reasoning_effort": "low" },
     "codex": { "model": "gpt-5.6-luna", "reasoning_effort": "low" },
-    "opencode": { "model": "opencode-go/gpt-5.6-luna" },
-    "cursor": { "model": "gpt-5.6-luna" },
+    "opencode": { "model": "opencode-go/gpt-5.6-luna", "reasoning_effort": "low" },
+    "cursor": { "model": "gpt-5.6-luna", "reasoning_effort": "low" },
     "github": { "model": "gpt-5.6-luna" }
   },
   "medium": {
-    "claude": { "model": "sonnet" },
+    "claude": { "model": "sonnet", "reasoning_effort": "medium" },
     "codex": { "model": "gpt-5.6-terra", "reasoning_effort": "medium" },
-    "opencode": { "model": "opencode-go/gpt-5.6-luna" },
-    "cursor": { "model": "gpt-5.6-terra" },
+    "opencode": { "model": "opencode-go/gpt-5.6-luna", "reasoning_effort": "medium" },
+    "cursor": { "model": "gpt-5.6-terra", "reasoning_effort": "medium" },
     "github": { "model": "gpt-5.6-terra" }
   },
   "high": {
-    "claude": { "model": "opus" },
+    "claude": { "model": "opus", "reasoning_effort": "high" },
     "codex": { "model": "gpt-5.6-sol", "reasoning_effort": "high" },
-    "opencode": { "model": "opencode-go/gpt-5.6-luna" },
-    "cursor": { "model": "gpt-5.6-sol" },
+    "opencode": { "model": "opencode-go/gpt-5.6-luna", "reasoning_effort": "high" },
+    "cursor": { "model": "gpt-5.6-sol", "reasoning_effort": "high" },
     "github": { "model": "gpt-5.6-sol" }
   }
 }

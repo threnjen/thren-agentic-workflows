@@ -3,6 +3,7 @@ name: z-reviewer-test-falsification
 description: Reviews tests for authentic failure power without reading the implementation code.
 tools: Skill, Read, Grep, Glob, Bash
 model: sonnet
+effort: medium
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

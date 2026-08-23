@@ -1,6 +1,7 @@
 ---
 description: "Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls. Use when: reviewing Unity code, checking for Unity anti-patterns, validating design patterns, code quality review, performance review, style guide compliance."
 model: opencode-go/gpt-5.6-luna
+reasoningEffort: medium
 mode: subagent
 hidden: true
 permission:

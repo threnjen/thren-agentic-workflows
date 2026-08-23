@@ -1,6 +1,7 @@
 ---
 description: "Creates or reuses a clean detached worktree at a caller-specified local baseline commit and returns its absolute path."
 model: opencode-go/gpt-5.6-luna
+reasoningEffort: low
 mode: subagent
 hidden: true
 permission:

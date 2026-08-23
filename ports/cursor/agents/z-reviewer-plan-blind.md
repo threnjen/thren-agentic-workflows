@@ -1,7 +1,7 @@
 ---
 name: z-reviewer-plan-blind
 description: "Reports the behavior the changed code actually exposes without reading the feature plan."
-model: gpt-5.6-terra
+model: gpt-5.6-terra[effort=medium]
 readonly: true
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

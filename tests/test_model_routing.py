@@ -52,6 +52,19 @@ def test_routing_contains_every_tier_and_harness() -> None:
             assert routing[tier][harness]["model"]
 
 
+def test_every_effort_capable_harness_route_carries_an_effort() -> None:
+    """Only Copilot lacks a per-agent effort field, so only `github` may omit one."""
+    routing = mod.load_model_routing()
+
+    missing = [
+        f"{tier}.{harness}"
+        for tier in mod.MODEL_TIERS
+        for harness in mod.MODEL_HARNESSES
+        if harness != "github" and "reasoning_effort" not in routing[tier][harness]
+    ]
+    assert not missing, f"routes missing a reasoning effort: {', '.join(missing)}"
+
+
 def test_tier_counts_are_inventory_counters() -> None:
     counters = {
         "source_agents": 23,
@@ -131,12 +144,18 @@ def test_renderers_emit_the_route_for_a_tiered_agent() -> None:
     cursor = mod.render_cursor_agent(agent, docs, claude_refs, "z-feature-review-and-fix", routing)
     github = mod._github_agent_bytes(agent.path, agent.path.read_bytes(), routing).decode("utf-8")
 
-    assert f"model: {routing[agent.model_tier]['claude']['model']}" in claude
+    route = routing[agent.model_tier]
+
+    assert f"model: {route['claude']['model']}" in claude
+    assert f"effort: {route['claude']['reasoning_effort']}" in claude
     assert f'model = "{medium}"' in codex
-    assert f'model_reasoning_effort = "{routing[agent.model_tier]["codex"]["reasoning_effort"]}"' in codex
-    assert f"model: {routing[agent.model_tier]['opencode']['model']}" in opencode
-    assert f"model: {routing[agent.model_tier]['cursor']['model']}" in cursor
-    assert f"model: {routing[agent.model_tier]['github']['model']}" in github
+    assert f'model_reasoning_effort = "{route["codex"]["reasoning_effort"]}"' in codex
+    assert f"model: {route['opencode']['model']}" in opencode
+    assert f"reasoningEffort: {route['opencode']['reasoning_effort']}" in opencode
+    assert f"model: {route['cursor']['model']}[effort={route['cursor']['reasoning_effort']}]" in cursor
+    assert f"model: {route['github']['model']}" in github
+    # Copilot custom-agent frontmatter has no per-agent effort field.
+    assert "effort" not in github
 
 
 def test_missing_route_fails_before_output_directory_is_created(tmp_path: Path, monkeypatch) -> None:

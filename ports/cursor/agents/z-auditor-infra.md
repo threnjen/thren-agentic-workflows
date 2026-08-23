@@ -1,7 +1,7 @@
 ---
 name: z-auditor-infra
 description: "Audits infrastructure and configuration files — Dockerfiles, CI/CD pipelines, IaC templates, build scripts, and documentation. Produces a structured findings report."
-model: gpt-5.6-sol
+model: gpt-5.6-sol[effort=high]
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 

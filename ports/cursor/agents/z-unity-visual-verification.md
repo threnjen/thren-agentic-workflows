@@ -1,7 +1,7 @@
 ---
 name: z-unity-visual-verification
 description: "Produce deterministic runtime screenshots of a rendering project and assess them against a phase's visual acceptance criteria. Use when: a Unity (or other rendering) phase has on-screen acceptance criteria that compile checks and unit tests cannot confirm — colors, layout, bars, bounds, sprites, 'does it actually render'."
-model: gpt-5.6-terra
+model: gpt-5.6-terra[effort=medium]
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 

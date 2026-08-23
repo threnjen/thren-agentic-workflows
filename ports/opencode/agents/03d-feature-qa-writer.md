@@ -1,6 +1,7 @@
 ---
 description: "Writes two consolidated QA documents from a pipeline run — an automated QA document of checks a machine can run and judge, and a manual QA checklist of what genuinely needs a human. Sorts every check between them."
 model: opencode-go/gpt-5.6-luna
+reasoningEffort: medium
 mode: subagent
 hidden: true
 permission:

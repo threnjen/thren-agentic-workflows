@@ -3,6 +3,7 @@ name: z-cleanliness-auditor
 description: Evaluates the cleanliness of code a branch adds — DRY violations, dead code, mixed concerns, and oversized modules — and recommends specific cleanup categories when non-passing.
 tools: Skill, Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
+effort: medium
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

@@ -1,6 +1,7 @@
 ---
 description: "Reviews the diff's outward impact on callers, suites, references, schemas, and configuration without judging the feature itself."
 model: opencode-go/gpt-5.6-luna
+reasoningEffort: medium
 mode: subagent
 hidden: true
 permission:

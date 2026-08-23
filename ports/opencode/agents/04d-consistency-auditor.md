@@ -1,6 +1,7 @@
 ---
 description: "Detects convention drift introduced by a branch and recommends canonical forms."
 model: opencode-go/gpt-5.6-luna
+reasoningEffort: medium
 mode: subagent
 hidden: true
 permission:

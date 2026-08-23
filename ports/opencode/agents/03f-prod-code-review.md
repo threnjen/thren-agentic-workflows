@@ -1,6 +1,7 @@
 ---
 description: "Final pre-production gate — cross-validates all pipeline documents across every feature in a phase and produces a go/no-go readiness assessment."
 model: opencode-go/gpt-5.6-luna
+reasoningEffort: high
 mode: subagent
 hidden: true
 permission:

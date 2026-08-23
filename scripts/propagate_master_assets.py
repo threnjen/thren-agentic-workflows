@@ -924,6 +924,8 @@ def render_claude_agent(
     ]
     if model_route:
         parts.insert(4, f"model: {model_route['model']}")
+        if "reasoning_effort" in model_route:
+            parts.insert(5, f"effort: {model_route['reasoning_effort']}")
 
     if appendix:
         parts.extend(["", "---", "", _rewrite_agent_references(appendix.strip(), reference_map, preserve_at_sign=True)])
@@ -990,6 +992,8 @@ def render_opencode_agent(
     ]
     if model_route:
         lines.append(f"model: {model_route['model']}")
+        if "reasoning_effort" in model_route:
+            lines.append(f"reasoningEffort: {model_route['reasoning_effort']}")
 
     if not agent.user_invocable:
         lines.append("mode: subagent")
@@ -1335,12 +1339,19 @@ def render_cursor_agent(
     appendix = _build_instruction_appendix(agent, docs)
     body = _rewrite_agent_references(agent.body.strip(), reference_map, preserve_at_sign=True)
     model_route = _model_route_for(agent, "cursor", routing)
+    if model_route:
+        model_value = model_route["model"]
+        if "reasoning_effort" in model_route:
+            # Cursor carries per-model parameters inside brackets on the model itself.
+            model_value += f"[effort={model_route['reasoning_effort']}]"
+    else:
+        model_value = "inherit"
 
     lines = [
         "---",
         f"name: {identifier}",
         f"description: {json.dumps(agent.description, ensure_ascii=False)}",
-        f"model: {model_route['model'] if model_route else 'inherit'}",
+        f"model: {model_value}",
     ]
     if "edit" not in agent.tools:
         lines.append("readonly: true")
@@ -1456,7 +1467,11 @@ def _github_agent_bytes(
     data: bytes,
     routing: Dict[str, Dict[str, Dict[str, str]]] | None,
 ) -> bytes:
-    """Add the GitHub custom-agent model field without changing source files."""
+    """Add the GitHub custom-agent model field without changing source files.
+
+    Copilot custom-agent frontmatter has no per-agent effort field, so a `github`
+    route carries a model alone. Effort is a CLI-wide `effortLevel` setting there.
+    """
     if not source_file.name.endswith(".agent.md"):
         return data
 

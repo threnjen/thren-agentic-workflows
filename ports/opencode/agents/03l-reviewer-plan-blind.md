@@ -1,6 +1,7 @@
 ---
 description: "Reports the behavior the changed code actually exposes without reading the feature plan."
 model: opencode-go/gpt-5.6-luna
+reasoningEffort: medium
 mode: subagent
 hidden: true
 permission:

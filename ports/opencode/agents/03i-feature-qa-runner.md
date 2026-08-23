@@ -1,6 +1,7 @@
 ---
 description: "Executes an automated QA document written by Feature - QA Writer — runs every check's command, compares actual output to the stated expected result, and records per-check status and evidence back into the document's Run results section. Phase- and audit-scoped, not a repository-wide runbook run."
 model: opencode-go/gpt-5.6-luna
+reasoningEffort: low
 mode: subagent
 hidden: true
 permission:

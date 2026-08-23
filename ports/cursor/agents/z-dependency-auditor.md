@@ -1,7 +1,7 @@
 ---
 name: z-dependency-auditor
 description: "Inventories dependencies added by a branch and reports supply-chain and duplication risks."
-model: gpt-5.6-sol
+model: gpt-5.6-sol[effort=high]
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 

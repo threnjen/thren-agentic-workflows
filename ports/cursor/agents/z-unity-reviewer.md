@@ -1,7 +1,7 @@
 ---
 name: z-unity-reviewer
 description: "Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls. Use when: reviewing Unity code, checking for Unity anti-patterns, validating design patterns, code quality review, performance review, style guide compliance."
-model: gpt-5.6-terra
+model: gpt-5.6-terra[effort=medium]
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->
 

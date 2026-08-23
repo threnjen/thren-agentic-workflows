@@ -1,6 +1,7 @@
 ---
 description: "Compares two completed audit reports of the same product — a baseline snapshot and a current one — and produces a reconciled delta document classifying every finding as resolved, improved, unchanged, transformed, or unverified, plus a standalone open-items queue for remediation research. Findings with no baseline counterpart are marked provisional for a separate attribution agent to settle against the trees."
 model: opencode-go/gpt-5.6-luna
+reasoningEffort: high
 mode: subagent
 hidden: true
 permission:

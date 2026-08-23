@@ -3,6 +3,7 @@ name: z-baseline-worktree
 description: Creates or reuses a clean detached worktree at a caller-specified local baseline commit and returns its absolute path.
 tools: Skill, Read, Grep, Glob, Bash
 model: haiku
+effort: low
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

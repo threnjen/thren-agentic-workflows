@@ -1,7 +1,7 @@
 ---
 name: z-reviewer-blast-radius
 description: "Reviews the diff's outward impact on callers, suites, references, schemas, and configuration without judging the feature itself."
-model: gpt-5.6-terra
+model: gpt-5.6-terra[effort=medium]
 readonly: true
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

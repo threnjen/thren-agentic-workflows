@@ -1,6 +1,7 @@
 ---
 description: "Merges committee reports into one deduplicated, severity-ranked fix list for the implementer."
 model: opencode-go/gpt-5.6-luna
+reasoningEffort: medium
 mode: subagent
 hidden: true
 permission:

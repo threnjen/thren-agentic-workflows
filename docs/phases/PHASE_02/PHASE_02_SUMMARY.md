@@ -249,7 +249,9 @@ Nine of these also serve the PR Review and Auditor pipelines. Assigning them a t
 
 ### Model-tier contract
 
-Source agent definitions use only the canonical `model_tier` field. The central routing file owns exact model identifiers and optional reasoning settings. Harness adapters translate canonical settings into each harness's supported fields.
+Source agent definitions use only the canonical `model_tier` field. The central routing file owns exact model identifiers and reasoning settings. Harness adapters translate canonical settings into each harness's supported fields.
+
+Model tier and reasoning effort are separate settings. Each route names a `model`, and every route for a harness with a per-agent effort field also names a `reasoning_effort`. Each adapter writes that effort in its harness's own shape: Claude uses an `effort` frontmatter field, Codex uses `model_reasoning_effort`, OpenCode uses `reasoningEffort`, and Cursor uses a bracketed model parameter such as `gpt-5.6-terra[effort=medium]`. Copilot custom-agent frontmatter has no per-agent effort field, so a `github` route carries a model alone and effort stays a CLI-wide `effortLevel` setting there.
 
 - `high` handles initial decomposition and level revalidation.
 - `medium` handles plan expansion, all four committee reviewers, consolidation, QA writing, and final readiness analysis.
@@ -310,7 +312,7 @@ This is a real cost of the merge. The resume path is the answer to it, together 
 - [ ] An interrupted phase resumes at the last completed feature, and an uncommitted working tree at startup is reported rather than built upon.
 - [ ] Source agents contain only `low`, `medium`, or `high`, never harness-specific model IDs.
 - [ ] Every one of the twenty-three pipeline subagents carries a tier, and no user-invocable agent does, including a dual-use agent such as Docs Writer.
-- [ ] Generated routing covers all five harnesses with harness-correct fields.
+- [ ] Generated routing covers all five harnesses with harness-correct fields, including reasoning effort wherever the harness accepts it per agent.
 - [ ] Session overrides change only the current run.
 - [ ] Unsupported or unverifiable routes produce explicit fallback disclosure.
 - [ ] Review records attribute each finding to the reviewer that produced it.

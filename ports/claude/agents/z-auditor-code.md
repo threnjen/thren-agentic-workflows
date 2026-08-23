@@ -3,6 +3,7 @@ name: z-auditor-code
 description: Audits source code for quality, security, readability, DRY, type hints, and dependencies. Produces a structured findings report.
 tools: Skill, Read, Grep, Glob, Edit, Write, WebFetch
 model: opus
+effort: high
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/agents. Do not edit manually. -->

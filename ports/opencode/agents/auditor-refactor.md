@@ -1,6 +1,7 @@
 ---
 description: "Audits codebase structure and architecture — module organization, coupling, cohesion, and separation of concerns. Produces a structured findings report."
 model: opencode-go/gpt-5.6-luna
+reasoningEffort: high
 mode: subagent
 hidden: true
 permission:
