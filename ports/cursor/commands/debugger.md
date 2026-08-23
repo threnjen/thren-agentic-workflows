@@ -91,31 +91,29 @@ After completing a fix, route the entry per the auto-loaded learnings routing ta
 
 # Code Change Strategy
 
-## Hard Requirements
+## Requirements
 
-- MUST load `base-code-guidelines` before writing, fixing, or reviewing code. Missing this step can create duplicate implementations.
-- MUST define scope by the responsibility being changed, not by changed-line count. Required caller updates remain in scope.
-- MUST search for an existing implementation of the same responsibility before adding a sibling function, class, fixture, or helper.
+- Load `base-code-guidelines` before you write, fix, or review code. Skipping it creates duplicate implementations.
+- Scope a change by the responsibility it changes, not by lines touched. Caller updates the change forces stay in scope.
+- Search for an existing implementation of the same responsibility before you add a sibling function, class, fixture, or helper.
 
-## Common Traps
+## Traps
 
-- An existing implementation almost fits: compare extending its contract with adding a sibling. Reuse it only when both consumers keep one cohesive responsibility.
-- Reuse changes several callers: update and test every affected caller. File count does not make a required contract change into scope creep.
-- Similar syntax hides different semantics: keep implementations separate when reuse would couple responsibilities that change for different reasons.
+- An existing implementation almost fits. Weigh extending its contract against adding a sibling. Reuse it only when both callers keep one cohesive responsibility.
+- Reuse touches several callers. Update and test every one. File count does not turn a required contract change into scope creep.
+- Similar syntax hides different meaning. Keep implementations apart when reuse would couple responsibilities that change for different reasons.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: code-change-strategy."* Then proceed normally.
 
 ### Codebase Context Bootstrap
 
 # Codebase Context Bootstrap
 
-Before discovery/exploration, check whether `docs/CODEBASE_CONTEXT.md` exists in the repository root. If it exists, **read it first**.
+Read `docs/CODEBASE_CONTEXT.md` first when it exists in the repository root. Use it as your starting orientation to avoid a broad rescan, then explore only for task-specific detail. If the file does not exist, continue normally. Do not fail and do not ask for it to be created.
 
-**Skip this step** if your task is purely mechanical and requires no codebase exploration — for example: creating a git commit from pipeline records, generating file templates from a provided plan with explicit file references already listed, or producing a commit message. If you will not be scanning or reading source files beyond what was explicitly handed to you, skip this step — this **handed-scope exception** covers any agent whose file list arrives in its input (for example, a reviewer scoped to an implementation record's "Files Changed" table). An agent body may invoke this exception by name; it may not otherwise override this instruction.
-
-## How to Use It
-
-- Use it as your **starting orientation** to avoid broad rescans.
-- Then continue normal discovery, focusing only on task-specific details.
-- If the file does not exist, continue normally; do not fail or request file creation.
+Skip this step when the task needs no exploration at all — writing a commit message, committing pipeline records, or generating templates from a plan that already lists its files. This **handed-scope exception** covers any agent whose file list arrives in its input, such as a reviewer scoped to an implementation record's "Files Changed" table. An agent body may invoke the exception by name. It may not override this instruction any other way.
 
 ## Load Canary
 
@@ -125,17 +123,17 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 # Path Token Bindings
 
-These tokens appear in paths throughout the corpus. They bind to exactly this, everywhere.
+These tokens appear in paths across the corpus. They bind to exactly this, everywhere.
 
 | Token | Binding | Example |
 |-------|---------|---------|
-| `[0N-task-name]` | Zero-padded two-digit prefix, then a short kebab-case identifier. The prefix indicates recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
-| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` followed by the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
-| `[audit-name]` | Kebab-case audit identifier chosen by the audit orchestrator; also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
-| `[topic-name]` | Descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | Git commit the phase branch started from — resolve with `git merge-base HEAD <default-branch>`. Not a path; used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `[0N-task-name]` | A zero-padded two-digit prefix, then a short kebab-case identifier. The prefix gives the recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
+| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
+| `[audit-name]` | A kebab-case audit identifier the audit orchestrator chooses. It is also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
+| `[topic-name]` | A descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
+| `<phase-baseline>` | The git commit the phase branch started from. Resolve it with `git merge-base HEAD <default-branch>`. Not a path — used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
-Two distinct discovery-context artifacts exist; they are not interchangeable:
+Two discovery-context artifacts exist. They are not interchangeable.
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
@@ -144,8 +142,7 @@ Two distinct discovery-context artifacts exist; they are not interchangeable:
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
-Never invent `[phase-name]` — read it from the phase directory on disk or build it from the
-phase number the caller supplied. If it cannot be determined, stop and ask.
+Never invent `[phase-name]`. Read it from the phase directory on disk, or build it from the phase number the caller supplied. When you cannot determine it, stop and ask.
 
 ## Load Canary
 
@@ -163,21 +160,25 @@ Before writing or reviewing code, load the skill for its language and follow it 
 | TypeScript / JavaScript | `typescript-standards` |
 | C# | `csharp-standards` |
 
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: language-standards."* Then proceed normally.
+
 ### Learnings Bootstrap
 
-**Learnings live in the repository you are working on — the repo whose code, plans, or docs you were invoked to change. Every `docs/learnings/` path below is relative to that repo's root (or its worktree/checkout root). NEVER write learnings into the agent-definition / source-of-truth repo.**
+**Learnings live in the repository you were invoked to change — the repo whose code, plans, or docs you are touching. Every `docs/learnings/` path below is relative to that repo's root or worktree root. Never write learnings into the agent-definition or source-of-truth repo.**
 
-**Read first.** Read every `docs/learnings/*.md` that exists before starting. Apply documented fix patterns proactively.
+**Read first.** Read every `docs/learnings/*.md` that exists before you start. Apply the fix patterns you find there.
 
-**Write when you learn something durable.** Append (never rewrite) a concise, dateless, reusable entry: one bolded claim per bullet plus the signal that reveals it. Create the file and `docs/learnings/` if absent. Skip one-off bugs. Never ask "should I note this?" — the answer is yes; a downstream agent can ignore an irrelevant note but cannot consult one never written.
+**Write when you learn something durable.** Append a short, dateless, reusable entry — one bolded claim per bullet plus the signal that reveals it. Never rewrite an existing entry. Create the file and `docs/learnings/` when they are missing. Skip one-off bugs. Never ask whether to write a note. A downstream agent can ignore a note it does not need, but cannot read one you never wrote.
 
 | File | Write here when you find… |
 |---|---|
-| `cross-phase-decisions.md` | a decision, constraint, risk, deferred capability, scope gap, or documented deviation affecting a later phase. Tag blockers `Must-do before Phase N`. |
+| `cross-phase-decisions.md` | a decision, constraint, risk, deferred capability, scope gap, or documented deviation that affects a later phase. Tag blockers `Must-do before Phase N`. |
 | `review-learnings.md` | a recurring review finding — a defect class you expect to see again. |
-| `project-learnings.md` | anything that bit you and will bite again — a framework behavior, config trap, or library gotcha, and any diagnosed root-cause pattern, pipeline gap, or agent-workflow failure. One `##` section per entry, appended; never merge into or overwrite an existing section. |
+| `project-learnings.md` | anything that bit you and will bite again: a framework behavior, config trap, library gotcha, diagnosed root cause, pipeline gap, or agent-workflow failure. One `##` section per entry, appended. Never merge into or overwrite an existing section. |
 
-A discovery that belongs in the current phase document's Notes section or a `DISCOVERY_CONTEXT.md` goes there instead; use `cross-phase-decisions.md` when it spans future phases. If you are forbidden from writing to the target repo, report the learning in your return message and write nothing.
+Put a discovery in the current phase document's Notes section or in a `DISCOVERY_CONTEXT.md` when it belongs there instead. Use `cross-phase-decisions.md` when it spans future phases. If you may not write to the target repo, report the learning in your return message and write nothing.
 
 ## Load Canary
 
@@ -185,23 +186,15 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 ### Output Verbosity Policy
 
-Use concise defaults for high-frequency responses as soft targets, never hard limits.
+Treat every target below as a soft default, never a hard limit.
 
-Default response shape:
-- Lead with delta-first content: changes made, findings, decisions, blockers, and next actions.
-- Keep supporting background brief unless needed for correctness.
+Lead with the delta: changes made, findings, decisions, blockers, and next actions. Keep background short unless correctness needs it.
 
-Soft targets (advisory):
-- Simple status or direct answers: 1-3 sentences.
-- Standard implementation/review updates: concise summary plus short evidence bullets.
-- Complex debugging, audits, or design tradeoffs: expand only where needed to keep reasoning correct and actionable.
+- Status reports and direct answers: one to three sentences.
+- Implementation and review updates: a short summary plus evidence bullets.
+- Debugging, audits, and design trade-offs: expand only where brevity would break the reasoning.
 
-Quality-preserving exceptions:
-- Expand detail when safety, correctness, compliance, or production-risk review would be weakened by brevity.
-- Expand detail when user instructions explicitly request depth.
-- Never omit required constraints, caveats, or validation outcomes to hit a length target.
-
-Do not enforce token limits at runtime and do not truncate required analysis.
+Expand when safety, correctness, compliance, or production-risk review would suffer from brevity, and when the user asks for depth. Never drop a required constraint, caveat, or validation outcome to hit a length target. Do not enforce token limits at runtime and do not truncate required analysis.
 
 ## Load Canary
 
@@ -209,9 +202,22 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 ### Proactive Research
 
-# Proactive Research Over Asking the User
+# Research Before Asking the User
 
-When you encounter an unfamiliar technology, API, service, pattern, constraint, error, or version-specific issue, **spawn `@z-web-researcher` immediately** rather than asking the user to explain it. The user expects you to look things up yourself. Only ask the user for information that is inherently project-specific and cannot be found online (e.g., business priorities, internal team decisions, undocumented requirements). Default to researching first, then presenting what you found alongside any remaining questions that truly require the user's input.
+When you meet an unfamiliar technology, API, service, pattern, constraint, error, or version-specific issue, spawn `@z-web-researcher` instead of asking the user to explain it. Ask the user only for what cannot be found online — business priorities, internal team decisions, undocumented requirements. Research first, then present what you found alongside the questions that still need the user.
+
+## Library Documentation Comes From Context7
+
+Use the Context7 MCP server for any question about a library, framework, SDK, API, CLI tool, or cloud service. That covers API syntax, configuration, version migration, library-specific debugging, setup, and CLI usage. Use it for well-known tools too, because your training data may not reflect recent releases. Prefer it over a web search.
+
+Do not use Context7 for refactoring, writing a script from scratch, debugging business logic, code review, or general programming concepts.
+
+1. Call `resolve-library-id` with the library name and the user's question. Skip this step only when the user gives an exact `/org/project` identifier.
+2. Pick the best match by exact name, description relevance, snippet count, source reputation, and benchmark score. Try another name or phrasing when nothing fits. Use a version-specific identifier when the user names a version.
+3. Call `query-docs` with that identifier and the user's full question. Scope each call to one concept.
+4. Answer from the documentation you fetched.
+
+Split a question that spans several concepts into one `query-docs` call per concept, reusing the same identifier. A combined query dilutes ranking and returns shallow results for every topic in it. Keep the concepts in one call only when the question is about how they interact.
 
 ## Load Canary
 
@@ -272,14 +278,7 @@ Write to a colleague who is sharp, busy, and has not read the rest of the phase.
 
 ## Rewriting existing text
 
-Follow these steps for a full rewrite pass over text that already exists.
-
-1. Name the mode in one line before you change anything.
-2. Read the text once for meaning.
-3. Walk it sentence by sentence and flag each violation.
-4. Rewrite to fix the violation and nothing else. If a fix costs precision, keep the longer wording and flag it.
-5. Report the result as a table with three columns: rule violated, original, rewrite. End with the mode and the violation count.
-6. If the text already complies, say so. Do not force changes.
+Load the `prose-rewrite` skill. It holds the pass order, the report format, and the limits on what a rewrite may change.
 
 ## Load Canary
 
@@ -289,7 +288,8 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 # Subagent Delegation Depth
 
-Delegation depth is one. Only the user-invocable root orchestrator may spawn
-agents. Child agents never spawn agents. When work requires fan-out, the root
-spawns sibling agents and coordinates them through exclusive artifact ownership
-and compact returns.
+Delegation depth is one. Only the user-invocable root orchestrator may spawn agents. Child agents never spawn agents. When work needs fan-out, the root spawns sibling agents and coordinates them through exclusive artifact ownership and compact returns.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: subagent-depth."* Then proceed normally.

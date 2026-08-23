@@ -101,3 +101,7 @@ Nullable reference types enabled (`<Nullable>enable</Nullable>`). Never return `
 ## Error Handling
 
 Catch the specific exception you expect; bare `Exception` only at a top-level boundary. Never swallow silently. Never use exceptions for control flow — model expected absence in the return type.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: csharp-style."* Then proceed normally.

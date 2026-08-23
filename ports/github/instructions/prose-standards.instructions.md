@@ -1,6 +1,7 @@
 ---
 description: "Sentence and mode discipline for every piece of English an agent writes. Audience is an ENUMERATED agent roster - the user-invocable technical agents, whose filename shapes are unrelated, so no glob selects them without also catching subagents. Enumeration is deliberate. `client-deliverable` is absent on purpose: its output follows `engagement-client-voice`. The creative agents are withheld automatically by the profile gate, not by this roster."
 applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-phase-execute.agent.md,**/04-pr-review.agent.md,**/auditor.agent.md,**/debugger.agent.md,**/delta-auditor.agent.md,**/docs-writer.agent.md,**/instructions-manager.agent.md,**/pr-author.agent.md,**/qa-bootstrap.agent.md,**/single-feature-agent.agent.md,**/test-orchestrator.agent.md,**/web-research-specialist.agent.md"
+baseline: true
 ---
 
 # Prose Standards
@@ -56,14 +57,7 @@ Write to a colleague who is sharp, busy, and has not read the rest of the phase.
 
 ## Rewriting existing text
 
-Follow these steps for a full rewrite pass over text that already exists.
-
-1. Name the mode in one line before you change anything.
-2. Read the text once for meaning.
-3. Walk it sentence by sentence and flag each violation.
-4. Rewrite to fix the violation and nothing else. If a fix costs precision, keep the longer wording and flag it.
-5. Report the result as a table with three columns: rule violated, original, rewrite. End with the mode and the violation count.
-6. If the text already complies, say so. Do not force changes.
+Load the `prose-rewrite` skill. It holds the pass order, the report format, and the limits on what a rewrite may change.
 
 ## Load Canary
 

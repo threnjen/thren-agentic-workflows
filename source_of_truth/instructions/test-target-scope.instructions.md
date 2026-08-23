@@ -17,6 +17,10 @@ A pipeline document, a phase summary, or a plan file is an artifact of the work,
 
 ## The one exception
 
-Assert on file content only when the repository's own deliverable **is** that content — a prose corpus, an agent-definition set, a generated-output contract. Then the guard is a real guard: commit it to the tracked suite and follow the `guard-integrity` skill, which exists for exactly this case.
+Assert on file content when the repository's own deliverable **is** that content — a prose corpus, an agent-definition set, a generated-output contract. The guard is then a real guard. Commit it to the tracked suite and follow the `guard-integrity` skill, which exists for this case.
 
-Deciding the exception applies requires the repository to ship the text as its product. "The change I made was in a `.md` file" is not that.
+The exception applies only when the repository ships the text as its product. "The change I made was in a `.md` file" is not that.
+
+## Load Canary
+
+When this file is loaded, state once, before your first substantive output: *"Instruction loaded: test-target-scope."* Then proceed normally.

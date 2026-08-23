@@ -41,12 +41,12 @@ HARNESSES = ("claude", "codex", "opencode", "cursor", "github")
 # home directory, then spliced into the destination file between sentinel
 # comments — content outside the sentinels is never touched.
 BASELINE_TEMPLATE = REPO_ROOT / "source_of_truth" / "baseline" / "baseline-instructions.md"
-BASELINE_SECTIONS = ("phase-doc-sync", "agent-discovery", "know-the-audience")
-# Sections this repo used to splice and no longer does. Dropping a name from
-# BASELINE_SECTIONS only stops rewriting the block; the stale one already in a
+BASELINE_INSTRUCTIONS_DIR = REPO_ROOT / "source_of_truth" / "instructions"
+# Sections this repo used to splice and no longer does. Dropping a name from the
+# baseline list only stops rewriting the block; the stale one already in a
 # deployed file would sit there forever. Listing it here deletes it on the next
 # deploy. A name stays here until every machine has deployed past it.
-RETIRED_BASELINE_SECTIONS = ("context7", "code-review-graph")
+RETIRED_BASELINE_SECTIONS = ("context7", "phase-doc-sync", "know-the-audience")
 # Cursor has no user-global AGENTS.md; its native global channel is a rule file.
 CURSOR_BASELINE_FRONTMATTER = "---\nalwaysApply: true\n---\n\n"
 
@@ -264,15 +264,37 @@ def _baseline_substitutions(
     }
 
 
+def baseline_section_names(template: str | None = None) -> Tuple[str, ...]:
+    """Instruction names listed in the baseline template, in listed order.
+
+    The template is a prose file with a bullet list; only the bullets are read,
+    so the surrounding explanation can change freely without affecting deploys.
+    """
+    if template is None:
+        template = BASELINE_TEMPLATE.read_text(encoding="utf-8")
+    return tuple(re.findall(r"^- ([a-z0-9-]+)$", template, re.MULTILINE))
+
+
+def _instruction_body(name: str) -> str:
+    """Body of one baseline instruction, ready to splice.
+
+    Strips the frontmatter, drops the trailing Load Canary section, and demotes
+    the leading H1 to an H2. The canary proves an instruction was inlined into a
+    single agent; firing it from the always-loaded global file would make it
+    fire in every session and prove nothing.
+    """
+    text = (BASELINE_INSTRUCTIONS_DIR / f"{name}.instructions.md").read_text(encoding="utf-8")
+    if text.startswith("---\n"):
+        end = text.index("\n---\n", 3) + len("\n---\n")
+        text = text[end:]
+    text = re.sub(r"\n#{2,}\s*Load Canary\s*\n.*\Z", "\n", text, flags=re.DOTALL)
+    text = re.sub(r"\A\s*# ", "## ", text)
+    return text.strip("\n")
+
+
 def _parse_baseline_sections(template: str) -> Dict[str, str]:
-    """Extract each sentinel-delimited section body from the template."""
-    sections: Dict[str, str] = {}
-    for name in BASELINE_SECTIONS:
-        sentinel = f"<!-- {name} -->"
-        match = re.search(re.escape(sentinel) + r"\n(.*?)" + re.escape(sentinel), template, re.DOTALL)
-        if match:
-            sections[name] = match.group(1).strip("\n")
-    return sections
+    """Body of every instruction the baseline template lists, keyed by name."""
+    return {name: _instruction_body(name) for name in baseline_section_names(template)}
 
 
 def _strip_section(existing: str, name: str) -> str:
@@ -317,7 +339,12 @@ def deploy_baseline(
         return {"status": "failed", "detail": f"cannot read template: {exc}"}
 
     substitutions = _baseline_substitutions(harness, home=home, environ=environ)
-    sections = _parse_baseline_sections(template)
+    try:
+        sections = _parse_baseline_sections(template)
+    except OSError as exc:
+        # A listed name with no instruction file must fail loudly: splicing the
+        # rest would deploy a silently partial baseline.
+        return {"status": "failed", "detail": f"cannot read baseline instruction: {exc}"}
     if dest.is_symlink():
         return {"status": "skipped", "detail": f"{dest} is a symlink"}
     try:
