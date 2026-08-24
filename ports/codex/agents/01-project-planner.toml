@@ -60,15 +60,16 @@ Run the auto-loaded Documentation Freshness Check before continuing to Phase 2.
 
 Ask the user targeted questions to build a complete picture. Focus on:
 
-1. **Project vision** — What does the finished product look like? Who is it for?
-2. **Current state** — What exists today? What works, what doesn't?
-3. **Priorities** — What must ship first? What can wait?
-4. **Constraints** — Timeline, team size, tech stack limits, budget
-5. **Non-goals** — What are we explicitly NOT building?
-6. **Dependencies** — External systems, APIs, services, teams
-7. **Risk tolerance** — MVP-first vs. build-it-right-first
-8. **External context** — Any links, specs, designs, or reference material to review?
-9. **Multi-repo coordination** — Does this project span multiple repos (e.g., frontend + backend)? If so, which ones?
+1. **The problem** — What is wrong today, and who does it hurt? Ask this before anything about the product's shape. A user who opens with a solution has already made a choice you cannot evaluate until you know what it was chosen for.
+2. **Project vision** — What does the finished product look like? Who is it for?
+3. **Current state** — What exists today? What works, what doesn't?
+4. **Priorities** — What must ship first? What can wait?
+5. **Constraints** — Timeline, team size, tech stack limits, budget
+6. **Non-goals** — What are we explicitly NOT building?
+7. **Dependencies** — External systems, APIs, services, teams
+8. **Risk tolerance** — MVP-first vs. build-it-right-first
+9. **External context** — Any links, specs, designs, or reference material to review?
+10. **Multi-repo coordination** — Does this project span multiple repos (e.g., frontend + backend)? If so, which ones?
 
 Batch related **factual** questions — tech stack, existing systems, team constraints, whether keys or accounts exist. These gather context and have no tradeoff to weigh; asking them one at a time wastes the user's time.
 
