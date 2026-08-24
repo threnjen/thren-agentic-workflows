@@ -112,18 +112,6 @@ If fix research ran, its FINAL index is the pipeline's task-grouping input — t
 
 ## Auto-Loaded Instructions
 
-### Codebase Context Bootstrap
-
-# Codebase Context Bootstrap
-
-Read `docs/CODEBASE_CONTEXT.md` first when it exists in the repository root. Use it as your starting orientation to avoid a broad rescan, then explore only for task-specific detail. If the file does not exist, continue normally. Do not fail and do not ask for it to be created.
-
-Skip this step when the task needs no exploration at all — writing a commit message, committing pipeline records, or generating templates from a plan that already lists its files. This **handed-scope exception** covers any agent whose file list arrives in its input, such as a reviewer scoped to an implementation record's "Files Changed" table. An agent body may invoke the exception by name. It may not override this instruction any other way.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: codebase-context-bootstrap."* Then proceed normally.
-
 ### Dev Task Folder
 
 # Path Token Bindings
@@ -136,14 +124,14 @@ These tokens appear in paths across the corpus. They bind to exactly this, every
 | `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
 | `[audit-name]` | A kebab-case audit identifier the audit orchestrator chooses. It is also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
 | `[topic-name]` | A descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | The git commit the phase branch started from. Resolve it with `git merge-base HEAD <default-branch>`. Not a path — used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `<phase-baseline>` | The git commit the phase branch started from. Resolve it with `git merge-base HEAD <default-branch>`. Not a path — used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
 Two discovery-context artifacts exist. They are not interchangeable.
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
-| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
-| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Phase - Execute |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Phase - Execute |
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
@@ -162,8 +150,41 @@ Orchestrators coordinate subagents. They do not do the work themselves. These co
 ## Constraints
 
 - Do not write source code, test files, or configuration.
-- Do not write plan documents, review records, or QA plans. Delegate them to subagents.
-- Always ask the user before you start the fix or remediation phase.
+- Delegate plan documents, review records, and QA plans to subagents. `phase-execute` may write its own lightweight plans and living manifest, because it owns decomposition and scheduling. It still delegates context, tasks, review records, and QA plans.
+- Always ask the user before you start a fix or remediation phase the user has not already authorized. Explicit run-level authorization satisfies this rule for every routine fix round inside the pipeline that authorization covers. It never authorizes a remediation phase the user did not ask for, such as writing production code after an audit findings report.
+
+## Departure Preflight
+
+Run this when the user signals that they are stepping away, leaving the run unattended, or expecting completion without further input.
+
+Before you confirm that they can leave, list every permission the run may need and ask for each one. Cover repository policies that gate a command, credentials the pipeline cannot obtain, and any destructive or outward-facing action the plan implies. A Unity phase is the standing example: ask whether one headless import or test run is authorized, or whether Unity gates should record as verification-pending while implementation continues.
+
+Ask once, in one round, before departure. A permission you fail to raise here becomes a stall you cannot resolve later.
+
+## Unattended Completion
+
+When the user has authorized unattended completion, a retry ceiling still bounds work on the unit that is failing. It never ends the run. Exhaust the ceiling on that unit, record the outcome, and move to the next independent unit.
+
+Halt and wait for the user only for an external prerequisite you cannot obtain, a safety boundary, a destructive action needing approval, or a decision that materially changes product behavior. Nothing else justifies spending an unattended window idle.
+
+## Session Model Preflight
+
+Before an orchestrator selects work that uses tiered child models, run one session model preflight. Reuse
+`load_model_routing()` as the only routing loader. Do not parse the routing JSON again or persist a run override.
+
+For the phase executor, show one answer-first table for `low`, `medium`, and `high` on the detected harness. Each tier
+record has four distinct fields: `requested_model`, `user_override`, `resolved_route`, and `resolution_status`.
+Accept a tier override for the current run only. Keep it in memory and leave the source routing file byte-identical.
+
+Use exactly three disjoint resolution statuses:
+
+- `enforced`: the harness reports that it used the effective route.
+- `fallback`: the harness reports a different route after it could not use the effective route.
+- `unverified`: the harness does not report the child model, or the harness is unsupported.
+
+Generated configuration proves configuration only. It never proves `enforced`. An unsupported harness must disclose a
+`fallback` reason while setting every route to `unverified`. The display may contain model identifiers only. Reject a
+missing route or malformed identifier before execution starts.
 
 ## Working Branch
 
@@ -185,7 +206,7 @@ Verify that a subagent's output exists on disk before you move to the next step.
 
 ## Pipeline Discipline
 
-- Do not skip or reorder steps. The sequence matters.
+- Do not skip or reorder steps. The sequence matters. `phase-execute` may recompute dependency order only at its documented level-closure boundary.
 - Do not move past a subagent failure without attempting remediation.
 - Finish every step for one task or feature before you start the next.
 
@@ -238,83 +259,6 @@ Exactly once per run, after the report. Never before it, never a second time.
 ## Load Canary
 
 When this file is loaded, state once, before your first substantive output: *"Instruction loaded: orchestrator-conventions."* Then proceed normally. Also state *"Graph rebuild queued."* when you queue a graph rebuild.
-
-### Output Verbosity Policy
-
-Treat every target below as a soft default, never a hard limit.
-
-Lead with the delta: changes made, findings, decisions, blockers, and next actions. Keep background short unless correctness needs it.
-
-- Status reports and direct answers: one to three sentences.
-- Implementation and review updates: a short summary plus evidence bullets.
-- Debugging, audits, and design trade-offs: expand only where brevity would break the reasoning.
-
-Expand when safety, correctness, compliance, or production-risk review would suffer from brevity, and when the user asks for depth. Never drop a required constraint, caveat, or validation outcome to hit a length target. Do not enforce token limits at runtime and do not truncate required analysis.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: output-verbosity-policy."* Then proceed normally.
-
-### Prose Standards
-
-# Prose Standards
-
-Every piece of English you write has a reader. Pick the mode from the reader, not from the surrounding style. Style-matching applies to code, not prose.
-
-**Strict** - procedures, error messages, tool and agent descriptions, agent-to-agent instructions, safety text. Anywhere a wrong reading costs something.
-
-**Flavored** - READMEs, PR descriptions, changelogs, explanatory prose, replies to a human. Sentence rules apply in full. Word choice stays free.
-
-**Neither** - client-facing deliverables, marketing copy, creative writing. Never apply these rules there. Client deliverables follow `engagement-client-voice`.
-
-Dense is correct for machine-facing planning documents - phase summaries, discovery context, roadmaps, plan and context and tasks bundles. The pipeline reads these to decompose work, so spelling out every constraint helps. Dense never excuses ambiguous.
-
-## Sentence rules - both modes
-
-- Active voice. Use the passive only when the actor is genuinely unknown.
-- One instruction per sentence.
-- 20 words for an instruction, 25 for a description.
-- No semicolons. An em dash is allowed but usually marks a sentence that wants splitting.
-- Plain verbs - start, not spin up; contact, not reach out.
-- Three words maximum in a noun stack.
-- Keep the subject, verb, and article explicit. Imply nothing.
-- Simple tenses, unless the compound tense carries information the simple one cannot.
-- One topic per paragraph, six sentences maximum.
-- Number any sequence of three or more steps.
-
-## Human-facing documents
-
-- Answer first. Open with the conclusion and what it changes. Evidence after, or behind a link.
-- Translate a decision-driving number into words, then give the number.
-- One caveat, not three. Bold the decision, not the vocabulary.
-- Put a warning where the mistake happens, not in a preamble.
-- Runbooks and checklists: a TL;DR of five lines or fewer, then numbered steps. One action each, with the exact command and what a correct result looks like. Rationale below the steps.
-- When a step changes, rewrite the step. No correction-log narration in the body.
-
-## Hard limits
-
-- Never weaken or strengthen a hedge to save words. "May have failed" is not "failed". Confidence is content.
-- Never add a fact the source did not state - a cause, a frequency, a mechanism.
-- Never drop a safety condition, exception, or scope qualifier to shorten a sentence. Flag the trade-off instead.
-- Form is not substance. Say the text has nothing to say rather than polishing it.
-- Stop at unambiguous, not at shortest.
-
-Write to a colleague who is sharp, busy, and has not read the rest of the phase. If the reader asks for a simpler version, the first version was wrong.
-
-## Vocabulary rules - Strict only, advice in Flavored
-
-- One word, one meaning. Pick one verb per action and reuse it. Do not rotate check, verify, and confirm for the same act.
-- One name per thing. The user, the customer, and the client must not be one entity under three names.
-- Verb, not noun. Write "analyze the log", not "perform an analysis of the log".
-- Define each domain term once. Keep the necessary jargon. Unpack it inline on first use.
-
-## Rewriting existing text
-
-Load the `prose-rewrite` skill. It holds the pass order, the report format, and the limits on what a rewrite may change.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: prose-standards."* Then proceed normally.
 
 ### Subagent Depth
 

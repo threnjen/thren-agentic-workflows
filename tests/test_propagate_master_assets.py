@@ -20,9 +20,9 @@ import _propagate_env as env
 # The settled PR Review evaluator roster, and each agent's exact tool grant.
 #
 # This map is the propagation-enumeration ledger. `test_pr_review_evaluator_roster
-# _is_fully_enumerated` asserts it covers every `05*` evaluator on disk, so an
+# _is_fully_enumerated` asserts it covers every `04*` evaluator on disk, so an
 # agent can no longer be dropped from enumeration to dodge an assertion about it.
-# That is precisely how the previous gap arose: `05a`, `05g`, `05j` and `05k` were
+# That is precisely how the previous gap arose: several evaluators were
 # all omitted from the old `expected_slugs` tuple because they held `execute` and
 # would have failed its blanket `assertNotIn("execute", ...)`. Omission was free,
 # so omission happened. It is no longer free.
@@ -34,7 +34,7 @@ import _propagate_env as env
 #   * `edit` is REQUIRED by every evaluator that writes its own report. The bodies
 #     say "read-only, never remediate", which reads as license to strip `edit` --
 #     doing so would break the report contract. Pinned here so that fails.
-#   * `execute` is DECLARED, not hidden. It survives only on `05a-baseline-worktree`,
+#   * `execute` is DECLARED, not hidden. It survives only on `04a-baseline-worktree`,
 #     whose `git worktree` call has no non-shell equivalent; the grant is recorded
 #     as explicitly unclosable in `pr-review-conventions` (capability boundaries).
 #     Per-agent command scoping is not expressible in Claude subagent frontmatter
@@ -42,34 +42,34 @@ import _propagate_env as env
 #     removal is the only narrowing available -- and this one cannot be removed.
 #     Listing it is the honest outcome: visible and justified beats absent.
 PR_REVIEW_EVALUATOR_TOOLS = {
-    "05a-baseline-worktree": ["read", "search", "execute"],
-    "05b-change-narrator": ["read", "search", "edit"],
+    "04a-baseline-worktree": ["read", "search", "execute"],
+    "04b-change-narrator": ["read", "search", "edit"],
     # execute granted for one purpose: read-only git fallback when the
     # orchestrator's materialized range.diff/changed-files.txt are absent.
-    "05c-artifact-sweeper": ["read", "search", "edit", "execute"],
-    "05d-consistency-auditor": ["read", "search", "edit", "execute"],
-    "05e-dependency-auditor": ["read", "search", "edit"],
-    "05f-test-health": ["read", "search", "edit"],
+    "04c-artifact-sweeper": ["read", "search", "edit", "execute"],
+    "04d-consistency-auditor": ["read", "search", "edit", "execute"],
+    "04e-dependency-auditor": ["read", "search", "edit"],
+    "04f-test-health": ["read", "search", "edit"],
     # execute granted for one purpose: read-only git fallback when the
     # orchestrator's materialized range.diff/changed-files.txt are absent.
-    "05h-cleanliness-auditor": ["read", "search", "edit", "execute"],
-    "05g-readiness-synthesizer": ["read", "search", "edit"],
+    "04h-cleanliness-auditor": ["read", "search", "edit", "execute"],
+    "04g-readiness-synthesizer": ["read", "search", "edit"],
 }
 
 
 def _discover_pr_review_evaluator_slugs() -> set:
-    """Every `05`-family evaluator on disk, read from the source of truth.
+    """Every `04`-family evaluator on disk, read from the source of truth.
 
     Derived rather than restated: this is what makes omission from
     `PR_REVIEW_EVALUATOR_TOOLS` fail instead of silently narrowing coverage.
-    `05-pr-review` is the orchestrator that dispatches the roster, not a member
+    `04-pr-review` is the orchestrator that dispatches the roster, not a member
     of it.
     """
     agents_dir = REPO_ROOT / "source_of_truth" / "agents"
     return {
         path.name[: -len(".agent.md")]
-        for path in agents_dir.glob("05*.agent.md")
-        if path.name != "05-pr-review.agent.md"
+        for path in agents_dir.glob("04*.agent.md")
+        if path.name != "04-pr-review.agent.md"
     }
 
 
@@ -126,7 +126,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         out of the list, and nothing failed. Coverage narrowed silently and the
         grants went unexamined.
 
-        Deriving the roster from disk inverts that: adding a `05*` evaluator
+        Deriving the roster from disk inverts that: adding a `04*` evaluator
         without a tool expectation fails here, and so does deleting one without
         removing its entry.
         """
@@ -151,6 +151,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
     def test_phase_review_agents_match_all_generated_harness_outputs(self) -> None:
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
         instructions = mod.load_instruction_docs()
+        routing = mod.load_model_routing()
         expected_slugs = tuple(sorted(PR_REVIEW_EVALUATOR_TOOLS))
 
         claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
@@ -178,7 +179,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 claude_path = mod.CLAUDE_AGENTS_DIR / f"{claude_identifier}.md"
                 self.assertEqual(
                     mod.render_claude_agent(
-                        agent, docs, claude_references, claude_identifier
+                        agent, docs, claude_references, claude_identifier, routing
                     ),
                     claude_path.read_text(encoding="utf-8"),
                 )
@@ -187,21 +188,22 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                     agent, opencode_stems
                 )
                 self.assertEqual(
-                    mod.render_opencode_agent(agent, docs, opencode_references),
+                    mod.render_opencode_agent(agent, docs, opencode_references, routing),
                     opencode_path.read_text(encoding="utf-8"),
                 )
 
                 codex_path = mod.CODEX_AGENTS_DIR / mod._codex_filename_for(agent)
                 self.assertEqual(
-                    mod.render_codex_agent(agent, docs, codex_references),
+                    mod.render_codex_agent(agent, docs, codex_references, routing),
                     codex_path.read_text(encoding="utf-8"),
                 )
 
     def test_diff_security_scan_agent_matches_all_generated_harness_outputs(self) -> None:
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
         instructions = mod.load_instruction_docs()
+        routing = mod.load_model_routing()
 
-        agent = agents["04e-diff-security-scan"]
+        agent = agents["03e-diff-security-scan"]
         self.assertFalse(agent.user_invocable)
         self.assertNotIn("execute", agent.tools)
         docs = mod.applicable_instructions(agent, instructions)
@@ -224,23 +226,25 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         self.assertEqual(claude_identifier, "z-diff-security-scan")
         claude_path = mod.CLAUDE_AGENTS_DIR / f"{claude_identifier}.md"
         self.assertEqual(
-            mod.render_claude_agent(agent, docs, claude_references, claude_identifier),
+            mod.render_claude_agent(
+                agent, docs, claude_references, claude_identifier, routing
+            ),
             claude_path.read_text(encoding="utf-8"),
         )
 
         opencode_path = mod.OPENCODE_AGENTS_DIR / mod._opencode_filename_for(
             agent, opencode_stems
         )
-        self.assertEqual(opencode_path.name, "04e-diff-security-scan.md")
+        self.assertEqual(opencode_path.name, "03e-diff-security-scan.md")
         self.assertEqual(
-            mod.render_opencode_agent(agent, docs, opencode_references),
+            mod.render_opencode_agent(agent, docs, opencode_references, routing),
             opencode_path.read_text(encoding="utf-8"),
         )
 
         codex_path = mod.CODEX_AGENTS_DIR / mod._codex_filename_for(agent)
         self.assertEqual(codex_path.name, "z-diff-security-scan.toml")
         self.assertEqual(
-            mod.render_codex_agent(agent, docs, codex_references),
+            mod.render_codex_agent(agent, docs, codex_references, routing),
             codex_path.read_text(encoding="utf-8"),
         )
 
@@ -249,10 +253,10 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         # Claude output is a *command*, not an agent: this orchestrator is
         # user-invocable.
         expected_markers = {
-            "source_of_truth/agents/05-pr-review.agent.md": "name: 05 PR - Review",
+            "source_of_truth/agents/04-pr-review.agent.md": "name: 04 PR - Review",
             "ports/claude/commands/pr-review.md": "PR Review Orchestrator",
-            "ports/opencode/agents/05-pr-review.md": "PR Review Orchestrator",
-            "ports/codex/agents/05-pr-review.toml": 'name = "pr-review"',
+            "ports/opencode/agents/04-pr-review.md": "PR Review Orchestrator",
+            "ports/codex/agents/04-pr-review.toml": 'name = "pr-review"',
         }
 
         for relative_path, marker in expected_markers.items():
@@ -277,8 +281,8 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         # identifier in that root differs, which is exactly the set the rewrite was
         # supposed to translate and didn't.
         #
-        # Exact equality is what keeps this honest: `05b-change-narrator-report.md`
-        # (a report filename) and `.github/agents/04-phase-execute.agent.md` (a
+        # Exact equality is what keeps this honest: `04b-change-narrator-report.md`
+        # (a report filename) and `.github/agents/03-phase-execute.agent.md` (a
         # path) both contain a slug as a substring and must not trip it.
         #
         # `claude/agents/README.md` is hand-maintained inside a generated root -- it
@@ -484,7 +488,7 @@ class OrphanPruningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
             env.use(self, repo_root)
-            self._write_source_agent(repo_root, "05c-artifact-sweeper", "05c Artifact Sweeper")
+            self._write_source_agent(repo_root, "04c-artifact-sweeper", "04c Artifact Sweeper")
             doomed = self._write_source_agent(repo_root, "09-doomed", "09 Doomed")
 
             mod.propagate_once(verbose=False)
@@ -726,7 +730,7 @@ class OrphanPruningTests(unittest.TestCase):
         and pass AC7 for entirely the wrong reason."""
         # Counts dropped when the five phase-shaped evaluators were retired:
         # claude/agents 33 -> 27 (the five, plus `z-security-scan.md` -- Security
-        # Scan lost its spawnable subagent file once `05d` stopped declaring it as
+        # Scan lost its spawnable subagent file once the retired security parent stopped declaring it as
         # a child, and is now a user-invocable command only); opencode/agents and
         # codex/agents 46 -> 41 (the five). Command counts are unchanged:
         # Security Scan's command was renamed, not removed.
@@ -736,7 +740,7 @@ class OrphanPruningTests(unittest.TestCase):
         # The `qa` agent added one file to each user-invocable surface (claude
         # command, opencode agent, codex agent); claude/agents is
         # unchanged because `qa` declares no subagent children.
-        # The `05h Cleanliness Auditor` evaluator added one spawnable subagent
+        # The `04h Cleanliness Auditor` evaluator added one spawnable subagent
         # file to claude/agents, opencode/agents, and codex/agents; it is not
         # user-invocable, so command counts are unchanged.
         # The `06 Engagement - Prepare` orchestrator (user-invocable) added one
@@ -823,13 +827,13 @@ class OrphanPruningTests(unittest.TestCase):
         # All four left opencode/codex agents 55 -> 51. Counts recounted from
         # disk.
         # `Visual Verifier` became hidden (`user-invocable: false`) and its
-        # source moved to `04g-unity-visual-verification.agent.md`, since it
+        # source moved to `03g-unity-visual-verification.agent.md`, since it
         # reads its inputs from a spawning orchestrator and cannot run cold. It
         # was dual-use, so it held both a command and a spawnable file: claude
         # commands 16 -> 15, claude agents unchanged at 39. The rename dropped
         # its stem-stickiness, so it now emits as `z-unity-visual-verification`.
         # `Unity Reviewer` became hidden the same way and moved to
-        # `04h-unity-reviewer.agent.md`; it is now spawned by PR - Review as
+        # `03h-unity-reviewer.agent.md`; it is now spawned by PR - Review as
         # well as Phase - Execute and Single Feature - Agent. It was also
         # dual-use: claude commands 15 -> 14, claude agents unchanged at 39.
         # Stripping `04h-` yields the pre-existing stem, so stickiness held and
@@ -844,13 +848,14 @@ class OrphanPruningTests(unittest.TestCase):
         # claude commands gain one, while codex and opencode gain all three.
         # `Creative - Vault Sync` (hidden, the family's read-only git probe)
         # added one file to claude agents (45 -> 46) and opencode/codex agents
-        # (60 -> 61); claude commands unchanged (not user-invocable). Counts
+        # (60 -> 61); claude commands unchanged (not user-invocable). Phase 02
+        # then added four hidden committee agents to the agent roots. Counts
         # recounted from disk.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 46),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 17),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 61),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 61),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 50),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 16),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 64),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 64),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:
@@ -885,7 +890,7 @@ class OrphanPruningTests(unittest.TestCase):
         linger as a stale duplicate of `05c-*.md` and stay dispatchable.
 
         Exact stems, deliberately not a `05g-*` glob: feature 07 renumbers the
-        readiness synthesizer to `05g-readiness-synthesizer`, so a glob would
+        readiness synthesizer to `04g-readiness-synthesizer`, so a glob would
         pass today and break the moment that lands -- asserting the opposite of
         what it means.
         """
@@ -901,8 +906,8 @@ class OrphanPruningTests(unittest.TestCase):
                     f"retired OpenCode slug survived the renumber: {stem}.md",
                 )
 
-        for stem in ("05c-artifact-sweeper", "05d-consistency-auditor",
-                     "05e-dependency-auditor"):
+        for stem in ("04c-artifact-sweeper", "04d-consistency-auditor",
+                     "04e-dependency-auditor"):
             with self.subTest(stem=stem):
                 self.assertTrue((mod.OPENCODE_AGENTS_DIR / f"{stem}.md").is_file())
 
@@ -1358,7 +1363,7 @@ class CursorPropagationTests(unittest.TestCase):
         that must never reach the user-global Cursor rules directory.
         """
         agents_dir = repo_root / "source_of_truth" / "agents"
-        for slug, name in (("auditor", "Auditor"), ("04f-prod-code-review", "Prod Code Review")):
+        for slug, name in (("auditor", "Auditor"), ("03f-prod-code-review", "Prod Code Review")):
             (agents_dir / f"{slug}.md").write_text(
                 "---\n"
                 f"name: {name}\n"
@@ -1594,6 +1599,24 @@ class InstructionApplyToTests(unittest.TestCase):
             "silently stops being injected):\n  " + "\n  ".join(unresolved),
         )
 
+    def test_baseline_instructions_are_never_inlined_into_an_agent(self) -> None:
+        """The user-global file already carries them; inlining ships them twice.
+
+        Duplicated rules waste runtime context and fire each Load Canary twice,
+        which makes the canary useless as a load check.
+        """
+        docs = mod.load_instruction_docs()
+        agents = mod.load_source_agents()
+        offenders = sorted(
+            {
+                f"{agent.source_slug} <- {doc.path.name}"
+                for agent in agents
+                for doc in mod.applicable_instructions(agent, docs)
+                if doc.baseline
+            }
+        )
+        self.assertEqual([], offenders, f"baseline instructions inlined: {offenders}")
+
     def test_every_instruction_declares_applyto(self) -> None:
         # A baseline instruction deploys through the user-global file instead of
         # being inlined into agents, so it carries no roster by design.
@@ -1760,6 +1783,62 @@ class BaselineTemplateIsNotPropagatedTests(unittest.TestCase):
             if "deploy_agents.py" in path.read_text(encoding="utf-8")
         ]
         self.assertEqual([], stray, f"baseline template was propagated: {stray}")
+
+
+class RetargetTests(unittest.TestCase):
+    """`retarget` and `--target` keep a run out of this repository."""
+
+    def test_retarget_rebinds_every_directory_global(self) -> None:
+        with mod.retarget(Path("/tmp/example-root")) as root:
+            self.assertEqual(mod.REPO_ROOT, root)
+            self.assertEqual(mod.SOT_AGENTS_DIR, root / "source_of_truth" / "agents")
+            self.assertEqual(mod.CLAUDE_AGENTS_DIR, root / "ports" / "claude" / "agents")
+            self.assertEqual(mod.DOT_GITHUB_DIR, root / ".github")
+
+    def test_retarget_restores_real_roots_even_when_the_body_raises(self) -> None:
+        """A leaked root would silently aim the next run at the temp tree."""
+        before = {name: getattr(mod, name) for name in mod.directory_overrides(Path("/x"))}
+        with self.assertRaises(RuntimeError):
+            with mod.retarget(Path("/tmp/example-root")):
+                raise RuntimeError("boom")
+        for name, value in before.items():
+            self.assertEqual(getattr(mod, name), value, f"{name} was not restored")
+
+    def test_target_propagates_into_the_given_tree_and_not_the_repository(self) -> None:
+        import shutil
+        import tempfile
+
+        repo_ports = mod.REPO_ROOT / "ports"
+        before = sorted(p.name for p in repo_ports.rglob("*") if p.is_file())
+
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "elsewhere"
+            target.mkdir()
+            shutil.copytree(mod.SOT_DIR, target / "source_of_truth")
+
+            with mock.patch.object(
+                sys, "argv", ["propagate", "--once", "--target", str(target)]
+            ):
+                self.assertEqual(mod.main(), 0)
+
+            self.assertTrue((target / "ports" / "claude" / "agents").is_dir())
+            self.assertTrue(any((target / "ports").rglob("*.md")))
+
+        self.assertEqual(
+            before,
+            sorted(p.name for p in repo_ports.rglob("*") if p.is_file()),
+            "a --target run wrote into this repository's ports/",
+        )
+
+    def test_target_without_a_source_tree_fails_instead_of_propagating(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(
+                sys, "argv", ["propagate", "--once", "--target", tmp]
+            ):
+                self.assertEqual(mod.main(), 1)
+            self.assertFalse((Path(tmp) / "ports").exists())
 
 
 if __name__ == "__main__":

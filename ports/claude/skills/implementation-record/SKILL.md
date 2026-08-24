@@ -1,6 +1,6 @@
 ---
 name: implementation-record
-description: "Template for the implementation record artifact produced by the 04b-feature-implementer. Load when writing a task's [task-name]-implementation.md record."
+description: "Template for the implementation record artifact produced by the 03b-feature-implementer. Load when writing a task's [task-name]-implementation.md record."
 user-invocable: false
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
@@ -50,6 +50,14 @@ Use exact rubric or plan criterion IDs when available. If a commit SHA is not kn
 - **New tests added**: [count]
 - **Affected suites run**: [list] | None
 - **Regressions**: None | [describe] | Unknown — tests not executed
+
+## Review and Fix Loop
+
+- **Resolved review agents**: [agent names predicted by the trigger table]
+- **Review findings**: Every finding includes `reviewer: [agent name]`.
+- **Fix rounds**: [0-2]
+- **Carry-forward findings**: [Medium/Low findings retained for phase final review, or None]
+- **Fallback**: [fresh implementer used because the original handle could not resume, or None]
 
 ## Deviations from Plan
 <!-- "None" or list -->

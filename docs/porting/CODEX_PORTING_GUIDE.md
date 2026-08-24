@@ -105,7 +105,7 @@ Codex has no verified hide mechanism that keeps subagents out of the frontend ag
 When a user addresses a Codex custom agent by name or role, the agent-designator
 router loads that role into the current session. The `@agent-name` token is
 prompt text interpreted by this repository's routing skill, not a native CLI
-flag. Natural-language requests such as `Act as feature-decomposer` are
+flag. Natural-language requests such as `Act as phase-execute` are
 equivalent. The CLI `-p`/`--profile` option only selects a configuration profile
 and must not be documented as agent selection.
 
@@ -160,7 +160,7 @@ and must not be documented as agent selection.
 
 | Source pattern | Codex destination | Notes |
 |---|---|---|
-| `.github/agents/04b-feature-implementer.agent.md` role and core behavior | Custom-agent TOML fields | Convert purpose and constraints into TOML-backed content |
+| `.github/agents/03b-feature-implementer.agent.md` role and core behavior | Custom-agent TOML fields | Convert purpose and constraints into TOML-backed content |
 | Any user-invocable source agent that users will address by name or role | Matching Codex agent `developer_instructions` | Add explicit wording that the selected agent is already in role and should not self-spawn on entry |
 | `.github/agents/*` with `user-invocable: false` | `z-*.toml` plus `name = "z-*"` | Use naming to de-emphasize internal subagents in the Codex frontend |
 | GitHub display-name references such as `Feature - Review and Fix` | Generated Codex runtime name such as `z-feature-review-and-fix` | Rewrite body text so orchestrators and subagent instructions reference actual Codex agent names |

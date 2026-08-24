@@ -1,6 +1,6 @@
 ---
 description: "Prevents small-change guidance from creating duplicate implementations. Audience is enumerated because code-writing and code-review agents have unrelated names."
-applyTo: "**/04b-feature-implementer.agent.md,**/04c-feature-review-and-fix.agent.md,**/04h-unity-reviewer.agent.md,**/single-feature-agent.agent.md,**/debugger.agent.md,**/test-writer.agent.md,**/test-fixer.agent.md,**/auditor-code.agent.md"
+applyTo: "**/03b-feature-implementer.agent.md,**/03h-unity-reviewer.agent.md,**/single-feature-agent.agent.md,**/debugger.agent.md,**/test-writer.agent.md,**/test-fixer.agent.md,**/auditor-code.agent.md"
 baseline: true
 ---
 

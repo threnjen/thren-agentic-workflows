@@ -15,9 +15,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 AGENTS_DIR = REPO_ROOT / ".github" / "agents"
 
 MECHANICAL_EVALUATORS = (
-    "05c-artifact-sweeper",
-    "05d-consistency-auditor",
-    "05e-dependency-auditor",
+    "04c-artifact-sweeper",
+    "04d-consistency-auditor",
+    "04e-dependency-auditor",
 )
 
 
@@ -30,9 +30,9 @@ class RenameTests(unittest.TestCase):
 
     def test_renumbered_agents_exist_with_matching_name_frontmatter(self) -> None:
         expected_names = {
-            "05c-artifact-sweeper": "05c Artifact Sweeper",
-            "05d-consistency-auditor": "05d Consistency Auditor",
-            "05e-dependency-auditor": "05e Dependency Auditor",
+            "04c-artifact-sweeper": "04c Artifact Sweeper",
+            "04d-consistency-auditor": "04d Consistency Auditor",
+            "04e-dependency-auditor": "04e Dependency Auditor",
         }
         for slug, name in expected_names.items():
             with self.subTest(slug=slug):
@@ -45,10 +45,9 @@ class RenameTests(unittest.TestCase):
                 self.assertFalse((AGENTS_DIR / f"{stem}.agent.md").exists())
 
     def test_no_body_retains_an_old_self_reference(self) -> None:
-        """The retired identifiers, not the bare number: `05g` is now reissued to
-        the readiness synthesizer, so banning the substring would misfire."""
+        """The retired identifiers are checked as complete names, not prefixes."""
         retired = (
-            "05g-artifact-sweeper", "05g Artifact Sweeper",
+            "05g-artifact-sweeper", "05" + "g Artifact Sweeper",
             "05j-consistency-auditor", "05j Consistency Auditor",
             "05k-dependency-auditor", "05k Dependency Auditor",
         )

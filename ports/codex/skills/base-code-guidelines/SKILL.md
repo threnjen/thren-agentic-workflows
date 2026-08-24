@@ -1,6 +1,6 @@
 ---
 name: base-code-guidelines
-description: "Activate when writing, adding, reviewing, refactoring, or fixing any code, or when choosing libraries and dependencies. Provides behavioral guidelines to avoid common LLM coding mistakes — overcomplication, untargeted edits, hidden assumptions, and missing success criteria — and enforces an escalation ladder that exhausts cheaper sources of a solution before new code gets written. Also activate when the user asks for the simplest or most minimal solution, or complains about bloat, boilerplate, or unnecessary dependencies."
+description: "Activate when writing, adding, reviewing, refactoring, or fixing any code, or when choosing libraries and dependencies. Provides behavioral guidelines to avoid common LLM coding mistakes — overcomplication, untargeted edits, hidden assumptions, missing success criteria, and thin instrumentation — enforces an escalation ladder that exhausts cheaper sources of a solution before new code gets written, and mandates dense observability in every code path. Also activate when the user asks for the simplest or most minimal solution, or complains about bloat, boilerplate, or unnecessary dependencies."
 ---
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # Base Code Guidelines
@@ -45,7 +45,7 @@ Rules:
 - An almost-fitting implementation is a design decision, not automatic reuse. Extend it only when both consumers share one responsibility and its contract stays cohesive. Otherwise, keep the implementations separate.
 - When a request looks over-specified, ship the minimal version and question the rest in the same response ("Did X; Y already covers the rest — say the word if you need full X").
 
-**Never minimized** — cutting these is negligence, not minimalism: input validation at trust boundaries; error handling that prevents data loss or corruption; security measures; accessibility basics; tests for non-trivial logic; anything the user explicitly asked for (if they insist on the full version after hearing the alternative, build it well — no re-litigating). If one of these *looks* over-built, raise it as a question, never as a cut.
+**Never minimized** — cutting these is negligence, not minimalism: observability (Section 5); input validation at trust boundaries; error handling that prevents data loss or corruption; security measures; accessibility basics; tests for non-trivial logic; anything the user explicitly asked for (if they insist on the full version after hearing the alternative, build it well — no re-litigating). If one of these *looks* over-built, raise it as a question, never as a cut.
 
 Output discipline: lead with the code, then at most a few short lines stating what was deliberately skipped and the concrete trigger for adding it ("skipped caching; add when the profiler shows this endpoint hot"). A long defense of a simplification is complexity smuggled back in as prose.
 
@@ -82,3 +82,27 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+## 5. Observability
+
+**Instrument the code while you write it. Adding logs later costs a reproduction of the bug first.**
+
+Write enough logging that a reader reconstructs a failed run from the log alone, with no debugger and no second attempt.
+
+Log every one of these:
+- Entry to any operation crossing a boundary — network, disk, database, subprocess, queue — with the key inputs.
+- The outcome of that operation — status, result size, row count, duration.
+- Every branch a reader would not predict: fallback, retry, cache miss, early return, skipped work.
+- Every caught exception, with the exception and the state that produced it.
+- Every state transition, and every configuration value resolved at startup.
+
+Rules:
+- Log the identifiers that isolate one run from millions — request id, job id, user id, file path.
+- Log values, not labels. "validation failed" wastes the reader's time. "validation failed for order 4412: total -3" ends the investigation.
+- Pick the level by audience. DEBUG traces steps. INFO marks lifecycle. WARNING marks degraded but handled. ERROR carries the stack.
+- Never log secrets, tokens, credentials, or personal data. Redact at the call site.
+- Section 2 does not apply here. Observability is exempt from the minimalism ladder.
+- Excess logging is a cleanup pass later. Missing logging is a debugging session later. Choose the cleanup pass.
+
+Language-specific form — logger construction, structured fields, exception capture — lives in the language standard.
+

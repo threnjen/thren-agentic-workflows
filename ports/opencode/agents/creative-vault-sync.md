@@ -1,6 +1,5 @@
 ---
 description: "Reports what changed in a writer's vault since a recorded commit — resolves the current git SHA, compares it to the one stored in context/index.md, and returns the file-level diff. Read-only git access, no editing, no reasoning about the manuscript."
-model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:

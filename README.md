@@ -35,9 +35,8 @@ A numbered pipeline you step through for building a project end to end:
 |------|-------|--------|
 | 1 | **Project - Planner** | Describe your project → get a phased roadmap |
 | 2 | **Phase - Refiner** | Refine and stress-test one phase |
-| 3 | **Feature - Decomposer** | Break the phase into ready-to-build features |
-| 4 | **Phase - Execute** | Kick off — implementation, review, and QA run hands-free |
-| 5 | **PR - Review** | Get a plain-language readiness report on your diff |
+| 3 | **Phase - Execute** | Research, plan, and run the phase hands-free |
+| 4 | **PR - Review** | Get a plain-language readiness report on your diff |
 
 You drive these steps in order.
 
@@ -61,7 +60,7 @@ Reach for these individually, whenever you need them — no pipeline required:
   narratives, compliance package) from an engagement configuration file
 
 Behind these, a set of automated subagents and on-demand skills do the detailed work —
-you never invoke them directly. The library ships 55 source agent definitions in
+you never invoke them directly. The library ships 64 source agent definitions in
 `source_of_truth/agents/`. For the complete catalog and how the pipeline flows,
 see [USAGE.md](USAGE.md).
 

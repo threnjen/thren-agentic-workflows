@@ -1,6 +1,5 @@
 ---
 description: "Developmental editor for fiction — interrogates, reflects, diagnoses, and pressure-tests a writer's own material under a strict mode gate. Reads an Obsidian vault; cannot write to canon or drafts."
-model: deepseek/deepseek-v4-pro
 permission:
   glob: allow
   grep: allow

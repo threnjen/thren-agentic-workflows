@@ -1,6 +1,5 @@
 ---
 description: "Scans a draft creative-writing response against the active mode's rules and returns violations with repair instructions. Read-only, stateless."
-model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:

@@ -189,7 +189,7 @@ Unity Test Framework is the authoritative runner. Compilation success and focuse
 ```
 
 - Never pair `-quit` with `-runTests`; Unity can exit before the tests execute and return a false-green zero exit code.
-- **Affected-suite runs use `-testFilter`** — a semicolon-separated list of full test names or a regex, negation supported. Scope it to the suites exercising the changed symbol. Gate runs (wave boundary, phase end) are unfiltered.
+- **Affected-suite runs use `-testFilter`** — a semicolon-separated list of full test names or a regex, negation supported. Scope it to the suites exercising the changed symbol. Gate runs (dependency-level boundary, phase end) are unfiltered.
 - `-testResults` always receives an absolute path under the main checkout's `dev/test-results/`; `-logFile` uses the same absolute artifact directory. The shadow worktree is an execution target only. Never read results from the shadow worktree; never read logs from it either.
 
 **Precondition.** Commit before testing in a shadow worktree; it can represent only committed code. The normal per-feature commit usually satisfies this precondition. A dirty checkout requires a commit before this procedure begins.

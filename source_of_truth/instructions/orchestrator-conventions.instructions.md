@@ -1,6 +1,6 @@
 ---
 description: "Shared conventions for orchestrator agents that coordinate subagent pipelines, including the end-of-run graph rebuild (merged from graph-rebuild-hook). Audience is ENUMERATED deliberately - the four pipeline orchestrators are an arbitrary subset with no filename family. Add any new agent that coordinates a subagent pipeline, and inline this file into its claude/agents/ counterpart."
-applyTo: "**/auditor.agent.md,**/delta-auditor.agent.md,**/04-phase-execute.agent.md,**/test-orchestrator.agent.md"
+applyTo: "**/auditor.agent.md,**/delta-auditor.agent.md,**/03-phase-execute.agent.md,**/test-orchestrator.agent.md"
 ---
 
 # Orchestrator Conventions
@@ -10,8 +10,41 @@ Orchestrators coordinate subagents. They do not do the work themselves. These co
 ## Constraints
 
 - Do not write source code, test files, or configuration.
-- Do not write plan documents, review records, or QA plans. Delegate them to subagents.
-- Always ask the user before you start the fix or remediation phase.
+- Delegate plan documents, review records, and QA plans to subagents. `03 Phase - Execute` may write its own lightweight plans and living manifest, because it owns decomposition and scheduling. It still delegates context, tasks, review records, and QA plans.
+- Always ask the user before you start a fix or remediation phase the user has not already authorized. Explicit run-level authorization satisfies this rule for every routine fix round inside the pipeline that authorization covers. It never authorizes a remediation phase the user did not ask for, such as writing production code after an audit findings report.
+
+## Departure Preflight
+
+Run this when the user signals that they are stepping away, leaving the run unattended, or expecting completion without further input.
+
+Before you confirm that they can leave, list every permission the run may need and ask for each one. Cover repository policies that gate a command, credentials the pipeline cannot obtain, and any destructive or outward-facing action the plan implies. A Unity phase is the standing example: ask whether one headless import or test run is authorized, or whether Unity gates should record as verification-pending while implementation continues.
+
+Ask once, in one round, before departure. A permission you fail to raise here becomes a stall you cannot resolve later.
+
+## Unattended Completion
+
+When the user has authorized unattended completion, a retry ceiling still bounds work on the unit that is failing. It never ends the run. Exhaust the ceiling on that unit, record the outcome, and move to the next independent unit.
+
+Halt and wait for the user only for an external prerequisite you cannot obtain, a safety boundary, a destructive action needing approval, or a decision that materially changes product behavior. Nothing else justifies spending an unattended window idle.
+
+## Session Model Preflight
+
+Before an orchestrator selects work that uses tiered child models, run one session model preflight. Reuse
+`load_model_routing()` as the only routing loader. Do not parse the routing JSON again or persist a run override.
+
+For the phase executor, show one answer-first table for `low`, `medium`, and `high` on the detected harness. Each tier
+record has four distinct fields: `requested_model`, `user_override`, `resolved_route`, and `resolution_status`.
+Accept a tier override for the current run only. Keep it in memory and leave the source routing file byte-identical.
+
+Use exactly three disjoint resolution statuses:
+
+- `enforced`: the harness reports that it used the effective route.
+- `fallback`: the harness reports a different route after it could not use the effective route.
+- `unverified`: the harness does not report the child model, or the harness is unsupported.
+
+Generated configuration proves configuration only. It never proves `enforced`. An unsupported harness must disclose a
+`fallback` reason while setting every route to `unverified`. The display may contain model identifiers only. Reject a
+missing route or malformed identifier before execution starts.
 
 ## Working Branch
 
@@ -33,7 +66,7 @@ Verify that a subagent's output exists on disk before you move to the next step.
 
 ## Pipeline Discipline
 
-- Do not skip or reorder steps. The sequence matters.
+- Do not skip or reorder steps. The sequence matters. `03 Phase - Execute` may recompute dependency order only at its documented level-closure boundary.
 - Do not move past a subagent failure without attempting remediation.
 - Finish every step for one task or feature before you start the next.
 

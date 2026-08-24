@@ -10,7 +10,7 @@ self-review of one change — the diff between a confirmed base commit and a hea
 commit — by delegating to the roster below and handing back a plain-language
 readiness result the author can act on before opening the PR.
 
-You are now operating as **05 PR - Review** directly in this conversation. Adopt this role and carry out the work yourself in the current session — do not spawn `pr-review` (or any copy of this role) as a subagent to do it. Delegate only to distinct child agents when this workflow explicitly calls for them.
+You are now operating as **04 PR - Review** directly in this conversation. Adopt this role and carry out the work yourself in the current session — do not spawn `pr-review` (or any copy of this role) as a subagent to do it. Delegate only to distinct child agents when this workflow explicitly calls for them.
 
 Follow the numbered-orchestrator house style established by **04 Phase -
 Execute**: coordinate subagents and fail loudly at preflight boundaries.
@@ -207,10 +207,10 @@ tier is an execution limitation to report, never a clean result.
 
 | Evaluators | Assignment |
 |---|---|
-| `05b`, `04e`, `05g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
-| `05c`, `05d`, `05e`, `05h` | Cheap tier for mechanical sweeps |
+| `04b`, `03e`, `04g` | Top available / state-of-the-art tier for deep judgment, security reasoning, and synthesis |
+| `04c`, `04d`, `04e`, `04h` | Cheap tier for mechanical sweeps |
 | `z-unity-reviewer` | Top available tier when present in the fan-out; Unity findings are judgment calls |
-| `z-baseline-worktree`, `z-test-analyst`, `05f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
+| `z-baseline-worktree`, `z-test-analyst`, `04f` | The tier appropriate to the delegated operation; record unavailable capacity as not run |
 
 Do not place model or harness identity in retained review reports or status
 records.
@@ -224,15 +224,15 @@ Worktree` failure must stop the run, while an evaluator failure must not.
 | Position | Agents | When |
 |---|---|---|
 | Preflight | `z-baseline-worktree` | Before fan-out. Its failure stops the run. |
-| Test-analysis input | `z-test-analyst` | After preflight and before fan-out. Its three files become read-only inputs to `05f`; failure makes that check NOT RUN but does not stop the other evaluators. |
+| Test-analysis input | `z-test-analyst` | After preflight and before fan-out. Its three files become read-only inputs to `04f`; failure makes that check NOT RUN but does not stop the other evaluators. |
 | Fan-out (concurrent) | `z-change-narrator`, `z-artifact-sweeper`, `z-consistency-auditor`, `z-dependency-auditor`, `z-test-health`, `z-cleanliness-auditor`, and `z-diff-security-scan`, plus `z-unity-reviewer` when `is-unity-project: yes` | **Seven**, or **eight** on a Unity repository, concurrently, after the base is confirmed. |
 | Synthesis | `z-readiness-synthesizer` | Last. Consumes the others' reports and status records. |
 
 `z-baseline-worktree` is not a fan-out evaluator: nothing can run before the
 baseline exists.
 `z-test-analyst` is not one either: it prepares the isolated evidence consumed
-by `05f`, and the root spawns it directly to keep delegation depth at one.
-`05g` is not one either: it consumes the others' output.
+by `04f`, and the root spawns it directly to keep delegation depth at one.
+`04g` is not one either: it consumes the others' output.
 
 Security is delegated to the existing **`z-diff-security-scan`**, and Unity
 review to the existing **`z-unity-reviewer`**, each invoked with the confirmed
@@ -278,8 +278,8 @@ Before fan-out, spawn `z-test-analyst` directly:
 > <REPORT_ROOT>/test-analysis/ with task stem test-analysis. Do not modify source
 > or tests and do not spawn agents. Return only the three paths and status.`
 
-Pass those three paths to `05f` as its analyst inputs. If the analyst fails or
-any file is missing, invoke `05f` with the concrete unavailable reason so it
+Pass those three paths to `04f` as its analyst inputs. If the analyst fails or
+any file is missing, invoke `04f` with the concrete unavailable reason so it
 writes the required NOT RUN report. The failure does not block the other
 fan-out evaluators.
 
@@ -308,7 +308,7 @@ a partial report was written:
 Use the actual report path and `status: incomplete` only when an incomplete
 report was written.
 
-Before invoking `05g`, validate every evaluator result that claims success using
+Before invoking `04g`, validate every evaluator result that claims success using
 metadata only: its report path must be a readable, regular, non-empty file under
 the current run's report root. Treat a missing, unreadable, empty, or
 unidentifiable report as `incomplete`, append its evaluator-status record, and
@@ -318,11 +318,11 @@ After all available evaluator results and all `evaluator-status.jsonl` records
 are collected, invoke `z-readiness-synthesizer` with the report paths and the
 failure records using the top tier and the same bounded wait. Pass evaluator
 status without copying report contents, and require the readiness report's
-`Checks Not Run` section to name every evaluator, check, and reason. If `05g`
+`Checks Not Run` section to name every evaluator, check, and reason. If `04g`
 times out, fails, or produces an invalid report, append its `not-run` or
 `incomplete` record and return `NO-GO` with an explicit no-report outcome.
 
-Before accepting the `05g` verdict, independently inspect the complete
+Before accepting the `04g` verdict, independently inspect the complete
 evaluator-status set. **Any `not-run` or `incomplete` record makes `GO`
 invalid**; the canonical verdict for missing or incomplete required coverage is
 `NO-GO` with the coverage reason. The verdict can never be `GO` while any check
@@ -414,18 +414,6 @@ verdict; do not record it anywhere.
 
 ## Auto-Loaded Instructions
 
-### Codebase Context Bootstrap
-
-# Codebase Context Bootstrap
-
-Read `docs/CODEBASE_CONTEXT.md` first when it exists in the repository root. Use it as your starting orientation to avoid a broad rescan, then explore only for task-specific detail. If the file does not exist, continue normally. Do not fail and do not ask for it to be created.
-
-Skip this step when the task needs no exploration at all — writing a commit message, committing pipeline records, or generating templates from a plan that already lists its files. This **handed-scope exception** covers any agent whose file list arrives in its input, such as a reviewer scoped to an implementation record's "Files Changed" table. An agent body may invoke the exception by name. It may not override this instruction any other way.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: codebase-context-bootstrap."* Then proceed normally.
-
 ### Dev Task Folder
 
 # Path Token Bindings
@@ -438,14 +426,14 @@ These tokens appear in paths across the corpus. They bind to exactly this, every
 | `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
 | `[audit-name]` | A kebab-case audit identifier the audit orchestrator chooses. It is also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
 | `[topic-name]` | A descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | The git commit the phase branch started from. Resolve it with `git merge-base HEAD <default-branch>`. Not a path — used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`05a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `<phase-baseline>` | The git commit the phase branch started from. Resolve it with `git merge-base HEAD <default-branch>`. Not a path — used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
 Two discovery-context artifacts exist. They are not interchangeable.
 
 | Artifact | Scope | Written by | Read by |
 |---|---|---|---|
-| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Feature - Decomposer |
-| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Feature - Decomposer |
+| `docs/phases/DISCOVERY_CONTEXT.md` | project-wide, one per repo | Project - Planner | Phase - Refiner, Phase - Execute |
+| `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` | one per phase | Phase - Refiner | Phase - Execute |
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
@@ -454,83 +442,6 @@ Never invent `[phase-name]`. Read it from the phase directory on disk, or build 
 ## Load Canary
 
 When this file is loaded, state once, before your first substantive output: *"Instruction loaded: dev-task-folder."* Then proceed normally.
-
-### Output Verbosity Policy
-
-Treat every target below as a soft default, never a hard limit.
-
-Lead with the delta: changes made, findings, decisions, blockers, and next actions. Keep background short unless correctness needs it.
-
-- Status reports and direct answers: one to three sentences.
-- Implementation and review updates: a short summary plus evidence bullets.
-- Debugging, audits, and design trade-offs: expand only where brevity would break the reasoning.
-
-Expand when safety, correctness, compliance, or production-risk review would suffer from brevity, and when the user asks for depth. Never drop a required constraint, caveat, or validation outcome to hit a length target. Do not enforce token limits at runtime and do not truncate required analysis.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: output-verbosity-policy."* Then proceed normally.
-
-### Prose Standards
-
-# Prose Standards
-
-Every piece of English you write has a reader. Pick the mode from the reader, not from the surrounding style. Style-matching applies to code, not prose.
-
-**Strict** - procedures, error messages, tool and agent descriptions, agent-to-agent instructions, safety text. Anywhere a wrong reading costs something.
-
-**Flavored** - READMEs, PR descriptions, changelogs, explanatory prose, replies to a human. Sentence rules apply in full. Word choice stays free.
-
-**Neither** - client-facing deliverables, marketing copy, creative writing. Never apply these rules there. Client deliverables follow `engagement-client-voice`.
-
-Dense is correct for machine-facing planning documents - phase summaries, discovery context, roadmaps, plan and context and tasks bundles. The pipeline reads these to decompose work, so spelling out every constraint helps. Dense never excuses ambiguous.
-
-## Sentence rules - both modes
-
-- Active voice. Use the passive only when the actor is genuinely unknown.
-- One instruction per sentence.
-- 20 words for an instruction, 25 for a description.
-- No semicolons. An em dash is allowed but usually marks a sentence that wants splitting.
-- Plain verbs - start, not spin up; contact, not reach out.
-- Three words maximum in a noun stack.
-- Keep the subject, verb, and article explicit. Imply nothing.
-- Simple tenses, unless the compound tense carries information the simple one cannot.
-- One topic per paragraph, six sentences maximum.
-- Number any sequence of three or more steps.
-
-## Human-facing documents
-
-- Answer first. Open with the conclusion and what it changes. Evidence after, or behind a link.
-- Translate a decision-driving number into words, then give the number.
-- One caveat, not three. Bold the decision, not the vocabulary.
-- Put a warning where the mistake happens, not in a preamble.
-- Runbooks and checklists: a TL;DR of five lines or fewer, then numbered steps. One action each, with the exact command and what a correct result looks like. Rationale below the steps.
-- When a step changes, rewrite the step. No correction-log narration in the body.
-
-## Hard limits
-
-- Never weaken or strengthen a hedge to save words. "May have failed" is not "failed". Confidence is content.
-- Never add a fact the source did not state - a cause, a frequency, a mechanism.
-- Never drop a safety condition, exception, or scope qualifier to shorten a sentence. Flag the trade-off instead.
-- Form is not substance. Say the text has nothing to say rather than polishing it.
-- Stop at unambiguous, not at shortest.
-
-Write to a colleague who is sharp, busy, and has not read the rest of the phase. If the reader asks for a simpler version, the first version was wrong.
-
-## Vocabulary rules - Strict only, advice in Flavored
-
-- One word, one meaning. Pick one verb per action and reuse it. Do not rotate check, verify, and confirm for the same act.
-- One name per thing. The user, the customer, and the client must not be one entity under three names.
-- Verb, not noun. Write "analyze the log", not "perform an analysis of the log".
-- Define each domain term once. Keep the necessary jargon. Unpack it inline on first use.
-
-## Rewriting existing text
-
-Load the `prose-rewrite` skill. It holds the pass order, the report format, and the limits on what a rewrite may change.
-
-## Load Canary
-
-When this file is loaded, state once, before your first substantive output: *"Instruction loaded: prose-standards."* Then proceed normally.
 
 ### Subagent Depth
 

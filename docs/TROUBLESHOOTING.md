@@ -86,7 +86,7 @@ prefixes for hidden (non-user-invocable) Claude and Codex subagents.
   `web-researcher`, `audit-code-or-infra` → `audit-code-infra-refactor`.
 - Expect non-user-invocable agents to become `z-*` files in Claude and Codex outputs, with
   two exceptions: the emitter reuses a pre-existing generated stem when one exists, so
-  `04f-prod-code-review` stays `prod-code-review.md` and `04h-unity-reviewer` stays
+  `03f-prod-code-review` stays `prod-code-review.md` and `03h-unity-reviewer` stays
   `unity-reviewer.md` in `ports/claude/agents`.
 - Expect a user-invocable agent to *also* get a subagent file when an orchestrator declares
   it as a child (Docs Writer, Web Researcher). That is why
@@ -250,7 +250,7 @@ lacks the tool grant to spawn, an agent or skill frontmatter block is malformed,
   instruction to no agent, with no error at propagation time. Matching is `fnmatch`
   against the agent's repo-relative path, so `**/x.agent.md` needs a `/` immediately
   before `x`, and numbered agents must be named in full
-  (`**/04b-feature-implementer.agent.md`).
+  (`**/03b-feature-implementer.agent.md`).
 - Do not fix a failure by adding a prose-keyed assertion. Every check in this file is
   structural on purpose; a check that cannot survive a reword does not belong there.
 

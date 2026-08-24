@@ -11,9 +11,9 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 AGENT_ROOT = REPO_ROOT / "source_of_truth/agents"
 CONSUMER_PATHS = {
-    "phase_execute": AGENT_ROOT / "04-phase-execute.agent.md",
-    "visual_verifier": AGENT_ROOT / "04g-unity-visual-verification.agent.md",
-    "unity_reviewer": AGENT_ROOT / "04h-unity-reviewer.agent.md",
+    "phase_execute": AGENT_ROOT / "03-phase-execute.agent.md",
+    "visual_verifier": AGENT_ROOT / "03g-unity-visual-verification.agent.md",
+    "unity_reviewer": AGENT_ROOT / "03h-unity-reviewer.agent.md",
 }
 
 
@@ -208,9 +208,9 @@ def test_required_unity_consumers_are_present() -> None:
     }
 
 
-def test_phase_execute_wave_gate_contract() -> None:
+def test_phase_execute_dependency_level_gate_contract() -> None:
     text = _consumer_texts()["phase_execute"]
-    section = _section(text, "### Step 2.5: Wave Test Gate", 3)
+    section = _section(text, "### Step 2.5: Dependency-Level Test Gate", 3)
     assert not _phase_execute_errors(section), sorted(_phase_execute_errors(section))
 
 
@@ -277,7 +277,7 @@ def test_phase_execute_mutations_are_killed(
     needle: str, replacement: str, obligation: str
 ) -> None:
     text = _consumer_texts()["phase_execute"]
-    section = _section(text, "### Step 2.5: Wave Test Gate", 3)
+    section = _section(text, "### Step 2.5: Dependency-Level Test Gate", 3)
     assert needle in section, f"mutation target missing for {obligation}"
     assert obligation in _phase_execute_errors(section.replace(needle, replacement))
 

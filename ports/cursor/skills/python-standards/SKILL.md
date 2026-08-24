@@ -18,6 +18,7 @@ PAIRED ASSET: `instructions/python.instructions.md` carries the same rules for C
 - **Imports:** at the top of the file only — never inside a function, method, conditional, or loop. No new `import *`.
 - **Data containers:** `@dataclass` for data you own (mutable defaults via `field(default_factory=...)`); Pydantic v2 `BaseModel` for anything crossing a trust boundary — user input, API responses, config; `TypedDict` for dict shapes you don't own; a full class only when there is real behavior.
 - **Logging:** one module-level `logger = logging.getLogger(__name__)`, lazy `%s` args, `exc_info=True` on errors. `print` only for deliberate CLI output.
+- **Observability:** log every boundary call, its outcome, every unpredictable branch, and every caught exception, with the values involved. Instrument on the way in, never after a bug appears.
 - **SQL:** parameterized queries only — never f-strings.
 - **Async:** never call blocking I/O inside an `async` function.
 - **Tooling:** Ruff and Pyright (`strict` on greenfield) are enforced. Never disable them, never add ignore comments.
@@ -137,6 +138,16 @@ result = await loop.run_in_executor(None, blocking_function, arg)
 ## Logging
 
 `print` has no severity, cannot be silenced or redirected without a code change, and does not reach log aggregators. `exc_info=True` captures the full traceback for free. Never configure logging inside a library — configuration belongs to the application entry point only.
+
+Instrument densely. A module that logs only its errors tells you a run failed and nothing about why.
+
+```python
+logger.debug("fetching order %s from %s", order_id, url)
+resp = await client.get(url)
+logger.debug("order %s returned %s in %.3fs", order_id, resp.status_code, elapsed)
+```
+
+Lazy `%s` args cost nothing when the level is off, so a DEBUG line on every step is free in production. Put the identifying values in the message — an id, a path, a count, a duration. Log the caught exception with `logger.exception(...)` or `exc_info=True`, and log the state that produced it in the same call. Redact secrets at the call site.
 
 ## Tests
 

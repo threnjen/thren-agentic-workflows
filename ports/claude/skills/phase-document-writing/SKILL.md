@@ -25,9 +25,15 @@ Each `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` must include:
 
 [Brief summary of changes or new features introduced in this phase. Keep this section user-focused and use natural language to explain in practical impact terms, not technical terms. Include any relevant context for why these changes matter to the end user.]
 
+## Problem
+
+[The problem this phase solves, stated as a symptom rather than a mechanism. Write what is
+wrong today and who it hurts, not what will be built. When the phase is driven by preference,
+exploration, or taste rather than a problem, say that plainly here instead.]
+
 ## Objective
 
-[1-2 sentences: what this phase accomplishes and why it matters]
+[1-2 sentences: what this phase does about the Problem above, and why that is the right response]
 
 ## Scope
 
@@ -47,7 +53,7 @@ Each `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` must include:
 ## Technical Context
 
 [Existing code, patterns, libraries, or infrastructure relevant to this phase.
-Reference specific files/modules so the Feature - Decomposer knows where to look.]
+Reference specific files/modules so Phase - Execute knows where to look.]
 
 ## Dependencies & Risks
 
@@ -66,7 +72,7 @@ Reference specific files/modules so the Feature - Decomposer knows where to look
 - [For pure backend work, note if API contracts or integration behavior changes]
 - [If backend changes require frontend testing, note coordination with frontend repos]
 
-## Notes for Feature - Decomposer
+## Notes for Phase - Execute
 
 [Guidance on how to decompose this phase: suggested feature boundaries,
 areas that need careful separation of concerns, integration points between features.]
@@ -105,10 +111,12 @@ Before presenting or writing any Phase document, verify:
 - [ ] Phase ordering respects dependencies (no forward references)
 - [ ] Each phase is self-contained and independently valuable
 - [ ] Scope boundaries are explicit (in-scope AND out-of-scope per phase)
+- [ ] The Problem is stated as a symptom, or the phase names a non-problem driver honestly
 - [ ] Success criteria are testable
+- [ ] Success criteria measure the Problem moving, not merely the mechanism existing
 - [ ] For phases that render UI, success criteria include discrete, visually-checkable on-screen statements (color, layout, element presence) — not just "looks correct"
 - [ ] Technical context references specific files, modules, or patterns
-- [ ] "Notes for Feature - Decomposer" section provides decomposition guidance
+- [ ] "Notes for Phase - Execute" section provides decomposition guidance
 - [ ] Non-goals are defined at both project and phase level
 - [ ] Edge cases, failure modes, and key user flows documented
 - [ ] Dependencies (internal, external, cross-phase) and risks have mitigations

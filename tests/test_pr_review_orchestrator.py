@@ -15,7 +15,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
-ORCHESTRATOR = REPO_ROOT / "source_of_truth" / "agents" / "05-pr-review.agent.md"
+ORCHESTRATOR = REPO_ROOT / "source_of_truth" / "agents" / "04-pr-review.agent.md"
 RETIRED_ORCHESTRATOR = (
     REPO_ROOT / "source_of_truth" / "agents" / "05-phase-final-review.agent.md"
 )
@@ -119,7 +119,7 @@ def test_orchestrator_is_renamed_and_the_old_source_is_gone() -> None:
 def test_frontmatter_declares_the_pr_review_name() -> None:
     body = ORCHESTRATOR.read_text(encoding="utf-8")
 
-    assert "name: 05 PR - Review" in body
+    assert "name: 04 PR - Review" in body
     assert "05 Phase - Final Review" not in body
 
 
@@ -160,8 +160,8 @@ def test_agent_name_does_not_collide_with_prose_in_any_source_asset() -> None:
 def test_renamed_orchestrator_reaches_all_three_generated_roots() -> None:
     expected_markers = {
         "ports/claude/commands/pr-review.md": "PR Review Orchestrator",
-        "ports/opencode/agents/05-pr-review.md": "PR Review Orchestrator",
-        "ports/codex/agents/05-pr-review.toml": 'name = "pr-review"',
+        "ports/opencode/agents/04-pr-review.md": "PR Review Orchestrator",
+        "ports/codex/agents/04-pr-review.toml": 'name = "pr-review"',
     }
 
     for relative_path, marker in expected_markers.items():

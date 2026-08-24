@@ -1,6 +1,5 @@
 ---
 description: "Writes caller-supplied text verbatim into _editor-notes/ and scene-summaries/ in a writer's vault — append-only except for the context directory. Performs no reasoning about the manuscript."
-model: deepseek/deepseek-v4-pro
 mode: subagent
 hidden: true
 permission:

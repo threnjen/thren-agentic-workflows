@@ -28,7 +28,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Mapping, Tuple
+from typing import Dict, List, Mapping, Sequence, Tuple
 
 from scripts.asset_paths import PORTS_DIR, REPO_ROOT, file_has_generated_marker, poll_watch
 
@@ -279,9 +279,10 @@ def _instruction_body(name: str) -> str:
     """Body of one baseline instruction, ready to splice.
 
     Strips the frontmatter, drops the trailing Load Canary section, and demotes
-    the leading H1 to an H2. The canary proves an instruction was inlined into a
-    single agent; firing it from the always-loaded global file would make it
-    fire in every session and prove nothing.
+    the leading H1 to an H2. A per-instruction canary proves that instruction was
+    inlined into one agent. Firing every one of them from the always-loaded global
+    file would say nothing about routing and would cost a line per section, so the
+    baseline carries a single aggregate canary instead. See `_baseline_canary_body`.
     """
     text = (BASELINE_INSTRUCTIONS_DIR / f"{name}.instructions.md").read_text(encoding="utf-8")
     if text.startswith("---\n"):
@@ -290,6 +291,26 @@ def _instruction_body(name: str) -> str:
     text = re.sub(r"\n#{2,}\s*Load Canary\s*\n.*\Z", "\n", text, flags=re.DOTALL)
     text = re.sub(r"\A\s*# ", "## ", text)
     return text.strip("\n")
+
+
+BASELINE_CANARY_SECTION = "baseline-canary"
+
+
+def _baseline_canary_body(names: Sequence[str]) -> str:
+    """One canary covering the whole baseline, naming every section it deployed.
+
+    Per-instruction canaries are stripped on the way in, so without this the
+    baseline loads silently and a stale global file is indistinguishable from a
+    current one. Listing the count and the names makes that visible: a deploy the
+    user forgot to run reports a section list that does not match the manifest.
+    """
+    listed = ", ".join(names)
+    return (
+        "## Baseline Load Canary\n\n"
+        "When this file is loaded, state once, before your first substantive "
+        f"output: *\"Baseline loaded: {len(names)} sections - {listed}.\"* "
+        "Then proceed normally."
+    )
 
 
 def _parse_baseline_sections(template: str) -> Dict[str, str]:
@@ -358,6 +379,9 @@ def deploy_baseline(
         updated = CURSOR_BASELINE_FRONTMATTER
     for name in RETIRED_BASELINE_SECTIONS:
         updated = _strip_section(updated, name)
+    updated = _splice_section(
+        updated, BASELINE_CANARY_SECTION, _baseline_canary_body(tuple(sections))
+    )
     for name, body in sections.items():
         for placeholder, value in substitutions.items():
             body = body.replace(placeholder, value)

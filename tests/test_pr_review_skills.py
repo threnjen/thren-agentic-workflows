@@ -40,7 +40,7 @@ def _frontmatter(text: str) -> str:
 
 
 def _surviving_evaluator_agents() -> list[Path]:
-    return sorted((REPO_ROOT / "source_of_truth" / "agents").glob("05*.agent.md"))
+    return sorted((REPO_ROOT / "source_of_truth" / "agents").glob("04*.agent.md"))
 
 
 # --- the rename itself ------------------------------------------------------
@@ -72,7 +72,7 @@ def test_no_surviving_agent_references_a_retired_skill_name() -> None:
     """A stale skill reference is a silently missing skill at runtime, not an
     error. Matched on the exact skill tokens only."""
     agents = _surviving_evaluator_agents()
-    assert agents, "no 05x agents found -- the sweep would pass vacuously"
+    assert agents, "no 04x agents found -- the sweep would pass vacuously"
 
     offenders: list[str] = []
     for agent in agents:

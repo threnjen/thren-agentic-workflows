@@ -1,5 +1,5 @@
 ---
-description: "Hard TypeScript/Node rules that a competent model violates by default — module form, `any`, boundary validation, floating promises, throwables, logging, lockfiles. Audience is source files only: the glob fires for Cursor and Copilot whenever TypeScript code is open, and costs nothing otherwise. Harnesses that inline instructions into agents reach these rules through the typescript-standards skill instead, routed by language-standards.instructions.md. PAIRED ASSET: skills/typescript-standards/SKILL.md restates these rules — change both together."
+description: "Hard TypeScript/Node rules that a competent model violates by default — module form, `any`, boundary validation, floating promises, throwables, logging and observability, lockfiles. Audience is source files only: the glob fires for Cursor and Copilot whenever TypeScript code is open, and costs nothing otherwise. Harnesses that inline instructions into agents reach these rules through the typescript-standards skill instead, routed by language-standards.instructions.md. PAIRED ASSET: skills/typescript-standards/SKILL.md restates these rules — change both together."
 applyTo: "**/*.ts,**/*.tsx,**/*.mts,**/*.cts"
 ---
 
@@ -11,6 +11,7 @@ applyTo: "**/*.ts,**/*.tsx,**/*.mts,**/*.cts"
 - **Async:** every promise is awaited or explicitly handled — never disable `no-floating-promises`. Independent operations run under `Promise.all`. Never mix `.then()` and `await` in one function. No `*Sync` calls outside startup scripts.
 - **Errors:** throw only `Error` subclasses, always with `new`. An empty catch block requires a comment saying why swallowing is correct.
 - **Logging:** a structured logger (Pino) with context as fields. `console.*` only for deliberate CLI output.
+- **Observability:** log every boundary call, its outcome, every unpredictable branch, and every caught exception, with the values as fields. Instrument on the way in, never after a bug appears.
 - **Variables:** `const`/`let` only, never `var`. `===`/`!==` always — `== null` is the one exception.
 - **Dependencies:** commit `package-lock.json`; CI installs with `npm ci`.
 - **Tooling:** `tsc --noEmit` strict and typescript-eslint strict are enforced. Never disable them.

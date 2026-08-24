@@ -7,23 +7,23 @@ description: "Use whenever the user mentions an agent with @agent-name, [@agent-
 
 When the user message contains an agent designator such as:
 
-- `@feature-decomposer`
-- `[@feature-decomposer](subagent://feature-decomposer)`
-- `subagent://feature-decomposer`
+- `@phase-execute`
+- `[@phase-execute](subagent://phase-execute)`
+- `subagent://phase-execute`
 
 treat that as a request to operate under that agent's instructions.
 
 The designator is prompt text interpreted by this skill; it is not a Codex CLI
-flag. In particular, `codex -p feature-decomposer ...` selects a configuration
-profile named `feature-decomposer` and does not select the custom agent. For a
+flag. In particular, `codex -p phase-execute ...` selects a configuration
+profile named `phase-execute` and does not select the custom agent. For a
 new Codex CLI session, pass the role request in the prompt instead:
 
 ```bash
-codex '@feature-decomposer decompose Phase 08a into execution-ready feature bundles'
+codex '@phase-execute execute Phase 08a from its refined phase document'
 ```
 
-Natural-language role requests are equivalent, for example: `Act as the
-feature-decomposer and decompose Phase 08a.`
+Natural-language role requests are equivalent, for example: `Act as
+phase-execute and execute Phase 08a.`
 
 ## Required Behavior
 
