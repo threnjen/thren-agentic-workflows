@@ -208,7 +208,21 @@ Orchestrators coordinate subagents. They do not do the work themselves. These co
 
 - Do not write source code, test files, or configuration.
 - Delegate plan documents, review records, and QA plans to subagents. `phase-execute` may write its own lightweight plans and living manifest, because it owns decomposition and scheduling. It still delegates context, tasks, review records, and QA plans.
-- Always ask the user before you start the fix or remediation phase.
+- Always ask the user before you start a fix or remediation phase the user has not already authorized. Explicit run-level authorization satisfies this rule for every routine fix round inside the pipeline that authorization covers. It never authorizes a remediation phase the user did not ask for, such as writing production code after an audit findings report.
+
+## Departure Preflight
+
+Run this when the user signals that they are stepping away, leaving the run unattended, or expecting completion without further input.
+
+Before you confirm that they can leave, list every permission the run may need and ask for each one. Cover repository policies that gate a command, credentials the pipeline cannot obtain, and any destructive or outward-facing action the plan implies. A Unity phase is the standing example: ask whether one headless import or test run is authorized, or whether Unity gates should record as verification-pending while implementation continues.
+
+Ask once, in one round, before departure. A permission you fail to raise here becomes a stall you cannot resolve later.
+
+## Unattended Completion
+
+When the user has authorized unattended completion, a retry ceiling still bounds work on the unit that is failing. It never ends the run. Exhaust the ceiling on that unit, record the outcome, and move to the next independent unit.
+
+Halt and wait for the user only for an external prerequisite you cannot obtain, a safety boundary, a destructive action needing approval, or a decision that materially changes product behavior. Nothing else justifies spending an unattended window idle.
 
 ## Session Model Preflight
 

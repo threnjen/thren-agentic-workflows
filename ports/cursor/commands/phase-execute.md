@@ -171,7 +171,15 @@ The committee artifact contract stays stable across the producer and consumer:
 
 The consolidator consumes every committee report. The implementer consumes the consolidated fix list.
 
-**C. Consolidated fix loop** — Keep the implementer that wrote the feature addressable across review and fixes. Pass it the consolidator fix list without requiring rediscovery. If the harness cannot resume that handle, spawn a fresh implementer with the implementation record and the same fix list, and record the fallback. Only `Blocker` and `High` findings drive a fix round. Carry `Medium` and `Low` findings to phase final review. Run at most two fix rounds and re-review only the lanes that filed the findings being fixed. After two unsuccessful rounds, rewrite the feature plan once using the fix list as evidence and rebuild the feature. If the rebuilt feature still fails, mark the feature and its dependents blocked, then continue independent features.
+**C. Consolidated fix loop** — Keep the implementer that wrote the feature addressable across review and fixes. Pass it the consolidator fix list without requiring rediscovery. If the harness cannot resume that handle, spawn a fresh implementer with the implementation record and the same fix list, and record the fallback. Only `Blocker` and `High` findings drive a fix round. Carry `Medium` and `Low` findings to phase final review. Run at most two fix rounds and re-review only the lanes that filed the findings being fixed. After two unsuccessful rounds, rewrite the feature plan once using the fix list as evidence and rebuild the feature. Tell the consolidator that this consolidation follows the rebuild, so it applies its Post-Rebuild Convergence rule.
+
+If the rebuilt feature still fails, classify the failure before you block anything. Two classes exist and they carry different consequences.
+
+An **implementation blocker** is a confirmed production defect that invalidates the contract downstream features build against, or a dependency contract that does not exist in the tree. On an implementation blocker, mark the feature and its dependents blocked, then continue independent features.
+
+A **verification blocker** is a missing test artifact, an unavailable runner, absent generated metadata such as Unity `.meta` files, or a review-evidence gap. A verification blocker never blocks a dependent feature. Record the feature as `implementation-complete, verification-pending` in the manifest with the named missing evidence, set `all-approved: no`, and continue the dependency chain.
+
+Classify as an implementation blocker whenever you cannot establish that the required production contract exists and compiles. Absent compilation evidence is not permission to assume the contract holds.
 
 **B1. Review checkpoint** — Per feature, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by that feature. Do not stage files from other feature directories. Commit with the exact message `eval: review <feature-slug>`, replacing `<feature-slug>` with that feature's directory name.
 
@@ -362,7 +370,21 @@ Orchestrators coordinate subagents. They do not do the work themselves. These co
 
 - Do not write source code, test files, or configuration.
 - Delegate plan documents, review records, and QA plans to subagents. `z-phase-execute` may write its own lightweight plans and living manifest, because it owns decomposition and scheduling. It still delegates context, tasks, review records, and QA plans.
-- Always ask the user before you start the fix or remediation phase.
+- Always ask the user before you start a fix or remediation phase the user has not already authorized. Explicit run-level authorization satisfies this rule for every routine fix round inside the pipeline that authorization covers. It never authorizes a remediation phase the user did not ask for, such as writing production code after an audit findings report.
+
+## Departure Preflight
+
+Run this when the user signals that they are stepping away, leaving the run unattended, or expecting completion without further input.
+
+Before you confirm that they can leave, list every permission the run may need and ask for each one. Cover repository policies that gate a command, credentials the pipeline cannot obtain, and any destructive or outward-facing action the plan implies. A Unity phase is the standing example: ask whether one headless import or test run is authorized, or whether Unity gates should record as verification-pending while implementation continues.
+
+Ask once, in one round, before departure. A permission you fail to raise here becomes a stall you cannot resolve later.
+
+## Unattended Completion
+
+When the user has authorized unattended completion, a retry ceiling still bounds work on the unit that is failing. It never ends the run. Exhaust the ceiling on that unit, record the outcome, and move to the next independent unit.
+
+Halt and wait for the user only for an external prerequisite you cannot obtain, a safety boundary, a destructive action needing approval, or a decision that materially changes product behavior. Nothing else justifies spending an unattended window idle.
 
 ## Session Model Preflight
 
