@@ -172,15 +172,43 @@ The committee artifact contract stays stable across the producer and consumer:
 
 The consolidator consumes every committee report. The implementer consumes the consolidated fix list.
 
-**C. Consolidated fix loop** — Keep the implementer that wrote the feature addressable across review and fixes. Pass it the consolidator fix list without requiring rediscovery. If the harness cannot resume that handle, spawn a fresh implementer with the implementation record and the same fix list, and record the fallback. Only `Blocker` and `High` findings drive a fix round. Carry `Medium` and `Low` findings to phase final review. Run at most two fix rounds and re-review only the lanes that filed the findings being fixed. After two unsuccessful rounds, rewrite the feature plan once using the fix list as evidence and rebuild the feature. Tell the consolidator that this consolidation follows the rebuild, so it applies its Post-Rebuild Convergence rule.
+**C. Consolidated fix loop** — Keep the implementer addressable across review and fixes. Pass it the fix list without requiring rediscovery.
+
+Spawn a fresh implementer only when the harness cannot resume the original. Record that fallback in the implementation record.
+
+Only `Blocker` and `High` findings classified as `production-blocker` open a fix round. A verification blocker never opens a fix round or rebuild.
+
+Carry `Medium` and `Low` findings to phase final review. Run at most two production fix rounds and re-review only filing lanes.
+
+After two unsuccessful rounds, rewrite the feature plan once using the fix list. Validate the rewritten plan before the rebuild.
+
+Ensure every RED task precedes its production change. Ensure every baseline selector reaches its intended assertion without an import or setup failure.
+
+Correct every validation failure before implementation. A correction that makes the rewritten plan executable does not count as another rewrite.
+
+After the rebuilt implementation returns, rerun the applicable review lanes. Run the post-rebuild consolidator before classifying the rebuilt feature.
+
+Tell the consolidator this is the post-rebuild pass. Give it every fresh report and require its Post-Rebuild Convergence classes.
+
+The post-rebuild consolidator is the sole authority for convergence classes. Do not rank, merge, or classify the fresh findings yourself.
+
+When that report contains a `production-blocker`, return its fix list to the rebuilt implementer. Run at most two post-rebuild production fix rounds.
+
+Re-review only the lanes affected by each repair. Re-run the post-rebuild consolidator after each repair round.
+
+Do not rewrite or rebuild a second time. After two unsuccessful repair rounds, use the final consolidated classes to determine dependency status.
 
 If the rebuilt feature still fails, classify the failure before you block anything. Two classes exist and they carry different consequences.
 
-An **implementation blocker** is a confirmed production defect that invalidates the contract downstream features build against, or a dependency contract that does not exist in the tree. On an implementation blocker, mark the feature and its dependents blocked, then continue independent features.
+An **implementation blocker** is a confirmed shipped defect that invalidates a downstream contract, or a dependency contract absent from the tree.
 
-A **verification blocker** is a missing test artifact, an unavailable runner, absent generated metadata such as Unity `.meta` files, or a review-evidence gap. A verification blocker never blocks a dependent feature. Record the feature as `implementation-complete, verification-pending` in the manifest with the named missing evidence, set `all-approved: no`, and continue the dependency chain.
+Only a `production-blocker` can block dependents. Mark that feature and its dependents blocked, then continue independent features.
 
-Classify as an implementation blocker whenever you cannot establish that the required production contract exists and compiles. Absent compilation evidence is not permission to assume the contract holds.
+A **verification blocker** is a missing test artifact, unavailable runner, absent generated metadata, or review-evidence gap. It never blocks a dependent feature.
+
+Record verification blockers as `implementation-complete, verification-pending`. Name the missing evidence, set `all-approved: no`, and continue the dependency chain.
+
+A compile command that ran and failed proves a production blocker. Missing compilation evidence is a verification blocker until an authoritative run exists.
 
 **B1. Review checkpoint** — Per feature, stage only files belonging to `dev/feature/[0N-task-name]/` and any source files modified by that feature. Do not stage files from other feature directories. Commit with the exact message `eval: review <feature-slug>`, replacing `<feature-slug>` with that feature's directory name.
 

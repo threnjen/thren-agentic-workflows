@@ -10,6 +10,9 @@ PHASE_PATH = REPO_ROOT / "source_of_truth/agents/03-phase-execute.agent.md"
 PLAN_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/feature-plan-set/SKILL.md"
 LOOP_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/implementation-pipeline-loop/SKILL.md"
 RECORD_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/implementation-record/SKILL.md"
+CONSOLIDATOR_PATH = (
+    REPO_ROOT / "source_of_truth/agents/03m-finding-consolidator.agent.md"
+)
 
 PER_FEATURE_AGENTS = {
     "Feature - Review and Fix",
@@ -166,16 +169,36 @@ def _predicted_boundary_agents(
 
 FIX_LOOP_CONTRACT = (
     "Run the four committee reviewers concurrently at `medium`",
-    "Only `Blocker` and `High` findings open a fix round",
+    "Only `Blocker` and `High` findings classified as `production-blocker` open a fix round",
     "Record `Medium` and `Low` findings as carry-forward evidence",
-    "Run at most two fix rounds",
+    "Run at most two production fix rounds",
     "rewrite the feature plan once",
-    "mark it and its dependents blocked",
+    "Run the post-rebuild consolidator before classifying the rebuilt feature",
+    "Only a `production-blocker` can block dependents",
 )
 
 
 def _missing_fix_loop_contract(text: str) -> set[str]:
     return {phrase for phrase in FIX_LOOP_CONTRACT if phrase not in text}
+
+
+POST_REBUILD_CONTRACT = (
+    "A verification blocker never opens a fix round or rebuild",
+    "Validate the rewritten plan before the rebuild",
+    "Run the post-rebuild consolidator before classifying the rebuilt feature",
+    "The post-rebuild consolidator is the sole authority for convergence classes",
+    "Run at most two post-rebuild production fix rounds",
+    "Re-run the post-rebuild consolidator after each repair round",
+    "Do not rewrite or rebuild a second time",
+    "Only a `production-blocker` can block dependents",
+)
+
+EVIDENCE_CLASSIFICATION_CONTRACT = (
+    "The evidence-only rule applies on every consolidation",
+    "historical RED/GREEN artifact",
+    "verification-blocker",
+    "Medium",
+)
 
 
 # The committee-miss record left this contract with the audit bookend: it
@@ -306,6 +329,22 @@ def test_fix_loop_and_record_contracts_are_present_and_load_bearing() -> None:
         "Carry-forward findings",
     ):
         assert field in record
+
+
+def test_post_rebuild_convergence_prevents_evidence_only_deadlock() -> None:
+    phase = _read(PHASE_PATH)
+    loop = _read(LOOP_SKILL_PATH)
+    consolidator = _read(CONSOLIDATOR_PATH)
+
+    for phrase in POST_REBUILD_CONTRACT:
+        assert phrase in phase
+        assert phrase in loop
+
+    for phrase in EVIDENCE_CLASSIFICATION_CONTRACT:
+        assert phrase in consolidator
+
+    assert "missing test artifact" in phase
+    assert "missing test artifact" in loop
 
 
 def test_phase_close_backstop_and_committee_miss_are_load_bearing() -> None:

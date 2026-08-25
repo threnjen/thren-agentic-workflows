@@ -339,7 +339,12 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
                 "Blocker",
                 "`Blocker` and `High` findings",
                 "carry-forward",
-                "two fix rounds",
+                "two production fix rounds",
+                "Run the post-rebuild consolidator before classifying the rebuilt feature",
+                "A verification blocker never opens a fix round or rebuild",
+                "Run at most two post-rebuild production fix rounds",
+                "Do not rewrite or rebuild a second time",
+                "Only a `production-blocker` can block dependents",
             ),
         ),
     )

@@ -40,7 +40,27 @@ When a phase caller supplies review trigger tables, keep the implementer address
 
 Pass the consolidated fix list to the implementer that wrote the feature. Do not make that implementer rediscover its own work. If the harness cannot resume the handle, spawn a fresh implementer with the implementation record and the same fix list. Record that fallback in the implementation record.
 
-Only `Blocker` and `High` findings open a fix round. Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two fix rounds. Re-review only the lanes that filed the findings being fixed. After two unsuccessful rounds, rewrite the feature plan once using the fix list as evidence and rebuild the feature. If the rebuilt feature still fails, mark it and its dependents blocked, then continue independent features.
+Only `Blocker` and `High` findings classified as `production-blocker` open a fix round. A verification blocker never opens a fix round or rebuild.
+
+Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two production fix rounds and re-review only filing lanes.
+
+After two unsuccessful rounds, rewrite the feature plan once using the fix list. Validate the rewritten plan before the rebuild.
+
+Ensure every RED task precedes its production change. Ensure every baseline selector reaches its intended assertion without an import or setup failure.
+
+Correct every validation failure before implementation. A correction that makes the rewritten plan executable does not count as another rewrite.
+
+After the rebuilt implementation returns, rerun the applicable review lanes. Run the post-rebuild consolidator before classifying the rebuilt feature.
+
+The post-rebuild consolidator is the sole authority for convergence classes. The orchestrator must not rank or merge the fresh findings itself.
+
+When that report contains a `production-blocker`, return its fix list to the rebuilt implementer. Run at most two post-rebuild production fix rounds.
+
+Re-review only the lanes affected by each repair. Re-run the post-rebuild consolidator after each repair round.
+
+Do not rewrite or rebuild a second time. After two unsuccessful repair rounds, use the final consolidated classes to determine dependency status.
+
+Only a `production-blocker` can block dependents. A missing test artifact or unavailable runner leaves implementation complete with verification pending.
 
 ### Test Execution Gate
 

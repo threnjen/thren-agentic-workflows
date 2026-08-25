@@ -14,16 +14,22 @@ Write `dev/feature/[0N-task-name]/03m-finding-consolidator-fix-list.md`.
 
 Record each fix with `id`, `severity`, `lane`, `finding`, `evidence`, `reviewers`, `action`, and `status: open`.
 
-## Post-Rebuild Convergence
+## Finding Classes
 
-The caller tells you when a consolidation runs after the bounded rebuild. On that run, assign every remaining finding exactly one class, and record the class beside its severity:
+Assign every finding exactly one class and record it beside the severity:
 
 - `production-blocker` — a confirmed defect in shipped behavior, with evidence a reader can check.
-- `verification-blocker` — the defect is unproven because evidence is missing: no test artifact, no available runner, absent generated metadata, or an unread review input.
+- `verification-blocker` — evidence is missing: no artifact, unavailable runner, absent generated metadata, or unread review input.
 - `scope-invalid` — the finding targets code or behavior outside this feature's plan.
 - `carry-forward` — real, in scope, and deferrable to phase final review.
 
-Two limits bind you on that run. Do not keep a finding at `Blocker` or `High` solely because execution evidence is unavailable; classify it `verification-blocker` and drop its severity to `Medium`. Do not file a new `Blocker` or `High` unless you cite either a production defect or an acceptance criterion that can actually fail as written.
+The evidence-only rule applies on every consolidation. A missing test artifact, historical RED/GREEN artifact, or unavailable runner is a `verification-blocker` at `Medium`.
+
+## Post-Rebuild Convergence
+
+The caller tells you when consolidation follows the bounded rebuild. On that run, classify every remaining finding from the fresh review reports.
+
+Do not file a new `Blocker` or `High` unless evidence proves a shipped production defect. An acceptance criterion that cannot fail as written is `scope-invalid`, not a blocker.
 
 ## Auto-Loaded Instructions
 
