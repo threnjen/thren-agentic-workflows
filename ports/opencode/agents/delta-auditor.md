@@ -236,12 +236,13 @@ Halt and wait for the user only for an external prerequisite you cannot obtain, 
 
 ## Session Model Preflight
 
-Before an orchestrator selects work that uses tiered child models, run one session model preflight. Reuse
-`load_model_routing()` as the only routing loader. Do not parse the routing JSON again or persist a run override.
+Before an orchestrator selects work that uses tiered child models, run one session model preflight. Read each tier's
+requested route from the installed agent definitions in the working repository. Never fetch a routing table from
+another repository, and never persist a run override.
 
 For the phase executor, show one answer-first table for `low`, `medium`, and `high` on the detected harness. Each tier
 record has four distinct fields: `requested_model`, `user_override`, `resolved_route`, and `resolution_status`.
-Accept a tier override for the current run only. Keep it in memory and leave the source routing file byte-identical.
+Accept a tier override for the current run only. Keep it in memory and change no file on disk.
 
 Use exactly three disjoint resolution statuses:
 

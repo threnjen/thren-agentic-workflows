@@ -76,7 +76,7 @@ Deliver one phase workflow that keeps decomposition quality high, prevents stale
 - Decide the tier rule by the agent's own invocability. A dual-use agent that a pipeline spawns and a user can also invoke carries no tier.
 - Add `source_of_truth/config/model-routing.json` as the central harness-routing configuration.
 - Render harness-specific model fields from that configuration without placing exact model IDs in source agent definitions.
-- Display intended model routes at session start and accept user overrides by tier for the current run only.
+- Read each tier's intended route at session start from the installed agent definitions in the working repository, so a deployed pipeline needs no access to this repository at runtime. Display those routes and accept user overrides by tier for the current run only.
 - Report `enforced`, `fallback`, or `unverified` status for every resolved tier route.
 
 **Resumption**

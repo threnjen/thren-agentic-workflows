@@ -171,7 +171,7 @@ def test_phase_consumers_resolve_producer_contracts() -> None:
     routing = propagator.load_model_routing()
     assert set(routing) == set(propagator.MODEL_TIERS)
     assert all(tier in phase for tier in propagator.MODEL_TIERS)
-    assert "load_model_routing()" in phase
+    assert "load_model_routing()" not in phase
 
 
 def test_phase_spawn_roster_and_frontmatter_references_resolve() -> None:

@@ -32,23 +32,24 @@ Generate QA documentation by default for every phase execution. Do not ask the u
 ### Session Model Preflight
 
 Run this preflight after reading the phase input and before selecting or expanding any feature. Detect the current
-harness, call feature 02's `load_model_routing()` loader, and validate every `low`, `medium`, and `high` route before
-execution begins. The preflight reads the loader result. It does not parse `model-routing.json` a second time.
+harness. Read the requested route for `low`, `medium`, and `high` from the installed agent definitions themselves --
+each tiered agent carries its model in its own frontmatter. Validate all three routes before execution begins. Never
+reach outside the working repository for a routing table, and never run a routing loader script.
 
 Accept one optional override for each tier for this run. Accept `low`, `medium`, and `high` overrides independently.
-Validate each override as a model identifier before proceeding. Keep overrides in an in-memory copy of the loader
-result. Never write an override to `source_of_truth/config/model-routing.json`, an environment variable, a generated
-asset, or any persistent session setting. An omitted override still receives a resolution status.
+Validate each override as a model identifier before proceeding. Keep every override in memory for the current run.
+Never write an override to a configuration file, an environment variable, a generated asset, or any persistent session
+setting. An omitted override still receives a resolution status.
 
 Display the answer first in one table with exactly one row for each tier and these four record fields:
 
 | Tier | `requested_model` | `user_override` | `resolved_route` | `resolution_status` |
 |---|---|---|---|---|
-| `low` | loader value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
-| `medium` | loader value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
-| `high` | loader value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
+| `low` | agent frontmatter value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
+| `medium` | agent frontmatter value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
+| `high` | agent frontmatter value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
 
-Treat the tier as the record key. Keep the four fields distinct. `requested_model` is the central route,
+Treat the tier as the record key. Keep the four fields distinct. `requested_model` is the route the agent definition declares,
 `user_override` is the optional run-only replacement, `resolved_route` is what the harness reports, and
 `resolution_status` describes the evidence for that report.
 

@@ -109,16 +109,17 @@ def _manifest_status_errors(text: str) -> set[str]:
     return errors
 
 
-def test_preflight_runs_before_feature_selection_and_reuses_the_loader() -> None:
+def test_preflight_runs_before_feature_selection_without_source_repo_coupling() -> None:
     phase = _read(PHASE_PATH)
     preflight_start = phase.index("### Session Model Preflight")
     execution_start = phase.index("## Execution Pipeline")
     selection = phase.index("Execute one feature at a time")
 
     assert preflight_start < execution_start < selection
-    assert "load_model_routing()" in phase
+    assert "load_model_routing()" not in phase
     assert "json.loads" not in phase
-    assert "model-routing.json" in phase
+    assert "model-routing.json" not in phase
+    assert "source_of_truth/" not in phase
     assert all(f"`{tier}`" in phase for tier in TIERS)
 
 
@@ -222,7 +223,8 @@ def test_preflight_conventions_are_shared_and_do_not_expose_credentials() -> Non
     assert "user_override" in combined
     assert "resolved_route" in combined
     assert "resolution_status" in combined
-    assert "source_of_truth/config/model-routing.json" in phase
+    assert "source_of_truth/" not in combined
+    assert "load_model_routing()" not in combined
     assert not re.search(
         r"(?<![A-Za-z0-9])(?:sk-[A-Za-z0-9]|ghp_[A-Za-z0-9]|Bearer\s+\S+|api[_-]?key\s*[:=])",
         combined,

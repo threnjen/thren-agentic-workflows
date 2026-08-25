@@ -31,7 +31,7 @@ Record `PASS`, `FAIL`, or `UNVERIFIED` plus the observed evidence and the observ
    Record the Copilot CLI version and confirm the CLI output or `gen_ai.response.model` telemetry identifies the child model. Record `unverified` for cloud surfaces without equivalent runtime evidence.
 
 8. Repeat preflight with one override for each tier.
-   Record the harness version and confirm each override changes only the current run while `source_of_truth/config/model-routing.json` remains byte-identical.
+   Record the harness version and confirm each override changes only the current run and writes to no file on disk. Confirm with `git status` that the working tree is unchanged after the preflight.
 
 9. Run one Markdown-only feature through the committee loop.
    Record the harness version and confirm the trigger table selects the expected lanes, four committee reports return, the consolidator writes one fix list, and the implementer receives that list.
