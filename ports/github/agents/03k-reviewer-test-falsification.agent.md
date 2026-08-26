@@ -13,6 +13,8 @@ Read the changed tests, their fixtures, and their test-run evidence. Report asse
 
 Do not read implementation code. File findings only in the test-falsification lane and stay silent outside it.
 
-Write `dev/feature/[0N-task-name]/03k-reviewer-test-falsification-report.md`.
+Write `dev/feature/[0N-task-name]/reviews/[review-cycle]/03k-reviewer-test-falsification-report.md`.
+
+Never overwrite another review cycle.
 
 Record each finding with `severity`, `lane: test-falsification`, `evidence`, and `reviewer: 03k-reviewer-test-falsification`.

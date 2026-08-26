@@ -48,7 +48,8 @@ REPORT_PATHS = {
     "03j-reviewer-blast-radius": "03j-reviewer-blast-radius-report.md",
     "03k-reviewer-test-falsification": "03k-reviewer-test-falsification-report.md",
     "03l-reviewer-plan-blind": "03l-reviewer-plan-blind-report.md",
-    "03m-finding-consolidator": "03m-finding-consolidator-fix-list.md",
+    "03m-finding-consolidator": "03m-finding-consolidator-candidates.md",
+    "03n-finding-validator": "03n-finding-validator-fix-list.md",
 }
 FINDING_FIELDS = ("severity", "lane", "evidence", "reviewer")
 FIX_LIST_FIELDS = (
@@ -162,10 +163,10 @@ def test_phase_consumers_resolve_producer_contracts() -> None:
         body = agents[slug].body
         assert not _missing_tokens(body, FINDING_FIELDS)
 
-    consolidator = agents["03m-finding-consolidator"].body
-    assert not _missing_tokens(consolidator, FIX_LIST_FIELDS)
-    assert "consolidated fix list" in loop_skill
-    assert "consolidated fix list" in phase
+    validator = agents["03n-finding-validator"].body
+    assert not _missing_tokens(validator, FIX_LIST_FIELDS)
+    assert "final fix list" in loop_skill
+    assert "final fix list" in phase
     assert "Review findings" in record_skill
 
     routing = propagator.load_model_routing()

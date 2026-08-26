@@ -122,7 +122,7 @@ Evaluate these tables before each review boundary. Run exactly the agents whose 
 | Review agent | Entry condition |
 |---|---|
 | 03c-feature-review-and-fix | Always |
-| 03j-reviewer-blast-radius | The diff changes something another file imports or references |
+| 03j-reviewer-blast-radius | Always |
 | 03k-reviewer-test-falsification | Always |
 | 03l-reviewer-plan-blind | Always |
 | 04h-cleanliness-auditor | The diff changes a source or test file |
@@ -131,7 +131,7 @@ Evaluate these tables before each review boundary. Run exactly the agents whose 
 | 03h-unity-reviewer | `is-unity-project: yes` and the diff changes a `.cs` file under `Assets/` |
 | 03g-unity-visual-verification | The selected lightweight plan has `visual_acceptance: yes` |
 
-Eight per-feature conditions use changed-file evidence. The 03g-unity-visual-verification is the one plan-level exception because its subject is on-screen acceptance criteria. Do not replace that flag with a file-pattern proxy.
+Five specialist conditions use changed-file evidence. The 03g-unity-visual-verification uses the plan's on-screen acceptance criteria. Do not replace that flag with a file-pattern proxy.
 
 ##### Boundary triggers
 
@@ -157,32 +157,41 @@ Run these stages for one selected feature before selecting another. The dependen
 
 **B. Review and trigger resolution** — Only after the implementer for that feature has returned.
 
-Materialize the feature's changed-file list and selected plan metadata. Resolve the per-feature table. Spawn the four committee reviewers concurrently at `medium`, wait for all four returns, and spawn every conditional specialist whose row fires. Do not treat a non-firing specialist as an incomplete review.
+Create the next immutable `review-cycle` directory under `dev/feature/[0N-task-name]/reviews/`. Use `initial-01`, `fix-01`, `rebuild-01`, then `post-rebuild-01`, `post-rebuild-02`, and so on. Never overwrite a completed cycle.
 
-Spawn **03c-feature-review-and-fix** as Reviewer A with the plan and diff for plan conformance. Spawn **03j-reviewer-blast-radius** with the diff and outward references. Spawn **03k-reviewer-test-falsification** with the test files only. Spawn **03l-reviewer-plan-blind** with changed code and tests only. Do not pass the feature plan, context, tasks, or a plan-derived summary to Reviewer D.
+Materialize the feature's changed-file list and selected plan metadata. Resolve the per-feature table. Spawn Reviewers A through D concurrently at `medium`. Wait for all four reports. Spawn every conditional specialist whose row fires. Do not treat a non-firing specialist as incomplete.
+
+Assign each reviewer its report path in the current review cycle. Spawn **03c-feature-review-and-fix** as Reviewer A with the plan and diff for plan conformance. Spawn **03j-reviewer-blast-radius** with the diff and outward references. Spawn **03k-reviewer-test-falsification** with the test files only. Spawn **03l-reviewer-plan-blind** with changed code and tests only. Do not pass the feature plan, context, tasks, or a plan-derived summary to Reviewer D.
 
 For a firing Unity row, spawn **03h-unity-reviewer**. For a firing visual row, spawn **03g-unity-visual-verification** using the selected plan flag and phase visual acceptance criteria. For the other firing specialist rows, spawn **04h-cleanliness-auditor**, **03e-diff-security-scan**, or **04e-dependency-auditor** with the scope named by its row.
 
-After every committee report returns, spawn **03m-finding-consolidator** with all four committee report paths. It writes one deduplicated, severity-ranked fix list and adjudicates disagreements. The orchestrator does not merge or rank findings.
+After every committee report returns, spawn **03m-finding-consolidator** with all four report paths. It writes a deduplicated candidate list. It does not validate findings.
+
+After the candidate list exists, spawn **03n-finding-validator** with the candidate list, raw reports, validated plan, accepted contracts, changed code, tests, and run evidence. It proves or rejects every Critical, Blocker, and High candidate. It writes the validation report and final fix list. The orchestrator does not merge, validate, or rank findings.
 
 The committee artifact contract stays stable across the producer and consumer:
 
 | Lane | Report path | Finding fields |
 |---|---|---|
+| Reviewer A | `reviews/[review-cycle]/03c-feature-review-and-fix-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
 | Reviewer B | `03j-reviewer-blast-radius-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
 | Reviewer C | `03k-reviewer-test-falsification-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
 | Reviewer D | `03l-reviewer-plan-blind-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
-| Consolidator | `03m-finding-consolidator-fix-list.md` | `id`, `severity`, `lane`, `finding`, `evidence`, `reviewers`, `action`, `status` |
+| Consolidator | `03m-finding-consolidator-candidates.md` | `candidate_id`, `severity`, `lane`, `finding`, `evidence`, `reviewers` |
+| Validator | `03n-finding-validator-validation.md` | `id`, `validation_status`, `reproduction`, `production_trace` |
+| Validated fix list | `03n-finding-validator-fix-list.md` | `id`, `severity`, `finding`, `action`, `status` |
 
-The consolidator consumes every committee report. The implementer consumes the consolidated fix list.
+Every path after Reviewer A is relative to `reviews/[review-cycle]/`. Commit every cycle at the review checkpoint. The validator consumes the candidate list. The implementer consumes only the validated fix list.
 
 **C. Consolidated fix loop** — Keep the implementer addressable across review and fixes. Pass it the fix list without requiring rediscovery.
 
 Spawn a fresh implementer only when the harness cannot resume the original. Record that fallback in the implementation record.
 
-Only `Critical`, `Blocker`, and `High` findings classified as `production-blocker` open a fix round. A verification blocker never opens a fix round or rebuild.
+Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker. It never opens a fix round or rebuild.
 
-Carry `Medium` and `Low` findings to phase final review. Run at most two production fix rounds and re-review only filing lanes.
+A verification blocker never opens a fix round or rebuild.
+
+Carry `Medium` and `Low` findings to phase final review. Run at most two production fix rounds. After each repair, rerun Reviewers A through D, consolidation, and validation in a new review cycle.
 
 After two unsuccessful rounds, rewrite the feature plan once using the fix list. Validate the rewritten plan before the rebuild.
 
@@ -190,11 +199,11 @@ Ensure every RED task precedes its production change. Ensure every baseline sele
 
 Correct every validation failure before implementation. A correction that makes the rewritten plan executable does not count as another rewrite.
 
-After the rebuilt implementation returns, rerun the applicable review lanes. Run the post-rebuild consolidator before classifying the rebuilt feature.
+After the rebuilt implementation returns, rerun Reviewers A through D. Run post-rebuild consolidation and validation before classifying the rebuilt feature.
 
-Tell the consolidator this is the post-rebuild pass. Give it every fresh report and require its Post-Rebuild Convergence classes.
+Tell the validator this is the post-rebuild pass. Give it the fresh candidate list, raw reports, validated plan, accepted contracts, changed code, tests, and run evidence.
 
-The post-rebuild consolidator is the sole authority for convergence classes. Do not rank, merge, or classify the fresh findings yourself.
+The post-rebuild validator is the sole authority for convergence classes. Do not rank, merge, validate, or classify the fresh findings yourself.
 
 On the first full post-rebuild consolidation, freeze and record a finite supported-path matrix from the validated plan and accepted contracts.
 
@@ -210,7 +219,7 @@ Escalate when a reviewer identifies a new requirement or supported path outside 
 
 Otherwise, return the failing cells to the rebuilt implementer and continue targeted repairs while the failing cell count strictly decreases.
 
-Re-review only the lanes affected by each repair. Re-run the post-rebuild consolidator after each repair round.
+Re-run Reviewers A through D, post-rebuild consolidation and validation after each repair round. Store each pass in a new review cycle.
 
 Do not rewrite or rebuild a second time. Use the matrix decision to determine dependency status.
 

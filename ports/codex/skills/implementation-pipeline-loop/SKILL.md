@@ -35,13 +35,17 @@ After the subagent returns:
 
 ### Committee Review and Fix Loop
 
-When a phase caller supplies review trigger tables, keep the implementer addressable from Step A through review and fixes. Resolve the tables against the changed-file list and plan metadata. Run every committee lane whose condition holds. Run the four committee reviewers concurrently at `medium`, wait for every return, then spawn the consolidator with every committee report path. The consolidator writes one deduplicated, severity-ranked fix list and adjudicates disagreements. A non-firing lane is complete evidence, not a missing reviewer.
+When a phase caller supplies review trigger tables, keep the implementer addressable from Step A through review and fixes. Resolve the tables against the changed-file list and plan metadata. Run Reviewers A through D concurrently at `medium`. Wait for every report. Store each pass in a new `reviews/[review-cycle]/` directory and never overwrite a completed cycle.
 
-Pass the consolidated fix list to the implementer that wrote the feature. Do not make that implementer rediscover its own work. If the harness cannot resume the handle, spawn a fresh implementer with the implementation record and the same fix list. Record that fallback in the implementation record.
+Spawn `03m Finding Consolidator` with all four report paths. It writes a deduplicated candidate list. Then spawn `03n Finding Validator` with that list, the raw reports, validated plan, accepted contracts, changed code, tests, and run evidence. The validator proves or rejects every serious candidate and writes the final fix list.
 
-Only `Critical`, `Blocker`, and `High` findings classified as `production-blocker` open a fix round. A verification blocker never opens a fix round or rebuild.
+Pass only confirmed findings to the implementer that wrote the feature. Do not make that implementer rediscover its own work. If the harness cannot resume the handle, spawn a fresh implementer with the implementation record and the same fix list. Record that fallback in the implementation record.
 
-Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two production fix rounds and re-review only filing lanes.
+Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker. It never opens a fix round or rebuild.
+
+A verification blocker never opens a fix round or rebuild.
+
+Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two production fix rounds. After each repair, rerun Reviewers A through D, consolidation, and validation in a new review cycle.
 
 After two unsuccessful rounds, rewrite the feature plan once using the fix list. Validate the rewritten plan before the rebuild.
 
@@ -49,9 +53,9 @@ Ensure every RED task precedes its production change. Ensure every baseline sele
 
 Correct every validation failure before implementation. A correction that makes the rewritten plan executable does not count as another rewrite.
 
-After the rebuilt implementation returns, rerun the applicable review lanes. Run the post-rebuild consolidator before classifying the rebuilt feature.
+After the rebuilt implementation returns, rerun Reviewers A through D. Run post-rebuild consolidation and validation before classifying the rebuilt feature.
 
-The post-rebuild consolidator is the sole authority for convergence classes. The orchestrator must not rank or merge the fresh findings itself.
+The post-rebuild validator is the sole authority for convergence classes. The orchestrator must not rank, merge, validate, or classify the fresh findings itself.
 
 On the first full post-rebuild consolidation, freeze and record a finite supported-path matrix from the validated plan and accepted contracts.
 
@@ -67,7 +71,7 @@ Escalate when a reviewer identifies a new requirement or supported path outside 
 
 Otherwise, return the failing cells to the rebuilt implementer and continue targeted repairs while the failing cell count strictly decreases.
 
-Re-review only the lanes affected by each repair. Re-run the post-rebuild consolidator after each repair round.
+Re-run Reviewers A through D, post-rebuild consolidation and validation after each repair round. Store every pass in a new review cycle.
 
 Do not rewrite or rebuild a second time. Use the matrix decision to determine dependency status.
 

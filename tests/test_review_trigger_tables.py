@@ -13,6 +13,7 @@ RECORD_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/implementation-record/SK
 CONSOLIDATOR_PATH = (
     REPO_ROOT / "source_of_truth/agents/03m-finding-consolidator.agent.md"
 )
+VALIDATOR_PATH = REPO_ROOT / "source_of_truth/agents/03n-finding-validator.agent.md"
 
 PER_FEATURE_AGENTS = {
     "Feature - Review and Fix",
@@ -168,12 +169,12 @@ def _predicted_boundary_agents(
 
 
 FIX_LOOP_CONTRACT = (
-    "Run the four committee reviewers concurrently at `medium`",
-    "Only `Critical`, `Blocker`, and `High` findings classified as `production-blocker` open a fix round",
+    "Run Reviewers A through D concurrently at `medium`",
+    "Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round",
     "Record `Medium` and `Low` findings as carry-forward evidence",
     "Run at most two production fix rounds",
     "rewrite the feature plan once",
-    "Run the post-rebuild consolidator before classifying the rebuilt feature",
+    "Run post-rebuild consolidation and validation before classifying the rebuilt feature",
     "Only a `production-blocker` can block dependents",
 )
 
@@ -185,14 +186,14 @@ def _missing_fix_loop_contract(text: str) -> set[str]:
 POST_REBUILD_CONTRACT = (
     "A verification blocker never opens a fix round or rebuild",
     "Validate the rewritten plan before the rebuild",
-    "Run the post-rebuild consolidator before classifying the rebuilt feature",
-    "The post-rebuild consolidator is the sole authority for convergence classes",
+    "Run post-rebuild consolidation and validation before classifying the rebuilt feature",
+    "The post-rebuild validator is the sole authority for convergence classes",
     "freeze and record a finite supported-path matrix",
     "Pass when no `Critical`, `Blocker`, or `High` production cells remain",
     "Block when one repair cycle closes no failing production cells",
     "Escalate when a reviewer identifies a new requirement or supported path outside the frozen matrix",
     "must not expand the frozen matrix silently",
-    "Re-run the post-rebuild consolidator after each repair round",
+    "post-rebuild consolidation and validation after each repair round",
     "Do not rewrite or rebuild a second time",
     "Only a `production-blocker` can block dependents",
 )
@@ -211,7 +212,7 @@ POST_REBUILD_MATRIX_CONTRACT = (
 )
 
 EVIDENCE_CLASSIFICATION_CONTRACT = (
-    "The evidence-only rule applies on every consolidation",
+    "The evidence-only rule applies on every validation",
     "historical RED/GREEN artifact",
     "verification-blocker",
     "Medium",
@@ -249,6 +250,7 @@ def test_changed_file_scenarios_resolve_the_predicted_agent_set() -> None:
     text = _read(PHASE_PATH)
     always = {
         "Feature - Review and Fix",
+        "03j Reviewer - Blast Radius",
         "03k Reviewer - Test Falsification",
         "03l Reviewer - Plan Blind",
     }
@@ -258,7 +260,7 @@ def test_changed_file_scenarios_resolve_the_predicted_agent_set() -> None:
             "imported symbol",
             ["src/core.py"],
             {"imports_reference": True},
-            always | {"03j Reviewer - Blast Radius", "04h Cleanliness Auditor"},
+            always | {"04h Cleanliness Auditor"},
         ),
         ("lockfile", ["uv.lock"], {}, always | {"04e Dependency Auditor"}),
         (
@@ -317,7 +319,7 @@ def test_boundary_events_resolve_the_predicted_agent_set() -> None:
 
 def test_trigger_table_guard_fails_when_a_row_is_removed() -> None:
     original = _read(PHASE_PATH)
-    row = "| 03j Reviewer - Blast Radius | The diff changes something another file imports or references |"
+    row = "| 03j Reviewer - Blast Radius | Always |"
     assert row in original
     mutated = original.replace(row, "", 1)
     assert "per-feature roster" in _table_coverage_errors(mutated)
@@ -352,19 +354,43 @@ def test_post_rebuild_convergence_prevents_evidence_only_deadlock() -> None:
     phase = _read(PHASE_PATH)
     loop = _read(LOOP_SKILL_PATH)
     consolidator = _read(CONSOLIDATOR_PATH)
+    validator = _read(VALIDATOR_PATH)
 
     for phrase in POST_REBUILD_CONTRACT:
         assert phrase in phase
         assert phrase in loop
 
     for phrase in EVIDENCE_CLASSIFICATION_CONTRACT:
-        assert phrase in consolidator
+        assert phrase in validator
 
     for phrase in POST_REBUILD_MATRIX_CONTRACT:
-        assert phrase in consolidator
+        assert phrase in validator
 
     assert "missing test artifact" in phase
     assert "missing test artifact" in loop
+
+
+def test_serious_findings_are_validated_before_repair() -> None:
+    phase = _read(PHASE_PATH)
+    loop = _read(LOOP_SKILL_PATH)
+    validator = _read(VALIDATOR_PATH)
+
+    for text in (phase, loop):
+        assert "candidate list" in text
+        assert "03n Finding Validator" in text
+        assert "Only independently confirmed" in text
+        assert "not-proven" in text
+
+    for phrase in (
+        "accepted supported path",
+        "reproduce",
+        "trace",
+        "confirmed",
+        "rejected",
+        "scope-invalid",
+        "not-proven",
+    ):
+        assert phrase in validator
 
 
 def test_phase_close_backstop_and_committee_miss_are_load_bearing() -> None:

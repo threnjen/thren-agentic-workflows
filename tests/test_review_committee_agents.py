@@ -20,6 +20,7 @@ COMMITTEE_SLUGS = (
     "03k-reviewer-test-falsification",
     "03l-reviewer-plan-blind",
     "03m-finding-consolidator",
+    "03n-finding-validator",
 )
 NEW_REVIEWER_SLUGS = COMMITTEE_SLUGS[1:]
 
@@ -29,6 +30,7 @@ LANE_PROHIBITIONS = {
     "03k-reviewer-test-falsification": "Do not read implementation code.",
     "03l-reviewer-plan-blind": "Do not open or read the feature plan",
     "03m-finding-consolidator": "You are not the readiness synthesizer.",
+    "03n-finding-validator": "Do not repair confirmed findings.",
 }
 
 
@@ -66,7 +68,8 @@ def test_committee_reports_and_fix_list_have_stable_paths_and_fields() -> None:
         "03j-reviewer-blast-radius": "03j-reviewer-blast-radius-report.md",
         "03k-reviewer-test-falsification": "03k-reviewer-test-falsification-report.md",
         "03l-reviewer-plan-blind": "03l-reviewer-plan-blind-report.md",
-        "03m-finding-consolidator": "03m-finding-consolidator-fix-list.md",
+        "03m-finding-consolidator": "03m-finding-consolidator-candidates.md",
+        "03n-finding-validator": "03n-finding-validator-fix-list.md",
     }
     expected_fields = {
         "03j-reviewer-blast-radius": "lane: blast-radius",
@@ -76,7 +79,7 @@ def test_committee_reports_and_fix_list_have_stable_paths_and_fields() -> None:
 
     for slug, filename in expected_paths.items():
         body = agents[slug].body
-        assert f"dev/feature/[0N-task-name]/{filename}" in body
+        assert f"dev/feature/[0N-task-name]/reviews/[review-cycle]/{filename}" in body
         if slug in expected_fields:
             assert expected_fields[slug] in body
             assert "reviewer:" in body
@@ -84,12 +87,35 @@ def test_committee_reports_and_fix_list_have_stable_paths_and_fields() -> None:
             assert "evidence" in body
 
     consolidator = agents["03m-finding-consolidator"].body
-    for field in ("id", "severity", "lane", "finding", "evidence", "reviewers", "action", "status: open"):
+    for field in ("candidate_id", "severity", "lane", "finding", "evidence", "reviewers"):
         assert field in consolidator
+
+    validator = agents["03n-finding-validator"].body
+    for field in (
+        "id",
+        "severity",
+        "lane",
+        "finding",
+        "evidence",
+        "reviewers",
+        "validation_status",
+        "reproduction",
+        "action",
+        "status: open",
+    ):
+        assert field in validator
+
+
+def test_review_evidence_uses_immutable_cycle_directories() -> None:
+    agents = _agents()
+    for slug in COMMITTEE_SLUGS[1:]:
+        body = agents[slug].body
+        assert "reviews/[review-cycle]/" in body
+        assert "Never overwrite" in body
 
 
 def test_new_committee_agents_use_reserved_post_renumber_identifiers() -> None:
-    actual = {path.name.removesuffix(".agent.md") for path in AGENTS_DIR.glob("03[j-m]-*.agent.md")}
+    actual = {path.name.removesuffix(".agent.md") for path in AGENTS_DIR.glob("03[j-n]-*.agent.md")}
     assert actual == set(NEW_REVIEWER_SLUGS)
     for slug in NEW_REVIEWER_SLUGS:
         assert not slug.startswith(("04", "05"))
