@@ -31,6 +31,20 @@ The caller tells you when consolidation follows the bounded rebuild. On that run
 
 Do not file a new `Blocker` or `High` unless evidence proves a shipped production defect. An acceptance criterion that cannot fail as written is `scope-invalid`, not a blocker.
 
+On the first full post-rebuild consolidation, freeze the finite supported-path matrix from the validated plan and accepted contracts.
+
+Record each cell with `cell_id`, `supported_path`, `invariant`, `status`, `severity`, `lineage`, and `evidence`.
+
+On later consolidations, update the frozen cells from fresh evidence. Do not add a path or requirement silently.
+
+Return `Pass` when no Critical, Blocker, or High production cell remains.
+
+Return `Block` when one cycle closes no failing cell, increases the high-severity count, or repeats one cell twice.
+
+Return `Escalate` when a finding requires a path or requirement outside the frozen matrix. The user owns scope expansion.
+
+Otherwise return `Continue` with the remaining failing cells and the strict decrease since the prior consolidation.
+
 ## Auto-Loaded Instructions
 
 ### Dev Task Folder

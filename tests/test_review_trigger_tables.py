@@ -169,7 +169,7 @@ def _predicted_boundary_agents(
 
 FIX_LOOP_CONTRACT = (
     "Run the four committee reviewers concurrently at `medium`",
-    "Only `Blocker` and `High` findings classified as `production-blocker` open a fix round",
+    "Only `Critical`, `Blocker`, and `High` findings classified as `production-blocker` open a fix round",
     "Record `Medium` and `Low` findings as carry-forward evidence",
     "Run at most two production fix rounds",
     "rewrite the feature plan once",
@@ -187,10 +187,27 @@ POST_REBUILD_CONTRACT = (
     "Validate the rewritten plan before the rebuild",
     "Run the post-rebuild consolidator before classifying the rebuilt feature",
     "The post-rebuild consolidator is the sole authority for convergence classes",
-    "Run at most two post-rebuild production fix rounds",
+    "freeze and record a finite supported-path matrix",
+    "Pass when no `Critical`, `Blocker`, or `High` production cells remain",
+    "Block when one repair cycle closes no failing production cells",
+    "Escalate when a reviewer identifies a new requirement or supported path outside the frozen matrix",
+    "must not expand the frozen matrix silently",
     "Re-run the post-rebuild consolidator after each repair round",
     "Do not rewrite or rebuild a second time",
     "Only a `production-blocker` can block dependents",
+)
+
+POST_REBUILD_MATRIX_CONTRACT = (
+    "cell_id",
+    "supported_path",
+    "invariant",
+    "status",
+    "severity",
+    "lineage",
+    "evidence",
+    "Pass",
+    "Block",
+    "Escalate",
 )
 
 EVIDENCE_CLASSIFICATION_CONTRACT = (
@@ -341,6 +358,9 @@ def test_post_rebuild_convergence_prevents_evidence_only_deadlock() -> None:
         assert phrase in loop
 
     for phrase in EVIDENCE_CLASSIFICATION_CONTRACT:
+        assert phrase in consolidator
+
+    for phrase in POST_REBUILD_MATRIX_CONTRACT:
         assert phrase in consolidator
 
     assert "missing test artifact" in phase

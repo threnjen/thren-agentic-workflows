@@ -176,7 +176,7 @@ The consolidator consumes every committee report. The implementer consumes the c
 
 Spawn a fresh implementer only when the harness cannot resume the original. Record that fallback in the implementation record.
 
-Only `Blocker` and `High` findings classified as `production-blocker` open a fix round. A verification blocker never opens a fix round or rebuild.
+Only `Critical`, `Blocker`, and `High` findings classified as `production-blocker` open a fix round. A verification blocker never opens a fix round or rebuild.
 
 Carry `Medium` and `Low` findings to phase final review. Run at most two production fix rounds and re-review only filing lanes.
 
@@ -192,11 +192,23 @@ Tell the consolidator this is the post-rebuild pass. Give it every fresh report 
 
 The post-rebuild consolidator is the sole authority for convergence classes. Do not rank, merge, or classify the fresh findings yourself.
 
-When that report contains a `production-blocker`, return its fix list to the rebuilt implementer. Run at most two post-rebuild production fix rounds.
+On the first full post-rebuild consolidation, freeze and record a finite supported-path matrix from the validated plan and accepted contracts.
+
+Each matrix cell records its path, invariant, severity, lineage, evidence, and pass or fail status.
+
+Later reviewers must not expand the frozen matrix silently.
+
+Pass when no `Critical`, `Blocker`, or `High` production cells remain.
+
+Block when one repair cycle closes no failing production cells, increases the failing high-severity count, or repeats one cell twice.
+
+Escalate when a reviewer identifies a new requirement or supported path outside the frozen matrix. Ask the user whether to expand scope.
+
+Otherwise, return the failing cells to the rebuilt implementer and continue targeted repairs while the failing cell count strictly decreases.
 
 Re-review only the lanes affected by each repair. Re-run the post-rebuild consolidator after each repair round.
 
-Do not rewrite or rebuild a second time. After two unsuccessful repair rounds, use the final consolidated classes to determine dependency status.
+Do not rewrite or rebuild a second time. Use the matrix decision to determine dependency status.
 
 If the rebuilt feature still fails, classify the failure before you block anything. Two classes exist and they carry different consequences.
 
