@@ -12,11 +12,11 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 64 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 48 hidden subagents (`user-invocable: false`) and 16 user-invocable.
-- 49 skills in `source_of_truth/skills/`.
-- 22 instructions in `source_of_truth/instructions/`.
+- 65 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 49 hidden subagents (`user-invocable: false`) and 16 user-invocable.
+- 50 skills in `source_of_truth/skills/`.
+- 24 instructions in `source_of_truth/instructions/`.
 - 1 installable hook in `source_of_truth/hooks/`, mirrored verbatim to `ports/github/hooks/` and `.github/hooks/`. `creative-canon-guard.py` is installed by the writer into their own vault's `.claude/`; see `docs/CREATIVE_TOOLKIT.md`.
-- `ports/claude/agents` = 50, `ports/claude/commands` = 16.
+- `ports/claude/agents` = 51, `ports/claude/commands` = 16.
 - Four of the agents, five of the skills, and one of the instructions belong to the
   creative writing family (`profile: creative`); see **Authoring profiles** below.
 
@@ -29,9 +29,9 @@ README.md USAGE.md CONTRIBUTING.md         # overview, agent catalog, contributo
 INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
-    *.agent.md                             # 64 agent definitions
-  skills/                                  # 49 skill dirs, each rooted at SKILL.md
-  instructions/                            # 22 applyTo-glob instruction files
+    *.agent.md                             # 65 agent definitions
+  skills/                                  # 50 skill dirs, each rooted at SKILL.md
+  instructions/                            # 24 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
   claude/  {agents, commands, skills}
@@ -124,7 +124,7 @@ benchmarks/ packages/ tests/
   `ports/claude/agents` for that reason.
 - Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
   plus a subagent file only if an orchestrator names it as a child (dual-use). So
-  `ports/claude/agents` = 48 hidden subagents plus two dual-use agents = 50, while
+  `ports/claude/agents` = 49 hidden subagents plus two dual-use agents = 51, while
   `ports/claude/commands` = 16.
 - Codex and OpenCode emit every source agent; only Claude and Cursor split commands out.
 - Cursor subagent names are the Claude identifier with a `z-` prefix always applied, because

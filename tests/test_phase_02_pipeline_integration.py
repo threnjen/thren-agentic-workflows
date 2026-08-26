@@ -330,17 +330,17 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
             "trigger table",
             phase,
             (
-                "| 03j Reviewer - Blast Radius | The diff changes something another file imports or references |",
+                "| 03j Reviewer - Blast Radius | Always |",
             ),
         ),
         (
             "fix loop",
             loop,
             (
-                "`Critical`, `Blocker`, and `High` findings",
+                "Only independently confirmed `Critical`, `Blocker`, and `High` production defects",
                 "carry-forward",
                 "two production fix rounds",
-                "Run the post-rebuild consolidator before classifying the rebuilt feature",
+                "Run post-rebuild consolidation and validation before classifying the rebuilt feature",
                 "A verification blocker never opens a fix round or rebuild",
                 "freeze and record a finite supported-path matrix",
                 "Pass when no `Critical`, `Blocker`, or `High` production cells remain",

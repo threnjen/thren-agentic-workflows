@@ -32,9 +32,9 @@ flowchart TD
     Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
-    SOT --> Agents[64 agent definitions]
-    SOT --> Skills[49 skill directories]
-    SOT --> Instructions[22 instruction files]
+    SOT --> Agents[65 agent definitions]
+    SOT --> Skills[50 skill directories]
+    SOT --> Instructions[24 instruction files]
 
     Scripts --> Propagate[propagate_master_assets.py]
     Scripts --> Shared[asset_paths.py]
@@ -126,11 +126,11 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 64 agent definitions (16 user-invocable, 48 hidden subagents), all using
+- `agents/` — 65 agent definitions (16 user-invocable, 49 hidden subagents), all using
   the `.agent.md` suffix. Loading keys off `name`/`description` frontmatter, not the
   suffix, so the source glob stays `*.md`.
-- `skills/` — 49 directory-based skills, each rooted at `SKILL.md`.
-- `instructions/` — 22 instruction files matched by `applyTo` globs. Matching is
+- `skills/` — 50 directory-based skills, each rooted at `SKILL.md`.
+- `instructions/` — 24 instruction files matched by `applyTo` globs. Matching is
   `fnmatch` against the agent's repo-relative path, so a `**/name.agent.md` pattern
   requires a `/` immediately before `name` — numbered agents must be named in full, and a
   pattern matching nothing fails silently.
@@ -149,8 +149,8 @@ platform-specific transformations:
 - Claude emission splits by invocability: a hidden agent emits a subagent file only; a
   user-invocable agent emits a slash command, **plus** a subagent file when some
   orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
-  it. That is why `ports/claude/agents` (50) and `ports/claude/commands` (16) differ:
-  48 hidden subagents plus the two dual-use agents (Docs Writer,
+  it. That is why `ports/claude/agents` (51) and `ports/claude/commands` (16) differ:
+  49 hidden subagents plus the two dual-use agents (Docs Writer,
   Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
   support `instructions/` directly
