@@ -15,7 +15,7 @@ import propagate_master_assets as mod  # noqa: E402
 AGENTS_DIR = REPO_ROOT / "source_of_truth" / "agents"
 PHASE_EXECUTE = AGENTS_DIR / "03-phase-execute.agent.md"
 COMMITTEE_SLUGS = (
-    "03c-feature-review-and-fix",
+    "03c-reviewer-plan-conformance",
     "03j-reviewer-blast-radius",
     "03k-reviewer-test-falsification",
     "03l-reviewer-plan-blind",
@@ -25,7 +25,7 @@ COMMITTEE_SLUGS = (
 NEW_REVIEWER_SLUGS = COMMITTEE_SLUGS[1:]
 
 LANE_PROHIBITIONS = {
-    "03c-feature-review-and-fix": "Review plan conformance only.",
+    "03c-reviewer-plan-conformance": "Review plan conformance only.",
     "03j-reviewer-blast-radius": "Never evaluate whether the changed feature satisfies its plan",
     "03k-reviewer-test-falsification": "Do not read implementation code.",
     "03l-reviewer-plan-blind": "Do not open or read the feature plan",
@@ -141,14 +141,14 @@ def test_required_instruction_membership_matches_each_lane() -> None:
     for name in ("code-change-strategy.instructions.md", "language-standards.instructions.md"):
         instruction = _instruction(name)
         assert not any(
-            fnmatch.fnmatch(agent_paths["03c-feature-review-and-fix"], pattern)
+            fnmatch.fnmatch(agent_paths["03c-reviewer-plan-conformance"], pattern)
             for pattern in instruction.apply_to_patterns
         ), f"{name} still routes coding guidance to Reviewer A"
 
     for name in ("test-target-scope.instructions.md", "test-execution-evidence.instructions.md"):
         instruction = _instruction(name)
         assert any(
-            fnmatch.fnmatch(agent_paths["03c-feature-review-and-fix"], pattern)
+            fnmatch.fnmatch(agent_paths["03c-reviewer-plan-conformance"], pattern)
             for pattern in instruction.apply_to_patterns
         ), f"{name} stopped reaching Reviewer A's test gate"
 

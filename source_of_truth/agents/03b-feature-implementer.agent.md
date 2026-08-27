@@ -160,7 +160,7 @@ When implementation is complete, you produce TWO outputs:
 
 ### A. Written Artifact: `[task-name]-implementation.md`
 
-This is the **primary deliverable**. Write or update it in `[plan-path]/` as described in Section G above. The Feature - Review and Fix subagent consumes this file to scope its review. It must be written before the return summary.
+This is the **primary deliverable**. Write or update it in `[plan-path]/` as described in Section G above. The 03c Reviewer - Plan Conformance subagent consumes this file to scope its review. It must be written before the return summary.
 
 ### B. Return Summary
 

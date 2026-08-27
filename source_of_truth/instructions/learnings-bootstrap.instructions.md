@@ -1,6 +1,6 @@
 ---
 description: "Read AND write learnings in the repository being worked on - past mistakes, review patterns, debugging fixes, cross-phase decisions. Owns the learnings file-routing table. Audience is ENUMERATED deliberately - an arbitrary subset with no filename family. Add any agent that writes code or plans against prior-phase history."
-applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-phase-execute.agent.md,**/03a-feature-plan-expander.agent.md,**/03b-feature-implementer.agent.md,**/03c-feature-review-and-fix.agent.md,**/03h-unity-reviewer.agent.md,**/debugger.agent.md,**/single-feature-agent.agent.md"
+applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-phase-execute.agent.md,**/03a-feature-plan-expander.agent.md,**/03b-feature-implementer.agent.md,**/03c-reviewer-plan-conformance.agent.md,**/03h-unity-reviewer.agent.md,**/debugger.agent.md,**/single-feature-agent.agent.md"
 baseline: true
 ---
 

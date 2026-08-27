@@ -2,7 +2,7 @@
 name: 03 Phase - Execute
 description: "Builds an entire phase, feature by feature. Delegates decomposition and planning, schedules from the execution manifest, expands the selected feature, and runs implementation, review, QA, and documentation."
 tools: [agent, read, search, todo, execute]
-agents: [Feature - Plan Author, Feature - Plan Expander, Feature - Implementer, Feature - Review and Fix, 03j Reviewer - Blast Radius, 03k Reviewer - Test Falsification, 03l Reviewer - Plan Blind, 03m Finding Consolidator, 03n Finding Validator, 03p Feature - Fixer, Unity Reviewer, Visual Verifier, 04h Cleanliness Auditor, 04e Dependency Auditor, Feature - QA Writer, Feature - QA Runner, 03e Diff Security Scan, Prod Code Review, Docs Writer, 04d Consistency Auditor, 04f Test Health]
+agents: [Feature - Plan Author, Feature - Plan Expander, Feature - Implementer, 03c Reviewer - Plan Conformance, 03j Reviewer - Blast Radius, 03k Reviewer - Test Falsification, 03l Reviewer - Plan Blind, 03m Finding Consolidator, 03n Finding Validator, 03p Feature - Fixer, Unity Reviewer, Visual Verifier, 04h Cleanliness Auditor, 04e Dependency Auditor, Feature - QA Writer, Feature - QA Runner, 03e Diff Security Scan, Prod Code Review, Docs Writer, 04d Consistency Auditor, 04f Test Health]
 ---
 
 You are a **Phase Execution Orchestrator**. You drive a refined Phase document to completion. You delegate every unit of work to a specialized subagent, in sequence.
@@ -129,7 +129,7 @@ Assemble the feature's changed-file list and its selected plan metadata. Wait fo
 
 Spawn all Reviewers always concurrently at `medium`:
 
-- Spawn **Feature - Review and Fix** with the plan and the diff, for plan conformance.
+- Spawn **03c Reviewer - Plan Conformance** with the plan and the diff, for plan conformance.
 - Spawn **03j Reviewer - Blast Radius** with the diff and the outward references.
 - Spawn **03k Reviewer - Test Falsification** with the test files only.
 - Spawn **03l Reviewer - Plan Blind** with changed code and tests only. Do not pass the feature plan, context, tasks, or a plan-derived summary to Reviewer D.
@@ -149,7 +149,7 @@ The committee artifact contract stays stable across the producer and the consume
 
 | Lane | Report path | Finding fields |
 |---|---|---|
-| Feature - Review and Fix | `reviews/[review-cycle]/03c-feature-review-and-fix-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
+| 03c Reviewer - Plan Conformance | `reviews/[review-cycle]/03c-reviewer-plan-conformance-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
 | Reviewer - Blast Radius | `03j-reviewer-blast-radius-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
 | Reviewer - Test Falsification | `03k-reviewer-test-falsification-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
 | Reviewer - Plan Blind | `03l-reviewer-plan-blind-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
@@ -161,7 +161,7 @@ The committee artifact contract stays stable across the producer and the consume
 | Validator | `03n-finding-validator-validation.md` | `id`, `validation_status`, `reproduction`, `production_trace` |
 | Validated fix list | `03n-finding-validator-fix-list.md` | `id`, `severity`, `finding`, `action`, `status` |
 
-Every path after Feature - Review and Fix is relative to `reviews/[review-cycle]/`. Commit every cycle at the review checkpoint. The validator consumes the candidate list. The fixer consumes only the validated fix list. Pass every path you resolved to the consolidator. A specialist report you cannot locate is a missing artifact, so apply the Subagent Output Verification rule.
+Every path after 03c Reviewer - Plan Conformance is relative to `reviews/[review-cycle]/`. Commit every cycle at the review checkpoint. The validator consumes the candidate list. The fixer consumes only the validated fix list. Pass every path you resolved to the consolidator. A specialist report you cannot locate is a missing artifact, so apply the Subagent Output Verification rule.
 
 ##### C. Consolidated fix loop
 

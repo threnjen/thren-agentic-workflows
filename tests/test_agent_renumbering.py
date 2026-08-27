@@ -19,7 +19,7 @@ IDENTITIES = (
     ("04", "-phase-execute", "03", "-phase-execute", "Phase - Execute", True),
     ("04a", "-feature-plan-expander", "03a", "-feature-plan-expander", "Feature - Plan Expander", False),
     ("04b", "-feature-implementer", "03b", "-feature-implementer", "Feature - Implementer", False),
-    ("04c", "-feature-review-and-fix", "03c", "-feature-review-and-fix", "Feature - Review and Fix", False),
+    ("04c", "-feature-review-and-fix", "03c", "-reviewer-plan-conformance", "Reviewer - Plan Conformance", True),
     ("04d", "-feature-qa-writer", "03d", "-feature-qa-writer", "Feature - QA Writer", False),
     ("04e", "-diff-security-scan", "03e", "-diff-security-scan", "Diff Security Scan", True),
     ("04f", "-prod-code-review", "03f", "-prod-code-review", "Prod Code Review", False),

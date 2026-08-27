@@ -221,7 +221,7 @@ flowchart TD
 
     PlanExpander[03a Feature - Plan Expander]
     Implementer[03b Feature - Implementer]
-    Reviewer[03c Feature - Review and Fix]
+    Reviewer[03c 03c Reviewer - Plan Conformance]
     QA[03d Feature - QA Writer]
     Security[Diff Security Scan]
 

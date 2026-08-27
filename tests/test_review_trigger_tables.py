@@ -16,7 +16,7 @@ CONSOLIDATOR_PATH = (
 VALIDATOR_PATH = REPO_ROOT / "source_of_truth/agents/03n-finding-validator.agent.md"
 
 PER_FEATURE_AGENTS = {
-    "Feature - Review and Fix",
+    "03c Reviewer - Plan Conformance",
     "03j Reviewer - Blast Radius",
     "03k Reviewer - Test Falsification",
     "03l Reviewer - Plan Blind",
@@ -227,7 +227,7 @@ def test_changed_file_scenarios_resolve_the_predicted_agent_set() -> None:
     # 04h is unconditional: it fires on a docs-only diff too. It was widened
     # from a reference-graph condition and relabelled Always to match.
     always = {
-        "Feature - Review and Fix",
+        "03c Reviewer - Plan Conformance",
         "03j Reviewer - Blast Radius",
         "03k Reviewer - Test Falsification",
         "03l Reviewer - Plan Blind",

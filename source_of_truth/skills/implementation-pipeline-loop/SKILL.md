@@ -23,9 +23,9 @@ After the subagent returns:
 
 ### Step B: Review
 
-spawn the **z-feature-review-and-fix** subagent:
+spawn the **z-reviewer-plan-conformance** subagent:
 
-> "[SUBAGENT-MODE] Review the implementation at `[plan-path]`. Read the plan files and implementation record, review all changed code, apply fixes for any issues found, and write the review record to `[plan-path]/[task-name]-review.md`. Manifest verification assets — run these affected suites if the change touches a shared contract: [verification-assets, or `not provided`]. Return the verdict, the test-execution status with its results artifact path, and a summary of issues found and fixes applied."
+> "[SUBAGENT-MODE] Review the implementation at `[plan-path]`. Read the plan files and implementation record, review all changed code, and write the review record to `[plan-path]/[task-name]-review.md`. Do not edit source, tests, or configuration — report what you find. Manifest verification assets — run these affected suites if the change touches a shared contract: [verification-assets, or `not provided`]. Return the verdict, the test-execution status with its results artifact path, and a summary of the issues found."
 
 After the subagent returns:
 - Verify `[plan-path]/[task-name]-review.md` exists
@@ -151,7 +151,7 @@ run-level one:
 <one paragraph: what changed and why, derived from implementation record summary>
 
 Implements: <AC refs, e.g., AC1, AC2, AC3>
-Reviewed-by: z-feature-review-and-fix
+Reviewed-by: z-reviewer-plan-conformance
 Verdict: <Approved | Approved with Reservations>
 ```
 

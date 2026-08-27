@@ -5,7 +5,7 @@ description: "Write feature plan documents for implementation. Use when: decompo
 
 # Feature Plan Set
 
-The three-file plan convention: `-plan.md` is produced by Phase - Execute; `-context.md` and `-tasks.md` are produced by the 03a-feature-plan-expander. All three files are consumed by 03b-feature-implementer, 03c-feature-review-and-fix, 03d-feature-qa-writer, and orchestrators.
+The three-file plan convention: `-plan.md` is produced by Phase - Execute; `-context.md` and `-tasks.md` are produced by the 03a-feature-plan-expander. All three files are consumed by 03b-feature-implementer, 03c-reviewer-plan-conformance, 03d-feature-qa-writer, and orchestrators.
 
 When Phase - Execute decomposes a phase, it must also produce the phase-level execution manifest at `dev/feature/[phase-name]-execution-manifest.md`. This manifest is not part of any single feature bundle. It is the living schedule and dependency contract consumed by Phase - Execute.
 
