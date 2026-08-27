@@ -25,7 +25,7 @@ Phase - Execute supplies:
 - The phase name and the path to `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`.
 - The manifest path `dev/feature/[phase-name]-execution-manifest.md`.
 - The run mode: `initial` for a first decomposition, or `revalidation` for a pass after one feature completes.
-- On a `revalidation` run: the completed feature, the boundary auditor findings, the affected future features, and their downstream dependents.
+- On a `revalidation` run: the completed feature, its implementation record and review evidence, the affected future features, and their downstream dependents.
 
 Load the `feature-plan-set` skill before you write anything. It holds the canonical Lightweight Plan shape, Plan Template, Concrete Name Rule, Integration Feature Rule, Decomposition Rules, manifest field contract, and Quality Checklist. Follow those templates exactly.
 

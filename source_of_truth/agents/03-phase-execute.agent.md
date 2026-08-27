@@ -243,6 +243,8 @@ The skill's staging rules exclude the evidence directory. It is untracked run ou
 
 Run the phase-close reviews here. Three things must complete first: every feature, every feature integration test gate, and QA.
 
+#### Step 4a: Run the audits
+
 Materialize the phase diff first. Resolve `<phase-baseline>` with `git merge-base HEAD <default-branch>`, then write both artifacts under `dev/feature/`:
 
 - `changed-files.txt` — `git diff --name-status <phase-baseline>..HEAD`
@@ -263,7 +265,23 @@ Wait for all three reports.
 
 **Audits.** Record `phase-close-audits: executed` with both report paths. If either cannot run, record `phase-close-audits: absent ([concrete reason])` and set `all-approved: no`. Never treat an absent audit as a clean result.
 
-Do not remediate any finding from this step. All three reports travel to Step 5.
+All three reports travel to Step 5.
+
+#### Step 4b: Validate before repairing
+
+Repair at most one round per phase. Only a `03e` or `04f` finding can open it. A `04d` consistency finding never opens a round: its fix rewrites code across every feature, which perturbs the diff the re-verification measures. Carry every `04d` finding to Step 5 as a condition.
+
+No auditor finding reaches a fixer unvalidated. Spawn **03n Finding Validator** at `medium`. Give it the `03e` and `04f` reports as candidates, the phase summary and every feature plan as accepted contracts, the phase diff, and the run evidence. Its unit directory is `dev/feature/[phase-name]-phase-close/`, and its review cycle is `repair-01`. Tell it that `04d` findings are excluded from the fix list.
+
+Only independently confirmed `Critical`, `Blocker`, and `High` production defects enter the fix list. On an empty fix list, record `phase-close-repair: none` and go to Step 5 with the Step 4a aggregates.
+
+#### Step 4c: Repair once, then re-verify
+
+1. Spawn **03p Feature - Fixer** at `medium`. Give it the validated fix list, every feature implementation record, and the resolved paths of every file the fix list cites.
+2. Run the affected suites yourself. A fixer self-report is not evidence. On a regression, instruct the fixer to revert the round, record `phase-close-repair: failed (regression)`, and go to Step 5.
+3. Re-run Step 3b against the existing automated QA document. Do not re-spawn **Feature - QA Writer**. Only the run repeats.
+4. Re-materialize `changed-files.txt` and `range.diff`, then run Step 4a again. All three auditors run, `04d` included. The `04d` exclusion governs what opens a repair, never what is measured.
+5. Record `phase-close-repair: executed ([fix list path])`. The second run's aggregates replace the first run's and are final. Never open a second round.
 
 This step emits no checkpoint of its own.
 
@@ -271,7 +289,7 @@ This step emits no checkpoint of its own.
 
 Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 3b, and both the diff security verdict and the phase-close audit result from Step 4. Any one of them can set `all-approved: no` on its own. Manual QA is not one of them. It runs after this pipeline, so an unexecuted manual checklist never sets `all-approved: no`.
 
-Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute four values: the verdict summary, the final aggregate `all-approved` state after every gate, the Step 4 phase-close audit result, and the author's fidelity-table departures. An absent audit keeps `all-approved: no` and still reaches this review.
+Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute five values: the verdict summary, the final aggregate `all-approved` state after every gate, the Step 4 phase-close audit result, the Step 4c repair result, and the author's fidelity-table departures. An absent audit keeps `all-approved: no` and still reaches this review.
 
 **If QA was generated and the complete pipeline is `all-approved: yes`:**
 
@@ -281,7 +299,7 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Automated QA run: [PASS | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode. Manual QA has not run and is not a gate. Do not treat the unexecuted manual checklist as a blocking item or a condition."
 >
-> Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved.
+> Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved. Phase-close repair: [`none` | `executed ([fix list path])` | `failed ([reason])`]. A failed repair is `all-approved: no`.
 
 **If QA was generated and the complete pipeline is `all-approved: no`:**
 
@@ -291,7 +309,7 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Automated QA run: [PASS | FAIL | NOT RUN | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode. Manual QA has not run and is not a gate. Do not treat the unexecuted manual checklist as a blocking item or a condition."
 >
-> Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved.
+> Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved. Phase-close repair: [`none` | `executed ([fix list path])` | `failed ([reason])`]. A failed repair is `all-approved: no`.
 
 After the Prod Code Review subagent returns, emit the skill's final review checkpoint. It aggregates the final review artifact, the Step 4 security scan report, and any phase-level pipeline documents this step updated.
 
@@ -304,6 +322,7 @@ Present results using the Pipeline Completion Report format from the auto-loaded
 - Include the manual QA document path, the automated QA document path, and the security scan report path
 - Include the automated QA verdict and how many checks a human still has to judge. Never present an unrun automated QA document as passing QA
 - Include the final test-execution status and results artifact path
+- Include the Step 4c repair result. Never omit that the pipeline changed code after QA ran
 
 Report the phase as implementation-complete only when the final gate is `executed-green`. If it is `executed-failing` or `not-executed`, say so plainly and name what remains. An unrun suite is not a completed phase.
 
