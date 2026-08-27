@@ -36,8 +36,8 @@ Record `PASS`, `FAIL`, or `UNVERIFIED` plus the observed evidence and the observ
 9. Run one Markdown-only feature through the committee loop.
    Record the harness version and confirm the trigger table selects the expected lanes, four committee reports return, the consolidator writes one fix list, and the implementer receives that list.
 
-10. Verify held-open implementer behavior on each harness that supports resumable child handles.
-    Record the harness version and confirm the original implementer handles a fix round. Record the fallback path when the harness requires a fresh implementer.
+10. Verify fix-round behavior on each harness.
+    Record the harness version and confirm the fixer handles the fix round, reads the cited files before editing, and reports each finding as fixed, not-reproduced, or blocked. Confirm the round records a baseline pass set and a regression result, and that a regressing round is recorded as a failed repair.
 
 11. Confirm the GitHub baseline splice.
     First confirm the repository destination. Then remove `.github/copilot-instructions.md` with `git rm .github/copilot-instructions.md`, run `python3 deploy_agents.py --harness github`, and confirm the file returns with all baseline sections. Run the same deploy command again and confirm the result reports `unchanged`. Restore the file with `git checkout -- .github/copilot-instructions.md` if the check must be rolled back.

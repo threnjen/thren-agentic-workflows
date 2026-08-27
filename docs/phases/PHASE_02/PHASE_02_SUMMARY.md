@@ -9,7 +9,7 @@
 
 Feature decomposition and phase execution now share one user-facing orchestrator. The orchestrator researches the phase once, writes lightweight feature plans, then executes one feature at a time. It expands each plan against the current repository state and revalidates affected future features after every dependency level.
 
-A review committee replaces the single blind reviewer. Reviewers run concurrently against each implemented feature, and two trigger tables name the entry condition for every review agent. A consolidator merges their reports into one ranked fix list. The implementer that wrote the feature stays open and applies the fixes without rediscovering its own work.
+A review committee replaces the single blind reviewer. Reviewers run concurrently against each implemented feature, and two trigger tables name the entry condition for every review agent. A consolidator merges their reports into one ranked fix list. A dedicated fixer applies each fix round after reading the fix list, the implementation record, and every file the findings cite. A regression check gates each round, so a repair that breaks a passing test cannot count as progress.
 
 The execution manifest becomes a living schedule. Its schema moves with it, so the skill that defines the manifest is rewritten in this phase rather than left describing the old static output.
 
@@ -56,8 +56,9 @@ Deliver one phase workflow that keeps decomposition quality high, prevents stale
 
 **Fix loop**
 
-- Hold the implementer open across review so it applies its own fixes without rediscovery.
-- Where a harness cannot resume a subagent, fall back to a fresh implementer handed the implementation record and the consolidated fix list, and disclose the fallback.
+- Spawn a dedicated fixer at `medium` for each fix round, handed the validated fix list, the implementation record, and the resolved paths of every file the findings cite. The implementer never applies its own review findings.
+- Require the fixer to read the cited code before it edits. Avoiding rediscovery means never re-planning a finished feature, never editing code the fixer has not read.
+- Record the passing tests at the start of each fix round, and re-run those suites when the round returns. A round that regresses a test that passed at its baseline is a failed round, not a converging cycle.
 - Gate fix rounds on severity. Blocker and High findings drive a round. Medium and Low findings are recorded and carried to phase final review.
 - Allow at most two fix rounds. Re-review only the lanes that filed the findings being fixed.
 - On escalation after two rounds, rewrite the feature plan once using the fix list as evidence, then rebuild the feature.
