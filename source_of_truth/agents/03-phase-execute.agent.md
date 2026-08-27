@@ -29,31 +29,45 @@ Reject a route that fails validation before you select the first feature. On an 
 
 ## Execution Pipeline
 
-### Step 1: Research, Decompose, and Validate the Schedule
-
-Verify that the phase document exists. Read it and extract the phase name and the scope. Derive the living schedule path:
-
-`dev/feature/[phase-name]-execution-manifest.md`
-
-Treat that manifest as the single source of truth after it exists.
+### Step 1: Establish the Schedule
 
 You do not author plans, graphs, or the manifest. **Feature - Plan Author** owns those artifacts. You verify its input. You spawn it. You verify its output. You schedule from what it wrote.
 
-1. Verify the phase document, the phase discovery context, and any existing manifest.
-2. If the manifest is absent, spawn **Feature - Plan Author** in `initial` mode. Its task is to research the phase and create one lightweight plan per candidate feature before scheduling. Give it the phase document path, both discovery context paths, and the manifest path. Use this brief:
+Everything in this step runs once, before the feature loop starts.
 
-   > "[SUBAGENT-MODE] Decompose the phase at `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`. Run mode: `initial`. Each plan states acceptance criteria, scope, dependency hypotheses, and expected file impact. Lightweight plans contain no context or task document. Build the dependency graph from runtime prerequisites and shared file scope. Derive dependency levels from that graph. Write the manifest to `dev/feature/[phase-name]-execution-manifest.md`. Keep the manifest path stable. Record every plan rewrite, reorder, split, merge, or delay with evidence naming the changed file, symbol, acceptance criterion, or dependency edge. Return the feature list with dependency levels, the captured phase-level discovery values, and every fidelity-table departure."
+#### Verify the inputs
 
-3. Re-spawn **Feature - Plan Author** in `revalidation` mode at every dependency-level closure. Pass it the closed level, the boundary auditor findings, the affected future features, and their downstream dependents. Recompute the graph and order after every closed level. Step 2 states the recomputation bound.
-4. Verify that the manifest and every named plan file exist on disk before you schedule anything. On a missing artifact, apply the Subagent Output Verification rule from the orchestrator conventions.
-5. Read each manifest entry. Validate its `status`, `dependency_level`, `depends_on`, `expected_read_set`, `expected_write_set`, `plan_revision`, `last_validation_commit`, `stale_reason`, and `resolved_model_status`. On a malformed or missing field, re-spawn the author once. Do not repair the manifest yourself.
-6. Validate every selected feature bundle. Each bundle must contain `-plan.md`, `-context.md`, and `-tasks.md`. Expand only the selected feature against the repository state at selection time by spawning **Feature - Plan Expander** when its context or tasks are absent or stale.
-7. Take the phase-level discovery the author returned. It contains the environment state, the test baseline, the lint and format commands, and the phase-scoped test directory pattern. Pass those values to every Plan Expander. Do not rediscover them per feature. Do not capture them yourself.
-8. Read the author's fidelity-table departures and its `[PROPOSED - name TBD]` labels. Both travel to the Plan Expander and to the final review as known risk. Never accept an unexplained departure. Re-spawn the author for its reason.
-9. Extract the manifest's `## Verification Assets` section if it exists. It lists new test files, existing test files that several features update, and manual QA checklist items. If the section is missing, record `verification-assets: not provided` and continue.
-10. Create a todo list entry for each feature with status `not-started`.
+1. Verify that the phase document exists at `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`. Read it and extract the phase name and the scope.
+2. Verify the project discovery context and the phase discovery context.
+3. Derive the living schedule path: `dev/feature/[phase-name]-execution-manifest.md`. Treat that manifest as the single source of truth after it exists.
+
+#### Obtain the manifest
+
+Check whether the manifest already exists.
+
+**If it exists,** adopt it as the schedule. Do not re-decompose the phase. Step 2 states how to resume against it.
+
+**If it is absent,** spawn **Feature - Plan Author** in `initial` mode. Its task is to research the phase and create one lightweight plan per candidate feature before scheduling. Give it the phase document path, both discovery context paths, and the manifest path. Use this brief:
+
+> "[SUBAGENT-MODE] Decompose the phase at `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`. Run mode: `initial`. Each plan states acceptance criteria, scope, dependency hypotheses, and expected file impact. Lightweight plans contain no context or task document. Build the dependency graph from runtime prerequisites and shared file scope. Derive dependency levels from that graph. Write the manifest to `dev/feature/[phase-name]-execution-manifest.md`. Keep the manifest path stable. Record every plan rewrite, reorder, split, merge, or delay with evidence naming the changed file, symbol, acceptance criterion, or dependency edge. Return the feature list with dependency levels, the captured phase-level discovery values, and every fidelity-table departure."
+
+Verify that the manifest and every named plan file exist on disk before you schedule anything. On a missing artifact, apply the Subagent Output Verification rule from the orchestrator conventions.
+
+#### Validate the schedule
+
+1. Read each manifest entry. Validate its `status`, `dependency_level`, `depends_on`, `expected_read_set`, `expected_write_set`, `plan_revision`, `last_validation_commit`, `stale_reason`, and `resolved_model_status`. On a malformed or missing field, re-spawn the author once. Do not repair the manifest yourself.
+2. Read the author's fidelity-table departures and its `[PROPOSED - name TBD]` labels. Both travel to the Plan Expander and to the final review as known risk. Never accept an unexplained departure. Re-spawn the author for its reason.
+3. Extract the manifest's `## Verification Assets` section if it exists. It lists new test files, existing test files that several features update, and manual QA checklist items. If the section is missing, record `verification-assets: not provided` and continue.
 
 Do not rebuild the schedule from stale plan metadata. Rebuild it from the graph and the living manifest.
+
+#### Seed the run
+
+Take the phase-level discovery the author returned. It contains the environment state, the test baseline, the lint and format commands, and the phase-scoped test directory pattern. Hold those values for the feature loop. Do not rediscover them per feature. Do not capture them yourself.
+
+Create a todo list entry for each feature with status `not-started`.
+
+Two later jobs also read this schedule. Step 2 expands each feature at selection time. Step 2 re-spawns the author in `revalidation` mode at every dependency-level closure.
 
 ### Step 2: Feature Development Loop
 
@@ -69,9 +83,11 @@ After the plans are on disk, decomposition context may drop. Treat the manifest 
 
 Execute one feature at a time in dependency-level order. `parallel_safe` records graph metadata only. It never authorizes concurrent feature builds. An expected write set is revalidation evidence only, never concurrency permission.
 
+Validate the selected feature's bundle before you build it. Each bundle must contain `-plan.md`, `-context.md`, and `-tasks.md`. Expand only the selected feature against the repository state at selection time by spawning **Feature - Plan Expander** when its context or tasks are absent or stale. Pass it the phase-level discovery values from Step 1, the fidelity-table departures, and the `[PROPOSED - name TBD]` labels.
+
 At the end of each dependency level, identify every affected future feature and every downstream dependent of an affected feature. Hold their revalidation until the boundary checks return.
 
-Then spawn **Feature - Plan Author** in `revalidation` mode. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. Bound recomputation to 25 rounds per level. Stop and report if the graph does not reach a fixed point.
+Then spawn **Feature - Plan Author** in `revalidation` mode. Pass it the closed level, the boundary auditor findings, the affected future features, and their downstream dependents. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. Recompute the graph and order after every closed level, not only at phase close. Bound recomputation to 25 rounds per level. Stop and report if the graph does not reach a fixed point.
 
 When a dependency level closes, resolve the boundary trigger table against that closure. Spawn `Auditor - Refactor`, `04d Consistency Auditor`, and `04f Test Health` concurrently against the phase diff so far. Wait for every report. Feed their findings into the affected-plan revalidation. A missing boundary result is incomplete evidence, never a clean result.
 
