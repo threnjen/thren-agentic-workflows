@@ -20,7 +20,6 @@ PIPELINE_AGENT_SLUGS = (
     "03b-feature-implementer",
     "03c-reviewer-plan-conformance",
     "03h-unity-reviewer",
-    "03g-unity-visual-verification",
     "03d-feature-qa-writer",
     "03i-feature-qa-runner",
     "03e-diff-security-scan",

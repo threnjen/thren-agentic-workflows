@@ -23,7 +23,6 @@ IDENTITIES = (
     ("04d", "-feature-qa-writer", "03d", "-feature-qa-writer", "Feature - QA Writer", False),
     ("04e", "-diff-security-scan", "03e", "-diff-security-scan", "Diff Security Scan", True),
     ("04f", "-prod-code-review", "03f", "-prod-code-review", "Prod Code Review", False),
-    ("04g", "-unity-visual-verification", "03g", "-unity-visual-verification", "Visual Verifier", False),
     ("04h", "-unity-reviewer", "03h", "-unity-reviewer", "Unity Reviewer", False),
     ("04i", "-feature-qa-runner", "03i", "-feature-qa-runner", "Feature - QA Runner", False),
     ("05", "-pr-review", "04", "-pr-review", "PR - Review", True),

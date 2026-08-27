@@ -2,7 +2,7 @@
 name: 03 Phase - Execute
 description: "Builds an entire phase, feature by feature. Delegates decomposition and planning, schedules from the execution manifest, expands the selected feature, and runs implementation, review, QA, and documentation."
 tools: [agent, read, search, todo, execute]
-agents: [Feature - Plan Author, Feature - Plan Expander, Feature - Implementer, 03c Reviewer - Plan Conformance, 03j Reviewer - Blast Radius, 03k Reviewer - Test Falsification, 03l Reviewer - Plan Blind, 03m Finding Consolidator, 03n Finding Validator, 03p Feature - Fixer, Unity Reviewer, Visual Verifier, 04h Cleanliness Auditor, 04e Dependency Auditor, Feature - QA Writer, Feature - QA Runner, 03e Diff Security Scan, Prod Code Review, Docs Writer, 04d Consistency Auditor, 04f Test Health]
+agents: [Feature - Plan Author, Feature - Plan Expander, Feature - Implementer, 03c Reviewer - Plan Conformance, 03j Reviewer - Blast Radius, 03k Reviewer - Test Falsification, 03l Reviewer - Plan Blind, 03m Finding Consolidator, 03n Finding Validator, 03p Feature - Fixer, Unity Reviewer, 04h Cleanliness Auditor, 04e Dependency Auditor, Feature - QA Writer, Feature - QA Runner, 03e Diff Security Scan, Prod Code Review, Docs Writer, 04d Consistency Auditor, 04f Test Health]
 ---
 
 You are a **Phase Execution Orchestrator**. You drive a refined Phase document to completion. You delegate every unit of work to a specialized subagent, in sequence.
@@ -115,7 +115,7 @@ Stages A through E run in order for one selected feature, then repeat for the ne
 
 Spawn **Feature - Implementer** with:
 
-> "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Run the affected suites from these manifest verification assets: [verification-assets extracted from manifest, or `not provided`]. For a Unity feature contributing to the phase's visual acceptance criteria, follow `unity-development` → Visual Verification Wiring before returning so the A1 checkpoint commits those inputs. Return a summary of what was implemented, the test-execution status with its results artifact path, and test results."
+> "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Run the affected suites from these manifest verification assets: [verification-assets extracted from manifest, or `not provided`]. Return a summary of what was implemented, the test-execution status with its results artifact path, and test results."
 
 **A1. Implement checkpoint** — Emit the skill's implement checkpoint for this feature. The unit is `dev/feature/[0N-task-name]/`. The file `[0N-task-name]-implementation.md` names the source and test files to stage.
 
@@ -250,32 +250,6 @@ This stage emits no checkpoint of its own.
 
 Mark the feature complete in the todo list. Update its manifest entry with the implementation result, the resolved review agents, the fix-round count, the carry-forward findings, the commit, the review verdict, and the validation evidence. A review verdict is `Approved`, `Approved with Reservations`, or `Changes Requested`. Record the preflight `resolution_status` under `resolved_model_status` for the Feature - Implementer tier.
 
-<!-- ### Step 3: Visual Verification Gate (conditional)
-
-This step produces runtime visual evidence for a phase that renders something. It catches the class of defect that compiles clean: invisible or miscolored output, broken scene wiring, and blank frames.
-
-The per-feature trigger table is the sole entry condition for **Visual Verifier**. This section executes a firing Visual Verifier row. It adds no competing trigger. A plan with `visual_acceptance: no` does not enter this section.
-
-For a plan with `visual_acceptance: yes`, resolve the capture config and the phase visual acceptance criteria. Two conditions end the step early:
-
-- If the repository is not a Unity project, record `visual-verification: not a Unity project` and skip.
-- If the config or the required package wiring is absent, record `visual-verification: not configured (capture inputs missing at implementation checkpoint)`, set `all-approved: no`, and skip.
-
-Visual Verification Wiring belongs to the responsible Feature Implementer, before its A1 checkpoint. Never create or modify capture inputs after the wave checkpoints. A shadow worktree can test only committed inputs.
-
-When the Visual Verifier row fires and its inputs are available, spawn the **Visual Verifier** subagent:
-
-> "[SUBAGENT-MODE] Run the visual verification gate for phase [phase-name]. Visual acceptance criteria from the phase document: [list each visual AC verbatim]. Capture config path: [resolved path]. Produce the deterministic screenshots via the repository's documented visual-verification run, then assess each visual AC against the rendered frames. Write the report to `docs/phases/[phase-name]/[phase-name]-visual-verification.md` and return a verdict (`Pass` | `Fail` | `Unverified`) with per-AC results and the artifact paths."
-
-After the subagent returns, record the verdict as `visual-verification: Pass | Fail | Unverified`. Then act on it:
-
-- **On `Fail`, remediate once.** This is the same bounded retry the review loop uses for "Changes Requested". Re-spawn the Feature - Implementer responsible for the rendering. Give it the Visual Verifier's per-AC findings and the rendered frames. Then re-run the Visual Verifier on the same config. Retry **at most once**. If the verdict is still `Fail`, record it and proceed. The blocker escalates to the Phase Final Review (Step 6). Use this implementer prompt:
-  > "[SUBAGENT-MODE] The visual verification gate failed for phase [phase-name]. Failing visual acceptance criteria, and what the rendered frames actually show: [paste the Visual Verifier's per-AC findings]. Rendered frames: [artifact paths]. Fix the rendering so these acceptance criteria are met. Do NOT edit the capture config or the visual ACs to force a pass — fix what is on screen. Return what you changed."
-- **Do not retry `Unverified`.** The capture could not run, or the images were not assessable. That is a setup problem, not a rendering problem. Record it and proceed.
-- If the final verdict is `Fail` or `Unverified`, set `all-approved: no`. The Phase Final Review (Step 6) then runs in standard mode, not fast-track mode, and flags it as a blocker. A blank or missing frame is a `Fail`, not an `Unverified`.
-
-This step emits no checkpoint of its own. The Phase Final Review checkpoint (Step 6) owns the report file and stages it. The generated screenshots and manifest are build artifacts. Do not commit them. -->
-
 ### Step 4: QA
 
 Produce the QA documents for this execution. Then run the automated one. Never ask the user to run a command this pipeline could run itself.
@@ -306,7 +280,7 @@ After the subagent returns:
 
 - Record `automated-qa-run: PASS | FAIL | NOT RUN (<reason>)`. Use the runner's own upper-case strings verbatim.
 - On `FAIL` or `NOT RUN`, set `all-approved: no`. The Phase Final Review then runs in standard mode and carries it as a blocker.
-- Do not remediate. An automated QA failure escalates to Step 6, exactly like the security scan and the visual gate. A re-spawned implementer here would edit code the review gates already approved.
+- Do not remediate. An automated QA failure escalates to Step 6, exactly like the security scan. A re-spawned implementer here would edit code the review gates already approved.
 - An `UNRUNNABLE` check is a defect in the QA document, not in the phase. Name it as such when you report. The reroute target is `Feature - QA Writer`, not the implementer.
 - Record how many `EVIDENCE ONLY` checks now have evidence waiting for the human. These do not block.
 
@@ -314,7 +288,7 @@ After the subagent returns:
 
 Emit the skill's QA checkpoint once. This stage produced the three QA outputs and any phase-level pipeline documents it updated.
 
-The skill's staging rules exclude two artifacts. The evidence directory is untracked run output. The Step 6 checkpoint owns the Step 3 visual-verification report.
+The skill's staging rules exclude one artifact. The evidence directory is untracked run output.
 
 The QA checkpoint lands after the run. The committed automated document therefore carries its own results.
 
@@ -334,7 +308,7 @@ This step emits no checkpoint of its own. The Phase Final Review checkpoint (Ste
 
 ### Step 5.5: Phase-Close Audits
 
-Resolve the boundary table's audit rows last. Five things must complete first: every feature, every feature integration test gate, visual verification, QA, and the Step 5 Diff Security Review.
+Resolve the boundary table's audit rows last. Four things must complete first: every feature, every feature integration test gate, QA, and the Step 5 Diff Security Review.
 
 Spawn `04d Consistency Auditor` and `04f Test Health` concurrently against the whole phase diff. Wait for both reports. One pass over the finished phase sees the cross-feature drift that no single feature's diff exposes.
 
@@ -346,9 +320,9 @@ Both reports travel to Step 6. **Prod Code Review** is the phase-close readiness
 
 ### Step 6: Phase Final Review
 
-Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Five other results also feed it: the feature integration test gate at stage D, the visual verification verdict from Step 3, the automated QA run at Step 4b, the diff security verdict from Step 5, and the phase-close audit result from Step 5.5. Any one of them can set `all-approved: no` on its own.
+Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 4b, the diff security verdict from Step 5, and the phase-close audit result from Step 5.5. Any one of them can set `all-approved: no` on its own.
 
-Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute four values: the verdict summary, the final aggregate `all-approved` state after every gate, the visual-verification verdict from Step 3 or its skip reason, and the Step 5.5 phase-close audit result. An absent audit keeps `all-approved: no` and still reaches this review.
+Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute three values: the verdict summary, the final aggregate `all-approved` state after every gate, and the Step 5.5 phase-close audit result. An absent audit keeps `all-approved: no` and still reaches this review.
 
 **If QA was generated and the complete pipeline is `all-approved: yes`:**
 
@@ -356,7 +330,7 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Visual verification: [Pass | skip reason]. Automated QA run: [PASS | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode."
+> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Automated QA run: [PASS | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode."
 >
 > Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved.
 
@@ -366,11 +340,11 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Visual verification: [Pass | Fail | Unverified | skip reason]. Automated QA run: [PASS | FAIL | NOT RUN | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode."
+> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Automated QA run: [PASS | FAIL | NOT RUN | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode."
 >
 > Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved.
 
-After the Prod Code Review subagent returns, emit the skill's final review checkpoint. It aggregates the final review artifact, the Step 3 visual-verification report, the Step 5 security scan report, and any phase-level pipeline documents this step updated.
+After the Prod Code Review subagent returns, emit the skill's final review checkpoint. It aggregates the final review artifact, the Step 5 security scan report, and any phase-level pipeline documents this step updated.
 
 ### Step 7: Report to User
 

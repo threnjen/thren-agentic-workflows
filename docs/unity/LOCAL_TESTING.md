@@ -3,7 +3,7 @@
 ## TL;DR
 
 Commit the code you intend to test, then use the persistent detached test worktree.
-Resolve the Unity Editor through the deployed Visual Verifier instructions.
+Resolve the Unity Editor through the `unity-development` skill's Editor discovery procedure.
 Run EditMode and PlayMode from the command line and save results in the main checkout.
 Remove the test worktree only when you deliberately choose to reclaim it.
 
@@ -69,7 +69,7 @@ git -C "<project-dir>-agent-tests/" status --short --untracked-files=all --ignor
 
 ## 8. Resolve the Unity Editor executable
 
-Load Step 1 of the deployed Visual Verifier agent through the active harness catalog. Use its Editor discovery procedure, then verify the resolved path.
+Follow the `unity-development` skill's Test Execution section, Editor discovery. Use its resolution order, then verify the resolved path.
 
 ```bash
 test -x "<resolved-unity-editor>"

@@ -173,5 +173,5 @@ There is deliberately no learnings asset. Durable, repo-agnostic rules are skill
 ### Other areas
 
 - `eval/` — past benchmark run artifacts; `eval/deprecated/` holds the archived eval-grader system (see `eval/deprecated/README.md`)
-- `packages/com.threnjen.visual-verification/` — Unity UPM package paired with the Visual Verifier agent
+- `packages/com.threnjen.visual-verification/` — Unity UPM package for deterministic screenshot capture, retained but not wired into any pipeline
 - `docs/` — ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT, TROUBLESHOOTING, porting references; keep counts/paths in these aligned with README and CONTRIBUTING when editing docs

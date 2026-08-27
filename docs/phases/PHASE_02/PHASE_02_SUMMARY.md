@@ -50,9 +50,8 @@ Deliver one phase workflow that keeps decomposition quality high, prevents stale
 - Add a consolidator that merges every committee report into one deduplicated, severity-ranked fix list addressed to the implementer, and adjudicates disagreements between reviewers.
 - Define two trigger tables that together name the entry condition for every review agent. The per-feature table covers agents evaluated against a feature's diff. The boundary table covers agents evaluated when the phase closes.
 - Run exactly the agents whose conditions hold.
-- Derive every per-feature trigger from the changed-file list, with one stated exception. The visual verifier fires from a plan-level flag instead, because its subject is a phase's on-screen acceptance criteria rather than a file pattern.
+- Derive every per-feature trigger from the changed-file list.
 - Derive every boundary trigger from the phase closing.
-- Add a required visual-acceptance flag to the lightweight feature plan. The decomposition stage sets it when it writes an on-screen acceptance criterion.
 
 **Fix loop**
 
@@ -192,9 +191,8 @@ Every review agent has exactly one entry condition, recorded in one of two table
 | Diff security scan | The diff touches authentication, user input, network calls, or secrets |
 | Dependency auditor | The diff changes a package manifest or lockfile |
 | Unity reviewer | The repository satisfies the canonical Unity predicate in `tech-stack-detection` and the diff changes a `.cs` file under `Assets/` |
-| Visual verifier | The feature plan carries the visual-acceptance flag |
 
-Eight of the nine conditions are derived from the changed-file list. The visual verifier's is not, and the phase states that rather than claiming a uniformity it does not have. A screenshot answers a question about acceptance criteria, and acceptance criteria live in the plan. Any file-pattern proxy for that would both miss code-only changes that alter the screen and fire on asset edits with no visible effect.
+Every condition is derived from the changed-file list.
 
 #### Boundary triggers
 
@@ -239,7 +237,7 @@ Twenty-three agents, counted after this phase completes. Four are created by thi
 
 Docs Writer is excluded. It is user-invocable, and a user-invocable agent never carries a tier even when a pipeline also spawns it. The rule is decided by the agent's own invocability, not by whether some pipeline uses it.
 
-Already in the pipeline (14): Feature - Plan Expander, Feature - Implementer, 03c Reviewer - Plan Conformance (becomes Reviewer A), Unity Reviewer, Visual Verifier, Feature - QA Writer, Feature - QA Runner, Diff Security Scan, Prod Code Review, Auditor - Code, Auditor - Infra, Auditor - Delta, Auditor - Attribution, Baseline Worktree.
+Already in the pipeline (13): Feature - Plan Expander, Feature - Implementer, 03c Reviewer - Plan Conformance (becomes Reviewer A), Unity Reviewer, Feature - QA Writer, Feature - QA Runner, Diff Security Scan, Prod Code Review, Auditor - Code, Auditor - Infra, Auditor - Delta, Auditor - Attribution, Baseline Worktree.
 
 Created by this phase (4): Reviewer B blast radius, Reviewer C test falsification, Reviewer D plan-blind, and the finding consolidator.
 
@@ -297,7 +295,6 @@ This is a real cost of the merge. The resume path is the answer to it, together 
 - [ ] The set of agents that ran at phase close matches the set the boundary trigger table predicts.
 - [ ] Every review agent the phase spawns appears in exactly one of the two trigger tables.
 - [ ] A feature whose diff touches nothing another file imports runs the committee without the blast-radius reviewer and is not treated as an incomplete review.
-- [ ] A feature plan carrying the visual-acceptance flag runs the visual verifier, and one without it does not.
 - [ ] The consolidator produces one ranked fix list, and duplicate findings across reviewers appear once.
 - [ ] A reviewer disagreement about the same code reaches an adjudicated result rather than two contradictory instructions.
 - [ ] Each triggered specialist runs when its condition holds and is skipped when it does not.
@@ -335,7 +332,7 @@ Test session overrides for all three tiers and verify that the central file rema
 
 Add a test asserting that every review agent the phase spawns appears in exactly one trigger table, so a new agent cannot be added without an entry condition.
 
-Add a test that resolves the per-feature trigger table against synthetic diffs — an isolated new file, an imported symbol change, a lockfile edit, an auth-touching change, a Unity `.cs` change under `Assets/`, and a plan with and without the visual-acceptance flag — and asserts the predicted agent set each time.
+Add a test that resolves the per-feature trigger table against synthetic diffs — an isolated new file, an imported symbol change, a lockfile edit, an auth-touching change, and a Unity `.cs` change under `Assets/` — and asserts the predicted agent set each time.
 
 Confirm the `copilot-instructions.md` splice by deleting the file and regenerating, rather than by reading the propagation logic. Run this check before the renumbering feature relies on it.
 

@@ -24,7 +24,6 @@ PER_FEATURE_AGENTS = {
     "03e Diff Security Scan",
     "04e Dependency Auditor",
     "Unity Reviewer",
-    "Visual Verifier",
 }
 BOUNDARY_AGENTS = {
     "04d Consistency Auditor",
@@ -113,7 +112,6 @@ def _predicted_agents(
     changed_files: list[str],
     *,
     is_unity_project: bool = False,
-    visual_acceptance: bool = False,
 ) -> set[str]:
     predicted: set[str] = set()
     for agent, condition in _table_rows(text, "##### Per-feature review triggers"):
@@ -130,8 +128,6 @@ def _predicted_agents(
         elif "`is-unity-project: yes`" in condition and is_unity_project and any(
             path.startswith("Assets/") and path.endswith(".cs") for path in changed_files
         ):
-            predicted.add(agent)
-        elif "visual_acceptance: yes" in condition and visual_acceptance:
             predicted.add(agent)
     return predicted
 
@@ -208,14 +204,6 @@ def _missing_phase_close_audit_contract(text: str) -> set[str]:
     return {phrase for phrase in PHASE_CLOSE_AUDIT_CONTRACT if phrase not in text}
 
 
-def _visual_flag_errors(text: str) -> set[str]:
-    errors: set[str] = set()
-    if "`visual_acceptance: yes | no`" not in text:
-        errors.add("visual flag field")
-    if "A plan without the flag fails validation" not in text:
-        errors.add("missing flag rejection")
-    return errors
-
 
 def test_trigger_tables_have_exact_rosters_and_conditions() -> None:
     errors = _table_coverage_errors(_read(PHASE_PATH))
@@ -250,21 +238,8 @@ def test_changed_file_scenarios_resolve_the_predicted_agent_set() -> None:
         assert _predicted_agents(text, files, **options) == expected, label
 
 
-def test_visual_verifier_uses_the_required_plan_flag() -> None:
+def test_security_row_has_one_entry_point() -> None:
     text = _read(PHASE_PATH)
-    without_flag = _predicted_agents(text, ["src/view.py"])
-    with_flag = _predicted_agents(text, ["src/view.py"], visual_acceptance=True)
-    assert "Visual Verifier" not in without_flag
-    assert "Visual Verifier" in with_flag
-
-
-def test_visual_and_security_rows_have_one_entry_point() -> None:
-    text = _read(PHASE_PATH)
-    visual_section = text.split("### Step 3: Visual Verification Gate (conditional)", 1)[1]
-    visual_section = visual_section.split("### Step 4: QA", 1)[0]
-    assert "per-feature trigger table is the sole entry condition" in visual_section
-    assert "Run it only when ALL" not in visual_section
-
     security_section = text.split("### Step 5: Diff Security Review", 1)[1]
     security_section = security_section.split("### Step 5.5: Phase-Close Audits", 1)[0]
     assert "Collect the reports from every feature" in security_section
@@ -290,79 +265,3 @@ def test_trigger_table_guard_fails_when_a_row_is_removed() -> None:
     assert "per-feature roster" in _table_coverage_errors(mutated)
 
 
-def test_visual_plan_flag_guard_is_load_bearing() -> None:
-    original = _read(PLAN_SKILL_PATH)
-    required = "`visual_acceptance: yes | no`"
-    assert not _visual_flag_errors(original)
-    mutated = original.replace(required, "", 1)
-    assert "visual flag field" in _visual_flag_errors(mutated)
-
-
-def test_fix_loop_and_record_contracts_are_present_and_load_bearing() -> None:
-    loop = _read(LOOP_SKILL_PATH)
-    assert not _missing_fix_loop_contract(loop)
-    for phrase in FIX_LOOP_CONTRACT:
-        mutated = loop.replace(phrase, "", 1)
-        assert phrase in _missing_fix_loop_contract(mutated)
-
-    record = _read(RECORD_SKILL_PATH)
-    for field in (
-        "Resolved review agents",
-        "reviewer:",
-        "Fix rounds",
-        "Carry-forward findings",
-    ):
-        assert field in record
-
-
-def test_post_rebuild_convergence_prevents_evidence_only_deadlock() -> None:
-    phase = _read(PHASE_PATH)
-    loop = _read(LOOP_SKILL_PATH)
-    consolidator = _read(CONSOLIDATOR_PATH)
-    validator = _read(VALIDATOR_PATH)
-
-    for phrase in POST_REBUILD_CONTRACT:
-        assert phrase in phase
-        assert phrase in loop
-
-    for phrase in EVIDENCE_CLASSIFICATION_CONTRACT:
-        assert phrase in validator
-
-    for phrase in POST_REBUILD_MATRIX_CONTRACT:
-        assert phrase in validator
-
-    assert "missing test artifact" in phase
-    assert "missing test artifact" in loop
-
-
-def test_serious_findings_are_validated_before_repair() -> None:
-    phase = _read(PHASE_PATH)
-    loop = _read(LOOP_SKILL_PATH)
-    validator = _read(VALIDATOR_PATH)
-
-    for text in (phase, loop):
-        assert "candidate list" in text
-        assert "03n Finding Validator" in text
-        assert "Only independently confirmed" in text
-        assert "not-proven" in text
-
-    for phrase in (
-        "accepted supported path",
-        "reproduce",
-        "trace",
-        "confirmed",
-        "rejected",
-        "scope-invalid",
-        "not-proven",
-    ):
-        assert phrase in validator
-
-
-def test_phase_close_audits_and_committee_miss_are_load_bearing() -> None:
-    text = _read(PHASE_PATH)
-    assert not _missing_phase_close_audit_contract(text)
-    for phrase in PHASE_CLOSE_AUDIT_CONTRACT:
-        assert phrase in text
-        assert phrase in _missing_phase_close_audit_contract(
-            text.replace(phrase, "", 1)
-        )

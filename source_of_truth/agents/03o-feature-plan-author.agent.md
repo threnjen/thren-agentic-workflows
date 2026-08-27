@@ -60,7 +60,7 @@ Record each moved, deferred, renamed, reordered, split, merged, or delayed requi
 
 Write one lightweight `-plan.md` per candidate feature into `dev/feature/[0N-task-name]/`. Follow the `feature-plan-set` Decomposition Rules to decide how many features exist and where their boundaries fall. Independence is the unit: two items are separate features when each can be implemented, tested, and shipped without the other.
 
-Each plan states acceptance criteria, scope, dependency hypotheses, and expected file impact. Each plan carries the required `visual_acceptance: yes | no` flag. Set it to `yes` when an acceptance criterion states what must appear on screen. Never default a missing flag to `no`.
+Each plan states acceptance criteria, scope, dependency hypotheses, and expected file impact.
 
 Keep every plan drift-tolerant. A plan records intent, not tree state, so an earlier feature landing does not invalidate a later plan.
 

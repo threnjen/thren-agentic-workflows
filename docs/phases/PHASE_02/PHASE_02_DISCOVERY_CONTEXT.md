@@ -30,7 +30,6 @@ Context gathered during refinement that lives outside this repository.
 - Keep renumbering inside Phase 02 as its final feature rather than splitting it into its own phase.
 - Define one trigger table with an entry condition for every review agent, in place of an always-on roster plus a separate conditional list.
 - Test the review step by comparing the agent set that ran against the set the trigger table predicts, not by counting reviewers.
-- Trigger the visual verifier from a plan-level visual-acceptance flag, and state in the phase that this one trigger is plan-derived while the rest are file-derived.
 - Trigger the Unity reviewer from the canonical Unity predicate combined with a changed `.cs` file under `Assets/`.
 - Make Phase 02 own the `feature-plan-set` skill rewrite and keep the corpus to two execution scopes, the feature and the phase.
 - Decide the model-tier rule by an agent's own invocability. Docs Writer is user-invocable, so it carries no tier and leaves the pipeline tier count at twenty-three.

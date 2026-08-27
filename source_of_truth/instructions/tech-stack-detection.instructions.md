@@ -1,6 +1,6 @@
 ---
 description: "Detect specialized tech stacks and load matching skills before starting work; holds the canonical Unity detection predicate. Audience is ENUMERATED deliberately - an arbitrary subset with no filename family, so add each new consumer by name rather than widening the glob. This file is the only copy of the predicate; do not restate it elsewhere."
-applyTo: "**/03-phase-execute.agent.md,**/03a-feature-plan-expander.agent.md,**/03b-feature-implementer.agent.md,**/03c-reviewer-plan-conformance.agent.md,**/03f-prod-code-review.agent.md,**/03g-unity-visual-verification.agent.md,**/04-pr-review.agent.md,**/auditor-code.agent.md,**/auditor-infra.agent.md,**/auditor-refactor.agent.md,**/auditor-security.agent.md,**/single-feature-agent.agent.md"
+applyTo: "**/03-phase-execute.agent.md,**/03a-feature-plan-expander.agent.md,**/03b-feature-implementer.agent.md,**/03c-reviewer-plan-conformance.agent.md,**/03f-prod-code-review.agent.md,**/04-pr-review.agent.md,**/auditor-code.agent.md,**/auditor-infra.agent.md,**/auditor-refactor.agent.md,**/auditor-security.agent.md,**/single-feature-agent.agent.md"
 ---
 
 Check whether the project uses a specialized tech stack with a matching skill. Look for `.github/copilot-instructions.md` naming a stack, or framework-specific project files: `package.json` for Node.js, `pyproject.toml` for Python, and the Unity predicate below. When a matching skill exists, **load and read it before you proceed**. It holds stack-specific rules and known pitfalls.

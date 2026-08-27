@@ -32,7 +32,7 @@ flowchart TD
     Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
-    SOT --> Agents[65 agent definitions]
+    SOT --> Agents[66 agent definitions]
     SOT --> Skills[50 skill directories]
     SOT --> Instructions[24 instruction files]
 
@@ -126,7 +126,7 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 65 agent definitions (16 user-invocable, 49 hidden subagents), all using
+- `agents/` — 66 agent definitions (16 user-invocable, 50 hidden subagents), all using
   the `.agent.md` suffix. Loading keys off `name`/`description` frontmatter, not the
   suffix, so the source glob stays `*.md`.
 - `skills/` — 50 directory-based skills, each rooted at `SKILL.md`.
@@ -199,7 +199,7 @@ used by both scripts' watch modes.
   archived eval-grader agents, skills, and commit hook; see its README.
 - `benchmarks/` — model cost/performance benchmark data and charts.
 - `packages/com.threnjen.visual-verification/` — a Unity UPM package for deterministic
-  screenshot capture, paired with the Visual Verifier agent.
+  screenshot capture. No pipeline stage invokes it.
 
 ## Agent System Shape
 

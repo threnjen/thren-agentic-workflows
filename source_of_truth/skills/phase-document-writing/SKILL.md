@@ -62,7 +62,7 @@ Reference specific files/modules so Phase - Execute knows where to look.]
 
 - [ ] [Testable outcome 1]
 - [ ] [Testable outcome 2]
-- [ ] [For phases that render UI: state each visual criterion as a discrete, on-screen-observable check — e.g. "the two teams render in distinct colors", "a health bar sits above each unit", "the play area is bounded by a visible border" — one per line, so a reviewer or the Visual Verifier can judge each against a rendered frame]
+- [ ] [For phases that render UI: state each visual criterion as a discrete, on-screen-observable check — e.g. "the two teams render in distinct colors", "a health bar sits above each unit", "the play area is bounded by a visible border" — one per line, so a reviewer can judge each against what the running project shows]
 
 ## QA Considerations
 

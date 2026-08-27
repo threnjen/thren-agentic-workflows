@@ -50,7 +50,7 @@ Expected read and write sets are revalidation evidence only. They never authoriz
 
 ## Lightweight Plan
 
-Before scheduling, Phase - Execute writes one lightweight `-plan.md` per candidate feature. Each plan carries acceptance criteria, scope, dependency hypotheses, and expected file impact. It contains no context or task document. Each plan also carries the required `visual_acceptance: yes | no` flag. Set it to `yes` when an acceptance criterion states what must appear on screen. The Plan Expander adds companion files only for the selected feature. A plan without the flag fails validation. The executor never defaults a missing flag to `no`.
+Before scheduling, Phase - Execute writes one lightweight `-plan.md` per candidate feature. Each plan carries acceptance criteria, scope, dependency hypotheses, and expected file impact. It contains no context or task document. The Plan Expander adds companion files only for the selected feature.
 
 **Naming**: `[0N-task-name]` is a zero-padded two-digit prefix followed by a short, descriptive, kebab-case identifier (e.g., `01-auth-login`, `02-rate-limiter`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order. `[phase-name]` is always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number (e.g., `PHASE_03`), matching the phase directory under `docs/phases/`.
 

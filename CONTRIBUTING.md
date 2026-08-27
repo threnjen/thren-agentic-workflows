@@ -107,7 +107,7 @@ orchestration and evaluators, the audit orchestrator and its auditors
 (code, infra, refactor, security, delta, remediation research, remediation
 reconciler), the Client Deliverable
 engagement fleet, QA bootstrapping, test operations, and standalone utility agents
-(docs writer, debugger, single-feature agent, unity reviewer, visual verifier, web
+(docs writer, debugger, single-feature agent, unity reviewer, web
 researcher). See
 [USAGE.md](USAGE.md) for the full catalog
 and pipeline flow.
@@ -131,7 +131,7 @@ pattern that matches nothing fails silently.
 ### Distributable package
 
 `packages/com.threnjen.visual-verification/` is a Unity UPM package for deterministic
-screenshot capture, paired with the Visual Verifier agent.
+screenshot capture. No pipeline stage invokes it.
 
 ## Related Documentation
 
