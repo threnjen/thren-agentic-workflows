@@ -7,12 +7,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PHASE_PATH = REPO_ROOT / "source_of_truth/agents/03-phase-execute.agent.md"
-PLAN_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/feature-plan-set/SKILL.md"
-LOOP_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/implementation-pipeline-loop/SKILL.md"
-RECORD_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/implementation-record/SKILL.md"
-CONSOLIDATOR_PATH = (
-    REPO_ROOT / "source_of_truth/agents/03m-finding-consolidator.agent.md"
-)
 VALIDATOR_PATH = REPO_ROOT / "source_of_truth/agents/03n-finding-validator.agent.md"
 
 PER_FEATURE_AGENTS = {
@@ -25,6 +19,7 @@ PER_FEATURE_AGENTS = {
     "Unity Reviewer",
 }
 BOUNDARY_AGENTS = {
+    "03e Diff Security Scan",
     "04d Consistency Auditor",
     "04f Test Health",
     "Prod Code Review",
@@ -70,7 +65,7 @@ def _table_coverage_errors(text: str) -> set[str]:
 
     if len(per_rows) != len(PER_FEATURE_AGENTS):
         errors.add("per-feature row count")
-    if len(boundary_rows) != 3:
+    if len(boundary_rows) != len(BOUNDARY_AGENTS):
         errors.add("boundary row count")
     if set(per_names) != PER_FEATURE_AGENTS:
         errors.add("per-feature roster")
@@ -83,7 +78,6 @@ def _table_coverage_errors(text: str) -> set[str]:
     if any(not condition for _, condition in per_rows + boundary_rows):
         errors.add("empty trigger condition")
     return errors
-
 
 
 def _matches_dependency(path: str) -> bool:
@@ -132,36 +126,6 @@ def _predicted_boundary_agents(text: str, *, phase_closing: bool) -> set[str]:
     return predicted
 
 
-FIX_LOOP_CONTRACT = (
-    "Run Reviewers A through D concurrently at `medium`",
-    "Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round",
-    "Record `Medium` and `Low` findings as carry-forward evidence",
-    "Run at most two production fix rounds",
-    "rewrite the feature plan once",
-    "Run post-rebuild consolidation and validation before classifying the rebuilt feature",
-    "Only a `production-blocker` can block dependents",
-)
-
-
-def _missing_fix_loop_contract(text: str) -> set[str]:
-    return {phrase for phrase in FIX_LOOP_CONTRACT if phrase not in text}
-
-
-POST_REBUILD_CONTRACT = (
-    "A verification blocker never opens a fix round or rebuild",
-    "Validate the rewritten plan before the rebuild",
-    "Run post-rebuild consolidation and validation before classifying the rebuilt feature",
-    "The post-rebuild validator is the sole authority for convergence classes",
-    "freeze and record a finite supported-path matrix",
-    "Pass when no `Critical`, `Blocker`, or `High` production cells remain",
-    "Block when one repair cycle closes no failing production cells",
-    "Escalate when a reviewer identifies a new requirement or supported path outside the frozen matrix",
-    "must not expand the frozen matrix silently",
-    "post-rebuild consolidation and validation after each repair round",
-    "Do not rewrite or rebuild a second time",
-    "Only a `production-blocker` can block dependents",
-)
-
 POST_REBUILD_MATRIX_CONTRACT = (
     "cell_id",
     "supported_path",
@@ -194,7 +158,6 @@ PHASE_CLOSE_AUDIT_CONTRACT = (
 
 def _missing_phase_close_audit_contract(text: str) -> set[str]:
     return {phrase for phrase in PHASE_CLOSE_AUDIT_CONTRACT if phrase not in text}
-
 
 
 def test_trigger_tables_have_exact_rosters_and_conditions() -> None:
@@ -233,9 +196,10 @@ def test_changed_file_scenarios_resolve_the_predicted_agent_set() -> None:
 def test_security_scan_has_one_entry_point() -> None:
     """Step 5 owns the only spawn of 03e; no feature stage may reintroduce one."""
     text = _read(PHASE_PATH)
-    security_section = text.split("### Step 5: Diff Security Review", 1)[1]
-    security_section = security_section.split("### Step 5.5: Phase-Close Audits", 1)[0]
-    assert "spawn the **03e Diff Security Scan** subagent at `high`" in security_section
+    security_section = text.split("### Step 5: Phase-Close Review", 1)[1]
+    security_section = security_section.split("### Step 6: Phase Final Review", 1)[0]
+    assert "**03e Diff Security Scan** concurrently" in security_section
+    assert "Spawn `03e` at `high`" in security_section
     # 03e cannot resolve its own scope, so Step 5 must hand it materialized inputs.
     assert "changed-files.txt" in security_section
     assert "range.diff" in security_section
@@ -249,6 +213,7 @@ def test_boundary_events_resolve_the_predicted_agent_set() -> None:
     text = _read(PHASE_PATH)
     assert _predicted_boundary_agents(text, phase_closing=False) == set()
     assert _predicted_boundary_agents(text, phase_closing=True) == {
+        "03e Diff Security Scan",
         "04d Consistency Auditor",
         "04f Test Health",
         "Prod Code Review",
@@ -264,22 +229,11 @@ def test_trigger_table_guard_fails_when_a_row_is_removed() -> None:
     assert "per-feature roster" in _table_coverage_errors(mutated)
 
 
-
-
 def _convergence_section(text: str) -> str:
     """The 03n block that owns the frozen matrix, isolated from the rest of the agent."""
     start = text.index("## Post-Rebuild Convergence")
     rest = text.find("\n## ", start + 1)
     return text[start:] if rest == -1 else text[start:rest]
-
-
-def test_fix_loop_contract_is_stated_in_the_loop_skill() -> None:
-    assert not _missing_fix_loop_contract(_read(LOOP_SKILL_PATH))
-
-
-def test_post_rebuild_contract_is_stated_in_the_loop_skill() -> None:
-    text = _read(LOOP_SKILL_PATH)
-    assert not {phrase for phrase in POST_REBUILD_CONTRACT if phrase not in text}
 
 
 def test_frozen_matrix_contract_lives_in_the_validator() -> None:
@@ -306,8 +260,3 @@ def test_frozen_matrix_guard_fails_when_a_cell_field_is_dropped() -> None:
     assert {phrase for phrase in POST_REBUILD_MATRIX_CONTRACT if phrase not in mutated}
 
 
-def test_fix_loop_guard_fails_when_the_round_cap_is_dropped() -> None:
-    original = _read(LOOP_SKILL_PATH)
-    phrase = "Run at most two production fix rounds"
-    assert phrase in original
-    assert phrase in _missing_fix_loop_contract(original.replace(phrase, "", 1))

@@ -101,6 +101,7 @@ Each agent appears in one table. Every boundary row fires at phase close, and no
 
 | Review agent | Entry condition |
 |---|---|
+| 03e Diff Security Scan | The phase is closing |
 | 04d Consistency Auditor | The phase is closing |
 | 04f Test Health | The phase is closing |
 | Prod Code Review | The phase is closing |
@@ -204,7 +205,7 @@ Run this gate before you mark the feature complete.
 1. Run the integrated suite. It is the union of every affected suite plus the manifest's `## Verification Assets`. On the phase's final feature, run the suite unfiltered.
    - For Unity, consume the `unity-development` skill's Test Execution section and Execution Ladder. Do not copy their mechanics. Target `<execution-unity-project>`, preserve affected-suite `-testFilter` scoping, and write the results XML and Unity log to the absolute main-checkout artifact directory.
 2. Read the results artifact. Record `[0N-task-name] integration test-execution: executed-green | executed-failing | not-executed (<reason>)`.
-3. **On `executed-failing`, remediate once.** Re-spawn the **Feature - Implementer** that owns the failing behavior. Give it the failing test names. Then re-run the gate. Retry at most once. If the gate still fails, record the final status and proceed. The blocker escalates to the Phase Final Review (Step 7).
+3. **On `executed-failing`, remediate once.** Re-spawn the **Feature - Implementer** that owns the failing behavior. Give it the failing test names. Then re-run the gate. Retry at most once. If the gate still fails, record the final status and proceed. The blocker escalates to the Phase Final Review (Step 6).
    > "[SUBAGENT-MODE] The feature integration test gate failed for phase [phase-name]. Failing tests: [names and assertion messages]. Results artifact: [path]. These failures are in suites outside your feature's Files Changed table — a contract you changed broke callers written before it. Fix the production code or update the affected fixtures so these tests pass. Do NOT delete, skip, or weaken tests to force a pass. Return what you changed."
 4. **On `not-executed`, do not proceed silently and do not treat it as green.**
    - For Unity, exhaust the canonical Execution Ladder. The orchestrator runs every obtainable command. Never delegate a Unity test command to the user.
@@ -251,7 +252,7 @@ After the subagent returns:
 
 - Record `automated-qa-run: PASS | FAIL | NOT RUN (<reason>)`. Use the runner's own upper-case strings verbatim.
 - On `FAIL` or `NOT RUN`, set `all-approved: no`. The Phase Final Review then runs in standard mode and carries it as a blocker.
-- Do not remediate. An automated QA failure escalates to Step 7.
+- Do not remediate. An automated QA failure escalates to Step 6.
 - An `UNRUNNABLE` check is a defect in the QA document, not in the phase. Name it as such when you report. The reroute target is `Feature - QA Writer`, not the implementer.
 - Record how many `EVIDENCE ONLY` checks now have evidence waiting for the human. These do not block.
 
@@ -263,49 +264,39 @@ The skill's staging rules exclude one artifact. The evidence directory is untrac
 
 The QA checkpoint lands after the run.
 
-### Step 5: Diff Security Review
+### Step 5: Phase-Close Review
 
-Run one diff-scoped security review for the whole phase.
+Resolve the boundary table's review rows here. Three things must complete first: every feature, every feature integration test gate, and QA.
 
-Materialize the diff first. `03e` has no shell or git access. Resolve `<phase-baseline>` with `git merge-base HEAD <default-branch>`, then write both artifacts under `dev/feature/`:
+Materialize the phase diff first. `03e` has no shell or git access. Resolve `<phase-baseline>` with `git merge-base HEAD <default-branch>`, then write both artifacts under `dev/feature/`:
 
 - `changed-files.txt` — `git diff --name-status <phase-baseline>..HEAD`
 - `range.diff` — `git diff <phase-baseline>..HEAD`
 
-If the range is empty, record `security-scan: not-applicable (empty phase diff)` and do not spawn.
-
-Otherwise spawn the **03e Diff Security Scan** subagent at `high`:
+Spawn **04d Consistency Auditor**, **04f Test Health**, and **03e Diff Security Scan** concurrently against the whole phase diff. Spawn `03e` at `high` with this brief:
 
 > "[SUBAGENT-MODE] Perform a diff-scoped security review of phase [phase-name]. Changed-file list: `dev/feature/changed-files.txt`. Full diff: `dev/feature/range.diff`. Context documents: [the phase summary path, and every feature implementation record path]. Write the report to `dev/feature/[phase-name]-security.md` and return its verdict (`PASS` | `PASS WITH CONDITIONS` | `BLOCKED` | `NOT RUN`) with finding counts by severity."
 
-After the subagent returns, verify the report exists at that path. Then record one aggregate:
+Wait for all three reports.
+
+**Security.** Verify the report exists at `dev/feature/[phase-name]-security.md`. Then record one aggregate:
 
 - If the report is missing, record `security-scan: NOT RUN (report missing)` and set `all-approved: no`.
 - Otherwise record `security-scan: PASS | PASS WITH CONDITIONS | BLOCKED` from the report. A blocked aggregate sets `all-approved: no`.
 
-It is not a substitute for a full-codebase `Auditor - Security` scan.
+`03e` is not a substitute for a full-codebase `Auditor - Security` scan.
 
-Do not automatically remediate security findings. Prod Code Review determines the final GO, GO WITH CONDITIONS, or NO-GO decision.
+**Audits.** Record `phase-close-audits: executed` with both report paths. If either cannot run, record `phase-close-audits: absent ([concrete reason])` and set `all-approved: no`. Never treat an absent audit as a clean result.
 
-This step emits no checkpoint of its own. The Phase Final Review checkpoint (Step 7) owns the security report and stages it.
+Do not automatically remediate any finding from this step. All three reports travel to Step 6. **Prod Code Review** is the phase-close readiness gate and the only consumer that can act on what they found. It determines the final GO, GO WITH CONDITIONS, or NO-GO decision.
 
-### Step 6: Phase-Close Audits
+This step emits no checkpoint of its own. The Phase Final Review checkpoint (Step 6) owns the security report and stages it.
 
-Resolve the boundary table's audit rows last. Four things must complete first: every feature, every feature integration test gate, QA, and the Step 5 Diff Security Review.
+### Step 6: Phase Final Review
 
-Spawn `04d Consistency Auditor` and `04f Test Health` concurrently against the whole phase diff. Wait for both reports.
+Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 4b, and both the diff security verdict and the phase-close audit result from Step 5. Any one of them can set `all-approved: no` on its own.
 
-Record `phase-close-audits: executed` with both report paths.
-
-If either cannot run, record `phase-close-audits: absent ([concrete reason])` and set `all-approved: no`. Never treat an absent audit as a clean result.
-
-Both reports travel to Step 7. **Prod Code Review** is the phase-close readiness gate and the only consumer that can act on what they found.
-
-### Step 7: Phase Final Review
-
-Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 4b, the diff security verdict from Step 5, and the phase-close audit result from Step 6. Any one of them can set `all-approved: no` on its own.
-
-Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute three values: the verdict summary, the final aggregate `all-approved` state after every gate, and the Step 6 phase-close audit result. An absent audit keeps `all-approved: no` and still reaches this review.
+Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute three values: the verdict summary, the final aggregate `all-approved` state after every gate, and the Step 5 phase-close audit result. An absent audit keeps `all-approved: no` and still reaches this review.
 
 **If QA was generated and the complete pipeline is `all-approved: yes`:**
 
@@ -329,7 +320,7 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 
 After the Prod Code Review subagent returns, emit the skill's final review checkpoint. It aggregates the final review artifact, the Step 5 security scan report, and any phase-level pipeline documents this step updated.
 
-### Step 8: Report to User
+### Step 7: Report to User
 
 Present results using the Pipeline Completion Report format from the auto-loaded orchestrator conventions. Use these field labels:
 
@@ -341,7 +332,7 @@ Present results using the Pipeline Completion Report format from the auto-loaded
 
 Report the phase as implementation-complete only when the final gate is `executed-green`. If it is `executed-failing` or `not-executed`, say so plainly and name what remains. An unrun suite is not a completed phase.
 
-### Step 9: Update Documentation
+### Step 8: Update Documentation
 
 Follow the Post-Loop: Documentation Update section from the `implementation-pipeline-loop` skill. Use this prompt:
 
@@ -355,7 +346,7 @@ See the Test Execution Gate section of the `implementation-pipeline-loop` skill 
 
 ### Documentation Drift
 
-The Docs Writer subagent runs in Step 9. It sweeps all the documentation it manages and updates anything stale. This is a best-effort step. A Docs Writer report of no changes needed is an expected result.
+The Docs Writer subagent runs in Step 8. It sweeps all the documentation it manages and updates anything stale. This is a best-effort step. A Docs Writer report of no changes needed is an expected result.
 
 **Standalone mode:** After writing, tell the user:
 

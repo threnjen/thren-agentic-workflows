@@ -29,21 +29,7 @@ SCAN_ROOTS = (
 
 # Unity visual verification retains this term for its committed-input checkpoint.
 # Every exempted phrase is a non-scheduling Unity contract phrase.
-NON_SCHEDULING_CAPTURE_PHRASES = {
-    REPO_ROOT / "source_of_truth/agents/03-phase-execute.agent.md": (
-        "Never create or modify capture inputs after the "
-        + SCHEDULING_TOKEN
-        + " checkpoints",
-    ),
-    REPO_ROOT / "tests/test_unity_consumer_contract.py": (
-        "Never create or modify capture inputs after the "
-        + SCHEDULING_TOKEN
-        + " checkpoints",
-        "no dirty post-" + SCHEDULING_TOKEN + " bootstrap",
-        "after the " + SCHEDULING_TOKEN + " checkpoints",
-        "Create capture inputs after the " + SCHEDULING_TOKEN + " checkpoints",
-    ),
-}
+NON_SCHEDULING_CAPTURE_PHRASES: dict[Path, tuple[str, ...]] = {}
 SCHEDULING_TERM_PATTERN = re.compile(
     rf"\b{re.escape(SCHEDULING_TOKEN)}s?\b", re.IGNORECASE
 )

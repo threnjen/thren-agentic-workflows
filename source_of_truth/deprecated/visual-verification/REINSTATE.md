@@ -36,9 +36,9 @@ mattered.
 | Implementer spawn prompt | Append to the Unity sentence: `For a Unity feature contributing to the phase's visual acceptance criteria, follow` `unity-development` `→ Visual Verification Wiring before returning so the A1 checkpoint commits those inputs.` This is what commits capture inputs before the A1 checkpoint — a shadow worktree can only test committed inputs, so without it the gate reads a stale checkout. |
 | Step 4b QA escalation | `exactly like the security scan.` → `exactly like the security scan and the visual gate.` |
 | Step 4c staging rules | `The skill's staging rules exclude one artifact.` → `exclude two artifacts`, and re-add `The Step 6 checkpoint owns the Step 3 visual-verification report.` |
-| Step 5.5 audit ordering | `Four things must complete first:` → `Five things`, re-adding `visual verification` after the integration test gate. |
+| Step 5 phase-close ordering | `Three things must complete first:` → `Four things`, re-adding `visual verification` after the integration test gate. |
 | Step 6 `all-approved` inputs | `Four other results also feed it:` → `Five other results`, re-adding `the visual verification verdict from Step 3,` after the stage D gate. |
-| Step 6 Prod Code Review substitutions | `Substitute three values:` → `Substitute four values:`, re-adding `the visual-verification verdict from Step 3 or its skip reason,` before the Step 5.5 result. |
+| Step 6 Prod Code Review substitutions | `Substitute three values:` → `Substitute four values:`, re-adding `the visual-verification verdict from Step 3 or its skip reason,` before the Step 5 phase-close result. |
 | Fast-track prompt template | Re-add ` Visual verification: [Pass \| skip reason].` after the test-execution sentence. |
 | Standard prompt template | Re-add ` Visual verification: [Pass \| Fail \| Unverified \| skip reason].` in the same position. |
 | Step 6 final checkpoint | Re-add `the Step 3 visual-verification report,` to the aggregation list. |
