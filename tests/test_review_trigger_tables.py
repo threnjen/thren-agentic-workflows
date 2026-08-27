@@ -235,7 +235,6 @@ def test_security_scan_has_one_entry_point() -> None:
     text = _read(PHASE_PATH)
     security_section = text.split("### Step 5: Diff Security Review", 1)[1]
     security_section = security_section.split("### Step 5.5: Phase-Close Audits", 1)[0]
-    assert "sole entry point for **03e Diff Security Scan**" in security_section
     assert "spawn the **03e Diff Security Scan** subagent at `high`" in security_section
     # 03e cannot resolve its own scope, so Step 5 must hand it materialized inputs.
     assert "changed-files.txt" in security_section

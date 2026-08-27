@@ -125,7 +125,7 @@ Start this stage only after the implementer for that feature has returned.
 
 Create the next immutable `review-cycle` directory under `dev/feature/[0N-task-name]/reviews/`. Use `initial-01`, `fix-01`, `rebuild-01`, then `post-rebuild-01`, `post-rebuild-02`, and so on. Never overwrite a completed cycle.
 
-Assemble the feature's changed-file list and its selected plan metadata. Wait for all four reports.
+Assemble the feature's changed-file list and its selected plan metadata. Wait for every report you spawned.
 
 Spawn all Reviewers always concurrently at `medium`:
 
@@ -140,7 +140,7 @@ Spawn these Reviewers conditionally concurrently at `medium`:
 - For a Unity project, spawn **Unity Reviewer**.
 - For a firing dependency row, spawn **04e Dependency Auditor** with the diff.
 
-Make note of which reviewers you spawnd and which reports you expect to see. After EVERY report returns, spawn **03m Finding Consolidator**. Give it all report paths. It writes a deduplicated candidate list. It does not validate findings.
+Make note of which reviewers you spawned and which reports you expect to see. After EVERY report returns, spawn **03m Finding Consolidator**. Give it all report paths. It writes a deduplicated candidate list. It does not validate findings.
 
 After the deduplicated candidate list exists, spawn **03n Finding Validator**. Give it the candidate list, the raw reports, the validated plan, the accepted contracts, the changed code, the tests, and the run evidence. It proves or rejects every Critical, Blocker, and High candidate. It writes the validation report and the final fix list. The orchestrator does not merge, validate, or rank findings.
 
@@ -165,17 +165,17 @@ Every path after 03c Reviewer - Plan Conformance is relative to `reviews/[review
 
 A **review cycle** means Reviewers A through D, then consolidation, then validation, stored in its own directory under `reviews/`. Run one after every repair round.
 
-**Who repairs.** Spawn **03p Feature - Fixer** at `medium` for each fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites. The implementer never applies its own review findings: a confirmed finding marks where the implementer's model of its own code was wrong, so repair belongs to an agent that reads the current code rather than one that remembers writing it. Never instruct the fixer to skip reading the code it edits. Avoiding rediscovery means never re-planning a finished feature. It never means editing code you have not looked at. How the fixer reads, repairs, and verifies is its own contract.
+**Who repairs.** Spawn **03p Feature - Fixer** at `medium` for each fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites. The implementer never applies its own review findings. Never instruct the fixer to skip reading the code it edits. How the fixer reads, repairs, and verifies is its own contract.
 
 **What opens a round.** Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker, and a verification blocker never opens a fix round or rebuild. Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two production fix rounds.
 
-**The regression gate.** Pass the phase-level test baseline to the fixer when discovery recorded one. It returns that round's baseline pass set and regression result. Run the affected suites yourself before you spawn any reviewer: the fixer's own re-run tells it whether its repair held, but your run decides whether the round is admissible, and a self-report is not evidence. Record both the baseline pass set and the regression result in the cycle directory.
+**The regression gate.** Pass the phase-level test baseline to the fixer when discovery recorded one. It returns that round's baseline pass set and regression result. Run the affected suites yourself before you spawn any reviewer. A fixer self-report is not evidence. Record both the baseline pass set and the regression result in the cycle directory.
 
 - **Regression** — a test that passed at the round baseline now fails, so the round failed. Return the failing test names to the fixer once. If the suite is still regressed, instruct it to revert the round and record a failed repair. A failed repair round never counts as a converging cycle.
 - **No regression** — run a review cycle.
 - **Runner unavailable** — record `regression-check: not-executed (<reason>)` and carry the round as verification pending. An unrunnable suite is never a clean regression check.
 
-Reviewers judge findings, never regressions. A repair that closes a finding and breaks a passing test is a net loss, and only the suite can see it.
+Reviewers judge findings, never regressions.
 
 **Rewrite and rebuild, once.** After two unsuccessful rounds, have **Feature - Plan Author** rewrite the feature plan once using the fix list. Validate it before the rebuild against two conditions: every RED task precedes its production change, and every baseline selector reaches its intended assertion without an import or setup failure. Correct every validation failure before implementation. A correction that makes the plan executable does not count as another rewrite. Do not rewrite or rebuild a second time.
 
@@ -186,7 +186,7 @@ Reviewers judge findings, never regressions. A repair that closes a finding and 
 - `Escalate` — a reviewer identified a requirement or supported path outside the frozen matrix. Ask the user whether to expand scope.
 - `Continue` — return the failing cells to the fixer, and run another round while the failing cell count strictly decreases.
 
-One condition overrides that class. A repair cycle that regresses a test passing at its own baseline is blocked whatever the matrix shows, because the matrix holds supported paths only and cannot see collateral damage.
+One condition overrides that class. A repair cycle that regresses a test passing at its own baseline is blocked whatever the matrix shows.
 
 **Classifying a still-failing feature.** Classify before you block anything. The two classes carry different consequences.
 
@@ -199,7 +199,7 @@ A compile command that ran and failed proves a production blocker. Missing compi
 
 ##### D. Integration test gate
 
-Run this gate before you mark the feature complete. It catches a feature that breaks an earlier feature's tests. No reviewer in stage B can see that class of defect, because every reviewer is scoped to the diff of the feature under review.
+Run this gate before you mark the feature complete.
 
 1. Run the integrated suite. It is the union of every affected suite plus the manifest's `## Verification Assets`. On the phase's final feature, run the suite unfiltered.
    - For Unity, consume the `unity-development` skill's Test Execution section and Execution Ladder. Do not copy their mechanics. Target `<execution-unity-project>`, preserve affected-suite `-testFilter` scoping, and write the results XML and Unity log to the absolute main-checkout artifact directory.
@@ -241,7 +241,7 @@ After the subagent returns:
 
 #### Step 4b: spawn QA Runner
 
-Run this step only when the automated QA document exists. If it does not exist, record `automated-qa-run: N/A (no automated checks)` and go to Step 4c. This is not a gate failure. A phase whose every check needs a human is a valid outcome.
+Run this step only when the automated QA document exists. If it does not exist, record `automated-qa-run: N/A (no automated checks)` and go to Step 4c. This is not a gate failure.
 
 Spawn the **Feature - QA Runner** subagent:
 
@@ -251,7 +251,7 @@ After the subagent returns:
 
 - Record `automated-qa-run: PASS | FAIL | NOT RUN (<reason>)`. Use the runner's own upper-case strings verbatim.
 - On `FAIL` or `NOT RUN`, set `all-approved: no`. The Phase Final Review then runs in standard mode and carries it as a blocker.
-- Do not remediate. An automated QA failure escalates to Step 6. A re-spawned implementer here would edit code the review gates already approved.
+- Do not remediate. An automated QA failure escalates to Step 6.
 - An `UNRUNNABLE` check is a defect in the QA document, not in the phase. Name it as such when you report. The reroute target is `Feature - QA Writer`, not the implementer.
 - Record how many `EVIDENCE ONLY` checks now have evidence waiting for the human. These do not block.
 
@@ -261,13 +261,13 @@ Emit the skill's QA checkpoint once. This stage produced the three QA outputs an
 
 The skill's staging rules exclude one artifact. The evidence directory is untracked run output.
 
-The QA checkpoint lands after the run. The committed automated document therefore carries its own results.
+The QA checkpoint lands after the run.
 
 ### Step 5: Diff Security Review
 
-Run one diff-scoped security review for the whole phase. This step is the sole entry point for **03e Diff Security Scan**. No feature stage spawns it.
+Run one diff-scoped security review for the whole phase.
 
-Materialize the diff first. `03e` has no shell or git access, so a bare commit range is not a runnable input and it returns `NOT RUN`. Resolve `<phase-baseline>` with `git merge-base HEAD <default-branch>`, then write both artifacts under `dev/feature/`:
+Materialize the diff first. `03e` has no shell or git access. Resolve `<phase-baseline>` with `git merge-base HEAD <default-branch>`, then write both artifacts under `dev/feature/`:
 
 - `changed-files.txt` — `git diff --name-status <phase-baseline>..HEAD`
 - `range.diff` — `git diff <phase-baseline>..HEAD`
@@ -283,7 +283,7 @@ After the subagent returns, verify the report exists at that path. Then record o
 - If the report is missing, record `security-scan: NOT RUN (report missing)` and set `all-approved: no`.
 - Otherwise record `security-scan: PASS | PASS WITH CONDITIONS | BLOCKED` from the report. A blocked aggregate sets `all-approved: no`.
 
-The specialist remains a changed-files reviewer. Phase scope widens the diff, not the method. It is not a substitute for a full-codebase `Auditor - Security` scan.
+It is not a substitute for a full-codebase `Auditor - Security` scan.
 
 Do not automatically remediate security findings. Prod Code Review determines the final GO, GO WITH CONDITIONS, or NO-GO decision.
 
@@ -293,7 +293,7 @@ This step emits no checkpoint of its own. The Phase Final Review checkpoint (Ste
 
 Resolve the boundary table's audit rows last. Four things must complete first: every feature, every feature integration test gate, QA, and the Step 5 Diff Security Review.
 
-Spawn `04d Consistency Auditor` and `04f Test Health` concurrently against the whole phase diff. Wait for both reports. One pass over the finished phase sees the cross-feature drift that no single feature's diff exposes.
+Spawn `04d Consistency Auditor` and `04f Test Health` concurrently against the whole phase diff. Wait for both reports.
 
 Record `phase-close-audits: executed` with both report paths.
 
