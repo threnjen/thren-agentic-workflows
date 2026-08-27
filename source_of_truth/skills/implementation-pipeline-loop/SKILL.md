@@ -39,13 +39,25 @@ When a phase caller supplies review trigger tables, keep the implementer address
 
 Spawn `03m Finding Consolidator` with all four report paths. It writes a deduplicated candidate list. Then spawn `03n Finding Validator` with that list, the raw reports, validated plan, accepted contracts, changed code, tests, and run evidence. The validator proves or rejects every serious candidate and writes the final fix list.
 
-Pass only confirmed findings to the implementer that wrote the feature. Do not make that implementer rediscover its own work. If the harness cannot resume the handle, spawn a fresh implementer with the implementation record and the same fix list. Record that fallback in the implementation record.
+Pass only confirmed findings to a fresh implementer spawned for the fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites. Every confirmed finding marks a place where the original implementer's model of its own code was wrong, so that handle's memory is worth less than a fresh read of what is on disk now.
+
+Require the fixer to read the cited code before it edits. Never instruct it to skip that read. Avoiding rediscovery means never re-planning a finished feature. It never means editing code you have not looked at.
 
 Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker. It never opens a fix round or rebuild.
 
 A verification blocker never opens a fix round or rebuild.
 
-Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two production fix rounds. After each repair, rerun Reviewers A through D, consolidation, and validation in a new review cycle.
+Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two production fix rounds.
+
+Before each repair round starts, have the fixer run the affected suites and record the passing tests as that round's baseline pass set.
+
+After each repair round returns, run the affected suites again before you spawn any reviewer.
+
+- On a regression — a test that passed at the round baseline now fails — the round failed. Return the failing test names to the fixer once. If the suite is still regressed, revert the round and record it as a failed repair. A failed repair round never counts as a converging cycle.
+- On no regression, rerun Reviewers A through D, consolidation, and validation in a new review cycle.
+- When the runner is unavailable, record `regression-check: not-executed (<reason>)` and carry the round as verification pending. An unrunnable suite is never a clean regression check.
+
+Record the baseline pass set and the regression result in the review cycle directory. Reviewers judge findings, never regressions. A repair that closes a finding and breaks a passing test is a net loss, and only the suite can see it.
 
 After two unsuccessful rounds, rewrite the feature plan once using the fix list. Validate the rewritten plan before the rebuild.
 
@@ -66,6 +78,8 @@ Later reviewers must not expand the frozen matrix silently.
 Pass when no `Critical`, `Blocker`, or `High` production cells remain.
 
 Block when one repair cycle closes no failing production cells, increases the failing high-severity count, or repeats one cell twice.
+
+Block when a repair cycle regresses a test that passed at that cycle's baseline, whatever the matrix shows. The frozen matrix holds supported paths only, so it cannot see collateral damage.
 
 Escalate when a reviewer identifies a new requirement or supported path outside the frozen matrix. The user decides whether to expand scope.
 

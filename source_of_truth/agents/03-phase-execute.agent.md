@@ -159,13 +159,25 @@ The committee artifact contract stays stable across the producer and the consume
 
 Every path after Feature - Review and Fix is relative to `reviews/[review-cycle]/`. Commit every cycle at the review checkpoint. The validator consumes the candidate list. The implementer consumes only the validated fix list. Pass every path you resolved to the consolidator. A specialist report you cannot locate is a missing artifact, so apply the Subagent Output Verification rule.
 
-**C. Consolidated fix loop** — Keep the implementer addressable across review and fixes. Pass it the fix list. Do not require it to rediscover the work.
+**C. Consolidated fix loop** — Spawn a fresh implementer for each fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites.
 
-Spawn a fresh implementer only when the harness cannot resume the original. Record that fallback in the implementation record.
+A fix round is bounded work against a written finding list. Every confirmed finding marks a place where the original implementer's model of its own code was wrong, so that handle's memory is worth less than a fresh read of what is on disk now.
+
+Require the fixer to read the cited code before it edits. Never instruct it to skip that read. Avoiding rediscovery means never re-planning a finished feature. It never means editing code you have not looked at.
 
 Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker. A verification blocker never opens a fix round or rebuild.
 
-Carry `Medium` and `Low` findings to phase final review. Run at most two production fix rounds. After each repair, rerun Reviewers A through D, consolidation, and validation in a new review cycle.
+Carry `Medium` and `Low` findings to phase final review. Run at most two production fix rounds.
+
+Before each repair round starts, have the fixer run the affected suites and record the passing tests as that round's baseline pass set. Where the phase-level discovery already recorded a suitable baseline, reuse it rather than recapturing one.
+
+After each repair round returns, run the affected suites again before you spawn any reviewer.
+
+- On a regression — a test that passed at the round baseline now fails — the round failed. Return the failing test names to the fixer once. If the suite is still regressed, revert the round and record it as a failed repair. A failed repair round never counts as a converging cycle.
+- On no regression, rerun Reviewers A through D, consolidation, and validation in a new review cycle.
+- When the runner is unavailable, record `regression-check: not-executed (<reason>)` and carry the round as verification pending. An unrunnable suite is never a clean regression check.
+
+Record the baseline pass set and the regression result in the review cycle directory. Reviewers judge findings, never regressions. A repair that closes a finding and breaks a passing test is a net loss, and only the suite can see it.
 
 After two unsuccessful rounds, have **Feature - Plan Author** rewrite the feature plan once using the fix list. Validate the rewritten plan before the rebuild.
 
@@ -188,6 +200,7 @@ Read the matrix for the decision:
 
 - Pass when no `Critical`, `Blocker`, or `High` production cells remain.
 - Block when one repair cycle closes no failing production cells, increases the failing high-severity count, or repeats one cell twice.
+- Block when a repair cycle regresses a test that passed at that cycle's baseline, whatever the matrix shows. The frozen matrix holds supported paths only, so it cannot see collateral damage.
 - Escalate when a reviewer identifies a new requirement or supported path outside the frozen matrix. Ask the user whether to expand scope.
 - Otherwise, return the failing cells to the rebuilt implementer. Continue targeted repairs while the failing cell count strictly decreases.
 
@@ -231,7 +244,7 @@ Run this gate at the end of every dependency level, before you start the next on
 
 This step emits no checkpoint of its own.
 
-### Step 3: Visual Verification Gate (conditional)
+<!-- ### Step 3: Visual Verification Gate (conditional)
 
 This step produces runtime visual evidence for a phase that renders something. It catches the class of defect that compiles clean: invisible or miscolored output, broken scene wiring, and blank frames.
 
@@ -255,7 +268,7 @@ After the subagent returns, record the verdict as `visual-verification: Pass | F
 - **Do not retry `Unverified`.** The capture could not run, or the images were not assessable. That is a setup problem, not a rendering problem. Record it and proceed.
 - If the final verdict is `Fail` or `Unverified`, set `all-approved: no`. The Phase Final Review (Step 6) then runs in standard mode, not fast-track mode, and flags it as a blocker. A blank or missing frame is a `Fail`, not an `Unverified`.
 
-This step emits no checkpoint of its own. The Phase Final Review checkpoint (Step 6) owns the report file and stages it. The generated screenshots and manifest are build artifacts. Do not commit them.
+This step emits no checkpoint of its own. The Phase Final Review checkpoint (Step 6) owns the report file and stages it. The generated screenshots and manifest are build artifacts. Do not commit them. -->
 
 ### Step 4: QA
 

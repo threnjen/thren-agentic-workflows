@@ -168,7 +168,32 @@ After writing the implementation record, return a brief summary to the orchestra
 
 ## Review Fix Handoff
 
-When Phase - Execute keeps this implementation handle open for review, remain addressable after the implementation return. Apply the supplied consolidated fix list without rediscovering the feature. Update the implementation record with the resolved review agents, reviewer-attributed findings, fix-round count, carry-forward findings, and fallback status. If a fresh invocation is supplied instead, read the existing implementation record and consolidated fix list before changing anything.
+A fix round is not an implementation round. You are changing code that already exists, and a reviewer has read it more recently than you have. Read it before you edit it, on every round.
+
+Read these first, in this order:
+
+1. The validated fix list. It is the only source of findings you act on.
+2. The implementation record, for the AC scope and the Files Changed tables.
+3. Every file and line the fix list cites, at its current content on disk.
+
+The code may differ from what you last wrote, because an earlier fix round or another agent may have changed it. Trust the disk over your memory of the code.
+
+Run the suites covering the cited code before you change anything. Record which tests pass. That pass set is this round's regression baseline.
+
+For each finding, in fix-list order:
+
+1. Reproduce the defect, or confirm the production trace the validator recorded.
+2. Change only the responsibility the finding names. Update the callers your change forces, and nothing beyond them.
+3. Re-run the baselined suites. Every test that passed before must still pass.
+4. Record the finding as `fixed`, `not-reproduced`, or `blocked`.
+
+Report `not-reproduced` when the cited defect is absent from the current code. Report `blocked` when the repair needs a change outside the feature's scope. Never improvise a change to make a finding look addressed. An unapplied finding with a stated reason is a correct outcome. A speculative rewrite is not.
+
+Stop the round and report when a fix breaks a test that passed at the round baseline and you cannot repair it inside the finding's scope. Revert that fix before you report. A round that returns a smaller defect count and a broken suite is a failed round.
+
+Do not refactor past the findings. Do not implement an unmet acceptance criterion during a fix round. Report it instead.
+
+Update the implementation record with the resolved review agents, reviewer-attributed findings, the per-finding outcome, the fix-round count, the round's baseline pass set and regression result, carry-forward findings, and fallback status.
 
 Required fields only:
 - **AC scope**: exact AC labels completed in this invocation
