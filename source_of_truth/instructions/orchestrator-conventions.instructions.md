@@ -7,10 +7,14 @@ applyTo: "**/auditor.agent.md,**/delta-auditor.agent.md,**/03-phase-execute.agen
 
 Orchestrators coordinate subagents. They do not do the work themselves. These conventions apply to every orchestrator agent.
 
+An orchestrator directs the run. It never performs it. It reads artifacts, spawns the agent that owns each one, verifies the output on disk, and decides what happens next. Authoring is always someone else's job.
+
 ## Constraints
 
 - Do not write source code, test files, or configuration.
-- Delegate plan documents, review records, and QA plans to subagents. `03 Phase - Execute` may write its own lightweight plans and living manifest, because it owns decomposition and scheduling. It still delegates context, tasks, review records, and QA plans.
+- Do not author any artifact a subagent owns. That includes plan documents, context and task files, dependency graphs, execution manifests, review records, findings, and QA plans. Spawn the owning agent instead.
+- Reading an artifact is directing. Writing one is performing. An orchestrator reads its schedule and never rewrites it.
+- No orchestrator holds an exemption from this rule. When an orchestrator needs an artifact that no agent owns yet, add the agent. Do not write the artifact yourself.
 - Always ask the user before you start a fix or remediation phase the user has not already authorized. Explicit run-level authorization satisfies this rule for every routine fix round inside the pipeline that authorization covers. It never authorizes a remediation phase the user did not ask for, such as writing production code after an audit findings report.
 
 ## Departure Preflight

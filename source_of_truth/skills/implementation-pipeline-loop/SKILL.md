@@ -81,59 +81,85 @@ Only a `production-blocker` can block dependents. A missing test artifact or una
 
 Read the Implementer's and Reviewer's reported test-execution status. Statuses are defined in the `test-execution-evidence` instruction.
 
-- **`executed-green`** → proceed to Step B2.
+- **`executed-green`** → proceed to Step C.
 - **`executed-failing`** → re-spawn the Implementer with the failing test names, then re-spawn the Reviewer. Retry once. If still failing, record it as a blocking status and proceed — the final review surfaces it.
 - **`not-executed`** → do NOT treat this as green. Record `test-execution: not-executed (<reason>)` for the task and report it to the orchestrator as a blocking status. A task with unrun tests cannot be reported complete. The direct-supervisor-attestation exception in the Test Execution Evidence instruction applies only when the user-invocable root orchestrator itself receives an explicit supervisor assertion; subagents still report `not-executed` without an artifact.
 
 Carry the per-task status forward: the orchestrator gates dependency-level and phase completion on it.
 
-### Step B2: Diff Security Scan (conditional)
-
-Run this step **only when the caller has not declared run-level security handling**. `03-phase-execute` declares it (one phase-level scan at its own Step 5) and skips B2 entirely. Callers that execute Steps A through D without such a declaration — `test-orchestrator` and `audit-remediation-pipeline` — run B2 once per task. Never produce both a per-task and a run-level verdict for the same change.
-
-When it runs, spawn the **z-diff-security-scan** subagent:
-
-> "[SUBAGENT-MODE] Perform a diff-scoped security scan for the task at `[plan-path]`. Scan ONLY these changed files, taken from the 'Files Changed' table in `[plan-path]/[task-name]-implementation.md`: [list of changed file paths]. Write the report to `[plan-path]/[task-name]-security.md`. Do not modify source code or reveal secret values. Return the report path, verdict, severity totals, and any Critical/High findings."
-
-After the subagent returns:
-- Verify `[plan-path]/[task-name]-security.md` exists
-- Record the verdict. If the verdict is **BLOCKED**, log it and proceed — the final review surfaces it as a blocker. Do NOT auto-remediate security findings in this loop.
-
 ### Step C: Commit
 
-Execute the commit directly — do not spawn a subagent for this step.
+This step is the only commit contract in the pipeline. A caller never defines its own commit
+scheme, message format, or staging rule — it runs these checkpoints. Execute every commit
+directly. Never spawn a subagent for a commit.
 
-1. **Collect files to stage** — From the "Files Changed" table in `[plan-path]/[task-name]-implementation.md`, collect every source file and test file path listed. Also include all pipeline documents in `[plan-path]/` (plan, context, tasks, implementation, review, and — only if Step B2 ran — security).
+Four checkpoints exist. Two land per unit of work, two land once per run.
 
-2. **Stage only those files**:
-   ```bash
-   git add <file1> <file2> ... [plan-path]/[task-name]-implementation.md [plan-path]/[task-name]-review.md
-   # append [plan-path]/[task-name]-security.md only if Step B2 ran
-   ```
-   Do NOT use `git add -A` — staging untracked files outside the implementation record risks including debug files or changes from adjacent features.
+| Checkpoint | When | Stages |
+|---|---|---|
+| Implement | After Step A returns, before review starts | The unit's source and test changes plus its pipeline documents |
+| Review | After the review and any fix rounds close | The unit's directory plus any source files the fixes touched |
+| QA | Once, after the consolidated QA stage runs | The QA documents and any run-level pipeline documents that stage updated |
+| Final review | Once, after the final review stage returns | The final review artifact and any run-level reports it aggregates |
 
-3. **Generate a commit message** using conventional commit format. Derive type, scope, and summary from the implementation record:
-   ```
-   <type>(<scope>): <short summary — 50 chars or fewer, imperative mood>
+A caller with no consolidated QA stage or no final review stage skips that checkpoint. Skipping
+one is not a missing commit.
 
-   <one paragraph: what changed and why, derived from implementation record summary>
+**1. Collect files to stage.** For a unit checkpoint, read the "Files Changed" table in
+`[plan-path]/[task-name]-implementation.md` and collect every source and test path it lists, plus
+the pipeline documents in `[plan-path]/` — plan, context, tasks, implementation, review, and, only
+if the caller ran a per-task security scan, security. For a run-level checkpoint, collect the artifacts that stage produced.
 
-   Implements: <AC refs, e.g., AC1, AC2, AC3>
-   Reviewed-by: z-feature-review-and-fix
-   Verdict: <Approved | Approved with Reservations>
-   ```
-   **Type:** `feat` (new capability) · `fix` (bug fix) · `refactor` (restructure) · `test` (tests only) · `docs` (docs only) · `chore` (config/build)
+**2. Stage only those files.**
 
-4. **Commit**:
-   ```bash
-   git commit -m "<message>"
-   ```
+```bash
+git add <file1> <file2> ... [plan-path]/[task-name]-implementation.md [plan-path]/[task-name]-review.md
+# append [plan-path]/[task-name]-security.md only if the caller ran a per-task security scan
+```
 
-5. **Verify**:
-   ```bash
-   git log --oneline -1
-   ```
-   Confirm the commit appears. If `git add` staged nothing, log "Nothing to commit" and proceed — this is not an error.
+Do NOT use `git add -A` — staging untracked files outside the implementation record risks
+including debug files or changes from adjacent tasks.
+
+Three staging rules hold at every checkpoint:
+
+- Never stage files from another unit's directory. A checkpoint commits one unit's work.
+- Never stage untracked run output such as an evidence directory. Output is not a deliverable.
+- Never stage an artifact another checkpoint owns. When a stage writes a report that a later
+  checkpoint aggregates, that later checkpoint stages it.
+
+**3. Generate a commit message** using conventional commit format. Derive type, scope, and summary
+from the implementation record for a unit checkpoint, or from the stage's own artifacts for a
+run-level one:
+
+```
+<type>(<scope>): <short summary — 50 chars or fewer, imperative mood>
+
+<one paragraph: what changed and why, derived from implementation record summary>
+
+Implements: <AC refs, e.g., AC1, AC2, AC3>
+Reviewed-by: z-feature-review-and-fix
+Verdict: <Approved | Approved with Reservations>
+```
+
+**Type:** `feat` (new capability) · `fix` (bug fix) · `refactor` (restructure) · `test` (tests only) · `docs` (docs only) · `chore` (config/build)
+
+Use `test` or `chore` for a QA checkpoint and `docs` for a final review checkpoint, and drop the
+`Implements:` and `Verdict:` trailers when the checkpoint commits no code.
+
+**4. Commit.**
+
+```bash
+git commit -m "<message>"
+```
+
+**5. Verify.**
+
+```bash
+git log --oneline -1
+```
+
+Confirm the commit appears. If `git add` staged nothing, log "Nothing to commit" and proceed —
+this is not an error.
 
 ### Step D: Mark Complete
 

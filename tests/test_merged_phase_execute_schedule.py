@@ -29,9 +29,9 @@ REQUIRED_SCHEDULE_CONTRACT = {
     "expander": "by spawning **Feature - Plan Expander** when its context or tasks are absent or stale",
     "interrupted run": "report an interrupted run and offer resumption",
     "mid-loop rebuild": "Discard and rebuild a feature interrupted mid-loop",
-    "commit resume state": "Resume at the last completed feature using the manifest and per-feature `eval:` commits",
+    "commit resume state": "Resume at the last completed feature using the status and validation commit the manifest records for it",
     "context drop": "After the plans are on disk, decomposition context may drop",
-    "manifest memory": "Treat the manifest and per-feature `eval:` commits as execution memory",
+    "manifest memory": "Treat the manifest and the per-feature checkpoint commits as execution memory",
 }
 
 
