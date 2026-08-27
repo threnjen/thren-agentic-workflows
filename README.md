@@ -98,9 +98,9 @@ not match the template means you have not deployed since the template changed.
 
 The deploy script also installs and configures two optional companion tools the agents
 use when present: [code-review-graph](https://github.com/tirth8205/code-review-graph)
-(via `pip`/`pipx`) and the [Context7](https://context7.com) MCP server (via `npx`,
-requires Node.js). Pass `--skip-tools` to opt out; a failed tool install never blocks
-asset deployment.
+(via `pip`/`pipx`, then configured only for the harnesses you selected) and the
+[Context7](https://context7.com) MCP server (via `npx`, requires Node.js). Pass
+`--skip-tools` to opt out; a failed tool install never blocks asset deployment.
 
 ## Deploy Commands
 

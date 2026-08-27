@@ -84,8 +84,16 @@ Unless `--skip-tools` is passed, deploy also installs and configures two optiona
 companion tools the agents use when present:
 
 - [code-review-graph](https://github.com/tirth8205/code-review-graph) — installed via
-  `pip` or `pipx`, then configured with `code-review-graph install`.
-- [Context7](https://context7.com) — configured via `npx ctx7 setup` (requires Node.js).
+  `pip` or `pipx`, then configured with `code-review-graph install --platform <p>`, run
+  once per harness in your saved selection. Its bare `install` targets every platform it
+  can detect and litters the repository with config for harnesses you do not use, so the
+  selection scopes it. To configure a platform this repo does not port to (windsurf, zed,
+  kiro, qoder, ...), run that CLI yourself.
+- [Context7](https://context7.com) — its MCP server, configured via
+  `npx ctx7 setup --claude --mcp -y` (requires Node.js). MCP mode is pinned because the
+  agents call Context7's `resolve-library-id` and `query-docs` tools by name; the CLI +
+  Skills mode of `ctx7 setup` registers no server. Presence is probed by looking for a
+  `context7` entry in `~/.claude.json`.
 
 Both are best-effort: if a tool cannot be set up (for example, no Node.js on PATH for
 Context7), deploy prints a warning explaining why and continues — a failed tool install

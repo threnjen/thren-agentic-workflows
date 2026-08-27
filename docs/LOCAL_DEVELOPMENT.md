@@ -84,8 +84,9 @@ python3 deploy_agents.py --skip-tools  # skip companion-tool install/config
 ```
 
 Unless `--skip-tools` is passed, deploy also bootstraps two optional companion tools:
-code-review-graph (via `pip`/`pipx`, then `code-review-graph install`) and the Context7
-MCP server (via `npx ctx7 setup`, requires Node.js). Both are best-effort — a failure
+code-review-graph (via `pip`/`pipx`, then `code-review-graph install --platform <p>` once
+  per selected harness) and the Context7
+MCP server (via `npx ctx7 setup --claude --mcp -y`, requires Node.js). Both are best-effort — a failure
 prints a `[tools] WARNING` with the reason and never blocks asset deployment.
 
 `deploy_agents.py` lives at the repository root (not under `scripts/`). The first

@@ -290,18 +290,75 @@ class EnsureCodeReviewGraphTests(unittest.TestCase):
         which_results = iter([None, "/usr/bin/pip", "/usr/bin/code-review-graph"])
         with mock.patch.object(mod.shutil, "which", side_effect=lambda _n: next(which_results)), \
                 mock.patch.object(mod.subprocess, "run", return_value=mock.Mock(returncode=0)) as run:
-            result = mod.ensure_code_review_graph()
+            result = mod.ensure_code_review_graph(["claude"])
         self.assertEqual(result["status"], "installed-and-configured")
         commands = [call.args[0] for call in run.call_args_list]
         self.assertIn(("pip", "install", "code-review-graph"), commands)
-        self.assertIn(["code-review-graph", "install"], commands)
+        self.assertIn(
+            ["code-review-graph", "install", "-y", "--platform", "claude-code"], commands
+        )
+
+    def test_configure_runs_once_per_selected_harness_and_never_for_all(self) -> None:
+        """The bare `install` (every detected platform) must never be issued."""
+        which_results = iter([None, "/usr/bin/pip", "/usr/bin/code-review-graph"])
+        with mock.patch.object(mod.shutil, "which", side_effect=lambda _n: next(which_results)), \
+                mock.patch.object(mod.subprocess, "run", return_value=mock.Mock(returncode=0)) as run:
+            mod.ensure_code_review_graph(["claude", "cursor", "claude"])
+        configures = [
+            call.args[0] for call in run.call_args_list
+            if list(call.args[0])[:2] == ["code-review-graph", "install"]
+        ]
+        self.assertEqual(
+            configures,
+            [
+                ["code-review-graph", "install", "-y", "--platform", "claude-code"],
+                ["code-review-graph", "install", "-y", "--platform", "cursor"],
+            ],
+        )
+
+    def test_no_mappable_harness_skips_configuration(self) -> None:
+        which_results = iter([None, "/usr/bin/pip", "/usr/bin/code-review-graph"])
+        with mock.patch.object(mod.shutil, "which", side_effect=lambda _n: next(which_results)), \
+                mock.patch.object(mod.subprocess, "run", return_value=mock.Mock(returncode=0)) as run:
+            result = mod.ensure_code_review_graph([])
+        self.assertEqual(result["status"], "skipped")
+        configures = [
+            call.args[0] for call in run.call_args_list
+            if list(call.args[0])[:2] == ["code-review-graph", "install"]
+        ]
+        self.assertEqual(configures, [])
+
+    def test_configure_failure_names_the_platform(self) -> None:
+        which_results = iter([None, "/usr/bin/pip", "/usr/bin/code-review-graph"])
+        # pip install succeeds; the per-platform configure call fails.
+        returncodes = iter([0, 1])
+        with mock.patch.object(mod.shutil, "which", side_effect=lambda _n: next(which_results)), \
+                mock.patch.object(
+                    mod.subprocess, "run",
+                    side_effect=lambda *_a, **_k: mock.Mock(returncode=next(returncodes)),
+                ):
+            result = mod.ensure_code_review_graph(["cursor"])
+        self.assertEqual(result["status"], "configure-failed")
+        self.assertIn("cursor", result["detail"])
 
     def test_install_failure_is_reported_not_raised(self) -> None:
         which_results = iter([None, "/usr/bin/pip", None, None])
         with mock.patch.object(mod.shutil, "which", side_effect=lambda _n: next(which_results, None)), \
                 mock.patch.object(mod.subprocess, "run", return_value=mock.Mock(returncode=1)):
-            result = mod.ensure_code_review_graph()
+            result = mod.ensure_code_review_graph(["claude"])
         self.assertEqual(result["status"], "install-failed")
+
+    def test_main_passes_the_selection_to_the_bootstrap(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(mod, "CONFIG_PATH", Path(tmp) / "config.json"), \
+                mock.patch.object(
+                    mod.sys, "argv",
+                    ["deploy_agents.py", "--harness", "claude,cursor", "--no-save"],
+                ), \
+                mock.patch.object(mod, "ensure_external_tools", return_value={}) as tools, \
+                mock.patch.object(mod, "deploy", return_value={}):
+            self.assertEqual(mod.main(), 0)
+        tools.assert_called_once_with(["claude", "cursor"])
 
     def test_deploy_proceeds_when_tool_bootstrap_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp, \
@@ -351,7 +408,7 @@ class ExternalToolReportingTests(unittest.TestCase):
 
 
 class EnsureContext7Tests(unittest.TestCase):
-    def test_existing_config_makes_no_subprocess_calls(self) -> None:
+    def test_registered_mcp_server_makes_no_subprocess_calls(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             (Path(tmp) / ".claude.json").write_text('{"mcpServers": {"context7": {}}}', encoding="utf-8")
             with mock.patch.object(mod.subprocess, "run") as run:
@@ -359,13 +416,24 @@ class EnsureContext7Tests(unittest.TestCase):
         self.assertEqual(result, {"status": "already-configured"})
         run.assert_not_called()
 
-    def test_missing_config_runs_ctx7_setup(self) -> None:
+    def test_cli_mode_rule_file_does_not_count_as_configured(self) -> None:
+        """CLI + Skills mode registers no server, so `resolve-library-id` and
+        `query-docs` would not exist. It must not satisfy the probe."""
+        with tempfile.TemporaryDirectory() as tmp:
+            rules = Path(tmp) / ".claude" / "rules"
+            rules.mkdir(parents=True)
+            (rules / "context7.md").write_text("use ctx7\n", encoding="utf-8")
+            self.assertFalse(mod.context7_is_configured(home=Path(tmp)))
+
+    def test_missing_config_runs_ctx7_setup_in_mcp_mode(self) -> None:
         with tempfile.TemporaryDirectory() as tmp, \
                 mock.patch.object(mod.shutil, "which", return_value="/usr/bin/npx"), \
                 mock.patch.object(mod.subprocess, "run", return_value=mock.Mock(returncode=0)) as run:
             result = mod.ensure_context7(home=Path(tmp))
         self.assertEqual(result["status"], "installed-and-configured")
-        self.assertEqual(run.call_args.args[0], ["npx", "ctx7", "setup"])
+        self.assertEqual(
+            run.call_args.args[0], ["npx", "ctx7", "setup", "--claude", "--mcp", "-y"]
+        )
 
     def test_missing_npx_is_reported_not_raised(self) -> None:
         with tempfile.TemporaryDirectory() as tmp, \

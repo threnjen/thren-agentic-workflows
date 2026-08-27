@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "code-review-graph": {
+      "command": "/Users/jennywadkins/.pyenv/versions/3.14.7/bin/python3.14",
+      "args": [
+        "-m",
+        "code_review_graph",
+        "serve"
+      ],
+      "cwd": "/Users/jennywadkins/github_repos/thren-agentic-workflows",
+      "type": "stdio"
+    }
+  }
+}

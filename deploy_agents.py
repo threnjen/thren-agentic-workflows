@@ -36,6 +36,17 @@ CONFIG_PATH = REPO_ROOT / ".deploy-config.json"
 
 HARNESSES = ("claude", "codex", "opencode", "cursor", "github")
 
+# `code-review-graph install --platform` vocabulary, keyed by our harness name.
+# Only the harnesses this repo ports to get configured; the tool's other
+# platforms are reachable by running its CLI directly.
+CRG_PLATFORMS = {
+    "claude": "claude-code",
+    "codex": "codex",
+    "opencode": "opencode",
+    "cursor": "cursor",
+    "github": "copilot",
+}
+
 # Baseline user-global instructions (CLAUDE.md / AGENTS.md / Cursor rule).
 # Rendered at deploy time so the discovery paths reflect this machine's real
 # home directory, then spliced into the destination file between sentinel
@@ -397,11 +408,17 @@ def deploy_baseline(
     return {"status": "created" if created else "updated", "path": str(dest)}
 
 
-def ensure_code_review_graph() -> Dict[str, str]:
+def ensure_code_review_graph(harnesses: Sequence[str] = ()) -> Dict[str, str]:
     """Install and configure code-review-graph (tirth8205/code-review-graph) if absent.
 
     The agents lean on its MCP knowledge graph, but asset deployment must never
     depend on it: every failure path returns a status instead of raising.
+
+    `code-review-graph install` defaults to every platform it can detect, which
+    scatters config for harnesses this repo does not port to (`.kiro/`,
+    `.qoder/`, `.windsurfrules`, ...) into the working repository. Scope it to
+    the harness selection instead, so the saved selection is the only place a
+    user picks harnesses.
     """
     if shutil.which("code-review-graph"):
         return {"status": "already-installed"}
@@ -418,37 +435,64 @@ def ensure_code_review_graph() -> Dict[str, str]:
     if not shutil.which("code-review-graph"):
         return {"status": "install-failed", "detail": "installed but binary not on PATH"}
 
-    if subprocess.run(["code-review-graph", "install"]).returncode != 0:
-        return {"status": "configure-failed", "detail": "'code-review-graph install' returned nonzero"}
+    platforms = [
+        CRG_PLATFORMS[name] for name in dict.fromkeys(harnesses) if name in CRG_PLATFORMS
+    ]
+    if not platforms:
+        return {"status": "skipped", "detail": "no selected harness maps to a code-review-graph platform"}
+    failed = [
+        platform
+        for platform in platforms
+        if subprocess.run(["code-review-graph", "install", "-y", "--platform", platform]).returncode != 0
+    ]
+    if failed:
+        return {
+            "status": "configure-failed",
+            "detail": f"'code-review-graph install' failed for: {', '.join(failed)}",
+        }
     return {"status": "installed-and-configured"}
+
+
+def context7_is_configured(*, home: Path | None = None) -> bool:
+    """Whether the Context7 MCP server is registered for Claude Code.
+
+    `ctx7 setup` has two modes and only one of them satisfies the agents.
+    MCP mode registers a `context7` server in `~/.claude.json`; CLI + Skills
+    mode writes a rule file instead and registers no server, so the
+    `resolve-library-id` and `query-docs` tools the baseline instructions call
+    would not exist. A CLI-mode install therefore does not count as configured.
+    """
+    home = Path(home).expanduser() if home else Path.home()
+    try:
+        return "context7" in (home / ".claude.json").read_text(encoding="utf-8")
+    except OSError:
+        return False
 
 
 def ensure_context7(*, home: Path | None = None) -> Dict[str, str]:
     """Configure the Context7 MCP server (context7.com) if not already present.
 
-    Presence is probed in Claude Code's config (`~/.claude.json`), the one
-    registry `npx ctx7 setup` always writes when Claude Code is detected. As
-    with the graph tool, every failure path returns a status instead of raising.
+    MCP mode is pinned because the agents call Context7's MCP tools by name;
+    bare `ctx7 setup` picks a mode interactively and can land on CLI + Skills,
+    which registers no server. `-y` keeps the deploy non-interactive — a
+    bootstrap step must never stop to ask. As with the graph tool, every failure
+    path returns a status instead of raising.
     """
-    home = Path(home).expanduser() if home else Path.home()
-    try:
-        if "context7" in (home / ".claude.json").read_text(encoding="utf-8"):
-            return {"status": "already-configured"}
-    except OSError:
-        pass
+    if context7_is_configured(home=home):
+        return {"status": "already-configured"}
 
     if not shutil.which("npx"):
         return {"status": "install-failed", "detail": "npx not on PATH (Node.js required)"}
-    if subprocess.run(["npx", "ctx7", "setup"]).returncode != 0:
+    if subprocess.run(["npx", "ctx7", "setup", "--claude", "--mcp", "-y"]).returncode != 0:
         return {"status": "configure-failed", "detail": "'npx ctx7 setup' returned nonzero"}
     return {"status": "installed-and-configured"}
 
 
-def ensure_external_tools() -> Dict[str, Dict[str, str]]:
+def ensure_external_tools(harnesses: Sequence[str] = ()) -> Dict[str, Dict[str, str]]:
     """Bootstrap each companion tool; no outcome here may abort deployment."""
     results: Dict[str, Dict[str, str]] = {}
     for name, bootstrap in (
-        ("code-review-graph", ensure_code_review_graph),
+        ("code-review-graph", lambda: ensure_code_review_graph(harnesses)),
         ("context7", ensure_context7),
     ):
         try:
@@ -465,6 +509,8 @@ def report_external_tools(results: Dict[str, Dict[str, str]]) -> None:
             print(f"[tools] {name}: already set up")
         elif status == "installed-and-configured":
             print(f"[tools] {name}: installed and configured")
+        elif status == "skipped":
+            print(f"[tools] {name}: skipped ({result.get('detail', '')})")
         else:
             detail = result.get("detail", "unknown error")
             print(
@@ -597,7 +643,7 @@ def main() -> int:
         save_config(selected, CONFIG_PATH)
 
     if not args.skip_tools:
-        report_external_tools(ensure_external_tools())
+        report_external_tools(ensure_external_tools(selected))
 
     if args.watch:
         watch(selected)

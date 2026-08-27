@@ -70,6 +70,10 @@ benchmarks/ packages/ tests/
 - Deploy: `python3 deploy_agents.py [--harness a,b | --all | --watch | --list | --no-save | --skip-tools]`.
 - Deploy also bootstraps companion tools (code-review-graph via pip/pipx, Context7 via
   `npx ctx7 setup`) unless `--skip-tools`; failures warn and never block deployment.
+- code-review-graph is configured per selected harness via `CRG_PLATFORMS`; its bare
+  `install` would write config for every platform it detects.
+- Context7 is pinned to MCP mode and probed via a `context7` entry in `~/.claude.json`;
+  a CLI + Skills install registers no server and does not satisfy the probe.
 - Deploy destinations:
   - claude → `$CLAUDE_CONFIG_DIR` or `~/.claude` (agents, commands, skills)
   - codex → `$CODEX_HOME` or `~/.codex` (agents) + `~/.agents/skills` (skills)
