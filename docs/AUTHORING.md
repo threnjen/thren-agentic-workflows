@@ -99,3 +99,132 @@ the agents that bootstrap from them. `README.md`, `docs/ARCHITECTURE.md`, and
 
 Recounting cannot fix a *definition* conflict — reconcile what the counted term means
 before recounting it.
+
+## Never gate a verdict on a step the agent cannot execute
+
+Phase - Execute returned "not approved" on nearly every run. Manual QA was never one of the
+inputs to `all-approved`, but the surrounding prose framed the manual checklist as outstanding
+work, so the agent inferred a gate and blocked on an action only a human can perform.
+
+**An enumeration of what counts reads as silence about what does not.** Listing the four results
+that feed a verdict does not tell the agent a fifth thing is excluded — it leaves the fifth
+unmentioned, and an unmentioned obligation gets read as an unmet one.
+
+**Fix**: name the exclusion, at every site that computes or reports the verdict — the aggregation
+rule, the consumer's prompt template, and the consumer's own rubric. Three sites, because one is
+where the agent decides and two are where it justifies the decision.
+
+**Watch for**: any gate whose evidence is a human action — visual inspection, a live service, UX
+judgment. It belongs after the pipeline, never inside its approval. The matching obligation is to
+keep the automated side honestly automatable: a check a command could decide must not be filed on
+a human's checklist.
+
+## Name every subagent at its spawn site
+
+A trigger table mapping a condition column to an agent roster forces two lookups — read the row,
+then find the prose that spawns it — and rots silently. Deleting one leaves prose pointing at
+"a firing dependency row" that no longer exists, and a test that parses the table keeps passing
+right up until the table is gone.
+
+**Fix**: one sentence per spawn, carrying the agent name, its inputs, and its condition. Group
+unconditional spawns under one lead and conditional ones under another, then state once that a
+condition which does not hold is complete evidence, not a missing reviewer.
+
+**Watch for**: anonymous lane labels — "Reviewer D", "Reviewers A through D". The reader cannot
+tell what the agent is for, and a constraint attached to the label ("do not pass the plan to
+Reviewer D") loses its reason.
+
+## Removing a numbered step means renumbering, then sweeping
+
+A removed step leaves a gap, and a gap invites two wrong repairs: reusing the number for
+something else, or reading the sequence as broken. Close it.
+
+**Fix**: renumber every following step, then sweep the whole repository for the old numbers —
+not just the file you edited. Cross-references live in test modules that split on heading
+strings, in sibling agents, and in deprecation notes.
+
+**Watch for**: a reinstatement document. Its step numbers describe the file *after* the removed
+step returns, which equals the pre-removal numbering. Applying the renumber map there makes a
+correct document wrong. State which numbering a document uses, and find sites by quoted text
+rather than by step number.
+
+## Write what this step does, for the agent that will run it
+
+An agent definition is read by one agent, once, top to bottom, and acted on. It is not read by a
+reviewer weighing whether the design was right. Six kinds of sentence serve the author instead of
+that reader. All six are cuts.
+
+- **Explaining a later step.** A sentence naming an agent this step does not spawn, or a verdict
+  it does not compute. The step needs to know where its output goes — never what the consumer
+  will conclude from it.
+- **Restating an earlier step.** A precondition already guaranteed by sequence, or a rule
+  repeated where it is not applied. A step's own preconditions are fair. A summary of what
+  produced them is not.
+- **Describing a subagent's internals.** "Its task is to…", "It proves…", "It sweeps…" after a
+  spawn whose brief already commissions the work. The subagent never reads this file, and the
+  orchestrator only has to spawn it and use what comes back.
+- **Defending the decision.** A clause arguing for the rule above it rather than adding a
+  constraint — "because no per-feature review can see that class of defect", "so the schedule
+  stays stable". The rationale belongs in this document or in a learnings note. The agent needs
+  the rule.
+- **Narrating the change.** "formerly", "(revised)", "this was removed because", "the slot is
+  still free". An agent definition describes the current pipeline as though it were always the
+  pipeline. Git history is the change log. This is the baseline-truth rule from `phase-doc-sync`,
+  and it applies to agent bodies too.
+- **Reasoning aloud.** Weighing an option, acknowledging a trade-off, or explaining why the
+  obvious alternative was not chosen. Decide it at authoring time and write the decision.
+
+**The one that looks like all six and stays**: a sentence forbidding a specific misreading.
+"A condition that does not hold is complete evidence, not a missing reviewer" and "an absent
+audit is never a clean result" are rules wearing explanatory clothing. The test is whether
+deleting it permits a wrong action. If it does, keep it.
+
+**Watch for**: a sentence you would delete if the reader had already read the whole file. Every
+agent reader has. The structural form of the same waste is a lookup table — see *Name every
+subagent at its spawn site* above.
+
+## Sharp, not editorial
+
+What survives the cuts above still has to earn its tone. An agent definition is an instruction
+set, not an argument and not a piece of writing.
+
+- **No emphasis the sentence has not earned.** "critically important", "absolutely never",
+  "the single most important". If a rule needs an intensifier to read as binding, it is written
+  as advice. Rewrite it as an instruction.
+- **No commentary on the rule.** "Note that", "It is worth remembering that", "Importantly".
+  Delete the frame and keep the sentence.
+- **No stakes narration.** "This is where runs usually go wrong", "getting this wrong is
+  expensive". Put the constraint where the mistake happens and let it do the work.
+- **No hedging on a decision you already made.** "generally", "typically", "in most cases",
+  "you may want to" — on a step the agent must run. A real conditional names its condition.
+  Preserve a genuine hedge: "may have failed" is not "failed", and confidence is content.
+- **One name per thing, one verb per action.** Do not rotate check, verify, and confirm for the
+  same act, or call one artifact the plan, the bundle, and the plan set.
+
+**Watch for**: an adjective in an instruction. "Run the affected suites" needs no adverb, and
+"carefully validate" is weaker than naming what validation checks.
+
+
+## A bound needs a stated purpose and exactly one owner
+
+Phase - Execute and Feature - Plan Author both carried "25 rounds", one per feature and one per
+level, for the same loop. The value matched, so grepping it found nothing wrong; only the
+denominators disagreed. Neither said what the bound was guarding, so the number read as a tuning
+knob rather than a tripwire.
+
+**Fix**: state the bound once, in the agent that runs the loop. Every other agent says what it
+does when the bound trips, never what the bound is. Give the number one sentence of purpose, so
+the next reader raises the alarm instead of raising the limit.
+
+**Watch for**: a bound whose unit was a scheduling concept you removed. Grep downstream agents for
+the retired unit's *noun*, not for the value — the value survives the rename.
+
+## Bound a repair that changes what it measures
+
+A gate reading a whole-branch diff cannot repair from that diff and then re-measure freely: the
+fix changes what the next measurement sees. Cap the rounds outright rather than testing for
+convergence.
+
+**Watch for**: blast radius, not severity, when deciding which finding class may be repaired
+automatically. A high-severity defect in one file is safer to fix unattended than a low-severity
+one spread across twenty.
