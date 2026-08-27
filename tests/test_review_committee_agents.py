@@ -157,7 +157,7 @@ def test_phase_execute_plan_blind_spawn_does_not_pass_the_plan() -> None:
     body = PHASE_EXECUTE.read_text(encoding="utf-8")
     required = (
         "Spawn **03l Reviewer - Plan Blind** with changed code and tests only.",
-        "Do not pass the feature plan, context, tasks, or a plan-derived summary to Reviewer D.",
+        "Never pass it the feature plan, context, tasks, or a plan-derived summary.",
     )
     def missing(text: str) -> set[str]:
         return {phrase for phrase in required if phrase not in text}

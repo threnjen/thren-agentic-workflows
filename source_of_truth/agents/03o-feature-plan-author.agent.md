@@ -24,7 +24,7 @@ Phase - Execute supplies:
 
 - The phase name and the path to `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`.
 - The manifest path `dev/feature/[phase-name]-execution-manifest.md`.
-- The run mode: `initial` for a first decomposition, or `revalidation` for a level-closure pass.
+- The run mode: `initial` for a first decomposition, or `revalidation` for a pass after one feature completes.
 - On a `revalidation` run: the completed feature, the boundary auditor findings, the affected future features, and their downstream dependents.
 
 Load the `feature-plan-set` skill before you write anything. It holds the canonical Lightweight Plan shape, Plan Template, Concrete Name Rule, Integration Feature Rule, Decomposition Rules, manifest field contract, and Quality Checklist. Follow those templates exactly.
@@ -80,13 +80,13 @@ Never record any field as permission to build features concurrently. Phase - Exe
 
 On a `revalidation` run, do not rebuild the phase from scratch. Read the existing manifest as current state, then:
 
-1. Read the closed level's boundary auditor findings and the tree as it now stands.
+1. Read the completed feature's implementation record, its review evidence, and the tree as it now stands.
 2. Rewrite the plans of every affected future feature and every downstream dependent of an affected feature.
 3. Update each rewritten plan's `stale_reason` and `last_validation_commit`.
-4. Recompute the graph and order after every closed level.
+4. Recompute the graph and order after every completed feature.
 5. Record every plan rewrite, reorder, split, merge, or delay with evidence naming the changed file, symbol, acceptance criterion, or prerequisite edge.
 
-Bound recomputation to 25 rounds per level. Stop and report when the graph does not reach a fixed point.
+A rewritten plan can change a prerequisite edge, which reorders the graph, which can mark another plan stale. Repeat until the stale set empties and the order stops moving. Bound that to 5 rounds per completed feature. Stop and report when the graph does not reach a fixed point — beyond a few rounds the graph is oscillating, and more rounds will not settle it.
 
 ## Quality Gate
 

@@ -83,7 +83,7 @@ Validate the selected feature's bundle before you build it. Each bundle must con
 
 After each feature completes, identify every affected future feature and every downstream dependent of an affected feature.
 
-Spawn **Feature - Plan Author** in `revalidation` mode. Pass it the completed feature, the affected future features, and their downstream dependents. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. Bound recomputation to 25 rounds per feature. Stop and report if the graph does not reach a fixed point.
+Spawn **Feature - Plan Author** in `revalidation` mode. Pass it the completed feature, the affected future features, and their downstream dependents. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. The author owns the recomputation bound. Stop the run and report when it returns a graph that did not reach a fixed point.
 
 #### Feature stage definitions
 
@@ -101,22 +101,24 @@ Spawn **Feature - Implementer** with:
 
 Create the next immutable `review-cycle` directory under `dev/feature/[0N-task-name]/reviews/`. Use `initial-01`, `fix-01`, `rebuild-01`, then `post-rebuild-01`, `post-rebuild-02`, and so on. Never overwrite a completed cycle.
 
-Assemble the feature's changed-file list and its selected plan metadata. Wait for every report you spawned.
+Assemble the feature's changed-file list and its selected plan metadata.
 
-Spawn all Reviewers always concurrently at `medium`:
+Spawn these five reviewers for every feature, concurrently at `medium`:
 
 - Spawn **03c Reviewer - Plan Conformance** with the plan and the diff, for plan conformance.
 - Spawn **03j Reviewer - Blast Radius** with the diff and the outward references.
 - Spawn **03k Reviewer - Test Falsification** with the test files only.
-- Spawn **03l Reviewer - Plan Blind** with changed code and tests only. Do not pass the feature plan, context, tasks, or a plan-derived summary to Reviewer D.
+- Spawn **03l Reviewer - Plan Blind** with changed code and tests only. Never pass it the feature plan, context, tasks, or a plan-derived summary.
 - Spawn **04h Cleanliness Auditor** with the diff.
 
-Spawn these Reviewers conditionally concurrently at `medium`:
+Spawn these two reviewers in the same concurrent batch, each only when its condition holds:
 
-- For a Unity project, spawn **Unity Reviewer**.
-- For a firing dependency row, spawn **04e Dependency Auditor** with the diff.
+- Spawn **Unity Reviewer** when `is-unity-project: yes`.
+- Spawn **04e Dependency Auditor** with the diff when the feature changed a dependency manifest or lockfile: `package.json`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `pyproject.toml`, `poetry.lock`, `uv.lock`, `requirements.txt`, `go.mod`, `go.sum`, `Cargo.toml`, or `Cargo.lock`.
 
-After every report returns, spawn **03m Finding Consolidator**. Give it all report paths. It writes a deduplicated candidate list.
+A condition that does not hold is complete evidence, not a missing reviewer.
+
+Wait for every report you spawned. After every report returns, spawn **03m Finding Consolidator**. Give it all report paths. It writes a deduplicated candidate list.
 
 After the deduplicated candidate list exists, spawn **03n Finding Validator**. Give it the candidate list, the raw reports, the validated plan, the accepted contracts, the changed code, the tests, and the run evidence. It proves or rejects every Critical, Blocker, and High candidate. It writes the validation report and the final fix list. The orchestrator does not merge, validate, or rank findings.
 
