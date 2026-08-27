@@ -65,6 +65,28 @@ and execute Steps A through D with `dev/[audit-name]/[task-name]/` as
 `[plan-path]` and `[task-name]` as the task identifier. Test failures are
 handled by that skill's Test Failure Handling section.
 
+## 4a. Per-task diff security scan
+
+Run this after each task's review closes and before its commit checkpoint. The
+implementation loop defines no security step, so this pipeline owns it.
+
+Spawn **03e Diff Security Scan**:
+
+> "[SUBAGENT-MODE] Perform a diff-scoped security scan for the task at
+> `dev/[audit-name]/[task-name]/`. Scan ONLY these changed files, taken from the
+> 'Files Changed' table in
+> `dev/[audit-name]/[task-name]/[task-name]-implementation.md`: [list of changed
+> file paths]. Write the report to
+> `dev/[audit-name]/[task-name]/[task-name]-security.md`. Do not modify source
+> code or reveal secret values. Return the report path, verdict, severity
+> totals, and any Critical/High findings."
+
+After the subagent returns, verify the report exists and record the verdict. On a
+**BLOCKED** verdict, log it and proceed — the pre-production gate surfaces it as a
+blocker. Do NOT auto-remediate security findings here.
+
+Stage the report with that task's review checkpoint.
+
 ## 5. Consolidated QA
 
 After every task is implemented and reviewed, spawn **Feature - QA Writer**:

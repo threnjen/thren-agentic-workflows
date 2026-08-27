@@ -39,7 +39,7 @@ Never halt or ask for a missing document — you run unattended and no one is th
 | Context document | Feature - Plan Expander | `[0N-task-name]-context.md` |
 | Task checklist | Feature - Plan Expander | `[0N-task-name]-tasks.md` |
 | Implementation record | Feature - Implementer | `[0N-task-name]-implementation.md` |
-| Review record | Feature - Review and Fix | `[0N-task-name]-review.md` |
+| Review record | 03c Reviewer - Plan Conformance | `[0N-task-name]-review.md` |
 
 **Consolidated QA document** (provided by the orchestrator):
 
@@ -182,6 +182,8 @@ State one of:
 | **GO WITH CONDITIONS** | Minor gaps exist but can be addressed during QA or are low-risk. List the conditions that must be monitored. |
 | **NO-GO** | Significant gaps, contradictions, or risks that must be resolved before manual QA begins. List all blocking issues. |
 
+Manual QA has not run when you reach this gate, and it never runs before it. An unexecuted manual checklist is the expected state, not a gap. Never make it a blocking item and never list it as a condition. Judge the phase on what the pipeline verified: review verdicts, the test-execution gate, the automated QA run, the security scan, and the phase-close audits.
+
 ### Executive Summary
 
 Three to five sentences covering:
@@ -200,7 +202,7 @@ Three to five sentences covering:
 | Context | `[0N-task-name]-context.md` | Feature - Plan Expander | Yes/No | — |
 | Tasks | `[0N-task-name]-tasks.md` | Feature - Plan Expander | Yes/No | — |
 | Implementation Record | `[0N-task-name]-implementation.md` | Feature - Implementer | Yes/No | — |
-| Review Record | `[0N-task-name]-review.md` | Feature - Review and Fix | Yes/No | — |
+| Review Record | `[0N-task-name]-review.md` | 03c Reviewer - Plan Conformance | Yes/No | — |
 
 **Consolidated QA Documents:**
 
@@ -261,7 +263,7 @@ Use this table to determine where the user should return:
 |------------|-----------|------|
 | **03 Phase - Execute** | Acceptance criteria are ambiguous, incomplete, contradictory, or missing edge cases that downstream agents couldn't compensate for | The plan itself is the problem — vague ACs, missing non-goals, inadequate test strategy, or architectural gaps |
 | **Feature - Implementer** | ACs are well-defined but implementation is missing, incomplete, or deviates without justification | The plan was sound but execution has gaps — missing ACs, untested paths, undocumented deviations |
-| **Feature - Review and Fix** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
+| **03c Reviewer - Plan Conformance** | Implementation exists but the review missed significant issues now surfaced by this analysis | The review was insufficiently thorough — missed bugs, didn't verify fixes, inconsistent verdict |
 | **Feature - QA Writer** | Implementation and review are solid but the QA plan has gaps, is unactionable, or misses critical scenarios | The QA plan needs rework — missing coverage, vague test steps, redundant manual tests, missing prerequisites, a command sorted onto the human checklist, or a check the runner marked `UNRUNNABLE` |
 
 #### Blocking Items List

@@ -1,6 +1,6 @@
 ---
 description: "Bounds what a test may assert on. Audience is ENUMERATED deliberately - an arbitrary subset with no filename family. Add any agent that writes, plans, or fixes tests."
-applyTo: "**/03b-feature-implementer.agent.md,**/03c-feature-review-and-fix.agent.md,**/03-phase-execute.agent.md,**/test-writer.agent.md,**/test-analyst.agent.md,**/test-orchestrator.agent.md,**/test-fixer.agent.md"
+applyTo: "**/03b-feature-implementer.agent.md,**/03c-reviewer-plan-conformance.agent.md,**/03-phase-execute.agent.md,**/test-writer.agent.md,**/test-analyst.agent.md,**/test-orchestrator.agent.md,**/test-fixer.agent.md"
 ---
 
 # Test Target Scope

@@ -172,14 +172,20 @@ Unity Test Framework is the authoritative runner. Compilation success and focuse
 
 `-batchmode` is mandatory for every agent-driven Unity test run. Never assume a bare `Unity` executable is on `PATH`.
 
-**Editor discovery.** Load Step 1 from the deployed `Visual Verifier` agent definition by display name through the active harness's configured agent catalog. Resolve it there rather than pointing at an authoring-repository path in the consumer checkout. Do not copy its discovery algorithm into this skill; that deployed agent remains the single canonical implementation.
+**Editor discovery.** Never assume a bare `Unity` executable is on `PATH`. Resolve the editor path in this order and stop at the first hit:
+
+1. The `VISUAL_VERIFICATION_UNITY` environment variable, if set. The name is historical; it is a machine-wide Unity editor path and applies to every Unity run, not only capture runs.
+2. A machine-local override file `dev/com.threnjen.visual-verification.local.json` containing `{ "unityEditorPath": "…" }`, if present. The filename is historical in the same way.
+3. Derive it from the project's Unity version in `<execution-unity-project>/ProjectSettings/ProjectVersion.txt` plus the Unity Hub layout. Check both the default location (`…/Hub/Editor/<version>/Editor/Unity.exe`) and any custom editor-install location Hub records in its own config (`%APPDATA%/UnityHub/` on Windows, `~/Library/Application Support/UnityHub/` on macOS, `~/.config/UnityHub/` on Linux). This covers an editor relocated to another drive.
+
+This skill is the single canonical implementation of editor discovery.
 
 **Project paths.** Resolve `<main-repo-root>` as the Git checkout root and `<unity-project-relative-path>` as `.` for a root Unity layout or the nested directory containing `Assets/` and `ProjectSettings/` (for example `game`). A shadow `<worktree-root>` is a checkout of the whole repository. Set `<execution-unity-project>` to `<worktree-root>/<unity-project-relative-path>`; for the main-checkout fallback use `<main-repo-root>/<unity-project-relative-path>`. Never pass a monorepo root without a Unity project to `-projectPath`.
 
 | Platform | Required flags |
 |----------|----------------|
 | EditMode | `-batchmode -nographics` |
-| PlayMode and visual capture | `-batchmode` with graphics enabled; exclude `-nographics` |
+| PlayMode | `-batchmode` with graphics enabled; exclude `-nographics` |
 
 ```bash
 "<resolved-unity-editor>" -batchmode -nographics -runTests -projectPath "<execution-unity-project>" -testPlatform EditMode -testResults "<absolute-main-checkout>/dev/test-results/<results.xml>" -logFile "<absolute-main-checkout>/dev/test-results/<unity.log>"
@@ -187,7 +193,7 @@ Unity Test Framework is the authoritative runner. Compilation success and focuse
 ```
 
 - Never pair `-quit` with `-runTests`; Unity can exit before the tests execute and return a false-green zero exit code.
-- **Affected-suite runs use `-testFilter`** — a semicolon-separated list of full test names or a regex, negation supported. Scope it to the suites exercising the changed symbol. Gate runs (dependency-level boundary, phase end) are unfiltered.
+- **Affected-suite runs use `-testFilter`** — a semicolon-separated list of full test names or a regex, negation supported. Scope it to the suites exercising the changed symbol. Gate runs (feature integration gate, phase end) are unfiltered.
 - `-testResults` always receives an absolute path under the main checkout's `dev/test-results/`; `-logFile` uses the same absolute artifact directory. The shadow worktree is an execution target only. Never read results from the shadow worktree; never read logs from it either.
 
 **Precondition.** Commit before testing in a shadow worktree; it can represent only committed code. The normal per-feature commit usually satisfies this precondition. A dirty checkout requires a commit before this procedure begins.
@@ -300,46 +306,6 @@ Run via `-batchmode -executeMethod <Type>.<Method> -quit`, then confirm the asse
 - **(URP only)** A render-pipeline chain that doesn't fully resolve: `QualitySettings`/`GraphicsSettings` → URP pipeline `.asset` → renderer `.asset` must all exist. A missing link silently disables sprite/line rendering with no console error. (Built-in Render Pipeline projects have no such chain.)
 - A serialized field reported as "wired" whose target component's script GUID does not resolve — a present fileID is **not** proof the reference resolves.
 
-## Visual Verification Wiring
-
-For a View feature whose phase has visual acceptance criteria, set up its visual test the same
-way you set up unit tests for logic — it is part of "done," not an afterthought. The capture
-mechanism is config-driven (a generic PlayMode capture package, e.g.
-`com.threnjen.visual-verification`), so "writing the visual test" means wiring the project to run
-it, not authoring per-feature test code:
-
-1. **Ensure the capture package is a dependency — default to the bundled companion.** This agent
-   pack ships with a companion capture package; wire it by default so a fresh repo needs no manual
-   setup. Unless the project documents an override, ensure `Packages/manifest.json` contains the
-   dependency **and** a top-level `testables` entry (note `testables` is a sibling of `dependencies`,
-   not nested inside it):
-   ```jsonc
-   {
-     "dependencies": {
-       "com.threnjen.visual-verification": "https://github.com/threnjen/thren-agentic-workflows.git?path=/packages/com.threnjen.visual-verification#com.threnjen.visual-verification/v0.2.1"
-       // …existing dependencies…
-     },
-     "testables": [ "com.threnjen.visual-verification" ]
-   }
-   ```
-   If the project documents a different capture package (a fork, or a newer tag), use that instead.
-   This is the single source for the default — bump the pinned `com.threnjen.visual-verification/vX.Y.Z` tag here
-   when the companion package releases. (The default resolves only if the companion repo is reachable
-   from the consuming machine; for private forks, document the override.)
-2. **Create or update the capture config.** Ensure `Assets/VisualVerification/capture-config.json`
-   (root layout) or `game/Assets/VisualVerification/capture-config.json` (nested layout) exists,
-   with an entry for the scene this feature renders: the scene name, resolution, and capture
-   frames **chosen to fit the AC** — they are not a fixed magic list. A static-layout AC ("two
-   teams in distinct colors") needs only one settled frame. A motion/animation AC ("units close
-   on each other", "the cube rotates") needs several well-spread frames including an intermediate
-   one, because endpoints can coincide (e.g. a 90° rotation of a symmetric object looks like 0°).
-   Reuse the existing config if the scene is already covered.
-3. **Confirm the scene is loadable.** The capture loads the scene by name, so it must be in Build
-   Settings and have a `MainCamera`-tagged camera.
-
-Record in the implementation record which scene the config covers and which visual ACs the captured
-frames are meant to demonstrate, so the Visual Verifier (and the orchestrator's visual gate) have a
-clear target.
 
 ## Pre-Handoff Checklist (Unity-Specific)
 
@@ -351,4 +317,3 @@ Before writing the implementation record, confirm each of these. Items 1–4 are
 4. **TickerType match** — If a new `ThingComp` overrides `CompTickRare` or `CompTickLong`, does the parent Thing's Def set the matching `tickerType`?
 5. **PlacedSize vs def.size** — Any code computing building footprints uses `Building.PlacedSize` (the actual placed/rotated size), NOT `def.size` (blueprint size).
 6. **Serialized assets generated, not hand-written** — Any new/changed `.prefab`/`.unity`/`.mat`/`.asset` was produced via the Unity Editor API (batch-mode `Editor/` script), not hand-authored YAML. No fabricated GUIDs, no `0000…f000` `m_Script` references, no missing required components or dangling asset references. See "Serialized Assets: Generate via Unity, Never Hand-Author".
-7. **Visual test wired** — For a View feature with visual ACs, is the capture config present for this scene and the capture package a dependency listed under `testables`? Is the scene in Build Settings with a `MainCamera`? See "Visual Verification Wiring".

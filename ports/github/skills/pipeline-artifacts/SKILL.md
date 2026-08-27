@@ -18,7 +18,7 @@ Inside `dev/feature/[0N-task-name]/`:
 | `-context.md` | Feature - Plan Expander | Key files, decisions, constraints |
 | `-tasks.md` | Feature - Plan Expander | Ordered checklist of work items |
 | `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results |
-| `-review.md` | Feature - Review and Fix | Verdict, issues found, fixes applied |
+| `-review.md` | 03c Reviewer - Plan Conformance | Verdict and issues found |
 | `-qa.md` | Feature - QA Writer (per-feature mode) | Manual QA plan for a single feature |
 | `-qa-automated.md` | Feature - QA Writer (per-feature mode) | Automated QA checks for a single feature, executed by Feature - QA Runner |
 | `-coverage-map-qa.md` | Feature - QA Writer (per-feature mode) | AC coverage map for a single feature |

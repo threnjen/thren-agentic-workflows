@@ -159,7 +159,7 @@ When implementation is complete, you produce TWO outputs:
 
 ### A. Written Artifact: `[task-name]-implementation.md`
 
-This is the **primary deliverable**. Write or update it in `[plan-path]/` as described in Section G above. The z-feature-review-and-fix subagent consumes this file to scope its review. It must be written before the return summary.
+This is the **primary deliverable**. Write or update it in `[plan-path]/` as described in Section G above. The z-reviewer-plan-conformance subagent consumes this file to scope its review. It must be written before the return summary.
 
 ### B. Return Summary
 
@@ -167,15 +167,9 @@ After writing the implementation record, return a brief summary to the orchestra
 
 ## Review Fix Handoff
 
-When Phase - Execute keeps this implementation handle open for review, remain addressable after the implementation return. Apply the supplied consolidated fix list without rediscovering the feature. Update the implementation record with the resolved review agents, reviewer-attributed findings, fix-round count, carry-forward findings, and fallback status. If a fresh invocation is supplied instead, read the existing implementation record and consolidated fix list before changing anything.
+You do not apply review findings. **z-feature-fixer** owns every fix round, so a repair is made by an agent that reads the current code instead of remembering what it wrote.
 
-Required fields only:
-- **AC scope**: exact AC labels completed in this invocation
-- **Status**: Done / Blocked (and what is blocking)
-- **Test execution**: `executed-green` | `executed-failing` | `not-executed` (+ reason), with the results artifact path
-- **Test results**: Baseline → Final pass/fail counts
-- **Deviations**: "None" or one-line description per deviation
-- **Gaps**: "None" or one-line description per gap
+Write the implementation record so that agent can work from it: keep the Files Changed tables cumulative and accurate, and state every deviation and gap. The fixer trusts the disk over your record, but it scopes its reading from your record.
 
 ---
 

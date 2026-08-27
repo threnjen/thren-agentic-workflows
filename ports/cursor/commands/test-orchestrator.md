@@ -100,7 +100,7 @@ Each task should be independently implementable.
 
 For **each task** (in priority order), run the implementation pipeline loop.
 
-Load the `implementation-pipeline-loop` skill and execute Steps A through D for each task, using `dev/feature/[0N-task-name]/[fix-name]/` as the `[plan-path]` and `[fix-name]` as the task identifier. This orchestrator declares no run-level security handling, so Step B2 (Diff Security Scan) runs once per task.
+Load the `implementation-pipeline-loop` skill and execute Steps A through D for each task, using `dev/feature/[0N-task-name]/[fix-name]/` as the `[plan-path]` and `[fix-name]` as the task identifier.
 
 ### Phase 8: Report to User
 
@@ -155,11 +155,62 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 Orchestrators coordinate subagents. They do not do the work themselves. These conventions apply to every orchestrator agent.
 
+An orchestrator directs the run. It never performs it. It reads artifacts, spawns the agent that owns each one, verifies the output on disk, and decides what happens next. Authoring is always someone else's job.
+
 ## Constraints
 
 - Do not write source code, test files, or configuration.
-- Delegate plan documents, review records, and QA plans to subagents. `z-phase-execute` may write its own lightweight plans and living manifest, because it owns decomposition and scheduling. It still delegates context, tasks, review records, and QA plans.
+- Do not author any artifact a subagent owns. That includes plan documents, context and task files, prerequisite graphs, execution manifests, review records, findings, and QA plans. Spawn the owning agent instead.
+- Reading an artifact is directing. Writing one is performing. An orchestrator reads its schedule and never rewrites it.
+- No orchestrator holds an exemption from this rule. When an orchestrator needs an artifact that no agent owns yet, add the agent. Do not write the artifact yourself.
 - Always ask the user before you start a fix or remediation phase the user has not already authorized. Explicit run-level authorization satisfies this rule for every routine fix round inside the pipeline that authorization covers. It never authorizes a remediation phase the user did not ask for, such as writing production code after an audit findings report.
+
+## On-Load Preflight
+
+On orchestrator load, run one session model preflight.
+
+1. Detect the current harness.
+2. Read each tier's requested route from the installed agent definitions in the working repository. Each tiered agent carries its model in its own frontmatter.
+3. Validate all three routes before execution begins.
+
+Never fetch a routing table from another repository. Never run a routing loader script.
+
+### Run overrides
+
+Accept one optional override for each tier for the current run. Accept `low`, `medium`, and `high` overrides independently. Validate each override as a model identifier before you proceed. Keep every override in memory.
+
+Never persist a run override. Never write one to a configuration file, an environment variable, a generated asset, or a persistent session setting. An omitted override still receives a resolution status.
+
+### The tier record
+
+Treat the tier as the record key. Each tier record has four distinct fields:
+
+- `requested_model` is the route the agent definition declares.
+- `user_override` is the optional run-only replacement.
+- `resolved_route` is what the harness reports.
+- `resolution_status` describes the evidence for that report.
+
+For the phase executor, show one answer-first table for `low`, `medium`, and `high` on the detected harness:
+
+| Tier | `requested_model` | `user_override` | `resolved_route` | `resolution_status` |
+|---|---|---|---|---|
+| `low` | agent frontmatter value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
+| `medium` | agent frontmatter value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
+| `high` | agent frontmatter value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
+
+### Resolution status
+
+Use exactly three disjoint resolution statuses:
+
+- `enforced`: the harness reports that it used the effective route.
+- `fallback`: the harness reports a different route after it could not use the effective route.
+- `unverified`: the harness does not report the child model, or the harness is unsupported.
+
+Generated configuration proves configuration only. It never proves `enforced`.
+
+An unsupported harness must disclose a `fallback` reason with its concrete unsupported-harness cause, while setting every route to `unverified`. Never report `enforced` for an unsupported harness. Do not invent a model result.
+
+The display may contain model identifiers only. Reject a missing route, a malformed identifier, or an unavailable configured route before execution starts. Report the validation error instead of proceeding.
 
 ## Departure Preflight
 
@@ -174,26 +225,6 @@ Ask once, in one round, before departure. A permission you fail to raise here be
 When the user has authorized unattended completion, a retry ceiling still bounds work on the unit that is failing. It never ends the run. Exhaust the ceiling on that unit, record the outcome, and move to the next independent unit.
 
 Halt and wait for the user only for an external prerequisite you cannot obtain, a safety boundary, a destructive action needing approval, or a decision that materially changes product behavior. Nothing else justifies spending an unattended window idle.
-
-## Session Model Preflight
-
-Before an orchestrator selects work that uses tiered child models, run one session model preflight. Read each tier's
-requested route from the installed agent definitions in the working repository. Never fetch a routing table from
-another repository, and never persist a run override.
-
-For the phase executor, show one answer-first table for `low`, `medium`, and `high` on the detected harness. Each tier
-record has four distinct fields: `requested_model`, `user_override`, `resolved_route`, and `resolution_status`.
-Accept a tier override for the current run only. Keep it in memory and change no file on disk.
-
-Use exactly three disjoint resolution statuses:
-
-- `enforced`: the harness reports that it used the effective route.
-- `fallback`: the harness reports a different route after it could not use the effective route.
-- `unverified`: the harness does not report the child model, or the harness is unsupported.
-
-Generated configuration proves configuration only. It never proves `enforced`. An unsupported harness must disclose a
-`fallback` reason while setting every route to `unverified`. The display may contain model identifiers only. Reject a
-missing route or malformed identifier before execution starts.
 
 ## Working Branch
 
