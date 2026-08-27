@@ -6,7 +6,7 @@ Context gathered during refinement that lives outside this repository.
 
 - Merge feature decomposition and phase execution into one user-facing orchestrator.
 - Keep a living schedule rather than freezing the whole order during initial decomposition.
-- Revalidate affected future features and their downstream dependency chain after each dependency level.
+- Revalidate affected future features and their downstream prerequisite chain after each completed feature.
 - Use per-harness exact model routing from one central configuration file.
 - Keep source agent definitions at the abstract tiers `low`, `medium`, and `high`.
 - Show intended model routes at the start of every orchestration session.
@@ -21,7 +21,7 @@ Context gathered during refinement that lives outside this repository.
 - Hold the implementer open across review so it applies its own fixes.
 - Gate fix rounds on severity, allow at most two, then replan once before blocking the feature.
 - Build one feature at a time. Drop concurrent feature builds and write-set conflict detection.
-- Catch accretive defects per feature and emergent defects when a dependency level closes.
+- Catch accretive defects per feature and emergent defects when the phase closes.
 - Scope `model_tier` to the agents this pipeline spawns, not to all subagents.
 - Keep the `Phase - Execute` identity for the merged agent and delete the decomposer.
 - Renumber the corpus so no gaps remain: `04*` becomes `03*` and `05*` becomes `04*`. Execute it last.
@@ -30,9 +30,8 @@ Context gathered during refinement that lives outside this repository.
 - Keep renumbering inside Phase 02 as its final feature rather than splitting it into its own phase.
 - Define one trigger table with an entry condition for every review agent, in place of an always-on roster plus a separate conditional list.
 - Test the review step by comparing the agent set that ran against the set the trigger table predicts, not by counting reviewers.
-- Trigger the visual verifier from a plan-level visual-acceptance flag, and state in the phase that this one trigger is plan-derived while the rest are file-derived.
 - Trigger the Unity reviewer from the canonical Unity predicate combined with a changed `.cs` file under `Assets/`.
-- Make Phase 02 own the `feature-plan-set` skill rewrite and retire the term "wave" in favor of "dependency level".
+- Make Phase 02 own the `feature-plan-set` skill rewrite and keep the corpus to two execution scopes, the feature and the phase.
 - Decide the model-tier rule by an agent's own invocability. Docs Writer is user-invocable, so it carries no tier and leaves the pipeline tier count at twenty-three.
 - Keep tests and documentation in scope for every change, including the rename. Test modules asserting old identifiers are fixed, never skipped.
 - Exclude `docs/` from the mechanical rename pass. Docs Writer updates documentation at phase end, including this phase document's own cross-references.
@@ -42,7 +41,7 @@ Context gathered during refinement that lives outside this repository.
 - `source_of_truth/agents/03-phase-execute.agent.md` researches the phase, creates feature plans, validates the manifest, and runs the implementation pipeline.
 - `source_of_truth/agents/03a-feature-plan-expander.agent.md` writes context and task documents before implementation.
 - `source_of_truth/agents/03b-feature-implementer.agent.md` treats plan claims as hypotheses and follows the required mid-phase replan gate.
-- `source_of_truth/agents/03c-feature-review-and-fix.agent.md` reviews each implemented feature while the implementer owns fixes.
+- `source_of_truth/agents/03c-reviewer-plan-conformance.agent.md` reviews each implemented feature while the implementer owns fixes.
 - `scripts/propagate_master_assets.py` currently renders Codex agent metadata without model fields, hardcodes an OpenCode model, and emits `model: inherit` for Cursor.
 - The current source agent frontmatter has no model-tier field.
 - The current execution manifest is static after decomposition. This phase changes it into the living schedule.

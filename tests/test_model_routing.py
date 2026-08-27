@@ -18,9 +18,8 @@ import propagate_master_assets as mod  # noqa: E402
 PIPELINE_AGENT_SLUGS = (
     "03a-feature-plan-expander",
     "03b-feature-implementer",
-    "03c-feature-review-and-fix",
+    "03c-reviewer-plan-conformance",
     "03h-unity-reviewer",
-    "03g-unity-visual-verification",
     "03d-feature-qa-writer",
     "03i-feature-qa-runner",
     "03e-diff-security-scan",
@@ -122,7 +121,7 @@ def test_source_agent_bodies_do_not_contain_routed_model_identifiers() -> None:
 
 
 def test_renderers_emit_the_route_for_a_tiered_agent() -> None:
-    agent = _agent("03c-feature-review-and-fix")
+    agent = _agent("03c-reviewer-plan-conformance")
     docs = mod.applicable_instructions(agent, mod.load_instruction_docs())
     routing = mod.load_model_routing()
     claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
@@ -138,10 +137,10 @@ def test_renderers_emit_the_route_for_a_tiered_agent() -> None:
     codex_refs = mod._build_agent_reference_map(mod.load_source_agents(), mod._codex_identifier_for)
     medium = routing[agent.model_tier]["codex"]["model"]
 
-    claude = mod.render_claude_agent(agent, docs, claude_refs, "z-feature-review-and-fix", routing)
+    claude = mod.render_claude_agent(agent, docs, claude_refs, "z-reviewer-plan-conformance", routing)
     codex = mod.render_codex_agent(agent, docs, codex_refs, routing)
     opencode = mod.render_opencode_agent(agent, docs, opencode_refs, routing)
-    cursor = mod.render_cursor_agent(agent, docs, claude_refs, "z-feature-review-and-fix", routing)
+    cursor = mod.render_cursor_agent(agent, docs, claude_refs, "z-reviewer-plan-conformance", routing)
     github = mod._github_agent_bytes(agent.path, agent.path.read_bytes(), routing).decode("utf-8")
 
     route = routing[agent.model_tier]

@@ -853,6 +853,10 @@ class OrphanPruningTests(unittest.TestCase):
         # recounted from disk.
         # The hidden `03n Finding Validator` added one Claude agent file
         # (50 -> 51). It validates serious review findings before repair.
+        # Extracting `Visual Verifier` to source_of_truth/deprecated/ took
+        # one back out: claude agents 52 -> 51, opencode/codex 66 -> 65.
+        # The hidden `03p Feature - Fixer` had added one more before that. It owns
+        # every fix round, so the implementer never repairs its own findings.
         roots = [
             (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 51),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 16),

@@ -10,8 +10,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/feature-plan-set/SKILL.md"
 MANIFEST_FIELDS = (
     "status",
-    "dependency_level",
-    "depends_on",
+    "execution_order",
+    "prerequisites",
     "expected_read_set",
     "expected_write_set",
     "plan_revision",
@@ -29,21 +29,7 @@ SCAN_ROOTS = (
 
 # Unity visual verification retains this term for its committed-input checkpoint.
 # Every exempted phrase is a non-scheduling Unity contract phrase.
-NON_SCHEDULING_CAPTURE_PHRASES = {
-    REPO_ROOT / "source_of_truth/agents/03-phase-execute.agent.md": (
-        "Never create or modify capture inputs after the "
-        + SCHEDULING_TOKEN
-        + " checkpoints",
-    ),
-    REPO_ROOT / "tests/test_unity_consumer_contract.py": (
-        "Never create or modify capture inputs after the "
-        + SCHEDULING_TOKEN
-        + " checkpoints",
-        "no dirty post-" + SCHEDULING_TOKEN + " bootstrap",
-        "after the " + SCHEDULING_TOKEN + " checkpoints",
-        "Create capture inputs after the " + SCHEDULING_TOKEN + " checkpoints",
-    ),
-}
+NON_SCHEDULING_CAPTURE_PHRASES: dict[Path, tuple[str, ...]] = {}
 SCHEDULING_TERM_PATTERN = re.compile(
     rf"\b{re.escape(SCHEDULING_TOKEN)}s?\b", re.IGNORECASE
 )
@@ -112,17 +98,17 @@ def test_manifest_is_a_living_schedule_with_execution_rewrite_events() -> None:
         "not frozen after decomposition",
         "selects a feature",
         "records an implementation result",
-        "closes a dependency level",
+        "completes a feature",
         "completes revalidation of affected future features",
     )
     missing = [phrase for phrase in required_phrases if phrase not in text]
     assert not missing, f"manifest execution contract missing phrases: {', '.join(missing)}"
 
 
-def test_quality_checklist_requires_a_dependency_level_schedule() -> None:
+def test_quality_checklist_requires_the_prerequisite_graph() -> None:
     text = _read_manifest_skill()
     checklist = text.split("## Quality Checklist", 1)[1]
-    assert "includes the ordered feature list, dependency-level schedule" in checklist
+    assert "includes the ordered feature list, each feature's prerequisites" in checklist
 
 
 def test_in_scope_files_have_no_retired_scheduling_term() -> None:

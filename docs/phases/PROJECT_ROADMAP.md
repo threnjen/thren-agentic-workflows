@@ -9,7 +9,7 @@ One authored corpus of agents, skills, and instructions that propagates to every
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
 | 01 | Creative Writing Profile and Developmental Editor Toolkit | Complete | None | Large | Creative agent roster, profile instruction with skill allow-list, four creative skills, baseline trim, guard tests, and user documentation. |
-| 02 | Merged Feature Scheduling and Phase Execution | Implemented with eleven known pre-existing test failures | 01 | Large | Provides one living-schedule orchestrator with just-in-time plan expansion, dependency-level revalidation, a four-reviewer committee, consolidated fix loops, model-tier routing, session preflight, integration guards, and post-renumber harness outputs. |
+| 02 | Merged Feature Scheduling and Phase Execution | Implemented with eleven known pre-existing test failures | 01 | Large | Provides one living-schedule orchestrator with just-in-time plan expansion, per-feature revalidation, a four-reviewer committee, consolidated fix loops, model-tier routing, session preflight, integration guards, and post-renumber harness outputs. |
 
 ## Constraints & Non-Goals
 
@@ -17,14 +17,14 @@ One authored corpus of agents, skills, and instructions that propagates to every
 - **Propagation is a manual maintainer step.** Agents edit `source_of_truth/` only and never regenerate `ports/` or `.github/`.
 - **Isolation is enforced at build time, not at runtime.** Instruction bodies are inlined as literal text, so every harness receives a self-contained file and no per-harness feature is relied upon.
 - **Skill isolation cannot be made hard.** The skill catalog is global and description-matched, and `map_tools_for_claude` grants `Skill` to every Claude agent. Allow-lists are prose; documentation must say so.
-- **One feature builds at a time.** Two implementers in one working tree break the per-feature commit step. The dependency graph sets order and drives revalidation. It never authorizes concurrent builds.
+- **One feature builds at a time.** Two implementers in one working tree break the per-feature commit step. The prerequisite graph sets order and drives revalidation. It never authorizes concurrent builds.
 - Not building the standalone Creative Editor Toolkit harness. That is a separate product in `cf-app-crucible-harness-extension`.
 
 ## Architecture Notes
 
 Reviewer committees are differentiated by the evidence each reviewer may read, never by assigned subject matter. Reviewers given the same inputs and different topic lists converge on the same findings, and the committee then costs several times one report's value.
 
-Defects split by how they arise. Accretive defects enter on one feature's diff and are caught per feature. Emergent defects arise from accumulation across features, are invisible in any single diff, and need a check when a dependency level closes, where findings can still change how unbuilt features are planned.
+Defects split by how they arise. Accretive defects enter on one feature's diff and are caught per feature. Emergent defects arise from accumulation across features, are invisible in any single diff, and need a check when the phase closes, where one pass over the finished phase can see them.
 
 Every review agent has one entry condition, recorded in a per-feature table or a boundary table, and the correctness test is that the set of agents which ran matches the set the tables predict. Counting reviewers cannot catch an agent wrongly skipped. Entry conditions are derived from the changed-file list wherever the agent's subject is a file, and from the feature plan where its subject is an acceptance criterion.
 

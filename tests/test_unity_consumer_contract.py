@@ -12,7 +12,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 AGENT_ROOT = REPO_ROOT / "source_of_truth/agents"
 CONSUMER_PATHS = {
     "phase_execute": AGENT_ROOT / "03-phase-execute.agent.md",
-    "visual_verifier": AGENT_ROOT / "03g-unity-visual-verification.agent.md",
     "unity_reviewer": AGENT_ROOT / "03h-unity-reviewer.agent.md",
 }
 
@@ -28,7 +27,7 @@ def _section(text: str, heading: str, next_heading_level: int) -> str:
 
 
 def _consumer_texts() -> dict[str, str]:
-    assert len(CONSUMER_PATHS) == 3
+    assert len(CONSUMER_PATHS) == 2
     missing = [str(path) for path in CONSUMER_PATHS.values() if not path.is_file()]
     assert not missing, f"missing Unity consumers: {missing}"
     return {
@@ -77,80 +76,6 @@ def _phase_execute_errors(section: str) -> set[str]:
     return errors
 
 
-def _visual_verifier_errors(section: str) -> set[str]:
-    normalized = " ".join(section.split())
-    errors: set[str] = set()
-
-    for token in (
-        "VISUAL_VERIFICATION_UNITY",
-        "dev/com.threnjen.visual-verification.local.json",
-        "UnityHub",
-        ".gitignore",
-    ):
-        if token not in section:
-            errors.add("editor discovery and saved path")
-    if (
-        "`unity-development` skill's Test Execution section and Execution Ladder"
-        not in normalized
-    ):
-        errors.add("canonical test execution ladder")
-    if (
-        "<main-repo-root>" not in section
-        or "<unity-project-relative-path>" not in section
-        or "<execution-unity-project>" not in section
-    ):
-        errors.add("root or nested project path")
-    if "<execution-unity-project>/ProjectSettings/ProjectVersion.txt" not in section:
-        errors.add("nested editor version path")
-    if "capture inputs are committed" not in normalized:
-        errors.add("committed capture inputs")
-
-    command = next(
-        (
-            line
-            for line in normalized.split("`")
-            if "-runTests" in line and '"<resolved-unity-editor>"' in line
-        ),
-        "",
-    )
-    required_tokens = (
-        '"<resolved-unity-editor>"',
-        "-batchmode",
-        "-runTests",
-        "-testPlatform PlayMode",
-        '-projectPath "<execution-unity-project>"',
-        '-testResults "<absolute-main-checkout>/dev/test-results/<results.xml>"',
-        '-logFile "<absolute-main-checkout>/dev/test-results/<unity.log>"',
-    )
-    if not command or any(token not in command for token in required_tokens):
-        errors.add("PlayMode capture command")
-    if "-nographics" in command or "-quit" in command:
-        errors.add("graphics enabled without quit")
-    if "graphics enabled" not in normalized:
-        errors.add("graphics enabled without quit")
-    return errors
-
-
-def _phase_visual_gate_errors(section: str, full_text: str) -> set[str]:
-    normalized = " ".join(section.split())
-    errors: set[str] = set()
-
-    if (
-        "Visual Verification Wiring" not in full_text
-        or "before returning so the A1 checkpoint commits those inputs" not in full_text
-    ):
-        errors.add("implementation-owned visual wiring")
-    if "Never create or modify capture inputs after the wave checkpoints" not in normalized:
-        errors.add("no dirty post-wave bootstrap")
-    if (
-        "visual-verification: not configured (capture inputs missing at implementation checkpoint)"
-        not in normalized
-        or "all-approved: no" not in section
-    ):
-        errors.add("missing-input non-green status")
-    if "perform the minimal wiring yourself" in normalized:
-        errors.add("no dirty post-wave bootstrap")
-    return errors
 
 
 def _unity_reviewer_errors(section: str) -> set[str]:
@@ -203,28 +128,14 @@ def _duplication_errors(texts: dict[str, str]) -> set[str]:
 def test_required_unity_consumers_are_present() -> None:
     assert set(_consumer_texts()) == {
         "phase_execute",
-        "visual_verifier",
         "unity_reviewer",
     }
 
 
-def test_phase_execute_dependency_level_gate_contract() -> None:
+def test_phase_execute_integration_gate_stage_contract() -> None:
     text = _consumer_texts()["phase_execute"]
-    section = _section(text, "### Step 2.5: Dependency-Level Test Gate", 3)
+    section = _section(text, "##### D. Integration test gate", 5)
     assert not _phase_execute_errors(section), sorted(_phase_execute_errors(section))
-
-
-def test_phase_execute_visual_gate_commit_contract() -> None:
-    text = _consumer_texts()["phase_execute"]
-    section = _section(text, "### Step 3: Visual Verification Gate (conditional)", 3)
-    errors = _phase_visual_gate_errors(section, text)
-    assert not errors, sorted(errors)
-
-
-def test_visual_verifier_invocation_contract() -> None:
-    text = _consumer_texts()["visual_verifier"]
-    section = _section(text, "## Step 1 — Resolve the capture invocation", 2)
-    assert not _visual_verifier_errors(section), sorted(_visual_verifier_errors(section))
 
 
 def test_unity_reviewer_compilation_contract() -> None:
@@ -277,60 +188,9 @@ def test_phase_execute_mutations_are_killed(
     needle: str, replacement: str, obligation: str
 ) -> None:
     text = _consumer_texts()["phase_execute"]
-    section = _section(text, "### Step 2.5: Dependency-Level Test Gate", 3)
+    section = _section(text, "##### D. Integration test gate", 5)
     assert needle in section, f"mutation target missing for {obligation}"
     assert obligation in _phase_execute_errors(section.replace(needle, replacement))
-
-
-@pytest.mark.parametrize(
-    ("needle", "replacement", "obligation"),
-    [
-        ("-batchmode", "-interactive", "PlayMode capture command"),
-        ("graphics enabled", "graphics disabled", "graphics enabled without quit"),
-        (
-            '-projectPath "<execution-unity-project>"',
-            '-projectPath "."',
-            "PlayMode capture command",
-        ),
-        (
-            '"<absolute-main-checkout>/dev/test-results/<results.xml>"',
-            '"results.xml"',
-            "PlayMode capture command",
-        ),
-        (
-            "VISUAL_VERIFICATION_UNITY",
-            "LOCAL_UNITY",
-            "editor discovery and saved path",
-        ),
-        (
-            "`unity-development` skill's Test Execution section and Execution Ladder",
-            "local execution notes",
-            "canonical test execution ladder",
-        ),
-        (
-            '"<resolved-unity-editor>" -batchmode',
-            '"<resolved-unity-editor>" -batchmode -quit',
-            "graphics enabled without quit",
-        ),
-        (
-            "capture inputs are committed",
-            "capture inputs may remain dirty",
-            "committed capture inputs",
-        ),
-        (
-            "<execution-unity-project>/ProjectSettings/ProjectVersion.txt",
-            "ProjectSettings/ProjectVersion.txt",
-            "nested editor version path",
-        ),
-    ],
-)
-def test_visual_verifier_mutations_are_killed(
-    needle: str, replacement: str, obligation: str
-) -> None:
-    text = _consumer_texts()["visual_verifier"]
-    section = _section(text, "## Step 1 — Resolve the capture invocation", 2)
-    assert needle in section, f"mutation target missing for {obligation}"
-    assert obligation in _visual_verifier_errors(section.replace(needle, replacement))
 
 
 @pytest.mark.parametrize(
@@ -387,34 +247,3 @@ def test_canonical_mechanics_duplication_mutations_are_killed() -> None:
     )
 
 
-@pytest.mark.parametrize(
-    ("needle", "replacement", "obligation"),
-    [
-        (
-            "before returning so the A1 checkpoint commits those inputs",
-            "after the wave checkpoints",
-            "implementation-owned visual wiring",
-        ),
-        (
-            "Never create or modify capture inputs after the wave checkpoints",
-            "Create capture inputs after the wave checkpoints",
-            "no dirty post-wave bootstrap",
-        ),
-        (
-            "visual-verification: not configured (capture inputs missing at implementation checkpoint)",
-            "visual-verification: Pass",
-            "missing-input non-green status",
-        ),
-    ],
-)
-def test_phase_visual_gate_mutations_are_killed(
-    needle: str, replacement: str, obligation: str
-) -> None:
-    text = _consumer_texts()["phase_execute"]
-    section = _section(text, "### Step 3: Visual Verification Gate (conditional)", 3)
-    assert needle in text, f"mutation target missing for {obligation}"
-    mutated_text = text.replace(needle, replacement, 1)
-    mutated_section = _section(
-        mutated_text, "### Step 3: Visual Verification Gate (conditional)", 3
-    )
-    assert obligation in _phase_visual_gate_errors(mutated_section, mutated_text)

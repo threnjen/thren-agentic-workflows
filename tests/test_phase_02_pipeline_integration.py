@@ -29,8 +29,8 @@ POST_GATE_QA_PATH = REPO_ROOT / "docs/phases/PHASE_02/PHASE_02_POST_GATE_QA.md"
 
 MANIFEST_FIELDS = (
     "status",
-    "dependency_level",
-    "depends_on",
+    "execution_order",
+    "prerequisites",
     "expected_read_set",
     "expected_write_set",
     "plan_revision",
@@ -322,17 +322,10 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
         (
             "schedule",
             phase,
-            ("`dependency_level`", "`expected_write_set`", "`last_validation_commit`"),
+            ("`execution_order`", "`expected_write_set`", "`last_validation_commit`"),
         ),
         ("routing", routing_text, ('"low":', '"medium":', '"high":')),
         ("committee", phase, tuple(REPORT_PATHS.values())),
-        (
-            "trigger table",
-            phase,
-            (
-                "| 03j Reviewer - Blast Radius | Always |",
-            ),
-        ),
         (
             "fix loop",
             loop,

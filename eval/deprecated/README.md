@@ -15,6 +15,8 @@ runtime context. Nothing in this directory is deployed to any harness.
 | `skills/eval-feature-decomposition-report/` | Report template for the decomposition benchmark |
 | `hooks/post-commit.sh` | Git hook that appended `ledger-commits.jsonl` on `phase/*` branches |
 | `agentic-evaluator-plan.md` | The original design plan for the whole evaluation framework |
+| `rubrics/` | Scoring rubrics. `phase-eval-infrastructure-foundation.example.yaml` matched commits by literal prefix through `expected_commit_prefix` |
+| `EVAL_SYSTEM_USAGE.md` | Operator guide for the run scoring system — run directories, rubric schema, and the grading workflow |
 
 ## Why they were retired
 
@@ -28,13 +30,20 @@ justify the standing context cost.
 `eval-feature-decomposition` produced no artifacts and its Step 4 still pointed at the
 pre-restructure `.github/agents/` layout, so it could no longer locate its own inputs.
 
-Retained live: `eval/rubrics/` and `eval/EVAL_SYSTEM_USAGE.md`. `eval/runs/` is
-gitignored, so past run output is local-only and was never committed.
+The rubrics and the usage guide were retained live at first, on the theory that the
+scoring inputs might outlive the graders. They did not. Nothing under `source_of_truth/`
+referenced either one, and their only remaining tie to a live agent was the `eval:` commit
+literals that `03 Phase - Execute` emitted so `expected_commit_prefix` could match them.
+Both are now archived here, so the run scoring system is retired end to end.
+
+`eval/runs/` stays where it is. It is gitignored, so past run output is local-only and was
+never committed, and `.gitignore:19` is load-bearing — see `tests/test_eval_grader_retirement.py`.
 
 ## Reactivating
 
 Restoring the agents and skills to `source_of_truth/` is not sufficient — the grader reads
-ledger files that nothing writes any more. A revival also needs the hook install steps and
+ledger files that nothing writes any more, and the rubrics here match commit prefixes that
+no agent emits any more. A revival needs the commit scheme rebuilt alongside them. A revival also needs the hook install steps and
 the per-agent ledger sections rebuilt, and `tests/test_eval_grader_retirement.py` removed.
 Prefer rebuilding the instrumentation as something opt-in per run rather than restoring the
 always-on instruction.

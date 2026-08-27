@@ -109,7 +109,7 @@ def _runbook_errors(text: str) -> set[str]:
             "no ignored content outside `<execution-unity-project>/Library/`",
             "strict ignored-content boundary",
         ),
-        ("Visual Verifier", "editor discovery"),
+        ("`unity-development` skill's Editor discovery", "editor discovery"),
         ("-batchmode -nographics -runTests", "EditMode flags"),
         ("-batchmode -runTests", "PlayMode flags"),
         ("absolute-main-checkout>/dev/test-results", "absolute results"),

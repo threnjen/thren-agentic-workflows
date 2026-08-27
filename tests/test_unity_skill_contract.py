@@ -168,7 +168,7 @@ def _contract_errors(section: str) -> set[str]:
     if not re.search(r"\|\s*EditMode\s*\|[^|]*`-batchmode -nographics`[^|]*\|", section):
         errors.add("EditMode flags")
     playmode_row = re.search(
-        r"\|\s*PlayMode and visual capture\s*\|([^|]*)\|", section
+        r"\|\s*PlayMode\s*\|([^|]*)\|", section
     )
     if (
         playmode_row is None
@@ -182,19 +182,18 @@ def _contract_errors(section: str) -> set[str]:
     if (
         "semicolon-separated list of full test names or a regex" not in normalized
         or "negation supported" not in normalized
-        or "Gate runs (dependency-level boundary, phase end) are unfiltered" not in normalized
+        or "Gate runs (feature integration gate, phase end) are unfiltered" not in normalized
     ):
         errors.add("testFilter semantics")
     if (
-        "deployed `Visual Verifier` agent definition" not in section
-        or "active harness's configured agent catalog" not in section
-        or "Step 1" not in section
+        "VISUAL_VERIFICATION_UNITY" not in section
+        or "dev/com.threnjen.visual-verification.local.json" not in section
+        or "ProjectSettings/ProjectVersion.txt" not in section
+        or "UnityHub" not in section
     ):
-        errors.add("deployed editor discovery")
-    if "source_of_truth/agents/03g-unity-visual-verification.agent.md" in section:
-        errors.add("no authoring-only discovery pointer")
-    if "VISUAL_VERIFICATION_UNITY" in section or "ProjectSettings/ProjectVersion.txt" in section:
-        errors.add("no duplicated discovery algorithm")
+        errors.add("owned editor discovery")
+    if "This skill is the single canonical implementation of editor discovery" not in section:
+        errors.add("single canonical discovery")
     if "Never assume a bare `Unity` executable is on `PATH`" not in section:
         errors.add("no bare Unity")
     if (
@@ -432,19 +431,19 @@ def test_source_sweep_mutations_are_killed() -> None:
             "testFilter semantics",
         ),
         (
-            "deployed `Visual Verifier` agent definition",
-            "unavailable authoring definition",
-            "deployed editor discovery",
+            "VISUAL_VERIFICATION_UNITY",
+            "LOCAL_UNITY",
+            "owned editor discovery",
         ),
         (
-            "Resolve it there rather than pointing at an authoring-repository path",
-            "Resolve it from source_of_truth/agents/03g-unity-visual-verification.agent.md",
-            "no authoring-only discovery pointer",
+            "ProjectSettings/ProjectVersion.txt",
+            "ProjectVersion",
+            "owned editor discovery",
         ),
         (
-            "Do not copy its discovery algorithm into this skill",
-            "Copy `VISUAL_VERIFICATION_UNITY` and `ProjectSettings/ProjectVersion.txt` here",
-            "no duplicated discovery algorithm",
+            "This skill is the single canonical implementation of editor discovery",
+            "Discovery lives elsewhere",
+            "single canonical discovery",
         ),
         ("Never assume a bare `Unity` executable is on `PATH`", "Assume `Unity` is on `PATH`", "no bare Unity"),
         ("absolute path under the main checkout's `dev/test-results/`", "relative results path", "main-checkout results"),

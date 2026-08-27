@@ -15,7 +15,7 @@ import propagate_master_assets as mod  # noqa: E402
 AGENTS_DIR = REPO_ROOT / "source_of_truth" / "agents"
 PHASE_EXECUTE = AGENTS_DIR / "03-phase-execute.agent.md"
 COMMITTEE_SLUGS = (
-    "03c-feature-review-and-fix",
+    "03c-reviewer-plan-conformance",
     "03j-reviewer-blast-radius",
     "03k-reviewer-test-falsification",
     "03l-reviewer-plan-blind",
@@ -25,7 +25,7 @@ COMMITTEE_SLUGS = (
 NEW_REVIEWER_SLUGS = COMMITTEE_SLUGS[1:]
 
 LANE_PROHIBITIONS = {
-    "03c-feature-review-and-fix": "Review plan conformance only.",
+    "03c-reviewer-plan-conformance": "Review plan conformance only.",
     "03j-reviewer-blast-radius": "Never evaluate whether the changed feature satisfies its plan",
     "03k-reviewer-test-falsification": "Do not read implementation code.",
     "03l-reviewer-plan-blind": "Do not open or read the feature plan",
@@ -141,14 +141,14 @@ def test_required_instruction_membership_matches_each_lane() -> None:
     for name in ("code-change-strategy.instructions.md", "language-standards.instructions.md"):
         instruction = _instruction(name)
         assert not any(
-            fnmatch.fnmatch(agent_paths["03c-feature-review-and-fix"], pattern)
+            fnmatch.fnmatch(agent_paths["03c-reviewer-plan-conformance"], pattern)
             for pattern in instruction.apply_to_patterns
         ), f"{name} still routes coding guidance to Reviewer A"
 
     for name in ("test-target-scope.instructions.md", "test-execution-evidence.instructions.md"):
         instruction = _instruction(name)
         assert any(
-            fnmatch.fnmatch(agent_paths["03c-feature-review-and-fix"], pattern)
+            fnmatch.fnmatch(agent_paths["03c-reviewer-plan-conformance"], pattern)
             for pattern in instruction.apply_to_patterns
         ), f"{name} stopped reaching Reviewer A's test gate"
 
@@ -157,7 +157,7 @@ def test_phase_execute_plan_blind_spawn_does_not_pass_the_plan() -> None:
     body = PHASE_EXECUTE.read_text(encoding="utf-8")
     required = (
         "Spawn **03l Reviewer - Plan Blind** with changed code and tests only.",
-        "Do not pass the feature plan, context, tasks, or a plan-derived summary to Reviewer D.",
+        "Never pass it the feature plan, context, tasks, or a plan-derived summary.",
     )
     def missing(text: str) -> set[str]:
         return {phrase for phrase in required if phrase not in text}

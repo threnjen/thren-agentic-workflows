@@ -3,17 +3,17 @@
 **Status**: Implementation complete. Full suite has eleven known pre-existing failures.
 **Depends on**: Phase 01
 **Estimated complexity**: Large
-**Cross-references**: `source_of_truth/agents/03-phase-execute.agent.md`, `source_of_truth/agents/03a-feature-plan-expander.agent.md`, `source_of_truth/agents/03b-feature-implementer.agent.md`, `source_of_truth/agents/03c-feature-review-and-fix.agent.md`, `source_of_truth/agents/04d-consistency-auditor.agent.md`, `source_of_truth/agents/04e-dependency-auditor.agent.md`, `source_of_truth/agents/04f-test-health.agent.md`, `source_of_truth/agents/04g-readiness-synthesizer.agent.md`, `source_of_truth/agents/04h-cleanliness-auditor.agent.md`, `source_of_truth/agents/auditor-refactor.agent.md`, `source_of_truth/skills/implementation-pipeline-loop/SKILL.md`, `source_of_truth/skills/feature-plan-set/SKILL.md`, `source_of_truth/skills/guard-integrity/SKILL.md`
+**Cross-references**: `source_of_truth/agents/03-phase-execute.agent.md`, `source_of_truth/agents/03a-feature-plan-expander.agent.md`, `source_of_truth/agents/03b-feature-implementer.agent.md`, `source_of_truth/agents/03c-reviewer-plan-conformance.agent.md`, `source_of_truth/agents/04d-consistency-auditor.agent.md`, `source_of_truth/agents/04e-dependency-auditor.agent.md`, `source_of_truth/agents/04f-test-health.agent.md`, `source_of_truth/agents/04g-readiness-synthesizer.agent.md`, `source_of_truth/agents/04h-cleanliness-auditor.agent.md`, `source_of_truth/agents/auditor-refactor.agent.md`, `source_of_truth/skills/implementation-pipeline-loop/SKILL.md`, `source_of_truth/skills/feature-plan-set/SKILL.md`, `source_of_truth/skills/guard-integrity/SKILL.md`
 
 ## What's New
 
-Feature decomposition and phase execution now share one user-facing orchestrator. The orchestrator researches the phase once, writes lightweight feature plans, then executes one feature at a time. It expands each plan against the current repository state and revalidates affected future features after every dependency level.
+Feature decomposition and phase execution now share one user-facing orchestrator. The orchestrator researches the phase once, writes lightweight feature plans, then executes one feature at a time. It expands each plan against the current repository state and revalidates affected future features after every completed feature.
 
-A review committee replaces the single blind reviewer. Reviewers run concurrently against each implemented feature, and two trigger tables name the entry condition for every review agent. A consolidator merges their reports into one ranked fix list. The implementer that wrote the feature stays open and applies the fixes without rediscovering its own work.
+A review committee replaces the single blind reviewer. Reviewers run concurrently against each implemented feature, and two trigger tables name the entry condition for every review agent. A consolidator merges their reports into one ranked fix list. A dedicated fixer applies each fix round after reading the fix list, the implementation record, and every file the findings cite. A regression check gates each round, so a repair that breaks a passing test cannot count as progress.
 
 The execution manifest becomes a living schedule. Its schema moves with it, so the skill that defines the manifest is rewritten in this phase rather than left describing the old static output.
 
-Periodic checks at each dependency level catch problems that no single feature diff can show. Architecture, convention, and test-health findings feed the revalidation step, so features that are not yet expanded get planned around accumulated damage instead of adding to it.
+Checks at phase close catch problems that no single feature diff can show. Architecture, convention, and test-health findings feed the revalidation step, so features that are not yet expanded get planned around accumulated damage instead of adding to it.
 
 Model selection becomes a central, harness-aware policy. Source agents name only `low`, `medium`, or `high`. A central routing file maps each tier to an exact model for each harness.
 
@@ -33,31 +33,31 @@ Deliver one phase workflow that keeps decomposition quality high, prevents stale
 - Keep the `Phase - Execute` agent identity. Decomposition becomes an internal stage of that agent. Delete the separate decomposer agent.
 - Preserve feature research and acceptance-criteria traceability from the current decomposer.
 - Write lightweight feature plans before scheduling. Keep context and task documents just in time.
-- Build a dependency graph, order the features from it, and recompute that order after every dependency level.
+- Build a prerequisite graph, order the features from it, and recompute that order after every completed feature.
 - Revalidate affected future features and every downstream dependent feature.
 - Record schedule state, plan revisions, changed files, and revalidation results in the living execution manifest.
-- Build one feature at a time. The dependency graph sets order and drives revalidation. It never authorizes two concurrent feature builds.
+- Build one feature at a time. The prerequisite graph sets order and drives revalidation. It never authorizes two concurrent feature builds.
 
 **Review committee**
 
 - Replace the single post-implementation reviewer with a committee of concurrent reviewers, each differentiated by the evidence it may read.
-- Reviewer A, plan conformance: the existing `03c-feature-review-and-fix` agent, narrowed to review only. Its fix authority moves to the held-open implementer, so it edits no source. Reads the plan and the diff. Maps every acceptance criterion to code. Blocks approval while the authoritative tests are unrun.
+- Reviewer A, plan conformance: the existing `03c-reviewer-plan-conformance` agent, narrowed to review only. Its fix authority moves to the held-open implementer, so it edits no source. Reads the plan and the diff. Maps every acceptance criterion to code. Blocks approval while the authoritative tests are unrun.
 - Reviewer B, blast radius: reads outward from the diff and never evaluates the feature itself. Reports affected suites that did not run, callers with no coverage, non-code references such as schemas and config and name-based cross-references, and semantic breaks a caller's assertion is too loose to detect.
 - Reviewer C, test falsification: reads the tests, not the code. Reports assertions that cannot fail, mocks the test configured itself, tests that pin implementation rather than behavior, and tests that would survive deleting the feature.
 - Reviewer D, plan-blind: reads only the code and tests and never the plan. Reports what the code actually does, so a faithful implementation of a wrong plan is still caught.
 - Run all four committee reviewers at `medium` tier, concurrently.
 - Give each reviewer a lane. A reviewer files findings only inside its lane and stays silent outside it.
 - Add a consolidator that merges every committee report into one deduplicated, severity-ranked fix list addressed to the implementer, and adjudicates disagreements between reviewers.
-- Define two trigger tables that together name the entry condition for every review agent. The per-feature table covers agents evaluated against a feature's diff. The boundary table covers agents evaluated when a dependency level closes and when the phase closes.
+- Define two trigger tables that together name the entry condition for every review agent. The per-feature table covers agents evaluated against a feature's diff. The boundary table covers agents evaluated when the phase closes.
 - Run exactly the agents whose conditions hold.
-- Derive every per-feature trigger from the changed-file list, with one stated exception. The visual verifier fires from a plan-level flag instead, because its subject is a phase's on-screen acceptance criteria rather than a file pattern.
-- Derive every boundary trigger from a closure event, either a dependency level closing or the phase closing.
-- Add a required visual-acceptance flag to the lightweight feature plan. The decomposition stage sets it when it writes an on-screen acceptance criterion.
+- Derive every per-feature trigger from the changed-file list.
+- Derive every boundary trigger from the phase closing.
 
 **Fix loop**
 
-- Hold the implementer open across review so it applies its own fixes without rediscovery.
-- Where a harness cannot resume a subagent, fall back to a fresh implementer handed the implementation record and the consolidated fix list, and disclose the fallback.
+- Spawn a dedicated fixer at `medium` for each fix round, handed the validated fix list, the implementation record, and the resolved paths of every file the findings cite. The implementer never applies its own review findings.
+- Require the fixer to read the cited code before it edits. Avoiding rediscovery means never re-planning a finished feature, never editing code the fixer has not read.
+- Record the passing tests at the start of each fix round, and re-run those suites when the round returns. A round that regresses a test that passed at its baseline is a failed round, not a converging cycle.
 - Gate fix rounds on severity. Blocker and High findings drive a round. Medium and Low findings are recorded and carried to phase final review.
 - Allow at most two fix rounds. Re-review only the lanes that filed the findings being fixed.
 - On escalation after two rounds, rewrite the feature plan once using the fix list as evidence, then rebuild the feature.
@@ -65,7 +65,7 @@ Deliver one phase workflow that keeps decomposition quality high, prevents stale
 
 **Dependency-level checks**
 
-- Run architecture, convention-consistency, and test-health checks when a dependency level closes, scoped to the phase diff so far.
+- Run convention-consistency and test-health checks when the phase closes, scoped to the whole phase diff.
 - Feed their findings into the existing revalidation step so unexpanded features are planned around the findings.
 - Run one final architecture pass before the phase closes as a backstop.
 
@@ -106,8 +106,8 @@ Deliver one phase workflow that keeps decomposition quality high, prevents stale
 **Manifest contract**
 
 - Rewrite `source_of_truth/skills/feature-plan-set/SKILL.md` so the manifest it defines is the living schedule this phase describes.
-- Add dependency level, dependency edges, expected read and write sets, plan revision, last validation commit, stale reason, and resolved model status to the manifest schema.
-- Retire the term "wave" across the corpus in favor of "dependency level", including the skill's quality-checklist item that asserts a wave schedule. A checklist that keeps asserting the old term passes against a document that no longer means it.
+- Add execution order, prerequisites, expected read and write sets, plan revision, last validation commit, stale reason, and resolved model status to the manifest schema.
+- Keep the corpus to two execution scopes, the feature and the phase, including the skill's quality-checklist item that asserts the manifest contents. A checklist that keeps asserting a retired term passes against a document that no longer means it.
 
 **Corpus updates**
 
@@ -129,7 +129,7 @@ Deliver one phase workflow that keeps decomposition quality high, prevents stale
 |---|-------------|-------------|-----------------|
 | 1 | Merged orchestrator | One user-invocable flow that owns research, scheduling, expansion, execution, and completion. | Agent definition, migration references |
 | 2 | Lightweight feature plans | Initial plans carry acceptance criteria, scope, dependency hypotheses, and expected file impact. | Decomposition stage |
-| 3 | Living execution schedule | The manifest records feature state, dependency levels, dependencies, plan revisions, and validation points. | Scheduling state |
+| 3 | Living execution schedule | The manifest records feature state, execution order, prerequisites, plan revisions, and validation points. | Scheduling state |
 | 4 | Just-in-time expansion | The orchestrator expands only the selected feature against the current tree. | Plan expander integration |
 | 5 | Stale-plan revalidation | Level-boundary changes trigger targeted revalidation and schedule recomputation. | Dependency and impact checks |
 | 6 | Review committee | Concurrent reviewers with disjoint evidence scopes and enforced lanes. | Three new reviewer agents, plus narrowing the existing review-and-fix agent into Reviewer A |
@@ -155,21 +155,21 @@ Deliver one phase workflow that keeps decomposition quality high, prevents stale
 3. Apply any user overrides to the current run without changing persistent configuration.
 4. Research the phase and identify candidate features.
 5. Write one lightweight plan per candidate feature.
-6. Build the dependency graph and choose the first ready feature.
+6. Build the prerequisite graph and choose the first ready feature.
 7. Expand only that feature into context and task documents.
 8. Implement the feature.
 9. Run the review committee concurrently. Run conditional specialists whose triggers fire.
 10. Consolidate every report into one ranked fix list.
 11. Apply fixes through the held-open implementer. Re-review only the lanes that filed. Repeat at most twice on Blocker or High findings.
 12. Commit the feature.
-13. When the dependency level closes, run the architecture, consistency, and test-health checks against the phase diff so far.
+13. When the phase closes, run the consistency and test-health checks against the whole phase diff.
 14. Record changed files and dependency evidence. Revalidate affected future features and their downstream dependents.
 15. Rewrite stale plans and recompute ordering.
 16. Repeat until all features complete, then run the existing phase completion gates.
 
 ### Dependency levels
 
-A dependency level is the set of features whose dependencies are all satisfied at the same point in the graph. It is a scheduling and checkpoint unit, never a concurrency unit. Features inside a level build one at a time, in any order the graph permits.
+The pipeline has two execution scopes, the feature and the phase. The prerequisite graph orders the features, and a feature is eligible once every feature it names as a prerequisite is complete. Features build one at a time, in any order the graph permits.
 
 A level closes when its last feature is committed. That closure is the trigger for the level checks and for revalidation, and it is derivable from the graph rather than left to orchestrator judgment.
 
@@ -177,7 +177,7 @@ Level boundaries matter because the next level's features are still unexpanded w
 
 ### Review trigger tables
 
-Every review agent has exactly one entry condition, recorded in one of two tables. The per-feature table is evaluated against a feature's diff inside the implement-review-commit loop. The boundary table is evaluated when a dependency level closes and when the phase closes.
+Every review agent has exactly one entry condition, recorded in one of two tables. The per-feature table is evaluated against a feature's diff inside the implement-review-commit loop. The boundary table is evaluated when the phase closes.
 
 #### Per-feature review triggers
 
@@ -188,24 +188,21 @@ Every review agent has exactly one entry condition, recorded in one of two table
 | Reviewer C, test falsification | Always |
 | Reviewer D, plan-blind | Always |
 | Cleanliness auditor | Always |
-| Diff security scan | The diff touches authentication, user input, network calls, or secrets |
 | Dependency auditor | The diff changes a package manifest or lockfile |
 | Unity reviewer | The repository satisfies the canonical Unity predicate in `tech-stack-detection` and the diff changes a `.cs` file under `Assets/` |
-| Visual verifier | The feature plan carries the visual-acceptance flag |
 
-Eight of the nine conditions are derived from the changed-file list. The visual verifier's is not, and the phase states that rather than claiming a uniformity it does not have. A screenshot answers a question about acceptance criteria, and acceptance criteria live in the plan. Any file-pattern proxy for that would both miss code-only changes that alter the screen and fire on asset edits with no visible effect.
+Every condition is derived from the changed-file list. The diff security scan is not a per-feature review. It runs once at phase close over the whole phase diff.
 
 #### Boundary triggers
 
 | Review agent | Entry condition |
 |---|---|
-| Auditor - Refactor, architecture | A dependency level closed |
-| Consistency auditor | A dependency level closed |
-| Test health | A dependency level closed |
+| Consistency auditor | The phase is closing |
+| Test health | The phase is closing |
 | Auditor - Refactor, backstop pass | The phase is closing |
 | Prod code review | The phase is closing |
 
-Boundary agents have no per-feature diff to trigger against, so they cannot live in the per-feature table. They are not unconditional either. "A dependency level closed" and "the phase is closing" are conditions that can fail to fire, and an agent whose condition never fires is an agent that never ran.
+Boundary agents have no per-feature diff to trigger against, so they cannot live in the per-feature table. "The phase is closing" is a condition that can fail to fire, and an agent whose condition never fires is an agent that never ran.
 
 The tables replace counting reviewers as the correctness test. The check is that the set of agents that ran matches the set the tables predict, at both altitudes — per feature against the diff, and per boundary against the closure event. That catches an agent wrongly skipped. A count cannot.
 
@@ -219,17 +216,19 @@ The consolidator exists because the orchestrator must not perform analysis. Merg
 
 ### Where defect classes are caught
 
-Code-quality and security findings are accretive. Each one enters on a specific feature's diff, so a per-feature reviewer can catch it as it lands. The committee and the conditional specialists absorb these classes.
+Code-quality findings are accretive. Each one enters on a specific feature's diff, so a per-feature reviewer can catch it as it lands. The committee and the conditional specialists absorb this class.
 
-Architecture, convention, and coverage findings are emergent. They arise from accumulation across features, and no reviewer examining one diff can see them. Five features may each add one reasonable method to the same file and leave it needing a split that no single feature caused. These classes need a check at a different altitude, run when a dependency level closes, so the findings reach features that are not yet expanded.
+Security findings are accretive too, but the scan runs once over the whole phase diff rather than per feature. A diff-scoped scan judges exploitability from the code around a changed line, and the surrounding code is only final once every feature has landed. The cost is timing: an auth defect surfaces at phase close, after that feature's fix loop has already closed.
+
+Architecture, convention, and coverage findings are emergent. They arise from accumulation across features, and no reviewer examining one diff can see them. Five features may each add one reasonable method to the same file and leave it needing a split that no single feature caused. These classes need a check at a different altitude, run when the phase closes, where one pass over the finished phase diff can see them.
 
 Level-boundary timing matters. A check that runs only at phase end reports the damage after every feature is built, which relocates a cleanup phase rather than removing it.
 
 ### Living schedule contract
 
-The execution manifest is the authoritative schedule. Each feature entry records its status, dependency level, dependency edges, expected read and write sets, plan revision, last validation commit, stale reason when applicable, and resolved model status.
+The execution manifest is the authoritative schedule. Each feature entry records its status, execution order, prerequisites, expected read and write sets, plan revision, last validation commit, stale reason when applicable, and resolved model status.
 
-The schedule can delay, split, merge, or rewrite a feature when later repository changes invalidate its assumptions. Every such change needs an evidence record tied to the changed files, symbols, acceptance criteria, or dependency edge.
+The schedule can delay, split, merge, or rewrite a feature when later repository changes invalidate its assumptions. Every such change needs an evidence record tied to the changed files, symbols, acceptance criteria, or prerequisite edge.
 
 The expected read and write sets remain recorded evidence for revalidation. They do not authorize concurrent feature builds.
 
@@ -239,7 +238,7 @@ Twenty-three agents, counted after this phase completes. Four are created by thi
 
 Docs Writer is excluded. It is user-invocable, and a user-invocable agent never carries a tier even when a pipeline also spawns it. The rule is decided by the agent's own invocability, not by whether some pipeline uses it.
 
-Already in the pipeline (14): Feature - Plan Expander, Feature - Implementer, Feature - Review and Fix (becomes Reviewer A), Unity Reviewer, Visual Verifier, Feature - QA Writer, Feature - QA Runner, Diff Security Scan, Prod Code Review, Auditor - Code, Auditor - Infra, Auditor - Delta, Auditor - Attribution, Baseline Worktree.
+Already in the pipeline (13): Feature - Plan Expander, Feature - Implementer, 03c Reviewer - Plan Conformance (becomes Reviewer A), Unity Reviewer, Feature - QA Writer, Feature - QA Runner, Diff Security Scan, Prod Code Review, Auditor - Code, Auditor - Infra, Auditor - Delta, Auditor - Attribution, Baseline Worktree.
 
 Created by this phase (4): Reviewer B blast radius, Reviewer C test falsification, Reviewer D plan-blind, and the finding consolidator.
 
@@ -292,22 +291,20 @@ This is a real cost of the merge. The resume path is the answer to it, together 
 - [ ] One user invocation enters the merged orchestration flow without a required decomposer-to-executor handoff.
 - [ ] Future features receive expanded context and task documents only shortly before execution.
 - [ ] A test scenario where later features touch files changed by earlier levels causes targeted revalidation and schedule recomputation.
-- [ ] The schedule records every dependency level, plan revision, revalidation result, and ordering change.
+- [ ] The schedule records every execution-order change, plan revision, revalidation result, and prerequisite change.
 - [ ] The set of review agents that ran against a feature matches the set the per-feature trigger table predicts for that diff, and each reports only inside its own lane.
-- [ ] The set of agents that ran at a dependency-level closure and at phase close matches the set the boundary trigger table predicts.
+- [ ] The set of agents that ran at phase close matches the set the boundary trigger table predicts.
 - [ ] Every review agent the phase spawns appears in exactly one of the two trigger tables.
 - [ ] A feature whose diff touches nothing another file imports runs the committee without the blast-radius reviewer and is not treated as an incomplete review.
-- [ ] A feature plan carrying the visual-acceptance flag runs the visual verifier, and one without it does not.
 - [ ] The consolidator produces one ranked fix list, and duplicate findings across reviewers appear once.
 - [ ] A reviewer disagreement about the same code reaches an adjudicated result rather than two contradictory instructions.
 - [ ] Each triggered specialist runs when its condition holds and is skipped when it does not.
 - [ ] The manifest schema and `feature-plan-set` describe the same living schedule, and no corpus file asserts a wave schedule.
-- [ ] The implementer applies fixes without re-reading the feature from scratch, and a harness that cannot resume a subagent produces an explicit fallback record.
+- [ ] The fixer reads the cited code before editing, records a regression baseline, and reports each finding as fixed, not-reproduced, or blocked.
 - [ ] Medium and Low findings do not trigger a fix round and do appear at phase final review.
 - [ ] A feature that fails two fix rounds is replanned once, and a feature that fails after replanning is blocked along with its dependents while independent features continue.
-- [ ] A dependency-level architecture finding changes the plan of a feature that has not yet been expanded.
-- [ ] A dependency-level convention-consistency finding changes the plan of a feature that has not yet been expanded.
-- [ ] A dependency-level test-health finding changes the plan of a feature that has not yet been expanded.
+- [ ] A phase-close convention-consistency finding is recorded against the phase.
+- [ ] A phase-close test-health finding is recorded against the phase.
 - [ ] The final architecture backstop pass runs before the phase closes, and its absence is recorded rather than passing silently.
 - [ ] An interrupted phase resumes at the last completed feature, and an uncommitted working tree at startup is reported rather than built upon.
 - [ ] Source agents contain only `low`, `medium`, or `high`, never harness-specific model IDs.
@@ -336,7 +333,7 @@ Test session overrides for all three tiers and verify that the central file rema
 
 Add a test asserting that every review agent the phase spawns appears in exactly one trigger table, so a new agent cannot be added without an entry condition.
 
-Add a test that resolves the per-feature trigger table against synthetic diffs — an isolated new file, an imported symbol change, a lockfile edit, an auth-touching change, a Unity `.cs` change under `Assets/`, and a plan with and without the visual-acceptance flag — and asserts the predicted agent set each time.
+Add a test that resolves the per-feature trigger table against synthetic diffs — an isolated new file, an imported symbol change, a lockfile edit, an auth-touching change, and a Unity `.cs` change under `Assets/` — and asserts the predicted agent set each time.
 
 Confirm the `copilot-instructions.md` splice by deleting the file and regenerating, rather than by reading the propagation logic. Run this check before the renumbering feature relies on it.
 

@@ -131,7 +131,7 @@ In Claude Code, when `Edit` or `Write` tool calls fail (e.g., wrong path, missin
 - NEVER write or overwrite files using Bash (`cat`, `echo`, heredoc, etc.) — always use the `Write` tool to create new files and `Edit` to modify existing ones. If these tools return an error, stop and report the failure; do not fall back to shell commands.
 ```
 
-This applies to: `z-feature-implementer`, `z-feature-review-and-fix`, `z-test-writer`, `z-test-fixer`, `debugger`, `single-feature-agent`, and any other agent that produces source code or test files.
+This applies to: `z-feature-implementer`, `z-reviewer-plan-conformance`, `z-test-writer`, `z-test-fixer`, `debugger`, `single-feature-agent`, and any other agent that produces source code or test files.
 
 ## Maintenance Note
 
