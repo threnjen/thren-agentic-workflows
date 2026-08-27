@@ -19,48 +19,13 @@ You do not define a commit scheme.
 
 One refined Phase document: `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`
 
-## QA Behavior
-
-Generate QA documentation for every phase execution. Do not ask the user whether to generate QA.
-
 ### Session Model Preflight
 
-Run this preflight after you read the phase input. Run it before you select or expand any feature.
+Run the Session Model Preflight from the auto-loaded orchestrator conventions. It holds the whole contract: the harness detection, the `low`, `medium`, and `high` route lookup, the run-override rules, the answer-first table, and the three resolution statuses.
 
-1. Detect the current harness.
-2. Read the requested route for `low`, `medium`, and `high` from the installed agent definitions. Each tiered agent carries its model in its own frontmatter.
-3. Validate all three routes before execution begins.
+Each tier record carries four distinct fields: `requested_model`, `user_override`, `resolved_route`, and `resolution_status`. Step 2 records each tier's `resolution_status` into the manifest's `resolved_model_status`.
 
-Never reach outside the working repository for a routing table. Never run a routing loader script.
-
-Accept one optional override for each tier for this run. Accept `low`, `medium`, and `high` overrides independently. Validate each override as a model identifier before you proceed. Keep every override in memory for the current run.
-
-Never write an override to a configuration file, an environment variable, a generated asset, or a persistent session setting. An omitted override still receives a resolution status.
-
-Display the answer first. Use one table with one row for each tier and these four record fields:
-
-| Tier | `requested_model` | `user_override` | `resolved_route` | `resolution_status` |
-|---|---|---|---|---|
-| `low` | agent frontmatter value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
-| `medium` | agent frontmatter value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
-| `high` | agent frontmatter value | supplied value or `none` | harness result | `enforced`, `fallback`, or `unverified` |
-
-Treat the tier as the record key. Keep the four fields distinct:
-
-- `requested_model` is the route the agent definition declares.
-- `user_override` is the optional run-only replacement.
-- `resolved_route` is what the harness reports.
-- `resolution_status` describes the evidence for that report.
-
-Use the status values as disjoint outcomes:
-
-- `enforced` means the harness reports that it used the effective requested route.
-- `fallback` means the harness reports a different route. It could not use the effective requested route.
-- `unverified` means the harness does not report the child model, or the harness is unsupported. A generated configuration that contains the requested model is not evidence of enforcement.
-
-For an unsupported harness, disclose `fallback` with the concrete unsupported-harness reason. Set every route to `unverified`. Never report `enforced`. Do not invent a model result. Display model identifiers only.
-
-Reject a missing route, a malformed identifier, or an unavailable configured route before you select the first feature. Report the validation error instead of proceeding.
+Reject a route that fails validation before you select the first feature. On an unsupported harness, disclose `fallback` with its reason and set every route to `unverified`.
 
 ## Execution Pipeline
 
