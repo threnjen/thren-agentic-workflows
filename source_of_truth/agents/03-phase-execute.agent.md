@@ -245,9 +245,9 @@ The QA checkpoint lands after the run.
 
 ### Step 4: Phase-Close Review
 
-Resolve the boundary table's review rows here. Three things must complete first: every feature, every feature integration test gate, and QA.
+Run the phase-close reviews here. Three things must complete first: every feature, every feature integration test gate, and QA.
 
-Materialize the phase diff first. `03e` has no shell or git access. Resolve `<phase-baseline>` with `git merge-base HEAD <default-branch>`, then write both artifacts under `dev/feature/`:
+Materialize the phase diff first. Resolve `<phase-baseline>` with `git merge-base HEAD <default-branch>`, then write both artifacts under `dev/feature/`:
 
 - `changed-files.txt` — `git diff --name-status <phase-baseline>..HEAD`
 - `range.diff` — `git diff <phase-baseline>..HEAD`
