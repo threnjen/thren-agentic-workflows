@@ -165,60 +165,35 @@ Every path after 03c Reviewer - Plan Conformance is relative to `reviews/[review
 
 ##### C. Consolidated fix loop
 
-Spawn **03p Feature - Fixer** at `medium` for each fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites. The implementer never applies its own review findings.
+A **review cycle** means Reviewers A through D, then consolidation, then validation, stored in its own directory under `reviews/`. Run one after every repair round.
 
-Every confirmed finding marks a place where the original implementer's model of its own code was wrong, so repair belongs to an agent that reads the current code rather than one that remembers writing it.
+**Who repairs.** Spawn **03p Feature - Fixer** at `medium` for each fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites. The implementer never applies its own review findings: a confirmed finding marks where the implementer's model of its own code was wrong, so repair belongs to an agent that reads the current code rather than one that remembers writing it. Never instruct the fixer to skip reading the code it edits. Avoiding rediscovery means never re-planning a finished feature. It never means editing code you have not looked at. How the fixer reads, repairs, and verifies is its own contract.
 
-Never instruct the fixer to skip reading the code it edits. Avoiding rediscovery means never re-planning a finished feature. It never means editing code you have not looked at. How the fixer reads, repairs, and verifies is its own contract.
+**What opens a round.** Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker, and a verification blocker never opens a fix round or rebuild. Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two production fix rounds.
 
-Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker. A verification blocker never opens a fix round or rebuild.
+**The regression gate.** Pass the phase-level test baseline to the fixer when discovery recorded one. It returns that round's baseline pass set and regression result. Run the affected suites yourself before you spawn any reviewer: the fixer's own re-run tells it whether its repair held, but your run decides whether the round is admissible, and a self-report is not evidence. Record both the baseline pass set and the regression result in the cycle directory.
 
-Carry `Medium` and `Low` findings to phase final review. Run at most two production fix rounds.
+- **Regression** — a test that passed at the round baseline now fails, so the round failed. Return the failing test names to the fixer once. If the suite is still regressed, instruct it to revert the round and record a failed repair. A failed repair round never counts as a converging cycle.
+- **No regression** — run a review cycle.
+- **Runner unavailable** — record `regression-check: not-executed (<reason>)` and carry the round as verification pending. An unrunnable suite is never a clean regression check.
 
-Pass the phase-level test baseline to the fixer when discovery recorded one, so it does not recapture what you already hold. The fixer returns that round's baseline pass set and its regression result.
+Reviewers judge findings, never regressions. A repair that closes a finding and breaks a passing test is a net loss, and only the suite can see it.
 
-After each repair round returns, run the affected suites yourself before you spawn any reviewer. The fixer's own re-run tells it whether its repair held. Your run decides whether the round is admissible, and a self-report is not evidence.
+**Rewrite and rebuild, once.** After two unsuccessful rounds, have **Feature - Plan Author** rewrite the feature plan once using the fix list. Validate it before the rebuild against two conditions: every RED task precedes its production change, and every baseline selector reaches its intended assertion without an import or setup failure. Correct every validation failure before implementation. A correction that makes the plan executable does not count as another rewrite. Do not rewrite or rebuild a second time.
 
-- On a regression — a test that passed at the round baseline now fails — the round failed. Return the failing test names to the fixer once. If the suite is still regressed, instruct the fixer to revert the round, then record it as a failed repair. A failed repair round never counts as a converging cycle.
-- On no regression, rerun Reviewers A through D, consolidation, and validation in a new review cycle.
-- When the runner is unavailable, record `regression-check: not-executed (<reason>)` and carry the round as verification pending. An unrunnable suite is never a clean regression check.
+**Convergence.** When the rebuild returns, run a review cycle and tell the validator this is the post-rebuild pass. Give it the fresh candidate list, the raw reports, the validated plan, the accepted contracts, the changed code, the tests, and the run evidence. **03n Finding Validator** owns the frozen supported-path matrix and is the sole authority for convergence classes. Do not rank, merge, validate, or classify the fresh findings yourself. Act on the class it returns:
 
-Record the baseline pass set and the regression result in the review cycle directory. Reviewers judge findings, never regressions. A repair that closes a finding and breaks a passing test is a net loss, and only the suite can see it.
+- `Pass` — the feature converged. Go to stage D.
+- `Block` — classify the failure below.
+- `Escalate` — a reviewer identified a requirement or supported path outside the frozen matrix. Ask the user whether to expand scope.
+- `Continue` — return the failing cells to the fixer, and run another round while the failing cell count strictly decreases.
 
-After two unsuccessful rounds, have **Feature - Plan Author** rewrite the feature plan once using the fix list. Validate the rewritten plan before the rebuild.
+One condition overrides that class. A repair cycle that regresses a test passing at its own baseline is blocked whatever the matrix shows, because the matrix holds supported paths only and cannot see collateral damage.
 
-Check two conditions in the rewritten plan:
+**Classifying a still-failing feature.** Classify before you block anything. The two classes carry different consequences.
 
-- Every RED task precedes its production change.
-- Every baseline selector reaches its intended assertion without an import or setup failure.
-
-Correct every validation failure before implementation. A correction that makes the rewritten plan executable does not count as another rewrite.
-
-After the rebuilt implementation returns, rerun Reviewers A through D. Run post-rebuild consolidation and validation before classifying the rebuilt feature.
-
-Tell the validator that this is the post-rebuild pass. Give it the fresh candidate list, the raw reports, the validated plan, the accepted contracts, the changed code, the tests, and the run evidence.
-
-The post-rebuild validator is the sole authority for convergence classes. Do not rank, merge, validate, or classify the fresh findings yourself.
-
-On the first full post-rebuild consolidation, freeze and record a finite supported-path matrix. Build it from the validated plan and the accepted contracts. Each matrix cell records its path, invariant, severity, lineage, evidence, and pass or fail status. Later reviewers must not expand the frozen matrix silently.
-
-Read the matrix for the decision:
-
-- Pass when no `Critical`, `Blocker`, or `High` production cells remain.
-- Block when one repair cycle closes no failing production cells, increases the failing high-severity count, or repeats one cell twice.
-- Block when a repair cycle regresses a test that passed at that cycle's baseline, whatever the matrix shows. The frozen matrix holds supported paths only, so it cannot see collateral damage.
-- Escalate when a reviewer identifies a new requirement or supported path outside the frozen matrix. Ask the user whether to expand scope.
-- Otherwise, return the failing cells to **03p Feature - Fixer**. Continue targeted repairs while the failing cell count strictly decreases.
-
-Re-run Reviewers A through D, post-rebuild consolidation and validation after each repair round. Store each pass in a new review cycle.
-
-Do not rewrite or rebuild a second time. Use the matrix decision to determine dependency status.
-
-If the rebuilt feature still fails, classify the failure before you block anything. Two classes exist, and they carry different consequences.
-
-An **implementation blocker** is a confirmed shipped defect that invalidates a downstream contract. An absent dependency contract is also an implementation blocker. Only a `production-blocker` can block dependents. Mark that feature and its dependents blocked. Then continue the independent features.
-
-A **verification blocker** is a missing test artifact, an unavailable runner, absent generated metadata, or a review-evidence gap. It never blocks a dependent feature. Record it as `implementation-complete, verification-pending`. Name the missing evidence, set `all-approved: no`, and continue with the remaining features.
+- An **implementation blocker** is a confirmed shipped defect that invalidates a downstream contract, or an absent dependency contract. Only a `production-blocker` can block dependents. Mark that feature and its dependents blocked, then continue the independent features.
+- A **verification blocker** is a missing test artifact, an unavailable runner, absent generated metadata, or a review-evidence gap. It never blocks a dependent feature. Record it as `implementation-complete, verification-pending`, name the missing evidence, set `all-approved: no`, and continue with the remaining features.
 
 A compile command that ran and failed proves a production blocker. Missing compilation evidence is a verification blocker until an authoritative run exists.
 

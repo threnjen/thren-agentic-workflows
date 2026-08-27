@@ -43,7 +43,7 @@ Pass only confirmed findings to `03p Feature - Fixer`, spawned at `medium` for t
 
 Require the fixer to read the cited code before it edits. Never instruct it to skip that read. Avoiding rediscovery means never re-planning a finished feature. It never means editing code you have not looked at.
 
-Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker. It never opens a fix round or rebuild.
+Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker.
 
 A verification blocker never opens a fix round or rebuild.
 

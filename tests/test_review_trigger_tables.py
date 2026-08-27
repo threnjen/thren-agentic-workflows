@@ -265,3 +265,50 @@ def test_trigger_table_guard_fails_when_a_row_is_removed() -> None:
     assert "per-feature roster" in _table_coverage_errors(mutated)
 
 
+
+
+def _convergence_section(text: str) -> str:
+    """The 03n block that owns the frozen matrix, isolated from the rest of the agent."""
+    start = text.index("## Post-Rebuild Convergence")
+    rest = text.find("\n## ", start + 1)
+    return text[start:] if rest == -1 else text[start:rest]
+
+
+def test_fix_loop_contract_is_stated_in_the_loop_skill() -> None:
+    assert not _missing_fix_loop_contract(_read(LOOP_SKILL_PATH))
+
+
+def test_post_rebuild_contract_is_stated_in_the_loop_skill() -> None:
+    text = _read(LOOP_SKILL_PATH)
+    assert not {phrase for phrase in POST_REBUILD_CONTRACT if phrase not in text}
+
+
+def test_frozen_matrix_contract_lives_in_the_validator() -> None:
+    # 03n is the sole authority for convergence classes, so the matrix cell
+    # fields and the three verdicts must be stated in its own section rather
+    # than anywhere else in the agent.
+    section = _convergence_section(_read(VALIDATOR_PATH))
+    assert not {
+        phrase for phrase in POST_REBUILD_MATRIX_CONTRACT if phrase not in section
+    }
+
+
+def test_evidence_classification_contract_lives_in_the_validator() -> None:
+    text = _read(VALIDATOR_PATH)
+    assert not {
+        phrase for phrase in EVIDENCE_CLASSIFICATION_CONTRACT if phrase not in text
+    }
+
+
+def test_frozen_matrix_guard_fails_when_a_cell_field_is_dropped() -> None:
+    original = _read(VALIDATOR_PATH)
+    assert "`lineage`" in _convergence_section(original)
+    mutated = _convergence_section(original.replace("`lineage`, ", "", 1))
+    assert {phrase for phrase in POST_REBUILD_MATRIX_CONTRACT if phrase not in mutated}
+
+
+def test_fix_loop_guard_fails_when_the_round_cap_is_dropped() -> None:
+    original = _read(LOOP_SKILL_PATH)
+    phrase = "Run at most two production fix rounds"
+    assert phrase in original
+    assert phrase in _missing_fix_loop_contract(original.replace(phrase, "", 1))
