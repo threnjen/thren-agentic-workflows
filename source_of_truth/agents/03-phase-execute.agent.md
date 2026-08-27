@@ -180,7 +180,7 @@ Run this gate before you mark the feature complete.
 1. Run the integrated suite. It is the union of every affected suite plus the manifest's `## Verification Assets`. On the phase's final feature, run the suite unfiltered.
    - For Unity, consume the `unity-development` skill's Test Execution section and Execution Ladder. Do not copy their mechanics. Target `<execution-unity-project>`, preserve affected-suite `-testFilter` scoping, and write the results XML and Unity log to the absolute main-checkout artifact directory.
 2. Read the results artifact. Record `[0N-task-name] integration test-execution: executed-green | executed-failing | not-executed (<reason>)`.
-3. **On `executed-failing`, remediate once.** Re-spawn the **Feature - Implementer** that owns the failing behavior. Give it the failing test names. Then re-run the gate. Retry at most once. If the gate still fails, record the final status and proceed. The blocker escalates to the Phase Final Review (Step 6).
+3. **On `executed-failing`, remediate once.** Re-spawn the **Feature - Implementer** that owns the failing behavior. Give it the failing test names. Then re-run the gate. Retry at most once. If the gate still fails, record the final status and proceed. The blocker escalates to the Phase Final Review (Step 5).
    > "[SUBAGENT-MODE] The feature integration test gate failed for phase [phase-name]. Failing tests: [names and assertion messages]. Results artifact: [path]. These failures are in suites outside your feature's Files Changed table — a contract you changed broke callers written before it. Fix the production code or update the affected fixtures so these tests pass. Do NOT delete, skip, or weaken tests to force a pass. Return what you changed."
 4. **On `not-executed`, do not proceed silently and do not treat it as green.**
    - For Unity, exhaust the canonical Execution Ladder. The orchestrator runs every obtainable command. Never delegate a Unity test command to the user.
@@ -197,13 +197,13 @@ This stage emits no checkpoint of its own.
 
 Mark the feature complete in the todo list. Update its manifest entry with the implementation result, the resolved review agents, the fix-round count, the carry-forward findings, the commit, the review verdict, and the validation evidence. A review verdict is `Approved`, `Approved with Reservations`, or `Changes Requested`. Record the preflight `resolution_status` under `resolved_model_status` for the Feature - Implementer tier.
 
-### Step 4: QA
+### Step 3: QA
 
 Produce the QA documents for this execution. Then run the automated one. Never ask the user to run a command this pipeline could run itself.
 
 Load the `pipeline-artifacts` skill. Determine all three QA output paths from its Consolidated QA Documents table. Check for existing QA files at those paths.
 
-#### Step 4a: spawn QA Writer
+#### Step 3a: spawn QA Writer
 
 Spawn the **Feature - QA Writer** subagent:
 
@@ -217,9 +217,9 @@ After the subagent returns:
 - Read the manual document's items. A manual item earns its place only when its stated reason is visual inspection, a real environment, a live service, or UX judgment. Any other reason is a check a command could decide.
 - If any item fails that test, re-spawn **Feature - QA Writer** once with the mis-sorted items named and instruct it to move each one into the automated document. Continue with whatever it returns.
 
-#### Step 4b: spawn QA Runner
+#### Step 3b: spawn QA Runner
 
-Run this step only when the automated QA document exists. If it does not exist, record `automated-qa-run: N/A (no automated checks)` and go to Step 4c. This is not a gate failure.
+Run this step only when the automated QA document exists. If it does not exist, record `automated-qa-run: N/A (no automated checks)` and go to Step 3c. This is not a gate failure.
 
 Spawn the **Feature - QA Runner** subagent:
 
@@ -229,11 +229,11 @@ After the subagent returns:
 
 - Record `automated-qa-run: PASS | FAIL | NOT RUN (<reason>)`. Use the runner's own upper-case strings verbatim.
 - On `FAIL` or `NOT RUN`, set `all-approved: no`. The Phase Final Review then runs in standard mode and carries it as a blocker.
-- Do not remediate. An automated QA failure escalates to Step 6.
+- Do not remediate. An automated QA failure escalates to Step 5.
 - An `UNRUNNABLE` check is a defect in the QA document, not in the phase. Name it as such when you report. The reroute target is `Feature - QA Writer`, not the implementer.
 - Record how many `EVIDENCE ONLY` checks now have evidence waiting for the human. These do not block.
 
-#### Step 4c: Checkpoint
+#### Step 3c: Checkpoint
 
 Emit the skill's QA checkpoint once. This stage produced the three QA outputs and any phase-level pipeline documents it updated.
 
@@ -241,7 +241,7 @@ The skill's staging rules exclude one artifact. The evidence directory is untrac
 
 The QA checkpoint lands after the run.
 
-### Step 5: Phase-Close Review
+### Step 4: Phase-Close Review
 
 Resolve the boundary table's review rows here. Three things must complete first: every feature, every feature integration test gate, and QA.
 
@@ -265,15 +265,15 @@ Wait for all three reports.
 
 **Audits.** Record `phase-close-audits: executed` with both report paths. If either cannot run, record `phase-close-audits: absent ([concrete reason])` and set `all-approved: no`. Never treat an absent audit as a clean result.
 
-Do not automatically remediate any finding from this step. All three reports travel to Step 6. **Prod Code Review** is the phase-close readiness gate and the only consumer that can act on what they found. It determines the final GO, GO WITH CONDITIONS, or NO-GO decision.
+Do not automatically remediate any finding from this step. All three reports travel to Step 5. **Prod Code Review** is the phase-close readiness gate and the only consumer that can act on what they found. It determines the final GO, GO WITH CONDITIONS, or NO-GO decision.
 
-This step emits no checkpoint of its own. The Phase Final Review checkpoint (Step 6) owns the security report and stages it.
+This step emits no checkpoint of its own. The Phase Final Review checkpoint (Step 5) owns the security report and stages it.
 
-### Step 6: Phase Final Review
+### Step 5: Phase Final Review
 
-Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 4b, and both the diff security verdict and the phase-close audit result from Step 5. Any one of them can set `all-approved: no` on its own. Manual QA is not one of them. It runs after this pipeline, so an unexecuted manual checklist never sets `all-approved: no`.
+Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 3b, and both the diff security verdict and the phase-close audit result from Step 4. Any one of them can set `all-approved: no` on its own. Manual QA is not one of them. It runs after this pipeline, so an unexecuted manual checklist never sets `all-approved: no`.
 
-Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute three values: the verdict summary, the final aggregate `all-approved` state after every gate, and the Step 5 phase-close audit result. An absent audit keeps `all-approved: no` and still reaches this review.
+Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute three values: the verdict summary, the final aggregate `all-approved` state after every gate, and the Step 4 phase-close audit result. An absent audit keeps `all-approved: no` and still reaches this review.
 
 **If QA was generated and the complete pipeline is `all-approved: yes`:**
 
@@ -295,9 +295,9 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved.
 
-After the Prod Code Review subagent returns, emit the skill's final review checkpoint. It aggregates the final review artifact, the Step 5 security scan report, and any phase-level pipeline documents this step updated.
+After the Prod Code Review subagent returns, emit the skill's final review checkpoint. It aggregates the final review artifact, the Step 4 security scan report, and any phase-level pipeline documents this step updated.
 
-### Step 7: Report to User
+### Step 6: Report to User
 
 Present results using the Pipeline Completion Report format from the auto-loaded orchestrator conventions. Use these field labels:
 
@@ -309,7 +309,7 @@ Present results using the Pipeline Completion Report format from the auto-loaded
 
 Report the phase as implementation-complete only when the final gate is `executed-green`. If it is `executed-failing` or `not-executed`, say so plainly and name what remains. An unrun suite is not a completed phase.
 
-### Step 8: Update Documentation
+### Step 7: Update Documentation
 
 Follow the Post-Loop: Documentation Update section from the `implementation-pipeline-loop` skill. Use this prompt:
 
@@ -323,7 +323,7 @@ See the Test Execution Gate section of the `implementation-pipeline-loop` skill 
 
 ### Documentation Drift
 
-The Docs Writer subagent runs in Step 8. It sweeps all the documentation it manages and updates anything stale. This is a best-effort step. A Docs Writer report of no changes needed is an expected result.
+The Docs Writer subagent runs in Step 7. It sweeps all the documentation it manages and updates anything stale. This is a best-effort step. A Docs Writer report of no changes needed is an expected result.
 
 **Standalone mode:** After writing, tell the user:
 

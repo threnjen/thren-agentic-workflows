@@ -43,7 +43,18 @@ mattered.
 | Standard prompt template | Re-add ` Visual verification: [Pass \| Fail \| Unverified \| skip reason].` in the same position. |
 | Step 6 final checkpoint | Re-add `the Step 3 visual-verification report,` to the aggregation list. |
 
-Step 3 was not renumbered on removal. Steps run 2, 4, 5, 5.5, 6, so the slot is still free.
+**The Step 3 slot is no longer free.** After the gate was removed, the remaining steps were
+renumbered to close the gap. The file now runs 1, 2, 3 (QA), 4 (Phase-Close Review), 5 (Phase Final
+Review), 6 (Report), 7 (Documentation).
+
+Every step number in the table above, and in
+`phase-execute-step-3-visual-verification-gate.md`, uses the **post-reinstatement** numbering, which
+is the numbering the file had when the gate was removed. Reinstating the gate as Step 3 shifts
+today's Steps 3 through 7 to 4 through 8 and makes those numbers correct again. Renumber first, then
+restore the references. Find each site by its quoted text, not by its step number.
+
+Two test modules also pin these headings and need the same shift:
+`tests/test_phase_execute_contracts.py` and `tests/test_audit_comparison_contracts.py`.
 
 ### The plan flag — the actual entry point
 

@@ -36,18 +36,18 @@ EVIDENCE_CLASSIFICATION_CONTRACT = (
 
 
 def test_security_scan_has_one_entry_point() -> None:
-    """Step 5 owns the only spawn of 03e; no feature stage may reintroduce one."""
+    """Step 4 owns the only spawn of 03e; no feature stage may reintroduce one."""
     text = _read(PHASE_PATH)
-    security_section = text.split("### Step 5: Phase-Close Review", 1)[1]
-    security_section = security_section.split("### Step 6: Phase Final Review", 1)[0]
+    security_section = text.split("### Step 4: Phase-Close Review", 1)[1]
+    security_section = security_section.split("### Step 5: Phase Final Review", 1)[0]
     assert "**03e Diff Security Scan** concurrently" in security_section
     assert "Spawn `03e` at `high`" in security_section
-    # 03e cannot resolve its own scope, so Step 5 must hand it materialized inputs.
+    # 03e cannot resolve its own scope, so Step 4 must hand it materialized inputs.
     assert "changed-files.txt" in security_section
     assert "range.diff" in security_section
     # The feature loop must not spawn it.
     feature_loop = text.split("#### Feature stage definitions", 1)[1]
-    feature_loop = feature_loop.split("### Step 4: QA", 1)[0]
+    feature_loop = feature_loop.split("### Step 3: QA", 1)[0]
     assert "03e" not in feature_loop
 
 
