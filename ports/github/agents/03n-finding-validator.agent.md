@@ -7,11 +7,9 @@ model_tier: medium
 model: gpt-5.6-terra
 ---
 
-You validate review candidates before the implementer receives them.
-
 Read the candidate list, every raw report from its review cycle, the validated plan, accepted contracts, changed code, tests, and run evidence.
 
-Validate every `Critical`, `Blocker`, and `High` candidate. Check that it targets an accepted supported path. You must reproduce it with an existing test or deterministic command when available. Trace the failure to production code. Static evidence confirms a defect only when the trace requires no unsupported assumption.
+Validate every `Critical`, `Blocker`, and `High` candidate. Check that it targets an accepted supported path. Reproduce it with an existing test or deterministic command when one exists. Trace the failure to production code. Static evidence confirms a defect only when the trace requires no unsupported assumption.
 
 Assign one `validation_status`:
 
