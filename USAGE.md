@@ -96,7 +96,7 @@ Interactive — you iterate to probe edge cases and dependencies before executio
 1. Reads or creates `dev/feature/[phase-name]-execution-manifest.md`
 2. Writes lightweight plans with acceptance criteria, dependency hypotheses, and expected file impact
 3. Expands only the selected feature into `-context.md` and `-tasks.md`
-4. For each feature in manifest dependency-level order, runs the full cycle:
+4. For each feature in manifest execution order, runs the full cycle:
    - **Implement** → Red-Green-Refactor TDD, writes implementation record
    - **Review** → Finds bugs, applies fixes, writes review record
 5. Runs the **QA Writer**, then the **QA Runner** on the automated QA document it produced
@@ -220,7 +220,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 > Give it a single Phase document from the 01 Project - Planner (or describe a standalone feature). It iterates with you to refine scope, probe edge cases, surface hidden dependencies, stress-test decomposition readiness, and walk through user flows — deepening the Phase document until it's fully ready for automated execution. It updates the Phase document in place and will not write changes until you explicitly approve.
 
 **03 Phase - Execute** (orchestrator — delegates to subagents)
-> Give it a refined Phase document. It researches the phase, writes lightweight feature plans and the living execution manifest, expands one selected feature at a time, implements features by dependency-level order, then runs consolidated QA, the diff security scan, and Prod Code Review.
+> Give it a refined Phase document. It researches the phase, writes lightweight feature plans and the living execution manifest, expands one selected feature at a time, implements features in the manifest's execution order, then runs consolidated QA, the diff security scan, and Prod Code Review.
 
 **04 PR - Review** (orchestrator — delegates to evaluators)
 > Point it at a change you are about to open a PR for — this is an author self-review, not a reviewer critiquing someone else's open PR. In a single upfront interaction it warns on a below-par model tier, confirms the base commit (suggest-and-confirm — git cannot derive a branch's base), and asks whether the report should be posted to a draft PR if one already exists (posting is opt-in; the default recommendation keeps you between the finding and the audience). It then fans out the PR Review evaluators over that diff and returns a readiness verdict without reading code or diffs itself. Advisory only: it changes no code and records no verdict in any document.

@@ -15,13 +15,12 @@ REMOVED_AGENT_SLUG = "03-feature-" + "decomposer"
 
 REQUIRED_SCHEDULE_CONTRACT = {
     "lightweight plans": "create one lightweight plan per candidate feature before scheduling",
-    "plan contents": "acceptance criteria, scope, dependency hypotheses, and expected file impact",
+    "plan contents": "acceptance criteria, scope, prerequisite hypotheses, and expected file impact",
     "plan boundary": "Lightweight plans contain no context or task document",
-    "dependency graph": "Build the dependency graph",
-    "dependency-level recomputation": "Recompute the graph and order after every closed level",
+    "prerequisite graph": "Build the prerequisite graph",
+    "per-feature recomputation": "Recompute the graph and order after every completed feature",
     "just-in-time expansion": "Expand only the selected feature against the repository state at selection time",
-    "single-feature execution": "Execute one feature at a time in dependency-level order",
-    "parallel metadata": "`parallel_safe` records graph metadata only",
+    "single-feature execution": "Execute one feature at a time, in the manifest's execution order",
     "write-set evidence": "An expected write set is revalidation evidence only, never concurrency permission",
     "affected future revalidation": "identify every affected future feature and every downstream dependent",
     "recompute bound": "Bound recomputation to 25 rounds per level",

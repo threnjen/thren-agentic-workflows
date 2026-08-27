@@ -49,13 +49,13 @@ Check whether the manifest already exists.
 
 **If it is absent,** spawn **Feature - Plan Author** in `initial` mode. Its task is to research the phase and create one lightweight plan per candidate feature before scheduling. Give it the phase document path, both discovery context paths, and the manifest path. Use this brief:
 
-> "[SUBAGENT-MODE] Decompose the phase at `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`. Run mode: `initial`. Each plan states acceptance criteria, scope, dependency hypotheses, and expected file impact. Lightweight plans contain no context or task document. Build the dependency graph from runtime prerequisites and shared file scope. Derive dependency levels from that graph. Write the manifest to `dev/feature/[phase-name]-execution-manifest.md`. Keep the manifest path stable. Record every plan rewrite, reorder, split, merge, or delay with evidence naming the changed file, symbol, acceptance criterion, or dependency edge. Return the feature list with dependency levels, the captured phase-level discovery values, and every fidelity-table departure."
+> "[SUBAGENT-MODE] Decompose the phase at `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`. Run mode: `initial`. Each plan states acceptance criteria, scope, prerequisite hypotheses, and expected file impact. Lightweight plans contain no context or task document. Build the prerequisite graph from runtime prerequisites and shared file scope. Order the features from that graph. Write the manifest to `dev/feature/[phase-name]-execution-manifest.md`. Keep the manifest path stable. Record every plan rewrite, reorder, split, merge, or delay with evidence naming the changed file, symbol, acceptance criterion, or prerequisite edge. Return the ordered feature list, the captured phase-level discovery values, and every fidelity-table departure."
 
 Verify that the manifest and every named plan file exist on disk before you schedule anything. On a missing artifact, apply the Subagent Output Verification rule from the orchestrator conventions.
 
 #### Validate the schedule
 
-1. Read each manifest entry. Validate its `status`, `dependency_level`, `depends_on`, `expected_read_set`, `expected_write_set`, `plan_revision`, `last_validation_commit`, `stale_reason`, and `resolved_model_status`. On a malformed or missing field, re-spawn the author once. Do not repair the manifest yourself.
+1. Read each manifest entry. Validate its `status`, `execution_order`, `prerequisites`, `expected_read_set`, `expected_write_set`, `plan_revision`, `last_validation_commit`, `stale_reason`, and `resolved_model_status`. On a malformed or missing field, re-spawn the author once. Do not repair the manifest yourself.
 2. Read the author's fidelity-table departures and its `[PROPOSED - name TBD]` labels. Both travel to the Plan Expander and to the final review as known risk. Never accept an unexplained departure. Re-spawn the author for its reason.
 3. Extract the manifest's `## Verification Assets` section if it exists. It lists new test files, existing test files that several features update, and manual QA checklist items. If the section is missing, record `verification-assets: not provided` and continue.
 
@@ -67,13 +67,13 @@ Take the phase-level discovery the author returned. It contains the environment 
 
 Create a todo list entry for each feature with status `not-started`.
 
-Two later jobs also read this schedule. Step 2 expands each feature at selection time. Step 2 re-spawns the author in `revalidation` mode at every dependency-level closure.
+Two later jobs also read this schedule. Step 2 expands each feature at selection time. Step 2 re-spawns the author in `revalidation` mode after each feature completes.
 
 ### Step 2: Feature Development Loop
 
 Load the `implementation-pipeline-loop` skill.
 
-Apply the canonical Unity detection predicate before dependency-level execution starts. Set `is-unity-project: yes` on a match. Set it to `no` otherwise.
+Apply the canonical Unity detection predicate before the feature loop starts. Set `is-unity-project: yes` on a match. Set it to `no` otherwise.
 
 Before you select work, inspect the manifest for `status: in-progress`. Inspect the working tree. If you find both, report an interrupted run and offer resumption. Never build on a dirty tree silently.
 
@@ -81,13 +81,13 @@ Resume at the last completed feature using the status and validation commit the 
 
 After the plans are on disk, decomposition context may drop. Treat the manifest and the per-feature checkpoint commits as execution memory. Do not rely on a held-open transcript or on unstored research.
 
-Execute one feature at a time in dependency-level order.
+Execute one feature at a time, in the manifest's execution order.
 
 Validate the selected feature's bundle before you build it. Each bundle must contain `-plan.md`, `-context.md`, and `-tasks.md`. Expand only the selected feature against the repository state at selection time by spawning **Feature - Plan Expander** when its context or tasks are absent or stale. Pass it the phase-level discovery values from Step 1, the fidelity-table departures, and the `[PROPOSED - name TBD]` labels.
 
-At the end of each dependency level, identify every affected future feature and every downstream dependent of an affected feature.
+After each feature completes, identify every affected future feature and every downstream dependent of an affected feature.
 
-Spawn **Feature - Plan Author** in `revalidation` mode. Pass it the closed level, the affected future features, and their downstream dependents. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. Recompute the graph and order after every closed level, not only at phase close. Bound recomputation to 25 rounds per level. Stop and report if the graph does not reach a fixed point.
+Spawn **Feature - Plan Author** in `revalidation` mode. Pass it the completed feature, the affected future features, and their downstream dependents. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. Recompute the graph and order after every completed feature, not only at phase close. Bound recomputation to 25 rounds per feature. Stop and report if the graph does not reach a fixed point.
 
 ---
 
@@ -95,7 +95,7 @@ Spawn **Feature - Plan Author** in `revalidation` mode. Pass it the closed level
 
 Evaluate these tables before each review boundary. Run exactly the agents whose conditions hold. A non-firing condition is complete evidence, not a missing reviewer.
 
-Each agent appears in one table. Every boundary row fires at phase close. No boundary row fires at a dependency-level closure.
+Each agent appears in one table. Every boundary row fires at phase close, and nowhere else.
 
 ##### Boundary triggers
 
@@ -109,7 +109,7 @@ The per-feature table is the only trigger for a feature review. The boundary tab
 
 #### Feature stage definitions
 
-Run these stages for one selected feature before you select another. The dependency level is a scheduling checkpoint, never a concurrency instruction.
+Run these stages for one selected feature before you select another. The execution order schedules the features. It never authorizes two concurrent feature builds.
 
 **A. Implement** — spawn **Feature - Implementer** with:
 
@@ -212,7 +212,7 @@ If the rebuilt feature still fails, classify the failure before you block anythi
 
 An **implementation blocker** is a confirmed shipped defect that invalidates a downstream contract. An absent dependency contract is also an implementation blocker. Only a `production-blocker` can block dependents. Mark that feature and its dependents blocked. Then continue the independent features.
 
-A **verification blocker** is a missing test artifact, an unavailable runner, absent generated metadata, or a review-evidence gap. It never blocks a dependent feature. Record it as `implementation-complete, verification-pending`. Name the missing evidence, set `all-approved: no`, and continue the dependency chain.
+A **verification blocker** is a missing test artifact, an unavailable runner, absent generated metadata, or a review-evidence gap. It never blocks a dependent feature. Record it as `implementation-complete, verification-pending`. Name the missing evidence, set `all-approved: no`, and continue with the remaining features.
 
 A compile command that ran and failed proves a production blocker. Missing compilation evidence is a verification blocker until an authoritative run exists.
 
@@ -222,15 +222,15 @@ The per-feature table owns the `03e Diff Security Scan` entry. Do not spawn it f
 
 **D. Complete** — Mark the feature complete in the todo list. Update its manifest entry with the implementation result, the resolved review agents, the fix-round count, the carry-forward findings, the commit, the review verdict, and the validation evidence. A review verdict is `Approved`, `Approved with Reservations`, or `Changes Requested`. Record the preflight `resolution_status` under `resolved_model_status` for the Feature - Implementer tier.
 
-### Step 2.5: Dependency-Level Test Gate
+### Step 2.5: Feature Integration Test Gate
 
-Run this gate at the end of every dependency level, before you start the next one. It catches a later feature that breaks an earlier feature's tests. No per-feature review can see that class of defect.
+Run this gate after each feature completes, before you select the next one. It catches a feature that breaks an earlier feature's tests. No per-feature review can see that class of defect, because every reviewer is scoped to the diff of the feature under review.
 
-1. Run the integrated suite for the dependency level. It is the union of every affected suite plus the manifest's `## Verification Assets`. On the final dependency level, run the suite unfiltered.
+1. Run the integrated suite. It is the union of every affected suite plus the manifest's `## Verification Assets`. On the phase's final feature, run the suite unfiltered.
    - For Unity, consume the `unity-development` skill's Test Execution section and Execution Ladder. Do not copy their mechanics. Target `<execution-unity-project>`, preserve affected-suite `-testFilter` scoping, and write the results XML and Unity log to the absolute main-checkout artifact directory.
-2. Read the results artifact. Record `dependency-level-[N] test-execution: executed-green | executed-failing | not-executed (<reason>)`.
+2. Read the results artifact. Record `[0N-task-name] integration test-execution: executed-green | executed-failing | not-executed (<reason>)`.
 3. **On `executed-failing`, remediate once.** Re-spawn the **Feature - Implementer** that owns the failing behavior. Give it the failing test names. Then re-run the gate. Retry at most once. If the gate still fails, record the final status and proceed. The blocker escalates to the Phase Final Review (Step 6).
-   > "[SUBAGENT-MODE] The dependency-level test gate failed for phase [phase-name]. Failing tests: [names and assertion messages]. Results artifact: [path]. These failures are in suites outside your feature's Files Changed table — a contract you changed broke callers written before it. Fix the production code or update the affected fixtures so these tests pass. Do NOT delete, skip, or weaken tests to force a pass. Return what you changed."
+   > "[SUBAGENT-MODE] The feature integration test gate failed for phase [phase-name]. Failing tests: [names and assertion messages]. Results artifact: [path]. These failures are in suites outside your feature's Files Changed table — a contract you changed broke callers written before it. Fix the production code or update the affected fixtures so these tests pass. Do NOT delete, skip, or weaken tests to force a pass. Return what you changed."
 4. **On `not-executed`, do not proceed silently and do not treat it as green.**
    - For Unity, exhaust the canonical Execution Ladder. The orchestrator runs every obtainable command. Never delegate a Unity test command to the user.
    - Reach `not-executed` only in three cases: the user declines the main-checkout fallback, unattended non-response yields `not-executed: editor open, user unavailable`, or the evidence is genuinely unavailable for another stated reason.
@@ -238,7 +238,7 @@ Run this gate at the end of every dependency level, before you start the next on
    - If the direct supervisor states that the named authoritative suite passed, accept that statement as the direct-supervisor-attestation exception from the Test Execution Evidence instruction. Promote the final gate to `executed-green`. Record the exact suite or action and any counts the supervisor supplied. Use `supervisor-attested (no artifact exported)` as the results artifact.
    - If the direct supervisor directs this run to skip Unity testing gates, record `not-executed (supervisor-directed skip; user will run later)` for each skipped gate. Continue the pipeline without treating it as green. Carry `all-approved: no` into final review.
    - Do not invent counts. Do not apply either exception to a subagent's report.
-5. If the final status for any dependency level is not `executed-green`, set `all-approved: no`.
+5. If the final status for any feature is not `executed-green`, set `all-approved: no`.
 
 This step emits no checkpoint of its own.
 
@@ -326,7 +326,7 @@ This step emits no checkpoint of its own. The Phase Final Review checkpoint (Ste
 
 ### Step 5.5: Phase-Close Audits
 
-Resolve the boundary table's audit rows last. Five things must complete first: all dependency levels, the dependency-level test gates, visual verification, QA, and the Step 5 Diff Security Review.
+Resolve the boundary table's audit rows last. Five things must complete first: every feature, every feature integration test gate, visual verification, QA, and the Step 5 Diff Security Review.
 
 Spawn `04d Consistency Auditor` and `04f Test Health` concurrently against the whole phase diff. Wait for both reports. One pass over the finished phase sees the cross-feature drift that no single feature's diff exposes.
 
@@ -338,7 +338,7 @@ Both reports travel to Step 6. **Prod Code Review** is the phase-close readiness
 
 ### Step 6: Phase Final Review
 
-Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Five other results also feed it: the dependency-level test gate at Step 2.5, the visual verification verdict from Step 3, the automated QA run at Step 4b, the diff security verdict from Step 5, and the phase-close audit result from Step 5.5. Any one of them can set `all-approved: no` on its own.
+Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Five other results also feed it: the feature integration test gate at Step 2.5, the visual verification verdict from Step 3, the automated QA run at Step 4b, the diff security verdict from Step 5, and the phase-close audit result from Step 5.5. Any one of them can set `all-approved: no` on its own.
 
 Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute four values: the verdict summary, the final aggregate `all-approved` state after every gate, the visual-verification verdict from Step 3 or its skip reason, and the Step 5.5 phase-close audit result. An absent audit keeps `all-approved: no` and still reaches this review.
 
@@ -348,7 +348,7 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-dependency-level status and results artifact paths from Step 2.5]. Visual verification: [Pass | skip reason]. Automated QA run: [PASS | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode."
+> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-feature integration status and results artifact paths from Step 2.5]. Visual verification: [Pass | skip reason]. Automated QA run: [PASS | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode."
 >
 > Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved.
 
@@ -358,7 +358,7 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-dependency-level status and results artifact paths from Step 2.5]. Visual verification: [Pass | Fail | Unverified | skip reason]. Automated QA run: [PASS | FAIL | NOT RUN | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode."
+> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-feature integration status and results artifact paths from Step 2.5]. Visual verification: [Pass | Fail | Unverified | skip reason]. Automated QA run: [PASS | FAIL | NOT RUN | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode."
 >
 > Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved.
 
@@ -386,7 +386,7 @@ Follow the Post-Loop: Documentation Update section from the `implementation-pipe
 
 ### Test Failures
 
-See the Test Execution Gate section of the `implementation-pipeline-loop` skill for per-feature handling. See Step 2.5 above for the dependency-level gate.
+See the Test Execution Gate section of the `implementation-pipeline-loop` skill for per-feature handling. See Step 2.5 above for the feature integration gate.
 
 ### Documentation Drift
 

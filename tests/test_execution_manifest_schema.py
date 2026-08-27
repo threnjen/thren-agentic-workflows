@@ -10,8 +10,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_SKILL_PATH = REPO_ROOT / "source_of_truth/skills/feature-plan-set/SKILL.md"
 MANIFEST_FIELDS = (
     "status",
-    "dependency_level",
-    "depends_on",
+    "execution_order",
+    "prerequisites",
     "expected_read_set",
     "expected_write_set",
     "plan_revision",
@@ -112,17 +112,17 @@ def test_manifest_is_a_living_schedule_with_execution_rewrite_events() -> None:
         "not frozen after decomposition",
         "selects a feature",
         "records an implementation result",
-        "closes a dependency level",
+        "completes a feature",
         "completes revalidation of affected future features",
     )
     missing = [phrase for phrase in required_phrases if phrase not in text]
     assert not missing, f"manifest execution contract missing phrases: {', '.join(missing)}"
 
 
-def test_quality_checklist_requires_a_dependency_level_schedule() -> None:
+def test_quality_checklist_requires_the_prerequisite_graph() -> None:
     text = _read_manifest_skill()
     checklist = text.split("## Quality Checklist", 1)[1]
-    assert "includes the ordered feature list, dependency-level schedule" in checklist
+    assert "includes the ordered feature list, each feature's prerequisites" in checklist
 
 
 def test_in_scope_files_have_no_retired_scheduling_term() -> None:

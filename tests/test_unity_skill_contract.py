@@ -182,7 +182,7 @@ def _contract_errors(section: str) -> set[str]:
     if (
         "semicolon-separated list of full test names or a regex" not in normalized
         or "negation supported" not in normalized
-        or "Gate runs (dependency-level boundary, phase end) are unfiltered" not in normalized
+        or "Gate runs (feature integration gate, phase end) are unfiltered" not in normalized
     ):
         errors.add("testFilter semantics")
     if (

@@ -1,6 +1,6 @@
 ---
 name: Feature - Plan Author
-description: "Researches a refined Phase document and writes the phase's lightweight feature plans, dependency graph, and execution manifest."
+description: "Researches a refined Phase document and writes the phase's lightweight feature plans, prerequisite graph, and execution manifest."
 tools: [read, search, edit, execute]
 user-invocable: false
 model_tier: high
@@ -25,7 +25,7 @@ Phase - Execute supplies:
 - The phase name and the path to `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`.
 - The manifest path `dev/feature/[phase-name]-execution-manifest.md`.
 - The run mode: `initial` for a first decomposition, or `revalidation` for a level-closure pass.
-- On a `revalidation` run: the closed dependency level, the boundary auditor findings, the affected future features, and their downstream dependents.
+- On a `revalidation` run: the completed feature, the boundary auditor findings, the affected future features, and their downstream dependents.
 
 Load the `feature-plan-set` skill before you write anything. It holds the canonical Lightweight Plan shape, Plan Template, Concrete Name Rule, Integration Feature Rule, Decomposition Rules, manifest field contract, and Quality Checklist. Follow those templates exactly.
 
@@ -68,13 +68,13 @@ Apply the Concrete Name Rule to every symbol, path, config key, and test name. V
 
 ### Step 5: Build the Graph and Write the Manifest
 
-Build the dependency graph from runtime prerequisites and shared file scope. Derive dependency levels from that graph. A sequential chain becomes separate dependency levels, so level depth matches dependency depth.
+Build the prerequisite graph from runtime prerequisites and shared file scope. Order the features from that graph, so every feature follows the features it needs.
 
-Write the manifest at `dev/feature/[phase-name]-execution-manifest.md`. Keep the manifest path stable across every run. Populate every field in the `feature-plan-set` manifest contract: `status`, `dependency_level`, `depends_on`, `expected_read_set`, `expected_write_set`, `plan_revision`, `last_validation_commit`, `stale_reason`, and `resolved_model_status`.
+Write the manifest at `dev/feature/[phase-name]-execution-manifest.md`. Keep the manifest path stable across every run. Populate every field in the `feature-plan-set` manifest contract: `status`, `execution_order`, `prerequisites`, `expected_read_set`, `expected_write_set`, `plan_revision`, `last_validation_commit`, `stale_reason`, and `resolved_model_status`.
 
-Include the ordered feature list, the dependency-level schedule, the dependency graph, the expected bundle files, and a `## Verification Assets` section naming new test files, existing test files that several features update, and manual QA checklist items.
+Include the ordered feature list, the prerequisite graph, the expected bundle files, and a `## Verification Assets` section naming new test files, existing test files that several features update, and manual QA checklist items.
 
-`parallel_safe` is graph metadata only. Never record it as permission to build features concurrently.
+Never record any field as permission to build features concurrently. Phase - Execute builds one feature at a time.
 
 ### Step 6: Revalidation Runs
 
@@ -84,7 +84,7 @@ On a `revalidation` run, do not rebuild the phase from scratch. Read the existin
 2. Rewrite the plans of every affected future feature and every downstream dependent of an affected feature.
 3. Update each rewritten plan's `stale_reason` and `last_validation_commit`.
 4. Recompute the graph and order after every closed level.
-5. Record every plan rewrite, reorder, split, merge, or delay with evidence naming the changed file, symbol, acceptance criterion, or dependency edge.
+5. Record every plan rewrite, reorder, split, merge, or delay with evidence naming the changed file, symbol, acceptance criterion, or prerequisite edge.
 
 Bound recomputation to 25 rounds per level. Stop and report when the graph does not reach a fixed point.
 
@@ -97,7 +97,7 @@ Run the `feature-plan-set` Quality Checklist before you return. The manifest che
 Return a compact summary to Phase - Execute:
 
 - The manifest path and the feature count.
-- The ordered feature list with each feature's dependency level.
+- The ordered feature list with each feature's prerequisites.
 - The captured phase-level discovery values.
 - Every fidelity-table departure and its reason.
 - Every name you labelled `[PROPOSED - name TBD]`.

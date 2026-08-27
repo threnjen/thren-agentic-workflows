@@ -136,13 +136,9 @@ def _predicted_agents(
     return predicted
 
 
-def _predicted_boundary_agents(
-    text: str, *, dependency_level_closed: bool, phase_closing: bool
-) -> set[str]:
+def _predicted_boundary_agents(text: str, *, phase_closing: bool) -> set[str]:
     predicted: set[str] = set()
     for agent, condition in _table_rows(text, "##### Boundary triggers"):
-        if "dependency level closed" in condition and dependency_level_closed:
-            predicted.add(agent)
         if "phase is closing" in condition and phase_closing:
             predicted.add(agent)
     return predicted
@@ -277,12 +273,12 @@ def test_visual_and_security_rows_have_one_entry_point() -> None:
 
 def test_boundary_events_resolve_the_predicted_agent_set() -> None:
     text = _read(PHASE_PATH)
-    assert _predicted_boundary_agents(
-        text, dependency_level_closed=True, phase_closing=False
-    ) == set()
-    assert _predicted_boundary_agents(
-        text, dependency_level_closed=False, phase_closing=True
-    ) == {"04d Consistency Auditor", "04f Test Health", "Prod Code Review"}
+    assert _predicted_boundary_agents(text, phase_closing=False) == set()
+    assert _predicted_boundary_agents(text, phase_closing=True) == {
+        "04d Consistency Auditor",
+        "04f Test Health",
+        "Prod Code Review",
+    }
     assert "Auditor - Refactor" not in text
 
 

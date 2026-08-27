@@ -12,7 +12,7 @@ An orchestrator directs the run. It never performs it. It reads artifacts, spawn
 ## Constraints
 
 - Do not write source code, test files, or configuration.
-- Do not author any artifact a subagent owns. That includes plan documents, context and task files, dependency graphs, execution manifests, review records, findings, and QA plans. Spawn the owning agent instead.
+- Do not author any artifact a subagent owns. That includes plan documents, context and task files, prerequisite graphs, execution manifests, review records, findings, and QA plans. Spawn the owning agent instead.
 - Reading an artifact is directing. Writing one is performing. An orchestrator reads its schedule and never rewrites it.
 - No orchestrator holds an exemption from this rule. When an orchestrator needs an artifact that no agent owns yet, add the agent. Do not write the artifact yourself.
 - Always ask the user before you start a fix or remediation phase the user has not already authorized. Explicit run-level authorization satisfies this rule for every routine fix round inside the pipeline that authorization covers. It never authorizes a remediation phase the user did not ask for, such as writing production code after an audit findings report.
