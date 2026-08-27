@@ -46,6 +46,7 @@ Reach for these individually, whenever you need them — no pipeline required:
 
 - **Single Feature - Agent** — a small, scoped change with an approval gate before it edits
 - **Debugger** — diagnose and fix a frontend or backend error
+- **PR Author** — write a pull request body from the real diff and the evidence behind it
 - **Docs Writer** — create or update your repo's documentation
 - **Web Researcher** — research a topic and produce a cited findings report
 - **Creative - Developmental Editor** — developmental editing for fiction against an Obsidian
@@ -60,7 +61,7 @@ Reach for these individually, whenever you need them — no pipeline required:
   narratives, compliance package) from an engagement configuration file
 
 Behind these, a set of automated subagents and on-demand skills do the detailed work —
-you never invoke them directly. The library ships 65 source agent definitions in
+you never invoke them directly. The library ships 66 source agent definitions in
 `source_of_truth/agents/`. For the complete catalog and how the pipeline flows,
 see [USAGE.md](USAGE.md).
 
@@ -81,10 +82,12 @@ to pull the latest.
 
 Deploy also maintains a **baseline instructions file** per harness — `CLAUDE.md` for
 Claude, `AGENTS.md` for Codex and OpenCode, an always-applied rule for Cursor, and
-`.github/copilot-instructions.md` for Copilot. It carries five managed sections
-(Context7 usage, code-review-graph usage, phase-document sync, agent/skill discovery,
-and audience-appropriate writing) wrapped in HTML sentinel comments; deploy splices only
-those sections, so anything you write outside them in the same file is preserved.
+`.github/copilot-instructions.md` for Copilot. It carries the instruction sections named
+in `source_of_truth/baseline/baseline-instructions.md`, each wrapped in an HTML sentinel
+comment, plus one load canary that names every section it deployed. Deploy splices only
+those sections, so anything you write outside them in the same file is preserved. The
+canary makes a stale global file visible: it reports a section list, and a list that does
+not match the template means you have not deployed since the template changed.
 
 ## Prerequisites
 

@@ -728,140 +728,27 @@ class OrphanPruningTests(unittest.TestCase):
         """The guard must still positively identify all real generated output.
         A guard tightened until it matches nothing would make the pruner inert
         and pass AC7 for entirely the wrong reason."""
-        # Counts dropped when the five phase-shaped evaluators were retired:
-        # claude/agents 33 -> 27 (the five, plus `z-security-scan.md` -- Security
-        # Scan lost its spawnable subagent file once the retired security parent stopped declaring it as
-        # a child, and is now a user-invocable command only); opencode/agents and
-        # codex/agents 46 -> 41 (the five). Command counts are unchanged:
-        # Security Scan's command was renamed, not removed.
-        # Evangelize retirement dropped one file from each user-invocable
-        # surface (claude command, opencode agent, codex agent);
-        # claude/agents is unchanged because it had no spawnable subagent file.
-        # The `qa` agent added one file to each user-invocable surface (claude
-        # command, opencode agent, codex agent); claude/agents is
-        # unchanged because `qa` declares no subagent children.
-        # The `04h Cleanliness Auditor` evaluator added one spawnable subagent
-        # file to claude/agents, opencode/agents, and codex/agents; it is not
-        # user-invocable, so command counts are unchanged.
-        # The `06 Engagement - Prepare` orchestrator (user-invocable) added one
-        # file to each user-invocable surface: claude commands 18 -> 19,
-        # opencode/agents and codex/agents 42 -> 43; claude/agents is unchanged
-        # (its only child, Docs Writer, already had a file). Counts recounted
-        # from disk (`ls ports/<harness>/agents`), not incremented from memory.
-        # The `Engagement - Orchestrator` (user-invocable) added one file to
-        # each user-invocable surface: claude commands 19 -> 20, opencode/agents
-        # and codex/agents 43 -> 44. It also declares `Engagement - Prepare` as
-        # a child, giving Prepare its first spawnable subagent file:
-        # claude/agents 28 -> 29. Counts recounted from disk.
-        # The `Engagement - Audit Runner` (hidden subagent) added one file to
-        # opencode/agents and codex/agents: 44 -> 45; claude commands unchanged
-        # (not user-invocable). claude/agents 29 -> 31: the runner's own
-        # spawnable file plus a first spawnable file for its child
-        # `Security Scan`. Counts recounted from disk.
-        # The four delta/security synthesis subagents (Delta Synthesizer,
-        # Security Narrative, Introduced Issues, Pricing Researcher — all
-        # hidden) added four files each to claude/agents (31 -> 35),
-        # opencode/agents and codex/agents (45 -> 49); claude commands
-        # unchanged (not user-invocable). Counts recounted from disk.
-        # The `Engagement - Narrative Writer` (hidden subagent) added one file
-        # to claude/agents (35 -> 36), opencode/agents and codex/agents
-        # (49 -> 50); claude commands unchanged (not user-invocable). Counts
-        # recounted from disk.
-        # The `Engagement - Compliance Writer` and `Engagement - Gap Reviewer`
-        # (both hidden subagents) added two files each to claude/agents
-        # (36 -> 38), opencode/agents and codex/agents (50 -> 52); claude
-        # commands unchanged (not user-invocable). Counts recounted from disk.
-        # `Engagement - Audit Runner` was retired when the pair-loop skill took
-        # over spawning the audit agents directly (one-deep nesting): claude
-        # agents 38 -> 37, opencode and codex agents 52 -> 51. Claude commands
-        # recounted from disk at 19. Counts recounted from disk.
-        # `Engagement - Introduced Issues` was retired when its report folded
-        # into the Security Narrative's internal security-delta document:
-        # claude agents 37 -> 36, opencode and codex agents 51 -> 50. Claude
-        # commands unchanged (not user-invocable). Counts recounted from disk.
-        # The `Engagement - Manifest Assembler` (hidden subagent, split out of
-        # the Compliance Writer) added one file to claude/agents (36 -> 37),
-        # opencode/agents and codex/agents (50 -> 51); claude commands
-        # unchanged (not user-invocable). Counts recounted from disk.
-        # The QA bootstrap trio (`QA - Bootstrapper` plus hidden `QA - Doc
-        # Generator` and `QA - Runner`) added: claude agents 37 -> 39, claude
-        # commands 19 -> 20, opencode and codex agents 51 -> 54. Counts
-        # recounted from disk.
-        # `Auditor - Delta` (hidden subagent of the Audit orchestrator, which
-        # compares two audit reports into a delta document) added one file to
-        # claude agents (39 -> 40) and opencode/codex agents (54 -> 55); claude
-        # commands unchanged (not user-invocable). Counts recounted from disk.
-        # `Auditor - Remediation Research` (hidden subagent of the Audit
-        # orchestrator, which researches fixes for a delta's open items) added
-        # one file to claude agents (40 -> 41) and opencode/codex agents
-        # (55 -> 56); claude commands unchanged (not user-invocable). Counts
-        # recounted from disk.
-        # `Auditor - Remediation Reconciler` (hidden sibling of the subsystem
-        # researchers) added one file to every agent surface. After the later
-        # retirements below, final counts are claude agents 40 and
-        # opencode/codex agents 52.
-        # `Security Scan` was folded into `Auditor - Security`, a hidden
-        # sibling of the Code/Infra/Refactor auditors: the agent surfaces are
-        # unchanged (its spawnable file, held because the Engagement
-        # orchestrator declared it as a child, is simply renamed), but it loses
-        # its user-invocable command -- claude commands 20 -> 19. Counts
-        # recounted from disk.
-        # The `QA` agent was merged into `Debugger`: both were authored in one
-        # commit, and that same commit gave Debugger the phase-doc-sync gate
-        # that was QA's only reason to exist, so QA was redundant from birth.
-        # Its two unique clauses moved into Debugger and the file was deleted.
-        # It was user-invocable, so it held no z-file in claude agents (41
-        # unchanged) but did hold a command (19 -> 18) and an opencode/codex
-        # agent file (56 -> 55). Counts recounted from disk.
-        # The `Engagement - *` fleet was renamed to `Client Deliverable*`
-        # (files `engagement-orchestrator`/`engagement-0N-*` ->
-        # `client-deliverable`/`client-deliverable-0N-*`). Earlier entries in
-        # this log keep the old names because they record what was true when
-        # written. A rename is 1:1, so every count below is unchanged; the
-        # propagation pass pruned the nine stale generated files as orphans.
-        # The eval-grader system was archived to `eval/deprecated/` (outside
-        # `source_of_truth/`, so propagation no longer sees it): `Eval - Grader`
-        # and `Eval - Feature Decomposition` were user-invocable and held no
-        # spawnable file, so claude commands 18 -> 16; `Eval - Metric Grader`
-        # and `Eval - Score Recorder` were hidden, so claude agents 41 -> 39.
-        # All four left opencode/codex agents 55 -> 51. Counts recounted from
-        # disk.
-        # `Visual Verifier` became hidden (`user-invocable: false`) and its
-        # source moved to `03g-unity-visual-verification.agent.md`, since it
-        # reads its inputs from a spawning orchestrator and cannot run cold. It
-        # was dual-use, so it held both a command and a spawnable file: claude
-        # commands 16 -> 15, claude agents unchanged at 39. The rename dropped
-        # its stem-stickiness, so it now emits as `z-unity-visual-verification`.
-        # `Unity Reviewer` became hidden the same way and moved to
-        # `03h-unity-reviewer.agent.md`; it is now spawned by PR - Review as
-        # well as Phase - Execute and Single Feature - Agent. It was also
-        # dual-use: claude commands 15 -> 14, claude agents unchanged at 39.
-        # Stripping `04h-` yields the pre-existing stem, so stickiness held and
-        # it still emits as `unity-reviewer.md`, not `z-unity-reviewer.md`.
-        # `Auditor - Attribution` (hidden sibling of `Auditor - Delta`, which
-        # probes both trees to settle whether each provisional finding pre-dates
-        # the newer work) added one file to claude agents (40 -> 41) and
-        # opencode/codex agents (53 -> 54); claude commands unchanged (not
-        # user-invocable). Counts recounted from disk.
-        # The creative writing family adds three source agents. Only the scribe
-        # and the compliance check are hidden, so claude agents gain two and
-        # claude commands gain one, while codex and opencode gain all three.
-        # `Creative - Vault Sync` (hidden, the family's read-only git probe)
-        # added one file to claude agents (45 -> 46) and opencode/codex agents
-        # (60 -> 61); claude commands unchanged (not user-invocable). Phase 02
-        # then added four hidden committee agents to the agent roots. Counts
-        # recounted from disk.
-        # The hidden `03n Finding Validator` added one Claude agent file
-        # (50 -> 51). It validates serious review findings before repair.
-        # Extracting `Visual Verifier` to source_of_truth/deprecated/ took
-        # one back out: claude agents 52 -> 51, opencode/codex 66 -> 65.
-        # The hidden `03p Feature - Fixer` had added one more before that. It owns
-        # every fix round, so the implementer never repairs its own findings.
+        # Recount these from disk after any agent add, removal, or rename:
+        # `ls ports/<harness>/agents | wc -l`. Never increment the old number --
+        # an agent's effect on each surface depends on whether it is
+        # user-invocable and whether an orchestrator declares it as a child, so
+        # the arithmetic is not guessable from the change alone.
+        #
+        # Claude splits its surfaces: a hidden agent emits a spawnable file
+        # only, a user-invocable agent emits a command, plus a spawnable file
+        # when some orchestrator names it as a child (dual-use). So
+        # CLAUDE_AGENTS_DIR is the hidden agents plus the dual-use ones, and
+        # CLAUDE_COMMANDS_DIR is exactly the user-invocable agents. Codex and
+        # OpenCode emit every source agent to one directory.
+        #
+        # CODEX_PROFILES_DIR is a retired cleanup root and stays at 0: Codex
+        # profiles are configuration layers, not agent entry points. It is
+        # asserted so a regression that starts writing there is caught.
         roots = [
-            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 51),
+            (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 52),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 16),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 65),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 65),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 66),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 66),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:

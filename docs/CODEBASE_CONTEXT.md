@@ -35,7 +35,7 @@ source_of_truth/                           # THE authoring surface
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
   claude/  {agents, commands, skills}
-  codex/   {agents, profiles, skills}   # TOML agents
+  codex/   {agents, skills}             # TOML agents; profiles/ = retired cleanup root
   opencode/{agents, skills}
   cursor/  {agents, commands, rules, skills}  # commands/agents=*.md, rules=*.mdc
   github/  {agents, instructions, skills}          # verbatim mirror
@@ -86,15 +86,26 @@ benchmarks/ packages/ tests/
   - cursor → `~/.cursor/rules/baseline-instructions.mdc` (`alwaysApply: true` frontmatter)
   - github → `<repo>/.github/copilot-instructions.md` (a `.github/AGENTS.md` would only
     scope to files under `.github/`)
-- Baseline splice model: three sections delimited by sentinel comments
-  (`<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`, `<!-- know-the-audience -->`);
-  only sentinel blocks are replaced/appended, content outside them is never touched;
+- Baseline splice model: the template is a **manifest**, not a body. `baseline_section_names`
+  reads its bullet list with `^- ([a-z0-9-]+)$`, so surrounding prose can change freely.
+  Each bullet names `source_of_truth/instructions/<name>.instructions.md`, which must carry
+  `baseline: true`. `_instruction_body` strips the frontmatter, drops the trailing Load Canary
+  section, and demotes the H1 to an H2. Currently 11 sections: `agent-discovery`,
+  `challenge-assumptions`, `code-change-strategy`, `code-review-graph`,
+  `codebase-context-bootstrap`, `language-standards`, `learnings-bootstrap`,
+  `output-verbosity-policy`, `proactive-research`, `prose-standards`, `question-hygiene`.
+- Deploy also splices `<!-- baseline-canary -->`, one aggregate canary naming the count and
+  every section it wrote. Per-instruction canaries are stripped on the way in, so without it
+  a stale global file reads identically to a current one. A canary whose section list does
+  not match the template means that machine has not deployed since the template changed.
+- Only sentinel blocks are replaced/appended, content outside them is never touched;
   idempotent (second run → `unchanged`); every failure returns a status, never raises.
-- `RETIRED_BASELINE_SECTIONS` (`deploy_agents.py`) names sections this repo no longer splices.
-  Dropping a name from `BASELINE_SECTIONS` only stops rewriting the block; listing it as
-  retired deletes the stale one a previous deploy already wrote. `context7` and
-  `code-review-graph` are retired — their rules now live in this repo's `AGENTS.md`. The
-  companion-tool bootstrap still installs both MCP servers; the trim removed text, not tooling.
+- `RETIRED_BASELINE_SECTIONS` (`deploy_agents.py`) names sections this repo no longer splices
+  and actively deletes. Dropping a name from the template only stops rewriting the block;
+  listing it as retired removes the stale one a previous deploy already wrote, and it stays
+  listed until every machine has deployed past it. Retired: `context7`, `phase-doc-sync`,
+  `know-the-audience`. Context7's rules live in this repo's own `AGENTS.md` instead, and the
+  companion-tool bootstrap installs the MCP server regardless — the retirement drops text, not tooling.
 - The cursor baseline `.mdc` deliberately carries NO generated marker so the
   `~/.cursor/rules` prune pass treats it as foreign and leaves it alone.
 
@@ -124,7 +135,7 @@ benchmarks/ packages/ tests/
   `ports/claude/agents` for that reason.
 - Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
   plus a subagent file only if an orchestrator names it as a child (dual-use). So
-  `ports/claude/agents` = 49 hidden subagents plus two dual-use agents = 51, while
+  `ports/claude/agents` = 50 hidden subagents plus two dual-use agents = 52, while
   `ports/claude/commands` = 16.
 - Codex and OpenCode emit every source agent; only Claude and Cursor split commands out.
 - Cursor subagent names are the Claude identifier with a `z-` prefix always applied, because
@@ -138,6 +149,8 @@ benchmarks/ packages/ tests/
   `**/x.agent.md` only matches when a `/` immediately precedes `x`. Numbered agents must
   be named in full (`**/03b-feature-implementer.agent.md`). A pattern that matches nothing
   fails silently — no error, the instruction simply ships to no agent.
+- `GITHUB_MIRRORED_SUBDIRS` (`deploy_agents.py`) lists `learnings`, which has no source dir.
+  The entry is a cleanup root so a past deploy's mirrored tree stays prunable.
 - Agents read and write a working repo's learnings at `docs/learnings/` in that repo —
   durable project knowledge belongs beside the other docs, not in `.github/`, which is
   GitHub's own machine-config surface. Nothing seeds or propagates that directory.
@@ -171,7 +184,7 @@ benchmarks/ packages/ tests/
 
 ## Testing
 
-- 18 Python test modules under `tests/` cover both scripts plus the agent corpus. The Unity contract
+- 28 Python test modules under `tests/` cover both scripts plus the agent corpus. The Unity contract
   modules are `test_unity_skill_contract.py`, `test_unity_consumer_contract.py`, and
   `test_unity_reference_assets.py`; Phase 02 uses `test_phase_refiner_final_check.py`.
 - Run with `uv run pytest tests/` (or `.venv/bin/python -m pytest tests/`); bare

@@ -181,11 +181,15 @@ deploy does not update.
 
 ### Cause
 
-Deploy only manages content between matching sentinel comments (`<!-- context7 -->`,
-`<!-- code-review-graph -->`, `<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`,
-`<!-- know-the-audience -->`). A hand-written copy of the
-same guidance outside sentinels (for example, an old unsentineled discovery section) is
-foreign content and is deliberately left alone, so it coexists with the managed block.
+Deploy only manages content between matching `<!-- <name> -->` sentinel comments, one per
+instruction named in `source_of_truth/baseline/baseline-instructions.md`, plus
+`<!-- baseline-canary -->`. A hand-written copy of the same guidance outside sentinels
+(for example, an old unsentineled discovery section) is foreign content and is
+deliberately left alone, so it coexists with the managed block.
+
+A section deploy no longer writes is a second case. Removing its bullet from the template
+stops the rewrite but does not delete the block already sitting in your file — only
+listing the name in `RETIRED_BASELINE_SECTIONS` does that.
 
 ### Fix
 
@@ -193,6 +197,24 @@ foreign content and is deliberately left alone, so it coexists with the managed 
   version is refreshed automatically.
 - If the same guidance also lives in a separate rules file (for example an old
   `~/.claude/rules/context7.md`), delete that file to avoid double-loading.
+
+### Symptom
+
+An agent opens with `Baseline loaded: N sections - ...` and the list does not match the
+bullets in `source_of_truth/baseline/baseline-instructions.md`.
+
+### Cause
+
+That canary is written at deploy time and names the sections that deploy actually wrote.
+A mismatch means this machine's global instructions file predates the current template —
+the baseline changed and `deploy_agents.py` has not run since.
+
+### Fix
+
+- Rerun `python3 deploy_agents.py` for the affected harness, then start a new session.
+  The canary is only re-read when the harness reloads its global instructions file.
+- If the list still disagrees, check that each bullet's instruction file exists and
+  carries `baseline: true` — a name with no matching file fails the load for that section.
 
 ### Symptom
 

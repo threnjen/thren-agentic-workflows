@@ -120,11 +120,17 @@ real home paths substituted at deploy time:
 | cursor | `~/.cursor/rules/baseline-instructions.mdc` (`alwaysApply` rule) |
 | github | `<repo>/.github/copilot-instructions.md` |
 
-Only the five sentinel-delimited sections (`<!-- context7 -->`,
-`<!-- code-review-graph -->`, `<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`,
-`<!-- know-the-audience -->`) are replaced or appended;
-content outside the sentinels is never touched, and a repeat run reports `unchanged`.
-The result appears under a `baseline` key in the per-harness deploy output.
+The template is a manifest: deploy reads its bullet list, loads each named instruction
+file from `source_of_truth/instructions/`, and splices that body under a
+`<!-- <name> -->` sentinel. It adds one `<!-- baseline-canary -->` section naming every
+section it wrote. Only sentinel blocks are replaced or appended; content outside them is
+never touched, and a repeat run reports `unchanged`. The result appears under a
+`baseline` key in the per-harness deploy output.
+
+To add a section, add the instruction file with `baseline: true` in its frontmatter and
+list its name in the template. To remove one, delete the bullet **and** add the name to
+`RETIRED_BASELINE_SECTIONS` in `deploy_agents.py` — the bullet alone only stops rewriting
+the block, leaving the stale one in every already-deployed file.
 
 Deploy only ever overwrites or prunes files this system wrote (identified by a generated
 marker, or membership in a marked skill directory). A hand-placed file at a destination

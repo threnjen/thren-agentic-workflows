@@ -100,12 +100,18 @@ its mirrored tree is copied verbatim (no per-file marker), so it is treated as
 unconditionally managed within the mirrored subdirs.
 
 After the asset copy, deploy renders a per-harness **baseline instructions file** from
-`source_of_truth/baseline/baseline-instructions.md`. The template holds five sections
-wrapped in HTML sentinel comments (`<!-- context7 -->`, `<!-- code-review-graph -->`,
-`<!-- phase-doc-sync -->`, `<!-- agent-discovery -->`, `<!-- know-the-audience -->`);
-placeholders for harness name and agent/skill paths are
-substituted at deploy time using the machine's real home directory, so no OS branching
-is needed. Deploy splices each sentinel-delimited section into the destination —
+`source_of_truth/baseline/baseline-instructions.md`. That template is a manifest, not a
+body: `baseline_section_names` reads its bullet list, and each bullet names an
+instruction under `source_of_truth/instructions/` carrying `baseline: true`. Deploy loads
+each named instruction, strips its frontmatter and its Load Canary section, demotes the
+H1 to an H2, and splices the result under a `<!-- <name> -->` sentinel. It then splices
+one aggregate `<!-- baseline-canary -->` section naming every section it wrote, because
+the per-instruction canaries were stripped on the way in and a stale global file would
+otherwise be indistinguishable from a current one. `RETIRED_BASELINE_SECTIONS` names the
+sentinels deploy deletes on sight — dropping a name from the template only stops
+rewriting its block, so a retired name is what removes one a past deploy already wrote.
+Placeholders for harness name and agent/skill paths are substituted at deploy time using
+the machine's real home directory, so no OS branching is needed. Deploy splices each sentinel-delimited section into the destination —
 replacing an existing block in place or appending a missing one — and never touches
 content outside the sentinels, so a hand-maintained `CLAUDE.md`/`AGENTS.md` keeps its
 own content. Destinations: `CLAUDE.md` under the Claude config dir, `AGENTS.md` under
@@ -149,8 +155,8 @@ platform-specific transformations:
 - Claude emission splits by invocability: a hidden agent emits a subagent file only; a
   user-invocable agent emits a slash command, **plus** a subagent file when some
   orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
-  it. That is why `ports/claude/agents` (51) and `ports/claude/commands` (16) differ:
-  49 hidden subagents plus the two dual-use agents (Docs Writer,
+  it. That is why `ports/claude/agents` (52) and `ports/claude/commands` (16) differ:
+  50 hidden subagents plus the two dual-use agents (Docs Writer,
   Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
   support `instructions/` directly
@@ -163,9 +169,14 @@ platform-specific transformations:
   against the loaded source agents with the same `fnmatch` semantics used for inlining,
   so naming form does not matter)
 
-Known filename aliases preserved during propagation: `docs-writer` → `docs-writer`,
-`web-research-specialist` → `web-researcher`, `audit-code-or-infra` →
-`audit-code-infra-refactor`.
+Known filename aliases preserved during propagation: `web-research-specialist` →
+`web-researcher` and `audit-code-or-infra` → `audit-code-infra-refactor`. The alias maps
+also carry an identity entry for `docs-writer`, which pins the stem against a future
+rename of the source file.
+
+`ports/codex/profiles/` is a retired cleanup root, kept so a past deploy's generated
+profiles can still be pruned. Codex CLI profiles are configuration layers, not custom
+agent entry points, and propagation writes nothing into it.
 
 Agents read and write a working repository's learnings at `docs/learnings/` in that
 repository. Nothing is seeded there and nothing is propagated to it: a repo's learnings
@@ -219,18 +230,26 @@ flowchart TD
     ClientDeliverablePrepare[Client Deliverable - Prepare]
     DocsWriter[Docs Writer]
 
+    PlanAuthor[03o Feature - Plan Author]
     PlanExpander[03a Feature - Plan Expander]
     Implementer[03b Feature - Implementer]
-    Reviewer[03c 03c Reviewer - Plan Conformance]
+    Committee["Review committee — 03c Plan Conformance, 03j Blast Radius, 03k Test Falsification, 03l Plan Blind, 04h Cleanliness"]
+    Consolidator[03m Finding Consolidator]
+    Validator[03n Finding Validator]
+    Fixer[03p Feature - Fixer]
     QA[03d Feature - QA Writer]
-    Security[Diff Security Scan]
+    Security[03e Diff Security Scan]
 
     Planner --> Refiner
     Refiner --> PhaseExecute
 
+    PhaseExecute --> PlanAuthor
     PhaseExecute --> PlanExpander
     PhaseExecute --> Implementer
-    PhaseExecute --> Reviewer
+    PhaseExecute --> Committee
+    Committee --> Consolidator
+    Consolidator --> Validator
+    Validator --> Fixer
     PhaseExecute --> QA
     PhaseExecute --> Security
     PhaseExecute --> ProdReview
@@ -249,9 +268,21 @@ flowchart TD
     Test --> TestFixer[Test - Fixer]
 
     ClientDeliverable --> ClientDeliverablePrepare
-    ClientDeliverable --> ClientDeliverableSubs[Client Deliverable subagents: Delta Synthesizer, Security Narrative, Pricing Researcher, Narrative Writer, Compliance Writer, Manifest Assembler, Gap Reviewer]
+    ClientDeliverable --> ClientDeliverableSubs["Client Deliverable subagents — Delta Synthesizer, Security Narrative, Pricing Researcher, Narrative Writer, Compliance Writer, Manifest Assembler, Gap Reviewer"]
     ClientDeliverable --> DocsWriter
 ```
+
+**Phase - Execute** runs one feature at a time through five stages. It implements, then
+spawns a concurrent review committee over the feature diff — plan conformance, blast
+radius, test falsification, plan-blind behavior, and cleanliness, plus the Unity Reviewer
+and the Dependency Auditor when their conditions hold. Every report feeds **03m Finding
+Consolidator**, which deduplicates without judging, then **03n Finding Validator**, which
+independently proves or rejects each serious candidate. Only confirmed Critical, Blocker,
+and High production defects reach **03p Feature - Fixer**, which repairs against a
+regression baseline. The implementer never applies its own review findings, and the
+orchestrator never merges, validates, or ranks findings itself. After the feature loop
+closes it runs QA, then the phase-close audits (consistency, test health, diff security)
+over the whole phase diff, then the Prod Code Review gate.
 
 The audit orchestrator runs a matrix of audit types by targets. A target is a
 directory or a git ref; ref targets are materialized as detached read-only

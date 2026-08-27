@@ -41,29 +41,33 @@ The core development workflow. **You drive steps 1–2, step 3 runs hands-free t
 ┌────────────────────────────────────────────────────────────│────┐
 │  AUTOMATED (subagents)                                     │    │
 │                                                            ▼    │
-│  BATCH MODE (all features, one branch):                           │
-│  ┌──────────────────────────────────────────────┐                │
-│  │  FOR EACH FEATURE (in 0N order):             │                │
-│  │  Feature - Implementer  → Code + tests       │                │
-│  │  03c Reviewer - Plan Conformance     → Plan review       │                │
-│  │  Loop back for next feature                  │                │
-│  └──────────────────────────────────────────────┘                │
-│  Feature - QA Writer    → Manual + automated QA plans         │
-│  Feature - QA Runner    → Runs the automated QA plan          │
-│  03e Diff Security Scan → Diff-scoped security report         │
-│  Prod Code Review       → GO / NO-GO verdict                  │
+│  Feature - Plan Author  → Plans + prerequisite graph + manifest  │
 │                                                                   │
-│  PER-FEATURE MODE (one feature, one branch, one PR):             │
-│  ┌──────────────────────────────────────────────┐                │
-│  │  Feature - Implementer  → Code + tests       │                │
-│  │  03c Reviewer - Plan Conformance     → Plan review       │                │
-│  │  Feature - QA Writer    → QA for this feature │                │
-│  │  Feature - QA Runner    → Runs the automated one│               │
-│  │  Prod Code Review       → GO / NO-GO verdict │                │
-│  └──────────────────────────────────────────────┘                │
-│  → "Merge this PR, then re-spawn for next feature"              │
+│  ┌──────────────────────────────────────────────────────────┐    │
+│  │  FOR EACH FEATURE (in manifest execution order):         │    │
+│  │  A. Feature - Plan Expander → Context + tasks            │    │
+│  │  A. Feature - Implementer   → Code + tests (TDD)         │    │
+│  │  B. Review committee, concurrently:                      │    │
+│  │       03c Plan Conformance                               │    │
+│  │       03j Blast Radius                                   │    │
+│  │       03k Test Falsification                             │    │
+│  │       03l Plan Blind                                     │    │
+│  │       04h Cleanliness                                    │    │
+│  │       (+ Unity Reviewer / 04e Dependency, on condition)  │    │
+│  │     03m Finding Consolidator → Deduplicated candidates   │    │
+│  │     03n Finding Validator    → Proven fix list           │    │
+│  │  C. 03p Feature - Fixer      → Repairs, regression-gated │    │
+│  │  D. Integration test gate    → Union of affected suites  │    │
+│  │  E. Complete → manifest updated, schedule revalidated    │    │
+│  └──────────────────────────────────────────────────────────┘    │
 │                                                                   │
-│  Docs Writer        → Update stale documentation              │
+│  Feature - QA Writer    → Manual + automated QA documents        │
+│  Feature - QA Runner    → Runs the automated QA document         │
+│  Phase-close audits, concurrently over the whole phase diff:     │
+│       04d Consistency / 04f Test Health / 03e Diff Security      │
+│  03n Finding Validator + 03p Feature - Fixer → one repair round  │
+│  Prod Code Review       → GO / NO-GO verdict                     │
+│  Docs Writer            → Update stale documentation             │
 │                                                                   │
 │  ──► Report back to you                                          │
 └───────────────────────────────────────────────────────────────────┘
@@ -93,20 +97,38 @@ Interactive — you iterate to probe edge cases and dependencies before executio
 
 **Hands-free from here.** The orchestrator researches the phase, writes the plans and manifest, expands one selected feature at a time, and automatically:
 
-1. Reads or creates `dev/feature/[phase-name]-execution-manifest.md`
-2. Writes lightweight plans with acceptance criteria, dependency hypotheses, and expected file impact
-3. Expands only the selected feature into `-context.md` and `-tasks.md`
-4. For each feature in manifest execution order, runs the full cycle:
-   - **Implement** → Red-Green-Refactor TDD, writes implementation record
-   - **Review** → Committee reviews the diff, consolidates and validates findings
-   - **Fix** → 03p Feature - Fixer applies the validated fix list against a regression baseline
-   - **Integration gate** → Runs the integrated suite to catch breakage of earlier features
-   - **Complete** → Records the result in the manifest
-5. Runs the **QA Writer**, then the **QA Runner** on the automated QA document it produced
-6. Runs the **03e Diff Security Scan** across all files changed by the phase
-7. Runs the **Prod Code Review** with the security report
-8. Reports the verdict back to you
-9. Runs the **Docs Writer** to update any stale documentation
+1. Reads `dev/feature/[phase-name]-execution-manifest.md`, or spawns **Feature - Plan
+   Author** to decompose the phase and write it. The manifest is the living schedule and
+   the single source of truth once it exists.
+2. Validates every manifest entry, then holds the phase-level discovery values — test
+   baseline, lint and format commands, test directory pattern — for the whole run.
+3. For each feature in manifest execution order, runs five stages:
+   - **A. Implement** → expands the selected feature into `-context.md` and `-tasks.md`,
+     then implements every acceptance criterion with Red-Green-Refactor TDD
+   - **B. Review** → spawns five reviewers concurrently over the feature diff (plan
+     conformance, blast radius, test falsification, plan-blind behavior, cleanliness),
+     plus the Unity Reviewer and the Dependency Auditor when their conditions hold. Every
+     report feeds the **Finding Consolidator**, then the **Finding Validator**, which
+     independently proves or rejects each serious candidate.
+   - **C. Fix** → **03p Feature - Fixer** applies the validated fix list. Only confirmed
+     Critical, Blocker, and High production defects open a round, at most two rounds run,
+     and any round that regresses a baseline-passing test is reverted.
+   - **D. Integration gate** → runs the union of affected suites to catch breakage of
+     earlier features
+   - **E. Complete** → records the result in the manifest, then has the Plan Author
+     revalidate every downstream feature against what just landed
+4. Runs the **QA Writer**, then the **QA Runner** on the automated QA document it produced
+5. Runs the **phase-close audits** concurrently over the whole phase diff — **04d
+   Consistency Auditor**, **04f Test Health**, and **03e Diff Security Scan** — then
+   validates their findings and allows one repair round
+6. Runs the **Prod Code Review** with the security report
+7. Reports the verdict back to you
+8. Runs the **Docs Writer** to update any stale documentation
+
+The orchestrator never merges, validates, or ranks findings itself, and the implementer
+never applies its own review findings. Both jobs belong to separate agents on purpose:
+the reviewer that found a defect does not get to decide it is real, and the author of the
+code does not get to decide it is fixed.
 
 ### Step 4: Self-Review Before Opening the PR
 
@@ -154,6 +176,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **Instructions Manager** | Create a scoped AI coding instruction set, or blind A/B-test whether a change to one is an improvement |
 | **Single Feature - Agent** | Handle small, focused changes with a proposal + explicit permission gate before implementation |
 | **Debugger** | Diagnose and fix frontend or backend application errors |
+| **PR Author** | Write a pull request body from the real diff, the verified evidence, and the known limitations |
 | **Docs Writer** | Create or update repo documentation; also spawned automatically by orchestrators after pipeline completion |
 | **QA - Bootstrapper** | Bootstrap a repository's QA package — generate QA_AUTOMATED and QA_USER from available starter inputs, run the automated runbook, and stamp pass/fail results |
 | **Test - Orchestrator** | Orchestrate test analysis, writing, or fixing with optional remediation pipeline |
@@ -176,11 +199,16 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **Auditor - Remediation Reconciler** | Audit orchestrator | Validate researcher corrections and reconcile the current report, summary, full delta, and queue |
 | **Instructions - Writer** | Instructions Manager | Draft scoped `.instructions.md` files for a repository |
 | **Instructions - Evaluator** | Instructions Manager | A/B evaluate whether instruction-file changes improve or regress |
+| **02a Phase - Final-Check Reviewer** | Phase - Refiner | Cold-start, response-only review of a completed Phase document |
+| **Feature - Plan Author** | Phase - Execute | Decompose the phase into lightweight plans, build the prerequisite graph, and own the living execution manifest |
 | **Feature - Plan Expander** | Phase - Execute | Generate context and tasks files from existing plan files |
 | **Feature - Implementer** | Phase - Execute, Audit orchestrator, Test orchestrator | Implement a feature plan using Red-Green-Refactor TDD |
 | **03c Reviewer - Plan Conformance** | Phase - Execute, Audit orchestrator, Test orchestrator | Review plan conformance, block on unrun tests, and produce a review record |
 | **Feature - QA Writer** | Phase - Execute, Audit orchestrator | Write the automated QA document and the manual QA plan, sorting every check between them |
 | **Feature - QA Runner** | Phase - Execute, Audit orchestrator | Execute the automated QA document and record per-check results into it |
+| **03j Reviewer - Blast Radius** | Phase - Execute | Trace the diff's outward impact on callers, suites, schemas, and configuration |
+| **03k Reviewer - Test Falsification** | Phase - Execute | Judge whether the changed tests can actually fail, without reading the implementation |
+| **03l Reviewer - Plan Blind** | Phase - Execute | Report what the changed code actually does, never having seen the plan |
 | **03m Finding Consolidator** | Phase - Execute | Merge the review reports into one deduplicated candidate list without deciding whether the findings are valid |
 | **03n Finding Validator** | Phase - Execute | Prove or reject serious candidates before repair and write the implementer's confirmed fix list |
 | **03p Feature - Fixer** | Phase - Execute | Apply the validated fix list to an implemented feature, holding a regression baseline across every repair |
@@ -205,6 +233,9 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **Client Deliverable - Compliance Writer** | Client Deliverable | Walk SOW acceptance criteria against retained artifacts; write the compliance walkthrough, verification summary, and internal compliance-basis report |
 | **Client Deliverable - Manifest Assembler** | Client Deliverable | Assemble the package manifest per its schema, evaluating every row's present/missing status from disk, plus the internal manifest-basis report |
 | **Client Deliverable - Gap Reviewer** | Client Deliverable | Review the deliverable set from the client's perspective against the manifest; always emit the internal gap-review report |
+| **Creative - Scribe** | Creative - Developmental Editor | Write caller-supplied text verbatim into the vault's editor notes and scene summaries — the family's only write bit |
+| **Creative - Compliance Check** | Creative - Developmental Editor | Scan a draft response against the active mode's rules and return violations with repair instructions |
+| **Creative - Vault Sync** | Creative - Developmental Editor | Report what changed in the vault since the commit recorded in `context/index.md` |
 | **Test - Analyst** | Test orchestrator, 04 PR - Review | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
 | **Test - Writer** | Test orchestrator | Bootstrap a test suite from scratch for untested code |
@@ -245,6 +276,12 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 **Debugger** (full tool access — reads and writes code)
 > Give it an error message or description — frontend or backend. Triages the issue, classifies it (build-time, runtime, database, dependency, etc.), investigates, and applies minimal targeted fixes. On repos with `docs/phases/`, it also syncs the affected phase documents so they stay baseline-truth. Handles both frontend (TypeScript, React, build tools) and backend (Node.js, Python, databases, auth) errors.
 
+**PR Author** (read-only over the repository — writes only the PR body)
+> Point it at a branch you are ready to publish. It reads the real diff, the evidence that
+> actually ran, and the limitations you know about, then writes a pull request body framed
+> around the decision a reviewer has to make before merge. It invents no validation and
+> modifies no source, tests, configuration, or pipeline document.
+
 **QA - Bootstrapper** (orchestrator — delegates to subagents)
 > Point it at a repository that has no QA package. It spawns **QA - Doc Generator** to write the `QA_AUTOMATED` technical runbook and the `QA_USER` manual acceptance checklist from the repository plus any starter inputs (existing manual QA notes, an SOW or contract, plan acceptance criteria), then spawns **QA - Runner** to execute the runbook end to end and stamp binary pass/fail results back into it.
 
@@ -255,7 +292,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 > Give it a problem or topic. Searches across GitHub issues, Stack Overflow, Reddit, forums, and docs. Produces two deliverable documents saved to `dev/research/[topic-name]/`: a full structured findings report (`[topic-name]-report.md`) with inline numbered citations and a References table, and an executive summary (`[topic-name]-summary.md`) with priority recommendations and key reference links. Every factual claim traces back to a numbered citation. Sources older than 2 years are flagged with ⚠️.
 
 **Docs Writer** (reads codebase, writes documentation)
-> Give it a repo to document. Produces or updates README, ARCHITECTURE, CODEBASE_CONTEXT, and TROUBLESHOOTING documents. Also spawned automatically at the end of orchestrator pipelines to update stale documentation after code changes.
+> Give it a repo to document. Produces or updates the README, ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT, and TROUBLESHOOTING documents. Also spawned automatically at the end of orchestrator pipelines to update stale documentation after code changes.
 
 
 ### Hidden Subagents
@@ -271,6 +308,16 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 **Feature - QA Writer** *(subagent of Phase - Execute, Audit orchestrator)* — Reads the pipeline docs and sorts every check three ways. A command with a deterministic expected result goes to the automated QA document. A human-only check goes to the manual QA plan. A hybrid check is split: the command goes to the automated document, the judgment to the manual one. Batch mode writes one set covering the whole phase; per-feature mode writes into the feature's own directory.
 
 **Feature - QA Runner** *(subagent of Phase - Execute, Audit orchestrator)* — Executes the automated QA document, compares each check's actual output to its stated expected result, and records per-check status plus a Run results section back into that document. Never fixes what a check exposes. Not to be confused with `QA - Runner`, which executes the repository-wide `docs/QA_AUTOMATED.md` runbook.
+
+**Feature - Plan Author** *(subagent of Phase - Execute)* — Reads the refined Phase document and the discovery context, researches the repository, and writes one lightweight `-plan.md` per candidate feature plus the phase's execution manifest. It builds the prerequisite graph from runtime prerequisites and shared file scope, and orders the features from that graph. It runs again in `revalidation` mode after every completed feature, restamping each downstream plan's stale reason and validation commit. Phase - Execute schedules from what it writes and never repairs the manifest itself.
+
+**02a Phase - Final-Check Reviewer** *(subagent of Phase - Refiner)* — A stateless cold-start read of a completed Phase document. It has no memory of the refinement conversation, which is the point: it reports only what the document itself says, so anything the refiner and the user settled verbally but never wrote down shows up as a gap.
+
+**03j Reviewer - Blast Radius** *(subagent of Phase - Execute)* — Reads the diff and traces outward to affected suites, callers, schemas, configuration, and name-based references. Reports affected suites that did not run, callers with no coverage, and semantic breaks a loose assertion would miss. It does not judge the feature itself.
+
+**03k Reviewer - Test Falsification** *(subagent of Phase - Execute)* — Reads the changed tests, their fixtures, and their run evidence, and never the implementation. Reports assertions that cannot fail, self-configured mocks, implementation-pinning assertions, and tests that still pass with the feature deleted.
+
+**03l Reviewer - Plan Blind** *(subagent of Phase - Execute)* — Reads the changed code, its reachable callers, and the executed evidence, and is never given the plan, context, tasks, or any plan-derived summary. It describes what the code actually does, including observable gaps, surprising defaults, and failure behavior. Withholding the plan is what makes it able to notice behavior the plan never claimed.
 
 **03m Finding Consolidator** *(subagent of Phase - Execute)* — Merges the independent review reports into one candidate list. It removes duplicates and preserves evidence, severity, and reviewer attribution. It does not decide whether a serious candidate is valid.
 
@@ -321,6 +368,12 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 **Client Deliverable - Manifest Assembler** *(subagent of Client Deliverable)* — Assembles the package manifest per the `engagement-package-manifest` schema, evaluating every row's present/missing status from disk as an independent check on the writing agents, plus the internal manifest-basis report (per-row determination notes and the report-vs-disk discrepancy audit trail), then hands the manifest to the gap review.
 
 **Client Deliverable - Gap Reviewer** *(subagent of Client Deliverable)* — Reviews the complete deliverable set from the client's perspective using the manifest as its completeness checklist and unconditionally emits `internal/gap-review.md`, even when no gaps are found.
+
+**Creative - Scribe** *(subagent of Creative - Developmental Editor)* — Writes text it was handed, where it was told to put it, into the vault's `_editor-notes/` and `scene-summaries/`. Append-only except for the context directory. It holds the only write tool in the creative family and forms no opinion about the manuscript, which is what keeps the editor unable to write to canon or drafts.
+
+**Creative - Compliance Check** *(subagent of Creative - Developmental Editor)* — Receives a draft response plus the mode it was written under and decides whether it complies, returning violations with repair instructions. Read-only and stateless.
+
+**Creative - Vault Sync** *(subagent of Creative - Developmental Editor)* — Resolves the vault's current git SHA, compares it to the one recorded in `context/index.md`, and returns the file-level diff. It reports the change and does not interpret it.
 
 **Test - Analyst** *(subagent of Test orchestrator and PR Review)* — Classifies tests by value, flags redundancy and over-mocking, and writes a categorized inventory with a staged reduction plan. PR Review spawns it directly and passes its files to 04f as sibling evidence.
 
