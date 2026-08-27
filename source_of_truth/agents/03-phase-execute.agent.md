@@ -85,25 +85,6 @@ After each feature completes, identify every affected future feature and every d
 
 Spawn **Feature - Plan Author** in `revalidation` mode. Pass it the completed feature, the affected future features, and their downstream dependents. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. Bound recomputation to 25 rounds per feature. Stop and report if the graph does not reach a fixed point.
 
----
-
-#### Review trigger tables
-
-Evaluate these tables before each review boundary. Run exactly the agents whose conditions hold. A non-firing condition is complete evidence, not a missing reviewer.
-
-Each agent appears in one table.
-
-##### Boundary triggers
-
-| Review agent | Entry condition |
-|---|---|
-| 03e Diff Security Scan | The phase is closing |
-| 04d Consistency Auditor | The phase is closing |
-| 04f Test Health | The phase is closing |
-| Prod Code Review | The phase is closing |
-
-The per-feature table is the only trigger for a feature review. The boundary table is the only trigger for a closure review. Do not select reviewers by a fixed count.
-
 #### Feature stage definitions
 
 Stages A through E run in order for one selected feature, then repeat for the next. Complete every stage before you select another feature. The execution order schedules the features. It never authorizes two concurrent feature builds.

@@ -84,7 +84,7 @@ being capture-specific.
 
 Deleted rather than left to pass vacuously on absent text:
 
-- `test_review_trigger_tables.py` — `Visual Verifier` roster entry, the `visual_acceptance` parameter and its predicate branch, `test_visual_verifier_uses_the_required_plan_flag`, `_visual_flag_errors`, `test_visual_plan_flag_guard_is_load_bearing`. `test_visual_and_security_rows_have_one_entry_point` was narrowed to the security row and renamed `test_security_row_has_one_entry_point`.
+- `test_phase_execute_contracts.py` (formerly `test_review_trigger_tables.py`) — `Visual Verifier` roster entry, the `visual_acceptance` parameter and its predicate branch, `test_visual_verifier_uses_the_required_plan_flag`, `_visual_flag_errors`, `test_visual_plan_flag_guard_is_load_bearing`. `test_visual_and_security_rows_have_one_entry_point` was narrowed to the security row and renamed `test_security_row_has_one_entry_point`.
 - `test_unity_consumer_contract.py` — the `visual_verifier` consumer entry (and its `len(CONSUMER_PATHS)` count, 3 → 2), `_visual_verifier_errors`, `_phase_visual_gate_errors`, `test_phase_execute_visual_gate_commit_contract`, `test_visual_verifier_invocation_contract`, and both parametrized mutation blocks.
 - `test_unity_skill_contract.py` — the editor-discovery contract was **inverted**, not deleted. It asserted the skill must *not* copy `VISUAL_VERIFICATION_UNITY`; it now asserts the skill *must* own the ladder. Three mutation rows were retargeted onto the inverted obligations. Restoring the old delegation means re-inverting this, which the discovery note above advises against.
 - `test_model_routing.py`, `test_agent_renumbering.py` — one row each for `03g`.
