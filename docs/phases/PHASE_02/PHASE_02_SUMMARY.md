@@ -188,11 +188,10 @@ Every review agent has exactly one entry condition, recorded in one of two table
 | Reviewer C, test falsification | Always |
 | Reviewer D, plan-blind | Always |
 | Cleanliness auditor | Always |
-| Diff security scan | The diff touches authentication, user input, network calls, or secrets |
 | Dependency auditor | The diff changes a package manifest or lockfile |
 | Unity reviewer | The repository satisfies the canonical Unity predicate in `tech-stack-detection` and the diff changes a `.cs` file under `Assets/` |
 
-Every condition is derived from the changed-file list.
+Every condition is derived from the changed-file list. The diff security scan is not a per-feature review. It runs once at phase close over the whole phase diff.
 
 #### Boundary triggers
 
@@ -217,7 +216,9 @@ The consolidator exists because the orchestrator must not perform analysis. Merg
 
 ### Where defect classes are caught
 
-Code-quality and security findings are accretive. Each one enters on a specific feature's diff, so a per-feature reviewer can catch it as it lands. The committee and the conditional specialists absorb these classes.
+Code-quality findings are accretive. Each one enters on a specific feature's diff, so a per-feature reviewer can catch it as it lands. The committee and the conditional specialists absorb this class.
+
+Security findings are accretive too, but the scan runs once over the whole phase diff rather than per feature. A diff-scoped scan judges exploitability from the code around a changed line, and the surrounding code is only final once every feature has landed. The cost is timing: an auth defect surfaces at phase close, after that feature's fix loop has already closed.
 
 Architecture, convention, and coverage findings are emergent. They arise from accumulation across features, and no reviewer examining one diff can see them. Five features may each add one reasonable method to the same file and leave it needing a split that no single feature caused. These classes need a check at a different altitude, run when the phase closes, where one pass over the finished phase diff can see them.
 

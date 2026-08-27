@@ -21,7 +21,6 @@ PER_FEATURE_AGENTS = {
     "03k Reviewer - Test Falsification",
     "03l Reviewer - Plan Blind",
     "04h Cleanliness Auditor",
-    "03e Diff Security Scan",
     "04e Dependency Auditor",
     "Unity Reviewer",
 }
@@ -69,7 +68,7 @@ def _table_coverage_errors(text: str) -> set[str]:
     boundary_names = [name for name, _ in boundary_rows]
     errors: set[str] = set()
 
-    if len(per_rows) != 9:
+    if len(per_rows) != len(PER_FEATURE_AGENTS):
         errors.add("per-feature row count")
     if len(boundary_rows) != 3:
         errors.add("boundary row count")
@@ -85,9 +84,6 @@ def _table_coverage_errors(text: str) -> set[str]:
         errors.add("empty trigger condition")
     return errors
 
-
-def _matches_security(path: str) -> bool:
-    return any(token in path.lower() for token in ("auth", "input", "network", "secret"))
 
 
 def _matches_dependency(path: str) -> bool:
@@ -116,10 +112,6 @@ def _predicted_agents(
     predicted: set[str] = set()
     for agent, condition in _table_rows(text, "##### Per-feature review triggers"):
         if condition == "Always":
-            predicted.add(agent)
-        elif "authentication" in condition and any(
-            _matches_security(path) for path in changed_files
-        ):
             predicted.add(agent)
         elif "package manifest" in condition and any(
             _matches_dependency(path) for path in changed_files
@@ -225,7 +217,7 @@ def test_changed_file_scenarios_resolve_the_predicted_agent_set() -> None:
         ("isolated", ["docs/new.md"], {}, always),
         ("imported symbol", ["src/core.py"], {}, always),
         ("lockfile", ["uv.lock"], {}, always | {"04e Dependency Auditor"}),
-        ("authentication", ["src/auth.py"], {}, always | {"03e Diff Security Scan"}),
+        ("authentication", ["src/auth.py"], {}, always),
         (
             "Unity C#",
             ["Assets/Runtime/Spawner.cs"],
@@ -238,12 +230,20 @@ def test_changed_file_scenarios_resolve_the_predicted_agent_set() -> None:
         assert _predicted_agents(text, files, **options) == expected, label
 
 
-def test_security_row_has_one_entry_point() -> None:
+def test_security_scan_has_one_entry_point() -> None:
+    """Step 5 owns the only spawn of 03e; no feature stage may reintroduce one."""
     text = _read(PHASE_PATH)
     security_section = text.split("### Step 5: Diff Security Review", 1)[1]
     security_section = security_section.split("### Step 5.5: Phase-Close Audits", 1)[0]
-    assert "Collect the reports from every feature" in security_section
-    assert "spawn the **03e Diff Security Scan**" not in security_section
+    assert "sole entry point for **03e Diff Security Scan**" in security_section
+    assert "spawn the **03e Diff Security Scan** subagent at `high`" in security_section
+    # 03e cannot resolve its own scope, so Step 5 must hand it materialized inputs.
+    assert "changed-files.txt" in security_section
+    assert "range.diff" in security_section
+    # The feature loop must not spawn it.
+    feature_loop = text.split("#### Feature stage definitions", 1)[1]
+    feature_loop = feature_loop.split("### Step 4: QA", 1)[0]
+    assert "03e" not in feature_loop
 
 
 def test_boundary_events_resolve_the_predicted_agent_set() -> None:

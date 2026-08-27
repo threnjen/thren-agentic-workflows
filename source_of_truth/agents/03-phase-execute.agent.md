@@ -139,7 +139,6 @@ Spawn these Reviewers conditionally concurrently at `medium`:
 
 - For a Unity project, spawn **Unity Reviewer**.
 - For a firing dependency row, spawn **04e Dependency Auditor** with the diff.
-- For the other firing rows, spawn **03e Diff Security Scan**.
 
 Make note of which reviewers you spawnd and which reports you expect to see. After EVERY report returns, spawn **03m Finding Consolidator**. Give it all report paths. It writes a deduplicated candidate list. It does not validate findings.
 
@@ -155,8 +154,7 @@ The committee artifact contract stays stable across the producer and the consume
 | Reviewer - Plan Blind | `03l-reviewer-plan-blind-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
 | Cleanliness Auditor | `04h-cleanliness-auditor-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
 | Dependency Auditor | `04e-dependency-auditor-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
-| Unity Reviewer | `03e-unity-reviewer-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
-| Diff Security Scan | `03e-diff-security-scan-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
+| Unity Reviewer | `03h-unity-reviewer-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
 | Consolidator | `03m-finding-consolidator-candidates.md` | `candidate_id`, `severity`, `lane`, `finding`, `evidence`, `reviewers` |
 | Validator | `03n-finding-validator-validation.md` | `id`, `validation_status`, `reproduction`, `production_trace` |
 | Validated fix list | `03n-finding-validator-fix-list.md` | `id`, `severity`, `finding`, `action`, `status` |
@@ -198,8 +196,6 @@ One condition overrides that class. A repair cycle that regresses a test passing
 A compile command that ran and failed proves a production blocker. Missing compilation evidence is a verification blocker until an authoritative run exists.
 
 **C1. Review checkpoint** — Emit the skill's review checkpoint for this feature, after the fix loop closes. The unit is `dev/feature/[0N-task-name]/`, including every review cycle under `reviews/`.
-
-The per-feature table owns the `03e Diff Security Scan` entry. Do not spawn it for a non-matching diff.
 
 ##### D. Integration test gate
 
@@ -255,7 +251,7 @@ After the subagent returns:
 
 - Record `automated-qa-run: PASS | FAIL | NOT RUN (<reason>)`. Use the runner's own upper-case strings verbatim.
 - On `FAIL` or `NOT RUN`, set `all-approved: no`. The Phase Final Review then runs in standard mode and carries it as a blocker.
-- Do not remediate. An automated QA failure escalates to Step 6, exactly like the security scan. A re-spawned implementer here would edit code the review gates already approved.
+- Do not remediate. An automated QA failure escalates to Step 6. A re-spawned implementer here would edit code the review gates already approved.
 - An `UNRUNNABLE` check is a defect in the QA document, not in the phase. Name it as such when you report. The reroute target is `Feature - QA Writer`, not the implementer.
 - Record how many `EVIDENCE ONLY` checks now have evidence waiting for the human. These do not block.
 
@@ -269,17 +265,29 @@ The QA checkpoint lands after the run. The committed automated document therefor
 
 ### Step 5: Diff Security Review
 
-Collect the reports from every feature whose `03e` row fired. Verify each report path from its implementation record. Then record one aggregate:
+Run one diff-scoped security review for the whole phase. This step is the sole entry point for **03e Diff Security Scan**. No feature stage spawns it.
 
-- If no row fired, record `security-scan: not-triggered (no feature diff matched)`.
-- If a triggered report is missing, record `security-scan: NOT RUN (triggered report missing)` and set `all-approved: no`.
-- Otherwise record `security-scan: PASS | PASS WITH CONDITIONS | BLOCKED` from the triggered reports. A blocked aggregate sets `all-approved: no`.
+Materialize the diff first. `03e` has no shell or git access, so a bare commit range is not a runnable input and it returns `NOT RUN`. Resolve `<phase-baseline>` with `git merge-base HEAD <default-branch>`, then write both artifacts under `dev/feature/`:
 
-The triggered specialist remains a changed-files reviewer. It is not a substitute for a full-codebase `Auditor - Security` scan.
+- `changed-files.txt` — `git diff --name-status <phase-baseline>..HEAD`
+- `range.diff` — `git diff <phase-baseline>..HEAD`
+
+If the range is empty, record `security-scan: not-applicable (empty phase diff)` and do not spawn.
+
+Otherwise spawn the **03e Diff Security Scan** subagent at `high`:
+
+> "[SUBAGENT-MODE] Perform a diff-scoped security review of phase [phase-name]. Changed-file list: `dev/feature/changed-files.txt`. Full diff: `dev/feature/range.diff`. Context documents: [the phase summary path, and every feature implementation record path]. Write the report to `dev/feature/[phase-name]-security.md` and return its verdict (`PASS` | `PASS WITH CONDITIONS` | `BLOCKED` | `NOT RUN`) with finding counts by severity."
+
+After the subagent returns, verify the report exists at that path. Then record one aggregate:
+
+- If the report is missing, record `security-scan: NOT RUN (report missing)` and set `all-approved: no`.
+- Otherwise record `security-scan: PASS | PASS WITH CONDITIONS | BLOCKED` from the report. A blocked aggregate sets `all-approved: no`.
+
+The specialist remains a changed-files reviewer. Phase scope widens the diff, not the method. It is not a substitute for a full-codebase `Auditor - Security` scan.
 
 Do not automatically remediate security findings. Prod Code Review determines the final GO, GO WITH CONDITIONS, or NO-GO decision.
 
-This step emits no checkpoint of its own. The Phase Final Review checkpoint (Step 6) owns the triggered reports and stages them.
+This step emits no checkpoint of its own. The Phase Final Review checkpoint (Step 6) owns the security report and stages it.
 
 ### Step 5.5: Phase-Close Audits
 
