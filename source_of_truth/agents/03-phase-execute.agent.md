@@ -21,7 +21,7 @@ One refined Phase document: `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`
 
 ### Session Model Preflight
 
-Run the Session Model Preflight from the auto-loaded orchestrator conventions. It holds the whole contract: the harness detection, the `low`, `medium`, and `high` route lookup, the run-override rules, the answer-first table, and the three resolution statuses.
+Run the Session Model Preflight from the auto-loaded orchestrator conventions. It holds the whole contract for the `low`, `medium`, and `high` tiers.
 
 Each tier record carries four distinct fields: `requested_model`, `user_override`, `resolved_route`, and `resolution_status`. Step 2 records each tier's `resolution_status` into the manifest's `resolved_model_status`.
 
@@ -31,9 +31,7 @@ Reject a route that fails validation before you select the first feature. On an 
 
 ### Step 1: Establish the Schedule
 
-**Feature - Plan Author** authors plans, graphs, and the manifest. You verify its input. You spawn it. You verify its output. You schedule from what it wrote.
-
-Everything in this step runs once, before the feature loop starts.
+**Feature - Plan Author** authors the plans, the graph, and the manifest. You schedule from what it wrote. This step runs once, before the feature loop starts.
 
 #### Verify the inputs
 
@@ -63,11 +61,9 @@ Do not rebuild the schedule from stale plan metadata. Rebuild it from the graph 
 
 #### Seed the run
 
-Take the phase-level discovery the author returned. It contains the environment state, the test baseline, the lint and format commands, and the phase-scoped test directory pattern. Hold those values for the feature loop. Do not rediscover them per feature. Do not capture them yourself.
+Take the phase-level discovery the author returned. It contains the environment state, the test baseline, the lint and format commands, and the phase-scoped test directory pattern. Hold those values for the feature loop. Do not rediscover them per feature.
 
 Create a todo list entry for each feature with status `not-started`.
-
-Two later jobs also read this schedule. Step 2 expands each feature at selection time. Step 2 re-spawns the author in `revalidation` mode after each feature completes.
 
 ### Step 2: Feature Development Loop (one feature at a time)
 
@@ -77,9 +73,9 @@ Apply the canonical Unity detection predicate before the feature loop starts. Se
 
 Before you select work, inspect the manifest for `status: in-progress`. Inspect the working tree. If you find both, report an interrupted run and offer resumption. Never build on a dirty tree silently.
 
-Resume at the last completed feature using the status and validation commit the manifest records for it. Discard and rebuild a feature interrupted mid-loop. Never resume inside a feature loop. Never rely on a held-open subagent transcript.
+Resume at the last completed feature using the status and validation commit the manifest records for it. Discard and rebuild a feature interrupted mid-loop. Never resume inside a feature loop.
 
-After the plans are on disk, decomposition context may drop. Treat the manifest and the per-feature checkpoint commits as execution memory. Do not rely on a held-open transcript or on unstored research.
+Treat the manifest and the per-feature checkpoint commits as execution memory. Never rely on a held-open subagent transcript or on unstored research.
 
 Execute one feature at a time, in the manifest's execution order.
 
@@ -87,7 +83,7 @@ Validate the selected feature's bundle before you build it. Each bundle must con
 
 After each feature completes, identify every affected future feature and every downstream dependent of an affected feature.
 
-Spawn **Feature - Plan Author** in `revalidation` mode. Pass it the completed feature, the affected future features, and their downstream dependents. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. Recompute the graph and order after every completed feature, not only at phase close. Bound recomputation to 25 rounds per feature. Stop and report if the graph does not reach a fixed point.
+Spawn **Feature - Plan Author** in `revalidation` mode. Pass it the completed feature, the affected future features, and their downstream dependents. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. Bound recomputation to 25 rounds per feature. Stop and report if the graph does not reach a fixed point.
 
 ---
 
@@ -95,7 +91,7 @@ Spawn **Feature - Plan Author** in `revalidation` mode. Pass it the completed fe
 
 Evaluate these tables before each review boundary. Run exactly the agents whose conditions hold. A non-firing condition is complete evidence, not a missing reviewer.
 
-Each agent appears in one table. Every boundary row fires at phase close, and nowhere else.
+Each agent appears in one table.
 
 ##### Boundary triggers
 
@@ -122,8 +118,6 @@ Spawn **Feature - Implementer** with:
 
 ##### B. Feature Review
 
-Start this stage only after the implementer for that feature has returned.
-
 Create the next immutable `review-cycle` directory under `dev/feature/[0N-task-name]/reviews/`. Use `initial-01`, `fix-01`, `rebuild-01`, then `post-rebuild-01`, `post-rebuild-02`, and so on. Never overwrite a completed cycle.
 
 Assemble the feature's changed-file list and its selected plan metadata. Wait for every report you spawned.
@@ -141,32 +135,32 @@ Spawn these Reviewers conditionally concurrently at `medium`:
 - For a Unity project, spawn **Unity Reviewer**.
 - For a firing dependency row, spawn **04e Dependency Auditor** with the diff.
 
-Make note of which reviewers you spawned and which reports you expect to see. After EVERY report returns, spawn **03m Finding Consolidator**. Give it all report paths. It writes a deduplicated candidate list. It does not validate findings.
+After every report returns, spawn **03m Finding Consolidator**. Give it all report paths. It writes a deduplicated candidate list.
 
 After the deduplicated candidate list exists, spawn **03n Finding Validator**. Give it the candidate list, the raw reports, the validated plan, the accepted contracts, the changed code, the tests, and the run evidence. It proves or rejects every Critical, Blocker, and High candidate. It writes the validation report and the final fix list. The orchestrator does not merge, validate, or rank findings.
 
-The committee artifact contract stays stable across the producer and the consumer:
+The committee artifact contract stays stable across the producer and the consumer. Every path below is relative to `reviews/[review-cycle]/`. Every reviewer report carries the same finding fields: `severity`, `lane`, `evidence`, `reviewer`.
 
 | Lane | Report path | Finding fields |
 |---|---|---|
-| 03c Reviewer - Plan Conformance | `reviews/[review-cycle]/03c-reviewer-plan-conformance-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
-| Reviewer - Blast Radius | `03j-reviewer-blast-radius-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
-| Reviewer - Test Falsification | `03k-reviewer-test-falsification-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
-| Reviewer - Plan Blind | `03l-reviewer-plan-blind-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
-| Cleanliness Auditor | `04h-cleanliness-auditor-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
-| Dependency Auditor | `04e-dependency-auditor-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
-| Unity Reviewer | `03h-unity-reviewer-report.md` | `severity`, `lane`, `evidence`, `reviewer` |
+| 03c Reviewer - Plan Conformance | `03c-reviewer-plan-conformance-report.md` | reviewer fields |
+| Reviewer - Blast Radius | `03j-reviewer-blast-radius-report.md` | reviewer fields |
+| Reviewer - Test Falsification | `03k-reviewer-test-falsification-report.md` | reviewer fields |
+| Reviewer - Plan Blind | `03l-reviewer-plan-blind-report.md` | reviewer fields |
+| Cleanliness Auditor | `04h-cleanliness-auditor-report.md` | reviewer fields |
+| Dependency Auditor | `04e-dependency-auditor-report.md` | reviewer fields |
+| Unity Reviewer | `03h-unity-reviewer-report.md` | reviewer fields |
 | Consolidator | `03m-finding-consolidator-candidates.md` | `candidate_id`, `severity`, `lane`, `finding`, `evidence`, `reviewers` |
 | Validator | `03n-finding-validator-validation.md` | `id`, `validation_status`, `reproduction`, `production_trace` |
 | Validated fix list | `03n-finding-validator-fix-list.md` | `id`, `severity`, `finding`, `action`, `status` |
 
-Every path after 03c Reviewer - Plan Conformance is relative to `reviews/[review-cycle]/`. Commit every cycle at the review checkpoint. The validator consumes the candidate list. The fixer consumes only the validated fix list. Pass every path you resolved to the consolidator. A specialist report you cannot locate is a missing artifact, so apply the Subagent Output Verification rule.
+Commit every cycle at the review checkpoint. The validator consumes the candidate list. The fixer consumes only the validated fix list. Pass every path you resolved to the consolidator. A specialist report you cannot locate is a missing artifact, so apply the Subagent Output Verification rule.
 
 ##### C. Consolidated fix loop
 
-A **review cycle** means Reviewers A through D, then consolidation, then validation, stored in its own directory under `reviews/`. Run one after every repair round.
+A **review cycle** means every triggered reviewer, then consolidation, then validation, stored in its own directory under `reviews/`. Run one after every repair round.
 
-**Who repairs.** Spawn **03p Feature - Fixer** at `medium` for each fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites. The implementer never applies its own review findings. Never instruct the fixer to skip reading the code it edits. How the fixer reads, repairs, and verifies is its own contract.
+**Who repairs.** Spawn **03p Feature - Fixer** at `medium` for each fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites. The implementer never applies its own review findings. Never instruct the fixer to skip reading the code it edits.
 
 **What opens a round.** Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker, and a verification blocker never opens a fix round or rebuild. Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two production fix rounds.
 
@@ -180,7 +174,7 @@ Reviewers judge findings, never regressions.
 
 **Rewrite and rebuild, once.** After two unsuccessful rounds, have **Feature - Plan Author** rewrite the feature plan once using the fix list. Validate it before the rebuild against two conditions: every RED task precedes its production change, and every baseline selector reaches its intended assertion without an import or setup failure. Correct every validation failure before implementation. A correction that makes the plan executable does not count as another rewrite. Do not rewrite or rebuild a second time.
 
-**Convergence.** When the rebuild returns, run a review cycle and tell the validator this is the post-rebuild pass. Give it the fresh candidate list, the raw reports, the validated plan, the accepted contracts, the changed code, the tests, and the run evidence. **03n Finding Validator** owns the frozen supported-path matrix and is the sole authority for convergence classes. Do not rank, merge, validate, or classify the fresh findings yourself. Act on the class it returns:
+**Convergence.** When the rebuild returns, run a review cycle and tell the validator this is the post-rebuild pass. Give it the fresh candidate list, the raw reports, the validated plan, the accepted contracts, the changed code, the tests, and the run evidence. **03n Finding Validator** owns the frozen supported-path matrix and is the sole authority for convergence classes. Act on the class it returns:
 
 - `Pass` — the feature converged. Go to stage D.
 - `Block` — classify the failure below.
@@ -189,7 +183,7 @@ Reviewers judge findings, never regressions.
 
 One condition overrides that class. A repair cycle that regresses a test passing at its own baseline is blocked whatever the matrix shows.
 
-**Classifying a still-failing feature.** Classify before you block anything. The two classes carry different consequences.
+**Classifying a still-failing feature.** Classify before you block anything.
 
 - An **implementation blocker** is a confirmed shipped defect that invalidates a downstream contract, or an absent dependency contract. Only a `production-blocker` can block dependents. Mark that feature and its dependents blocked, then continue the independent features.
 - A **verification blocker** is a missing test artifact, an unavailable runner, absent generated metadata, or a review-evidence gap. It never blocks a dependent feature. Record it as `implementation-complete, verification-pending`, name the missing evidence, set `all-approved: no`, and continue with the remaining features.
