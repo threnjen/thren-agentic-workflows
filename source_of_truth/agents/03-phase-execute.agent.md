@@ -69,7 +69,7 @@ Create a todo list entry for each feature with status `not-started`.
 
 Two later jobs also read this schedule. Step 2 expands each feature at selection time. Step 2 re-spawns the author in `revalidation` mode after each feature completes.
 
-### Step 2: Feature Development Loop
+### Step 2: Feature Development Loop (one feature at a time)
 
 Load the `implementation-pipeline-loop` skill.
 
@@ -109,15 +109,19 @@ The per-feature table is the only trigger for a feature review. The boundary tab
 
 #### Feature stage definitions
 
-Run these stages for one selected feature before you select another. The execution order schedules the features. It never authorizes two concurrent feature builds.
+Stages A through E run in order for one selected feature, then repeat for the next. Complete every stage before you select another feature. The execution order schedules the features. It never authorizes two concurrent feature builds.
 
-**A. Implement** — spawn **Feature - Implementer** with:
+##### A. Implement
+
+Spawn **Feature - Implementer** with:
 
 > "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Run the affected suites from these manifest verification assets: [verification-assets extracted from manifest, or `not provided`]. For a Unity feature contributing to the phase's visual acceptance criteria, follow `unity-development` → Visual Verification Wiring before returning so the A1 checkpoint commits those inputs. Return a summary of what was implemented, the test-execution status with its results artifact path, and test results."
 
 **A1. Implement checkpoint** — Emit the skill's implement checkpoint for this feature. The unit is `dev/feature/[0N-task-name]/`. The file `[0N-task-name]-implementation.md` names the source and test files to stage.
 
-**B. Feature Review** — Start this stage only after the implementer for that feature has returned.
+##### B. Feature Review
+
+Start this stage only after the implementer for that feature has returned.
 
 Create the next immutable `review-cycle` directory under `dev/feature/[0N-task-name]/reviews/`. Use `initial-01`, `fix-01`, `rebuild-01`, then `post-rebuild-01`, `post-rebuild-02`, and so on. Never overwrite a completed cycle.
 
@@ -159,7 +163,9 @@ The committee artifact contract stays stable across the producer and the consume
 
 Every path after Feature - Review and Fix is relative to `reviews/[review-cycle]/`. Commit every cycle at the review checkpoint. The validator consumes the candidate list. The fixer consumes only the validated fix list. Pass every path you resolved to the consolidator. A specialist report you cannot locate is a missing artifact, so apply the Subagent Output Verification rule.
 
-**C. Consolidated fix loop** — Spawn **03p Feature - Fixer** at `medium` for each fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites. The implementer never applies its own review findings.
+##### C. Consolidated fix loop
+
+Spawn **03p Feature - Fixer** at `medium` for each fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites. The implementer never applies its own review findings.
 
 Every confirmed finding marks a place where the original implementer's model of its own code was wrong, so repair belongs to an agent that reads the current code rather than one that remembers writing it.
 
@@ -220,11 +226,9 @@ A compile command that ran and failed proves a production blocker. Missing compi
 
 The per-feature table owns the `03e Diff Security Scan` entry. Do not spawn it for a non-matching diff.
 
-**D. Complete** — Mark the feature complete in the todo list. Update its manifest entry with the implementation result, the resolved review agents, the fix-round count, the carry-forward findings, the commit, the review verdict, and the validation evidence. A review verdict is `Approved`, `Approved with Reservations`, or `Changes Requested`. Record the preflight `resolution_status` under `resolved_model_status` for the Feature - Implementer tier.
+##### D. Integration test gate
 
-### Step 2.5: Feature Integration Test Gate
-
-Run this gate after each feature completes, before you select the next one. It catches a feature that breaks an earlier feature's tests. No per-feature review can see that class of defect, because every reviewer is scoped to the diff of the feature under review.
+Run this gate before you mark the feature complete. It catches a feature that breaks an earlier feature's tests. No reviewer in stage B can see that class of defect, because every reviewer is scoped to the diff of the feature under review.
 
 1. Run the integrated suite. It is the union of every affected suite plus the manifest's `## Verification Assets`. On the phase's final feature, run the suite unfiltered.
    - For Unity, consume the `unity-development` skill's Test Execution section and Execution Ladder. Do not copy their mechanics. Target `<execution-unity-project>`, preserve affected-suite `-testFilter` scoping, and write the results XML and Unity log to the absolute main-checkout artifact directory.
@@ -240,7 +244,11 @@ Run this gate after each feature completes, before you select the next one. It c
    - Do not invent counts. Do not apply either exception to a subagent's report.
 5. If the final status for any feature is not `executed-green`, set `all-approved: no`.
 
-This step emits no checkpoint of its own.
+This stage emits no checkpoint of its own.
+
+##### E. Complete
+
+Mark the feature complete in the todo list. Update its manifest entry with the implementation result, the resolved review agents, the fix-round count, the carry-forward findings, the commit, the review verdict, and the validation evidence. A review verdict is `Approved`, `Approved with Reservations`, or `Changes Requested`. Record the preflight `resolution_status` under `resolved_model_status` for the Feature - Implementer tier.
 
 <!-- ### Step 3: Visual Verification Gate (conditional)
 
@@ -338,7 +346,7 @@ Both reports travel to Step 6. **Prod Code Review** is the phase-close readiness
 
 ### Step 6: Phase Final Review
 
-Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Five other results also feed it: the feature integration test gate at Step 2.5, the visual verification verdict from Step 3, the automated QA run at Step 4b, the diff security verdict from Step 5, and the phase-close audit result from Step 5.5. Any one of them can set `all-approved: no` on its own.
+Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Five other results also feed it: the feature integration test gate at stage D, the visual verification verdict from Step 3, the automated QA run at Step 4b, the diff security verdict from Step 5, and the phase-close audit result from Step 5.5. Any one of them can set `all-approved: no` on its own.
 
 Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute four values: the verdict summary, the final aggregate `all-approved` state after every gate, the visual-verification verdict from Step 3 or its skip reason, and the Step 5.5 phase-close audit result. An absent audit keeps `all-approved: no` and still reaches this review.
 
@@ -348,7 +356,7 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-feature integration status and results artifact paths from Step 2.5]. Visual verification: [Pass | skip reason]. Automated QA run: [PASS | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode."
+> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Visual verification: [Pass | skip reason]. Automated QA run: [PASS | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode."
 >
 > Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved.
 
@@ -358,7 +366,7 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-feature integration status and results artifact paths from Step 2.5]. Visual verification: [Pass | Fail | Unverified | skip reason]. Automated QA run: [PASS | FAIL | NOT RUN | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode."
+> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Visual verification: [Pass | Fail | Unverified | skip reason]. Automated QA run: [PASS | FAIL | NOT RUN | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode."
 >
 > Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved.
 
@@ -386,7 +394,7 @@ Follow the Post-Loop: Documentation Update section from the `implementation-pipe
 
 ### Test Failures
 
-See the Test Execution Gate section of the `implementation-pipeline-loop` skill for per-feature handling. See Step 2.5 above for the feature integration gate.
+See the Test Execution Gate section of the `implementation-pipeline-loop` skill for per-feature handling. See stage D of the feature loop for the integration gate.
 
 ### Documentation Drift
 

@@ -208,9 +208,9 @@ def test_required_unity_consumers_are_present() -> None:
     }
 
 
-def test_phase_execute_feature_integration_gate_contract() -> None:
+def test_phase_execute_integration_gate_stage_contract() -> None:
     text = _consumer_texts()["phase_execute"]
-    section = _section(text, "### Step 2.5: Feature Integration Test Gate", 3)
+    section = _section(text, "##### D. Integration test gate", 5)
     assert not _phase_execute_errors(section), sorted(_phase_execute_errors(section))
 
 
@@ -277,7 +277,7 @@ def test_phase_execute_mutations_are_killed(
     needle: str, replacement: str, obligation: str
 ) -> None:
     text = _consumer_texts()["phase_execute"]
-    section = _section(text, "### Step 2.5: Feature Integration Test Gate", 3)
+    section = _section(text, "##### D. Integration test gate", 5)
     assert needle in section, f"mutation target missing for {obligation}"
     assert obligation in _phase_execute_errors(section.replace(needle, replacement))
 

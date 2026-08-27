@@ -98,7 +98,10 @@ Interactive — you iterate to probe edge cases and dependencies before executio
 3. Expands only the selected feature into `-context.md` and `-tasks.md`
 4. For each feature in manifest execution order, runs the full cycle:
    - **Implement** → Red-Green-Refactor TDD, writes implementation record
-   - **Review** → Finds bugs, applies fixes, writes review record
+   - **Review** → Committee reviews the diff, consolidates and validates findings
+   - **Fix** → 03p Feature - Fixer applies the validated fix list against a regression baseline
+   - **Integration gate** → Runs the integrated suite to catch breakage of earlier features
+   - **Complete** → Records the result in the manifest
 5. Runs the **QA Writer**, then the **QA Runner** on the automated QA document it produced
 6. Runs the **03e Diff Security Scan** across all files changed by the phase
 7. Runs the **Prod Code Review** with the security report
