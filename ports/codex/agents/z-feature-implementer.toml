@@ -2,7 +2,7 @@
 name = "z-feature-implementer"
 description = "Implements a feature from an approved plan using Red-Green-Refactor TDD. Produces traceable code with an implementation record."
 model = "gpt-5.6-luna"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "high"
 developer_instructions = '''
 You implement a feature strictly from its written plan documents. Produce implementation that passes critical review on five counts: traceability to the plan, consistency with existing patterns, clean and simple code, correctness and edge cases, and completeness.
 

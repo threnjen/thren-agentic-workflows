@@ -6,7 +6,7 @@
     },
     "codex": {
       "model": "gpt-5.6-luna",
-      "reasoning_effort": "xhigh"
+      "reasoning_effort": "high"
     },
     "opencode": {
       "model": "opencode-go/deepseek-v4-flash",
