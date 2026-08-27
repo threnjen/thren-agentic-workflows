@@ -115,26 +115,28 @@ def _delta_errors(text: str) -> set[str]:
 
 
 def _phase_errors(text: str) -> set[str]:
-    """Phase - Execute must carry no audit bookend and must keep the backstop.
+    """Phase - Execute must carry no audit bookend and must keep a phase-close audit.
 
     The bookend ran a two-snapshot audit matrix, a delta, and an attribution
     pass at every phase close. It was removed because it was declined every
-    time. The phase-close architecture backstop is a boundary-table row that
-    predates it and must survive its removal.
+    time. Auditor - Refactor's architecture backstop outlived it, then was cut
+    too: it duplicated Prod Code Review as a second phase-close gate. What must
+    survive is the property the backstop carried and the level-closure rows
+    never did - a phase-close audit whose absence blocks all-approved.
     """
     errors: set[str] = set()
-    for phrase in ("bookend", "audit-comparison", "Auditor - Delta", "Auditor - Attribution", "Baseline Worktree"):
+    for phrase in ("bookend", "audit-comparison", "Auditor - Delta", "Auditor - Attribution", "Baseline Worktree", "Auditor - Refactor"):
         if phrase in text:
             errors.add(f"audit bookend residue: {phrase}")
-    heading = "### Step 5.5: Phase-Close Architecture Backstop"
+    heading = "### Step 5.5: Phase-Close Audits"
     if heading not in text:
-        errors.add("architecture backstop")
+        errors.add("phase-close audit")
         return errors
-    backstop = _section(text, heading, "### Step 6:")
-    if "Spawn **Auditor - Refactor** for the final architecture backstop" not in backstop:
-        errors.add("architecture backstop")
-    if "architecture-backstop: absent" not in backstop:
-        errors.add("absent backstop is not clean")
+    audits = _section(text, heading, "### Step 6:")
+    if "Spawn `04d Consistency Auditor` and `04f Test Health` concurrently" not in audits:
+        errors.add("phase-close audit")
+    if "phase-close-audits: absent" not in audits:
+        errors.add("absent audit is not clean")
     return errors
 
 
@@ -149,6 +151,7 @@ def _topology_errors() -> set[str]:
     removed = {
         "Auditor - Code",
         "Auditor - Infra",
+        "Auditor - Refactor",
         "Auditor - Delta",
         "Auditor - Attribution",
         "Baseline Worktree",
@@ -157,8 +160,9 @@ def _topology_errors() -> set[str]:
     stale = removed & set(phase.subagents)
     if stale:
         errors.add(f"Phase Execute still rosters bookend leaves: {sorted(stale)}")
-    if "Auditor - Refactor" not in set(phase.subagents):
-        errors.add("Phase Execute dropped the architecture backstop leaf")
+    for leaf in ("04d Consistency Auditor", "04f Test Health"):
+        if leaf not in set(phase.subagents):
+            errors.add(f"Phase Execute dropped the phase-close audit leaf: {leaf}")
     return errors
 
 
@@ -181,7 +185,7 @@ def test_finalized_skill_and_consumers_have_no_contract_errors() -> None:
         ("skill output root", SKILL_PATH, "Every report, summary, delta, queue, and attribution update is written below\n  this root.", _skill_errors, "output root confinement"),
         ("skill cleanup", SKILL_PATH, "After the attribution stage completes", _skill_errors, "cleanup after attribution"),
         ("delta matrix", DELTA_PATH, "State the matrix back to the user", _delta_errors, "delta matrix confirmation"),
-        ("phase backstop", PHASE_EXECUTE_PATH, "Spawn **Auditor - Refactor** for the final architecture backstop", _phase_errors, "architecture backstop"),
+        ("phase-close audit", PHASE_EXECUTE_PATH, "Spawn `04d Consistency Auditor` and `04f Test Health` concurrently", _phase_errors, "phase-close audit"),
     ],
 )
 def test_load_bearing_deletion_is_red(
@@ -201,21 +205,27 @@ def test_load_bearing_deletion_is_red(
     [
         (
             "bookend returns",
-            "Spawn **Auditor - Refactor** for the final architecture backstop",
-            "Run the accepted audit bookend, then spawn **Auditor - Refactor** for the final architecture backstop",
+            "Spawn `04d Consistency Auditor` and `04f Test Health` concurrently",
+            "Run the accepted audit bookend, then spawn `04d Consistency Auditor` and `04f Test Health` concurrently",
             "audit bookend residue: bookend",
         ),
         (
-            "backstop heading dropped",
-            "### Step 5.5: Phase-Close Architecture Backstop",
-            "### Step 5.5: Notes",
-            "architecture backstop",
+            "refactor auditor returns",
+            "Spawn `04d Consistency Auditor` and `04f Test Health` concurrently",
+            "Spawn **Auditor - Refactor** concurrently",
+            "audit bookend residue: Auditor - Refactor",
         ),
         (
-            "absent backstop reads clean",
-            "architecture-backstop: absent",
-            "architecture-backstop: fine",
-            "absent backstop is not clean",
+            "phase-close audit heading dropped",
+            "### Step 5.5: Phase-Close Audits",
+            "### Step 5.5: Notes",
+            "phase-close audit",
+        ),
+        (
+            "absent audit reads clean",
+            "phase-close-audits: absent",
+            "phase-close-audits: fine",
+            "absent audit is not clean",
         ),
     ],
 )

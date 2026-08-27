@@ -27,7 +27,6 @@ PER_FEATURE_AGENTS = {
     "Visual Verifier",
 }
 BOUNDARY_AGENTS = {
-    "Auditor - Refactor",
     "04d Consistency Auditor",
     "04f Test Health",
     "Prod Code Review",
@@ -73,7 +72,7 @@ def _table_coverage_errors(text: str) -> set[str]:
 
     if len(per_rows) != 9:
         errors.add("per-feature row count")
-    if len(boundary_rows) != 5:
+    if len(boundary_rows) != 3:
         errors.add("boundary row count")
     if set(per_names) != PER_FEATURE_AGENTS:
         errors.add("per-feature roster")
@@ -86,18 +85,6 @@ def _table_coverage_errors(text: str) -> set[str]:
     if any(not condition for _, condition in per_rows + boundary_rows):
         errors.add("empty trigger condition")
     return errors
-
-
-def _is_source_or_test(path: str) -> bool:
-    return path.startswith("tests/") or Path(path).suffix in {
-        ".py",
-        ".cs",
-        ".js",
-        ".ts",
-        ".tsx",
-        ".go",
-        ".rs",
-    }
 
 
 def _matches_security(path: str) -> bool:
@@ -125,19 +112,12 @@ def _predicted_agents(
     text: str,
     changed_files: list[str],
     *,
-    imports_reference: bool = False,
     is_unity_project: bool = False,
     visual_acceptance: bool = False,
 ) -> set[str]:
     predicted: set[str] = set()
     for agent, condition in _table_rows(text, "##### Per-feature review triggers"):
         if condition == "Always":
-            predicted.add(agent)
-        elif "another file imports or references" in condition and imports_reference:
-            predicted.add(agent)
-        elif "source or test file" in condition and any(
-            _is_source_or_test(path) for path in changed_files
-        ):
             predicted.add(agent)
         elif "authentication" in condition and any(
             _matches_security(path) for path in changed_files
@@ -219,17 +199,17 @@ EVIDENCE_CLASSIFICATION_CONTRACT = (
 )
 
 
-# The committee-miss record left this contract with the audit bookend: it
-# compared phase-end audit findings against the committee fix lists, and there
-# is no phase-end audit any more.
-BACKSTOP_CONTRACT = (
-    "architecture-backstop: executed",
-    "architecture-backstop: absent",
+# Auditor - Refactor was cut from this pipeline. Its phase-close backstop became
+# the phase-close audit pair, which keeps the property the backstop had and the
+# level-closure rows never did: an absent result blocks all-approved.
+PHASE_CLOSE_AUDIT_CONTRACT = (
+    "phase-close-audits: executed",
+    "phase-close-audits: absent",
 )
 
 
-def _missing_backstop_contract(text: str) -> set[str]:
-    return {phrase for phrase in BACKSTOP_CONTRACT if phrase not in text}
+def _missing_phase_close_audit_contract(text: str) -> set[str]:
+    return {phrase for phrase in PHASE_CLOSE_AUDIT_CONTRACT if phrase not in text}
 
 
 def _visual_flag_errors(text: str) -> set[str]:
@@ -248,39 +228,27 @@ def test_trigger_tables_have_exact_rosters_and_conditions() -> None:
 
 def test_changed_file_scenarios_resolve_the_predicted_agent_set() -> None:
     text = _read(PHASE_PATH)
+    # 04h is unconditional: it fires on a docs-only diff too. It was widened
+    # from a reference-graph condition and relabelled Always to match.
     always = {
         "Feature - Review and Fix",
         "03j Reviewer - Blast Radius",
         "03k Reviewer - Test Falsification",
         "03l Reviewer - Plan Blind",
+        "04h Cleanliness Auditor",
     }
     cases = (
         ("isolated", ["docs/new.md"], {}, always),
-        (
-            "imported symbol",
-            ["src/core.py"],
-            {"imports_reference": True},
-            always | {"04h Cleanliness Auditor"},
-        ),
+        ("imported symbol", ["src/core.py"], {}, always),
         ("lockfile", ["uv.lock"], {}, always | {"04e Dependency Auditor"}),
-        (
-            "authentication",
-            ["src/auth.py"],
-            {},
-            always | {"04h Cleanliness Auditor", "03e Diff Security Scan"},
-        ),
+        ("authentication", ["src/auth.py"], {}, always | {"03e Diff Security Scan"}),
         (
             "Unity C#",
             ["Assets/Runtime/Spawner.cs"],
             {"is_unity_project": True},
-            always | {"04h Cleanliness Auditor", "Unity Reviewer"},
+            always | {"Unity Reviewer"},
         ),
-        (
-            "non-Unity C#",
-            ["Assets/Runtime/Spawner.cs"],
-            {},
-            always | {"04h Cleanliness Auditor"},
-        ),
+        ("non-Unity C#", ["Assets/Runtime/Spawner.cs"], {}, always),
     )
     for label, files, options, expected in cases:
         assert _predicted_agents(text, files, **options) == expected, label
@@ -302,7 +270,7 @@ def test_visual_and_security_rows_have_one_entry_point() -> None:
     assert "Run it only when ALL" not in visual_section
 
     security_section = text.split("### Step 5: Diff Security Review", 1)[1]
-    security_section = security_section.split("### Step 5.5: Audit Bookend", 1)[0]
+    security_section = security_section.split("### Step 5.5: Phase-Close Audits", 1)[0]
     assert "Collect the reports from every feature" in security_section
     assert "spawn the **03e Diff Security Scan**" not in security_section
 
@@ -311,10 +279,11 @@ def test_boundary_events_resolve_the_predicted_agent_set() -> None:
     text = _read(PHASE_PATH)
     assert _predicted_boundary_agents(
         text, dependency_level_closed=True, phase_closing=False
-    ) == {"Auditor - Refactor", "04d Consistency Auditor", "04f Test Health"}
+    ) == set()
     assert _predicted_boundary_agents(
         text, dependency_level_closed=False, phase_closing=True
-    ) == {"Auditor - Refactor", "Prod Code Review"}
+    ) == {"04d Consistency Auditor", "04f Test Health", "Prod Code Review"}
+    assert "Auditor - Refactor" not in text
 
 
 def test_trigger_table_guard_fails_when_a_row_is_removed() -> None:
@@ -393,9 +362,11 @@ def test_serious_findings_are_validated_before_repair() -> None:
         assert phrase in validator
 
 
-def test_phase_close_backstop_and_committee_miss_are_load_bearing() -> None:
+def test_phase_close_audits_and_committee_miss_are_load_bearing() -> None:
     text = _read(PHASE_PATH)
-    assert not _missing_backstop_contract(text)
-    for phrase in BACKSTOP_CONTRACT:
+    assert not _missing_phase_close_audit_contract(text)
+    for phrase in PHASE_CLOSE_AUDIT_CONTRACT:
         assert phrase in text
-        assert phrase in _missing_backstop_contract(text.replace(phrase, "", 1))
+        assert phrase in _missing_phase_close_audit_contract(
+            text.replace(phrase, "", 1)
+        )
