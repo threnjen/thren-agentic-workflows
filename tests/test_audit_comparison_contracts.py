@@ -128,7 +128,7 @@ def _phase_errors(text: str) -> set[str]:
     for phrase in ("bookend", "audit-comparison", "Auditor - Delta", "Auditor - Attribution", "Baseline Worktree", "Auditor - Refactor"):
         if phrase in text:
             errors.add(f"audit bookend residue: {phrase}")
-    heading = "### Step 4: Phase-Close Review"
+    heading = "### Step 4: Phase-Close Audits"
     if heading not in text:
         errors.add("phase-close audit")
         return errors
@@ -217,7 +217,7 @@ def test_load_bearing_deletion_is_red(
         ),
         (
             "phase-close audit heading dropped",
-            "### Step 4: Phase-Close Review",
+            "### Step 4: Phase-Close Audits",
             "### Step 4: Notes",
             "phase-close audit",
         ),

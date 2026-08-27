@@ -38,7 +38,7 @@ EVIDENCE_CLASSIFICATION_CONTRACT = (
 def test_security_scan_has_one_entry_point() -> None:
     """Step 4 owns the only spawn of 03e; no feature stage may reintroduce one."""
     text = _read(PHASE_PATH)
-    security_section = text.split("### Step 4: Phase-Close Review", 1)[1]
+    security_section = text.split("### Step 4: Phase-Close Audits", 1)[1]
     security_section = security_section.split("### Step 5: Phase Final Review", 1)[0]
     assert "**03e Diff Security Scan** concurrently" in security_section
     assert "Spawn `03e` at `high`" in security_section

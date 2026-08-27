@@ -44,7 +44,7 @@ mattered.
 | Step 6 final checkpoint | Re-add `the Step 3 visual-verification report,` to the aggregation list. |
 
 **The Step 3 slot is no longer free.** After the gate was removed, the remaining steps were
-renumbered to close the gap. The file now runs 1, 2, 3 (QA), 4 (Phase-Close Review), 5 (Phase Final
+renumbered to close the gap. The file now runs 1, 2, 3 (QA), 4 (Phase-Close Audits), 5 (Phase Final
 Review), 6 (Report), 7 (Documentation).
 
 Every step number in the table above, and in

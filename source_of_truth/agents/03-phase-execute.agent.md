@@ -54,7 +54,7 @@ Verify that the manifest and every named plan file exist on disk before you sche
 #### Validate the schedule
 
 1. Read each manifest entry. Validate its `status`, `execution_order`, `prerequisites`, `expected_read_set`, `expected_write_set`, `plan_revision`, `last_validation_commit`, `stale_reason`, and `resolved_model_status`. On a malformed or missing field, re-spawn the author once. Do not repair the manifest yourself.
-2. Read the author's fidelity-table departures and its `[PROPOSED - name TBD]` labels. Never accept an unexplained departure. Re-spawn the author for its reason.
+2. Read the author's fidelity-table departures and its `[PROPOSED - name TBD]` labels. Both travel to the Plan Expander and to Step 5 as known risk. Never accept an unexplained departure. Re-spawn the author for its reason.
 3. Extract the manifest's `## Verification Assets` section if it exists. If the section is missing, record `verification-assets: not provided` and continue.
 
 Do not rebuild the schedule from stale plan metadata. Rebuild it from the graph and the living manifest.
@@ -80,10 +80,6 @@ Treat the manifest and the per-feature checkpoint commits as execution memory. N
 Execute one feature at a time, in the manifest's execution order.
 
 Validate the selected feature's bundle before you build it. Each bundle must contain `-plan.md`, `-context.md`, and `-tasks.md`. Expand only the selected feature against the repository state at selection time by spawning **Feature - Plan Expander** when its context or tasks are absent or stale. Pass it the phase-level discovery values from Step 1, the fidelity-table departures, and the `[PROPOSED - name TBD]` labels.
-
-After each feature completes, identify every affected future feature and every downstream dependent of an affected feature.
-
-Spawn **Feature - Plan Author** in `revalidation` mode. Pass it the completed feature, the affected future features, and their downstream dependents. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. The author owns the recomputation bound. Stop the run and report when it returns a graph that did not reach a fixed point.
 
 #### Feature stage definitions
 
@@ -197,6 +193,10 @@ This stage emits no checkpoint of its own.
 
 Mark the feature complete in the todo list. Update its manifest entry with the implementation result, the resolved review agents, the fix-round count, the carry-forward findings, the commit, the review verdict, and the validation evidence. A review verdict is `Approved`, `Approved with Reservations`, or `Changes Requested`. Record the preflight `resolution_status` under `resolved_model_status` for the Feature - Implementer tier.
 
+Then identify every affected future feature and every downstream dependent of an affected feature.
+
+Spawn **Feature - Plan Author** in `revalidation` mode. Pass it the completed feature, the affected future features, and their downstream dependents. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. The author owns the recomputation bound. Stop the run and report when it returns a graph that did not reach a fixed point.
+
 ### Step 3: QA
 
 Produce the QA documents for this execution. Then run the automated one. Never ask the user to run a command this pipeline could run itself.
@@ -239,7 +239,7 @@ Emit the skill's QA checkpoint once. This stage produced the three QA outputs an
 
 The skill's staging rules exclude the evidence directory. It is untracked run output.
 
-### Step 4: Phase-Close Review
+### Step 4: Phase-Close Audits
 
 Run the phase-close reviews here. Three things must complete first: every feature, every feature integration test gate, and QA.
 
@@ -271,13 +271,13 @@ This step emits no checkpoint of its own.
 
 Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 3b, and both the diff security verdict and the phase-close audit result from Step 4. Any one of them can set `all-approved: no` on its own. Manual QA is not one of them. It runs after this pipeline, so an unexecuted manual checklist never sets `all-approved: no`.
 
-Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute three values: the verdict summary, the final aggregate `all-approved` state after every gate, and the Step 4 phase-close audit result. An absent audit keeps `all-approved: no` and still reaches this review.
+Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute four values: the verdict summary, the final aggregate `all-approved` state after every gate, the Step 4 phase-close audit result, and the author's fidelity-table departures. An absent audit keeps `all-approved: no` and still reaches this review.
 
 **If QA was generated and the complete pipeline is `all-approved: yes`:**
 
 > "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. Manual QA plan: `[manual QA path]`. Automated QA: `[automated QA path, or `none written`]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
 >
-> Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
+> Manifest verification assets: [verification-assets extracted from manifest, or `not provided`]. Known plan risk: [fidelity-table departures and `[PROPOSED - name TBD]` labels, or `none recorded`].
 >
 > Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Automated QA run: [PASS | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode. Manual QA has not run and is not a gate. Do not treat the unexecuted manual checklist as a blocking item or a condition."
 >
@@ -287,7 +287,7 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 
 > "[SUBAGENT-MODE] Perform the final pre-production readiness analysis for the phase. Feature task folders: [list all dev/feature/[0N-task-name]/ paths]. Manual QA plan: `[manual QA path]`. Automated QA: `[automated QA path, or `none written`]`. Write the analysis to `docs/phases/[phase-name]/[phase-name]-qa-analysis.md`. Return the verdict and a summary of findings.
 >
-> Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
+> Manifest verification assets: [verification-assets extracted from manifest, or `not provided`]. Known plan risk: [fidelity-table departures and `[PROPOSED - name TBD]` labels, or `none recorded`].
 >
 > Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Automated QA run: [PASS | FAIL | NOT RUN | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode. Manual QA has not run and is not a gate. Do not treat the unexecuted manual checklist as a blocking item or a condition."
 >
