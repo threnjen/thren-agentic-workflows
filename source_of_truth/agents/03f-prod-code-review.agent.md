@@ -181,6 +181,8 @@ State one of:
 | **GO WITH CONDITIONS** | Minor gaps exist but can be addressed during QA or are low-risk. List the conditions that must be monitored. |
 | **NO-GO** | Significant gaps, contradictions, or risks that must be resolved before manual QA begins. List all blocking issues. |
 
+Manual QA has not run when you reach this gate, and it never runs before it. An unexecuted manual checklist is the expected state, not a gap. Never make it a blocking item and never list it as a condition. Judge the phase on what the pipeline verified: review verdicts, the test-execution gate, the automated QA run, the security scan, and the phase-close audits.
+
 ### Executive Summary
 
 Three to five sentences covering:

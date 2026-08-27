@@ -239,6 +239,8 @@ After the subagent returns:
 - Verify that the manual QA document exists at the determined path.
 - Verify that the coverage map exists at the determined path.
 - Check whether the automated QA document exists. Record `automated-qa: written | none`.
+- Read the manual document's items. A manual item earns its place only when its stated reason is visual inspection, a real environment, a live service, or UX judgment. Any other reason is a check a command could decide.
+- If any item fails that test, re-spawn **Feature - QA Writer** once with the mis-sorted items named and instruct it to move each one into the automated document. Continue with whatever it returns.
 
 #### Step 4b: spawn QA Runner
 
@@ -294,7 +296,7 @@ This step emits no checkpoint of its own. The Phase Final Review checkpoint (Ste
 
 ### Step 6: Phase Final Review
 
-Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 4b, and both the diff security verdict and the phase-close audit result from Step 5. Any one of them can set `all-approved: no` on its own.
+Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 4b, and both the diff security verdict and the phase-close audit result from Step 5. Any one of them can set `all-approved: no` on its own. Manual QA is not one of them. It runs after this pipeline, so an unexecuted manual checklist never sets `all-approved: no`.
 
 Spawn the **Prod Code Review** subagent. Build the prompt from the applicable template below. Substitute three values: the verdict summary, the final aggregate `all-approved` state after every gate, and the Step 5 phase-close audit result. An absent audit keeps `all-approved: no` and still reaches this review.
 
@@ -304,7 +306,7 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Automated QA run: [PASS | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode."
+> Review verdicts: [task-1: Approved, task-2: Approved, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Automated QA run: [PASS | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS]). Complete pipeline `all-approved: yes` — use fast-track mode. Manual QA has not run and is not a gate. Do not treat the unexecuted manual checklist as a blocking item or a condition."
 >
 > Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved.
 
@@ -314,7 +316,7 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Manifest verification assets: [verification-assets extracted from manifest, or `not provided`].
 >
-> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Automated QA run: [PASS | FAIL | NOT RUN | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode."
+> Review verdicts: [task-1: Approved, task-2: Changes Requested, ...]. Test execution: [per-feature integration status and results artifact paths from stage D]. Automated QA run: [PASS | FAIL | NOT RUN | N/A (no automated checks)]. Security scan: `[security report path]` ([PASS | PASS WITH CONDITIONS | BLOCKED | NOT RUN]). Complete pipeline `all-approved: no` — use standard mode. Manual QA has not run and is not a gate. Do not treat the unexecuted manual checklist as a blocking item or a condition."
 >
 > Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved.
 
