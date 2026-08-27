@@ -128,12 +128,12 @@ def _phase_errors(text: str) -> set[str]:
     for phrase in ("bookend", "audit-comparison", "Auditor - Delta", "Auditor - Attribution", "Baseline Worktree", "Auditor - Refactor"):
         if phrase in text:
             errors.add(f"audit bookend residue: {phrase}")
-    heading = "### Step 5.5: Phase-Close Audits"
+    heading = "### Step 4: Phase-Close Audits"
     if heading not in text:
         errors.add("phase-close audit")
         return errors
-    audits = _section(text, heading, "### Step 6:")
-    if "Spawn `04d Consistency Auditor` and `04f Test Health` concurrently" not in audits:
+    audits = _section(text, heading, "### Step 5:")
+    if "Spawn **04d Consistency Auditor**, **04f Test Health**, and **03e Diff Security Scan** concurrently" not in audits:
         errors.add("phase-close audit")
     if "phase-close-audits: absent" not in audits:
         errors.add("absent audit is not clean")
@@ -185,7 +185,7 @@ def test_finalized_skill_and_consumers_have_no_contract_errors() -> None:
         ("skill output root", SKILL_PATH, "Every report, summary, delta, queue, and attribution update is written below\n  this root.", _skill_errors, "output root confinement"),
         ("skill cleanup", SKILL_PATH, "After the attribution stage completes", _skill_errors, "cleanup after attribution"),
         ("delta matrix", DELTA_PATH, "State the matrix back to the user", _delta_errors, "delta matrix confirmation"),
-        ("phase-close audit", PHASE_EXECUTE_PATH, "Spawn `04d Consistency Auditor` and `04f Test Health` concurrently", _phase_errors, "phase-close audit"),
+        ("phase-close audit", PHASE_EXECUTE_PATH, "Spawn **04d Consistency Auditor**, **04f Test Health**, and **03e Diff Security Scan** concurrently", _phase_errors, "phase-close audit"),
     ],
 )
 def test_load_bearing_deletion_is_red(
@@ -205,20 +205,20 @@ def test_load_bearing_deletion_is_red(
     [
         (
             "bookend returns",
-            "Spawn `04d Consistency Auditor` and `04f Test Health` concurrently",
+            "Spawn **04d Consistency Auditor**, **04f Test Health**, and **03e Diff Security Scan** concurrently",
             "Run the accepted audit bookend, then spawn `04d Consistency Auditor` and `04f Test Health` concurrently",
             "audit bookend residue: bookend",
         ),
         (
             "refactor auditor returns",
-            "Spawn `04d Consistency Auditor` and `04f Test Health` concurrently",
+            "Spawn **04d Consistency Auditor**, **04f Test Health**, and **03e Diff Security Scan** concurrently",
             "Spawn **Auditor - Refactor** concurrently",
             "audit bookend residue: Auditor - Refactor",
         ),
         (
             "phase-close audit heading dropped",
-            "### Step 5.5: Phase-Close Audits",
-            "### Step 5.5: Notes",
+            "### Step 4: Phase-Close Audits",
+            "### Step 4: Notes",
             "phase-close audit",
         ),
         (

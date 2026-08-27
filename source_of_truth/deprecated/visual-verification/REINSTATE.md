@@ -36,14 +36,25 @@ mattered.
 | Implementer spawn prompt | Append to the Unity sentence: `For a Unity feature contributing to the phase's visual acceptance criteria, follow` `unity-development` `→ Visual Verification Wiring before returning so the A1 checkpoint commits those inputs.` This is what commits capture inputs before the A1 checkpoint — a shadow worktree can only test committed inputs, so without it the gate reads a stale checkout. |
 | Step 4b QA escalation | `exactly like the security scan.` → `exactly like the security scan and the visual gate.` |
 | Step 4c staging rules | `The skill's staging rules exclude one artifact.` → `exclude two artifacts`, and re-add `The Step 6 checkpoint owns the Step 3 visual-verification report.` |
-| Step 5.5 audit ordering | `Four things must complete first:` → `Five things`, re-adding `visual verification` after the integration test gate. |
+| Step 5 phase-close ordering | `Three things must complete first:` → `Four things`, re-adding `visual verification` after the integration test gate. |
 | Step 6 `all-approved` inputs | `Four other results also feed it:` → `Five other results`, re-adding `the visual verification verdict from Step 3,` after the stage D gate. |
-| Step 6 Prod Code Review substitutions | `Substitute three values:` → `Substitute four values:`, re-adding `the visual-verification verdict from Step 3 or its skip reason,` before the Step 5.5 result. |
+| Step 6 Prod Code Review substitutions | `Substitute three values:` → `Substitute four values:`, re-adding `the visual-verification verdict from Step 3 or its skip reason,` before the Step 5 phase-close result. |
 | Fast-track prompt template | Re-add ` Visual verification: [Pass \| skip reason].` after the test-execution sentence. |
 | Standard prompt template | Re-add ` Visual verification: [Pass \| Fail \| Unverified \| skip reason].` in the same position. |
 | Step 6 final checkpoint | Re-add `the Step 3 visual-verification report,` to the aggregation list. |
 
-Step 3 was not renumbered on removal. Steps run 2, 4, 5, 5.5, 6, so the slot is still free.
+**The Step 3 slot is no longer free.** After the gate was removed, the remaining steps were
+renumbered to close the gap. The file now runs 1, 2, 3 (QA), 4 (Phase-Close Audits), 5 (Phase Final
+Review), 6 (Report), 7 (Documentation).
+
+Every step number in the table above, and in
+`phase-execute-step-3-visual-verification-gate.md`, uses the **post-reinstatement** numbering, which
+is the numbering the file had when the gate was removed. Reinstating the gate as Step 3 shifts
+today's Steps 3 through 7 to 4 through 8 and makes those numbers correct again. Renumber first, then
+restore the references. Find each site by its quoted text, not by its step number.
+
+Two test modules also pin these headings and need the same shift:
+`tests/test_phase_execute_contracts.py` and `tests/test_audit_comparison_contracts.py`.
 
 ### The plan flag — the actual entry point
 
@@ -84,7 +95,7 @@ being capture-specific.
 
 Deleted rather than left to pass vacuously on absent text:
 
-- `test_review_trigger_tables.py` — `Visual Verifier` roster entry, the `visual_acceptance` parameter and its predicate branch, `test_visual_verifier_uses_the_required_plan_flag`, `_visual_flag_errors`, `test_visual_plan_flag_guard_is_load_bearing`. `test_visual_and_security_rows_have_one_entry_point` was narrowed to the security row and renamed `test_security_row_has_one_entry_point`.
+- `test_phase_execute_contracts.py` (formerly `test_review_trigger_tables.py`) — `Visual Verifier` roster entry, the `visual_acceptance` parameter and its predicate branch, `test_visual_verifier_uses_the_required_plan_flag`, `_visual_flag_errors`, `test_visual_plan_flag_guard_is_load_bearing`. `test_visual_and_security_rows_have_one_entry_point` was narrowed to the security row and renamed `test_security_row_has_one_entry_point`.
 - `test_unity_consumer_contract.py` — the `visual_verifier` consumer entry (and its `len(CONSUMER_PATHS)` count, 3 → 2), `_visual_verifier_errors`, `_phase_visual_gate_errors`, `test_phase_execute_visual_gate_commit_contract`, `test_visual_verifier_invocation_contract`, and both parametrized mutation blocks.
 - `test_unity_skill_contract.py` — the editor-discovery contract was **inverted**, not deleted. It asserted the skill must *not* copy `VISUAL_VERIFICATION_UNITY`; it now asserts the skill *must* own the ladder. Three mutation rows were retargeted onto the inverted obligations. Restoring the old delegation means re-inverting this, which the discovery note above advises against.
 - `test_model_routing.py`, `test_agent_renumbering.py` — one row each for `03g`.

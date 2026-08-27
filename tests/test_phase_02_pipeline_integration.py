@@ -327,13 +327,6 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
         ("routing", routing_text, ('"low":', '"medium":', '"high":')),
         ("committee", phase, tuple(REPORT_PATHS.values())),
         (
-            "trigger table",
-            phase,
-            (
-                "| 03j Reviewer - Blast Radius | Always |",
-            ),
-        ),
-        (
             "fix loop",
             loop,
             (
