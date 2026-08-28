@@ -65,11 +65,11 @@ Give every review step in the pipeline a natural stopping point, and delete the 
 
 ## Technical Context
 
-- `source_of_truth/agents/03-phase-execute.agent.md` — the orchestrator. Damage is concentrated in Step 2 stages B and C, and in Step 4b–4c
+- `source_of_truth/agents/03-phase-execute.agent.md` — the orchestrator. Step 2 now runs A implement, B review-and-fix, D test gate, E complete. The chorus spawns sit in Step 4a and feed the Consolidator at Step 4b; Feature 3 restructures them into the three roster classes
 - `source_of_truth/agents/03c-reviewer-plan-conformance.agent.md` — the review-and-fix agent. It holds `tools: [read, edit, search, execute, todo]` and sits outside the read-only-agent enumeration, mirroring `03p Feature - Fixer`. Seventeen files reference it, five of them instruction `applyTo` globs, which is why it changed in place rather than moving to a new number
 - `source_of_truth/agents/03l-reviewer-plan-blind.agent.md` — stays, moves to phase close
 - `03m Finding Consolidator`, `03n Finding Validator`, `03p Feature - Fixer` — survive at phase close only
-- `source_of_truth/skills/implementation-pipeline-loop` — defines the checkpoint scheme the feature loop emits
+- `source_of_truth/skills/implementation-pipeline-loop` — defines the checkpoint scheme the feature loop emits. Its Committee Review and Fix Loop section is retired; Step B is one review-and-fix call
 - `scripts/propagate_master_assets.py` — agents author under `source_of_truth/` only, then run this script to convergence. The regenerated `ports/` and `.github/` output is committed with the source change
 - `docs/learnings/project-learnings.md` — contains the four prior diagnoses this phase supersedes
 - `.venv` is gitignored and rebuilt with `uv venv .venv --python 3.12` plus `requirements-dev.txt`. The phase-start baseline is recorded in `docs/phases/PHASE_03/PHASE_03_TEST_BASELINE.md` and is fully green, with no exempt tests

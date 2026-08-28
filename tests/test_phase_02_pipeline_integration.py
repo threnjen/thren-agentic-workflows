@@ -165,7 +165,6 @@ def test_phase_consumers_resolve_producer_contracts() -> None:
 
     validator = agents["03n-finding-validator"].body
     assert not _missing_tokens(validator, FIX_LIST_FIELDS)
-    assert "final fix list" in loop_skill
     assert "final fix list" in phase
     assert "Review findings" in record_skill
 
@@ -327,20 +326,14 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
         ("routing", routing_text, ('"low":', '"medium":', '"high":')),
         ("committee", phase, tuple(REPORT_PATHS.values())),
         (
-            "fix loop",
-            loop,
+            "review and fix",
+            phase,
             (
-                "Only independently confirmed `Critical`, `Blocker`, and `High` production defects",
-                "carry-forward",
-                "two production fix rounds",
-                "Run post-rebuild consolidation and validation before classifying the rebuilt feature",
-                "A verification blocker never opens a fix round or rebuild",
-                "freeze and record a finite supported-path matrix",
-                "Pass when no `Critical`, `Blocker`, or `High` production cells remain",
-                "Block when one repair cycle closes no failing production cells",
-                "Escalate when a reviewer identifies a new requirement or supported path outside the frozen matrix",
-                "Do not rewrite or rebuild a second time",
+                "The reviewer gets one round.",
+                "never open a fix round of your own",
+                "An unfixed finding is not a blocker here",
                 "Only a `production-blocker` can block dependents",
+                "A failing test the baseline does not name is a regression",
             ),
         ),
     )

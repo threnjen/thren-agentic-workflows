@@ -26,71 +26,14 @@ After the subagent returns:
 
 spawn the **z-reviewer-plan-conformance** subagent:
 
-> "[SUBAGENT-MODE] Review the implementation at `[plan-path]`. Read the plan files and implementation record, review all changed code, and write the review record to `[plan-path]/[task-name]-review.md`. Do not edit source, tests, or configuration — report what you find. Manifest verification assets — run these affected suites if the change touches a shared contract: [verification-assets, or `not provided`]. Return the verdict, the test-execution status with its results artifact path, and a summary of the issues found."
+> "[SUBAGENT-MODE] Review and repair the implementation at `[plan-path]`. Read the plan files and implementation record, review all changed code, then fix what you find. You get one round. Write the review record to `[plan-path]/[task-name]-review.md`, and write any defect you could not fix into the implementation record under `## Unfixed findings`. Manifest verification assets — run these affected suites if the change touches a shared contract: [verification-assets, or `not provided`]. Return the verdict, what you repaired, what you left unfixed, and the test-execution status with its results artifact path."
+
+The reviewer gets one round. It repairs what it can and records what it cannot. Never spawn it a second time for the same task, and never open a fix round of your own.
 
 After the subagent returns:
 - Verify `[plan-path]/[task-name]-review.md` exists
-- Check the verdict:
-  - **Approved** or **Approved with Reservations** → apply the Test Execution Gate below
-  - **Changes Requested** → apply the Review Reject Loop from the auto-loaded orchestrator conventions (retry once, then log both summaries, proceed, and note the unresolved review in the final report)
-
-### Committee Review and Fix Loop
-
-When a phase caller supplies review trigger tables, keep the implementer addressable from Step A through review and fixes. Resolve the tables against the changed-file list and plan metadata. Run Reviewers A through D concurrently at `medium`. Wait for every report. Store each pass in a new `reviews/[review-cycle]/` directory and never overwrite a completed cycle.
-
-Spawn `03m Finding Consolidator` with all four report paths. It writes a deduplicated candidate list. Then spawn `03n Finding Validator` with that list, the raw reports, validated plan, accepted contracts, changed code, tests, and run evidence. The validator proves or rejects every serious candidate and writes the final fix list.
-
-Pass only confirmed findings to `03p Feature - Fixer`, spawned at `medium` for the fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites. The implementer never applies its own review findings, because every confirmed finding marks a place where its model of its own code was wrong.
-
-Require the fixer to read the cited code before it edits. Never instruct it to skip that read. Avoiding rediscovery means never re-planning a finished feature. It never means editing code you have not looked at.
-
-Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker.
-
-A verification blocker never opens a fix round or rebuild.
-
-Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two production fix rounds.
-
-The fixer returns that round's baseline pass set and its regression result. Pass it a recorded test baseline when the caller holds one.
-
-After each repair round returns, run the affected suites yourself before you spawn any reviewer. The fixer's own re-run tells it whether its repair held. Your run decides whether the round is admissible, and a self-report is not evidence.
-
-- On a regression — a test that passed at the round baseline now fails — the round failed. Return the failing test names to the fixer once. If the suite is still regressed, instruct the fixer to revert the round, then record it as a failed repair. A failed repair round never counts as a converging cycle.
-- On no regression, rerun Reviewers A through D, consolidation, and validation in a new review cycle.
-- When the runner is unavailable, record `regression-check: not-executed (<reason>)` and carry the round as verification pending. An unrunnable suite is never a clean regression check.
-
-Record the baseline pass set and the regression result in the review cycle directory. Reviewers judge findings, never regressions. A repair that closes a finding and breaks a passing test is a net loss, and only the suite can see it.
-
-After two unsuccessful rounds, rewrite the feature plan once using the fix list. Validate the rewritten plan before the rebuild.
-
-Ensure every RED task precedes its production change. Ensure every baseline selector reaches its intended assertion without an import or setup failure.
-
-Correct every validation failure before implementation. A correction that makes the rewritten plan executable does not count as another rewrite.
-
-After the rebuilt implementation returns, rerun Reviewers A through D. Run post-rebuild consolidation and validation before classifying the rebuilt feature.
-
-The post-rebuild validator is the sole authority for convergence classes. The orchestrator must not rank, merge, validate, or classify the fresh findings itself.
-
-On the first full post-rebuild consolidation, freeze and record a finite supported-path matrix from the validated plan and accepted contracts.
-
-Each matrix cell records its path, invariant, severity, lineage, evidence, and pass or fail status.
-
-Later reviewers must not expand the frozen matrix silently.
-
-Pass when no `Critical`, `Blocker`, or `High` production cells remain.
-
-Block when one repair cycle closes no failing production cells, increases the failing high-severity count, or repeats one cell twice.
-
-Block when a repair cycle regresses a test that passed at that cycle's baseline, whatever the matrix shows. The frozen matrix holds supported paths only, so it cannot see collateral damage.
-
-Escalate when a reviewer identifies a new requirement or supported path outside the frozen matrix. The user decides whether to expand scope.
-
-Otherwise, return the failing cells to `03p Feature - Fixer` and continue targeted repairs while the failing cell count strictly decreases.
-
-Re-run Reviewers A through D, post-rebuild consolidation and validation after each repair round. Store every pass in a new review cycle.
-
-Do not rewrite or rebuild a second time. Use the matrix decision to determine dependency status.
-
-Only a `production-blocker` can block dependents. A missing test artifact or unavailable runner leaves implementation complete with verification pending.
+- Run the affected suites yourself. A reviewer self-report is not evidence
+- Apply the Test Execution Gate below whatever the verdict. An unfixed finding is recorded, not blocking — the phase-close review sees the same code again
 
 ### Test Execution Gate
 

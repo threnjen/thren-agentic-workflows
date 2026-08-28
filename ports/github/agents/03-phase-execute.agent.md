@@ -93,81 +93,19 @@ Spawn **Feature - Implementer** with:
 
 **A1. Implement checkpoint** — Emit the skill's implement checkpoint for this feature. The unit is `dev/feature/[0N-task-name]/`. The file `[0N-task-name]-implementation.md` names the source and test files to stage.
 
-##### B. Feature Review
-
-Create the next immutable `review-cycle` directory under `dev/feature/[0N-task-name]/reviews/`. Use `initial-01`, `fix-01`, `rebuild-01`, then `post-rebuild-01`, `post-rebuild-02`, and so on. Never overwrite a completed cycle.
+##### B. Review and fix
 
 Assemble the feature's changed-file list and its selected plan metadata.
 
-Spawn these five reviewers for every feature, concurrently at `medium`:
+Spawn **03c Reviewer - Plan Conformance** at `medium` with the plan and the diff:
 
-- Spawn **03c Reviewer - Plan Conformance** with the plan and the diff.
-- Spawn **03j Reviewer - Blast Radius** with the diff and the outward references.
-- Spawn **03k Reviewer - Test Falsification** with the test files only.
-- Spawn **03l Reviewer - Plan Blind** with changed code and tests only. Never pass it the feature plan, context, tasks, or a plan-derived summary.
-- Spawn **04h Cleanliness Auditor** with the diff.
+> "[SUBAGENT-MODE] Review and repair the feature at `dev/feature/[0N-task-name]/`. Read the implementation record, the plan, and the changed files. Map every acceptance criterion to evidence, then fix what you find. You get one round. Write your review to `dev/feature/[0N-task-name]/reviews/03c-reviewer-plan-conformance-report.md`. Write any defect you could not fix into the implementation record under `## Unfixed findings`. Phase-start test baseline: [baseline path]. Return the verdict, what you repaired, and what you left unfixed."
 
-Spawn these two reviewers in the same concurrent batch, each only when its condition holds:
+The reviewer gets one round. It repairs what it can and records what it cannot. Never spawn it a second time for the same feature, and never open a fix round of your own. An unfixed finding is not a blocker here — the phase-close review at Step 4 sees the same code again.
 
-- Spawn **Unity Reviewer** when `is-unity-project: yes`.
-- Spawn **04e Dependency Auditor** with the diff when the feature changed a dependency manifest or lockfile: `package.json`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `pyproject.toml`, `poetry.lock`, `uv.lock`, `requirements.txt`, `go.mod`, `go.sum`, `Cargo.toml`, or `Cargo.lock`.
+Run the affected suites yourself after the reviewer returns. A reviewer self-report is not evidence.
 
-A condition that does not hold is complete evidence, not a missing reviewer.
-
-Wait for every report you spawned. After every report returns, spawn **03m Finding Consolidator**. Give it all report paths. It writes a deduplicated candidate list.
-
-After the deduplicated candidate list exists, spawn **03n Finding Validator**. Give it the candidate list, the raw reports, the validated plan, the accepted contracts, the changed code, the tests, and the run evidence. It writes the validation report and the final fix list. The orchestrator does not merge, validate, or rank findings.
-
-Every path below is relative to `reviews/[review-cycle]/`. Every reviewer report carries the same finding fields: `severity`, `lane`, `evidence`, `reviewer`.
-
-| Lane | Report path | Finding fields |
-|---|---|---|
-| 03c Reviewer - Plan Conformance | `03c-reviewer-plan-conformance-report.md` | reviewer fields |
-| Reviewer - Blast Radius | `03j-reviewer-blast-radius-report.md` | reviewer fields |
-| Reviewer - Test Falsification | `03k-reviewer-test-falsification-report.md` | reviewer fields |
-| Reviewer - Plan Blind | `03l-reviewer-plan-blind-report.md` | reviewer fields |
-| Cleanliness Auditor | `04h-cleanliness-auditor-report.md` | reviewer fields |
-| Dependency Auditor | `04e-dependency-auditor-report.md` | reviewer fields |
-| Unity Reviewer | `03h-unity-reviewer-report.md` | reviewer fields |
-| Consolidator | `03m-finding-consolidator-candidates.md` | `candidate_id`, `severity`, `lane`, `finding`, `evidence`, `reviewers` |
-| Validator | `03n-finding-validator-validation.md` | `id`, `validation_status`, `reproduction`, `production_trace` |
-| Validated fix list | `03n-finding-validator-fix-list.md` | `id`, `severity`, `finding`, `action`, `status` |
-
-Commit every cycle at the review checkpoint. Pass every path you resolved to the consolidator. A specialist report you cannot locate is a missing artifact, so apply the Subagent Output Verification rule.
-
-##### C. Consolidated fix loop
-
-A **review cycle** means every triggered reviewer, then consolidation, then validation, stored in its own directory under `reviews/`. Run one after every repair round.
-
-**Who repairs.** Spawn **03p Feature - Fixer** at `medium` for each fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites. The implementer never applies its own review findings. Never instruct the fixer to skip reading the code it edits.
-
-**What opens a round.** Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker, and a verification blocker never opens a fix round or rebuild. Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two production fix rounds.
-
-**The regression gate.** Pass the phase-level test baseline to the fixer when discovery recorded one. It returns that round's baseline pass set and regression result. Run the affected suites yourself before you spawn any reviewer. A fixer self-report is not evidence. Record both the baseline pass set and the regression result in the cycle directory.
-
-- **Regression** — a test that passed at the round baseline now fails, so the round failed. Return the failing test names to the fixer once. If the suite is still regressed, instruct it to revert the round and record a failed repair. A failed repair round never counts as a converging cycle.
-- **No regression** — run a review cycle.
-- **Runner unavailable** — record `regression-check: not-executed (<reason>)` and carry the round as verification pending. An unrunnable suite is never a clean regression check.
-
-**Rewrite and rebuild, once.** After two unsuccessful rounds, have **Feature - Plan Author** rewrite the feature plan once using the fix list. Validate it before the rebuild against two conditions: every RED task precedes its production change, and every baseline selector reaches its intended assertion without an import or setup failure. Correct every validation failure before implementation. A correction that makes the plan executable does not count as another rewrite. Do not rewrite or rebuild a second time.
-
-**Convergence.** When the rebuild returns, run a review cycle and tell the validator this is the post-rebuild pass. Give it the fresh candidate list, the raw reports, the validated plan, the accepted contracts, the changed code, the tests, and the run evidence. Act on the class **03n Finding Validator** returns:
-
-- `Pass` — the feature converged. Go to stage D.
-- `Block` — classify the failure below.
-- `Escalate` — a reviewer identified a requirement or supported path outside the frozen matrix. Ask the user whether to expand scope.
-- `Continue` — return the failing cells to the fixer, and run another round while the failing cell count strictly decreases.
-
-One condition overrides that class. A repair cycle that regresses a test passing at its own baseline is blocked whatever the matrix shows.
-
-**Classifying a still-failing feature.** Classify before you block anything.
-
-- An **implementation blocker** is a confirmed shipped defect that invalidates a downstream contract, or an absent dependency contract. Only a `production-blocker` can block dependents. Mark that feature and its dependents blocked, then continue the independent features.
-- A **verification blocker** is a missing test artifact, an unavailable runner, absent generated metadata, or a review-evidence gap. It never blocks a dependent feature. Record it as `implementation-complete, verification-pending`, name the missing evidence, set `all-approved: no`, and continue with the remaining features.
-
-A compile command that ran and failed proves a production blocker. Missing compilation evidence is a verification blocker until an authoritative run exists.
-
-**C1. Review checkpoint** — Emit the skill's review checkpoint for this feature, after the fix loop closes. The unit is `dev/feature/[0N-task-name]/`, including every review cycle under `reviews/`.
+**B1. Review checkpoint** — Emit the skill's review checkpoint for this feature. The unit is `dev/feature/[0N-task-name]/`.
 
 ##### D. Integration test gate
 
@@ -176,6 +114,7 @@ Run this gate before you mark the feature complete.
 1. Run the integrated suite. It is the union of every affected suite plus the manifest's `## Verification Assets`. On the phase's final feature, run the suite unfiltered.
    - For Unity, consume the `unity-development` skill's Test Execution section and Execution Ladder. Do not copy their mechanics. Target `<execution-unity-project>`, preserve affected-suite `-testFilter` scoping, and write the results XML and Unity log to the absolute main-checkout artifact directory.
 2. Read the results artifact. Record `[0N-task-name] integration test-execution: executed-green | executed-failing | not-executed (<reason>)`.
+   - Judge the run against the phase-start test baseline recorded in Step 1. No test that passed at the baseline may fail after this feature. A failing test named in the baseline is exempt. A failing test the baseline does not name is a regression this feature caused, whatever its subject. Never add a test to the baseline during the phase.
 3. **On `executed-failing`, remediate once.** Re-spawn the **Feature - Implementer** that owns the failing behavior. Give it the failing test names. Then re-run the gate. Retry at most once. If the gate still fails, record the final status and proceed.
    > "[SUBAGENT-MODE] The feature integration test gate failed for phase [phase-name]. Failing tests: [names and assertion messages]. Results artifact: [path]. These failures are in suites outside your feature's Files Changed table — a contract you changed broke callers written before it. Fix the production code or update the affected fixtures so these tests pass. Do NOT delete, skip, or weaken tests to force a pass. Return what you changed."
 4. **On `not-executed`, do not proceed silently and do not treat it as green.**
@@ -185,7 +124,11 @@ Run this gate before you mark the feature complete.
    - If the direct supervisor states that the named authoritative suite passed, accept that statement as the direct-supervisor-attestation exception from the Test Execution Evidence instruction. Promote the final gate to `executed-green`. Record the exact suite or action and any counts the supervisor supplied. Use `supervisor-attested (no artifact exported)` as the results artifact.
    - If the direct supervisor directs this run to skip Unity testing gates, record `not-executed (supervisor-directed skip; user will run later)` for each skipped gate. Continue the pipeline without treating it as green. Carry `all-approved: no` into final review.
    - Do not invent counts. Do not apply either exception to a subagent's report.
-5. If the final status for any feature is not `executed-green`, set `all-approved: no`.
+5. **Classify a feature the gate leaves failing.** Classify before you block anything.
+   - An **implementation blocker** is a confirmed shipped defect that invalidates a downstream contract, or an absent dependency contract. Only a `production-blocker` can block dependents. Mark that feature and its dependents blocked, then continue the independent features.
+   - A **verification blocker** is a missing test artifact, an unavailable runner, absent generated metadata, or a review-evidence gap. It never blocks a dependent feature. Record it as `implementation-complete, verification-pending`, name the missing evidence, set `all-approved: no`, and continue with the remaining features.
+   - A compile command that ran and failed proves a production blocker. Missing compilation evidence is a verification blocker until an authoritative run exists.
+6. If the final status for any feature is not `executed-green`, set `all-approved: no`.
 
 This stage emits no checkpoint of its own.
 
@@ -250,11 +193,36 @@ Materialize the phase diff first. Resolve `<phase-baseline>` with `git merge-bas
 - `changed-files.txt` — `git diff --name-status <phase-baseline>..HEAD`
 - `range.diff` — `git diff <phase-baseline>..HEAD`
 
-Spawn **04d Consistency Auditor**, **04f Test Health**, and **03e Diff Security Scan** concurrently against the whole phase diff. Spawn `03e` at `high` with this brief:
+Spawn these reviewers concurrently at `medium` against the whole phase diff:
+
+- Spawn **03j Reviewer - Blast Radius** with the diff and the outward references.
+- Spawn **03k Reviewer - Test Falsification** with the test files only.
+- Spawn **03l Reviewer - Plan Blind** with changed code and tests only. Never pass it the feature plan, context, tasks, or a plan-derived summary.
+- Spawn **04h Cleanliness Auditor** with the diff.
+
+Spawn these two in the same concurrent batch, each only when its condition holds:
+
+- Spawn **03h Unity Reviewer** when `is-unity-project: yes`.
+- Spawn **04e Dependency Auditor** with the diff when the phase changed a dependency manifest or lockfile: `package.json`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `pyproject.toml`, `poetry.lock`, `uv.lock`, `requirements.txt`, `go.mod`, `go.sum`, `Cargo.toml`, or `Cargo.lock`.
+
+A condition that does not hold is complete evidence, not a missing reviewer.
+
+Every path below is relative to `dev/feature/[phase-name]-phase-close/`. Every reviewer report carries the same finding fields: `severity`, `lane`, `evidence`, `reviewer`.
+
+| Lane | Report path |
+|---|---|
+| Reviewer - Blast Radius | `03j-reviewer-blast-radius-report.md` |
+| Reviewer - Test Falsification | `03k-reviewer-test-falsification-report.md` |
+| Reviewer - Plan Blind | `03l-reviewer-plan-blind-report.md` |
+| Cleanliness Auditor | `04h-cleanliness-auditor-report.md` |
+| Dependency Auditor | `04e-dependency-auditor-report.md` |
+| Unity Reviewer | `03h-unity-reviewer-report.md` |
+
+Spawn **04d Consistency Auditor**, **04f Test Health**, and **03e Diff Security Scan** concurrently in the same batch. Spawn `03e` at `high` with this brief:
 
 > "[SUBAGENT-MODE] Perform a diff-scoped security review of phase [phase-name]. Changed-file list: `dev/feature/changed-files.txt`. Full diff: `dev/feature/range.diff`. Context documents: [the phase summary path, and every feature implementation record path]. Write the report to `dev/feature/[phase-name]-security.md` and return its verdict (`PASS` | `PASS WITH CONDITIONS` | `BLOCKED` | `NOT RUN`) with finding counts by severity."
 
-Wait for all three reports.
+Wait for every report you spawned. A specialist report you cannot locate is a missing artifact, so apply the Subagent Output Verification rule.
 
 **Security.** Verify the report exists at `dev/feature/[phase-name]-security.md`. Then record one aggregate:
 
@@ -265,13 +233,15 @@ Wait for all three reports.
 
 **Audits.** Record `phase-close-audits: executed` with both report paths. If either cannot run, record `phase-close-audits: absent ([concrete reason])` and set `all-approved: no`. Never treat an absent audit as a clean result.
 
-All three reports travel to Step 5.
+Every report travels to Step 5.
 
 #### Step 4b: Validate before repairing
 
 Repair at most one round per phase. Only a `03e` or `04f` finding can open it. A `04d` consistency finding never opens a round: its fix rewrites code across every feature, which perturbs the diff the re-verification measures. Carry every `04d` finding to Step 5 as a condition.
 
-No auditor finding reaches a fixer unvalidated. Spawn **03n Finding Validator** at `medium`. Give it the `03e` and `04f` reports as candidates, the phase summary and every feature plan as accepted contracts, the phase diff, and the run evidence. Its unit directory is `dev/feature/[phase-name]-phase-close/`, and its review cycle is `repair-01`. Tell it that `04d` findings are excluded from the fix list.
+No reviewer report reaches a fixer unconsolidated or unvalidated. Spawn **03m Finding Consolidator** first. Give it every report path from Step 4a. It writes the deduplicated candidate list to `03m-finding-consolidator-candidates.md`. The orchestrator does not merge, rank, or adjudicate findings itself.
+
+Then spawn **03n Finding Validator** at `medium`. Give it the candidate list. It writes `03n-finding-validator-validation.md` and the final fix list at `03n-finding-validator-fix-list.md`. Give it the phase summary and every feature plan as accepted contracts, the phase diff, and the run evidence. Its unit directory is `dev/feature/[phase-name]-phase-close/`, and its review cycle is `repair-01`. Tell it that `04d` findings are excluded from the fix list.
 
 Only independently confirmed `Critical`, `Blocker`, and `High` production defects enter the fix list. On an empty fix list, record `phase-close-repair: none` and go to Step 5 with the Step 4a aggregates.
 
