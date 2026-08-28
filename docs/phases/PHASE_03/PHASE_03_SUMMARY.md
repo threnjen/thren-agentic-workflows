@@ -9,7 +9,7 @@
 
 Running a phase used to take about a day and often never finished. The pipeline reviewed every feature with a committee of seven agents, argued with itself about the findings, repaired, then reviewed again — and the second review always reported more problems than the first, because reviewers subdivided the same issues rather than finding new ones. Runs commonly stalled on the first feature and never reached the second.
 
-After this phase, each feature is built, reviewed once by a single agent that also applies its own fixes, and tested. The full review committee runs once, at the end, over the finished phase. There is one repair round, then QA, then a go/no-go. The feature loop costs about a quarter of the agents it used to, and a whole four-feature phase costs less than half.
+After this phase, each feature is built, reviewed once by a single agent that also applies its own fixes, and tested. Anything that agent cannot fix in its one round is written down and looked at again when the phase closes. The full review committee runs once, at the end, over the finished phase. There is one repair round, then QA, then a go/no-go. The feature loop costs about a quarter of the agents it used to, and a whole four-feature phase costs less than half.
 
 ## Problem
 
@@ -30,16 +30,18 @@ Give every review step in the pipeline a natural stopping point, and delete the 
 ### In Scope
 
 - Collapse the per-feature review committee and fix loop into a single review-and-fix agent, running one round per feature
-- Restore edit capability to that agent, derived from `03c Reviewer - Plan Conformance`, under a new agent identity
+- Grant `edit` to `03c Reviewer - Plan Conformance` in place, and detach the read-only-agent instruction from it. The agent keeps its number, its name, and all seventeen existing references
+- Give that agent one round per feature. A defect it finds and cannot fix in that round is written into the implementation record in a form the phase-close Consolidator can match, and the feature completes. The reviewer never blocks a feature on its own unrepaired finding
 - Retire the rule "the implementer never applies its own review findings" for the feature loop only. The reviewer and the implementer stay separate agents there; the reviewer now applies what it finds. The rule stands unchanged at phase close, where `03p Feature - Fixer` remains a distinct agent from every reviewer
 - Move the full reviewer roster to phase close, running once. The roster is nine agents in three classes:
   - **Repair-eligible (four)**: `03e Diff Security`, `03j Blast Radius`, `03k Test Falsification`, `03l Plan Blind`
-  - **Conditional (two)**: `04e Dependency Auditor`, `Unity Reviewer` — each fires only when its trigger condition holds
+  - **Conditional (two)**: `04e Dependency Auditor`, `03h Unity Reviewer` — each fires only when its trigger condition holds
   - **Advisory only (three)**: `04h Cleanliness`, `04d Consistency`, `04f Test Health` — reported, never auto-repaired
 - Consolidate all nine phase-close reports into one deduplicated candidate list; validate only the four repair-eligible lanes
 - Run one phase-close repair round with no re-run of the audits. Two gates apply in order: a lane is repair-eligible by blast radius, and within an eligible lane a finding enters the fix list only at Validator-confirmed Critical, Blocker, or High. The blast-radius rule recorded in `cross-phase-decisions.md` is preserved, not superseded — the advisory-only class is that rule expressed as a roster class, and `04d` consistency drift stays excluded because its fix spans every feature's files
 - Verify the phase-close repair with the orchestrator's own regression run over the affected suites. Running tests is not re-running the audits, and a fixer self-report is not evidence
 - Reorder QA to run after the phase-close repair, so it measures final code
+- Define the feature test gate as a baseline comparison: no test that passed before a feature may fail after it. Record the phase-start baseline, naming every already-failing test, and repair the test environment before the first feature runs
 - Retire the per-feature review-cycle directory scheme, the two-round fix loop, the plan rewrite, the rebuild, the post-rebuild review pass, and the second audit pass
 - Update guard tests that assert on the retired pipeline structure
 - Update `PROJECT_ROADMAP.md`, including Phase 02's now-superseded description
@@ -55,34 +57,44 @@ Give every review step in the pipeline a natural stopping point, and delete the 
 
 | # | Deliverable | Description | Likely Features |
 |---|-------------|-------------|-----------------|
-| 1 | Review-and-fix agent | New identity derived from `03c`, with `edit` restored and read-only constraints removed | Agent authoring |
+| 1 | Review-and-fix agent | `03c` gains `edit`, loses the read-only instruction, and gains the one-round and unfixed-defect-record contract | Agent authoring |
 | 2 | Simplified feature loop | Stages collapse to expand, implement, review-and-fix, test gate, complete | `03-phase-execute` Step 2 |
 | 3 | Phase-close chorus | Nine reviewers, Consolidator over all, Validator over four, one repair round, no re-run | `03-phase-execute` Steps 3–4 |
 | 4 | QA reorder | QA moves after the repair round | `03-phase-execute` step order |
-| 5 | Retirement and guards | Dead agents handled, structural guard tests updated, roadmap synced | Corpus cleanup |
+| 5 | Roster and guards | Orchestrator frontmatter, structural guard tests, roadmap and learnings synced. No agent is deleted — every chorus member, the Consolidator, the Validator, and the Fixer all survive | Corpus cleanup |
 
 ## Technical Context
 
 - `source_of_truth/agents/03-phase-execute.agent.md` — the orchestrator. Damage is concentrated in Step 2 stages B and C, and in Step 4b–4c
-- `source_of_truth/agents/03c-reviewer-plan-conformance.agent.md` — the origin of the review-and-fix agent. Currently `tools: [read, search, execute, todo]` with the read-only-agent instruction attached
+- `source_of_truth/agents/03c-reviewer-plan-conformance.agent.md` — becomes the review-and-fix agent. Currently `tools: [read, search, execute, todo]` with the read-only-agent instruction attached. Seventeen files reference it, five of them instruction `applyTo` globs, which is why it changes in place rather than moving to a new number
 - `source_of_truth/agents/03l-reviewer-plan-blind.agent.md` — stays, moves to phase close
 - `03m Finding Consolidator`, `03n Finding Validator`, `03p Feature - Fixer` — survive at phase close only
 - `source_of_truth/skills/implementation-pipeline-loop` — defines the checkpoint scheme the feature loop emits
 - `scripts/propagate_master_assets.py` — agents edit `source_of_truth/` only; propagation is a manual maintainer step
 - `docs/learnings/project-learnings.md` — contains the four prior diagnoses this phase supersedes
+- The checked-in virtualenv is stale. `.venv/bin/pytest` carries a shebang pointing at `/Users/jennywadkins/github_repos/github-agents-source-of-truth/.venv/bin/python`, a path left behind by the repository rename, so the suite does not currently start
 
 ## Dependencies & Risks
 
-- **Dependency**: the Phase 03 numbering rule in `cross-phase-decisions.md`. Any agent authored here uses post-renumber numbering. The new review-and-fix agent is a new identity, not a rename of `03c`
+- **Dependency**: the Phase 03 numbering rule in `cross-phase-decisions.md`. Any agent authored here uses post-renumber numbering. This phase authors no new agent identity, so the rename surface stays empty
+- **Dependency**: a runnable test environment. The suite cannot start until the stale virtualenv is rebuilt, and three success criteria are measured only by a live run
 - **Risk**: guard tests may pass against retired pipeline text. `project-learnings.md` records that a contract test locating its section by heading string cannot tell a live section from a commented-out one. Mitigation: delete retired sections outright rather than commenting them, and confirm each affected guard goes red before it goes green
 - **Risk**: removing the per-feature committee removes the only early catch for accretive defects. Mitigation: the per-feature integration test gate stays, and Plan Conformance repairs contract failures at the feature where they enter
+- **Risk**: an unfixed per-feature defect is recorded and then never re-found by the chorus, so it ships. Mitigation: the record is written in the Consolidator's finding shape, and the chorus reviews the same code at phase close
+- **Risk**: the baseline exemption list goes stale and silently widens, exempting failures a feature actually caused. Mitigation: record the baseline once per phase, name every exempt test, and treat an unnamed failure as a real one
 - **Risk**: one repair round means a wasted fix is a fix not available elsewhere. Mitigation: the Validator gates the fix list to independently confirmed Critical, Blocker, and High production defects
 - **Risk**: with the audit re-run removed, the phase-close fix has no auditor to re-measure it. Mitigation: the orchestrator's regression run over the affected suites is the check, and Prod Code Review sees the fix-list outcome alongside the consolidated findings
-- **Risk**: a stale agent roster in the orchestrator's frontmatter. The `agents:` list names twenty agents, several of which this phase removes from the pipeline
+- **Risk**: a stale agent roster in the orchestrator's frontmatter. The `agents:` list names twenty agents by mixed conventions — some numbered, some not — several of which this phase removes from the pipeline
 
 ## Success Criteria
 
 - [ ] A phase with three or more features runs to completion without stalling on any feature
+- [ ] The test suite starts and runs to a verdict from a clean checkout
+- [ ] A feature passes its gate when the suite is red only with tests named in the phase-start baseline, and fails when any other test fails
+- [ ] `03c` grants `edit` and no longer carries the read-only-agent instruction
+- [ ] `03c`'s contract states one round per feature and names the record where an unfixed defect is written
+- [ ] A guard test fails if the one-round bound or the unfixed-defect record is removed from `03c`'s text
+- [ ] A feature whose reviewer leaves a defect unfixed still completes, and the defect appears in the phase-close candidate list
 - [ ] No step in the pipeline runs a second time against input its own repair modified
 - [ ] Per-feature agent count is four: expander, implementer, review-and-fix, revalidation
 - [ ] Phase-close review runs exactly once, with no second audit pass
@@ -106,10 +118,10 @@ Give every review step in the pipeline a natural stopping point, and delete the 
 
 Suggested feature boundaries, in dependency order:
 
-1. **Author the review-and-fix agent.** Self-contained, no orchestrator changes. Everything else depends on it existing
+1. **Repair the environment, record the baseline, and change `03c`.** Rebuild the virtualenv so the suite runs, record the phase-start baseline naming every already-failing test, then grant `03c` its edit bit and its one-round contract. The environment work comes first because every later feature's gate is measured against that baseline
 2. **Rewrite Step 2.** Collapse stages B and C to a single review-and-fix call. Delete the review-cycle directory scheme and the rebuild path
 3. **Rewrite Steps 3 and 4.** Chorus, consolidation split, one repair round, QA reorder. Renumber the orchestrator's own steps
-4. **Retirement and guards.** Roster frontmatter, retired agents, guard tests, roadmap, learnings
+4. **Roster and guards.** Orchestrator frontmatter, guard tests, roadmap, learnings. No agent deletions
 
 Keep features 2 and 3 separate. They touch the same file but change different responsibilities, and merging them makes the diff unreadable at review.
 

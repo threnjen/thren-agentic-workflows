@@ -33,6 +33,14 @@ per-feature review-and-fix slot.
 5. The chorus roster is nine agents in three classes — four repair-eligible, two conditional,
    three advisory only.
 6. QA runs after the phase-close repair, so it measures the code Prod Code Review evaluates.
+7. A defect the per-feature reviewer cannot fix in its one round is recorded and carried to the
+   phase-close chorus. The reviewer never blocks a feature on its own unrepaired finding.
+8. `03c` changes in place rather than moving to a new identity. Seventeen files reference it,
+   five of them instruction `applyTo` globs, and a silently non-matching glob is a recorded
+   failure mode in this corpus. No agent is deleted by this phase.
+9. The feature test gate is a baseline comparison, not absolute green. Phase 02 is recorded as
+   shipping with eleven known test failures, so an absolute gate would stall every feature on
+   failures it did not cause.
 
 ## Deferred
 
@@ -45,6 +53,14 @@ Measure it after this phase rather than guessing now.
 Per-feature reviewer committee, per-feature consolidation and validation, review-cycle
 directories, the two-round fix loop, the plan rewrite, the rebuild, the post-rebuild review,
 and the second full audit pass.
+
+## Environment finding
+
+The checked-in virtualenv is stale. `.venv/bin/pytest` carries a shebang pointing at
+`/Users/jennywadkins/github_repos/github-agents-source-of-truth/.venv/bin/python`, a path the
+repository rename left behind, so the suite does not start. The eleven Phase 02 failures could
+not be enumerated during refinement for that reason — eleven is the roadmap's number, not a
+measurement. Rebuilding the environment is the first step of Feature 1.
 
 ## Sources
 
