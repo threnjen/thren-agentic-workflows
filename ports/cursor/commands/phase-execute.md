@@ -34,6 +34,25 @@ Reject a route that fails validation before you select the first feature. On an 
 
 This step runs once, before the feature loop starts.
 
+#### Green-suite preflight
+
+Run this before anything else. Do not verify inputs, spawn the Plan Author, decompose the phase,
+or create a todo list until it passes.
+
+1. Run the full test suite yourself, unfiltered. Not the affected suites, and never a subagent's
+   report of a run.
+2. **On green, continue to the input verification below.** Record the command and the counts.
+3. **On any failing test, stop the run immediately.** Report the failing test names and the
+   command that produced them. Do not spawn a single agent. The phase has not started, so there is
+   nothing to unwind and nothing to classify.
+4. **On a suite that cannot run, stop the same way.** A suite you cannot execute is not a green
+   suite, and no code exists yet to judge against it. Report the reason and what would make the
+   suite runnable.
+
+The phase begins green or it does not begin. Every later gate depends on that, because a test
+failing after a feature can only be a defect that feature introduced. There is no baseline
+exemption list and no test may be excused during the phase.
+
 #### Verify the inputs
 
 1. Verify that the phase document exists at `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`. Read it and extract the phase name and the scope.
@@ -62,7 +81,7 @@ Do not rebuild the schedule from stale plan metadata. Rebuild it from the graph 
 
 #### Seed the run
 
-Take the phase-level discovery the author returned. It contains the environment state, the test baseline, the lint and format commands, and the phase-scoped test directory pattern. Hold those values for the feature loop. Do not rediscover them per feature.
+Take the phase-level discovery the author returned. It contains the environment state, the lint and format commands, and the phase-scoped test directory pattern. The preflight above owns the suite command and its green result, so do not take a test baseline from the author. Hold those values for the feature loop. Do not rediscover them per feature.
 
 Create a todo list entry for each feature with status `not-started`.
 
@@ -90,85 +109,25 @@ Stages A through E run in order for one selected feature, then repeat for the ne
 
 Spawn **z-feature-implementer** with:
 
-> "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Run the affected suites from these manifest verification assets: [verification-assets extracted from manifest, or `not provided`]. Return a summary of what was implemented, the test-execution status with its results artifact path, and test results."
+> "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Run the affected suites from these manifest verification assets: [verification-assets extracted from manifest, or `not provided`], then run the integrated suite and leave every test green. The phase started green, so any failing test is a defect this feature introduced, whatever its subject. Never delete, skip, or weaken a test to reach green. If you cannot reach green, stop and name every still-failing test rather than reporting the feature done. Return a summary of what was implemented, the test-execution status with its results artifact path, and test results."
 
 **A1. Implement checkpoint** — Emit the skill's implement checkpoint for this feature. The unit is `dev/feature/[0N-task-name]/`. The file `[0N-task-name]-implementation.md` names the source and test files to stage.
 
-##### B. Feature Review
-
-Create the next immutable `review-cycle` directory under `dev/feature/[0N-task-name]/reviews/`. Use `initial-01`, `fix-01`, `rebuild-01`, then `post-rebuild-01`, `post-rebuild-02`, and so on. Never overwrite a completed cycle.
+##### B. Review and fix
 
 Assemble the feature's changed-file list and its selected plan metadata.
 
-Spawn these five reviewers for every feature, concurrently at `medium`:
+Spawn **z-reviewer-plan-conformance** at `medium` with the plan and the diff:
 
-- Spawn **z-reviewer-plan-conformance** with the plan and the diff.
-- Spawn **z-reviewer-blast-radius** with the diff and the outward references.
-- Spawn **z-reviewer-test-falsification** with the test files only.
-- Spawn **z-reviewer-plan-blind** with changed code and tests only. Never pass it the feature plan, context, tasks, or a plan-derived summary.
-- Spawn **z-cleanliness-auditor** with the diff.
+> "[SUBAGENT-MODE] Review and repair the feature at `dev/feature/[0N-task-name]/`. Read the implementation record, the plan, and the changed files. Map every acceptance criterion to evidence, then fix what you find. You get one round. Write your review to `dev/feature/[0N-task-name]/reviews/03c-reviewer-plan-conformance-report.md`. Fix Red-Green-Refactor and leave the integrated suite green. Write any defect you could not fix into the implementation record under `## Unfixed findings`. Return the verdict, what you repaired, what you left unfixed, and the final suite result."
 
-Spawn these two reviewers in the same concurrent batch, each only when its condition holds:
+The reviewer gets one round of review. It repairs what it finds and records what it cannot fix. Never spawn it a second time for the same feature, and never open a fix round of your own. An unfixed finding that leaves the suite green is not a blocker here — the phase-close review at Step 3 sees the same code again.
 
-- Spawn **z-unity-reviewer** when `is-unity-project: yes`.
-- Spawn **z-dependency-auditor** with the diff when the feature changed a dependency manifest or lockfile: `package.json`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `pyproject.toml`, `poetry.lock`, `uv.lock`, `requirements.txt`, `go.mod`, `go.sum`, `Cargo.toml`, or `Cargo.lock`.
+Reaching green is not part of that one round. The reviewer keeps repairing until every test passes, because running tests and fixing what they show is not reviewing its own repair.
 
-A condition that does not hold is complete evidence, not a missing reviewer.
+Run the suite yourself after the reviewer returns. A reviewer self-report is not evidence.
 
-Wait for every report you spawned. After every report returns, spawn **z-finding-consolidator**. Give it all report paths. It writes a deduplicated candidate list.
-
-After the deduplicated candidate list exists, spawn **z-finding-validator**. Give it the candidate list, the raw reports, the validated plan, the accepted contracts, the changed code, the tests, and the run evidence. It writes the validation report and the final fix list. The orchestrator does not merge, validate, or rank findings.
-
-Every path below is relative to `reviews/[review-cycle]/`. Every reviewer report carries the same finding fields: `severity`, `lane`, `evidence`, `reviewer`.
-
-| Lane | Report path | Finding fields |
-|---|---|---|
-| z-reviewer-plan-conformance | `03c-reviewer-plan-conformance-report.md` | reviewer fields |
-| Reviewer - Blast Radius | `03j-reviewer-blast-radius-report.md` | reviewer fields |
-| Reviewer - Test Falsification | `03k-reviewer-test-falsification-report.md` | reviewer fields |
-| Reviewer - Plan Blind | `03l-reviewer-plan-blind-report.md` | reviewer fields |
-| Cleanliness Auditor | `04h-cleanliness-auditor-report.md` | reviewer fields |
-| Dependency Auditor | `04e-dependency-auditor-report.md` | reviewer fields |
-| z-unity-reviewer | `03h-unity-reviewer-report.md` | reviewer fields |
-| Consolidator | `03m-finding-consolidator-candidates.md` | `candidate_id`, `severity`, `lane`, `finding`, `evidence`, `reviewers` |
-| Validator | `03n-finding-validator-validation.md` | `id`, `validation_status`, `reproduction`, `production_trace` |
-| Validated fix list | `03n-finding-validator-fix-list.md` | `id`, `severity`, `finding`, `action`, `status` |
-
-Commit every cycle at the review checkpoint. Pass every path you resolved to the consolidator. A specialist report you cannot locate is a missing artifact, so apply the Subagent Output Verification rule.
-
-##### C. Consolidated fix loop
-
-A **review cycle** means every triggered reviewer, then consolidation, then validation, stored in its own directory under `reviews/`. Run one after every repair round.
-
-**Who repairs.** Spawn **z-feature-fixer** at `medium` for each fix round. Give it the validated fix list, the implementation record, and the resolved paths of every file the fix list cites. The implementer never applies its own review findings. Never instruct the fixer to skip reading the code it edits.
-
-**What opens a round.** Only independently confirmed `Critical`, `Blocker`, and `High` production defects open a fix round. A `not-proven` candidate becomes a Medium verification blocker, and a verification blocker never opens a fix round or rebuild. Record `Medium` and `Low` findings as carry-forward evidence for phase final review. Run at most two production fix rounds.
-
-**The regression gate.** Pass the phase-level test baseline to the fixer when discovery recorded one. It returns that round's baseline pass set and regression result. Run the affected suites yourself before you spawn any reviewer. A fixer self-report is not evidence. Record both the baseline pass set and the regression result in the cycle directory.
-
-- **Regression** — a test that passed at the round baseline now fails, so the round failed. Return the failing test names to the fixer once. If the suite is still regressed, instruct it to revert the round and record a failed repair. A failed repair round never counts as a converging cycle.
-- **No regression** — run a review cycle.
-- **Runner unavailable** — record `regression-check: not-executed (<reason>)` and carry the round as verification pending. An unrunnable suite is never a clean regression check.
-
-**Rewrite and rebuild, once.** After two unsuccessful rounds, have **z-feature-plan-author** rewrite the feature plan once using the fix list. Validate it before the rebuild against two conditions: every RED task precedes its production change, and every baseline selector reaches its intended assertion without an import or setup failure. Correct every validation failure before implementation. A correction that makes the plan executable does not count as another rewrite. Do not rewrite or rebuild a second time.
-
-**Convergence.** When the rebuild returns, run a review cycle and tell the validator this is the post-rebuild pass. Give it the fresh candidate list, the raw reports, the validated plan, the accepted contracts, the changed code, the tests, and the run evidence. Act on the class **z-finding-validator** returns:
-
-- `Pass` — the feature converged. Go to stage D.
-- `Block` — classify the failure below.
-- `Escalate` — a reviewer identified a requirement or supported path outside the frozen matrix. Ask the user whether to expand scope.
-- `Continue` — return the failing cells to the fixer, and run another round while the failing cell count strictly decreases.
-
-One condition overrides that class. A repair cycle that regresses a test passing at its own baseline is blocked whatever the matrix shows.
-
-**Classifying a still-failing feature.** Classify before you block anything.
-
-- An **implementation blocker** is a confirmed shipped defect that invalidates a downstream contract, or an absent dependency contract. Only a `production-blocker` can block dependents. Mark that feature and its dependents blocked, then continue the independent features.
-- A **verification blocker** is a missing test artifact, an unavailable runner, absent generated metadata, or a review-evidence gap. It never blocks a dependent feature. Record it as `implementation-complete, verification-pending`, name the missing evidence, set `all-approved: no`, and continue with the remaining features.
-
-A compile command that ran and failed proves a production blocker. Missing compilation evidence is a verification blocker until an authoritative run exists.
-
-**C1. Review checkpoint** — Emit the skill's review checkpoint for this feature, after the fix loop closes. The unit is `dev/feature/[0N-task-name]/`, including every review cycle under `reviews/`.
+**B1. Review checkpoint** — Emit the skill's review checkpoint for this feature. The unit is `dev/feature/[0N-task-name]/`.
 
 ##### D. Integration test gate
 
@@ -177,8 +136,8 @@ Run this gate before you mark the feature complete.
 1. Run the integrated suite. It is the union of every affected suite plus the manifest's `## Verification Assets`. On the phase's final feature, run the suite unfiltered.
    - For Unity, consume the `unity-development` skill's Test Execution section and Execution Ladder. Do not copy their mechanics. Target `<execution-unity-project>`, preserve affected-suite `-testFilter` scoping, and write the results XML and Unity log to the absolute main-checkout artifact directory.
 2. Read the results artifact. Record `[0N-task-name] integration test-execution: executed-green | executed-failing | not-executed (<reason>)`.
-3. **On `executed-failing`, remediate once.** Re-spawn the **z-feature-implementer** that owns the failing behavior. Give it the failing test names. Then re-run the gate. Retry at most once. If the gate still fails, record the final status and proceed.
-   > "[SUBAGENT-MODE] The feature integration test gate failed for phase [phase-name]. Failing tests: [names and assertion messages]. Results artifact: [path]. These failures are in suites outside your feature's Files Changed table — a contract you changed broke callers written before it. Fix the production code or update the affected fixtures so these tests pass. Do NOT delete, skip, or weaken tests to force a pass. Return what you changed."
+   - The phase started green under the Step 1 preflight, so every failing test here is a defect this feature introduced, whatever its subject. There is no exempt test and no baseline list to check against.
+3. **On `executed-failing`, do not remediate here.** Two agents already owned reaching green, and neither did. Opening a third repair round is the orchestrator doing the work it delegated. Record the failing tests and classify the feature at point 5 as a production blocker.
 4. **On `not-executed`, do not proceed silently and do not treat it as green.**
    - For Unity, exhaust the canonical Execution Ladder. The orchestrator runs every obtainable command. Never delegate a Unity test command to the user.
    - Reach `not-executed` only in three cases: the user declines the main-checkout fallback, unattended non-response yields `not-executed: editor open, user unavailable`, or the evidence is genuinely unavailable for another stated reason.
@@ -186,7 +145,12 @@ Run this gate before you mark the feature complete.
    - If the direct supervisor states that the named authoritative suite passed, accept that statement as the direct-supervisor-attestation exception from the Test Execution Evidence instruction. Promote the final gate to `executed-green`. Record the exact suite or action and any counts the supervisor supplied. Use `supervisor-attested (no artifact exported)` as the results artifact.
    - If the direct supervisor directs this run to skip Unity testing gates, record `not-executed (supervisor-directed skip; user will run later)` for each skipped gate. Continue the pipeline without treating it as green. Carry `all-approved: no` into final review.
    - Do not invent counts. Do not apply either exception to a subagent's report.
-5. If the final status for any feature is not `executed-green`, set `all-approved: no`.
+5. **Classify a feature the gate leaves failing.** Classify before you block anything.
+   - A gate left at `executed-failing` is always a production blocker. The tests ran and failed, which is confirmed evidence of a shipped defect. Never record such a feature complete.
+   - An **implementation blocker** is a confirmed shipped defect that invalidates a downstream contract, or an absent dependency contract. Only a `production-blocker` can block dependents. Mark that feature and its dependents blocked, then continue the independent features.
+   - A **verification blocker** is a missing test artifact, an unavailable runner, absent generated metadata, or a review-evidence gap. It never blocks a dependent feature. Record it as `implementation-complete, verification-pending`, name the missing evidence, set `all-approved: no`, and continue with the remaining features.
+   - A compile command that ran and failed proves a production blocker. Missing compilation evidence is a verification blocker until an authoritative run exists.
+6. If the final status for any feature is not `executed-green`, set `all-approved: no`.
 
 This stage emits no checkpoint of its own.
 
@@ -198,13 +162,92 @@ Then identify every affected future feature and every downstream dependent of an
 
 Spawn **z-feature-plan-author** in `revalidation` mode. Pass it the completed feature, the affected future features, and their downstream dependents. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. The author owns the recomputation bound. Stop the run and report when it returns a graph that did not reach a fixed point.
 
-### Step 3: QA
+### Step 3: Phase-Close Review
+
+Run the phase-close reviews here, once, over the finished phase. Two things must complete first: every feature and every feature integration test gate. QA runs after this step, at Step 4, so that it measures the code the repair round produced.
+
+The roster is nine reviewers in three classes. The class sets what may be repaired, never what is reported. Every class reaches Step 5.
+
+- **Repair-eligible (four)** — `z-diff-security-scan`, `z-reviewer-blast-radius`, `z-reviewer-test-falsification`, `z-reviewer-plan-blind`. Findings from these lanes may enter the fix list.
+- **Conditional (two)** — `z-dependency-auditor`, `z-unity-reviewer`. Each runs only when its trigger holds. A condition that does not hold is complete evidence, not a missing reviewer.
+- **Advisory only (three)** — `z-cleanliness-auditor`, `z-consistency-auditor`, `z-test-health`. Reported and carried to Step 5, never auto-repaired. Their fixes span every feature's files, so a repair would perturb the whole phase diff.
+
+Eligibility is set by lane, by blast radius. Severity gates a finding only once its lane is already eligible.
+
+#### Step 3a: Run the audits
+
+Materialize the phase diff first. Resolve `<phase-baseline>` with `git merge-base HEAD <default-branch>`, then write both artifacts under `dev/feature/`:
+
+- `changed-files.txt` — `git diff --name-status <phase-baseline>..HEAD`
+- `range.diff` — `git diff <phase-baseline>..HEAD`
+
+Spawn these reviewers concurrently at `medium` against the whole phase diff:
+
+- Spawn **z-reviewer-blast-radius** with the diff and the outward references.
+- Spawn **z-reviewer-test-falsification** with the test files only.
+- Spawn **z-reviewer-plan-blind** with changed code and tests only. Never pass it the feature plan, context, tasks, or a plan-derived summary.
+- Spawn **z-cleanliness-auditor** with the diff.
+
+Spawn these two in the same concurrent batch, each only when its condition holds:
+
+- Spawn **z-unity-reviewer** when `is-unity-project: yes`.
+- Spawn **z-dependency-auditor** with the diff when the phase changed a dependency manifest or lockfile: `package.json`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `pyproject.toml`, `poetry.lock`, `uv.lock`, `requirements.txt`, `go.mod`, `go.sum`, `Cargo.toml`, or `Cargo.lock`.
+
+Every path below is relative to `dev/feature/[phase-name]-phase-close/`. Every reviewer report carries the same finding fields: `severity`, `lane`, `evidence`, `reviewer`.
+
+| Lane | Report path |
+|---|---|
+| Reviewer - Blast Radius | `03j-reviewer-blast-radius-report.md` |
+| Reviewer - Test Falsification | `03k-reviewer-test-falsification-report.md` |
+| Reviewer - Plan Blind | `03l-reviewer-plan-blind-report.md` |
+| Cleanliness Auditor | `04h-cleanliness-auditor-report.md` |
+| Dependency Auditor | `04e-dependency-auditor-report.md` |
+| z-unity-reviewer | `03h-unity-reviewer-report.md` |
+
+Spawn **z-consistency-auditor**, **z-test-health**, and **z-diff-security-scan** concurrently in the same batch. Spawn `03e` at `high` with this brief:
+
+> "[SUBAGENT-MODE] Perform a diff-scoped security review of phase [phase-name]. Changed-file list: `dev/feature/changed-files.txt`. Full diff: `dev/feature/range.diff`. Context documents: [the phase summary path, and every feature implementation record path]. Write the report to `dev/feature/[phase-name]-security.md` and return its verdict (`PASS` | `PASS WITH CONDITIONS` | `BLOCKED` | `NOT RUN`) with finding counts by severity."
+
+Wait for every report you spawned. A specialist report you cannot locate is a missing artifact, so apply the Subagent Output Verification rule.
+
+**Security.** Verify the report exists at `dev/feature/[phase-name]-security.md`. Then record one aggregate:
+
+- If the report is missing, record `security-scan: NOT RUN (report missing)` and set `all-approved: no`.
+- Otherwise record `security-scan: PASS | PASS WITH CONDITIONS | BLOCKED` from the report. A blocked aggregate sets `all-approved: no`.
+
+`03e` is not a substitute for a full-codebase `z-auditor-security` scan.
+
+**Audits.** Record `phase-close-audits: executed` with both report paths. If either cannot run, record `phase-close-audits: absent ([concrete reason])` and set `all-approved: no`. Never treat an absent audit as a clean result.
+
+Every report travels to Step 5.
+
+#### Step 3b: Validate before repairing
+
+Repair at most one round per phase. Only a finding from a repair-eligible lane can open it. An advisory-only finding never opens a round, and `04d` consistency drift in particular is never auto-repaired: its fix rewrites code across every feature. Carry every advisory-only finding to Step 5 as a condition.
+
+No reviewer report reaches a fixer unconsolidated or unvalidated. Spawn **z-finding-consolidator** first. Give it every report path from all nine lanes, advisory ones included. It writes the deduplicated candidate list to `03m-finding-consolidator-candidates.md`, and that one list is what Step 5 reads — never nine separate reports. The orchestrator does not merge, rank, or adjudicate findings itself.
+
+Then spawn **z-finding-validator** at `medium`. Give it only the candidates drawn from the four repair-eligible lanes. The advisory-only and unfired conditional lanes are not validated, because nothing downstream may repair them. It writes `03n-finding-validator-validation.md` and the final fix list at `03n-finding-validator-fix-list.md`. Give it the phase summary and every feature plan as accepted contracts, the phase diff, and the run evidence. Its unit directory is `dev/feature/[phase-name]-phase-close/`, and its review cycle is `repair-01`. Tell it that advisory-only findings are excluded from the fix list.
+
+Only independently confirmed `Critical`, `Blocker`, and `High` production defects enter the fix list. On an empty fix list, record `phase-close-repair: none` and go to Step 5 with the Step 3a aggregates.
+
+#### Step 3c: Repair once, then re-verify
+
+1. Spawn **z-feature-fixer** at `medium`. Give it the validated fix list, every feature implementation record, and the resolved paths of every file the fix list cites.
+2. Run the affected suites yourself. A fixer self-report is not evidence. On a regression, instruct the fixer to revert the round, record `phase-close-repair: failed (regression)`, and go to Step 5.
+3. Record `phase-close-repair: executed ([fix list path])`. Never open a second round.
+
+Do not re-run the audits. The regression run at point 2 is the check on this repair, and running tests is not re-running the audits. Re-materializing the diff and re-spawning the roster would measure a diff this repair just changed, which is the loop this pipeline exists without. The Step 3a aggregates stand, and Step 5 sees them beside the fix-list outcome.
+
+This step emits no checkpoint of its own.
+
+### Step 4: QA
 
 Produce the QA documents for this execution. Then run the automated one. Never ask the user to run a command this pipeline could run itself.
 
 Load the `pipeline-artifacts` skill. Determine all three QA output paths from its Consolidated QA Documents table. Check for existing QA files at those paths.
 
-#### Step 3a: spawn QA Writer
+#### Step 4a: spawn QA Writer
 
 Spawn the **z-feature-qa-writer** subagent:
 
@@ -218,9 +261,9 @@ After the subagent returns:
 - Read the manual document's items. A manual item earns its place only when its stated reason is visual inspection, a real environment, a live service, or UX judgment. Any other reason is a check a command could decide.
 - If any item fails that test, re-spawn **z-feature-qa-writer** once with the mis-sorted items named and instruct it to move each one into the automated document. Continue with whatever it returns.
 
-#### Step 3b: spawn QA Runner
+#### Step 4b: spawn QA Runner
 
-Run this step only when the automated QA document exists. If it does not exist, record `automated-qa-run: N/A (no automated checks)` and go to Step 3c. This is not a gate failure.
+Run this step only when the automated QA document exists. If it does not exist, record `automated-qa-run: N/A (no automated checks)` and go to Step 4c. This is not a gate failure.
 
 Spawn the **z-feature-qa-runner** subagent:
 
@@ -234,63 +277,17 @@ After the subagent returns:
 - An `UNRUNNABLE` check is a defect in the QA document, not in the phase. Name it as such when you report. The reroute target is `z-feature-qa-writer`, not the implementer.
 - Record how many `EVIDENCE ONLY` checks now have evidence waiting for the human. These do not block.
 
-#### Step 3c: Checkpoint
+#### Step 4c: Checkpoint
 
 Emit the skill's QA checkpoint once. This stage produced the three QA outputs and any phase-level pipeline documents it updated.
 
 The skill's staging rules exclude the evidence directory. It is untracked run output.
 
-### Step 4: Phase-Close Audits
-
-Run the phase-close reviews here. Three things must complete first: every feature, every feature integration test gate, and QA.
-
-#### Step 4a: Run the audits
-
-Materialize the phase diff first. Resolve `<phase-baseline>` with `git merge-base HEAD <default-branch>`, then write both artifacts under `dev/feature/`:
-
-- `changed-files.txt` — `git diff --name-status <phase-baseline>..HEAD`
-- `range.diff` — `git diff <phase-baseline>..HEAD`
-
-Spawn **z-consistency-auditor**, **z-test-health**, and **z-diff-security-scan** concurrently against the whole phase diff. Spawn `03e` at `high` with this brief:
-
-> "[SUBAGENT-MODE] Perform a diff-scoped security review of phase [phase-name]. Changed-file list: `dev/feature/changed-files.txt`. Full diff: `dev/feature/range.diff`. Context documents: [the phase summary path, and every feature implementation record path]. Write the report to `dev/feature/[phase-name]-security.md` and return its verdict (`PASS` | `PASS WITH CONDITIONS` | `BLOCKED` | `NOT RUN`) with finding counts by severity."
-
-Wait for all three reports.
-
-**Security.** Verify the report exists at `dev/feature/[phase-name]-security.md`. Then record one aggregate:
-
-- If the report is missing, record `security-scan: NOT RUN (report missing)` and set `all-approved: no`.
-- Otherwise record `security-scan: PASS | PASS WITH CONDITIONS | BLOCKED` from the report. A blocked aggregate sets `all-approved: no`.
-
-`03e` is not a substitute for a full-codebase `z-auditor-security` scan.
-
-**Audits.** Record `phase-close-audits: executed` with both report paths. If either cannot run, record `phase-close-audits: absent ([concrete reason])` and set `all-approved: no`. Never treat an absent audit as a clean result.
-
-All three reports travel to Step 5.
-
-#### Step 4b: Validate before repairing
-
-Repair at most one round per phase. Only a `03e` or `04f` finding can open it. A `04d` consistency finding never opens a round: its fix rewrites code across every feature, which perturbs the diff the re-verification measures. Carry every `04d` finding to Step 5 as a condition.
-
-No auditor finding reaches a fixer unvalidated. Spawn **z-finding-validator** at `medium`. Give it the `03e` and `04f` reports as candidates, the phase summary and every feature plan as accepted contracts, the phase diff, and the run evidence. Its unit directory is `dev/feature/[phase-name]-phase-close/`, and its review cycle is `repair-01`. Tell it that `04d` findings are excluded from the fix list.
-
-Only independently confirmed `Critical`, `Blocker`, and `High` production defects enter the fix list. On an empty fix list, record `phase-close-repair: none` and go to Step 5 with the Step 4a aggregates.
-
-#### Step 4c: Repair once, then re-verify
-
-1. Spawn **z-feature-fixer** at `medium`. Give it the validated fix list, every feature implementation record, and the resolved paths of every file the fix list cites.
-2. Run the affected suites yourself. A fixer self-report is not evidence. On a regression, instruct the fixer to revert the round, record `phase-close-repair: failed (regression)`, and go to Step 5.
-3. Re-run Step 3b against the existing automated QA document. Do not re-spawn **z-feature-qa-writer**. Only the run repeats.
-4. Re-materialize `changed-files.txt` and `range.diff`, then run Step 4a again. All three auditors run, `04d` included. The `04d` exclusion governs what opens a repair, never what is measured.
-5. Record `phase-close-repair: executed ([fix list path])`. The second run's aggregates replace the first run's and are final. Never open a second round.
-
-This step emits no checkpoint of its own.
-
 ### Step 5: Phase Final Review
 
-Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 3b, and both the diff security verdict and the phase-close audit result from Step 4. Any one of them can set `all-approved: no` on its own. Manual QA is not one of them. It runs after this pipeline, so an unexecuted manual checklist never sets `all-approved: no`.
+Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 4b, and both the diff security verdict and the phase-close audit result from Step 3. Any one of them can set `all-approved: no` on its own. Manual QA is not one of them. It runs after this pipeline, so an unexecuted manual checklist never sets `all-approved: no`.
 
-Spawn the **z-prod-code-review** subagent. Build the prompt from the applicable template below. Substitute five values: the verdict summary, the final aggregate `all-approved` state after every gate, the Step 4 phase-close audit result, the Step 4c repair result, and the author's fidelity-table departures. An absent audit keeps `all-approved: no` and still reaches this review.
+Spawn the **z-prod-code-review** subagent. Build the prompt from the applicable template below. Substitute five values: the verdict summary, the final aggregate `all-approved` state after every gate, the Step 3 phase-close audit result, the Step 3c repair result, and the author's fidelity-table departures. An absent audit keeps `all-approved: no` and still reaches this review.
 
 **If QA was generated and the complete pipeline is `all-approved: yes`:**
 
@@ -312,7 +309,7 @@ Spawn the **z-prod-code-review** subagent. Build the prompt from the applicable 
 >
 > Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved. Phase-close repair: [`none` | `executed ([fix list path])` | `failed ([reason])`]. A failed repair is `all-approved: no`.
 
-After the z-prod-code-review subagent returns, emit the skill's final review checkpoint. It aggregates the final review artifact, the Step 4 security scan report, and any phase-level pipeline documents this step updated.
+After the z-prod-code-review subagent returns, emit the skill's final review checkpoint. It aggregates the final review artifact, the Step 3 security scan report, and any phase-level pipeline documents this step updated.
 
 ### Step 6: Report to User
 
@@ -323,7 +320,7 @@ Present results using the Pipeline Completion Report format from the auto-loaded
 - Include the manual QA document path, the automated QA document path, and the security scan report path
 - Include the automated QA verdict and how many checks a human still has to judge. Never present an unrun automated QA document as passing QA
 - Include the final test-execution status and results artifact path
-- Include the Step 4c repair result. Never omit that the pipeline changed code after QA ran
+- Include the Step 3c repair result. QA ran after that repair, so the QA verdict describes the code this report is about
 
 Report the phase as implementation-complete only when the final gate is `executed-green`. If it is `executed-failing` or `not-executed`, say so plainly and name what remains. An unrun suite is not a completed phase.
 

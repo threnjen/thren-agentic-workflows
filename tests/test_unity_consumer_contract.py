@@ -71,8 +71,8 @@ def _phase_execute_errors(section: str) -> set[str]:
         or "supervisor-attested (no artifact exported)" not in section
     ):
         errors.add("supervisor attestation")
-    if "Retry at most once" not in section:
-        errors.add("one retry")
+    if "do not remediate here" not in lower:
+        errors.add("no orchestrator repair round")
     return errors
 
 
