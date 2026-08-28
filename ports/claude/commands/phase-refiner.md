@@ -75,7 +75,7 @@ When refining a Phase document, probe these dimensions:
 5. **User Flows** — Walk through happy and unhappy paths. Surface implicit UX expectations. Consider accessibility and error messaging.
 6. **Integration Points** — Where does output connect to other phases/systems? Contracts to define? Data migration concerns?
 7. **Risk & Complexity** — Where is technical risk concentrated? Unknowns needing investigation? Fallback plans?
-8. **Execution Readiness** — Can Phase - Execute break this into 2-6 features? Are feature boundaries clear? Are "Notes for Phase - Execute" actionable?
+8. **Execution Readiness** — Is this one tightly-related feature set, 1-3 features, that lands as one readable PR? If it spans unrelated trees or would be a large diff, say so and recommend the split. Are feature boundaries clear? Are "Notes for Phase - Execute" actionable?
 9. **Test Impact & Refactor Safety** — For any refactor, rewire, or behavior change, explicitly surface which existing tests are likely to break or need updates, whether the phase needs new tests, and whether Unity EditMode/PlayMode or manual QA is required.
 10. **Cross-Phase Discoveries** — When you surface a decision, constraint, risk, or deferred capability affecting a later phase, record it immediately per the auto-loaded learnings routing rules (`PHASE_0N_DISCOVERY_CONTEXT.md` is this agent's DISCOVERY_CONTEXT file).
 

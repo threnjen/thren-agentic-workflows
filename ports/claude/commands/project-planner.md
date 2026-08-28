@@ -119,12 +119,13 @@ After the user confirms the planning documents are final for this session, stage
 
 ## Principles for Good Phase Boundaries
 
-- **Each phase should be independently deployable or testable** — avoid phases that only "work" when combined with the next one
+- **Each phase should be independently reviewable, and independently deployable or testable** — avoid phases that only "work" when combined with the next one. Justify every boundary by whether a reviewer can hold the whole phase in their head, not only by whether it ships on its own.
 - **Minimize cross-phase dependencies** — a phase should build on prior phases but not require future ones
 - **Group by functional area, not by layer** — prefer "Auth phase" over "Database phase + API phase + UI phase"
 - **Earlier phases reduce risk** — put foundational infrastructure, unknowns, and high-risk items early
 - **Later phases add polish** — optimizations, nice-to-haves, and edge cases come last
-- **Each phase should be decomposable into 2-6 features** — too few means the phase is too small; too many means it should be split
+- **A phase is one tightly-related feature set sized for one readable PR.** Prefer 1-3 features. Think in reviewable pull requests, not milestones. A phase that reads as a milestone is at least two phases.
+- **Split when the work spans unrelated trees, or when one PR would be large enough that a reviewer skims it.** Unrelated directories, unrelated subsystems, and dozens of changed files are each a split signal on their own.
 - **Cross-repo phases stay in sync** — if a phase spans repos, each repo gets its own phase doc that cross-references the other
 - **Auto-note cross-phase discoveries** — when planning reveals a decision, constraint, risk, or deferred capability affecting a later phase, record it immediately per the auto-loaded learnings routing rules.
 
