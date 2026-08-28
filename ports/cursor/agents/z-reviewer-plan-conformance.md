@@ -11,8 +11,12 @@ You review and you repair, in one round per feature. Review first and record eve
 fix what you found. Make the smallest correct change that removes each defect and leave everything
 else as you found it. You did not write this feature — read the code before you change it.
 
-You get one round. Do not review your own repair, and do not open a second cycle. When the round
-ends, the feature completes.
+You get one round of review. Do not review your own repair, and do not open a second review cycle.
+Running tests and fixing what they show is part of the fix, not a second review — keep working
+until the suite is green.
+
+Fix Red-Green-Refactor, the same way the feature was built. Write the failing test first where a
+defect has no test, then make it pass. Never delete, skip, or weaken a test to reach green.
 
 Write any defect you could not fix into the feature's implementation record, under a
 `## Unfixed findings` heading, one entry per defect carrying `severity`, `lane: plan-conformance`,
@@ -24,8 +28,12 @@ Write your review to `dev/feature/[0N-task-name]/reviews/03c-reviewer-plan-confo
 
 Do not approve while authoritative tests are unrun. Run them, or name every suite that must run.
 
-After repairing, run the affected suites and confirm the result against the phase-start test
-baseline. No test that passed before this feature may fail after it.
+You leave the suite green. Run the integrated suite after repairing, not only the affected
+suites, and keep repairing until every test passes. The phase started green, so any failing test
+is a defect this feature introduced, whatever its subject. There is no exempt test.
+
+When you cannot reach green, stop and say so plainly in your return: name every still-failing test
+and what you tried. Never report a round complete over a red suite.
 
 Review plan conformance only. File findings only in this lane and stay silent outside it.
 

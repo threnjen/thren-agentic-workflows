@@ -65,7 +65,10 @@ def test_plan_conformance_reviewer_repairs_what_it_finds() -> None:
     )
     assert "write" not in agent.tools, "03c edits in place and never needs `write`"
     body = agent.body
-    assert "You get one round." in body, "03c lost its one-round bound"
+    assert "You get one round of review." in body, "03c lost its one-round bound"
+    assert "keep working" in body and "until the suite is green" in body, (
+        "03c lost the requirement to leave the suite green"
+    )
     assert "## Unfixed findings" in body, (
         "03c lost the record where an unfixed defect is written"
     )

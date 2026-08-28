@@ -105,3 +105,49 @@ def test_every_body_spawn_resolves_to_an_agent_on_disk() -> None:
     assert not unresolved, (
         f"Phase - Execute spawns agents that match no `name:` on disk: {unresolved}"
     )
+
+
+def test_phase_starts_green_or_does_not_start() -> None:
+    """The preflight must stop the run, not record a status and continue.
+
+    Every later gate in the file reasons that a failing test can only be a defect
+    the current feature introduced. That inference is sound only because the phase
+    refused to begin red. A preflight that degrades to a warning silently restores
+    the baseline-exemption model the phase deleted.
+    """
+    body = _read(PHASE_PATH)
+    preflight = body.split("#### Green-suite preflight", 1)
+    assert len(preflight) == 2, "Step 1 lost its green-suite preflight"
+    section = preflight[1].split("#### Verify the inputs", 1)[0]
+
+    assert "stop the run immediately" in section, "preflight does not stop on a failing test"
+    assert "Do not spawn a single agent." in section, (
+        "preflight may not decompose or delegate before the suite is green"
+    )
+    assert "cannot run, stop the same way" in section, (
+        "an unrunnable suite must stop the preflight, not pass it"
+    )
+    assert "unfiltered" in section, "preflight must run the full suite, not affected suites"
+
+
+def test_no_test_may_be_excused_during_the_phase() -> None:
+    """A single exempt test reopens the escape hatch the preflight closed."""
+    body = " ".join(_read(PHASE_PATH).split())
+    assert "There is no exempt test" in body, "the no-exemption rule left the feature gate"
+    assert "no baseline exemption list" in body, "the no-exemption rule left the preflight"
+    assert "named in the baseline is exempt" not in body, (
+        "the baseline exemption clause is back"
+    )
+
+
+def test_orchestrator_opens_no_repair_round_of_its_own() -> None:
+    """Two agents own reaching green; a third round is the orchestrator undoing that."""
+    body = _read(PHASE_PATH)
+    gate = body.split("##### D. Integration test gate", 1)[1].split("##### E.", 1)[0]
+    assert "do not remediate here" in gate.lower(), "the gate reopened a repair round"
+    assert "Re-spawn the **Feature - Implementer**" not in gate, (
+        "the gate spawns a second repair agent for the same feature"
+    )
+    assert "always a production blocker" in gate, (
+        "a gate left failing must block, never be recorded complete"
+    )

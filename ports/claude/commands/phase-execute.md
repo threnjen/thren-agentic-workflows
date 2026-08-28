@@ -33,6 +33,25 @@ Reject a route that fails validation before you select the first feature. On an 
 
 This step runs once, before the feature loop starts.
 
+#### Green-suite preflight
+
+Run this before anything else. Do not verify inputs, spawn the Plan Author, decompose the phase,
+or create a todo list until it passes.
+
+1. Run the full test suite yourself, unfiltered. Not the affected suites, and never a subagent's
+   report of a run.
+2. **On green, continue to the input verification below.** Record the command and the counts.
+3. **On any failing test, stop the run immediately.** Report the failing test names and the
+   command that produced them. Do not spawn a single agent. The phase has not started, so there is
+   nothing to unwind and nothing to classify.
+4. **On a suite that cannot run, stop the same way.** A suite you cannot execute is not a green
+   suite, and no code exists yet to judge against it. Report the reason and what would make the
+   suite runnable.
+
+The phase begins green or it does not begin. Every later gate depends on that, because a test
+failing after a feature can only be a defect that feature introduced. There is no baseline
+exemption list and no test may be excused during the phase.
+
 #### Verify the inputs
 
 1. Verify that the phase document exists at `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`. Read it and extract the phase name and the scope.
@@ -61,7 +80,7 @@ Do not rebuild the schedule from stale plan metadata. Rebuild it from the graph 
 
 #### Seed the run
 
-Take the phase-level discovery the author returned. It contains the environment state, the test baseline, the lint and format commands, and the phase-scoped test directory pattern. Hold those values for the feature loop. Do not rediscover them per feature.
+Take the phase-level discovery the author returned. It contains the environment state, the lint and format commands, and the phase-scoped test directory pattern. The preflight above owns the suite command and its green result, so do not take a test baseline from the author. Hold those values for the feature loop. Do not rediscover them per feature.
 
 Create a todo list entry for each feature with status `not-started`.
 
@@ -89,7 +108,7 @@ Stages A through E run in order for one selected feature, then repeat for the ne
 
 Spawn **z-feature-implementer** with:
 
-> "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Run the affected suites from these manifest verification assets: [verification-assets extracted from manifest, or `not provided`]. Return a summary of what was implemented, the test-execution status with its results artifact path, and test results."
+> "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Run the affected suites from these manifest verification assets: [verification-assets extracted from manifest, or `not provided`], then run the integrated suite and leave every test green. The phase started green, so any failing test is a defect this feature introduced, whatever its subject. Never delete, skip, or weaken a test to reach green. If you cannot reach green, stop and name every still-failing test rather than reporting the feature done. Return a summary of what was implemented, the test-execution status with its results artifact path, and test results."
 
 **A1. Implement checkpoint** — Emit the skill's implement checkpoint for this feature. The unit is `dev/feature/[0N-task-name]/`. The file `[0N-task-name]-implementation.md` names the source and test files to stage.
 
@@ -99,11 +118,13 @@ Assemble the feature's changed-file list and its selected plan metadata.
 
 Spawn **z-reviewer-plan-conformance** at `medium` with the plan and the diff:
 
-> "[SUBAGENT-MODE] Review and repair the feature at `dev/feature/[0N-task-name]/`. Read the implementation record, the plan, and the changed files. Map every acceptance criterion to evidence, then fix what you find. You get one round. Write your review to `dev/feature/[0N-task-name]/reviews/03c-reviewer-plan-conformance-report.md`. Write any defect you could not fix into the implementation record under `## Unfixed findings`. Phase-start test baseline: [baseline path]. Return the verdict, what you repaired, and what you left unfixed."
+> "[SUBAGENT-MODE] Review and repair the feature at `dev/feature/[0N-task-name]/`. Read the implementation record, the plan, and the changed files. Map every acceptance criterion to evidence, then fix what you find. You get one round. Write your review to `dev/feature/[0N-task-name]/reviews/03c-reviewer-plan-conformance-report.md`. Fix Red-Green-Refactor and leave the integrated suite green. Write any defect you could not fix into the implementation record under `## Unfixed findings`. Return the verdict, what you repaired, what you left unfixed, and the final suite result."
 
-The reviewer gets one round. It repairs what it can and records what it cannot. Never spawn it a second time for the same feature, and never open a fix round of your own. An unfixed finding is not a blocker here — the phase-close review at Step 3 sees the same code again.
+The reviewer gets one round of review. It repairs what it finds and records what it cannot fix. Never spawn it a second time for the same feature, and never open a fix round of your own. An unfixed finding that leaves the suite green is not a blocker here — the phase-close review at Step 3 sees the same code again.
 
-Run the affected suites yourself after the reviewer returns. A reviewer self-report is not evidence.
+Reaching green is not part of that one round. The reviewer keeps repairing until every test passes, because running tests and fixing what they show is not reviewing its own repair.
+
+Run the suite yourself after the reviewer returns. A reviewer self-report is not evidence.
 
 **B1. Review checkpoint** — Emit the skill's review checkpoint for this feature. The unit is `dev/feature/[0N-task-name]/`.
 
@@ -114,9 +135,8 @@ Run this gate before you mark the feature complete.
 1. Run the integrated suite. It is the union of every affected suite plus the manifest's `## Verification Assets`. On the phase's final feature, run the suite unfiltered.
    - For Unity, consume the `unity-development` skill's Test Execution section and Execution Ladder. Do not copy their mechanics. Target `<execution-unity-project>`, preserve affected-suite `-testFilter` scoping, and write the results XML and Unity log to the absolute main-checkout artifact directory.
 2. Read the results artifact. Record `[0N-task-name] integration test-execution: executed-green | executed-failing | not-executed (<reason>)`.
-   - Judge the run against the phase-start test baseline recorded in Step 1. No test that passed at the baseline may fail after this feature. A failing test named in the baseline is exempt. A failing test the baseline does not name is a regression this feature caused, whatever its subject. Never add a test to the baseline during the phase.
-3. **On `executed-failing`, remediate once.** Re-spawn the **z-feature-implementer** that owns the failing behavior. Give it the failing test names. Then re-run the gate. Retry at most once. If the gate still fails, record the final status and proceed.
-   > "[SUBAGENT-MODE] The feature integration test gate failed for phase [phase-name]. Failing tests: [names and assertion messages]. Results artifact: [path]. These failures are in suites outside your feature's Files Changed table — a contract you changed broke callers written before it. Fix the production code or update the affected fixtures so these tests pass. Do NOT delete, skip, or weaken tests to force a pass. Return what you changed."
+   - The phase started green under the Step 1 preflight, so every failing test here is a defect this feature introduced, whatever its subject. There is no exempt test and no baseline list to check against.
+3. **On `executed-failing`, do not remediate here.** Two agents already owned reaching green, and neither did. Opening a third repair round is the orchestrator doing the work it delegated. Record the failing tests and classify the feature at point 5 as a production blocker.
 4. **On `not-executed`, do not proceed silently and do not treat it as green.**
    - For Unity, exhaust the canonical Execution Ladder. The orchestrator runs every obtainable command. Never delegate a Unity test command to the user.
    - Reach `not-executed` only in three cases: the user declines the main-checkout fallback, unattended non-response yields `not-executed: editor open, user unavailable`, or the evidence is genuinely unavailable for another stated reason.
@@ -125,6 +145,7 @@ Run this gate before you mark the feature complete.
    - If the direct supervisor directs this run to skip Unity testing gates, record `not-executed (supervisor-directed skip; user will run later)` for each skipped gate. Continue the pipeline without treating it as green. Carry `all-approved: no` into final review.
    - Do not invent counts. Do not apply either exception to a subagent's report.
 5. **Classify a feature the gate leaves failing.** Classify before you block anything.
+   - A gate left at `executed-failing` is always a production blocker. The tests ran and failed, which is confirmed evidence of a shipped defect. Never record such a feature complete.
    - An **implementation blocker** is a confirmed shipped defect that invalidates a downstream contract, or an absent dependency contract. Only a `production-blocker` can block dependents. Mark that feature and its dependents blocked, then continue the independent features.
    - A **verification blocker** is a missing test artifact, an unavailable runner, absent generated metadata, or a review-evidence gap. It never blocks a dependent feature. Record it as `implementation-complete, verification-pending`, name the missing evidence, set `all-approved: no`, and continue with the remaining features.
    - A compile command that ran and failed proves a production blocker. Missing compilation evidence is a verification blocker until an authoritative run exists.

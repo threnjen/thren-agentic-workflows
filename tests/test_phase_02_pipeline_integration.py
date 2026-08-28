@@ -344,11 +344,11 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
             "review and fix",
             phase,
             (
-                "The reviewer gets one round.",
+                "The reviewer gets one round of review.",
                 "never open a fix round of your own",
-                "An unfixed finding is not a blocker here",
+                "An unfixed finding that leaves the suite green is not a blocker here",
                 "Only a `production-blocker` can block dependents",
-                "A failing test the baseline does not name is a regression",
+                "There is no exempt test and no baseline list to check against",
             ),
         ),
     )

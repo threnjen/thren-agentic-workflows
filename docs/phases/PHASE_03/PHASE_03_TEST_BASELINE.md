@@ -1,7 +1,8 @@
 # Phase 03 Test Baseline
 
-The feature test gate compares against this record. No test that passes here may fail after a
-feature. A failure whose test is not named below is a real regression, never an exemption.
+This records the green suite Phase - Execute requires before it starts. The orchestrator now
+runs the suite itself at its Step 1 preflight and stops the run on any failing or unrunnable
+test, so this file documents the measured result rather than acting as a list a gate consults.
 
 ## Environment
 
@@ -24,8 +25,7 @@ the repository's pre-rename path and could not start.
 
 ## Exempt tests
 
-None. Every test passes at phase start.
-
-An empty exemption list is the strongest form of this gate: any failing test during Phase 03 is
-caused by the feature that introduced it. Nothing may be added to this list during the phase.
-A test that starts failing is repaired, not exempted.
+None, and the concept is retired. Because the phase cannot begin red, no test can be excused
+during it. Any failing test is caused by the feature that introduced it and is repaired by the
+agent that touched the code — the Implementer, then 03c. A feature whose gate still fails is a
+production blocker, never a completed feature.
