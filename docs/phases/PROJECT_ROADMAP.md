@@ -9,7 +9,8 @@ One authored corpus of agents, skills, and instructions that propagates to every
 | Phase | Name | Status | Depends On | Complexity | Description |
 |-------|------|--------|------------|------------|-------------|
 | 01 | Creative Writing Profile and Developmental Editor Toolkit | Complete | None | Large | Creative agent roster, profile instruction with skill allow-list, four creative skills, baseline trim, guard tests, and user documentation. |
-| 02 | Merged Feature Scheduling and Phase Execution | Implemented with eleven known pre-existing test failures | 01 | Large | Provides one living-schedule orchestrator with just-in-time plan expansion, per-feature revalidation, a four-reviewer committee, consolidated fix loops, model-tier routing, session preflight, integration guards, and post-renumber harness outputs. |
+| 02 | Merged Feature Scheduling and Phase Execution | Implemented with eleven known pre-existing test failures | 01 | Large | Provides one living-schedule orchestrator with just-in-time plan expansion, per-feature revalidation, a per-feature reviewer committee, consolidated fix loops, model-tier routing, session preflight, integration guards, and post-renumber harness outputs. |
+| 03 | Phase Execute Loop Simplification | Planned | 02 | Medium | Collapses the per-feature reviewer committee into one review-and-fix agent, moves the full nine-agent chorus to phase close as a single pass, caps repair at one round with no audit re-run, and reorders QA to measure final code. |
 
 ## Constraints & Non-Goals
 
@@ -25,6 +26,8 @@ One authored corpus of agents, skills, and instructions that propagates to every
 Reviewer committees are differentiated by the evidence each reviewer may read, never by assigned subject matter. Reviewers given the same inputs and different topic lists converge on the same findings, and the committee then costs several times one report's value.
 
 Defects split by how they arise. Accretive defects enter on one feature's diff and are caught per feature. Emergent defects arise from accumulation across features, are invisible in any single diff, and need a check when the phase closes, where one pass over the finished phase can see them.
+
+Review terminates only when its question has a finite answer set. Plan conformance walks a fixed list of acceptance criteria and ends when the list ends. Open-ended observation has no completion state, so repeated cycles subdivide the same findings instead of adding new ones. A review step that can run twice against its own repair must be given a hard bound or removed.
 
 Every review agent has one entry condition, recorded in a per-feature table or a boundary table, and the correctness test is that the set of agents which ran matches the set the tables predict. Counting reviewers cannot catch an agent wrongly skipped. Entry conditions are derived from the changed-file list wherever the agent's subject is a file, and from the feature plan where its subject is an acceptance criterion.
 
