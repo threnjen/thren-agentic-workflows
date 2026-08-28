@@ -23,6 +23,9 @@ COMMITTEE_SLUGS = (
     "03n-finding-validator",
 )
 NEW_REVIEWER_SLUGS = COMMITTEE_SLUGS[1:]
+# 03c reviews and repairs in one round, so it holds `edit` and is outside the
+# read-only enumeration. Every other committee lane stays read-only.
+READ_ONLY_SLUGS = COMMITTEE_SLUGS[1:]
 
 LANE_PROHIBITIONS = {
     "03c-reviewer-plan-conformance": "Review plan conformance only.",
@@ -48,9 +51,25 @@ def test_committee_agents_are_hidden_medium_and_read_only() -> None:
         agent = agents[slug]
         assert not agent.user_invocable, f"{slug} must remain hidden"
         assert agent.model_tier == "medium", f"{slug} must use the medium tier"
+    for slug in READ_ONLY_SLUGS:
+        agent = agents[slug]
         assert not {"edit", "write"}.intersection(agent.tools), (
             f"{slug} has repository write authority: {agent.tools}"
         )
+
+
+def test_plan_conformance_reviewer_repairs_what_it_finds() -> None:
+    agent = _agents()["03c-reviewer-plan-conformance"]
+    assert "edit" in agent.tools, (
+        "03c reviews and repairs in one round and must keep its edit grant"
+    )
+    assert "write" not in agent.tools, "03c edits in place and never needs `write`"
+    body = agent.body
+    assert "You get one round." in body, "03c lost its one-round bound"
+    assert "## Unfixed findings" in body, (
+        "03c lost the record where an unfixed defect is written"
+    )
+    assert "Never block a feature on a finding you left unfixed" in body
 
 
 def test_each_committee_lane_has_a_load_bearing_prohibition() -> None:
@@ -127,11 +146,15 @@ def test_required_instruction_membership_matches_each_lane() -> None:
     read_only = _instruction("read-only-agent.instructions.md")
     autonomy = _instruction("subagent-autonomy.instructions.md")
 
-    for slug in COMMITTEE_SLUGS:
+    for slug in READ_ONLY_SLUGS:
         assert any(
             fnmatch.fnmatch(agent_paths[slug], pattern)
             for pattern in read_only.apply_to_patterns
         ), f"read-only instructions do not reach {slug}"
+    assert not any(
+        fnmatch.fnmatch(agent_paths["03c-reviewer-plan-conformance"], pattern)
+        for pattern in read_only.apply_to_patterns
+    ), "read-only instructions still forbid 03c from applying its own fixes"
     for slug in NEW_REVIEWER_SLUGS:
         assert any(
             fnmatch.fnmatch(agent_paths[slug], pattern)

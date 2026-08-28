@@ -66,22 +66,23 @@ Give every review step in the pipeline a natural stopping point, and delete the 
 ## Technical Context
 
 - `source_of_truth/agents/03-phase-execute.agent.md` — the orchestrator. Damage is concentrated in Step 2 stages B and C, and in Step 4b–4c
-- `source_of_truth/agents/03c-reviewer-plan-conformance.agent.md` — becomes the review-and-fix agent. Currently `tools: [read, search, execute, todo]` with the read-only-agent instruction attached. Seventeen files reference it, five of them instruction `applyTo` globs, which is why it changes in place rather than moving to a new number
+- `source_of_truth/agents/03c-reviewer-plan-conformance.agent.md` — the review-and-fix agent. It holds `tools: [read, edit, search, execute, todo]` and sits outside the read-only-agent enumeration, mirroring `03p Feature - Fixer`. Seventeen files reference it, five of them instruction `applyTo` globs, which is why it changed in place rather than moving to a new number
 - `source_of_truth/agents/03l-reviewer-plan-blind.agent.md` — stays, moves to phase close
 - `03m Finding Consolidator`, `03n Finding Validator`, `03p Feature - Fixer` — survive at phase close only
 - `source_of_truth/skills/implementation-pipeline-loop` — defines the checkpoint scheme the feature loop emits
-- `scripts/propagate_master_assets.py` — agents edit `source_of_truth/` only; propagation is a manual maintainer step
+- `scripts/propagate_master_assets.py` — agents author under `source_of_truth/` only, then run this script to convergence. The regenerated `ports/` and `.github/` output is committed with the source change
 - `docs/learnings/project-learnings.md` — contains the four prior diagnoses this phase supersedes
-- The checked-in virtualenv is stale. `.venv/bin/pytest` carries a shebang pointing at `/Users/jennywadkins/github_repos/github-agents-source-of-truth/.venv/bin/python`, a path left behind by the repository rename, so the suite does not currently start
+- `.venv` is gitignored and rebuilt with `uv venv .venv --python 3.12` plus `requirements-dev.txt`. The phase-start baseline is recorded in `docs/phases/PHASE_03/PHASE_03_TEST_BASELINE.md` and is fully green, with no exempt tests
+- Any edit under `source_of_truth/` requires a propagation run before the suite passes. `test_retirement_reconciliation.py::test_committed_tree_is_at_a_propagation_fixed_point` fails until `scripts/propagate_master_assets.py` has run to convergence and the regenerated `ports/` and `.github/` output is committed
 
 ## Dependencies & Risks
 
 - **Dependency**: the Phase 03 numbering rule in `cross-phase-decisions.md`. Any agent authored here uses post-renumber numbering. This phase authors no new agent identity, so the rename surface stays empty
-- **Dependency**: a runnable test environment. The suite cannot start until the stale virtualenv is rebuilt, and three success criteria are measured only by a live run
+- **Dependency**: a runnable test environment. Three success criteria are measured only by a live run
 - **Risk**: guard tests may pass against retired pipeline text. `project-learnings.md` records that a contract test locating its section by heading string cannot tell a live section from a commented-out one. Mitigation: delete retired sections outright rather than commenting them, and confirm each affected guard goes red before it goes green
 - **Risk**: removing the per-feature committee removes the only early catch for accretive defects. Mitigation: the per-feature integration test gate stays, and Plan Conformance repairs contract failures at the feature where they enter
 - **Risk**: an unfixed per-feature defect is recorded and then never re-found by the chorus, so it ships. Mitigation: the record is written in the Consolidator's finding shape, and the chorus reviews the same code at phase close
-- **Risk**: the baseline exemption list goes stale and silently widens, exempting failures a feature actually caused. Mitigation: record the baseline once per phase, name every exempt test, and treat an unnamed failure as a real one
+- **Risk**: the baseline exemption list goes stale and silently widens, exempting failures a feature actually caused. Mitigation: the baseline is empty, so any failing test during this phase is a regression. Nothing is added to the list during the phase
 - **Risk**: one repair round means a wasted fix is a fix not available elsewhere. Mitigation: the Validator gates the fix list to independently confirmed Critical, Blocker, and High production defects
 - **Risk**: with the audit re-run removed, the phase-close fix has no auditor to re-measure it. Mitigation: the orchestrator's regression run over the affected suites is the check, and Prod Code Review sees the fix-list outcome alongside the consolidated findings
 - **Risk**: a stale agent roster in the orchestrator's frontmatter. The `agents:` list names twenty agents by mixed conventions — some numbered, some not — several of which this phase removes from the pipeline
