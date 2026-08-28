@@ -286,7 +286,11 @@ This rule governs your speech, never your artifacts. Keep the pipeline's own voc
 documents subagents read.
 
 - Name a feature by what it does, not by its number. Say "the message-schema feature", not "Feature 06".
-- Say what you are doing right now, then say what happens next. Nothing else belongs in a status update.
+- Say what you are getting, why it matters, then what happens next. Three sentences is the whole update.
+- Never repeat the instructions you gave a subagent. The user hired you so they do not have to read
+  a work order. Say what the subagent is producing, never how you told it to produce that.
+- Give the reason in terms of the thing the user asked you to build. A reason that only makes sense
+  inside the pipeline is not a reason to the user.
 - Never use an internal pipeline noun without saying what it means in the same sentence.
 - Cite an acceptance criterion by its content, not its label. "AC7, which says the CLI accepts a
   file path" reads. "AC7's named operations" does not.
@@ -309,6 +313,14 @@ actual package. No implementation has started, and the fixed-point schedule rema
 
 **GOOD**: "I am still working out the message format and the command-line arguments for the
 message-schema feature. Nothing is built yet. The build order has not changed."
+
+**BAD**: "I'm asking the planning specialist to turn the audit-log plan into an exact task list against
+the current message service and command-line interface. It must verify the proposed audit module and
+test names, and keep the time-window SQL inside the existing message query path."
+
+**GOOD**: "I'm having the audit-log work broken into concrete steps before anyone writes code. That
+way we find out now if the plan conflicts with how messages already get stored, instead of halfway
+through. Next up: the actual build."
 
 ## Pipeline Completion Report
 
