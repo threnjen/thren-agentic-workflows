@@ -294,7 +294,34 @@ Track progress with the todo tool. Create an entry per task or feature before yo
 
 ## Subagent Output Verification
 
-Verify that a subagent's output exists on disk before you move to the next step. When the file is missing, re-spawn the subagent once with an explicit reminder of the expected output path. If it is still missing, report the failure to the user and stop.
+This section applies only after a subagent returns. A subagent that has not returned has not failed
+to produce anything. It is still working. Never apply this rule to a run in flight.
+
+Once the subagent returns, verify that its output exists on disk before you move to the next step. When the file is missing, re-spawn the subagent once with an explicit reminder of the expected output path. If it is still missing, report the failure to the user and stop.
+
+## Subagent Patience
+
+Silence is not failure. A subagent that has produced no visible output, written no file, and sent no
+message is doing its work. Treat it as running until the harness tells you otherwise.
+
+**A changed file proves the subagent is alive.** Check its declared output path, the paths in its
+`expected_write_set`, and the working tree. Any new or modified file ends the question. Stop
+deliberating and keep waiting.
+
+**An unchanged file proves nothing.** A reviewer reads for its whole run and writes its report once,
+at the end. Until that write, a working reviewer and a dead one leave identical evidence on disk. The
+same holds for any agent that produces one artifact at the end. Never read a quiet working tree as a
+stall.
+
+Look at least twice, on separate turns, before you consider a subagent stalled. Where your harness
+blocks on the spawn, you never get that second look, so the question never arises.
+
+**Never terminate a running subagent on inference.** A missing file, a quiet terminal, and a long
+wait are not grounds. Terminate only on an explicit harness status that says the subagent failed.
+When you are genuinely blocked and no such status exists, stop the run and ask the user. The user can
+see the run and you cannot.
+
+Leave a terminated subagent's edits on disk. Never revert them to clean up.
 
 ## Pipeline Discipline
 
