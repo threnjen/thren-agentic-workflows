@@ -152,7 +152,7 @@ Run the phase-close reviews here, once, over the finished phase. Two things must
 The roster is nine reviewers in three classes. The class sets what may be repaired, never what is reported. Every class reaches Step 5.
 
 - **Repair-eligible (four)** — `03e-diff-security-scan`, `03j-reviewer-blast-radius`, `03k-reviewer-test-falsification`, `03l-reviewer-plan-blind`. Findings from these lanes may enter the fix list.
-- **Conditional (two)** — `04e-dependency-auditor`, `03h 03h-unity-reviewer`. Each runs only when its trigger holds. A condition that does not hold is complete evidence, not a missing reviewer.
+- **Conditional (two)** — `04e-dependency-auditor`, `03h-unity-reviewer`. Each runs only when its trigger holds. A condition that does not hold is complete evidence, not a missing reviewer.
 - **Advisory only (three)** — `04h-cleanliness-auditor`, `04d-consistency-auditor`, `04f-test-health`. Reported and carried to Step 5, never auto-repaired. Their fixes span every feature's files, so a repair would perturb the whole phase diff.
 
 Eligibility is set by lane, by blast radius. Severity gates a finding only once its lane is already eligible.
@@ -173,7 +173,7 @@ Spawn these reviewers concurrently at `medium` against the whole phase diff:
 
 Spawn these two in the same concurrent batch, each only when its condition holds:
 
-- Spawn **03h 03h-unity-reviewer** when `is-unity-project: yes`.
+- Spawn **03h-unity-reviewer** when `is-unity-project: yes`.
 - Spawn **04e-dependency-auditor** with the diff when the phase changed a dependency manifest or lockfile: `package.json`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `pyproject.toml`, `poetry.lock`, `uv.lock`, `requirements.txt`, `go.mod`, `go.sum`, `Cargo.toml`, or `Cargo.lock`.
 
 Every path below is relative to `dev/feature/[phase-name]-phase-close/`. Every reviewer report carries the same finding fields: `severity`, `lane`, `evidence`, `reviewer`.

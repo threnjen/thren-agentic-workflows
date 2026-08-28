@@ -80,3 +80,28 @@ def test_frozen_matrix_guard_fails_when_a_cell_field_is_dropped() -> None:
     assert "`lineage`" in _convergence_section(original)
     mutated = _convergence_section(original.replace("`lineage`, ", "", 1))
     assert {phrase for phrase in POST_REBUILD_MATRIX_CONTRACT if phrase not in mutated}
+
+
+def test_every_body_spawn_resolves_to_an_agent_on_disk() -> None:
+    """A spawn names an agent by its `name:`, never by its filename.
+
+    `03h-unity-reviewer.agent.md` declares `name: "Unity Reviewer"`, so a body
+    that writes `Spawn **03h Unity Reviewer**` names nothing. The frontmatter
+    roster is checked elsewhere against the same set; this checks the prose that
+    actually issues the spawn, which no other guard reads.
+    """
+    import re
+    import sys
+
+    sys.path.insert(0, str(REPO_ROOT / "scripts"))
+    import propagate_master_assets as mod
+
+    known = {agent.name for agent in mod.load_source_agents()}
+    body = _read(PHASE_PATH).split("---", 2)[2]
+    spawned = set(re.findall(r"[Ss]pawn (?:the )?\*\*(.+?)\*\*", body))
+
+    assert spawned, "no spawn directives found; the pattern stopped matching"
+    unresolved = sorted(name for name in spawned if name not in known)
+    assert not unresolved, (
+        f"Phase - Execute spawns agents that match no `name:` on disk: {unresolved}"
+    )

@@ -1,6 +1,6 @@
 # Phase 3: Phase Execute Loop Simplification
 
-**Status**: Planned
+**Status**: Complete
 **Depends on**: Phase 02
 **Estimated complexity**: Medium
 **Cross-references**: `docs/phases/PHASE_02/PHASE_02_SUMMARY.md`
@@ -85,7 +85,7 @@ Give every review step in the pipeline a natural stopping point, and delete the 
 - **Risk**: the baseline exemption list goes stale and silently widens, exempting failures a feature actually caused. Mitigation: the baseline is empty, so any failing test during this phase is a regression. Nothing is added to the list during the phase
 - **Risk**: one repair round means a wasted fix is a fix not available elsewhere. Mitigation: the Validator gates the fix list to independently confirmed Critical, Blocker, and High production defects
 - **Risk**: with the audit re-run removed, the phase-close fix has no auditor to re-measure it. Mitigation: the orchestrator's regression run over the affected suites is the check, and Prod Code Review sees the fix-list outcome alongside the consolidated findings
-- **Risk**: a stale agent roster in the orchestrator's frontmatter. The `agents:` list names twenty agents by mixed conventions — some numbered, some not — several of which this phase removes from the pipeline
+- **Risk**: the orchestrator's `agents:` list names twenty agents by mixed conventions, some numbered and some not. No entry went stale, because no agent was deleted. The exposure is that a body may spawn an agent by its filename rather than its `name:`, which resolves to nothing. Mitigation: a guard resolves every `Spawn **X**` in the orchestrator against the agent names on disk
 
 ## Success Criteria
 
