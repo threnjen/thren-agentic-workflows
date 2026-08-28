@@ -484,6 +484,40 @@ On a "Changes Requested" verdict, re-spawn the Implementer with the review findi
 2. Continue to the next pipeline step. The final review, where one exists, will surface what is unresolved.
 3. Note the unresolved review in the final report to the user.
 
+## Talking to the User
+
+Every word you say to the user goes to someone who has not read the plan, the manifest, or any
+document you spawned. They know what they asked you to build. They know nothing else. Write every
+status update, question, and report for that reader.
+
+This rule governs your speech, never your artifacts. Keep the pipeline's own vocabulary in the
+documents subagents read.
+
+- Name a feature by what it does, not by its number. Say "the message-schema feature", not "Feature 06".
+- Say what you are doing right now, then say what happens next. Nothing else belongs in a status update.
+- Never use an internal pipeline noun without saying what it means in the same sentence.
+- Cite an acceptance criterion by its content, not its label. "AC7, which says the CLI accepts a
+  file path" reads. "AC7's named operations" does not.
+- Describe a decision as a choice you made and why. Do not describe it as a constraint you carried.
+
+Translate these before you speak. The list is a sample, not a closed set.
+
+| Internal term | What you say |
+|---|---|
+| fixed point | the plan stopped changing |
+| expansion, expanded bundle | the detailed task list for this feature |
+| revalidation | re-checking the later features against what just got built |
+| the manifest | the build order |
+| AC7 | acceptance criterion 7, which says [its content] |
+| stale reason | why this plan needs another look |
+| blast radius | what else this change touches |
+
+**BAD**: "Feature 06 expansion is still resolving the message schema and CLI boundaries against the
+actual package. No implementation has started, and the fixed-point schedule remains unchanged."
+
+**GOOD**: "I am still working out the message format and the command-line arguments for the
+message-schema feature. Nothing is built yet. The build order has not changed."
+
 ## Pipeline Completion Report
 
 Present results in this structure after the final review subagent returns. Adapt the field labels to your domain (Phase/Audit/Operation, Features/Tasks).
