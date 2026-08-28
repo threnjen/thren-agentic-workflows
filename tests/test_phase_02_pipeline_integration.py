@@ -326,6 +326,21 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
         ("routing", routing_text, ('"low":', '"medium":', '"high":')),
         ("committee", phase, tuple(REPORT_PATHS.values())),
         (
+            "phase-close roster",
+            phase,
+            (
+                "The roster is nine reviewers in three classes.",
+                "**Repair-eligible (four)**",
+                "**Advisory only (three)**",
+                "Eligibility is set by lane, by blast radius.",
+                "Only a finding from a repair-eligible lane can open it.",
+                "`04d` consistency drift in particular is never auto-repaired",
+                "Give it only the candidates drawn from the four repair-eligible lanes.",
+                "Do not re-run the audits.",
+                "Never open a second round.",
+            ),
+        ),
+        (
             "review and fix",
             phase,
             (

@@ -65,7 +65,7 @@ Give every review step in the pipeline a natural stopping point, and delete the 
 
 ## Technical Context
 
-- `source_of_truth/agents/03-phase-execute.agent.md` — the orchestrator. Step 2 now runs A implement, B review-and-fix, D test gate, E complete. The chorus spawns sit in Step 4a and feed the Consolidator at Step 4b; Feature 3 restructures them into the three roster classes
+- `source_of_truth/agents/03-phase-execute.agent.md` — the orchestrator. Step 2 runs A implement, B review-and-fix, D test gate, E complete. Step 3 is the phase-close review: 3a spawns the nine-agent roster in three classes, 3b consolidates all nine and validates four, 3c repairs once with no audit re-run. Step 4 is QA, so it measures the repaired code. Step 5 is unchanged
 - `source_of_truth/agents/03c-reviewer-plan-conformance.agent.md` — the review-and-fix agent. It holds `tools: [read, edit, search, execute, todo]` and sits outside the read-only-agent enumeration, mirroring `03p Feature - Fixer`. Seventeen files reference it, five of them instruction `applyTo` globs, which is why it changed in place rather than moving to a new number
 - `source_of_truth/agents/03l-reviewer-plan-blind.agent.md` — stays, moves to phase close
 - `03m Finding Consolidator`, `03n Finding Validator`, `03p Feature - Fixer` — survive at phase close only

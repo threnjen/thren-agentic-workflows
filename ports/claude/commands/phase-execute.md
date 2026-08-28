@@ -101,7 +101,7 @@ Spawn **z-reviewer-plan-conformance** at `medium` with the plan and the diff:
 
 > "[SUBAGENT-MODE] Review and repair the feature at `dev/feature/[0N-task-name]/`. Read the implementation record, the plan, and the changed files. Map every acceptance criterion to evidence, then fix what you find. You get one round. Write your review to `dev/feature/[0N-task-name]/reviews/03c-reviewer-plan-conformance-report.md`. Write any defect you could not fix into the implementation record under `## Unfixed findings`. Phase-start test baseline: [baseline path]. Return the verdict, what you repaired, and what you left unfixed."
 
-The reviewer gets one round. It repairs what it can and records what it cannot. Never spawn it a second time for the same feature, and never open a fix round of your own. An unfixed finding is not a blocker here — the phase-close review at Step 4 sees the same code again.
+The reviewer gets one round. It repairs what it can and records what it cannot. Never spawn it a second time for the same feature, and never open a fix round of your own. An unfixed finding is not a blocker here — the phase-close review at Step 3 sees the same code again.
 
 Run the affected suites yourself after the reviewer returns. A reviewer self-report is not evidence.
 
@@ -140,53 +140,19 @@ Then identify every affected future feature and every downstream dependent of an
 
 Spawn **z-feature-plan-author** in `revalidation` mode. Pass it the completed feature, the affected future features, and their downstream dependents. Tell it to update each plan's stale reason and validation commit, and to recompute the graph and order. The author owns the recomputation bound. Stop the run and report when it returns a graph that did not reach a fixed point.
 
-### Step 3: QA
+### Step 3: Phase-Close Review
 
-Produce the QA documents for this execution. Then run the automated one. Never ask the user to run a command this pipeline could run itself.
+Run the phase-close reviews here, once, over the finished phase. Two things must complete first: every feature and every feature integration test gate. QA runs after this step, at Step 4, so that it measures the code the repair round produced.
 
-Load the `pipeline-artifacts` skill. Determine all three QA output paths from its Consolidated QA Documents table. Check for existing QA files at those paths.
+The roster is nine reviewers in three classes. The class sets what may be repaired, never what is reported. Every class reaches Step 5.
 
-#### Step 3a: spawn QA Writer
+- **Repair-eligible (four)** — `z-diff-security-scan`, `z-reviewer-blast-radius`, `z-reviewer-test-falsification`, `z-reviewer-plan-blind`. Findings from these lanes may enter the fix list.
+- **Conditional (two)** — `z-dependency-auditor`, `03h z-unity-reviewer`. Each runs only when its trigger holds. A condition that does not hold is complete evidence, not a missing reviewer.
+- **Advisory only (three)** — `z-cleanliness-auditor`, `z-consistency-auditor`, `z-test-health`. Reported and carried to Step 5, never auto-repaired. Their fixes span every feature's files, so a repair would perturb the whole phase diff.
 
-Spawn the **z-feature-qa-writer** subagent:
+Eligibility is set by lane, by blast radius. Severity gates a finding only once its lane is already eligible.
 
-> "Write the consolidated release QA documents covering ALL features in this phase. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following feature folders: [list all dev/feature/[0N-task-name]/ paths]. Use these manifest verification assets as a required coverage checklist: [verification-assets extracted from manifest, or `not provided`]. Write the manual QA plan to `[determined manual QA path]`, the automated QA document to `[determined automated QA path]`, and the coverage map to `[determined coverage map path]`. Sort every check: a command with a deterministic expected result belongs in the automated document, not on a human's checklist. If a QA file already exists, merge new coverage into it. Return both document paths, the automated/hybrid/manual counts, and a summary of what manual QA remains."
-
-After the subagent returns:
-
-- Verify that the manual QA document exists at the determined path.
-- Verify that the coverage map exists at the determined path.
-- Check whether the automated QA document exists. Record `automated-qa: written | none`.
-- Read the manual document's items. A manual item earns its place only when its stated reason is visual inspection, a real environment, a live service, or UX judgment. Any other reason is a check a command could decide.
-- If any item fails that test, re-spawn **z-feature-qa-writer** once with the mis-sorted items named and instruct it to move each one into the automated document. Continue with whatever it returns.
-
-#### Step 3b: spawn QA Runner
-
-Run this step only when the automated QA document exists. If it does not exist, record `automated-qa-run: N/A (no automated checks)` and go to Step 3c. This is not a gate failure.
-
-Spawn the **z-feature-qa-runner** subagent:
-
-> "[SUBAGENT-MODE] Execute the automated QA document at `[determined automated QA path]` for phase [phase-name]. Repository root: [absolute repository path]. Evidence directory: [an untracked directory outside the source tree]. Run every check, compare actual output to each stated expected result, and record per-check status plus the Run results section back into that document. Modify nothing else, and do not fix any defect a check exposes. Return the verdict, per-status counts, the evidence directory, and the decisive reason."
-
-After the subagent returns:
-
-- Record `automated-qa-run: PASS | FAIL | NOT RUN (<reason>)`. Use the runner's own upper-case strings verbatim.
-- On `FAIL` or `NOT RUN`, set `all-approved: no`.
-- Do not remediate.
-- An `UNRUNNABLE` check is a defect in the QA document, not in the phase. Name it as such when you report. The reroute target is `z-feature-qa-writer`, not the implementer.
-- Record how many `EVIDENCE ONLY` checks now have evidence waiting for the human. These do not block.
-
-#### Step 3c: Checkpoint
-
-Emit the skill's QA checkpoint once. This stage produced the three QA outputs and any phase-level pipeline documents it updated.
-
-The skill's staging rules exclude the evidence directory. It is untracked run output.
-
-### Step 4: Phase-Close Audits
-
-Run the phase-close reviews here. Three things must complete first: every feature, every feature integration test gate, and QA.
-
-#### Step 4a: Run the audits
+#### Step 3a: Run the audits
 
 Materialize the phase diff first. Resolve `<phase-baseline>` with `git merge-base HEAD <default-branch>`, then write both artifacts under `dev/feature/`:
 
@@ -204,8 +170,6 @@ Spawn these two in the same concurrent batch, each only when its condition holds
 
 - Spawn **03h z-unity-reviewer** when `is-unity-project: yes`.
 - Spawn **z-dependency-auditor** with the diff when the phase changed a dependency manifest or lockfile: `package.json`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `pyproject.toml`, `poetry.lock`, `uv.lock`, `requirements.txt`, `go.mod`, `go.sum`, `Cargo.toml`, or `Cargo.lock`.
-
-A condition that does not hold is complete evidence, not a missing reviewer.
 
 Every path below is relative to `dev/feature/[phase-name]-phase-close/`. Every reviewer report carries the same finding fields: `severity`, `lane`, `evidence`, `reviewer`.
 
@@ -235,31 +199,73 @@ Wait for every report you spawned. A specialist report you cannot locate is a mi
 
 Every report travels to Step 5.
 
-#### Step 4b: Validate before repairing
+#### Step 3b: Validate before repairing
 
-Repair at most one round per phase. Only a `03e` or `04f` finding can open it. A `04d` consistency finding never opens a round: its fix rewrites code across every feature, which perturbs the diff the re-verification measures. Carry every `04d` finding to Step 5 as a condition.
+Repair at most one round per phase. Only a finding from a repair-eligible lane can open it. An advisory-only finding never opens a round, and `04d` consistency drift in particular is never auto-repaired: its fix rewrites code across every feature. Carry every advisory-only finding to Step 5 as a condition.
 
-No reviewer report reaches a fixer unconsolidated or unvalidated. Spawn **z-finding-consolidator** first. Give it every report path from Step 4a. It writes the deduplicated candidate list to `03m-finding-consolidator-candidates.md`. The orchestrator does not merge, rank, or adjudicate findings itself.
+No reviewer report reaches a fixer unconsolidated or unvalidated. Spawn **z-finding-consolidator** first. Give it every report path from all nine lanes, advisory ones included. It writes the deduplicated candidate list to `03m-finding-consolidator-candidates.md`, and that one list is what Step 5 reads — never nine separate reports. The orchestrator does not merge, rank, or adjudicate findings itself.
 
-Then spawn **z-finding-validator** at `medium`. Give it the candidate list. It writes `03n-finding-validator-validation.md` and the final fix list at `03n-finding-validator-fix-list.md`. Give it the phase summary and every feature plan as accepted contracts, the phase diff, and the run evidence. Its unit directory is `dev/feature/[phase-name]-phase-close/`, and its review cycle is `repair-01`. Tell it that `04d` findings are excluded from the fix list.
+Then spawn **z-finding-validator** at `medium`. Give it only the candidates drawn from the four repair-eligible lanes. The advisory-only and unfired conditional lanes are not validated, because nothing downstream may repair them. It writes `03n-finding-validator-validation.md` and the final fix list at `03n-finding-validator-fix-list.md`. Give it the phase summary and every feature plan as accepted contracts, the phase diff, and the run evidence. Its unit directory is `dev/feature/[phase-name]-phase-close/`, and its review cycle is `repair-01`. Tell it that advisory-only findings are excluded from the fix list.
 
-Only independently confirmed `Critical`, `Blocker`, and `High` production defects enter the fix list. On an empty fix list, record `phase-close-repair: none` and go to Step 5 with the Step 4a aggregates.
+Only independently confirmed `Critical`, `Blocker`, and `High` production defects enter the fix list. On an empty fix list, record `phase-close-repair: none` and go to Step 5 with the Step 3a aggregates.
 
-#### Step 4c: Repair once, then re-verify
+#### Step 3c: Repair once, then re-verify
 
 1. Spawn **z-feature-fixer** at `medium`. Give it the validated fix list, every feature implementation record, and the resolved paths of every file the fix list cites.
 2. Run the affected suites yourself. A fixer self-report is not evidence. On a regression, instruct the fixer to revert the round, record `phase-close-repair: failed (regression)`, and go to Step 5.
-3. Re-run Step 3b against the existing automated QA document. Do not re-spawn **z-feature-qa-writer**. Only the run repeats.
-4. Re-materialize `changed-files.txt` and `range.diff`, then run Step 4a again. All three auditors run, `04d` included. The `04d` exclusion governs what opens a repair, never what is measured.
-5. Record `phase-close-repair: executed ([fix list path])`. The second run's aggregates replace the first run's and are final. Never open a second round.
+3. Record `phase-close-repair: executed ([fix list path])`. Never open a second round.
+
+Do not re-run the audits. The regression run at point 2 is the check on this repair, and running tests is not re-running the audits. Re-materializing the diff and re-spawning the roster would measure a diff this repair just changed, which is the loop this pipeline exists without. The Step 3a aggregates stand, and Step 5 sees them beside the fix-list outcome.
 
 This step emits no checkpoint of its own.
 
+### Step 4: QA
+
+Produce the QA documents for this execution. Then run the automated one. Never ask the user to run a command this pipeline could run itself.
+
+Load the `pipeline-artifacts` skill. Determine all three QA output paths from its Consolidated QA Documents table. Check for existing QA files at those paths.
+
+#### Step 4a: spawn QA Writer
+
+Spawn the **z-feature-qa-writer** subagent:
+
+> "Write the consolidated release QA documents covering ALL features in this phase. Read all documents (plan, context, tasks, implementation record, review record) and source code from the following feature folders: [list all dev/feature/[0N-task-name]/ paths]. Use these manifest verification assets as a required coverage checklist: [verification-assets extracted from manifest, or `not provided`]. Write the manual QA plan to `[determined manual QA path]`, the automated QA document to `[determined automated QA path]`, and the coverage map to `[determined coverage map path]`. Sort every check: a command with a deterministic expected result belongs in the automated document, not on a human's checklist. If a QA file already exists, merge new coverage into it. Return both document paths, the automated/hybrid/manual counts, and a summary of what manual QA remains."
+
+After the subagent returns:
+
+- Verify that the manual QA document exists at the determined path.
+- Verify that the coverage map exists at the determined path.
+- Check whether the automated QA document exists. Record `automated-qa: written | none`.
+- Read the manual document's items. A manual item earns its place only when its stated reason is visual inspection, a real environment, a live service, or UX judgment. Any other reason is a check a command could decide.
+- If any item fails that test, re-spawn **z-feature-qa-writer** once with the mis-sorted items named and instruct it to move each one into the automated document. Continue with whatever it returns.
+
+#### Step 4b: spawn QA Runner
+
+Run this step only when the automated QA document exists. If it does not exist, record `automated-qa-run: N/A (no automated checks)` and go to Step 4c. This is not a gate failure.
+
+Spawn the **z-feature-qa-runner** subagent:
+
+> "[SUBAGENT-MODE] Execute the automated QA document at `[determined automated QA path]` for phase [phase-name]. Repository root: [absolute repository path]. Evidence directory: [an untracked directory outside the source tree]. Run every check, compare actual output to each stated expected result, and record per-check status plus the Run results section back into that document. Modify nothing else, and do not fix any defect a check exposes. Return the verdict, per-status counts, the evidence directory, and the decisive reason."
+
+After the subagent returns:
+
+- Record `automated-qa-run: PASS | FAIL | NOT RUN (<reason>)`. Use the runner's own upper-case strings verbatim.
+- On `FAIL` or `NOT RUN`, set `all-approved: no`.
+- Do not remediate.
+- An `UNRUNNABLE` check is a defect in the QA document, not in the phase. Name it as such when you report. The reroute target is `z-feature-qa-writer`, not the implementer.
+- Record how many `EVIDENCE ONLY` checks now have evidence waiting for the human. These do not block.
+
+#### Step 4c: Checkpoint
+
+Emit the skill's QA checkpoint once. This stage produced the three QA outputs and any phase-level pipeline documents it updated.
+
+The skill's staging rules exclude the evidence directory. It is untracked run output.
+
 ### Step 5: Phase Final Review
 
-Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 3b, and both the diff security verdict and the phase-close audit result from Step 4. Any one of them can set `all-approved: no` on its own. Manual QA is not one of them. It runs after this pipeline, so an unexecuted manual checklist never sets `all-approved: no`.
+Determine `all-approved` first. Set `all-approved: yes` only when every feature's recorded review verdict is `Approved` or `Approved with Reservations`. Four other results also feed it: the feature integration test gate at stage D, the automated QA run at Step 4b, and both the diff security verdict and the phase-close audit result from Step 3. Any one of them can set `all-approved: no` on its own. Manual QA is not one of them. It runs after this pipeline, so an unexecuted manual checklist never sets `all-approved: no`.
 
-Spawn the **z-prod-code-review** subagent. Build the prompt from the applicable template below. Substitute five values: the verdict summary, the final aggregate `all-approved` state after every gate, the Step 4 phase-close audit result, the Step 4c repair result, and the author's fidelity-table departures. An absent audit keeps `all-approved: no` and still reaches this review.
+Spawn the **z-prod-code-review** subagent. Build the prompt from the applicable template below. Substitute five values: the verdict summary, the final aggregate `all-approved` state after every gate, the Step 3 phase-close audit result, the Step 3c repair result, and the author's fidelity-table departures. An absent audit keeps `all-approved: no` and still reaches this review.
 
 **If QA was generated and the complete pipeline is `all-approved: yes`:**
 
@@ -281,7 +287,7 @@ Spawn the **z-prod-code-review** subagent. Build the prompt from the applicable 
 >
 > Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved. Phase-close repair: [`none` | `executed ([fix list path])` | `failed ([reason])`]. A failed repair is `all-approved: no`.
 
-After the z-prod-code-review subagent returns, emit the skill's final review checkpoint. It aggregates the final review artifact, the Step 4 security scan report, and any phase-level pipeline documents this step updated.
+After the z-prod-code-review subagent returns, emit the skill's final review checkpoint. It aggregates the final review artifact, the Step 3 security scan report, and any phase-level pipeline documents this step updated.
 
 ### Step 6: Report to User
 
@@ -292,7 +298,7 @@ Present results using the Pipeline Completion Report format from the auto-loaded
 - Include the manual QA document path, the automated QA document path, and the security scan report path
 - Include the automated QA verdict and how many checks a human still has to judge. Never present an unrun automated QA document as passing QA
 - Include the final test-execution status and results artifact path
-- Include the Step 4c repair result. Never omit that the pipeline changed code after QA ran
+- Include the Step 3c repair result. QA ran after that repair, so the QA verdict describes the code this report is about
 
 Report the phase as implementation-complete only when the final gate is `executed-green`. If it is `executed-failing` or `not-executed`, say so plainly and name what remains. An unrun suite is not a completed phase.
 
