@@ -110,7 +110,7 @@ Spawn **Feature - Implementer** with:
 
 > "[SUBAGENT-MODE] Implement all acceptance criteria from the plan at `dev/feature/[0N-task-name]/`. Read the plan files, work through each AC in plan order using Red-Green-Refactor TDD, and write the implementation record to `dev/feature/[0N-task-name]/[0N-task-name]-implementation.md`. Run the affected suites from these manifest verification assets: [verification-assets extracted from manifest, or `not provided`], then run the integrated suite and leave every test green. The phase started green, so any failing test is a defect this feature introduced, whatever its subject. Never delete, skip, or weaken a test to reach green. If you cannot reach green, stop and name every still-failing test rather than reporting the feature done. Return a summary of what was implemented, the test-execution status with its results artifact path, and test results."
 
-**A1. Implement checkpoint** — Emit the skill's implement checkpoint for this feature. The unit is `dev/feature/[0N-task-name]/`. The file `[0N-task-name]-implementation.md` names the source and test files to stage.
+**A1. Implement checkpoint** — Emit the skill's implement checkpoint for this feature. The unit is `dev/feature/[0N-task-name]/`. Stage the source and test files that `[0N-task-name]-implementation.md` names. Never stage the `dev/` documents themselves.
 
 ##### B. Review and fix
 
@@ -126,7 +126,7 @@ Reaching green is not part of that one round. The reviewer keeps repairing until
 
 Run the suite yourself after the reviewer returns. A reviewer self-report is not evidence.
 
-**B1. Review checkpoint** — Emit the skill's review checkpoint for this feature. The unit is `dev/feature/[0N-task-name]/`.
+**B1. Review checkpoint** — Emit the skill's review checkpoint for this feature. The unit is `dev/feature/[0N-task-name]/`. Stage only the source and test files the fixes touched.
 
 ##### D. Integration test gate
 
@@ -278,9 +278,9 @@ After the subagent returns:
 
 #### Step 4c: Checkpoint
 
-Emit the skill's QA checkpoint once. This stage produced the three QA outputs and any phase-level pipeline documents it updated.
+Emit the skill's QA checkpoint once. Stage the three QA outputs and any phase-level documents it updated that live outside `dev/`.
 
-The skill's staging rules exclude the evidence directory. It is untracked run output.
+The skill's staging rules exclude the evidence directory and everything under `dev/`.
 
 ### Step 5: Phase Final Review
 
@@ -308,7 +308,7 @@ Spawn the **Prod Code Review** subagent. Build the prompt from the applicable te
 >
 > Phase-close audits: [`executed` with both report paths | `absent ([reason])`]. An absent audit is `all-approved: no` even when other verdicts are Approved. Phase-close repair: [`none` | `executed ([fix list path])` | `failed ([reason])`]. A failed repair is `all-approved: no`.
 
-After the Prod Code Review subagent returns, emit the skill's final review checkpoint. It aggregates the final review artifact, the Step 3 security scan report, and any phase-level pipeline documents this step updated.
+After the Prod Code Review subagent returns, emit the skill's final review checkpoint. It aggregates the final review artifact, the Step 3 security scan report, and any phase-level documents this step updated — staging only those that live outside `dev/`.
 
 ### Step 6: Report to User
 

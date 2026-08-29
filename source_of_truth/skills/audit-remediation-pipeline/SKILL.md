@@ -83,7 +83,7 @@ After the subagent returns, verify the report exists and record the verdict. On 
 **BLOCKED** verdict, log it and proceed — the pre-production gate surfaces it as a
 blocker. Do NOT auto-remediate security findings here.
 
-Stage the report with that task's review checkpoint.
+Do not stage the report. It lives under `dev/`, which no checkpoint stages.
 
 ## 5. Consolidated QA
 

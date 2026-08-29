@@ -56,31 +56,31 @@ Four checkpoints exist. Two land per unit of work, two land once per run.
 
 | Checkpoint | When | Stages |
 |---|---|---|
-| Implement | After Step A returns, before review starts | The unit's source and test changes plus its pipeline documents |
-| Review | After the review and any fix rounds close | The unit's directory plus any source files the fixes touched |
-| QA | Once, after the consolidated QA stage runs | The QA documents and any run-level pipeline documents that stage updated |
-| Final review | Once, after the final review stage returns | The final review artifact and any run-level reports it aggregates |
+| Implement | After Step A returns, before review starts | The unit's source and test changes |
+| Review | After the review and any fix rounds close | The source and test files the fixes touched |
+| QA | Once, after the consolidated QA stage runs | The QA documents that stage wrote outside `dev/` |
+| Final review | Once, after the final review stage returns | The final review artifacts written outside `dev/` |
 
 A caller with no consolidated QA stage or no final review stage skips that checkpoint. Skipping
 one is not a missing commit.
 
 **1. Collect files to stage.** For a unit checkpoint, read the "Files Changed" table in
-`[plan-path]/[task-name]-implementation.md` and collect every source and test path it lists, plus
-the pipeline documents in `[plan-path]/` — plan, context, tasks, implementation, review, and, only
-if the caller ran a per-task security scan, security. For a run-level checkpoint, collect the artifacts that stage produced.
+`[plan-path]/[task-name]-implementation.md` and collect every source and test path it lists. For a
+run-level checkpoint, collect the artifacts that stage produced outside `dev/`.
 
 **2. Stage only those files.**
 
 ```bash
-git add <file1> <file2> ... [plan-path]/[task-name]-implementation.md [plan-path]/[task-name]-review.md
-# append [plan-path]/[task-name]-security.md only if the caller ran a per-task security scan
+git add <file1> <file2> ...
 ```
 
 Do NOT use `git add -A` — staging untracked files outside the implementation record risks
 including debug files or changes from adjacent tasks.
 
-Three staging rules hold at every checkpoint:
+Four staging rules hold at every checkpoint:
 
+- Never stage anything under `dev/`. Pipeline documents — plan, context, tasks, implementation,
+  review, security, and every audit report — are working state, not deliverables.
 - Never stage files from another unit's directory. A checkpoint commits one unit's work.
 - Never stage untracked run output such as an evidence directory. Output is not a deliverable.
 - Never stage an artifact another checkpoint owns. When a stage writes a report that a later
@@ -118,7 +118,7 @@ git log --oneline -1
 ```
 
 Confirm the commit appears. If `git add` staged nothing, log "Nothing to commit" and proceed —
-this is not an error.
+this is not an error. A checkpoint whose only outputs live under `dev/` stages nothing by design.
 
 ### Step D: Mark Complete
 
