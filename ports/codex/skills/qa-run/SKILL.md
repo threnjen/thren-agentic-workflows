@@ -72,8 +72,9 @@ final-acceptance rule, apply the stricter.
    path. A suite is PASS only when the runner exits successfully, ≥1
    expected test is discovered, all discovered tests execute, failed/
    skipped/ignored/inconclusive counts are zero (unless the runbook names an
-   exception), counts reconcile with any declared baseline, and required
-   artifacts were produced. Build success ≠ suite PASS. A platform the host
+   exception), and required artifacts were produced. A total test count that
+   differs from a number written in the runbook is never a failure on its
+   own — record the actual total and continue. Build success ≠ suite PASS. A platform the host
    cannot run is native BLOCKED, binary FAIL — never substitute inspection.
 4. **Execute every QA check** — for each numbered check capture: QA ID,
    native and binary status, exact command/action, expected vs actual,

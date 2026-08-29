@@ -86,7 +86,10 @@ client-package completeness gates; a final verification-summary requirement;
 and a traceability matrix mapping every applicable target to one or more
 checks. Each check states the setup or command, exact expected result,
 required evidence, whether static evidence is insufficient, and how to
-classify blockers or cross-system failures. Include a **Run results** section
+classify blockers or cross-system failures. Never write a specific test,
+file, or item total into an expected result — a suite passes on a
+successful exit code with zero failures, not on matching a number that
+grows every time someone adds a test. Include a **Run results** section
 (initially "not yet run") where an execution run records per-check status and
 the overall result.
 

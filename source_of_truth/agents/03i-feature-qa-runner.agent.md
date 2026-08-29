@@ -77,7 +77,7 @@ Do not stop at the first failure. Run every remaining independent check.
 ### 3. Judge each result
 
 Compare actual output to the document's stated expected result. Match on what the expectation
-actually says — exit code, exact output, absence of output, a count.
+actually says — exit code, exact output, absence of output.
 
 Two rules decide the hard cases:
 

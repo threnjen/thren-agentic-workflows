@@ -47,9 +47,13 @@ Each check you write belongs to exactly one of three kinds. Decide the kind firs
 
 | Kind | Test | Goes to |
 |------|------|---------|
-| **Automated** | A command decides it. You can state the exact command and the exact output, exit code, or count that means success. | Automated QA document |
+| **Automated** | A command decides it. You can state the exact command and the exact output or exit code that means success. | Automated QA document |
 | **Hybrid** | A command gathers the evidence, but a human judges it. The command cannot separate a pass from a fail on its own. | Command to the automated document as an `EVIDENCE ONLY` check; judgment to the manual document, citing that check |
 | **Manual** | A human must read, look at, or use something. No command produces the answer. | Manual QA document |
+
+Never write a specific test, file, or item total into an expected result. A suite passes on a
+successful exit code with zero failures. A count that grew since you wrote the check is normal,
+not a failure.
 
 Apply the same rule to `grep`, `ls`, `diff`, `cmp`, `git`, `wc`, HTTP calls, and CLI invocations alike. A repository with no test suite still has automated QA — mechanical shell checks are automated QA.
 
@@ -167,7 +171,7 @@ records results at the bottom.
 
 - **A1 — [what it proves]**
   - Command: `[exact command]`
-  - Expected: [exact output, exit code, or count that means success]
+  - Expected: [exact output or exit code that means success]
 - **A2 — [what it proves]**
   - Command: `[exact command]`
   - Expected: [exact expectation]
