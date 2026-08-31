@@ -15,6 +15,7 @@ past deploys already wrote, also add the name to `RETIRED_BASELINE_SECTIONS`.
 - code-change-strategy
 - code-review-graph
 - codebase-context-bootstrap
+- comms-protocol
 - language-standards
 - learnings-bootstrap
 - output-verbosity-policy

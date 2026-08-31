@@ -30,7 +30,14 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Tuple
 
-from scripts.asset_paths import PORTS_DIR, REPO_ROOT, file_has_generated_marker, poll_watch
+from scripts.asset_paths import (
+    GENERATED_AGENT_MARKDOWN_HEADER,
+    PORTS_DIR,
+    REPO_ROOT,
+    file_has_generated_marker,
+    generated_marker_line_index,
+    poll_watch,
+)
 
 CONFIG_PATH = REPO_ROOT / ".deploy-config.json"
 
@@ -299,6 +306,12 @@ def _instruction_body(name: str) -> str:
     if text.startswith("---\n"):
         end = text.index("\n---\n", 3) + len("\n---\n")
         text = text[end:]
+    lines = text.splitlines()
+    marker_index = generated_marker_line_index(text)
+    if marker_index >= 0 and marker_index < len(lines):
+        if lines[marker_index] == GENERATED_AGENT_MARKDOWN_HEADER:
+            del lines[marker_index]
+            text = "\n".join(lines) + "\n"
     text = re.sub(r"\n#{2,}\s*Load Canary\s*\n.*\Z", "\n", text, flags=re.DOTALL)
     text = re.sub(r"\A\s*# ", "## ", text)
     return text.strip("\n")

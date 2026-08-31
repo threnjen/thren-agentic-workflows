@@ -138,6 +138,79 @@ WATCH_DIRS = [
 # Currently empty — all source agents are propagated.
 PROPAGATION_EXCLUDE: set[str] = set()
 
+# Crosswire's generated instruction is the read-only authority for this
+# vendored contract. Tests and maintainers may inject a staged copy through the
+# same local-file binding without executing or importing Crosswire.
+workflows_repo_root = REPO_ROOT
+crosswire_contract_relative_path = Path(
+    "crosswire/src/crosswire/protocol/comms-protocol.instructions.md"
+)
+CONTRACT_INSTRUCTION_NAME = "comms-protocol.instructions.md"
+
+
+class ContractDriftError(RuntimeError):
+    """Raised before propagation when the vendored contract is not authoritative."""
+
+
+def crosswire_contract_source_path() -> Path:
+    """Resolve the deterministic local Crosswire source location."""
+    return workflows_repo_root.parent / crosswire_contract_relative_path
+
+
+def _contract_components(path: Path, *, role: str) -> tuple[int, str]:
+    """Read one generated contract and return its version and normalized body."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise ContractDriftError(
+            f"{role} contract is missing or unreadable: {path}"
+        ) from exc
+
+    text = text.replace("\r\n", "\n")
+    if role == "vendored" and not text.startswith("---\n"):
+        raise ContractDriftError(f"{role} contract frontmatter is missing: {path}")
+    if role == "vendored" and text.startswith("---\n"):
+        end = text.find("\n---\n", 3)
+        if end < 0:
+            raise ContractDriftError(f"{role} contract frontmatter is malformed: {path}")
+        text = text[end + len("\n---\n") :]
+
+    lines = text.splitlines()
+    if not lines or lines[0] != GENERATED_AGENT_MARKDOWN_HEADER:
+        raise ContractDriftError(
+            f"{role} contract has no generated marker at the required position: {path}"
+        )
+    lines.pop(0)
+
+    version_matches = re.findall(r"^Contract version:\s*(\d+)\s*$", "\n".join(lines), re.MULTILINE)
+    if not version_matches:
+        raise ContractDriftError(f"{role} contract has no Contract version stamp: {path}")
+    if len(version_matches) > 1:
+        raise ContractDriftError(f"{role} contract has duplicate Contract version stamps: {path}")
+
+    body = "\n".join(lines).strip("\n")
+    return int(version_matches[0]), body
+
+
+def validate_contract_drift() -> None:
+    """Fail closed unless the vendored contract matches Crosswire's output."""
+    vendored = SOT_INSTRUCTIONS_DIR / CONTRACT_INSTRUCTION_NAME
+    authoritative = crosswire_contract_source_path()
+    vendored_version, vendored_body = _contract_components(vendored, role="vendored")
+    authoritative_version, authoritative_body = _contract_components(
+        authoritative, role="authoritative"
+    )
+    if vendored_version != authoritative_version:
+        raise ContractDriftError(
+            "contract version drift: "
+            f"vendored version {vendored_version}, authoritative version {authoritative_version}"
+        )
+    if vendored_body != authoritative_body:
+        raise ContractDriftError(
+            "contract body drift: vendored and authoritative bodies differ "
+            f"at version {vendored_version}"
+        )
+
 INVENTORY_COUNTERS = frozenset(
     {
         "source_agents",
@@ -325,10 +398,13 @@ class PropagationConvergenceResult:
 
 
 class PropagationConvergenceError(RuntimeError):
-    def __init__(self, category: str, pass_count: int) -> None:
+    def __init__(self, category: str, pass_count: int, detail: str | None = None) -> None:
         self.category = category
         self.pass_count = pass_count
-        super().__init__(f"{category} after {pass_count} propagation pass(es)")
+        message = f"{category} after {pass_count} propagation pass(es)"
+        if detail:
+            message += f": {detail}"
+        super().__init__(message)
 
 
 FrontmatterValue = Union[str, List[str]]
@@ -1646,6 +1722,9 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
     instructions = load_instruction_docs()
     routing = load_model_routing() if any(agent.model_tier for agent in agents) else None
     tiered_agent_count = sum(agent.model_tier is not None for agent in agents)
+    # All source/config validation completes before any generated directory is
+    # created. Contract drift is the final gate immediately before emission.
+    validate_contract_drift()
 
     CLAUDE_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
     CLAUDE_COMMANDS_DIR.mkdir(parents=True, exist_ok=True)
@@ -1887,9 +1966,8 @@ def propagate_until_converged(
         except Exception as exc:
             if isinstance(exc, PropagationConvergenceError):
                 raise
-            raise PropagationConvergenceError(
-                "propagation_failed", pass_count
-            ) from exc
+            detail = str(exc) if isinstance(exc, ContractDriftError) else None
+            raise PropagationConvergenceError("propagation_failed", pass_count, detail) from exc
 
         try:
             changes = propagation_changes(counters)

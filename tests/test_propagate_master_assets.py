@@ -17,6 +17,39 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 import propagate_master_assets as mod
 import _propagate_env as env
 
+_ORIGINAL_ENV_USE = env.use
+
+
+def _use_with_staged_contract(testcase: unittest.TestCase, root: Path) -> None:
+    """Give every retargeted propagation fixture its explicit local authority."""
+    _ORIGINAL_ENV_USE(testcase, root)
+    crosswire_source = (
+        REPO_ROOT.parent
+        / "crosswire"
+        / "src"
+        / "crosswire"
+        / "protocol"
+        / "comms-protocol.instructions.md"
+    )
+    vendor = root / "source_of_truth" / "instructions" / "comms-protocol.instructions.md"
+    vendor.parent.mkdir(parents=True, exist_ok=True)
+    vendor.write_text(
+        "---\n"
+        'description: "The generated AGENT-RESULT contract shared by Crosswire and workflows."\n'
+        "baseline: true\n"
+        "---\n"
+        + crosswire_source.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    reference = root / "authoritative-comms-protocol.instructions.md"
+    shutil.copy2(crosswire_source, reference)
+    patcher = mock.patch.object(mod, "crosswire_contract_source_path", return_value=reference)
+    patcher.start()
+    testcase.addCleanup(patcher.stop)
+
+
+env.use = _use_with_staged_contract
+
 # The settled PR Review evaluator roster, and each agent's exact tool grant.
 #
 # This map is the propagation-enumeration ledger. `test_pr_review_evaluator_roster
@@ -116,6 +149,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 'description: "Demo skill with a wrapped description."',
                 codex_skill.read_text(encoding="utf-8"),
             )
+
 
     def test_pr_review_evaluator_roster_is_fully_enumerated(self) -> None:
         """AC8: no evaluator may be omitted from propagation enumeration.
@@ -324,6 +358,111 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             "root that files agents as `z-<stem>`. Name the sibling by its display "
             "name in the source so the reference map can rewrite it.",
         )
+
+
+class ContractDriftTests(unittest.TestCase):
+    """The authoritative Crosswire contract gates every propagation write."""
+
+    def _stage_contract(self, repo_root: Path) -> tuple[Path, Path]:
+        env.use(self, repo_root)
+        crosswire_source = (
+            REPO_ROOT.parent
+            / "crosswire"
+            / "src"
+            / "crosswire"
+            / "protocol"
+            / "comms-protocol.instructions.md"
+        )
+        vendor = repo_root / "source_of_truth" / "instructions" / "comms-protocol.instructions.md"
+        reference = repo_root / "authoritative-comms-protocol.instructions.md"
+        shutil.copy2(crosswire_source, reference)
+        self._reference = mock.patch.object(
+            mod, "crosswire_contract_source_path", return_value=reference
+        )
+        self._reference.start()
+        self.addCleanup(self._reference.stop)
+        return vendor, reference
+
+    def test_committed_contract_match_allows_propagation(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            self._stage_contract(repo_root)
+            mod.propagate_once(verbose=False)
+            self.assertTrue((repo_root / "ports").is_dir())
+
+    def test_version_drift_fails_with_both_versions_before_writes(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            vendor, _ = self._stage_contract(repo_root)
+            vendor.write_text(
+                vendor.read_text(encoding="utf-8").replace(
+                    "Contract version: 1", "Contract version: 2"
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(mod.ContractDriftError, r"version 2.*version 1"):
+                mod.propagate_once(verbose=False)
+            self.assertFalse((repo_root / "ports").exists())
+
+    def test_same_version_body_drift_fails_before_writes(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            vendor, _ = self._stage_contract(repo_root)
+            vendor.write_text(
+                vendor.read_text(encoding="utf-8").replace(
+                    "End each turn with exactly one block using these delimiters:",
+                    "End each turn with exactly two blocks using these delimiters:",
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(mod.ContractDriftError, "body drift"):
+                mod.propagate_once(verbose=False)
+            self.assertFalse((repo_root / "ports").exists())
+
+    def test_missing_duplicate_and_malformed_authoritative_sources_fail_closed(self) -> None:
+        cases = {
+            "missing": lambda path: path.unlink(),
+            "unreadable": lambda path: (path.unlink(), path.mkdir()),
+            "duplicate": lambda path: path.write_text(
+                path.read_text(encoding="utf-8") + "\nContract version: 1\n",
+                encoding="utf-8",
+            ),
+            "malformed": lambda path: path.write_text("not a generated contract\n", encoding="utf-8"),
+        }
+        for name, mutate in cases.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+                repo_root = Path(tmp_dir)
+                _vendor, reference = self._stage_contract(repo_root)
+                mutate(reference)
+                with self.assertRaises(mod.ContractDriftError):
+                    mod.propagate_once(verbose=False)
+                self.assertFalse((repo_root / "ports").exists())
+
+    def test_missing_or_duplicate_vendored_stamp_fails_closed(self) -> None:
+        for duplicate in (False, True):
+            with self.subTest(duplicate=duplicate), tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+                repo_root = Path(tmp_dir)
+                vendor, _ = self._stage_contract(repo_root)
+                text = vendor.read_text(encoding="utf-8")
+                if duplicate:
+                    text += "\nContract version: 1\n"
+                else:
+                    text = text.replace("Contract version: 1\n", "")
+                vendor.write_text(text, encoding="utf-8")
+                with self.assertRaises(mod.ContractDriftError):
+                    mod.propagate_once(verbose=False)
+                self.assertFalse((repo_root / "ports").exists())
+
+    def test_marker_is_accepted_only_at_generated_position(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            _vendor, reference = self._stage_contract(repo_root)
+            marker = mod.GENERATED_AGENT_MARKDOWN_HEADER
+            text = reference.read_text(encoding="utf-8")
+            reference.write_text(text.replace(marker, "# heading\n" + marker), encoding="utf-8")
+            with self.assertRaises(mod.ContractDriftError):
+                mod.propagate_once(verbose=False)
+            self.assertFalse((repo_root / "ports").exists())
 
 
 class PropagationConvergenceTests(unittest.TestCase):
@@ -580,7 +719,7 @@ class OrphanPruningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir) / "repo"
             env.use(self, repo_root)
-            repo_root.mkdir()
+            repo_root.mkdir(exist_ok=True)
             self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
 
             outside = Path(tmp_dir) / "outside"
@@ -642,7 +781,7 @@ class OrphanPruningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir) / "repo"
             env.use(self, repo_root)
-            repo_root.mkdir()
+            repo_root.mkdir(exist_ok=True)
             self._write_source_agent(repo_root, "01-keeper", "01 Keeper")
 
             outside = Path(tmp_dir) / "outside"
