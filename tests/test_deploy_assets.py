@@ -246,6 +246,31 @@ class DeployTests(unittest.TestCase):
 
 
 class ConfigAndCliTests(unittest.TestCase):
+    def test_profile_config_is_backward_compatible_and_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp) / "config.json"
+            config.write_text(json.dumps({"harnesses": ["claude"]}), encoding="utf-8")
+            self.assertFalse(mod.load_comms_profile(config))
+            config.write_text(
+                json.dumps({"harnesses": ["claude"], "comms_profile": True}),
+                encoding="utf-8",
+            )
+            self.assertTrue(mod.load_comms_profile(config))
+            for invalid in ("true", 1, [], {"enabled": True}, None):
+                config.write_text(
+                    json.dumps({"harnesses": ["claude"], "comms_profile": invalid}),
+                    encoding="utf-8",
+                )
+                with self.subTest(invalid=invalid):
+                    self.assertFalse(mod.load_comms_profile(config))
+
+    def test_save_config_persists_the_profile_without_changing_harnesses(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp) / "config.json"
+            mod.save_config(["claude", "opencode"], config, comms_profile=True)
+            self.assertEqual(mod.load_config(config), ["claude", "opencode"])
+            self.assertTrue(mod.load_comms_profile(config))
+
     def test_config_round_trip_filters_unknown_harnesses(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             config = Path(tmp) / "config.json"
@@ -443,6 +468,41 @@ class EnsureContext7Tests(unittest.TestCase):
 
 
 class BaselineDeployTests(unittest.TestCase):
+    def test_profile_off_excludes_comms_and_profile_on_includes_it(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            off = mod.deploy_baseline("codex", home=home, environ={}, comms_enabled=False)
+            content = (home / ".codex" / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertEqual(off["status"], "created")
+            self.assertNotIn("<!-- comms-protocol -->", content)
+            on = mod.deploy_baseline("codex", home=home, environ={}, comms_enabled=True)
+            content = (home / ".codex" / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertEqual(on["status"], "updated")
+            self.assertIn("<!-- comms-protocol -->", content)
+            self.assertIn("Baseline loaded: 12 sections", content)
+            mod.deploy_baseline("codex", home=home, environ={}, comms_enabled=False)
+            content = (home / ".codex" / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertNotIn("<!-- comms-protocol -->", content)
+        self.assertIn("Baseline loaded: 11 sections", content)
+
+    def test_profile_off_preserves_foreign_bytes_for_each_user_global_baseline(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            for harness in ("claude", "codex", "opencode"):
+                destination = mod.baseline_destination(harness, home=home, environ={})
+                assert destination is not None
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                foreign = f"foreign {harness}\n\n"
+                destination.write_text(foreign, encoding="utf-8")
+                mod.deploy_baseline(harness, home=home, environ={}, comms_enabled=False)
+                before = destination.read_bytes()
+                mod.deploy_baseline(harness, home=home, environ={}, comms_enabled=True)
+                mod.deploy_baseline(harness, home=home, environ={}, comms_enabled=False)
+                after = destination.read_bytes()
+                with self.subTest(harness=harness):
+                    self.assertEqual(after, before)
+                    self.assertIn(foreign.encode(), after)
+
     def test_destinations_per_harness(self) -> None:
         home = Path("/home/fixture")
         self.assertEqual(
@@ -617,7 +677,7 @@ class BaselineDeployTests(unittest.TestCase):
     def test_creates_file_with_all_sections_and_real_paths(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
-            result = mod.deploy_baseline("codex", home=home, environ={})
+            result = mod.deploy_baseline("codex", home=home, environ={}, comms_enabled=True)
             self.assertEqual(result["status"], "created")
             content = (home / ".codex" / "AGENTS.md").read_text(encoding="utf-8")
         for name in mod.baseline_section_names():
@@ -716,7 +776,7 @@ class BaselineCanaryTests(unittest.TestCase):
     """The baseline announces itself, and says which sections it carries."""
 
     def _deploy(self, home):
-        return mod.deploy_baseline("claude", home=home, environ={})
+        return mod.deploy_baseline("claude", home=home, environ={}, comms_enabled=True)
 
     def test_deployed_baseline_carries_a_canary_naming_every_section(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -751,6 +811,128 @@ class BaselineCanaryTests(unittest.TestCase):
         for name in mod.baseline_section_names():
             with self.subTest(name=name):
                 self.assertNotIn("Instruction loaded:", mod._instruction_body(name))
+
+
+class RegistrationLifecycleTests(unittest.TestCase):
+    def _adapter(self, root: Path) -> mod.RegistrationAdapter:
+        def upsert(existing: bytes, config_path: Path) -> bytes:
+            owned = f"{mod.REGISTRATION_OWNERSHIP_TAG} {config_path}\n".encode()
+            prefix = existing.split(mod.REGISTRATION_OWNERSHIP_TAG.encode(), 1)[0]
+            suffix = b""
+            if mod.REGISTRATION_OWNERSHIP_TAG.encode() in existing:
+                suffix = existing.split(b"\n", 1)[-1] if b"\n" in existing else b""
+            return prefix + owned + suffix
+
+        def remove(existing: bytes) -> tuple[bytes, str]:
+            marker = mod.REGISTRATION_OWNERSHIP_TAG.encode()
+            if marker not in existing:
+                return existing, ""
+            line, _, remainder = existing.partition(b"\n")
+            return remainder, line.decode()
+
+        return mod.RegistrationAdapter(
+            target_path=lambda base: base / "settings.json",
+            config_path=lambda base: base / "hook-config.json",
+            upsert=upsert,
+            remove=remove,
+        )
+
+    def test_probe_success_writes_and_changed_path_replaces_owned_content(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            adapter = self._adapter(home / ".claude")
+            responses = [mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n", stderr="")]
+            with mock.patch.object(mod.subprocess, "run", side_effect=responses) as run:
+                result = mod.run_registration("claude", adapter, enabled=True, home=home, environ={})
+            target = home / ".claude" / "settings.json"
+            self.assertEqual(result["status"], "created")
+            self.assertEqual(result["probe"], "CROSSWIRE_HOOK_PROBE_OK")
+            self.assertEqual(run.call_args.args[0], ["crosswire-turn-hook", "--probe", "--config", str(home / ".claude" / "hook-config.json")])
+            unchanged = mod.run_registration(
+                "claude", adapter, enabled=True, home=home, environ={},
+                probe_runner=lambda *_args, **_kwargs: mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n"),
+            )
+            self.assertEqual(unchanged["status"], "unchanged")
+            alternate = home / "alternate.json"
+            changed = mod.run_registration(
+                "claude", adapter, enabled=True, config_path=alternate, home=home, environ={},
+                probe_runner=lambda *_args, **_kwargs: mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n"),
+            )
+            self.assertEqual(changed["status"], "updated")
+            self.assertIn(str(alternate), target.read_text())
+            self.assertEqual(target.read_text().count(mod.REGISTRATION_OWNERSHIP_TAG), 1)
+
+    def test_failed_probe_never_writes_and_failure_token_is_not_success(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            adapter = self._adapter(home / ".claude")
+            target = home / ".claude" / "settings.json"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"foreign\n")
+            for response in (
+                mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_FAILED\n"),
+                mock.Mock(returncode=0, stdout="unexpected\n"),
+            ):
+                result = mod.run_registration(
+                    "claude", adapter, enabled=True, home=home, environ={},
+                    probe_runner=lambda *_args, response=response, **_kwargs: response,
+                )
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual(target.read_bytes(), b"foreign\n")
+
+    def test_disabled_registration_removes_edited_content_and_reports_it(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            adapter = self._adapter(home / ".claude")
+            target = home / ".claude" / "settings.json"
+            target.parent.mkdir(parents=True)
+            target.write_bytes((mod.REGISTRATION_OWNERSHIP_TAG + " hand-edited\nforeign\n").encode())
+            result = mod.run_registration("claude", adapter, enabled=False, home=home, environ={})
+            self.assertEqual(result["status"], "removed")
+            self.assertIn("hand-edited", result["removed_content"])
+            self.assertEqual(target.read_bytes(), b"foreign\n")
+
+    def test_probe_timeout_and_launch_failure_are_failed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            adapter = self._adapter(home / ".claude")
+            for error in (TimeoutError(), FileNotFoundError()):
+                result = mod.run_registration(
+                    "claude", adapter, enabled=True, home=home, environ={},
+                    probe_runner=mock.Mock(side_effect=error),
+                )
+                self.assertEqual(result["status"], "failed")
+
+    def test_deploy_runs_registration_only_for_selected_harnesses(self) -> None:
+        adapter = self._adapter(Path("/unused"))
+        with mock.patch.object(mod, "deploy_harness", return_value={"copied": 0}), \
+                mock.patch.object(mod, "deploy_baseline", return_value={"status": "unchanged"}), \
+                mock.patch.object(mod, "run_registration", return_value={"status": "unchanged"}) as run:
+            mod.deploy(
+                ["claude"],
+                comms_profile=True,
+                registration_adapters={"claude": adapter, "codex": adapter},
+                verbose=False,
+            )
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(run.call_args.args[0], "claude")
+
+    def test_atomic_registration_failure_preserves_existing_target(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            adapter = self._adapter(home / ".claude")
+            target = home / ".claude" / "settings.json"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"before\n")
+            with mock.patch.object(mod.os, "replace", side_effect=OSError("disk full")):
+                result = mod.run_registration(
+                    "claude", adapter, enabled=True, home=home, environ={},
+                    probe_runner=lambda *_args, **_kwargs: mock.Mock(
+                        returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n"
+                    ),
+                )
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(target.read_bytes(), b"before\n")
 
 
 if __name__ == "__main__":

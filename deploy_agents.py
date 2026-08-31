@@ -27,8 +27,10 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Mapping, Sequence, Tuple
+from typing import Callable, Dict, List, Mapping, Sequence, Tuple
 
 from scripts.asset_paths import (
     GENERATED_AGENT_MARKDOWN_HEADER,
@@ -42,6 +44,29 @@ from scripts.asset_paths import (
 CONFIG_PATH = REPO_ROOT / ".deploy-config.json"
 
 HARNESSES = ("claude", "codex", "opencode", "cursor", "github")
+COMMS_PROFILE_KEY = "comms_profile"
+REGISTRATION_OWNERSHIP_TAG = "<!-- crosswire-comms-registration -->"
+PROBE_SUCCESS_TOKEN = "CROSSWIRE_HOOK_PROBE_OK"
+PROBE_FAILURE_TOKEN = "CROSSWIRE_HOOK_PROBE_FAILED"
+PROBE_TIMEOUT_SECONDS = 10
+
+
+@dataclass(frozen=True)
+class DeployConfig:
+    """Normalized persisted deployment selection."""
+
+    harnesses: List[str]
+    comms_profile: bool = False
+
+
+@dataclass(frozen=True)
+class RegistrationAdapter:
+    """Format-specific seams consumed by the shared registration lifecycle."""
+
+    target_path: Callable[[Path], Path]
+    config_path: Callable[[Path], Path]
+    upsert: Callable[[bytes, Path], bytes]
+    remove: Callable[[bytes], Tuple[bytes, str]]
 
 # `code-review-graph install --platform` vocabulary, keyed by our harness name.
 # Only the harnesses this repo ports to get configured; the tool's other
@@ -75,6 +100,41 @@ CURSOR_BASELINE_FRONTMATTER = "---\nalwaysApply: true\n---\n\n"
 GITHUB_MIRRORED_SUBDIRS = ("agents", "hooks", "instructions", "learnings", "skills")
 
 
+def _environment_root(
+    env_var: str,
+    default: str | Path,
+    *,
+    home: Path,
+    environ: Mapping[str, str],
+) -> Path:
+    raw = environ.get(env_var, "")
+    return Path(raw).expanduser() if raw else home / default
+
+
+def harness_root(
+    harness: str,
+    *,
+    home: Path | None = None,
+    environ: Mapping[str, str] | None = None,
+) -> Path:
+    """Resolve the configuration root using the same rules as asset deployment."""
+    home = Path(home).expanduser() if home else Path.home()
+    environ = os.environ if environ is None else environ
+    if harness == "claude":
+        return _environment_root("CLAUDE_CONFIG_DIR", ".claude", home=home, environ=environ)
+    if harness == "codex":
+        return _environment_root("CODEX_HOME", ".codex", home=home, environ=environ)
+    if harness == "opencode":
+        return _environment_root(
+            "OPENCODE_CONFIG_DIR", Path(".config") / "opencode", home=home, environ=environ
+        )
+    if harness == "cursor":
+        return home / ".cursor"
+    if harness == "github":
+        return REPO_ROOT / ".github"
+    raise ValueError(f"unknown harness: {harness}")
+
+
 def harness_mappings(
     harness: str,
     *,
@@ -85,20 +145,16 @@ def harness_mappings(
     home = Path(home).expanduser() if home else Path.home()
     environ = os.environ if environ is None else environ
 
-    def root(env_var: str, default: str | Path) -> Path:
-        raw = environ.get(env_var, "")
-        return Path(raw).expanduser() if raw else home / default
-
     port = PORTS_DIR / harness
     if harness == "claude":
-        base = root("CLAUDE_CONFIG_DIR", ".claude")
+        base = harness_root(harness, home=home, environ=environ)
         # learnings/ has no runtime destination under the config dir: every
         # consumer reads `.github/learnings/` in the working repo, so a copy
         # here would be read by nothing. Cursor is the exception - its
         # learnings ship as agent-requested rules under rules/.
         return [(port / sub, base / sub) for sub in ("agents", "commands", "skills")]
     if harness == "codex":
-        base = root("CODEX_HOME", ".codex")
+        base = harness_root(harness, home=home, environ=environ)
         # codex profiles/ has no documented runtime destination and is not
         # deployed; neither does learnings/ (see the claude branch above).
         return [
@@ -106,16 +162,16 @@ def harness_mappings(
             (port / "skills", home / ".agents" / "skills"),
         ]
     if harness == "opencode":
-        base = root("OPENCODE_CONFIG_DIR", Path(".config") / "opencode")
+        base = harness_root(harness, home=home, environ=environ)
         return [(port / sub, base / sub) for sub in ("agents", "skills")]
     if harness == "cursor":
-        base = home / ".cursor"
+        base = harness_root(harness, home=home, environ=environ)
         return [
             (port / sub, base / sub)
             for sub in ("agents", "commands", "rules", "skills")
         ]
     if harness == "github":
-        base = REPO_ROOT / ".github"
+        base = harness_root(harness, home=home, environ=environ)
         return [(port / sub, base / sub) for sub in GITHUB_MIRRORED_SUBDIRS]
     raise ValueError(f"unknown harness: {harness}")
 
@@ -226,18 +282,14 @@ def baseline_destination(
     home = Path(home).expanduser() if home else Path.home()
     environ = os.environ if environ is None else environ
 
-    def root(env_var: str, default: str | Path) -> Path:
-        raw = environ.get(env_var, "")
-        return Path(raw).expanduser() if raw else home / default
-
     if harness == "claude":
-        return root("CLAUDE_CONFIG_DIR", ".claude") / "CLAUDE.md"
+        return harness_root(harness, home=home, environ=environ) / "CLAUDE.md"
     if harness == "codex":
-        return root("CODEX_HOME", ".codex") / "AGENTS.md"
+        return harness_root(harness, home=home, environ=environ) / "AGENTS.md"
     if harness == "opencode":
-        return root("OPENCODE_CONFIG_DIR", Path(".config") / "opencode") / "AGENTS.md"
+        return harness_root(harness, home=home, environ=environ) / "AGENTS.md"
     if harness == "cursor":
-        return home / ".cursor" / "rules" / "baseline-instructions.mdc"
+        return harness_root(harness, home=home, environ=environ) / "rules" / "baseline-instructions.mdc"
     if harness == "github":
         # Copilot's repo-wide instructions file; .github/AGENTS.md would only
         # scope to files under .github/ (nearest-file precedence).
@@ -348,7 +400,10 @@ def _strip_section(existing: str, name: str) -> str:
     pattern = re.compile(r"\n*" + re.escape(sentinel) + r"\n?.*?" + re.escape(sentinel) + r"\n*", re.DOTALL)
     if not pattern.search(existing):
         return existing
-    stripped = pattern.sub("\n\n", existing, count=1)
+    match = pattern.search(existing)
+    assert match is not None
+    replacement = "\n" if match.end() == len(existing) else "\n\n"
+    stripped = existing[: match.start()] + replacement + existing[match.end() :]
     return stripped.lstrip("\n")
 
 
@@ -370,6 +425,7 @@ def deploy_baseline(
     *,
     home: Path | None = None,
     environ: Mapping[str, str] | None = None,
+    comms_enabled: bool = False,
 ) -> Dict[str, str]:
     """Splice the rendered baseline sections into the harness's global file."""
     home = Path(home).expanduser() if home else Path.home()
@@ -403,6 +459,9 @@ def deploy_baseline(
         updated = CURSOR_BASELINE_FRONTMATTER
     for name in RETIRED_BASELINE_SECTIONS:
         updated = _strip_section(updated, name)
+    if not comms_enabled:
+        sections.pop("comms-protocol", None)
+        updated = _strip_section(updated, "comms-protocol")
     updated = _splice_section(
         updated, BASELINE_CANARY_SECTION, _baseline_canary_body(tuple(sections))
     )
@@ -419,6 +478,133 @@ def deploy_baseline(
     except OSError as exc:
         return {"status": "failed", "detail": str(exc)}
     return {"status": "created" if created else "updated", "path": str(dest)}
+
+
+REGISTRATION_ADAPTERS: Dict[str, RegistrationAdapter] = {}
+
+
+def _safe_replace(path: Path, data: bytes) -> None:
+    """Replace a registration file without truncating an existing target."""
+    if path.is_symlink():
+        raise OSError("target is a symlink")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except Exception:
+        try:
+            temporary.unlink()
+        except OSError:
+            pass
+        raise
+
+
+def probe_crosswire(
+    config_path: Path,
+    *,
+    probe_runner: Callable[..., object] | None = None,
+    timeout: float = PROBE_TIMEOUT_SECONDS,
+) -> Dict[str, str]:
+    """Run the explicit Crosswire probe and classify its exact stdout token."""
+    command = ["crosswire-turn-hook", "--probe", "--config", str(config_path)]
+    runner = subprocess.run if probe_runner is None else probe_runner
+    try:
+        completed = runner(command, capture_output=True, text=True, timeout=timeout, check=False)
+    except (FileNotFoundError, OSError):
+        return {"status": "failed", "reason": "probe-launch-failed"}
+    except (subprocess.TimeoutExpired, TimeoutError):
+        return {"status": "failed", "reason": "probe-timeout"}
+    except Exception:
+        return {"status": "failed", "reason": "probe-launch-failed"}
+
+    returncode = getattr(completed, "returncode", None)
+    stdout = getattr(completed, "stdout", "")
+    if returncode == 0 and stdout == f"{PROBE_SUCCESS_TOKEN}\n":
+        return {"status": "ok", "token": PROBE_SUCCESS_TOKEN}
+    if returncode == 0 and stdout == f"{PROBE_FAILURE_TOKEN}\n":
+        return {"status": "failed", "reason": "probe-reported-failure"}
+    return {"status": "failed", "reason": "probe-contract-mismatch"}
+
+
+def run_registration(
+    harness: str,
+    adapter: RegistrationAdapter,
+    *,
+    enabled: bool,
+    config_path: Path | None = None,
+    home: Path | None = None,
+    environ: Mapping[str, str] | None = None,
+    probe_runner: Callable[..., object] | None = None,
+    timeout: float = PROBE_TIMEOUT_SECONDS,
+) -> Dict[str, object]:
+    """Run one format adapter through the shared probe-first lifecycle."""
+    try:
+        root = harness_root(harness, home=home, environ=environ)
+        target = adapter.target_path(root)
+        explicit_config = config_path or adapter.config_path(root)
+    except (OSError, ValueError, TypeError):
+        return {
+            "harness": harness,
+            "enabled": enabled,
+            "status": "failed",
+            "detail": "invalid-registration-path",
+        }
+    result: Dict[str, object] = {
+        "harness": harness,
+        "target_path": str(target),
+        "config_path": str(explicit_config),
+        "enabled": enabled,
+    }
+    if enabled:
+        probe = probe_crosswire(explicit_config, probe_runner=probe_runner, timeout=timeout)
+        result["probe"] = probe.get("token", probe.get("reason", "failed"))
+        if probe["status"] != "ok":
+            result.update(status="failed", detail=probe.get("reason", "probe-failed"))
+            return result
+
+    if target.is_symlink():
+        result.update(status="failed", detail="target-is-symlink")
+        return result
+    existed = target.is_file()
+    try:
+        existing = target.read_bytes() if target.is_file() else b""
+    except OSError:
+        result.update(status="failed", detail="target-read-failed")
+        return result
+    try:
+        if enabled:
+            updated = adapter.upsert(existing, explicit_config)
+            removed = ""
+        else:
+            updated, removed = adapter.remove(existing)
+    except Exception:
+        result.update(status="failed", detail="adapter-failed")
+        return result
+    if not isinstance(updated, bytes):
+        result.update(status="failed", detail="adapter-returned-invalid-bytes")
+        return result
+    if updated == existing:
+        result.update(status="unchanged")
+        if not enabled:
+            result["removed_content"] = removed
+        return result
+    try:
+        _safe_replace(target, updated)
+    except OSError:
+        result.update(status="failed", detail="target-write-failed")
+        return result
+    if enabled:
+        result["status"] = "updated" if existed else "created"
+    else:
+        result["status"] = "removed"
+    if not enabled:
+        result["removed_content"] = removed
+    return result
 
 
 def ensure_code_review_graph(harnesses: Sequence[str] = ()) -> Dict[str, str]:
@@ -539,29 +725,67 @@ def deploy(
     home: Path | None = None,
     environ: Mapping[str, str] | None = None,
     verbose: bool = True,
+    comms_profile: bool = False,
+    registration_adapters: Mapping[str, RegistrationAdapter] | None = None,
 ) -> Dict[str, Dict[str, object]]:
     results: Dict[str, Dict[str, object]] = {}
+    adapters = REGISTRATION_ADAPTERS if registration_adapters is None else registration_adapters
     for name in harnesses:
         results[name] = deploy_harness(name, home=home, environ=environ)
-        baseline = deploy_baseline(name, home=home, environ=environ)
+        baseline = deploy_baseline(
+            name, home=home, environ=environ, comms_enabled=comms_profile
+        )
         if baseline["status"] != "not-applicable":
             results[name]["baseline"] = baseline
+        adapter = adapters.get(name)
+        if adapter is not None:
+            results[name]["registration"] = run_registration(
+                name,
+                adapter,
+                enabled=comms_profile,
+                home=home,
+                environ=environ,
+            )
     if verbose:
         print(json.dumps(results, indent=2))
     return results
 
 
-def load_config(path: Path = CONFIG_PATH) -> List[str]:
+def _read_config_data(path: Path) -> Mapping[str, object]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return []
-    selected = data.get("harnesses", []) if isinstance(data, dict) else []
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def load_config(path: Path = CONFIG_PATH) -> List[str]:
+    data = _read_config_data(path)
+    selected = data.get("harnesses", [])
+    if not isinstance(selected, list):
+        selected = []
     return [name for name in selected if name in HARNESSES]
 
 
-def save_config(harnesses: List[str], path: Path = CONFIG_PATH) -> None:
-    path.write_text(json.dumps({"harnesses": harnesses}, indent=2) + "\n", encoding="utf-8")
+def load_comms_profile(path: Path = CONFIG_PATH) -> bool:
+    value = _read_config_data(path).get(COMMS_PROFILE_KEY, False)
+    return value if isinstance(value, bool) else False
+
+
+def load_config_state(path: Path = CONFIG_PATH) -> DeployConfig:
+    return DeployConfig(load_config(path), load_comms_profile(path))
+
+
+def save_config(
+    harnesses: List[str],
+    path: Path = CONFIG_PATH,
+    *,
+    comms_profile: bool = False,
+) -> None:
+    path.write_text(
+        json.dumps({"harnesses": harnesses, COMMS_PROFILE_KEY: comms_profile}, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def parse_harness_arg(raw: str) -> List[str]:
@@ -630,9 +854,11 @@ def main() -> int:
         help="Do not install/configure external tools (code-review-graph, Context7).",
     )
     args = parser.parse_args()
+    saved_state = load_config_state(CONFIG_PATH)
 
     if args.list:
-        list_harnesses(load_config(CONFIG_PATH))
+        list_harnesses(saved_state.harnesses)
+        print(f"Comms profile: {'enabled' if saved_state.comms_profile else 'disabled'}")
         return 0
 
     if args.all:
@@ -643,7 +869,7 @@ def main() -> int:
         except ValueError as exc:
             parser.error(str(exc))
     else:
-        selected = load_config(CONFIG_PATH)
+        selected = saved_state.harnesses
         if not selected:
             if sys.stdin.isatty():
                 selected = prompt_for_harnesses()
@@ -652,8 +878,9 @@ def main() -> int:
                     "no saved harness selection; pass --harness claude,codex,opencode,cursor or --all"
                 )
 
+    comms_profile = saved_state.comms_profile
     if not args.no_save:
-        save_config(selected, CONFIG_PATH)
+        save_config(selected, CONFIG_PATH, comms_profile=comms_profile)
 
     if not args.skip_tools:
         report_external_tools(ensure_external_tools(selected))
@@ -662,7 +889,7 @@ def main() -> int:
         watch(selected)
         return 0
 
-    deploy(selected)
+    deploy(selected, comms_profile=comms_profile)
     return 0
 
 

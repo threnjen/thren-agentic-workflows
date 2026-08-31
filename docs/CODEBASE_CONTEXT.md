@@ -81,6 +81,8 @@ benchmarks/ packages/ tests/
   - cursor → `~/.cursor` (agents, commands, rules, skills; needs Cursor 2.4+)
   - github → `<repo>/.github` (verbatim mirror of the mirrored subdirs)
 - Deploy selection persists to `.deploy-config.json` (gitignored) unless `--no-save`.
+  The file stores `harnesses` and the opt-in boolean `comms_profile`, which defaults
+  to `false` for legacy files and invalid values.
 - Deploy also splices a baseline instructions file per harness (`deploy_baseline`),
   rendered from `source_of_truth/baseline/baseline-instructions.md` with real home
   paths substituted at deploy time (no OS branching — `Path.home()` handles it):
@@ -94,16 +96,24 @@ benchmarks/ packages/ tests/
   reads its bullet list with `^- ([a-z0-9-]+)$`, so surrounding prose can change freely.
   Each bullet names `source_of_truth/instructions/<name>.instructions.md`, which must carry
   `baseline: true`. `_instruction_body` strips the frontmatter, drops the trailing Load Canary
-  section, and demotes the H1 to an H2. Currently 11 sections: `agent-discovery`,
+  section, and demotes the H1 to an H2. The profile-off baseline uses eleven sections:
+  `agent-discovery`,
   `challenge-assumptions`, `code-change-strategy`, `code-review-graph`,
   `codebase-context-bootstrap`, `language-standards`, `learnings-bootstrap`,
   `output-verbosity-policy`, `proactive-research`, `prose-standards`, `question-hygiene`.
+  A disabled communications profile deploys these eleven sections. An enabled profile
+  also deploys `comms-protocol`, for twelve sections.
 - Deploy also splices `<!-- baseline-canary -->`, one aggregate canary naming the count and
   every section it wrote. Per-instruction canaries are stripped on the way in, so without it
   a stale global file reads identically to a current one. A canary whose section list does
   not match the template means that machine has not deployed since the template changed.
 - Only sentinel blocks are replaced/appended, content outside them is never touched;
   idempotent (second run → `unchanged`); every failure returns a status, never raises.
+- Enabled communications runs `crosswire-turn-hook --probe --config PATH` before any
+  registration write and accepts only the exact `CROSSWIRE_HOOK_PROBE_OK` output.
+  The shared lifecycle owns the `<!-- crosswire-comms-registration -->` marker,
+  atomic replacement, idempotence, and removed-content reporting. Set `comms_profile`
+  to `false` and redeploy to remove owned registrations and the contract section.
 - `RETIRED_BASELINE_SECTIONS` (`deploy_agents.py`) names sections this repo no longer splices
   and actively deletes. Dropping a name from the template only stops rewriting the block;
   listing it as retired removes the stale one a previous deploy already wrote, and it stays
@@ -112,6 +122,11 @@ benchmarks/ packages/ tests/
   companion-tool bootstrap installs the MCP server regardless — the retirement drops text, not tooling.
 - The cursor baseline `.mdc` deliberately carries NO generated marker so the
   `~/.cursor/rules` prune pass treats it as foreign and leaves it alone.
+
+Registration targets resolve from `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, and
+`OPENCODE_CONFIG_DIR` through the same root helper as asset deployment. Agents do not
+run propagation. A maintainer must run `python3 scripts/propagate_master_assets.py --once`
+after source changes.
 
 ## Important Script Facts
 

@@ -9,6 +9,8 @@ python3 deploy_agents.py
 
 The first run asks which harnesses you use (Claude, Codex, OpenCode, Cursor, GitHub) and
 saves the choice to `.deploy-config.json` (gitignored). Subsequent runs reuse it.
+The saved file also carries `"comms_profile": false` by default. Set it to `true` only
+after installing and probing Crosswire.
 
 Common variants:
 
@@ -33,11 +35,19 @@ home paths at deploy time (so it works unchanged on Mac, Windows, or Linux):
 | cursor | `~/.cursor/rules/baseline-instructions.mdc` (an `alwaysApply` rule) |
 | github | `<repo>/.github/copilot-instructions.md` |
 
-The baseline contains three sections — Context7 usage, code-review-graph usage, and
-agent/skill discovery — each wrapped in HTML sentinel comments (for example
-`<!-- context7 -->`). Deploy only replaces content between matching sentinels (or
-appends a missing section); everything else in the file is yours and is never touched.
-Re-running deploy is idempotent and reports the file as `unchanged`.
+The baseline contains eleven technical sections by default. The opt-in communications
+profile adds the `comms-protocol` section for a twelve-section enabled baseline.
+Each section is wrapped in an HTML sentinel comment, and deploy only replaces content
+between matching sentinels. Everything else in the file remains yours.
+
+With communications enabled, selected harnesses run the explicit
+`crosswire-turn-hook --probe --config PATH` check before a registration writer mutates
+its configuration. Only the exact `CROSSWIRE_HOOK_PROBE_OK` output permits a write.
+The deployment report includes each target path and lifecycle status.
+
+To roll back, set `"comms_profile": false` in `.deploy-config.json` and run
+`python3 deploy_agents.py`. The deployment removes owned registrations and the contract
+section while preserving foreign content. It reports removed owned content for recovery.
 
 ## Using Named Agents in Codex
 
@@ -99,12 +109,14 @@ Both are best-effort: if a tool cannot be set up (for example, no Node.js on PAT
 Context7), deploy prints a warning explaining why and continues — a failed tool install
 never blocks asset deployment.
 
-Deploy copies from `ports/`. If you have edited anything under `source_of_truth/`, first
-regenerate the outputs:
+Deploy copies from `ports/`. If you have edited anything under `source_of_truth/`, ask a
+maintainer to regenerate the outputs:
 
 ```bash
 python3 scripts/propagate_master_assets.py --once
 ```
+
+Agents do not run propagation. The maintainer must run it after source changes.
 
 **GitHub Copilot users**: the github harness deploys into this repo's own `.github/`;
 to use the agents from another project, open this repo in your VS Code workspace
