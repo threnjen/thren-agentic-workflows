@@ -1290,6 +1290,37 @@ class OpenCodeRegistrationTests(unittest.TestCase):
         self.assertNotIn("input.$", content)
         self.assertNotIn("sh -c", content)
 
+    def test_plugin_failure_reaps_the_spawned_hook_process(self) -> None:
+        content = mod.OPENCODE_PLUGIN_SOURCE.read_text(encoding="utf-8")
+
+        self.assertIn("process.kill()", content)
+        self.assertIn("await process.exited.catch", content)
+
+    def test_marker_inside_foreign_code_is_not_ownership_proof(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = self._target(home)
+            target.parent.mkdir(parents=True)
+            original = (
+                b'const note = "<!-- crosswire-comms-registration -->";\n'
+            )
+            target.write_bytes(original)
+
+            enabled = self._run(home, home / "host.json")
+            disabled = mod.run_registration(
+                "opencode",
+                mod.REGISTRATION_ADAPTERS["opencode"],
+                enabled=False,
+                home=home,
+                environ={},
+            )
+            final = target.read_bytes()
+
+        self.assertEqual(enabled["status"], "failed")
+        self.assertEqual(enabled["detail"], "adapter-failed")
+        self.assertEqual(disabled["status"], "unchanged")
+        self.assertEqual(final, original)
+
     def test_opencode_root_override_and_probe_use_exact_config_argv(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)

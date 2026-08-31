@@ -40,9 +40,19 @@ const invokeCrosswire = async (input: Parameters<Plugin>[0], event: IdleEvent) =
         stderr: "ignore",
       },
     )
-    process.stdin.write(`${payload}\n`)
-    process.stdin.end()
-    await process.exited
+    try {
+      process.stdin.write(`${payload}\n`)
+      process.stdin.end()
+      await process.exited
+    } catch (error) {
+      try {
+        process.kill()
+      } catch {
+        // The child may have exited while the input stream failed.
+      }
+      await process.exited.catch(() => undefined)
+      throw error
+    }
   } catch (error) {
     console.error("crosswire OpenCode idle hook failed", error)
   }

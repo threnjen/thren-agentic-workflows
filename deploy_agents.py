@@ -1039,8 +1039,13 @@ def _opencode_config_path(root: Path) -> Path:
     return root / "hook-config.json"
 
 
+def _opencode_is_owned(existing: bytes) -> bool:
+    ownership_line = f"// {REGISTRATION_OWNERSHIP_TAG}".encode("utf-8")
+    return any(line.strip() == ownership_line for line in existing.splitlines())
+
+
 def _opencode_upsert(existing: bytes, config_path: Path) -> bytes:
-    if existing and REGISTRATION_OWNERSHIP_TAG.encode("utf-8") not in existing:
+    if existing and not _opencode_is_owned(existing):
         raise ValueError("OpenCode target is not owned")
     try:
         source = OPENCODE_PLUGIN_SOURCE.read_text(encoding="utf-8")
@@ -1054,7 +1059,7 @@ def _opencode_upsert(existing: bytes, config_path: Path) -> bytes:
 
 
 def _opencode_remove(existing: bytes) -> Tuple[bytes, str]:
-    if REGISTRATION_OWNERSHIP_TAG.encode("utf-8") not in existing:
+    if not _opencode_is_owned(existing):
         return existing, ""
     return b"", existing.decode("utf-8")
 
