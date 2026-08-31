@@ -785,9 +785,6 @@ def _claude_config_path(root: Path) -> Path:
     return root / "hook-config.json"
 
 
-_CODEX_JSON_DECODER = json.JSONDecoder()
-
-
 def _codex_comment_start(text: str) -> int | None:
     quote: str | None = None
     escaped = False
@@ -818,11 +815,7 @@ def _codex_array_values(value: str) -> List[str]:
             index += 1
         if index == len(value) - 1:
             return values
-        if value[index] != '"':
-            raise ValueError("Codex notify values must be basic strings")
-        parsed, end = _CODEX_JSON_DECODER.raw_decode(value, index)
-        if not isinstance(parsed, str):
-            raise ValueError("Codex notify values must be strings")
+        parsed, end = _codex_string_value(value, index)
         values.append(parsed)
         index = end
         while index < len(value) - 1 and value[index] in " \t":
@@ -834,8 +827,69 @@ def _codex_array_values(value: str) -> List[str]:
         index += 1
 
 
+def _codex_string_value(value: str, index: int) -> Tuple[str, int]:
+    quote = value[index]
+    if quote == "'":
+        end = value.find(quote, index + 1)
+        if end < 0:
+            raise ValueError("Codex notify literal string is unterminated")
+        parsed = value[index + 1 : end]
+        if any(
+            char in "\r\n" or ord(char) < 0x20 and char != "\t" or ord(char) == 0x7F
+            for char in parsed
+        ):
+            raise ValueError("Codex notify literal string contains a control character")
+        return parsed, end + 1
+    if quote != '"':
+        raise ValueError("Codex notify values must be strings")
+
+    index += 1
+    parsed: List[str] = []
+    escapes = {
+        'b': "\b",
+        't': "\t",
+        'n': "\n",
+        'f': "\f",
+        'r': "\r",
+        '"': '"',
+        "\\": "\\",
+    }
+    while index < len(value):
+        char = value[index]
+        if char == '"':
+            return "".join(parsed), index + 1
+        if char == "\\":
+            index += 1
+            if index >= len(value):
+                break
+            escape = value[index]
+            if escape in escapes:
+                parsed.append(escapes[escape])
+                index += 1
+                continue
+            if escape in ("u", "U"):
+                width = 4 if escape == "u" else 8
+                digits = value[index + 1 : index + 1 + width]
+                if len(digits) != width or any(digit not in "0123456789abcdefABCDEF" for digit in digits):
+                    raise ValueError("Codex notify string has an invalid Unicode escape")
+                codepoint = int(digits, 16)
+                if codepoint > 0x10FFFF or 0xD800 <= codepoint <= 0xDFFF:
+                    raise ValueError("Codex notify string has a non-scalar Unicode escape")
+                parsed.append(chr(codepoint))
+                index += width + 1
+                continue
+            raise ValueError("Codex notify string has an invalid escape")
+        if char in "\r\n" or ord(char) < 0x20 and char != "\t" or ord(char) == 0x7F:
+            raise ValueError("Codex notify basic string contains a control character")
+        parsed.append(char)
+        index += 1
+    raise ValueError("Codex notify basic string is unterminated")
+
+
 def _codex_table_header(body: str) -> bool:
-    stripped = body.strip()
+    comment_start = _codex_comment_start(body)
+    header = body[:comment_start] if comment_start is not None else body
+    stripped = header.strip()
     return stripped.startswith("[") and stripped.endswith("]")
 
 
@@ -931,7 +985,7 @@ def _codex_upsert(existing: bytes, config_path: Path) -> bytes:
         output: List[str] = []
         for index, (line, _, _, ending) in enumerate(lines):
             if index == first_owned:
-                output.append(_codex_assignment(config_path, ending or newline))
+                output.append(_codex_assignment(config_path, ending))
             elif index in owned_indices:
                 continue
             else:

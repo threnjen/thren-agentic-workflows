@@ -1247,20 +1247,26 @@ class CodexRegistrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
             codex_home = home / "custom codex"
+            runner = mock.Mock(
+                return_value=mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n")
+            )
             result = mod.run_registration(
                 "codex",
                 mod.REGISTRATION_ADAPTERS["codex"],
                 enabled=True,
                 home=home,
                 environ={"CODEX_HOME": str(codex_home)},
-                probe_runner=mock.Mock(
-                    return_value=mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n")
-                ),
+                probe_runner=runner,
             )
             target = codex_home / "config.toml"
             content = target.read_bytes()
 
         self.assertEqual(result["status"], "created")
+        self.assertEqual(
+            runner.call_args.args[0],
+            ["crosswire-turn-hook", "--probe", "--config", str(codex_home / "hook-config.json")],
+        )
+        self.assertNotIn("shell", runner.call_args.kwargs)
         self.assertEqual(
             content.decode(),
             'notify = ["crosswire-turn-hook", "--adapter", "codex", "--config", '
@@ -1355,6 +1361,25 @@ class CodexRegistrationTests(unittest.TestCase):
                 self.assertEqual(result["status"], "failed")
                 self.assertEqual(target.read_bytes(), original)
 
+    def test_invalid_toml_escape_in_owned_line_fails_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".codex" / "config.toml"
+            target.parent.mkdir(parents=True)
+            original = (
+                'notify = ["crosswire-turn-hook", "--adapter", "codex", "--config", "bad'
+                + r"\/"
+                + 'path"] # '
+                + mod.REGISTRATION_OWNERSHIP_TAG
+                + "\n"
+            ).encode()
+            target.write_bytes(original)
+            result = self._run(home, home / "host.json")
+            final = target.read_bytes()
+
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(final, original)
+
     def test_profile_off_reports_hand_edited_owned_line_and_preserves_foreign_toml(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
@@ -1439,6 +1464,42 @@ class CodexRegistrationTests(unittest.TestCase):
             updated,
         )
         self.assertEqual(updated.count(mod.REGISTRATION_OWNERSHIP_TAG), 3)
+
+    def test_inline_comment_on_table_header_keeps_nested_notify_foreign(self) -> None:
+        fixtures = (
+            '[profiles.default] # table comment\nnotify = ["foreign"]\n',
+            '["profiles#default"] # table comment\nnotify = ["foreign"]\n',
+        )
+        for fixture in fixtures:
+            with self.subTest(fixture=fixture), tempfile.TemporaryDirectory() as tmp:
+                home = Path(tmp)
+                target = home / ".codex" / "config.toml"
+                target.parent.mkdir(parents=True)
+                target.write_text(fixture, encoding="utf-8")
+                result = self._run(home, home / "host.json")
+                updated = target.read_text(encoding="utf-8")
+
+            self.assertEqual(result["status"], "updated")
+            self.assertIn(fixture, updated)
+            self.assertEqual(updated.count(mod.REGISTRATION_OWNERSHIP_TAG), 1)
+
+    def test_changed_owned_line_preserves_missing_final_newline(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".codex" / "config.toml"
+            target.parent.mkdir(parents=True)
+            original = (
+                'notify = ["crosswire-turn-hook", "--adapter", "codex", "--config", "one"] # '
+                + mod.REGISTRATION_OWNERSHIP_TAG
+            ).encode()
+            target.write_bytes(original)
+            result = self._run(home, home / "two.json")
+            updated = target.read_bytes()
+
+        self.assertEqual(result["status"], "updated")
+        self.assertFalse(updated.endswith(b"\n"))
+        self.assertNotIn(b'"one"]', updated)
+        self.assertIn(str(home / "two.json").encode(), updated)
 
     def test_profile_off_without_owned_entry_preserves_complete_document(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
