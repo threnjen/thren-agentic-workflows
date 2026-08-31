@@ -5,6 +5,7 @@ import io
 import json
 import re
 import shlex
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -1221,6 +1222,243 @@ class ClaudeRegistrationTests(unittest.TestCase):
 
                 self.assertEqual(result["status"], "failed")
                 self.assertEqual(target.read_bytes(), content)
+
+
+class CodexRegistrationTests(unittest.TestCase):
+    def _run(
+        self,
+        home: Path,
+        config_path: Path | None = None,
+        *,
+        response: object | None = None,
+    ) -> dict[str, object]:
+        kwargs: dict[str, object] = {
+            "enabled": True,
+            "home": home,
+            "environ": {},
+            "probe_runner": lambda *_args, **_kwargs: response
+            or mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n"),
+        }
+        if config_path is not None:
+            kwargs["config_path"] = config_path
+        return mod.run_registration("codex", mod.REGISTRATION_ADAPTERS["codex"], **kwargs)
+
+    def test_missing_config_uses_codex_home_and_writes_owned_argv_array(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            codex_home = home / "custom codex"
+            result = mod.run_registration(
+                "codex",
+                mod.REGISTRATION_ADAPTERS["codex"],
+                enabled=True,
+                home=home,
+                environ={"CODEX_HOME": str(codex_home)},
+                probe_runner=mock.Mock(
+                    return_value=mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n")
+                ),
+            )
+            target = codex_home / "config.toml"
+            content = target.read_bytes()
+
+        self.assertEqual(result["status"], "created")
+        self.assertEqual(
+            content.decode(),
+            'notify = ["crosswire-turn-hook", "--adapter", "codex", "--config", '
+            f'"{codex_home / "hook-config.json"}"] # {mod.REGISTRATION_OWNERSHIP_TAG}\n',
+        )
+
+    def test_existing_toml_preserves_foreign_bytes_and_top_level_shape(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".codex" / "config.toml"
+            target.parent.mkdir(parents=True)
+            original = (
+                b"# preserve this comment\r\n"
+                b"title = 'foreign'\r\n"
+                b"foreign_text = 'notify = [\\\"do not touch\\\"]'\r\n"
+                b"\r\n"
+                b"[profiles.default]\r\n"
+                b"model = 'o4'\r\n"
+            )
+            target.write_bytes(original)
+            config_path = home / "host config.json"
+            result = self._run(home, config_path)
+            updated = target.read_bytes()
+
+        expected_line = (
+            f'notify = ["crosswire-turn-hook", "--adapter", "codex", "--config", '
+            f'"{config_path}"] # {mod.REGISTRATION_OWNERSHIP_TAG}\r\n'
+        ).encode()
+        self.assertEqual(result["status"], "updated")
+        self.assertEqual(updated.count(expected_line), 1)
+        self.assertTrue(updated.endswith(b"[profiles.default]\r\nmodel = 'o4'\r\n"))
+        self.assertIn(b"foreign_text = 'notify = [\\\"do not touch\\\"]'\r\n", updated)
+        self.assertEqual(updated.count(mod.REGISTRATION_OWNERSHIP_TAG.encode()), 1)
+
+    def test_same_path_is_idempotent_and_changed_path_replaces_owned_line(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            first_path = home / "one.json"
+            second_path = home / "two.json"
+            self.assertEqual(self._run(home, first_path)["status"], "created")
+            target = home / ".codex" / "config.toml"
+            first = target.read_bytes()
+            self.assertEqual(self._run(home, first_path)["status"], "unchanged")
+            self.assertEqual(target.read_bytes(), first)
+            self.assertEqual(self._run(home, second_path)["status"], "updated")
+            changed = target.read_text()
+
+        self.assertIn(str(second_path), changed)
+        self.assertNotIn(str(first_path), changed)
+        self.assertEqual(changed.count(mod.REGISTRATION_OWNERSHIP_TAG), 1)
+
+    def test_duplicate_owned_lines_are_collapsed_without_touching_foreign_text(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".codex" / "config.toml"
+            target.parent.mkdir(parents=True)
+            target.write_text(
+                "model = 'keep'\n"
+                'notify = ["crosswire-turn-hook", "--adapter", "codex", "--config", "one"] '
+                f"# {mod.REGISTRATION_OWNERSHIP_TAG}\n"
+                "comment = 'keep between'\n"
+                'notify = ["crosswire-turn-hook", "--adapter", "codex", "--config", "two"] '
+                f"# {mod.REGISTRATION_OWNERSHIP_TAG}\n",
+                encoding="utf-8",
+            )
+            result = self._run(home, home / "three")
+            updated = target.read_text(encoding="utf-8")
+
+        self.assertEqual(result["status"], "updated")
+        self.assertEqual(updated.count(mod.REGISTRATION_OWNERSHIP_TAG), 1)
+        self.assertIn("model = 'keep'\n", updated)
+        self.assertIn("comment = 'keep between'\n", updated)
+        self.assertIn(str(home / "three"), updated)
+
+    def test_foreign_notify_and_ambiguous_owned_lines_fail_without_mutation(self) -> None:
+        fixtures = (
+            'notify = ["foreign-command"]\n',
+            'notify = ["crosswire-turn-hook", "--adapter", "codex" # '
+            + mod.REGISTRATION_OWNERSHIP_TAG
+            + "\n",
+            'notify = ["crosswire-turn-hook", "--adapter", "codex", "--config", '
+            '"literal # ' + mod.REGISTRATION_OWNERSHIP_TAG + '"]\n',
+        )
+        for fixture in fixtures:
+            with self.subTest(fixture=fixture), tempfile.TemporaryDirectory() as tmp:
+                home = Path(tmp)
+                target = home / ".codex" / "config.toml"
+                target.parent.mkdir(parents=True)
+                original = fixture.encode()
+                target.write_bytes(original)
+                result = self._run(home, home / "host.json")
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual(target.read_bytes(), original)
+
+    def test_profile_off_reports_hand_edited_owned_line_and_preserves_foreign_toml(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".codex" / "config.toml"
+            target.parent.mkdir(parents=True)
+            original = (
+                "model = 'keep'\n"
+                'notify = ["operator-edited", "--config", "changed"] '
+                f"# {mod.REGISTRATION_OWNERSHIP_TAG}\n"
+                "[profiles.default]\nmodel = 'o4'\n"
+            ).encode()
+            target.write_bytes(original)
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                result = mod.deploy(["codex"], home=home, environ={}, comms_profile=False)
+            remaining = target.read_bytes()
+
+        self.assertEqual(result["codex"]["registration"]["status"], "removed")
+        self.assertIn("operator-edited", output.getvalue())
+        self.assertIn(mod.REGISTRATION_OWNERSHIP_TAG, output.getvalue())
+        self.assertEqual(remaining, b"model = 'keep'\n[profiles.default]\nmodel = 'o4'\n")
+
+    def test_enabled_zero_byte_target_fails_before_probe_or_codex_logic(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".codex" / "config.toml"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"")
+            result = self._run(
+                home,
+                response=mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n"),
+            )
+
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["detail"], "target-empty")
+
+    def test_probe_failures_leave_existing_codex_bytes_unchanged(self) -> None:
+        responses: tuple[object, ...] = (
+            mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_FAILED\n"),
+            mock.Mock(returncode=0, stdout="unexpected\n"),
+            mock.Mock(returncode=1, stdout="CROSSWIRE_HOOK_PROBE_OK\n"),
+            subprocess.TimeoutExpired("crosswire-turn-hook", 10),
+            FileNotFoundError("crosswire-turn-hook"),
+        )
+        for response in responses:
+            with self.subTest(response=type(response).__name__), tempfile.TemporaryDirectory() as tmp:
+                home = Path(tmp)
+                target = home / ".codex" / "config.toml"
+                target.parent.mkdir(parents=True)
+                original = b"model = 'keep'\n"
+                target.write_bytes(original)
+                runner = mock.Mock(side_effect=response) if isinstance(response, BaseException) else mock.Mock(return_value=response)
+                result = mod.run_registration(
+                    "codex",
+                    mod.REGISTRATION_ADAPTERS["codex"],
+                    enabled=True,
+                    config_path=home / "host.json",
+                    home=home,
+                    environ={},
+                    probe_runner=runner,
+                )
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual(target.read_bytes(), original)
+
+    def test_nested_or_prose_tag_text_is_not_owned(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".codex" / "config.toml"
+            target.parent.mkdir(parents=True)
+            target.write_text(
+                "note = 'keep <!-- crosswire-comms-registration -->'\n"
+                "[profiles.default]\n"
+                'notify = ["foreign", "<!-- crosswire-comms-registration -->"]\n',
+                encoding="utf-8",
+            )
+            result = self._run(home, home / "host.json")
+            updated = target.read_text(encoding="utf-8")
+
+        self.assertEqual(result["status"], "updated")
+        self.assertIn("note = 'keep <!-- crosswire-comms-registration -->'\n", updated)
+        self.assertIn(
+            '[profiles.default]\nnotify = ["foreign", "<!-- crosswire-comms-registration -->"]\n',
+            updated,
+        )
+        self.assertEqual(updated.count(mod.REGISTRATION_OWNERSHIP_TAG), 3)
+
+    def test_profile_off_without_owned_entry_preserves_complete_document(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".codex" / "config.toml"
+            target.parent.mkdir(parents=True)
+            original = b"# foreign\r\nnotify = [\"foreign\"]\r\n"
+            target.write_bytes(original)
+            result = mod.run_registration(
+                "codex",
+                mod.REGISTRATION_ADAPTERS["codex"],
+                enabled=False,
+                home=home,
+                environ={},
+            )
+            final = target.read_bytes()
+
+        self.assertEqual(result["status"], "unchanged")
+        self.assertEqual(result["removed_content"], "")
+        self.assertEqual(final, original)
 
 
 if __name__ == "__main__":

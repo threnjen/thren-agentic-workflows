@@ -785,13 +785,206 @@ def _claude_config_path(root: Path) -> Path:
     return root / "hook-config.json"
 
 
+_CODEX_JSON_DECODER = json.JSONDecoder()
+
+
+def _codex_comment_start(text: str) -> int | None:
+    quote: str | None = None
+    escaped = False
+    for index, char in enumerate(text):
+        if quote is not None:
+            if quote == '"' and escaped:
+                escaped = False
+            elif quote == '"' and char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            continue
+        if char in ('"', "'"):
+            quote = char
+        elif char == "#":
+            return index
+    return None
+
+
+def _codex_array_values(value: str) -> List[str]:
+    value = value.strip()
+    if not value.startswith("[") or not value.endswith("]"):
+        raise ValueError("Codex notify value must be an inline array")
+    index = 1
+    values: List[str] = []
+    while True:
+        while index < len(value) - 1 and value[index] in " \t":
+            index += 1
+        if index == len(value) - 1:
+            return values
+        if value[index] != '"':
+            raise ValueError("Codex notify values must be basic strings")
+        parsed, end = _CODEX_JSON_DECODER.raw_decode(value, index)
+        if not isinstance(parsed, str):
+            raise ValueError("Codex notify values must be strings")
+        values.append(parsed)
+        index = end
+        while index < len(value) - 1 and value[index] in " \t":
+            index += 1
+        if index == len(value) - 1:
+            return values
+        if value[index] != ",":
+            raise ValueError("Codex notify array has no separator")
+        index += 1
+
+
+def _codex_table_header(body: str) -> bool:
+    stripped = body.strip()
+    return stripped.startswith("[") and stripped.endswith("]")
+
+
+def _codex_line_parts(line: str) -> Tuple[str, str]:
+    if line.endswith("\r\n"):
+        return line[:-2], "\r\n"
+    if line.endswith(("\n", "\r")):
+        return line[:-1], line[-1]
+    return line, ""
+
+
+def _codex_owned_path(body: str, *, strict: bool = True) -> str | None:
+    comment_start = _codex_comment_start(body)
+    comment = body[comment_start:] if comment_start is not None else ""
+    tagged = comment.strip() == f"# {REGISTRATION_OWNERSHIP_TAG}"
+    statement = body[:comment_start] if comment_start is not None else body
+    match = re.fullmatch(r"[ \t]*notify[ \t]*=[ \t]*(.*)", statement)
+    if match is None:
+        return None
+    if not tagged:
+        return None
+    values = _codex_array_values(match.group(1))
+    if strict and (len(values) != 5 or values[:4] != [
+        "crosswire-turn-hook",
+        "--adapter",
+        "codex",
+        "--config",
+    ]):
+        raise ValueError("owned Codex notify assignment has an unexpected argv")
+    return values[4] if len(values) > 4 else ""
+
+
+def _codex_document_lines(text: str) -> List[Tuple[str, bool, str, str]]:
+    lines: List[Tuple[str, bool, str, str]] = []
+    in_table = False
+    for line in text.splitlines(keepends=True):
+        body, ending = _codex_line_parts(line)
+        lines.append((line, not in_table, body, ending))
+        if _codex_table_header(body):
+            in_table = True
+    return lines
+
+
+def _codex_newline(text: str) -> str:
+    if "\r\n" in text:
+        return "\r\n"
+    if "\r" in text:
+        return "\r"
+    return "\n"
+
+
+def _codex_assignment(config_path: Path, newline: str) -> str:
+    values = [
+        "crosswire-turn-hook",
+        "--adapter",
+        "codex",
+        "--config",
+        str(config_path),
+    ]
+    return (
+        f"notify = {json.dumps(values, ensure_ascii=False)} # "
+        f"{REGISTRATION_OWNERSHIP_TAG}{newline}"
+    )
+
+
+def _codex_upsert(existing: bytes, config_path: Path) -> bytes:
+    if not existing:
+        return _codex_assignment(config_path, "\n").encode("utf-8")
+    text = existing.decode("utf-8")
+    lines = _codex_document_lines(text)
+    owned: List[Tuple[int, str]] = []
+    foreign_notify = False
+    first_table = len(lines)
+    for index, (_, top_level, body, ending) in enumerate(lines):
+        if top_level:
+            if _codex_table_header(body):
+                first_table = min(first_table, index)
+                continue
+            if re.fullmatch(r"[ \t]*notify[ \t]*=.*", body):
+                path = _codex_owned_path(body)
+                if path is not None:
+                    owned.append((index, path))
+                else:
+                    foreign_notify = True
+    if owned and len(owned) == 1 and owned[0][1] == str(config_path):
+        return existing
+    if foreign_notify:
+        raise ValueError("foreign or ambiguous top-level Codex notify assignment")
+    newline = _codex_newline(text)
+    if owned:
+        owned_indices = {index for index, _ in owned}
+        first_owned = owned[0][0]
+        output: List[str] = []
+        for index, (line, _, _, ending) in enumerate(lines):
+            if index == first_owned:
+                output.append(_codex_assignment(config_path, ending or newline))
+            elif index in owned_indices:
+                continue
+            else:
+                output.append(line)
+        return "".join(output).encode("utf-8")
+
+    assignment = _codex_assignment(config_path, newline)
+    prefix = "".join(line for line, _, _, _ in lines[:first_table])
+    suffix = "".join(line for line, _, _, _ in lines[first_table:])
+    if prefix and not prefix.endswith(("\n", "\r")):
+        prefix += newline
+    return (prefix + assignment + suffix).encode("utf-8")
+
+
+def _codex_remove(existing: bytes) -> Tuple[bytes, str]:
+    if not existing:
+        return existing, ""
+    text = existing.decode("utf-8")
+    lines = _codex_document_lines(text)
+    owned: set[int] = set()
+    for index, (_, top_level, body, _) in enumerate(lines):
+        if top_level and re.fullmatch(r"[ \t]*notify[ \t]*=.*", body):
+            if _codex_owned_path(body, strict=False) is not None:
+                owned.add(index)
+    if not owned:
+        return existing, ""
+    removed = "".join(lines[index][0] for index in sorted(owned))
+    updated = "".join(line for index, (line, _, _, _) in enumerate(lines) if index not in owned)
+    return updated.encode("utf-8"), removed
+
+
+def _codex_target_path(root: Path) -> Path:
+    return root / "config.toml"
+
+
+def _codex_config_path(root: Path) -> Path:
+    # [PROPOSED - name TBD] Match Claude's portable default under the resolved root.
+    return root / "hook-config.json"
+
+
 REGISTRATION_ADAPTERS: Dict[str, RegistrationAdapter] = {
     "claude": RegistrationAdapter(
         target_path=_claude_target_path,
         config_path=_claude_config_path,
         upsert=_claude_upsert,
         remove=_claude_remove,
-    )
+    ),
+    "codex": RegistrationAdapter(
+        target_path=_codex_target_path,
+        config_path=_codex_config_path,
+        upsert=_codex_upsert,
+        remove=_codex_remove,
+    ),
 }
 
 

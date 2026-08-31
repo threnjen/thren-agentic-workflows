@@ -87,6 +87,31 @@ ownership tag, including hand-edited commands. The verbose report includes the r
 JSON group so an operator can recover edits. Foreign groups and unrelated settings stay
 untouched. Agents do not run propagation. A maintainer must run it after source changes.
 
+## Codex Registration
+
+When the communications profile is enabled, deployment adds one owned top-level `notify`
+assignment to `config.toml` under the resolved Codex root:
+
+```toml
+notify = ["crosswire-turn-hook", "--adapter", "codex", "--config", "/path/to/hook-config.json"] # <!-- crosswire-comms-registration -->
+```
+
+`CODEX_HOME` selects the Codex root. Without it, deployment uses `~/.codex`. The
+registration preserves unrelated TOML bytes and owns only the one physical assignment
+line with the exact trailing comment. A foreign top-level `notify` assignment is left
+untouched and causes a bounded deployment failure rather than a duplicate key.
+
+Before an enabled write, deployment runs `crosswire-turn-hook --probe --config PATH`.
+Only a zero exit status with the exact `CROSSWIRE_HOOK_PROBE_OK` line permits mutation.
+Failure output, unexpected output, timeout, launch failure, or a nonzero exit leaves the
+target unchanged. The default Crosswire host configuration is `hook-config.json` under
+the resolved Codex root, unless deployment supplies an explicit path.
+
+To roll back Codex registration, set `"comms_profile": false` and deploy again. The
+report prints every removed owned line, including hand-edited content, for recovery.
+Foreign TOML remains unchanged. Agents do not run propagation. A maintainer must run it
+after source changes.
+
 ## Using Named Agents in Codex
 
 After deploying the Codex harness, request the agent in the prompt:
