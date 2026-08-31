@@ -487,7 +487,21 @@ def _reject_nonstandard_json_constant(value: str) -> object:
     raise ValueError(f"non-standard JSON constant: {value}")
 
 
-_CLAUDE_JSON_DECODER = json.JSONDecoder(parse_constant=_reject_nonstandard_json_constant)
+def _reject_duplicate_json_object(
+    pairs: List[Tuple[str, object]],
+) -> Dict[str, object]:
+    document: Dict[str, object] = {}
+    for key, value in pairs:
+        if key in document:
+            raise ValueError(f"duplicate JSON object key: {key}")
+        document[key] = value
+    return document
+
+
+_CLAUDE_JSON_DECODER = json.JSONDecoder(
+    parse_constant=_reject_nonstandard_json_constant,
+    object_pairs_hook=_reject_duplicate_json_object,
+)
 
 
 def _claude_json_skip_whitespace(text: str, index: int) -> int:
@@ -911,6 +925,9 @@ def run_registration(
         existing = target.read_bytes() if target.is_file() else b""
     except OSError:
         result.update(status="failed", detail="target-read-failed")
+        return result
+    if enabled and existed and not existing:
+        result.update(status="failed", detail="target-empty")
         return result
     try:
         if enabled:

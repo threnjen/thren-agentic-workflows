@@ -4,6 +4,7 @@ import contextlib
 import io
 import json
 import re
+import shlex
 import sys
 import tempfile
 import unittest
@@ -1133,14 +1134,20 @@ class ClaudeRegistrationTests(unittest.TestCase):
             after = target.read_bytes()
             second = self._run(home, home / "one host.json")
             final = target.read_bytes()
+            changed = self._run(home, home / "two host.json")
+            changed_final = target.read_bytes()
 
         self.assertEqual(first["status"], "updated")
         self.assertEqual(second["status"], "unchanged")
+        self.assertEqual(changed["status"], "updated")
         self.assertEqual(final, after)
         self.assertNotEqual(before, after)
         self.assertIn(b'"custom": "\\u2603"', after)
         self.assertIn(b'"command":"keep me"', after)
         self.assertEqual(after.count(mod.REGISTRATION_OWNERSHIP_TAG.encode()), 1)
+        self.assertIn(shlex.quote(str(home / "two host.json")).encode(), changed_final)
+        self.assertNotIn(shlex.quote(str(home / "one host.json")).encode(), changed_final)
+        self.assertEqual(changed_final.count(mod.REGISTRATION_OWNERSHIP_TAG.encode()), 1)
 
     def test_duplicate_owned_groups_are_collapsed_and_profile_off_reports_hand_edit(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1196,7 +1203,15 @@ class ClaudeRegistrationTests(unittest.TestCase):
         self.assertEqual(final, original)
 
     def test_invalid_settings_fail_closed_without_probe_or_write(self) -> None:
-        for content in (b"not json", b"[]", b'{"hooks": []}', b'{"hooks":{"Stop":{}}}', b'{"n":NaN}'):
+        for content in (
+            b"",
+            b"not json",
+            b"[]",
+            b'{"hooks": []}',
+            b'{"hooks":{"Stop":{}}}',
+            b'{"n":NaN}',
+            b'{"foreign":{"duplicate":1,"duplicate":2}}',
+        ):
             with self.subTest(content=content), tempfile.TemporaryDirectory() as tmp:
                 home = Path(tmp)
                 target = home / ".claude" / "settings.json"
