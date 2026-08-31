@@ -25,6 +25,7 @@ import json
 import math
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -482,7 +483,302 @@ def deploy_baseline(
     return {"status": "created" if created else "updated", "path": str(dest)}
 
 
-REGISTRATION_ADAPTERS: Dict[str, RegistrationAdapter] = {}
+def _reject_nonstandard_json_constant(value: str) -> object:
+    raise ValueError(f"non-standard JSON constant: {value}")
+
+
+_CLAUDE_JSON_DECODER = json.JSONDecoder(parse_constant=_reject_nonstandard_json_constant)
+
+
+def _claude_json_skip_whitespace(text: str, index: int) -> int:
+    while index < len(text) and text[index] in " \t\r\n":
+        index += 1
+    return index
+
+
+def _claude_json_object_members(text: str, start: int) -> List[Tuple[str, int, int]]:
+    if text[start] != "{":
+        raise ValueError("JSON value is not an object")
+    members: List[Tuple[str, int, int]] = []
+    index = _claude_json_skip_whitespace(text, start + 1)
+    if index < len(text) and text[index] == "}":
+        return members
+    keys: set[str] = set()
+    while True:
+        index = _claude_json_skip_whitespace(text, index)
+        key, index = _CLAUDE_JSON_DECODER.raw_decode(text, index)
+        if not isinstance(key, str):
+            raise ValueError("JSON object key is not a string")
+        if key in keys:
+            raise ValueError(f"duplicate JSON object key: {key}")
+        keys.add(key)
+        index = _claude_json_skip_whitespace(text, index)
+        if index >= len(text) or text[index] != ":":
+            raise ValueError("JSON object member has no colon")
+        value_start = _claude_json_skip_whitespace(text, index + 1)
+        _, value_end = _CLAUDE_JSON_DECODER.raw_decode(text, value_start)
+        members.append((key, value_start, value_end))
+        index = _claude_json_skip_whitespace(text, value_end)
+        if index >= len(text):
+            raise ValueError("unterminated JSON object")
+        if text[index] == "}":
+            return members
+        if text[index] != ",":
+            raise ValueError("JSON object member has no separator")
+        index += 1
+
+
+def _claude_json_array_items(text: str, start: int) -> List[Tuple[int, int]]:
+    if text[start] != "[":
+        raise ValueError("JSON value is not an array")
+    items: List[Tuple[int, int]] = []
+    index = _claude_json_skip_whitespace(text, start + 1)
+    if index < len(text) and text[index] == "]":
+        return items
+    while True:
+        value_start = _claude_json_skip_whitespace(text, index)
+        _, value_end = _CLAUDE_JSON_DECODER.raw_decode(text, value_start)
+        items.append((value_start, value_end))
+        index = _claude_json_skip_whitespace(text, value_end)
+        if index >= len(text):
+            raise ValueError("unterminated JSON array")
+        if text[index] == "]":
+            return items
+        if text[index] != ",":
+            raise ValueError("JSON array item has no separator")
+        index += 1
+
+
+def _claude_json_member(
+    text: str, object_start: int, name: str
+) -> Tuple[int, int] | None:
+    for key, value_start, value_end in _claude_json_object_members(text, object_start):
+        if key == name:
+            return value_start, value_end
+    return None
+
+
+def _claude_settings_document(existing: bytes) -> Tuple[str, Dict[str, object]]:
+    if not existing:
+        return "", {}
+    text = existing.decode("utf-8")
+    document = _CLAUDE_JSON_DECODER.decode(text)
+    if not isinstance(document, dict):
+        raise ValueError("Claude settings root must be an object")
+    hooks = document.get("hooks")
+    if "hooks" in document and not isinstance(hooks, dict):
+        raise ValueError("Claude settings hooks must be an object")
+    if isinstance(hooks, dict):
+        for event, groups in hooks.items():
+            if not isinstance(event, str) or not isinstance(groups, list):
+                raise ValueError("Claude hook event collections must be arrays")
+            for group in groups:
+                if not isinstance(group, dict):
+                    raise ValueError("Claude hook groups must be objects")
+                nested_hooks = group.get("hooks")
+                if not isinstance(nested_hooks, list):
+                    raise ValueError("Claude hook group hooks must be an array")
+                if any(not isinstance(hook, dict) for hook in nested_hooks):
+                    raise ValueError("Claude hook entries must be objects")
+    return text, document
+
+
+def _claude_command(config_path: Path) -> str:
+    quoted_path = shlex.quote(str(config_path))
+    return (
+        f"crosswire-turn-hook --adapter claude --config {quoted_path} "
+        f"# {REGISTRATION_OWNERSHIP_TAG}"
+    )
+
+
+def _claude_group(config_path: Path) -> Dict[str, object]:
+    return {
+        "matcher": "",
+        "hooks": [
+            {
+                "type": "command",
+                "command": _claude_command(config_path),
+                "timeout": 10,
+            }
+        ],
+    }
+
+
+def _claude_json_compact(value: object) -> str:
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+def _claude_json_insert_member(
+    text: str, object_start: int, object_end: int, key: str, value: object
+) -> str:
+    member = f"{json.dumps(key)}:{_claude_json_compact(value)}"
+    content_start = object_start + 1
+    content_end = object_end - 1
+    trimmed_end = content_end
+    while trimmed_end > content_start and text[trimmed_end - 1] in " \t\r\n":
+        trimmed_end -= 1
+    if trimmed_end == content_start:
+        return text[:content_start] + member + text[content_start:]
+    return text[:trimmed_end] + "," + member + text[trimmed_end:]
+
+
+def _claude_json_append_array_item(text: str, array_start: int, value: object) -> str:
+    _, array_end = _CLAUDE_JSON_DECODER.raw_decode(text, array_start)
+    items = _claude_json_array_items(text, array_start)
+    item = _claude_json_compact(value)
+    if items:
+        trailing = text[items[-1][1] : array_end - 1]
+        return text[: items[-1][1]] + "," + trailing + item + text[array_end - 1 :]
+    insertion = _claude_json_skip_whitespace(text, array_start + 1)
+    return text[:insertion] + item + text[insertion:]
+
+
+def _owned_command_span(
+    text: str, group_start: int
+) -> Tuple[int, int, str] | None:
+    nested_member = _claude_json_member(text, group_start, "hooks")
+    if nested_member is None:
+        return None
+    nested_start, _ = nested_member
+    for hook_start, _ in _claude_json_array_items(text, nested_start):
+        command_member = _claude_json_member(text, hook_start, "command")
+        if command_member is None:
+            continue
+        command_start, command_end = command_member
+        command, _ = _CLAUDE_JSON_DECODER.raw_decode(text, command_start)
+        if isinstance(command, str) and REGISTRATION_OWNERSHIP_TAG in command:
+            return command_start, command_end, command
+    return None
+
+
+def _claude_stop_array(text: str) -> Tuple[int, List[Tuple[int, int]]] | None:
+    root_start = _claude_json_skip_whitespace(text, 0)
+    hooks_member = _claude_json_member(text, root_start, "hooks")
+    if hooks_member is None:
+        return None
+    hooks_start, _ = hooks_member
+    stop_member = _claude_json_member(text, hooks_start, "Stop")
+    if stop_member is None:
+        return None
+    stop_start, _ = stop_member
+    return stop_start, _claude_json_array_items(text, stop_start)
+
+
+def _remove_owned_stop_groups(
+    text: str, stop_start: int, items: List[Tuple[int, int]]
+) -> Tuple[str, str, int]:
+    owned: List[int] = []
+    removed: List[str] = []
+    for index, (item_start, item_end) in enumerate(items):
+        if _owned_command_span(text, item_start) is not None:
+            owned.append(index)
+            removed.append(text[item_start:item_end])
+    if not owned:
+        return text, "", 0
+
+    edits: List[Tuple[int, int]] = []
+    cluster_start = cluster_end = owned[0]
+    clusters: List[Tuple[int, int]] = []
+    for index in owned[1:]:
+        if index == cluster_end + 1:
+            cluster_end = index
+        else:
+            clusters.append((cluster_start, cluster_end))
+            cluster_start = cluster_end = index
+    clusters.append((cluster_start, cluster_end))
+    for first, last in clusters:
+        if first > 0:
+            edits.append((items[first - 1][1], items[last][1]))
+        elif last + 1 < len(items):
+            edits.append((items[first][0], items[last + 1][0]))
+        else:
+            edits.append((items[first][0], items[last][1]))
+    updated = text
+    for start, end in reversed(edits):
+        updated = updated[:start] + updated[end:]
+    return updated, "\n".join(removed), len(owned)
+
+
+def _claude_upsert(existing: bytes, config_path: Path) -> bytes:
+    text, _ = _claude_settings_document(existing)
+    owned_group = _claude_group(config_path)
+    if not text:
+        return (json.dumps({"hooks": {"Stop": [owned_group]}}, indent=2) + "\n").encode(
+            "utf-8"
+        )
+    stop_data = _claude_stop_array(text)
+    if stop_data is None:
+        root_start = _claude_json_skip_whitespace(text, 0)
+        hooks_member = _claude_json_member(text, root_start, "hooks")
+        if hooks_member is None:
+            _, root_end = _CLAUDE_JSON_DECODER.raw_decode(text, root_start)
+            updated = _claude_json_insert_member(
+                text, root_start, root_end, "hooks", {"Stop": [owned_group]}
+            )
+            return updated.encode("utf-8")
+        hooks_start, hooks_end = hooks_member
+        updated = _claude_json_insert_member(
+            text, hooks_start, hooks_end, "Stop", [owned_group]
+        )
+        return updated.encode("utf-8")
+
+    stop_start, items = stop_data
+    owned_info: List[Tuple[int, int, str]] = []
+    owned_indices: List[int] = []
+    for index, (item_start, item_end) in enumerate(items):
+        command_span = _owned_command_span(text, item_start)
+        if command_span is not None:
+            owned_indices.append(index)
+            owned_info.append(command_span)
+    desired = str(owned_group["hooks"][0]["command"])
+    if len(owned_indices) == 1 and owned_info[0][2] == desired:
+        return existing
+    if len(owned_indices) == 1:
+        command_start, command_end, _ = owned_info[0]
+        updated = text[:command_start] + json.dumps(desired) + text[command_end:]
+        return updated.encode("utf-8")
+    if owned_indices:
+        updated, _, _ = _remove_owned_stop_groups(text, stop_start, items)
+        stop_data = _claude_stop_array(updated)
+        if stop_data is None:
+            raise ValueError("Claude Stop collection disappeared")
+        stop_start, _ = stop_data
+        updated = _claude_json_append_array_item(updated, stop_start, owned_group)
+        return updated.encode("utf-8")
+    updated = _claude_json_append_array_item(text, stop_start, owned_group)
+    return updated.encode("utf-8")
+
+
+def _claude_remove(existing: bytes) -> Tuple[bytes, str]:
+    if not existing:
+        return existing, ""
+    text, _ = _claude_settings_document(existing)
+    stop_data = _claude_stop_array(text)
+    if stop_data is None:
+        return existing, ""
+    stop_start, items = stop_data
+    updated, removed, _ = _remove_owned_stop_groups(text, stop_start, items)
+    return updated.encode("utf-8"), removed
+
+
+def _claude_target_path(root: Path) -> Path:
+    return root / "settings.json"
+
+
+def _claude_config_path(root: Path) -> Path:
+    # [PROPOSED - name TBD] Portable default until the host config contract
+    # supplies a user-global location. Callers can always inject config_path.
+    return root / "hook-config.json"
+
+
+REGISTRATION_ADAPTERS: Dict[str, RegistrationAdapter] = {
+    "claude": RegistrationAdapter(
+        target_path=_claude_target_path,
+        config_path=_claude_config_path,
+        upsert=_claude_upsert,
+        remove=_claude_remove,
+    )
+}
 
 
 def _normalize_comms_profile(value: object) -> bool:

@@ -1,5 +1,7 @@
 """deploy_assets: ports/ -> real harness config dirs, marker-ownership safety."""
 
+import contextlib
+import io
 import json
 import re
 import sys
@@ -1064,6 +1066,146 @@ class RegistrationLifecycleTests(unittest.TestCase):
                 )
             self.assertEqual(result["status"], "failed")
             self.assertEqual(target.read_bytes(), b"before\n")
+
+
+class ClaudeRegistrationTests(unittest.TestCase):
+    def _run(self, home: Path, config_path: Path | None = None) -> dict[str, object]:
+        kwargs: dict[str, object] = {
+            "enabled": True,
+            "home": home,
+            "environ": {},
+            "probe_runner": lambda *_args, **_kwargs: mock.Mock(
+                returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n"
+            ),
+        }
+        if config_path is not None:
+            kwargs["config_path"] = config_path
+        return mod.run_registration("claude", mod.REGISTRATION_ADAPTERS["claude"], **kwargs)
+
+    def test_missing_settings_creates_owned_stop_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            config_path = home / "host.json"
+            result = self._run(home, config_path)
+            target = home / ".claude" / "settings.json"
+            settings = json.loads(target.read_text(encoding="utf-8"))
+
+        self.assertEqual(result["status"], "created")
+        command = settings["hooks"]["Stop"][0]["hooks"][0]
+        self.assertEqual(command["type"], "command")
+        self.assertEqual(command["timeout"], 10)
+        self.assertIn("crosswire-turn-hook --adapter claude --config", command["command"])
+        self.assertIn(mod.REGISTRATION_OWNERSHIP_TAG, command["command"])
+
+    def test_claude_config_dir_override_and_exact_probe_argument(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            override = home / "claude config"
+            config_path = home / "host config.json"
+            runner = mock.Mock(
+                return_value=mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n")
+            )
+            result = mod.run_registration(
+                "claude",
+                mod.REGISTRATION_ADAPTERS["claude"],
+                enabled=True,
+                config_path=config_path,
+                home=home,
+                environ={"CLAUDE_CONFIG_DIR": str(override)},
+                probe_runner=runner,
+            )
+
+        self.assertEqual(result["target_path"], str(override / "settings.json"))
+        self.assertEqual(
+            runner.call_args.args[0],
+            ["crosswire-turn-hook", "--probe", "--config", str(config_path)],
+        )
+
+    def test_existing_settings_preserve_foreign_bytes_and_replace_only_owned_command(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".claude" / "settings.json"
+            target.parent.mkdir(parents=True)
+            foreign = '{\n  "custom": "\\u2603",\n  "hooks": {\n    "Stop": [\n      {"matcher":"foreign", "hooks":[{"type":"command","command":"keep me"}]},\n      {"matcher":"", "hooks":[{"type":"command","command":"old # '
+            target.write_text(foreign + mod.REGISTRATION_OWNERSHIP_TAG + '"}]}]\n  }\n}\n', encoding="utf-8")
+            before = target.read_bytes()
+            first = self._run(home, home / "one host.json")
+            after = target.read_bytes()
+            second = self._run(home, home / "one host.json")
+            final = target.read_bytes()
+
+        self.assertEqual(first["status"], "updated")
+        self.assertEqual(second["status"], "unchanged")
+        self.assertEqual(final, after)
+        self.assertNotEqual(before, after)
+        self.assertIn(b'"custom": "\\u2603"', after)
+        self.assertIn(b'"command":"keep me"', after)
+        self.assertEqual(after.count(mod.REGISTRATION_OWNERSHIP_TAG.encode()), 1)
+
+    def test_duplicate_owned_groups_are_collapsed_and_profile_off_reports_hand_edit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".claude" / "settings.json"
+            target.parent.mkdir(parents=True)
+            duplicate = {
+                "hooks": {
+                    "Stop": [
+                        {"matcher": "foreign", "hooks": [{"type": "command", "command": "keep"}]},
+                        {"matcher": "", "hooks": [{"type": "command", "command": "edited " + mod.REGISTRATION_OWNERSHIP_TAG}]},
+                        {"matcher": "", "hooks": [{"type": "command", "command": "second " + mod.REGISTRATION_OWNERSHIP_TAG}]},
+                    ]
+                },
+                "other": 7,
+            }
+            target.write_text(json.dumps(duplicate, indent=2) + "\n", encoding="utf-8")
+            self._run(home, home / "host.json")
+            settings = json.loads(target.read_text(encoding="utf-8"))
+            settings["hooks"]["Stop"][-1]["hooks"][0]["command"] = (
+                "edited by operator " + mod.REGISTRATION_OWNERSHIP_TAG
+            )
+            target.write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                result = mod.deploy(["claude"], home=home, environ={}, comms_profile=False)
+            remaining = json.loads(target.read_text(encoding="utf-8"))
+
+        self.assertEqual(result["claude"]["registration"]["status"], "removed")
+        self.assertIn(mod.REGISTRATION_OWNERSHIP_TAG, output.getvalue())
+        self.assertIn("edited by operator", output.getvalue())
+        self.assertEqual(remaining["hooks"]["Stop"][0]["hooks"][0]["command"], "keep")
+        self.assertEqual(remaining["other"], 7)
+
+    def test_profile_off_without_owned_entry_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".claude" / "settings.json"
+            target.parent.mkdir(parents=True)
+            original = b'{"hooks":{"Stop":[{"matcher":"foreign","hooks":[]}]},"x":1}\n'
+            target.write_bytes(original)
+            adapter = mod.REGISTRATION_ADAPTERS["claude"]
+            first = mod.run_registration(
+                "claude", adapter, enabled=False, home=home, environ={}
+            )
+            second = mod.run_registration(
+                "claude", adapter, enabled=False, home=home, environ={}
+            )
+            final = target.read_bytes()
+
+        self.assertEqual(first["status"], "unchanged")
+        self.assertEqual(first["removed_content"], "")
+        self.assertEqual(second["status"], "unchanged")
+        self.assertEqual(final, original)
+
+    def test_invalid_settings_fail_closed_without_probe_or_write(self) -> None:
+        for content in (b"not json", b"[]", b'{"hooks": []}', b'{"hooks":{"Stop":{}}}', b'{"n":NaN}'):
+            with self.subTest(content=content), tempfile.TemporaryDirectory() as tmp:
+                home = Path(tmp)
+                target = home / ".claude" / "settings.json"
+                target.parent.mkdir(parents=True)
+                target.write_bytes(content)
+                result = self._run(home, home / "host.json")
+
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual(target.read_bytes(), content)
 
 
 if __name__ == "__main__":

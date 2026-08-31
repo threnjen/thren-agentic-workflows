@@ -49,6 +49,44 @@ To roll back, set `"comms_profile": false` in `.deploy-config.json` and run
 `python3 deploy_agents.py`. The deployment removes owned registrations and the contract
 section while preserving foreign content. It reports removed owned content for recovery.
 
+## Claude Code Registration
+
+When the communications profile is enabled, Claude receives one owned `Stop` hook in
+`settings.json` under the resolved Claude root:
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "crosswire-turn-hook --adapter claude --config PATH # <!-- crosswire-comms-registration -->",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+`CLAUDE_CONFIG_DIR` selects the Claude root. Without it, deployment uses `~/.claude`.
+The default Crosswire config path is `hook-config.json` under that root until a host
+configuration contract establishes a user-global path. Pass an explicit path to the
+registration lifecycle when embedding deployment.
+
+Deployment runs `crosswire-turn-hook --probe --config PATH` before it writes. Only
+the exact `CROSSWIRE_HOOK_PROBE_OK` line permits a write. The report identifies the
+target and returns `created`, `updated`, `unchanged`, `removed`, or `failed` status.
+
+With the profile disabled, deployment removes every `Stop` group carrying the exact
+ownership tag, including hand-edited commands. The verbose report includes the removed
+JSON group so an operator can recover edits. Foreign groups and unrelated settings stay
+untouched. Agents do not run propagation. A maintainer must run it after source changes.
+
 ## Using Named Agents in Codex
 
 After deploying the Codex harness, request the agent in the prompt:
