@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import shutil
@@ -428,6 +429,7 @@ def deploy_baseline(
     comms_enabled: bool = False,
 ) -> Dict[str, str]:
     """Splice the rendered baseline sections into the harness's global file."""
+    comms_enabled = _normalize_comms_profile(comms_enabled)
     home = Path(home).expanduser() if home else Path.home()
     environ = os.environ if environ is None else environ
 
@@ -483,10 +485,26 @@ def deploy_baseline(
 REGISTRATION_ADAPTERS: Dict[str, RegistrationAdapter] = {}
 
 
+def _normalize_comms_profile(value: object) -> bool:
+    return value if type(value) is bool else False
+
+
+def _has_symlink_component(path: Path) -> bool:
+    """Whether any existing component of a path is a symlink."""
+    current = path.absolute()
+    while True:
+        if current.is_symlink():
+            return True
+        parent = current.parent
+        if parent == current:
+            return False
+        current = parent
+
+
 def _safe_replace(path: Path, data: bytes) -> None:
     """Replace a registration file without truncating an existing target."""
-    if path.is_symlink():
-        raise OSError("target is a symlink")
+    if _has_symlink_component(path):
+        raise OSError("target path contains a symlink")
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     temporary = Path(temporary_name)
@@ -511,10 +529,20 @@ def probe_crosswire(
     timeout: float = PROBE_TIMEOUT_SECONDS,
 ) -> Dict[str, str]:
     """Run the explicit Crosswire probe and classify its exact stdout token."""
+    if isinstance(timeout, bool):
+        return {"status": "failed", "reason": "invalid-probe-timeout"}
+    try:
+        bounded_timeout = min(float(timeout), PROBE_TIMEOUT_SECONDS)
+    except (TypeError, ValueError):
+        return {"status": "failed", "reason": "invalid-probe-timeout"}
+    if not math.isfinite(bounded_timeout) or bounded_timeout <= 0:
+        return {"status": "failed", "reason": "invalid-probe-timeout"}
     command = ["crosswire-turn-hook", "--probe", "--config", str(config_path)]
     runner = subprocess.run if probe_runner is None else probe_runner
     try:
-        completed = runner(command, capture_output=True, text=True, timeout=timeout, check=False)
+        completed = runner(
+            command, capture_output=True, text=True, timeout=bounded_timeout, check=False
+        )
     except (FileNotFoundError, OSError):
         return {"status": "failed", "reason": "probe-launch-failed"}
     except (subprocess.TimeoutExpired, TimeoutError):
@@ -543,11 +571,11 @@ def run_registration(
     timeout: float = PROBE_TIMEOUT_SECONDS,
 ) -> Dict[str, object]:
     """Run one format adapter through the shared probe-first lifecycle."""
+    enabled = _normalize_comms_profile(enabled)
     try:
         root = harness_root(harness, home=home, environ=environ)
-        target = adapter.target_path(root)
-        explicit_config = config_path or adapter.config_path(root)
-    except (OSError, ValueError, TypeError):
+        target = Path(adapter.target_path(root))
+    except Exception:
         return {
             "harness": harness,
             "enabled": enabled,
@@ -557,17 +585,29 @@ def run_registration(
     result: Dict[str, object] = {
         "harness": harness,
         "target_path": str(target),
-        "config_path": str(explicit_config),
         "enabled": enabled,
     }
+    explicit_config: Path | None = None
+    if enabled or config_path is not None:
+        try:
+            explicit_config = Path(
+                config_path if config_path is not None else adapter.config_path(root)
+            )
+        except Exception:
+            result.update(status="failed", detail="invalid-registration-path")
+            return result
+        result["config_path"] = str(explicit_config)
     if enabled:
+        if explicit_config is None:
+            result.update(status="failed", detail="invalid-registration-path")
+            return result
         probe = probe_crosswire(explicit_config, probe_runner=probe_runner, timeout=timeout)
         result["probe"] = probe.get("token", probe.get("reason", "failed"))
         if probe["status"] != "ok":
             result.update(status="failed", detail=probe.get("reason", "probe-failed"))
             return result
 
-    if target.is_symlink():
+    if _has_symlink_component(target):
         result.update(status="failed", detail="target-is-symlink")
         return result
     existed = target.is_file()
@@ -728,6 +768,7 @@ def deploy(
     comms_profile: bool = False,
     registration_adapters: Mapping[str, RegistrationAdapter] | None = None,
 ) -> Dict[str, Dict[str, object]]:
+    comms_profile = _normalize_comms_profile(comms_profile)
     results: Dict[str, Dict[str, object]] = {}
     adapters = REGISTRATION_ADAPTERS if registration_adapters is None else registration_adapters
     for name in harnesses:
@@ -759,21 +800,24 @@ def _read_config_data(path: Path) -> Mapping[str, object]:
     return data if isinstance(data, dict) else {}
 
 
-def load_config(path: Path = CONFIG_PATH) -> List[str]:
-    data = _read_config_data(path)
+def _normalize_config_data(data: Mapping[str, object]) -> DeployConfig:
     selected = data.get("harnesses", [])
     if not isinstance(selected, list):
         selected = []
-    return [name for name in selected if name in HARNESSES]
+    harnesses = [name for name in selected if isinstance(name, str) and name in HARNESSES]
+    return DeployConfig(harnesses, _normalize_comms_profile(data.get(COMMS_PROFILE_KEY, False)))
+
+
+def load_config(path: Path = CONFIG_PATH) -> List[str]:
+    return _normalize_config_data(_read_config_data(path)).harnesses
 
 
 def load_comms_profile(path: Path = CONFIG_PATH) -> bool:
-    value = _read_config_data(path).get(COMMS_PROFILE_KEY, False)
-    return value if isinstance(value, bool) else False
+    return _normalize_config_data(_read_config_data(path)).comms_profile
 
 
 def load_config_state(path: Path = CONFIG_PATH) -> DeployConfig:
-    return DeployConfig(load_config(path), load_comms_profile(path))
+    return _normalize_config_data(_read_config_data(path))
 
 
 def save_config(
@@ -782,6 +826,7 @@ def save_config(
     *,
     comms_profile: bool = False,
 ) -> None:
+    comms_profile = _normalize_comms_profile(comms_profile)
     path.write_text(
         json.dumps({"harnesses": harnesses, COMMS_PROFILE_KEY: comms_profile}, indent=2) + "\n",
         encoding="utf-8",
@@ -828,15 +873,16 @@ def list_harnesses(selected: List[str]) -> None:
         print("\nNo saved selection (.deploy-config.json missing).")
 
 
-def watch(harnesses: List[str]) -> None:
+def watch(harnesses: List[str], *, comms_profile: bool = False) -> None:
+    comms_profile = _normalize_comms_profile(comms_profile)
     print(f"Starting ports deploy watcher for {{{','.join(harnesses)}}} ...")
-    deploy(harnesses)
+    deploy(harnesses, comms_profile=comms_profile)
 
     def _on_change(changes: List[str]) -> None:
         sample = ", ".join(Path(c).name for c in changes[:5])
         more = "" if len(changes) <= 5 else f" (+{len(changes) - 5} more)"
         print(f"Detected change in ports: {sample}{more}")
-        deploy(harnesses)
+        deploy(harnesses, comms_profile=comms_profile)
 
     poll_watch([PORTS_DIR / name for name in harnesses], _on_change)
 
@@ -886,7 +932,7 @@ def main() -> int:
         report_external_tools(ensure_external_tools(selected))
 
     if args.watch:
-        watch(selected)
+        watch(selected, comms_profile=comms_profile)
         return 0
 
     deploy(selected, comms_profile=comms_profile)

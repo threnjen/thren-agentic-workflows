@@ -271,6 +271,23 @@ class ConfigAndCliTests(unittest.TestCase):
             self.assertEqual(mod.load_config(config), ["claude", "opencode"])
             self.assertTrue(mod.load_comms_profile(config))
 
+    def test_load_config_state_reads_and_normalizes_one_document(self) -> None:
+        with mock.patch.object(
+            mod,
+            "_read_config_data",
+            return_value={"harnesses": ["claude"], "comms_profile": True},
+        ) as read:
+            state = mod.load_config_state(Path("unused.json"))
+        self.assertEqual(state, mod.DeployConfig(["claude"], True))
+        read.assert_called_once_with(Path("unused.json"))
+
+    def test_save_config_normalizes_invalid_profile_values_to_disabled(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp) / "config.json"
+            mod.save_config(["claude"], config, comms_profile="true")
+            saved = json.loads(config.read_text(encoding="utf-8"))
+        self.assertIs(saved[mod.COMMS_PROFILE_KEY], False)
+
     def test_config_round_trip_filters_unknown_harnesses(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             config = Path(tmp) / "config.json"
@@ -300,6 +317,46 @@ class ConfigAndCliTests(unittest.TestCase):
             with self.assertRaises(SystemExit) as raised:
                 mod.main()
             self.assertEqual(raised.exception.code, 2)
+
+    def test_main_passes_saved_profile_to_watch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp) / "config.json"
+            config.write_text(
+                json.dumps({"harnesses": ["claude"], "comms_profile": True}),
+                encoding="utf-8",
+            )
+            with mock.patch.object(mod, "CONFIG_PATH", config), \
+                    mock.patch.object(
+                        mod.sys, "argv", ["deploy_agents.py", "--watch", "--skip-tools"]
+                    ), \
+                    mock.patch.object(mod, "watch") as watch:
+                self.assertEqual(mod.main(), 0)
+        watch.assert_called_once_with(["claude"], comms_profile=True)
+
+
+class WatchTests(unittest.TestCase):
+    def test_watch_keeps_profile_for_initial_and_changed_deploys(self) -> None:
+        callbacks = []
+        deployments = []
+
+        def capture_poll(_directories, callback):
+            callbacks.append(callback)
+
+        def capture_deploy(harnesses, **kwargs):
+            deployments.append((harnesses, kwargs))
+
+        with mock.patch.object(mod, "deploy", side_effect=capture_deploy), \
+                mock.patch.object(mod, "poll_watch", side_effect=capture_poll):
+            mod.watch(["claude"], comms_profile=True)
+            callbacks[0](["changed.md"])
+
+        self.assertEqual(
+            deployments,
+            [
+                (["claude"], {"comms_profile": True}),
+                (["claude"], {"comms_profile": True}),
+            ],
+        )
 
 
 class EnsureCodeReviewGraphTests(unittest.TestCase):
@@ -488,20 +545,23 @@ class BaselineDeployTests(unittest.TestCase):
     def test_profile_off_preserves_foreign_bytes_for_each_user_global_baseline(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
-            for harness in ("claude", "codex", "opencode"):
-                destination = mod.baseline_destination(harness, home=home, environ={})
-                assert destination is not None
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                foreign = f"foreign {harness}\n\n"
-                destination.write_text(foreign, encoding="utf-8")
-                mod.deploy_baseline(harness, home=home, environ={}, comms_enabled=False)
-                before = destination.read_bytes()
-                mod.deploy_baseline(harness, home=home, environ={}, comms_enabled=True)
-                mod.deploy_baseline(harness, home=home, environ={}, comms_enabled=False)
-                after = destination.read_bytes()
-                with self.subTest(harness=harness):
-                    self.assertEqual(after, before)
-                    self.assertIn(foreign.encode(), after)
+            fake_repo = home / "repo"
+            fake_repo.mkdir()
+            with mock.patch.object(mod, "REPO_ROOT", fake_repo):
+                for harness in ("claude", "codex", "opencode", "cursor", "github"):
+                    destination = mod.baseline_destination(harness, home=home, environ={})
+                    assert destination is not None
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    foreign = f"foreign {harness}\n\n"
+                    destination.write_text(foreign, encoding="utf-8")
+                    mod.deploy_baseline(harness, home=home, environ={}, comms_enabled=False)
+                    before = destination.read_bytes()
+                    mod.deploy_baseline(harness, home=home, environ={}, comms_enabled=True)
+                    mod.deploy_baseline(harness, home=home, environ={}, comms_enabled=False)
+                    after = destination.read_bytes()
+                    with self.subTest(harness=harness):
+                        self.assertEqual(after, before)
+                        self.assertIn(foreign.encode(), after)
 
     def test_destinations_per_harness(self) -> None:
         home = Path("/home/fixture")
@@ -902,6 +962,77 @@ class RegistrationLifecycleTests(unittest.TestCase):
                     probe_runner=mock.Mock(side_effect=error),
                 )
                 self.assertEqual(result["status"], "failed")
+
+    def test_probe_timeout_is_capped_by_the_shared_bound(self) -> None:
+        runner = mock.Mock(
+            return_value=mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n")
+        )
+        result = mod.probe_crosswire(
+            Path("/tmp/explicit-config.json"),
+            probe_runner=runner,
+            timeout=mod.PROBE_TIMEOUT_SECONDS * 2,
+        )
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(runner.call_args.kwargs["timeout"], mod.PROBE_TIMEOUT_SECONDS)
+
+    def test_invalid_adapter_path_returns_bounded_failure(self) -> None:
+        adapter = mod.RegistrationAdapter(
+            target_path=lambda _base: object(),
+            config_path=lambda base: base / "hook-config.json",
+            upsert=lambda existing, _config: existing,
+            remove=lambda existing: (existing, ""),
+        )
+        result = mod.run_registration(
+            "claude", adapter, enabled=False, home=Path("/tmp"), environ={}
+        )
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["detail"], "invalid-registration-path")
+
+    def test_disabled_removal_does_not_require_config_path_resolution(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".claude" / "settings.json"
+            target.parent.mkdir(parents=True)
+            target.write_bytes((mod.REGISTRATION_OWNERSHIP_TAG + " owned\n").encode())
+
+            def forbidden_config_path(_base):
+                raise AssertionError("disabled removal should not resolve a probe config")
+
+            adapter = mod.RegistrationAdapter(
+                target_path=lambda base: base / "settings.json",
+                config_path=forbidden_config_path,
+                upsert=lambda existing, _config: existing,
+                remove=lambda _existing: (b"", "owned"),
+            )
+            result = mod.run_registration(
+                "claude", adapter, enabled=False, home=home, environ={}
+            )
+
+        self.assertEqual(result["status"], "removed")
+        self.assertEqual(result["removed_content"], "owned")
+
+    def test_symlinked_registration_parent_is_not_followed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            outside = root / "outside"
+            outside.mkdir()
+            home = root / "home"
+            home.mkdir()
+            (home / ".claude").symlink_to(outside, target_is_directory=True)
+            adapter = self._adapter(home / ".claude")
+            result = mod.run_registration(
+                "claude",
+                adapter,
+                enabled=True,
+                home=home,
+                environ={},
+                probe_runner=lambda *_args, **_kwargs: mock.Mock(
+                    returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n"
+                ),
+            )
+
+        self.assertEqual(result["status"], "failed")
+        self.assertFalse((outside / "settings.json").exists())
 
     def test_deploy_runs_registration_only_for_selected_harnesses(self) -> None:
         adapter = self._adapter(Path("/unused"))
