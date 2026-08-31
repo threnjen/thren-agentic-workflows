@@ -1224,6 +1224,241 @@ class ClaudeRegistrationTests(unittest.TestCase):
                 self.assertEqual(target.read_bytes(), content)
 
 
+class OpenCodeRegistrationTests(unittest.TestCase):
+    def _run(
+        self,
+        home: Path,
+        config_path: Path | None = None,
+        *,
+        response: object | None = None,
+        environ: dict[str, str] | None = None,
+        probe_runner: object | None = None,
+    ) -> dict[str, object]:
+        if probe_runner is None:
+            probe_runner = lambda *_args, **_kwargs: response or mock.Mock(
+                returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n"
+            )
+        kwargs: dict[str, object] = {
+            "enabled": True,
+            "home": home,
+            "environ": environ or {},
+            "probe_runner": probe_runner,
+        }
+        if config_path is not None:
+            kwargs["config_path"] = config_path
+        return mod.run_registration(
+            "opencode", mod.REGISTRATION_ADAPTERS["opencode"], **kwargs
+        )
+
+    def _target(self, home: Path, environ: dict[str, str] | None = None) -> Path:
+        root = Path((environ or {}).get("OPENCODE_CONFIG_DIR", home / ".config" / "opencode"))
+        return root / "plugins" / "crosswire-comms.ts"
+
+    def test_missing_plugin_directory_creates_one_owned_session_idle_plugin(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            config_path = home / "hook config.json"
+            result = self._run(home, config_path)
+            target = self._target(home)
+            content = target.read_text(encoding="utf-8")
+
+        self.assertEqual(result["status"], "created")
+        self.assertEqual(target.name, "crosswire-comms.ts")
+        self.assertEqual(target.parent.name, "plugins")
+        self.assertEqual(content.count(mod.REGISTRATION_OWNERSHIP_TAG), 1)
+        self.assertIn('event.type !== "session.idle"', content)
+        self.assertIn("event.properties.sessionID", content)
+        for value in (
+            "pluginInput",
+            "input.directory",
+            "input.worktree",
+            "input.project.id",
+            "input.project.worktree",
+        ):
+            self.assertIn(value, content)
+        self.assertIn("Bun.spawn", content)
+        for value in (
+            '"crosswire-turn-hook"',
+            '"--adapter"',
+            '"opencode"',
+            '"--config"',
+        ):
+            self.assertIn(value, content)
+        self.assertIn('stdin.write', content)
+        self.assertIn('process.stdin.end()', content)
+        self.assertIn(str(config_path), content)
+        self.assertNotIn("input.$", content)
+        self.assertNotIn("sh -c", content)
+
+    def test_opencode_root_override_and_probe_use_exact_config_argv(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            root = home / "open code config"
+            config_path = home / "host $config\\name.json"
+            runner = mock.Mock(
+                return_value=mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n")
+            )
+            result = self._run(
+                home,
+                config_path,
+                environ={"OPENCODE_CONFIG_DIR": str(root)},
+                probe_runner=runner,
+            )
+            target = self._target(home, {"OPENCODE_CONFIG_DIR": str(root)})
+            self.assertTrue(target.is_file())
+
+        self.assertEqual(result["target_path"], str(target))
+        self.assertEqual(
+            runner.call_args.args[0],
+            ["crosswire-turn-hook", "--probe", "--config", str(config_path)],
+        )
+        self.assertNotIn("shell", runner.call_args.kwargs)
+
+    def test_same_path_is_idempotent_and_changed_path_replaces_owned_plugin(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            first_path = home / "one host.json"
+            second_path = home / "two host.json"
+            self.assertEqual(self._run(home, first_path)["status"], "created")
+            target = self._target(home)
+            first = target.read_bytes()
+            self.assertEqual(self._run(home, first_path)["status"], "unchanged")
+            self.assertEqual(target.read_bytes(), first)
+            self.assertEqual(self._run(home, second_path)["status"], "updated")
+            changed = target.read_text(encoding="utf-8")
+
+        self.assertIn(str(second_path), changed)
+        self.assertNotIn(str(first_path), changed)
+        self.assertEqual(changed.count(mod.REGISTRATION_OWNERSHIP_TAG), 1)
+
+    def test_config_path_is_serialized_as_a_typescript_string_literal(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            config_path = home / 'quote " slash \\ dollar $ tick ` ${x}.json'
+            result = self._run(home, config_path)
+            target = self._target(home)
+            content = target.read_text(encoding="utf-8")
+
+        self.assertEqual(result["status"], "created")
+        self.assertIn(json.dumps(str(config_path), ensure_ascii=False), content)
+        self.assertNotIn('__CROSSWIRE_CONFIG_PATH__', content)
+
+    def test_unowned_target_fails_closed_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = self._target(home)
+            target.parent.mkdir(parents=True)
+            original = b"// operator plugin without ownership\n"
+            target.write_bytes(original)
+            result = self._run(home, home / "host.json")
+            final = target.read_bytes()
+
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["detail"], "adapter-failed")
+        self.assertEqual(final, original)
+
+    def test_foreign_plugins_remain_byte_identical_and_profile_off_reports_raw_edit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            plugins = home / ".config" / "opencode" / "plugins"
+            plugins.mkdir(parents=True)
+            foreign = plugins / "foreign.ts"
+            foreign_bytes = b"// foreign\\xff plugin\n"
+            foreign.write_bytes(foreign_bytes)
+            self._run(home, home / "host.json")
+            target = self._target(home)
+            edited = b"// operator edit\n" + target.read_bytes()
+            target.write_bytes(edited)
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                result = mod.deploy(["opencode"], home=home, environ={}, comms_profile=False)
+            remaining_foreign = foreign.read_bytes()
+            target_exists = target.exists()
+
+        self.assertEqual(result["opencode"]["registration"]["status"], "removed")
+        self.assertIn("operator edit", output.getvalue())
+        self.assertFalse(target_exists)
+        self.assertEqual(remaining_foreign, foreign_bytes)
+
+    def test_probe_failures_and_empty_target_leave_plugin_unchanged(self) -> None:
+        responses: tuple[object, ...] = (
+            mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_FAILED\n"),
+            mock.Mock(returncode=0, stdout="unexpected\n"),
+            mock.Mock(returncode=1, stdout="CROSSWIRE_HOOK_PROBE_OK\n"),
+            subprocess.TimeoutExpired("crosswire-turn-hook", 10),
+            FileNotFoundError("crosswire-turn-hook"),
+        )
+        for response in responses:
+            with self.subTest(response=type(response).__name__), tempfile.TemporaryDirectory() as tmp:
+                home = Path(tmp)
+                target = self._target(home)
+                target.parent.mkdir(parents=True)
+                original = b"foreign plugin\n"
+                target.write_bytes(original)
+                runner = mock.Mock(side_effect=response) if isinstance(response, BaseException) else mock.Mock(return_value=response)
+                result = self._run(
+                    home,
+                    home / "host.json",
+                    response=None if isinstance(response, BaseException) else response,
+                    probe_runner=runner,
+                )
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual(target.read_bytes(), original)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = self._target(home)
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"")
+            runner = mock.Mock(return_value=mock.Mock(returncode=0, stdout="CROSSWIRE_HOOK_PROBE_OK\n"))
+            result = mod.run_registration(
+                "opencode",
+                mod.REGISTRATION_ADAPTERS["opencode"],
+                enabled=True,
+                home=home,
+                environ={},
+                probe_runner=runner,
+            )
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["detail"], "target-empty")
+
+    def test_profile_off_preserves_unowned_target_and_absent_target_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = self._target(home)
+            target.parent.mkdir(parents=True)
+            original = b"// no ownership marker\n"
+            target.write_bytes(original)
+            first = mod.run_registration(
+                "opencode", mod.REGISTRATION_ADAPTERS["opencode"], enabled=False, home=home, environ={}
+            )
+            self.assertEqual(first["status"], "unchanged")
+            self.assertEqual(target.read_bytes(), original)
+            target.unlink()
+            second = mod.run_registration(
+                "opencode", mod.REGISTRATION_ADAPTERS["opencode"], enabled=False, home=home, environ={}
+            )
+
+        self.assertEqual(second["status"], "unchanged")
+        self.assertEqual(second["removed_content"], "")
+
+    def test_symlinked_plugin_parent_is_rejected_without_writing_outside_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / "home"
+            outside = root / "outside"
+            home.mkdir()
+            outside.mkdir()
+            opencode_root = home / ".config" / "opencode"
+            opencode_root.mkdir(parents=True)
+            (opencode_root / "plugins").symlink_to(outside, target_is_directory=True)
+            result = self._run(home, home / "host.json")
+            outside_files = list(outside.iterdir())
+
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["detail"], "target-is-symlink")
+        self.assertEqual(outside_files, [])
+
+
 class CodexRegistrationTests(unittest.TestCase):
     def _run(
         self,

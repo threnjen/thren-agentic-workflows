@@ -51,6 +51,9 @@ REGISTRATION_OWNERSHIP_TAG = "<!-- crosswire-comms-registration -->"
 PROBE_SUCCESS_TOKEN = "CROSSWIRE_HOOK_PROBE_OK"
 PROBE_FAILURE_TOKEN = "CROSSWIRE_HOOK_PROBE_FAILED"
 PROBE_TIMEOUT_SECONDS = 10
+OPENCODE_PLUGIN_BASENAME = "crosswire-comms.ts"
+OPENCODE_PLUGIN_SOURCE = REPO_ROOT / "source_of_truth" / "plugins" / OPENCODE_PLUGIN_BASENAME
+OPENCODE_CONFIG_PLACEHOLDER = "__CROSSWIRE_CONFIG_PATH__"
 
 
 @dataclass(frozen=True)
@@ -69,6 +72,7 @@ class RegistrationAdapter:
     config_path: Callable[[Path], Path]
     upsert: Callable[[bytes, Path], bytes]
     remove: Callable[[bytes], Tuple[bytes, str]]
+    delete_on_remove: bool = False
 
 # `code-review-graph install --platform` vocabulary, keyed by our harness name.
 # Only the harnesses this repo ports to get configured; the tool's other
@@ -1026,6 +1030,35 @@ def _codex_config_path(root: Path) -> Path:
     return root / "hook-config.json"
 
 
+def _opencode_target_path(root: Path) -> Path:
+    return root / "plugins" / OPENCODE_PLUGIN_BASENAME
+
+
+def _opencode_config_path(root: Path) -> Path:
+    # [PROPOSED - name TBD] Match the other harnesses' portable default.
+    return root / "hook-config.json"
+
+
+def _opencode_upsert(existing: bytes, config_path: Path) -> bytes:
+    if existing and REGISTRATION_OWNERSHIP_TAG.encode("utf-8") not in existing:
+        raise ValueError("OpenCode target is not owned")
+    try:
+        source = OPENCODE_PLUGIN_SOURCE.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ValueError(f"cannot read OpenCode plugin source: {exc}") from exc
+    placeholder = f'"{OPENCODE_CONFIG_PLACEHOLDER}"'
+    if source.count(placeholder) != 1:
+        raise ValueError("OpenCode plugin source has an invalid config placeholder")
+    escaped_path = json.dumps(str(config_path), ensure_ascii=True)
+    return source.replace(placeholder, escaped_path).encode("utf-8")
+
+
+def _opencode_remove(existing: bytes) -> Tuple[bytes, str]:
+    if REGISTRATION_OWNERSHIP_TAG.encode("utf-8") not in existing:
+        return existing, ""
+    return b"", existing.decode("utf-8")
+
+
 REGISTRATION_ADAPTERS: Dict[str, RegistrationAdapter] = {
     "claude": RegistrationAdapter(
         target_path=_claude_target_path,
@@ -1038,6 +1071,13 @@ REGISTRATION_ADAPTERS: Dict[str, RegistrationAdapter] = {
         config_path=_codex_config_path,
         upsert=_codex_upsert,
         remove=_codex_remove,
+    ),
+    "opencode": RegistrationAdapter(
+        target_path=_opencode_target_path,
+        config_path=_opencode_config_path,
+        upsert=_opencode_upsert,
+        remove=_opencode_remove,
+        delete_on_remove=True,
     ),
 }
 
@@ -1194,7 +1234,10 @@ def run_registration(
             result["removed_content"] = removed
         return result
     try:
-        _safe_replace(target, updated)
+        if not enabled and adapter.delete_on_remove and not updated:
+            target.unlink()
+        else:
+            _safe_replace(target, updated)
     except OSError:
         result.update(status="failed", detail="target-write-failed")
         return result

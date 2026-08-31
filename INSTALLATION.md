@@ -112,6 +112,31 @@ report prints every removed owned line, including hand-edited content, for recov
 Foreign TOML remains unchanged. Agents do not run propagation. A maintainer must run it
 after source changes.
 
+## OpenCode Registration
+
+When the communications profile is enabled, deployment writes one owned TypeScript plugin
+to `plugins/crosswire-comms.ts` below the resolved OpenCode root:
+
+```text
+~/.config/opencode/plugins/crosswire-comms.ts
+```
+
+`OPENCODE_CONFIG_DIR` selects the OpenCode root. Without it, deployment uses
+`~/.config/opencode`. The plugin handles `session.idle`, preserves the session and project
+context, and invokes `crosswire-turn-hook --adapter opencode --config PATH` with an argument
+vector and JSON on standard input. The configuration path is serialized as a TypeScript
+string literal, so shell characters remain data.
+
+Before an enabled write, deployment runs the shared probe and accepts only the exact
+`CROSSWIRE_HOOK_PROBE_OK` line. Failure output, unexpected output, timeout, launch failure,
+invalid paths, symlinked paths, or an unowned target leave the target unchanged. Foreign
+plugin files remain byte-identical.
+
+To roll back OpenCode registration, set `"comms_profile": false` and deploy again. The
+deployment removes only `crosswire-comms.ts` when it carries the exact
+`<!-- crosswire-comms-registration -->` marker, and prints the raw removed content for
+recovery. Agents do not run propagation. A maintainer must run it after source changes.
+
 ## Using Named Agents in Codex
 
 After deploying the Codex harness, request the agent in the prompt:
