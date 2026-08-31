@@ -541,6 +541,49 @@ class BaselineDeployTests(unittest.TestCase):
         )
         self.assertIn("Load Canary", source, "canary removed from the source file, not just the render")
 
+    def test_contract_is_a_registered_baseline_section(self) -> None:
+        self.assertIn("comms-protocol", mod.baseline_section_names())
+        self.assertEqual(len(mod.baseline_section_names()), 12)
+        body = mod._instruction_body("comms-protocol")
+        self.assertTrue(body.startswith("## AGENT-RESULT contract"), body[:80])
+        self.assertNotIn(mod.GENERATED_AGENT_MARKDOWN_HEADER, body)
+        self.assertNotIn("Load Canary", body)
+
+    def test_quoted_generated_marker_is_not_removed_from_instruction_body(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "quoted.instructions.md"
+            path.write_text(
+                "---\nbaseline: true\n---\n\n"
+                "# Quoted marker\n\n"
+                f"A body example quotes {mod.GENERATED_AGENT_MARKDOWN_HEADER}.\n",
+                encoding="utf-8",
+            )
+            with mock.patch.object(mod, "BASELINE_INSTRUCTIONS_DIR", Path(tmp)):
+                body = mod._instruction_body("quoted")
+        self.assertIn(mod.GENERATED_AGENT_MARKDOWN_HEADER, body)
+
+    def test_existing_baseline_sections_keep_independent_render_bytes(self) -> None:
+        expected_sha256 = {
+            "agent-discovery": "639e204062080d795de3e1c85b290394c4a628ea35c87c4eda4a4987b75ccdfc",
+            "challenge-assumptions": "55d2a3aaced22ea3c7508ba4dcefd3c562005b0fcb9228715d9eb55f560b8e76",
+            "code-change-strategy": "4a48fe5b063d3ed234067473042b10546a0b33bc2c78311b1ca1d111670b8f88",
+            "code-review-graph": "c9df3c999e7dd12ecaa3dd666c17f97e291808c22abb1adf9df2cf6bb65b5e1c",
+            "codebase-context-bootstrap": "db969d68bc2563af88afdca5b206c30ca1410f8faf024edbdfdb83bb6e84ccc6",
+            "language-standards": "e68e8ae7eb868235a1f90ff7fd8b6a532f3a4e297c35eb404cc66dd79c5cc599",
+            "learnings-bootstrap": "81d5621047c4baa599709ddfc72cbb95c2b7fd05d3fa046ce4df5543236207fc",
+            "output-verbosity-policy": "00a4a46eee283a8c15f96e321502479b5f2954f3793b4f6d95dd71e3cef70b7a",
+            "proactive-research": "981a8af41e6b5aa162563e1d5676ef1682b7eaab42aa28c27420d2c773010c55",
+            "prose-standards": "40440969ad9ed3b77b9296ac3a955556deac45dedb028694196f67e646f87e9b",
+            "question-hygiene": "739d6b2de393d7ea836d455450c64749160e92ae56b1f4100fec756ab55281eb",
+        }
+        import hashlib
+
+        self.assertEqual(set(expected_sha256), set(mod.baseline_section_names()) - {"comms-protocol"})
+        for name, expected in expected_sha256.items():
+            with self.subTest(name=name):
+                actual = hashlib.sha256(mod._instruction_body(name).encode()).hexdigest()
+                self.assertEqual(actual, expected)
+
     def test_listed_name_without_an_instruction_file_fails_the_deploy(self) -> None:
         """A missing instruction must fail loudly, not deploy a partial baseline."""
         with tempfile.TemporaryDirectory() as tmp:
