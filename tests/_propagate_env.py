@@ -17,6 +17,18 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 import propagate_master_assets as mod  # noqa: E402
 
 
+def _crosswire_contract_source() -> Path:
+    """Return the read-only Crosswire artifact used by isolated propagations."""
+    return (
+        REPO_ROOT.parent
+        / "crosswire"
+        / "src"
+        / "crosswire"
+        / "protocol"
+        / "comms-protocol.instructions.md"
+    )
+
+
 def repo_dir_overrides(root: Path) -> dict:
     """Every directory global the propagator reads, rebased onto `root`.
 
@@ -31,10 +43,20 @@ def use(testcase, root: Path) -> None:
     patcher = mock.patch.multiple(mod, **repo_dir_overrides(root))
     patcher.start()
     testcase.addCleanup(patcher.stop)
+    authority_patcher = mock.patch.object(
+        mod, "crosswire_contract_source_path", return_value=_crosswire_contract_source()
+    )
+    authority_patcher.start()
+    testcase.addCleanup(authority_patcher.stop)
 
 
 @contextlib.contextmanager
 def redirect(root: Path):
     """Context-manager form of `use`, for plain (non-``unittest``) test functions."""
-    with mock.patch.multiple(mod, **repo_dir_overrides(root)):
+    with (
+        mock.patch.multiple(mod, **repo_dir_overrides(root)),
+        mock.patch.object(
+            mod, "crosswire_contract_source_path", return_value=_crosswire_contract_source()
+        ),
+    ):
         yield

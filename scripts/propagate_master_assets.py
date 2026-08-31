@@ -74,6 +74,7 @@ def directory_overrides(root: Union[str, Path]) -> Dict[str, object]:
     ports = root / "ports"
     return {
         "REPO_ROOT": root,
+        "workflows_repo_root": root,
         "SOT_DIR": sot,
         "PORTS_DIR": ports,
         "SOT_AGENTS_DIR": sot / "agents",

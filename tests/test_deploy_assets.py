@@ -541,6 +541,24 @@ class BaselineDeployTests(unittest.TestCase):
         )
         self.assertIn("Load Canary", source, "canary removed from the source file, not just the render")
 
+    def test_contract_source_retains_generated_shape(self) -> None:
+        """The vendored contract keeps the authority's shape before rendering."""
+        path = mod.BASELINE_INSTRUCTIONS_DIR / "comms-protocol.instructions.md"
+        text = path.read_text(encoding="utf-8")
+        self.assertTrue(text.startswith("---\n"))
+        end = text.find("\n---\n", 3)
+        self.assertGreaterEqual(end, 0, "contract frontmatter is not closed")
+        frontmatter = text[:end]
+        self.assertIn("description:", frontmatter)
+        self.assertIn("baseline: true", frontmatter)
+        body = text[end + len("\n---\n") :]
+        lines = body.splitlines()
+        self.assertGreaterEqual(len(lines), 4)
+        self.assertEqual(lines[0], mod.GENERATED_AGENT_MARKDOWN_HEADER)
+        self.assertEqual(lines[1], "# AGENT-RESULT contract")
+        self.assertIn("Contract version: 1", lines)
+        self.assertNotIn("Load Canary", body)
+
     def test_contract_is_a_registered_baseline_section(self) -> None:
         self.assertIn("comms-protocol", mod.baseline_section_names())
         self.assertEqual(len(mod.baseline_section_names()), 12)

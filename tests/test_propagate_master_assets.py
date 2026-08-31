@@ -1,5 +1,6 @@
 import fnmatch
 import hashlib
+import io
 import json
 import re
 import os
@@ -8,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
 from unittest import mock
 from pathlib import Path
 
@@ -394,12 +396,10 @@ class ContractDriftTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
             vendor, _ = self._stage_contract(repo_root)
-            vendor.write_text(
-                vendor.read_text(encoding="utf-8").replace(
-                    "Contract version: 1", "Contract version: 2"
-                ),
-                encoding="utf-8",
-            )
+            original = vendor.read_text(encoding="utf-8")
+            mutated = original.replace("Contract version: 1", "Contract version: 2")
+            self.assertNotEqual(mutated, original)
+            vendor.write_text(mutated, encoding="utf-8")
             with self.assertRaisesRegex(mod.ContractDriftError, r"version 2.*version 1"):
                 mod.propagate_once(verbose=False)
             self.assertFalse((repo_root / "ports").exists())
@@ -408,15 +408,36 @@ class ContractDriftTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
             vendor, _ = self._stage_contract(repo_root)
-            vendor.write_text(
-                vendor.read_text(encoding="utf-8").replace(
-                    "End each turn with exactly one block using these delimiters:",
-                    "End each turn with exactly two blocks using these delimiters:",
-                ),
-                encoding="utf-8",
+            original = vendor.read_text(encoding="utf-8")
+            mutated = original.replace(
+                "End each turn with exactly one block using these delimiters:",
+                "End each turn with exactly two blocks using these delimiters:",
             )
+            self.assertNotEqual(mutated, original)
+            vendor.write_text(mutated, encoding="utf-8")
             with self.assertRaisesRegex(mod.ContractDriftError, "body drift"):
                 mod.propagate_once(verbose=False)
+            self.assertFalse((repo_root / "ports").exists())
+
+    def test_cli_reports_contract_drift_with_nonzero_result(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            repo_root = Path(tmp_dir)
+            vendor, _ = self._stage_contract(repo_root)
+            original = vendor.read_text(encoding="utf-8")
+            mutated = original.replace("Contract version: 1", "Contract version: 2")
+            self.assertNotEqual(mutated, original)
+            vendor.write_text(mutated, encoding="utf-8")
+            stderr = io.StringIO()
+            with (
+                mock.patch.object(
+                    sys, "argv", ["propagate", "--once", "--target", str(repo_root)]
+                ),
+                redirect_stderr(stderr),
+            ):
+                result = mod.main()
+
+            self.assertEqual(result, 1)
+            self.assertRegex(stderr.getvalue(), r"version 2.*version 1")
             self.assertFalse((repo_root / "ports").exists())
 
     def test_missing_duplicate_and_malformed_authoritative_sources_fail_closed(self) -> None:
@@ -1823,9 +1844,55 @@ class RetargetTests(unittest.TestCase):
     def test_retarget_rebinds_every_directory_global(self) -> None:
         with mod.retarget(Path("/tmp/example-root")) as root:
             self.assertEqual(mod.REPO_ROOT, root)
+            self.assertEqual(mod.workflows_repo_root, root)
+            self.assertEqual(
+                mod.crosswire_contract_source_path(),
+                root.parent / mod.crosswire_contract_relative_path,
+            )
             self.assertEqual(mod.SOT_AGENTS_DIR, root / "source_of_truth" / "agents")
             self.assertEqual(mod.CLAUDE_AGENTS_DIR, root / "ports" / "claude" / "agents")
             self.assertEqual(mod.DOT_GITHUB_DIR, root / ".github")
+
+    def test_target_uses_its_own_crosswire_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            workspace = Path(tmp_dir)
+            target = workspace / "workflows"
+            target.mkdir()
+            shutil.copytree(mod.SOT_DIR, target / "source_of_truth")
+
+            authority = (
+                workspace
+                / "crosswire"
+                / "src"
+                / "crosswire"
+                / "protocol"
+                / "comms-protocol.instructions.md"
+            )
+            authority.parent.mkdir(parents=True)
+            source = (
+                REPO_ROOT.parent
+                / "crosswire"
+                / "src"
+                / "crosswire"
+                / "protocol"
+                / "comms-protocol.instructions.md"
+            )
+            shutil.copy2(source, authority)
+            authority.write_text(
+                authority.read_text(encoding="utf-8").replace(
+                    "End each turn with exactly one block using these delimiters:",
+                    "End each turn with exactly two blocks using these delimiters:",
+                ),
+                encoding="utf-8",
+            )
+
+            with mock.patch.object(
+                sys, "argv", ["propagate", "--once", "--target", str(target)]
+            ):
+                result = mod.main()
+
+            self.assertEqual(result, 1)
+            self.assertFalse((target / "ports").exists())
 
     def test_retarget_restores_real_roots_even_when_the_body_raises(self) -> None:
         """A leaked root would silently aim the next run at the temp tree."""
@@ -1847,6 +1914,24 @@ class RetargetTests(unittest.TestCase):
             target = Path(tmp) / "elsewhere"
             target.mkdir()
             shutil.copytree(mod.SOT_DIR, target / "source_of_truth")
+            authority = (
+                Path(tmp)
+                / "crosswire"
+                / "src"
+                / "crosswire"
+                / "protocol"
+                / "comms-protocol.instructions.md"
+            )
+            authority.parent.mkdir(parents=True)
+            shutil.copy2(
+                REPO_ROOT.parent
+                / "crosswire"
+                / "src"
+                / "crosswire"
+                / "protocol"
+                / "comms-protocol.instructions.md",
+                authority,
+            )
 
             with mock.patch.object(
                 sys, "argv", ["propagate", "--once", "--target", str(target)]
