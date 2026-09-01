@@ -128,6 +128,29 @@ Registration targets resolve from `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, and
 run propagation. A maintainer must run `python3 scripts/propagate_master_assets.py --once`
 after source changes.
 
+## Feature 07 Live Evidence and Rollback
+
+- The enabled `comms_profile` writes the Claude `Stop` registration to `settings.json`, the Codex
+  top-level `notify` registration to `config.toml`, and the OpenCode plugin to exactly
+  `plugins/crosswire-comms.ts` below each resolved harness root.
+- Each enabled registration requires the explicit command
+  `crosswire-turn-hook --probe --config PATH` and the exact stdout token
+  `CROSSWIRE_HOOK_PROBE_OK` with exit code zero. The generated hook configuration uses the shared
+  board, a valid `HostConfig` shape, a ten-second watcher lease, and actual enforced board session
+  IDs before correction evidence.
+- A live turn and correction run must retain a bounded audit envelope, use its
+  `unstructured_count` for compliance, and preserve redacted row and delivery metadata. Do not
+  include agent bodies, credentials, or hook configuration contents in Markdown evidence.
+- Feature 07's real-root snapshot is explicitly post-deployment and cannot prove AC7. A controlled
+  disposable-root cycle did capture an independent profile-off snapshot, prove enabled registration
+  creation, remove all owned registrations, and restore every affected file byte-for-byte.
+- Rollback is `comms_profile: false` followed by `python3 deploy_agents.py`. The removal report is
+  the recovery record for owned Claude groups, the Codex line, and the OpenCode plugin. Agents do
+  not run propagation. A maintainer runs `python3 scripts/propagate_master_assets.py --once`
+  after source changes.
+- Linux final evidence does not imply Mac parity. Mac hermetic and live-parity runs remain
+  independent carry-forward work.
+
 ## Important Script Facts
 
 - Both scripts are stdlib-only and share `scripts/asset_paths.py`.

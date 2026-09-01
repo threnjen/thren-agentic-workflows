@@ -137,6 +137,48 @@ deployment removes only `crosswire-comms.ts` when it carries the exact
 `<!-- crosswire-comms-registration -->` marker, and prints the raw removed content for
 recovery. Agents do not run propagation. A maintainer must run it after source changes.
 
+## Crosswire Live Verification and Rollback Evidence
+
+Feature 07 verified the enabled profile against these user-global files and configuration paths:
+
+| Harness | Baseline | Registration | Hook configuration |
+|---|---|---|---|
+| Claude | `$CLAUDE_CONFIG_DIR/CLAUDE.md` or `~/.claude/CLAUDE.md` | `settings.json` | `hook-config.json` below the resolved root |
+| Codex | `$CODEX_HOME/AGENTS.md` or `~/.codex/AGENTS.md` | `config.toml` | `hook-config.json` below the resolved root |
+| OpenCode | `$OPENCODE_CONFIG_DIR/AGENTS.md` or `~/.config/opencode/AGENTS.md` | `plugins/crosswire-comms.ts` | `hook-config.json` below the resolved root |
+
+Before enabling the profile, place a valid host configuration at each resolved `hook-config.json`
+path. Use the shared board identity and record only paths and redacted validation results. Run the
+exact probe for each path:
+
+```bash
+crosswire-turn-hook --probe --config PATH
+```
+
+Accept only exit code zero with exactly `CROSSWIRE_HOOK_PROBE_OK`. A successful deployment then
+reports the target path, probe token, and registration status. The OpenCode target is exactly
+`plugins/crosswire-comms.ts`, and ownership requires the standalone
+`// <!-- crosswire-comms-registration -->` line.
+
+Keep the Phase 01 watcher in the authorized login tmux session while measuring turns and
+corrections. Query bounded rows with `python -m crosswire.cli --repository REPOSITORY
+--store-root STORE_ROOT audit --view turn-results --json --created-after ISO
+--created-before ISO`. Derive compliance from that envelope's
+`unstructured_count` and sample size. Do not count skipped or out-of-window turns.
+
+For rollback, set `"comms_profile": false` and run `python3 deploy_agents.py`. The report retains
+removed Claude groups, the Codex line, and OpenCode target content. Compare raw bytes, SHA-256
+hashes, existence, and newline state with the pre-phase snapshot before deleting any evidence.
+Feature 07 proved this byte-identity procedure in a controlled disposable-root cycle. The real
+machine snapshot was captured after an earlier deployment and does not prove independent pre-phase
+bytes. Do not claim real-root rollback identity without an operator backup or a new controlled
+disposable-root comparison.
+
+After source changes, a maintainer must run
+`python3 scripts/propagate_master_assets.py --once` before deployment. Agents do not run
+propagation. Preserve the audit envelope, snapshot manifest, removal report, and live evidence
+until review accepts them.
+
 ## Using Named Agents in Codex
 
 After deploying the Codex harness, request the agent in the prompt:
