@@ -664,7 +664,9 @@ def _owned_command_span(
             continue
         command_start, command_end = command_member
         command, _ = _CLAUDE_JSON_DECODER.raw_decode(text, command_start)
-        if isinstance(command, str) and REGISTRATION_OWNERSHIP_TAG in command:
+        if isinstance(command, str) and command.endswith(
+            f"# {REGISTRATION_OWNERSHIP_TAG}"
+        ):
             return command_start, command_end, command
     return None
 
@@ -1543,7 +1545,11 @@ def main() -> int:
         watch(selected, comms_profile=comms_profile)
         return 0
 
-    deploy(selected, comms_profile=comms_profile)
+    results = deploy(selected, comms_profile=comms_profile)
+    for result in results.values():
+        registration = result.get("registration")
+        if isinstance(registration, Mapping) and registration.get("status") == "failed":
+            return 1
     return 0
 
 

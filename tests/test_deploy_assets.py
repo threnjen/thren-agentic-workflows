@@ -337,6 +337,32 @@ class ConfigAndCliTests(unittest.TestCase):
                 self.assertEqual(mod.main(), 0)
         watch.assert_called_once_with(["claude"], comms_profile=True)
 
+    def test_main_fails_when_enabled_registration_fails_after_baseline_write(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            config = home / "config.json"
+            config.write_text(
+                json.dumps({"harnesses": ["claude"], "comms_profile": True}),
+                encoding="utf-8",
+            )
+            with mock.patch.object(mod, "CONFIG_PATH", config), \
+                    mock.patch.object(
+                        mod.sys, "argv",
+                        ["deploy_agents.py", "--harness", "claude", "--no-save", "--skip-tools"],
+                    ), \
+                    mock.patch.dict(
+                        mod.os.environ, {"CLAUDE_CONFIG_DIR": str(home / ".claude")}, clear=False
+                    ), \
+                    mock.patch.object(
+                        mod, "probe_crosswire",
+                        return_value={"status": "failed", "reason": "probe-reported-failure"},
+                    ):
+                status = mod.main()
+
+            self.assertEqual(status, 1)
+            self.assertTrue((home / ".claude" / "CLAUDE.md").is_file())
+            self.assertFalse((home / ".claude" / "settings.json").exists())
+
 
 class WatchTests(unittest.TestCase):
     def test_watch_keeps_profile_for_initial_and_changed_deploys(self) -> None:
@@ -1150,6 +1176,44 @@ class ClaudeRegistrationTests(unittest.TestCase):
         self.assertNotIn(shlex.quote(str(home / "one host.json")).encode(), changed_final)
         self.assertEqual(changed_final.count(mod.REGISTRATION_OWNERSHIP_TAG.encode()), 1)
 
+    def test_marker_substring_in_foreign_command_is_not_owned(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            target = home / ".claude" / "settings.json"
+            target.parent.mkdir(parents=True)
+            settings = {
+                "hooks": {
+                    "Stop": [
+                        {
+                            "matcher": "",
+                            "hooks": [
+                                {
+                                    "type": "command",
+                                    "command": (
+                                        "echo foreign " + mod.REGISTRATION_OWNERSHIP_TAG
+                                    ),
+                                }
+                            ],
+                        }
+                    ]
+                }
+            }
+            target.write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
+            original = target.read_bytes()
+
+            result = mod.run_registration(
+                "claude",
+                mod.REGISTRATION_ADAPTERS["claude"],
+                enabled=False,
+                home=home,
+                environ={},
+            )
+            final = target.read_bytes()
+
+        self.assertEqual(result["status"], "unchanged")
+        self.assertEqual(result["removed_content"], "")
+        self.assertEqual(final, original)
+
     def test_duplicate_owned_groups_are_collapsed_and_profile_off_reports_hand_edit(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
@@ -1159,8 +1223,8 @@ class ClaudeRegistrationTests(unittest.TestCase):
                 "hooks": {
                     "Stop": [
                         {"matcher": "foreign", "hooks": [{"type": "command", "command": "keep"}]},
-                        {"matcher": "", "hooks": [{"type": "command", "command": "edited " + mod.REGISTRATION_OWNERSHIP_TAG}]},
-                        {"matcher": "", "hooks": [{"type": "command", "command": "second " + mod.REGISTRATION_OWNERSHIP_TAG}]},
+                        {"matcher": "", "hooks": [{"type": "command", "command": "edited # " + mod.REGISTRATION_OWNERSHIP_TAG}]},
+                        {"matcher": "", "hooks": [{"type": "command", "command": "second # " + mod.REGISTRATION_OWNERSHIP_TAG}]},
                     ]
                 },
                 "other": 7,
@@ -1169,7 +1233,7 @@ class ClaudeRegistrationTests(unittest.TestCase):
             self._run(home, home / "host.json")
             settings = json.loads(target.read_text(encoding="utf-8"))
             settings["hooks"]["Stop"][-1]["hooks"][0]["command"] = (
-                "edited by operator " + mod.REGISTRATION_OWNERSHIP_TAG
+                "edited by operator # " + mod.REGISTRATION_OWNERSHIP_TAG
             )
             target.write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
             with contextlib.redirect_stdout(io.StringIO()) as output:

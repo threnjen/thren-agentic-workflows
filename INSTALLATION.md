@@ -43,7 +43,9 @@ between matching sentinels. Everything else in the file remains yours.
 With communications enabled, selected harnesses run the explicit
 `crosswire-turn-hook --probe --config PATH` check before a registration writer mutates
 its configuration. Only the exact `CROSSWIRE_HOOK_PROBE_OK` output permits a write.
-The deployment report includes each target path and lifecycle status.
+The deployment report includes each target path and lifecycle status. An enabled
+registration failure returns status 1 after reporting any baseline that was already
+written, while the failed registration itself remains unchanged.
 
 To roll back, set `"comms_profile": false` in `.deploy-config.json` and run
 `python3 deploy_agents.py`. The deployment removes owned registrations and the contract
@@ -83,9 +85,11 @@ the exact `CROSSWIRE_HOOK_PROBE_OK` line permits a write. The report identifies 
 target and returns `created`, `updated`, `unchanged`, `removed`, or `failed` status.
 
 With the profile disabled, deployment removes every `Stop` group carrying the exact
-ownership tag, including hand-edited commands. The verbose report includes the removed
-JSON group so an operator can recover edits. Foreign groups and unrelated settings stay
-untouched. Agents do not run propagation. A maintainer must run it after source changes.
+trailing `# <!-- crosswire-comms-registration -->` ownership form, including hand-edited
+commands that retain that form. Marker text embedded in a foreign command is not ownership.
+The verbose report includes the removed JSON group so an operator can recover edits.
+Foreign groups and unrelated settings stay untouched. Agents do not run propagation.
+A maintainer must run it after source changes.
 
 ## Codex Registration
 
