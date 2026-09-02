@@ -148,6 +148,16 @@ after source changes.
   the recovery record for owned Claude groups, the Codex line, and the OpenCode plugin. Agents do
   not run propagation. A maintainer runs `python3 scripts/propagate_master_assets.py --once`
   after source changes.
+- The selected Phase 03C rollback contract accepts this controlled disposable-root comparison only.
+  It requires all six destinations to restore byte-for-byte, foreign content to survive, owned
+  content to be removed and reported, and recovery material to remain available. It does not prove
+  historical bytes in real user-global roots. The existing bounded atomic replacement failure test
+  proves that prior valid output remains available when replacement fails. The genuine-backup route
+  is not selected.
+- The profile-off baseline has eleven technical sections. An enabled comms profile has twelve
+  sections including `comms-protocol`. Feature 09 revision 13 remains terminal failed with zero
+  attributable rows, no percentage, open `XD-3`, and no retry. The current production decision is
+  **NO-GO**, regardless of controlled rollback success.
 - Linux final evidence does not imply Mac parity. Mac hermetic and live-parity runs remain
   independent carry-forward work.
 

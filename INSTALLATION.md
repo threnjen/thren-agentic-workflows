@@ -175,8 +175,16 @@ removed Claude groups, the Codex line, and OpenCode target content. Compare raw 
 hashes, existence, and newline state with the pre-phase snapshot before deleting any evidence.
 Feature 07 proved this byte-identity procedure in a controlled disposable-root cycle. The real
 machine snapshot was captured after an earlier deployment and does not prove independent pre-phase
-bytes. Do not claim real-root rollback identity without an operator backup or a new controlled
-disposable-root comparison.
+bytes. The selected Phase 03C contract accepts the controlled cycle only when all six destinations
+match, foreign content survives, owned content is removed and reported, and recovery material is
+retained. The bounded atomic replacement failure test proves prior valid output remains available
+when replacement fails. Do not claim historical real-root rollback identity. The genuine-backup
+route is not selected.
+
+The profile-off baseline has eleven technical sections. An enabled comms profile has twelve
+sections including `comms-protocol`. Feature 09 revision 13 remains terminal failed with zero
+attributable rows, no compliance percentage, open `XD-3`, and no retry authorization. The current
+production decision is **NO-GO**, even when the controlled rollback comparison passes.
 
 After source changes, a maintainer must run
 `python3 scripts/propagate_master_assets.py --once` before deployment. Agents do not run
