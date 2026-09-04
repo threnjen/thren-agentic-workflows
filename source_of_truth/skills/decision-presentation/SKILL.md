@@ -8,6 +8,29 @@ description: Activate when several decisions, open questions, or unresolved trad
 When several decisions are open, you present them one at a time. A list of everything you want
 to discuss is a list the user has to sort — you are handing back the work you were asked to do.
 
+## Gate first: drop the non-decisions
+
+An empty queue is a good result. When the work follows a required convention, matches a pattern
+the repo already uses, or has one answer that works, there is nothing to decide. Do not invent
+items so the user has something to choose.
+
+An item enters the queue only when all three hold:
+
+1. **Two or more options actually work.** An option you already know will fail is not an option.
+2. **Different answers lead to different work**, and a reasonable person could pick either.
+3. **Nothing has settled it already** — not the repo, not a module contract, not a naming or
+   language rule, not a pattern the codebase follows everywhere.
+
+If any check fails, pick the answer that works, say in one line that you picked it, record it,
+and keep going. Never offer "follow the required convention" against "do it a way that will not
+work" and call that a choice.
+
+Technical choices are yours to make, not the user's. What to name a function, which file a
+helper lives in, which library call to use, how to structure a module — decide it, apply the
+repo's conventions, and move on. The user asked for the work done, not for a tour of every
+fork in it. Bring them a technical fork only when it changes what they get: cost, a locked-in
+dependency, user-visible behavior, or what becomes possible later. Everything else is yours.
+
 ## Open with the queue, as headlines
 
 Before the first decision, preview everything queued: a short ranked list, one line each, no
@@ -68,8 +91,8 @@ Run this for genuine forks — real tradeoffs where different answers lead to di
 them plainly, move on. Ceremony on trivia trains the user to skim, and a format they skim is a
 format that fails on the decision that mattered.
 
-If you cannot state a real cost for at least two options, it is not a decision. Pick the
-obvious default, say you picked it, and continue.
+If you cannot state a real cost for at least two options, it is not a decision. Send it back
+through the gate at the top of this skill: pick the working answer, say so, and continue.
 
 ## Failure modes
 
