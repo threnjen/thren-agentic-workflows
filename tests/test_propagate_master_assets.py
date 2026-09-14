@@ -22,6 +22,41 @@ import _propagate_env as env
 _ORIGINAL_ENV_USE = env.use
 
 
+class SubagentDepthInstructionContractTests(unittest.TestCase):
+    """Guard the canonical delegation rule before generated propagation."""
+
+    def test_subagent_depth_instruction_distinguishes_spawn_mechanisms(self) -> None:
+        path = REPO_ROOT / "source_of_truth" / "instructions" / "subagent-depth.instructions.md"
+        text = path.read_text(encoding="utf-8")
+        expected_frontmatter = (
+            "---\n"
+            'description: "One-level delegation limit for every root agent that can spawn children. '
+            "Audience is DERIVED for the numbered pipeline: `0?-*.agent.md` matches the four pipeline "
+            "roots (01, 02, 03-phase-execute, 04-pr-review) and not their `0Na-` subagents, so a new "
+            "pipeline root inherits it automatically. The non-numbered roots have no filename family "
+            'and stay enumerated."\n'
+            'applyTo: "source_of_truth/agents/0?-*.agent.md,**/04-pr-review.agent.md,**/auditor.agent.md,**/delta-auditor.agent.md,**/client-deliverable.agent.md,**/debugger.agent.md,**/instructions-manager.agent.md,**/qa-bootstrap.agent.md,**/single-feature-agent.agent.md,**/test-orchestrator.agent.md"\n'
+            "---"
+        )
+        self.assertTrue(text.startswith(expected_frontmatter + "\n\n# Subagent Delegation Depth\n"))
+        self.assertIn(
+            'When this file is loaded, state once, before your first substantive output: '
+            '*"Instruction loaded: subagent-depth."* Then proceed normally.',
+            text,
+        )
+        for clause in (
+            "In-process fan-out MUST remain root-only at depth one.",
+            "Child agents MUST NOT use collaboration-tool fan-out or spawn in-process descendants.",
+            "Board-mediated spawning MAY recurse through Crosswire's existing durable intake and watcher path.",
+            "`SpawnConfig.max_depth`",
+            "`max_depth_exceeded`",
+            "`max_depth_refused`",
+        ):
+            with self.subTest(clause=clause):
+                self.assertIn(clause, text)
+        self.assertNotIn("Child agents never spawn agents.", text)
+
+
 def _use_with_staged_contract(testcase: unittest.TestCase, root: Path) -> None:
     """Give every retargeted propagation fixture its explicit local authority."""
     _ORIGINAL_ENV_USE(testcase, root)
