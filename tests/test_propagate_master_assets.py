@@ -38,19 +38,27 @@ class SubagentDepthInstructionContractTests(unittest.TestCase):
             'applyTo: "source_of_truth/agents/0?-*.agent.md,**/04-pr-review.agent.md,**/auditor.agent.md,**/delta-auditor.agent.md,**/client-deliverable.agent.md,**/debugger.agent.md,**/instructions-manager.agent.md,**/qa-bootstrap.agent.md,**/single-feature-agent.agent.md,**/test-orchestrator.agent.md"\n'
             "---"
         )
-        self.assertTrue(text.startswith(expected_frontmatter + "\n\n# Subagent Delegation Depth\n"))
-        self.assertIn(
-            'When this file is loaded, state once, before your first substantive output: '
-            '*"Instruction loaded: subagent-depth."* Then proceed normally.',
-            text,
+        self.assertTrue(
+            text.startswith(expected_frontmatter + "\n\n# Subagent Delegation Depth\n"),
+            "frontmatter must remain byte-identical and retain the instruction heading",
         )
+        canary = (
+            'When this file is loaded, state once, before your first substantive output: '
+            '*"Instruction loaded: subagent-depth."* Then proceed normally.'
+        )
+        self.assertEqual(text.count(canary), 1, "load canary must appear exactly once")
+        self.assertIn(canary, text, "load canary must remain byte-for-byte unchanged")
         for clause in (
             "In-process fan-out MUST remain root-only at depth one.",
+            "Only the user-invocable root orchestrator may create in-process children.",
             "Child agents MUST NOT use collaboration-tool fan-out or spawn in-process descendants.",
+            "When work needs in-process fan-out, the root MUST coordinate sibling agents through exclusive artifact ownership and compact returns.",
             "Board-mediated spawning MAY recurse through Crosswire's existing durable intake and watcher path.",
+            "Crosswire records parentage, applies registry-driven enforcement, and bounds each chain with",
             "`SpawnConfig.max_depth`",
             "`max_depth_exceeded`",
             "`max_depth_refused`",
+            "Board-mediated children MUST retain intake, claim, parent identity, chain, recovery, reconciliation, and enforcement checks.",
         ):
             with self.subTest(clause=clause):
                 self.assertIn(clause, text)
