@@ -13,10 +13,10 @@ Quick-reference for AI agents working in this repository.
 ## Current Counts
 
 - 59 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 43 hidden subagents (`user-invocable: false`) and 16 user-invocable.
-- 50 skills in `source_of_truth/skills/`.
+- 51 skills in `source_of_truth/skills/`.
 - 24 instructions in `source_of_truth/instructions/`.
 - 1 installable hook in `source_of_truth/hooks/`, mirrored verbatim to `ports/github/hooks/` and `.github/hooks/`. `creative-canon-guard.py` is installed by the writer into their own vault's `.claude/`; see `docs/CREATIVE_TOOLKIT.md`.
-- `ports/claude/agents` = 45, `ports/claude/commands` = 16.
+- After propagation, `ports/claude/agents` = 45 and `ports/claude/commands` = 17. The command count includes one alias.
 - Four of the agents, five of the skills, and one of the instructions belong to the
   creative writing family (`profile: creative`); see **Authoring profiles** below.
 
@@ -30,7 +30,7 @@ INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
     *.agent.md                             # 59 agent definitions
-  skills/                                  # 50 skill dirs, each rooted at SKILL.md
+  skills/                                  # 51 skill dirs, each rooted at SKILL.md
   instructions/                            # 24 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED — do not hand-edit
@@ -38,7 +38,7 @@ ports/                                     # GENERATED — do not hand-edit
   codex/   {agents, skills}             # TOML agents; profiles/ = retired cleanup root
   opencode/{agents, skills}
   cursor/  {agents, commands, rules, skills}  # commands/agents=*.md, rules=*.mdc
-  github/  {agents, instructions, skills}          # verbatim mirror
+  github/  {agents, instructions, skills}          # GitHub-native mirror
 .github/                                   # real deployed mirror of ports/github; gitignored
 scripts/
   propagate_master_assets.py               # transform entry point (--once | --watch)
@@ -50,7 +50,7 @@ docs/ ARCHITECTURE.md AUTHORING.md CODEBASE_CONTEXT.md COPILOT_SETUP.md LOCAL_DE
 docs/ ai-instruction-framework.md UNDERSTANDING_AGENTIC_ECOSYSTEM.md
 docs/porting/                              # CLAUDE/CODEX/OPENCODE guides + TOOL_MAPPING
 dev/                                       # gitignored scratch; nothing here is tracked
-tests/fixtures/pr-review/                  # tracked PR-review fixtures (NOT under dev/)
+tests/fixtures/local-final-checks/          # tracked local final-check fixtures (NOT under dev/)
 eval/                                      # past benchmark artifacts; deprecated/ = archived grader
 benchmarks/ packages/ tests/
 .deploy-config.json                        # gitignored; saved harness selection
@@ -79,7 +79,7 @@ benchmarks/ packages/ tests/
   - codex → `$CODEX_HOME` or `~/.codex` (agents) + `~/.agents/skills` (skills)
   - opencode → `$OPENCODE_CONFIG_DIR` or `~/.config/opencode` (agents, skills)
   - cursor → `~/.cursor` (agents, commands, rules, skills; needs Cursor 2.4+)
-  - github → `<repo>/.github` (verbatim mirror of the mirrored subdirs)
+  - github → `<repo>/.github` (native mirror; routed models, no command aliases)
 - Deploy selection persists to `.deploy-config.json` (gitignored) unless `--no-save`.
 - Deploy also splices a baseline instructions file per harness (`deploy_baseline`),
   rendered from `source_of_truth/baseline/baseline-instructions.md` with real home
@@ -125,7 +125,7 @@ benchmarks/ packages/ tests/
   change did not orphan previously generated files.
 - Skill auxiliary files carry no marker of their own; the whole skill dir is owned via
   its marked `SKILL.md`.
-- The `github` harness is a verbatim mirror: its files carry no marker and are treated
+- The `github` harness is a native mirror: its files carry no marker and are treated
   as unconditionally managed within the mirrored subdirs.
 - Deploy heals debris from the old symlink deployment: destination roots that are
   symlinks pointing into this repo (or dangling) are unlinked and replaced with real
@@ -139,8 +139,8 @@ benchmarks/ packages/ tests/
   `ports/claude/agents` for that reason.
 - Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
   plus a subagent file only if an orchestrator names it as a child (dual-use). So
-  `ports/claude/agents` = 43 hidden subagents plus two dual-use agents = 45, while
-  `ports/claude/commands` = 16.
+  `ports/claude/agents` = 43 hidden subagents plus two dual-use agents = 45. The
+  16 user-invocable agents plus one alias produce 17 commands.
 - Codex and OpenCode emit every source agent; only Claude and Cursor split commands out.
 - Cursor subagent names are the Claude identifier with a `z-` prefix always applied, because
   Cursor resolves commands and subagents from one `/name` namespace.
@@ -219,7 +219,7 @@ benchmarks/ packages/ tests/
   skills; this repository's own authoring knowledge is `docs/AUTHORING.md`; a working
   repo's findings belong in its own `docs/learnings/`.
 - Do not document anything under root `dev/` as part of the repo. `dev/*` is gitignored
-  in full — it is local scratch (audit write-ups, inspiration notes, PR-review run output).
-  Tracked PR-review fixtures live at `tests/fixtures/pr-review/`. Agent *runtime* output
+  in full — it is local scratch, including local final-check output.
+  Tracked local final-check fixtures live at `tests/fixtures/local-final-checks/`. Agent *runtime* output
   paths like `dev/feature/` are conventions agents create in a target repo, not here.
 - Do not tell contributors to use VS Code tasks: `.vscode/` is gitignored and a clone has none.

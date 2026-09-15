@@ -98,4 +98,4 @@ def test_optional_qa_and_documentation_gates_are_explicit() -> None:
     assert "Skipped QA is excluded from `all-approved`" in qa
     assert "GO` or `GO WITH CONDITIONS" in close
     assert "Never run it after `NO-GO`" in close
-    assert "`pr-review`" in close
+    assert "`phase-final-checks`" in close

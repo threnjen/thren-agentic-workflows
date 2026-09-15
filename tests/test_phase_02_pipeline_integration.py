@@ -347,7 +347,7 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
             (
                 "Skipped QA is excluded from `all-approved`",
                 "Run Docs Writer only after Prod Code Review returns `GO` or `GO WITH CONDITIONS`",
-                "Point the user to `pr-review`",
+                "Point the user to `phase-final-checks`",
             ),
         ),
     )

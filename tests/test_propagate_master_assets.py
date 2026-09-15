@@ -17,9 +17,9 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 import propagate_master_assets as mod
 import _propagate_env as env
 
-# The settled PR Review evaluator roster, and each agent's exact tool grant.
+# The settled Local Final Checks roster, and each agent's exact tool grant.
 #
-# This map is the propagation-enumeration ledger. `test_pr_review_evaluator_roster
+# This map is the propagation-enumeration ledger. `test_local_final_check_roster
 # _is_fully_enumerated` asserts it covers every `04*` evaluator on disk, so an
 # agent can no longer be dropped from enumeration to dodge an assertion about it.
 # That is precisely how the previous gap arose: several evaluators were
@@ -36,17 +36,14 @@ import _propagate_env as env
 #     doing so would break the report contract. Pinned here so that fails.
 #   * `execute` is DECLARED, not hidden. It survives only on `04a-baseline-worktree`,
 #     whose `git worktree` call has no non-shell equivalent; the grant is recorded
-#     as explicitly unclosable in `pr-review-conventions` (capability boundaries).
+#     as explicitly unclosable in the local final-check conventions.
 #     Per-agent command scoping is not expressible in Claude subagent frontmatter
 #     (`tools: Bash(gh:*)` is an unresolved tool name, not a narrower grant), so
 #     removal is the only narrowing available -- and this one cannot be removed.
 #     Listing it is the honest outcome: visible and justified beats absent.
-PR_REVIEW_EVALUATOR_TOOLS = {
+LOCAL_FINAL_CHECK_AGENT_TOOLS = {
     "04a-baseline-worktree": ["read", "search", "execute"],
     "04b-change-narrator": ["read", "search", "edit"],
-    # execute granted for one purpose: read-only git fallback when the
-    # orchestrator's materialized range.diff/changed-files.txt are absent.
-    "04c-artifact-sweeper": ["read", "search", "edit", "execute"],
     "04d-consistency-auditor": ["read", "search", "edit", "execute"],
     "04e-dependency-auditor": ["read", "search", "edit"],
     "04f-test-health": ["read", "search", "edit"],
@@ -54,22 +51,23 @@ PR_REVIEW_EVALUATOR_TOOLS = {
     # orchestrator's materialized range.diff/changed-files.txt are absent.
     "04h-cleanliness-auditor": ["read", "search", "edit", "execute"],
     "04g-readiness-synthesizer": ["read", "search", "edit"],
+    "04i-local-review-fixer": ["read", "search", "edit", "execute"],
 }
 
 
-def _discover_pr_review_evaluator_slugs() -> set:
+def _discover_local_final_check_slugs() -> set:
     """Every `04`-family evaluator on disk, read from the source of truth.
 
     Derived rather than restated: this is what makes omission from
-    `PR_REVIEW_EVALUATOR_TOOLS` fail instead of silently narrowing coverage.
-    `04-pr-review` is the orchestrator that dispatches the roster, not a member
+    `LOCAL_FINAL_CHECK_AGENT_TOOLS` fail instead of silently narrowing coverage.
+    `04-phase-final-checks` is the orchestrator, not a member
     of it.
     """
     agents_dir = REPO_ROOT / "source_of_truth" / "agents"
     return {
         path.name[: -len(".agent.md")]
         for path in agents_dir.glob("04*.agent.md")
-        if path.name != "04-pr-review.agent.md"
+        if path.name != "04-phase-final-checks.agent.md"
     }
 
 
@@ -117,7 +115,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 codex_skill.read_text(encoding="utf-8"),
             )
 
-    def test_pr_review_evaluator_roster_is_fully_enumerated(self) -> None:
+    def test_local_final_check_roster_is_fully_enumerated(self) -> None:
         """AC8: no evaluator may be omitted from propagation enumeration.
 
         The enumeration gap this closes was not a typo -- it was structural. The
@@ -131,10 +129,10 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         removing its entry.
         """
         self.assertEqual(
-            set(PR_REVIEW_EVALUATOR_TOOLS), _discover_pr_review_evaluator_slugs()
+            set(LOCAL_FINAL_CHECK_AGENT_TOOLS), _discover_local_final_check_slugs()
         )
 
-    def test_pr_review_evaluator_tool_grants_match_expected_lists(self) -> None:
+    def test_local_final_check_tool_grants_match_expected_lists(self) -> None:
         """AC3/AC4/AC8b/AC8c: exact per-agent grants, not a blanket prohibition.
 
         Replaces the old `assertNotIn("execute", agent.tools)`. Exact equality
@@ -144,15 +142,15 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         """
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
 
-        for slug, expected_tools in PR_REVIEW_EVALUATOR_TOOLS.items():
+        for slug, expected_tools in LOCAL_FINAL_CHECK_AGENT_TOOLS.items():
             with self.subTest(slug=slug):
                 self.assertEqual(agents[slug].tools, expected_tools)
 
-    def test_phase_review_agents_match_all_generated_harness_outputs(self) -> None:
+    def test_local_final_check_agents_match_all_generated_harness_outputs(self) -> None:
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
         instructions = mod.load_instruction_docs()
         routing = mod.load_model_routing()
-        expected_slugs = tuple(sorted(PR_REVIEW_EVALUATOR_TOOLS))
+        expected_slugs = tuple(sorted(LOCAL_FINAL_CHECK_AGENT_TOOLS))
 
         claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
         opencode_stems = mod._discover_existing_stems(mod.OPENCODE_AGENTS_DIR)
@@ -172,7 +170,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             with self.subTest(slug=slug):
                 agent = agents[slug]
                 # Tool grants are asserted per-agent in
-                # `test_pr_review_evaluator_tool_grants_match_expected_lists`.
+                # `test_local_final_check_tool_grants_match_expected_lists`.
                 docs = mod.applicable_instructions(agent, instructions)
 
                 claude_identifier = mod._claude_identifier_for(agent, claude_stems)
@@ -248,15 +246,15 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             codex_path.read_text(encoding="utf-8"),
         )
 
-    def test_pr_review_agent_is_present_in_all_harness_outputs(self) -> None:
-        # Renamed from `05 Phase - Final Review` by the PR-Review rescope. The
-        # Claude output is a *command*, not an agent: this orchestrator is
-        # user-invocable.
+    def test_local_final_checks_is_present_in_all_harness_outputs(self) -> None:
         expected_markers = {
-            "source_of_truth/agents/04-pr-review.agent.md": "name: 04 PR - Review",
-            "ports/claude/commands/pr-review.md": "PR Review Orchestrator",
-            "ports/opencode/agents/04-pr-review.md": "PR Review Orchestrator",
-            "ports/codex/agents/04-pr-review.toml": 'name = "pr-review"',
+            "source_of_truth/agents/04-phase-final-checks.agent.md": "name: 04 Phase - Final Checks",
+            "ports/claude/commands/phase-final-checks.md": "Local Final Checks Orchestrator",
+            "ports/claude/commands/pr-review.md": "Local Final Checks Orchestrator",
+            "ports/opencode/agents/phase-final-checks.md": "Local Final Checks Orchestrator",
+            "ports/opencode/agents/pr-review.md": "Local Final Checks Orchestrator",
+            "ports/codex/agents/04-phase-final-checks.toml": 'name = "phase-final-checks"',
+            "ports/codex/agents/pr-review.toml": 'name = "pr-review"',
         }
 
         for relative_path, marker in expected_markers.items():
@@ -488,11 +486,11 @@ class OrphanPruningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             repo_root = Path(tmp_dir)
             env.use(self, repo_root)
-            self._write_source_agent(repo_root, "04c-artifact-sweeper", "04c Artifact Sweeper")
+            self._write_source_agent(repo_root, "04h-cleanliness-auditor", "04h Cleanliness Auditor")
             doomed = self._write_source_agent(repo_root, "09-doomed", "09 Doomed")
 
             mod.propagate_once(verbose=False)
-            survivor = repo_root / "ports" / "claude" / "agents" / "z-artifact-sweeper.md"
+            survivor = repo_root / "ports" / "claude" / "agents" / "z-cleanliness-auditor.md"
             self.assertTrue(survivor.exists(), "fixture: expected the z- stem")
 
             doomed.unlink()
@@ -738,17 +736,17 @@ class OrphanPruningTests(unittest.TestCase):
         # only, a user-invocable agent emits a command, plus a spawnable file
         # when some orchestrator names it as a child (dual-use). So
         # CLAUDE_AGENTS_DIR is the hidden agents plus the dual-use ones, and
-        # CLAUDE_COMMANDS_DIR is exactly the user-invocable agents. Codex and
-        # OpenCode emit every source agent to one directory.
+        # CLAUDE_COMMANDS_DIR is the user-invocable agents plus validated aliases.
+        # Codex and OpenCode emit every source agent plus those aliases.
         #
         # CODEX_PROFILES_DIR is a retired cleanup root and stays at 0: Codex
         # profiles are configuration layers, not agent entry points. It is
         # asserted so a regression that starts writing there is caught.
         roots = [
             (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 45),
-            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 16),
-            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 59),
-            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 59),
+            (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 17),
+            (mod.OPENCODE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 60),
+            (mod.CODEX_AGENTS_DIR, "*.toml", mod.GENERATED_AGENT_HEADER, 60),
             (mod.CODEX_PROFILES_DIR, "*.config.toml", mod.GENERATED_AGENT_HEADER, 0),
         ]
         for directory, pattern, marker, expected_count in roots:
@@ -799,8 +797,7 @@ class OrphanPruningTests(unittest.TestCase):
                     f"retired OpenCode slug survived the renumber: {stem}.md",
                 )
 
-        for stem in ("04c-artifact-sweeper", "04d-consistency-auditor",
-                     "04e-dependency-auditor"):
+        for stem in ("04d-consistency-auditor", "04e-dependency-auditor"):
             with self.subTest(stem=stem):
                 self.assertTrue((mod.OPENCODE_AGENTS_DIR / f"{stem}.md").is_file())
 
@@ -832,6 +829,87 @@ class OrphanPruningTests(unittest.TestCase):
             self.assertEqual(result["skill_orphans_removed"], 0)
             self.assertEqual(result["cursor_command_orphans_removed"], 0)
             self.assertEqual(result["cursor_rule_orphans_removed"], 0)
+
+
+class AgentAliasTests(unittest.TestCase):
+    def _write_agent(
+        self,
+        root: Path,
+        slug: str,
+        *,
+        aliases: str = "",
+        user_invocable: bool = True,
+    ) -> None:
+        agents = root / "source_of_truth" / "agents"
+        agents.mkdir(parents=True, exist_ok=True)
+        alias_line = f"aliases: [{aliases}]\n" if aliases else ""
+        (agents / f"{slug}.agent.md").write_text(
+            "---\n"
+            f"name: {slug}\n"
+            'description: "fixture"\n'
+            "tools: [read]\n"
+            f"{alias_line}"
+            f"user-invocable: {'true' if user_invocable else 'false'}\n"
+            "---\n\nFixture.\n",
+            encoding="utf-8",
+        )
+
+    def test_alias_emits_the_same_role_on_four_command_surfaces(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            root = Path(tmp_dir)
+            env.use(self, root)
+            self._write_agent(root, "04-canonical", aliases="legacy")
+
+            mod.propagate_once(verbose=False)
+
+            outputs = (
+                root / "ports/claude/commands/legacy.md",
+                root / "ports/cursor/commands/legacy.md",
+                root / "ports/opencode/agents/legacy.md",
+                root / "ports/codex/agents/legacy.toml",
+            )
+            for output in outputs:
+                with self.subTest(output=output):
+                    self.assertTrue(output.is_file())
+            self.assertIn(
+                'name = "legacy"', outputs[-1].read_text(encoding="utf-8")
+            )
+
+    def test_hidden_agent_alias_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            root = Path(tmp_dir)
+            env.use(self, root)
+            self._write_agent(
+                root, "04-hidden", aliases="legacy", user_invocable=False
+            )
+
+            with self.assertRaisesRegex(ValueError, "hidden agent"):
+                mod.load_source_agents()
+
+    def test_invalid_and_colliding_aliases_are_rejected(self) -> None:
+        cases = (
+            ("Bad Alias", "invalid agent alias"),
+            ("canonical", "collides"),
+        )
+        for alias, message in cases:
+            with self.subTest(alias=alias):
+                with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+                    root = Path(tmp_dir)
+                    env.use(self, root)
+                    self._write_agent(root, "04-canonical", aliases=alias)
+
+                    with self.assertRaisesRegex(ValueError, message):
+                        mod.load_source_agents()
+
+    def test_duplicate_aliases_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            root = Path(tmp_dir)
+            env.use(self, root)
+            self._write_agent(root, "04-first", aliases="legacy")
+            self._write_agent(root, "04-second", aliases="legacy")
+
+            with self.assertRaisesRegex(ValueError, "collides"):
+                mod.load_source_agents()
 
 
 class StaticDoneNotifyNonInterferenceTests(unittest.TestCase):
@@ -1543,6 +1621,7 @@ class AuthoringProfileGateTests(unittest.TestCase):
             description="test",
             tools=["read"],
             subagents=[],
+            aliases=[],
             user_invocable=True,
             body="body\n",
             profile=profile,

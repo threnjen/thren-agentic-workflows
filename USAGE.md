@@ -24,7 +24,7 @@ Be specific in your request. Each agent produces structured output — plan docu
 
 ## The Project Pipeline (4 user steps)
 
-The core development workflow. **You drive steps 1–2, step 3 runs hands-free to a verdict, and step 4 is your own pre-PR self-review.**
+The core development workflow. **You drive steps 1–2, step 3 runs to a verdict, and step 4 checks the finished local range.**
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -34,7 +34,7 @@ The core development workflow. **You drive steps 1–2, step 3 runs hands-free t
 │  Step 2: 02 Phase - Refiner       → Refined phase document      │
 │  Step 3: 03 Phase - Execute       → Plan, build, QA ────────┐    │
 │                                                            │    │
-│  Step 4: 04 PR - Review           → Self-review before PR  │    │
+│  Step 4: 04 Phase - Final Checks → Local readiness check       │    │
 │          (after the automated run reports back)            │    │
 └────────────────────────────────────────────────────────────│────┘
                                                              │
@@ -99,20 +99,18 @@ The orchestrator asks once for model overrides, optional QA, and any applicable 
 4. Runs consolidated QA only when you selected it
 5. Runs **Prod Code Review**
 6. Runs **Docs Writer** only after `GO` or `GO WITH CONDITIONS`
-7. Reports the verdict and points you to `pr-review` for the separate local branch review
+7. Reports the verdict and points you to `phase-final-checks` for the local range review
 
 ### Step 4: Self-Review Before Opening the PR
 
 | Agent | Prompt | Output |
 |-------|--------|--------|
-| **04 PR - Review** | "Review my change before I open the PR" | Readiness report on the diff between a confirmed base and head commit |
+| **04 Phase - Final Checks** | "Review my change before I open the PR" | Readiness report on the diff between a confirmed base and head commit |
 
-Asks its three questions once — model tier, the base commit, and whether to post the
-report to an already-open draft PR — then runs its evaluator roster over that diff and
-hands back a plain-language readiness report. Advisory only: it changes no code and
-records no verdict in any document. Distinct from the automated **Prod Code Review**
-gate inside Step 4, which validates the phase's pipeline records; this reviews the diff
-you are about to publish.
+Confirms the base and optional context, then runs the applicable evaluators over that
+fixed range. It writes a plain-language readiness report before offering one bounded
+repair pass. It never posts, pushes, commits, or requires an open merge request.
+**Prod Code Review** remains the separate pipeline gate inside Step 3.
 
 ### Manual Implementation Path
 
@@ -122,10 +120,10 @@ Prefer to write your own code? Use the planning agents, then implement yourself:
 Step 1: 01 Project - Planner   → Phase documents
 Step 2: 02 Phase - Refiner      → Refined phase document
 Step 3: (you write the code from the phase plan)
-Step 4: 04 PR - Review          → Readiness report on what you wrote
+Step 4: 04 Phase - Final Checks          → Readiness report on what you wrote
 ```
 
-The refined Phase document from Step 2 contains detailed scope, requirements, and acceptance criteria — enough to implement directly. When you're ready for validation, run **04 PR - Review** to get a readiness verdict on your diff.
+The refined Phase document from Step 2 contains detailed scope, requirements, and acceptance criteria — enough to implement directly. When you're ready for validation, run **04 Phase - Final Checks** to get a readiness verdict on your diff.
 
 **Tip:** The refined Phase document contains the scope and acceptance criteria. Use **03 Phase - Execute** when you want the agent to create the feature schedule and run the implementation pipeline.
 
@@ -140,7 +138,7 @@ The refined Phase document from Step 2 contains detailed scope, requirements, an
 | **01 Project - Planner** | Create a project roadmap broken into phases |
 | **02 Phase - Refiner** | Refine and deepen an individual Phase document |
 | **03 Phase - Execute** | Orchestrate full phase execution from a prepared manifest and feature bundles |
-| **04 PR - Review** | Self-review a change before opening the PR — readiness report on the diff between a base commit and a head commit |
+| **04 Phase - Final Checks** | Review a confirmed local range, write an advisory readiness report, and optionally apply one bounded repair pass |
 | **Client Deliverable** | Produce the client deliverable package for a modernization engagement — audits each before/after repository pair and compares the two sides |
 | **Audit - Code, Infra, Refactor, Security** | Audit code quality, infrastructure, architecture, or security in one repository, with optional fix research and automated fix pipeline |
 | **Audit - Delta** | Audit two revisions or checkouts of the same product and reconcile them into a delta of what changed, with optional fix research and automated fix pipeline |
@@ -178,17 +176,17 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **Feature - QA Runner** | Phase - Execute, Audit orchestrator | Execute the automated QA document and record per-check results into it |
 | **QA - Doc Generator** | QA - Bootstrapper | Generate the QA_AUTOMATED runbook and QA_USER checklist from repository, manual QA, and acceptance inputs |
 | **QA - Runner** | QA - Bootstrapper | Execute the QA_AUTOMATED runbook and all test suites, then record binary pass/fail results into the runbook |
-| **Baseline Worktree** | 04 PR - Review | Create or reuse a clean detached worktree at a caller-specified baseline commit and return its path |
-| **04b Change Narrator** | 04 PR - Review | Build the base-to-head narrative for the diff under review and identify churn hotspots |
-| **04c Artifact Sweeper** | 04 PR - Review | Sweep the branch diff for debug artifacts, TODO/FIXME markers, and dead code added by the branch |
-| **04d Consistency Auditor** | 04 PR - Review | Compare the branch diff against established repository conventions and recommend canonical forms |
-| **04e Dependency Auditor** | 04 PR - Review, Client Deliverable | Inventory dependencies added by the branch and report supply-chain and duplication risks, offline |
-| **03e Diff Security Scan** | 04 PR - Review | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
-| **Unity Reviewer** | PR - Review, Single Feature - Agent | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
+| **Baseline Worktree** | 04 Phase - Final Checks | Create or reuse a clean detached worktree at a caller-specified baseline commit and return its path |
+| **04b Change Narrator** | 04 Phase - Final Checks | Build the base-to-head narrative for the diff under review and identify churn hotspots |
+| **04d Consistency Auditor** | 04 Phase - Final Checks | Compare the branch diff against established repository conventions and recommend canonical forms |
+| **04e Dependency Auditor** | 04 Phase - Final Checks, Client Deliverable | Inventory dependencies added by the branch and report supply-chain and duplication risks, offline |
+| **03e Diff Security Scan** | 04 Phase - Final Checks | Perform a diff-scoped security scan of only the files changed by an execution and write a compact security report |
+| **Unity Reviewer** | Phase - Final Checks, Single Feature - Agent | Review Unity C# code for architecture, performance, style, and Unity-specific pitfalls |
 | **Prod Code Review** | Phase - Execute, Audit orchestrator | Final pre-production readiness gate — cross-validate every pipeline document in a phase and produce a GO / NO-GO verdict |
-| **04f Test Health** | 04 PR - Review | Adapt root-supplied Test Analyst evidence into a test health report |
-| **04h Cleanliness Auditor** | 04 PR - Review | Evaluate the cleanliness of branch-added code and recommend specific cleanup categories when non-passing |
-| **04g Readiness Synthesizer** | 04 PR - Review | Synthesize evaluator reports into a severity-ordered readiness verdict |
+| **04f Test Health** | 04 Phase - Final Checks | Check changed tests for authentic failure power and report supplied coverage evidence |
+| **04h Cleanliness Auditor** | 04 Phase - Final Checks | Check branch-added artifacts, duplication, dead code, mixed concerns, and module growth |
+| **04g Readiness Synthesizer** | 04 Phase - Final Checks | Synthesize evaluator reports and optional context into readiness and repair candidates |
+| **04i Local Review Fixer** | 04 Phase - Final Checks | Apply one plan-independent repair pass to eligible local findings and record test evidence |
 | **Client Deliverable - Prepare** | Client Deliverable | Prepare a client engagement for comparison analysis — validate the engagement config, then ensure an analysis branch, a code graph, and a baseline snapshot per side |
 | **Client Deliverable - Delta Synthesizer** | Client Deliverable | Produce the client-facing findings report, the SOW-exclusions partition, and the internal remediation recommendations for a pair |
 | **Client Deliverable - Security Narrative** | Client Deliverable | Write the four-section client-facing security narrative and the internal engineer-facing security-delta report from the pair's reports and exclusions partition |
@@ -200,7 +198,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 | **Creative - Scribe** | Creative - Developmental Editor | Write caller-supplied text verbatim into the vault's editor notes and scene summaries — the family's only write bit |
 | **Creative - Compliance Check** | Creative - Developmental Editor | Scan a draft response against the active mode's rules and return violations with repair instructions |
 | **Creative - Vault Sync** | Creative - Developmental Editor | Report what changed in the vault since the commit recorded in `context/index.md` |
-| **Test - Analyst** | Test orchestrator, 04 PR - Review | Evaluate test suite for redundancy, coverage gaps, and consolidation |
+| **Test - Analyst** | Test orchestrator | Evaluate test suite for redundancy, coverage gaps, and consolidation |
 | **Test - Fixer** | Test orchestrator | Diagnose and fix broken tests without modifying source code |
 | **Test - Writer** | Test orchestrator | Bootstrap a test suite from scratch for untested code |
 
@@ -219,8 +217,8 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 **03 Phase - Execute** (orchestrator — delegates to subagents)
 > Give it a refined Phase document. It writes lightweight plans and the living execution manifest, creates one selection delta per feature, implements sequentially, runs optional QA, and closes with Prod Code Review.
 
-**04 PR - Review** (orchestrator — delegates to evaluators)
-> Point it at a change you are about to open a PR for — this is an author self-review, not a reviewer critiquing someone else's open PR. In a single upfront interaction it warns on a below-par model tier, confirms the base commit (suggest-and-confirm — git cannot derive a branch's base), and asks whether the report should be posted to a draft PR if one already exists (posting is opt-in; the default recommendation keeps you between the finding and the audience). It then fans out the PR Review evaluators over that diff and returns a readiness verdict without reading code or diffs itself. Advisory only: it changes no code and records no verdict in any document.
+**04 Phase - Final Checks** (orchestrator — delegates to evaluators)
+> Confirm a base and optional context for any local change. The command fixes one `base..HEAD` range, runs only the applicable checks, and writes an advisory report. It then offers one repair pass for confirmed security, outward-impact, and changed-test findings. `pr-review` invokes this same workflow as an alias.
 
 **Client Deliverable** (orchestrator — delegates to the engagement subagents)
 > Give it an engagement configuration file path. It produces the client-facing deliverable package — findings report, security narrative, cloud/cost analysis, business and workflow narratives, the SOW compliance walkthrough and verification summary, and the package manifest — by auditing each before/after repository pair and comparing the two sides, closing with a client-perspective gap review. Mechanically: it spawns Client Deliverable - Prepare unchanged, then drives each pair's analysis stages through subagents, holding only statuses and artifact pointers. It maintains `engagement-state.md` as its run record and resumes from it on restart.
@@ -275,9 +273,9 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **02a Phase - Final-Check Reviewer** *(subagent of Phase - Refiner)* — A stateless cold-start read of a completed Phase document. It has no memory of the refinement conversation, which is the point: it reports only what the document itself says, so anything the refiner and the user settled verbally but never wrote down shows up as a gap.
 
-**03e Diff Security Scan** *(subagent of 04 PR - Review)* — Performs a diff-scoped security review of changed files plus immediate security context. It writes a compact report and does not replace the full-codebase Auditor - Security scan.
+**03e Diff Security Scan** *(subagent of 04 Phase - Final Checks)* — Performs a diff-scoped security review of changed files plus immediate security context. It writes a compact report and does not replace the full-codebase Auditor - Security scan.
 
-**Prod Code Review** *(subagent of Phase - Execute and the Audit orchestrator)* — Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Pipeline-internal only (`user-invocable: false`): orchestrators spawn it as the automated gate at the end of a phase. For an on-demand readiness check of your own, use **04 PR - Review** instead.
+**Prod Code Review** *(subagent of Phase - Execute and the Audit orchestrator)* — Cross-validates all pipeline documents across all features in the phase, verifies the actual code matches the records, runs the test suite, and produces a **GO / GO WITH CONDITIONS / NO-GO** verdict with a full traceability matrix and risk register. Pipeline-internal only (`user-invocable: false`): orchestrators spawn it as the automated gate at the end of a phase. For an on-demand readiness check of your own, use **04 Phase - Final Checks** instead.
 
 **QA - Doc Generator** *(subagent of QA - Bootstrapper)* — Generates the `QA_AUTOMATED` runbook and the `QA_USER` manual acceptance checklist from the repository plus optional manual-QA, SOW/contract, and plan-acceptance inputs, per the `qa-generation` skill.
 
@@ -325,7 +323,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **Creative - Vault Sync** *(subagent of Creative - Developmental Editor)* — Resolves the vault's current git SHA, compares it to the one recorded in `context/index.md`, and returns the file-level diff. It reports the change and does not interpret it.
 
-**Test - Analyst** *(subagent of Test orchestrator and PR Review)* — Classifies tests by value, flags redundancy and over-mocking, and writes a categorized inventory with a staged reduction plan. PR Review spawns it directly and passes its files to 04f as sibling evidence.
+**Test - Analyst** *(subagent of Test orchestrator)* — Classifies tests by value, flags redundancy and over-mocking, and writes a categorized inventory with a staged reduction plan.
 
 **Test - Writer** *(subagent of Test orchestrator)* — Bootstraps a test suite from scratch. Scans the codebase, creates test files with meaningful coverage, and verifies the suite passes.
 
@@ -396,7 +394,7 @@ Not everything needs a pipeline. These agents work well on their own:
 - **Audit - Code, Infra, Refactor, Security** — Run anytime for a code, infrastructure, structural, or security health check
 - **Single Feature - Agent** — Implement a focused change with an explicit approval gate and minimal churn
 - **Test - Orchestrator** — Analyze, write, or fix tests on demand
-- **04 PR - Review** — Get a readiness verdict on any diff, without running a pipeline first
+- **04 Phase - Final Checks** — Get a readiness verdict on any diff, without running a pipeline first
 - **QA - Bootstrapper** — Generate a repository's QA_AUTOMATED and QA_USER package and run it
 - **Debugger** — Fix a specific frontend or backend error without a full pipeline
 - **Web Researcher** — Research a technical question or debug a tricky issue
@@ -529,11 +527,11 @@ Do not hand-copy files out of `ports/` or `.github/` — both are generated. Edi
 
 - **Language-agnostic**: These agents are generic. They read your workspace's `AGENTS.md` at runtime for language-specific conventions (naming, testing tools, formatting, etc.).
 - **Self-contained**: Each generated agent file is complete on its own — applicable instruction content is inlined at propagation time rather than referenced.
-- **Orchestrators**: **03 Phase - Execute**, **04 PR - Review**, **Audit - Code, Infra, Refactor, Security**, **Audit - Delta**, **Test - Orchestrator**, **QA - Bootstrapper**, **Instructions Manager**, and **Client Deliverable** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
+- **Orchestrators**: **03 Phase - Execute**, **04 Phase - Final Checks**, **Audit - Code, Infra, Refactor, Security**, **Audit - Delta**, **Test - Orchestrator**, **QA - Bootstrapper**, **Instructions Manager**, and **Client Deliverable** all delegate to hidden subagents marked `user-invocable: false`. These appear as collapsible tool calls in the chat UI.
 - **Shared subagents**: **Feature - Implementer** and **03c Reviewer - Plan Conformance** serve the phase, audit, and test pipelines through explicit artifact contracts. **Feature - QA Writer** and **Feature - QA Runner** serve Phase - Execute and Audit. **Docs Writer** updates stale documentation after positive pipeline outcomes and remains user-invocable.
 - **Dual-use agents**: two agents are user-invocable *and* declared as children by an orchestrator, so they emit both a slash command and a spawnable subagent file — **Docs Writer** (Planner, Refiner, Phase - Execute, Audit, Test, Client Deliverable) and **Web Researcher** (Planner, Refiner, Debugger).
 - **Subagent autonomy**: Hidden subagents operate without user confirmation — they read inputs from `dev/feature/[0N-task-name]/`, execute their role, write outputs to the same folder, and return a summary to the orchestrator.
-- **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Security**, **Auditor - Delta**, **Auditor - Remediation Research**, **Auditor - Remediation Reconciler**, **Test - Analyst**, **Unity Reviewer**, **03e Diff Security Scan**, and the **04x PR Review evaluators** do not modify production code. **03c Reviewer - Plan Conformance** can edit because its single pass includes repairs.
+- **Read-only subagents**: **Auditor - Code**, **Auditor - Infra**, **Auditor - Refactor**, **Auditor - Security**, **Auditor - Delta**, **Auditor - Remediation Research**, **Auditor - Remediation Reconciler**, **Test - Analyst**, **Unity Reviewer**, **03e Diff Security Scan**, and the `04a` through `04h` final-check evaluators do not modify production code. **04i Local Review Fixer** may edit during its one accepted repair pass.
 - **Approval-gated agents**: **01 Project - Planner** and **02 Phase - Refiner** present findings and ask for explicit approval before creating files. They also check for missing critical documentation (`README.md`, `docs/CODEBASE_CONTEXT.md`) and recommend running the **Docs Writer** before continuing. The **Audit** and **Test** orchestrators ask before proceeding to the remediation phase.
-- **Code-writing agents**: **Debugger**, **Test - Writer**, **Test - Fixer**, and **Feature - Implementer** have full tool access to create and modify files.
+- **Code-writing agents**: **Debugger**, **Test - Writer**, **Test - Fixer**, **Feature - Implementer**, and **04i Local Review Fixer** can modify files within their contracts.
 - **Prod Code Review** does not modify code — it analyzes and reports only, producing a GO / NO-GO verdict.

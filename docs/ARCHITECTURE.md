@@ -33,7 +33,7 @@ flowchart TD
     Root --> Scripts[scripts and deploy_agents.py]
 
     SOT --> Agents[59 agent definitions]
-    SOT --> Skills[50 skill directories]
+    SOT --> Skills[51 skill directories]
     SOT --> Instructions[24 instruction files]
 
     Scripts --> Propagate[propagate_master_assets.py]
@@ -57,7 +57,7 @@ flowchart LR
     Script --> CodexOut[ports/codex agents skills TOML]
     Script --> OpenCodeOut[ports/opencode agents skills]
     Script --> CursorOut[ports/cursor agents commands rules skills]
-    Script --> GithubPort[ports/github verbatim mirror]
+    Script --> GithubPort[ports/github native mirror]
     GithubPort --> DotGithub[.github mirror at repo root]
 ```
 
@@ -135,7 +135,7 @@ The only authoring surface.
 - `agents/` — 59 agent definitions (16 user-invocable, 43 hidden subagents), all using
   the `.agent.md` suffix. Loading keys off `name`/`description` frontmatter, not the
   suffix, so the source glob stays `*.md`.
-- `skills/` — 50 directory-based skills, each rooted at `SKILL.md`.
+- `skills/` — 51 directory-based skills, each rooted at `SKILL.md`.
 - `instructions/` — 24 instruction files matched by `applyTo` globs. Matching is
   `fnmatch` against the agent's repo-relative path, so a `**/name.agent.md` pattern
   requires a `/` immediately before `name` — numbered agents must be named in full, and a
@@ -155,9 +155,10 @@ platform-specific transformations:
 - Claude emission splits by invocability: a hidden agent emits a subagent file only; a
   user-invocable agent emits a slash command, **plus** a subagent file when some
   orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
-  it. That is why `ports/claude/agents` (45) and `ports/claude/commands` (16) differ:
-  43 hidden subagents plus the two dual-use agents (Docs Writer,
-  Web Researcher)
+  it. That is why `ports/claude/agents` (45) and `ports/claude/commands` (17) differ:
+  43 hidden subagents plus the two dual-use agents (Docs Writer and Web Researcher)
+  form the agent set. Sixteen user-invocable agents plus one validated alias form
+  the command set.
 - applicable instruction content is inlined when the destination platform does not
   support `instructions/` directly
 - Cursor: user-invocable agents become `commands/*.md`; the agents an orchestrator
@@ -185,7 +186,7 @@ skills instead — this repository ships no learnings content.
 
 ### The `.github/` mirror
 
-`ports/github` is a verbatim copy of the mirrored source subdirs, and `.github/`
+`ports/github` is a GitHub-native copy of the mirrored source subdirs, and `.github/`
 at the repo root is a real deployed copy of it. Only the mirrored subdirs
 (`agents`, `hooks`, `instructions`, `skills`) are touched — anything else
 in `.github/` (for example a future `workflows/`) is left alone.
@@ -203,9 +204,9 @@ used by both scripts' watch modes.
 - `docs/` — architecture, setup, troubleshooting, and porting guides. `docs/AUTHORING.md`
   holds this repository's authoring and deployment failure modes; read it before editing
   an agent definition.
-- `dev/` — gitignored local scratch (audit write-ups, inspiration notes, PR-review run
-  output). Nothing under it is tracked; the tracked PR-review fixture lives at
-  `tests/fixtures/pr-review/`.
+- `dev/` — gitignored local scratch, including local final-check output. Nothing
+  under it is tracked. The tracked local final-check fixture lives at
+  `tests/fixtures/local-final-checks/`.
 - `eval/` — past benchmark run artifacts and rubrics. `eval/deprecated/` holds the
   archived eval-grader agents, skills, and commit hook; see its README.
 - `benchmarks/` — model cost/performance benchmark data and charts.

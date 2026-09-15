@@ -5,7 +5,7 @@ description: "Shared conventions for all auditor subagents and any agent that pr
 
 # Auditor Conventions
 
-Common conventions for every auditor subagent and any agent that produces, queues, or compares audit findings. Load this skill first, then follow domain-specific instructions in your agent definition. Where your agent also loads a narrower conventions skill for its own family (for example `pr-review-conventions`), that skill governs wherever the two differ.
+Common conventions for every auditor subagent and any agent that produces, queues, or compares audit findings. Load this skill first, then follow domain-specific instructions in your agent definition. Where your agent also loads a narrower conventions skill for its own family, that skill governs wherever the two differ.
 
 ## Standard Constraints
 

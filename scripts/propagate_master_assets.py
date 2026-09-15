@@ -3,7 +3,7 @@
 
 This script treats `source_of_truth/` as the canonical home for agents, skills,
 and instructions, and regenerates target-platform variants under
-`ports/{claude,codex,opencode,cursor}`. It also mirrors the source verbatim to
+`ports/{claude,codex,opencode,cursor}`. It also emits GitHub-native copies to
 `ports/github` and to a real `.github/` directory at the repository root.
 
 Run with `--watch` (the maintainer workflow) to re-propagate on every save under
@@ -122,7 +122,8 @@ def retarget(root: Union[str, Path]):
         module.update(previous)
 
 
-# Subdirectories mirrored verbatim to ports/github and .github. Anything else in
+# Subdirectories mirrored to ports/github and .github. Agent frontmatter receives
+# the GitHub-specific transform; other files stay verbatim. Anything else in
 # .github/ (e.g. workflows/) is never touched.
 GITHUB_MIRRORED_SUBDIRS = ("agents", "hooks", "instructions", "skills")
 
@@ -156,6 +157,7 @@ OPENCODE_FILE_ALIASES = {
     "docs-writer": "docs-writer",
     "web-research-specialist": "web-researcher",
     "audit-code-or-infra": "audit-code-infra-refactor",
+    "04-phase-final-checks": "phase-final-checks",
 }
 
 CLAUDE_FILE_ALIASES = {
@@ -176,6 +178,7 @@ VALID_PROFILES = frozenset({DEFAULT_PROFILE, CREATIVE_PROFILE})
 MODEL_TIERS = ("low", "medium", "high")
 MODEL_HARNESSES = ("claude", "codex", "opencode", "cursor", "github")
 MODEL_IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._/-]*[A-Za-z0-9])?$")
+AGENT_ALIAS_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 def _model_routing_path() -> Path:
@@ -299,6 +302,7 @@ class SourceAgent:
     description: str
     tools: List[str]
     subagents: List[str]
+    aliases: List[str]
     user_invocable: bool
     body: str
     profile: str = DEFAULT_PROFILE
@@ -666,6 +670,7 @@ def load_source_agents() -> List[SourceAgent]:
         tools = _parse_list_value(fm.get("tools", ""))
         _validate_tool_keys(rel_path, tools)
         subagents = _parse_list_value(fm.get("agents", ""))
+        aliases = _parse_list_value(fm.get("aliases", ""))
         user_invocable = _parse_bool(fm.get("user-invocable"), default=True)
         profile = _parse_profile(rel_path, fm.get("profile"))
         model_tier = _parse_model_tier(rel_path, fm.get("model_tier"))
@@ -679,13 +684,49 @@ def load_source_agents() -> List[SourceAgent]:
                 description=description,
                 tools=tools,
                 subagents=subagents,
+                aliases=aliases,
                 user_invocable=user_invocable,
                 body=body.strip() + "\n",
                 profile=profile,
                 model_tier=model_tier,
             )
         )
+    _validate_agent_aliases(agents)
     return agents
+
+
+def _validate_agent_aliases(agents: List[SourceAgent]) -> None:
+    """Reject aliases that would create ambiguous harness entry points."""
+    owners: Dict[str, str] = {}
+    for agent in agents:
+        stripped = _sanitize_slug(_strip_numeric_prefix(agent.source_slug))
+        identifiers = {
+            stripped,
+            _sanitize_slug(CLAUDE_FILE_ALIASES.get(agent.source_slug, stripped)),
+            _sanitize_slug(
+                OPENCODE_FILE_ALIASES.get(agent.source_slug, agent.source_slug)
+            ),
+        }
+        for identifier in identifiers:
+            owner = owners.get(identifier)
+            if owner is not None and owner != agent.rel_path:
+                raise ValueError(
+                    f"agent identifier `{identifier}` in {agent.rel_path} collides with {owner}"
+                )
+            owners[identifier] = agent.rel_path
+
+    for agent in agents:
+        if agent.aliases and not agent.user_invocable:
+            raise ValueError(f"hidden agent cannot declare aliases: {agent.rel_path}")
+        for alias in agent.aliases:
+            if not AGENT_ALIAS_PATTERN.fullmatch(alias):
+                raise ValueError(f"invalid agent alias `{alias}` in {agent.rel_path}")
+            owner = owners.get(alias)
+            if owner is not None:
+                raise ValueError(
+                    f"agent alias `{alias}` in {agent.rel_path} collides with {owner}"
+                )
+            owners[alias] = agent.rel_path
 
 
 def load_instruction_docs() -> List[InstructionDoc]:
@@ -1087,11 +1128,13 @@ def _render_toml_string(value: str) -> List[str]:
     return [json.dumps(value, ensure_ascii=False)]
 
 
-def _inject_codex_selected_agent_instruction(agent: SourceAgent, body: str) -> str:
+def _inject_codex_selected_agent_instruction(
+    agent: SourceAgent, body: str, identifier: str | None = None
+) -> str:
     if not agent.user_invocable:
         return body
 
-    identifier = _codex_identifier_for(agent)
+    identifier = identifier or _codex_identifier_for(agent)
     clause = (
         f"You are the `{identifier}` agent. When the user addresses you by name or role, "
         "begin work in this role immediately. "
@@ -1163,6 +1206,7 @@ def render_codex_agent(
     docs: List[InstructionDoc],
     reference_map: Dict[str, str],
     routing: Dict[str, Dict[str, Dict[str, str]]] | None = None,
+    identifier: str | None = None,
 ) -> str:
     combined = agent.body.strip()
     appendix = _build_instruction_appendix(agent, docs)
@@ -1171,10 +1215,10 @@ def render_codex_agent(
 
     combined = _rewrite_agent_references(combined, reference_map, preserve_at_sign=False)
     combined = _rewrite_codex_invocation_language(combined)
-    combined = _inject_codex_selected_agent_instruction(agent, combined)
+    combined = _inject_codex_selected_agent_instruction(agent, combined, identifier)
     combined = _inject_codex_todo_override(agent, combined)
 
-    name_value = _codex_identifier_for(agent)
+    name_value = identifier or _codex_identifier_for(agent)
     description = json.dumps(agent.description, ensure_ascii=False)
     model_route = _model_route_for(agent, "codex", routing)
 
@@ -1541,24 +1585,17 @@ def _github_agent_bytes(
     data: bytes,
     routing: Dict[str, Dict[str, Dict[str, str]]] | None,
 ) -> bytes:
-    """Add the GitHub custom-agent model field without changing source files.
+    """Render GitHub-only frontmatter without fabricating command aliases.
 
     Copilot custom-agent frontmatter has no per-agent effort field, so a `github`
     route carries a model alone. Effort is a CLI-wide `effortLevel` setting there.
+    GitHub has no generated command-alias surface, so `aliases` stays an authoring
+    field and is removed from its native custom-agent copy.
     """
     if not source_file.name.endswith(".agent.md"):
         return data
 
     text = data.decode("utf-8")
-    frontmatter, _body = _parse_frontmatter(text)
-    tier = _parse_model_tier(
-        source_file.relative_to(SOT_DIR.parent).as_posix(), frontmatter.get("model_tier")
-    )
-    if tier is None:
-        return data
-
-    table = routing if routing is not None else load_model_routing()
-    model = table[tier]["github"]["model"]
     lines = text.splitlines(keepends=True)
     closing_index = next(
         (index for index, line in enumerate(lines[1:], start=1) if line.rstrip("\r\n") == "---"),
@@ -1566,6 +1603,28 @@ def _github_agent_bytes(
     )
     if closing_index is None:
         return data
+
+    alias_index = next(
+        (index for index in range(1, closing_index) if lines[index].startswith("aliases:")),
+        None,
+    )
+    if alias_index is not None:
+        alias_end = alias_index + 1
+        while alias_end < closing_index and lines[alias_end].startswith((" ", "\t")):
+            alias_end += 1
+        del lines[alias_index:alias_end]
+        closing_index -= alias_end - alias_index
+
+    rendered = "".join(lines)
+    frontmatter, _body = _parse_frontmatter(rendered)
+    tier = _parse_model_tier(
+        source_file.relative_to(SOT_DIR.parent).as_posix(), frontmatter.get("model_tier")
+    )
+    if tier is None:
+        return rendered.encode("utf-8")
+
+    table = routing if routing is not None else load_model_routing()
+    model = table[tier]["github"]["model"]
 
     for index in range(1, closing_index):
         if lines[index].startswith("model:"):
@@ -1734,6 +1793,23 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
             ):
                 changed_cursor += 1
 
+            for alias in agent.aliases:
+                claude_alias_file = CLAUDE_COMMANDS_DIR / f"{alias}.md"
+                expected_claude_command_files.add(claude_alias_file)
+                if _write_if_changed(
+                    claude_alias_file,
+                    render_claude_command(agent, docs, claude_reference_map, alias),
+                ):
+                    changed_claude += 1
+
+                cursor_alias_file = CURSOR_COMMANDS_DIR / f"{alias}.md"
+                expected_cursor_command_files.add(cursor_alias_file)
+                if _write_if_changed(
+                    cursor_alias_file,
+                    render_cursor_command(agent, docs, cursor_reference_map, alias),
+                ):
+                    changed_cursor += 1
+
         # Cursor subagents follow the Claude emission rule: a worker, or a
         # user-invocable role some orchestrator spawns as a child.
         if emit_claude_agent:
@@ -1762,6 +1838,29 @@ def propagate_once(verbose: bool = True) -> Dict[str, int]:
             render_codex_agent(agent, docs, codex_reference_map, routing),
         ):
             changed_codex += 1
+
+        for alias in agent.aliases:
+            opencode_alias_file = OPENCODE_AGENTS_DIR / f"{alias}.md"
+            expected_opencode_files.add(opencode_alias_file)
+            if _write_if_changed(
+                opencode_alias_file,
+                render_opencode_agent(agent, docs, opencode_reference_map, routing),
+            ):
+                changed_opencode += 1
+
+            codex_alias_file = CODEX_AGENTS_DIR / f"{alias}.toml"
+            expected_codex_files.add(codex_alias_file)
+            if _write_if_changed(
+                codex_alias_file,
+                render_codex_agent(
+                    agent,
+                    docs,
+                    codex_reference_map,
+                    routing,
+                    identifier=alias,
+                ),
+            ):
+                changed_codex += 1
 
     # Every prune runs only after all emission above has completed. `_claude_filename_for`
     # and `_opencode_filename_for` resolve an output name against the stems already on

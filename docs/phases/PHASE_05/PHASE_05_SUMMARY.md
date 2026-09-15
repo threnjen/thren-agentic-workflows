@@ -1,6 +1,6 @@
 # Phase 5: Unified Local Final Checks
 
-**Status**: Planned
+**Status**: Implemented — maintainer propagation pending
 **Depends on**: Phase 04
 **Estimated complexity**: Large
 **Cross-references**: `docs/phases/PHASE_04/PHASE_04_SUMMARY.md`
@@ -13,7 +13,7 @@ The command reviews a confirmed commit range, writes one advisory readiness repo
 
 ## Problem
 
-Local change review has overlapping responsibilities and vocabulary. The current PR Review command assumes a pull-request-shaped workflow, while phase execution also carries review responsibilities that belong after implementation.
+Local change review had overlapping responsibilities and vocabulary. The prior command assumed a pull-request-shaped workflow, while phase execution carried separate review responsibilities.
 
 The overlap increases agent cost and gives authors more than one place to seek the same readiness answer. It also couples local review to merge-request concepts that are unnecessary for reviewing a commit range.
 
@@ -25,13 +25,13 @@ Provide one advisory local-review workflow for any confirmed `base..HEAD` range.
 
 ### In Scope
 
-- Replace the current PR Review orchestration surface with `phase-final-checks`.
+- Expose the local review orchestration surface as `phase-final-checks`.
 - Preserve `pr-review` as an alias that resolves to the same agent body on Claude, Codex, OpenCode, and Cursor.
 - Keep the GitHub mirror on its native agent surface, which has no generated slash-command alias.
 - Suggest a base, show the resulting range, and require confirmation before review begins.
 - Complete an empty-diff run with a valid report instead of treating it as an orchestration failure.
 - Accept optional plans, specifications, QA records, merge-request URLs, and approval summaries as enrichment.
-- Allow only the readiness synthesizer to use enrichment when forming its final judgment.
+- Allow only the readiness synthesizer to use judgment enrichment. Coverage evidence remains direct Test Health input.
 - Run the baseline worktree and change narrator for every non-empty review.
 - Extend the change narrator to report outward impact when the diff changes code, schema, or configuration.
 - Extend test health to falsify changed tests when the diff changes test files.
@@ -102,31 +102,29 @@ Provide one advisory local-review workflow for any confirmed `base..HEAD` range.
 
 ## Technical Context
 
-- `source_of_truth/agents/04-pr-review.agent.md` owns the current base confirmation, evaluator fan-out, report lifecycle, and forge-posting behavior.
+- `source_of_truth/agents/04-phase-final-checks.agent.md` owns base confirmation, conditional evaluator fan-out, and the report lifecycle.
 - `source_of_truth/agents/04a-baseline-worktree.agent.md` provides the isolated baseline and remains the first mandatory child.
 - `source_of_truth/agents/04b-change-narrator.agent.md` explains the branch diff without plan enrichment.
 - `source_of_truth/agents/04b-change-narrator.agent.md` can own conditional outward-impact findings without another report lane.
-- `source_of_truth/agents/04h-cleanliness-auditor.agent.md` is the intended owner of branch-added debug markers and temporary artifacts.
+- `source_of_truth/agents/04h-cleanliness-auditor.agent.md` owns branch-added debug markers and temporary artifacts.
 - `source_of_truth/agents/04d-consistency-auditor.agent.md`, `04e-dependency-auditor.agent.md`, `03e-diff-security-scan.agent.md`, and `04f-test-health.agent.md` remain advisory lanes.
 - `source_of_truth/agents/04f-test-health.agent.md` can own conditional falsification of changed tests.
 - `source_of_truth/agents/04g-readiness-synthesizer.agent.md` is the sole consumer that may combine evaluator evidence with enrichment and emit repair candidates.
-- Phase 04 deleted the old Phase review committee, consolidator, validator, and fixer. This phase must not restore them.
-- `source_of_truth/agents/04c-artifact-sweeper.agent.md` remains a retirement candidate after Cleanliness absorbs its live checks.
-- `source_of_truth/skills/pr-review-conventions/SKILL.md` and `pr-review-report/SKILL.md` define the current report root, evidence boundary, severity model, and report template.
-- `scripts/propagate_master_assets.py` emits the harness-specific command surfaces and must learn validated aliases from source frontmatter.
-- `tests/test_pr_review_orchestrator.py`, `test_pr_review_skills.py`, `test_readiness_synthesis_agents.py`, `test_narrative_and_test_health_agents.py`, and `test_propagate_master_assets.py` guard the current workflow.
+- Phase 04 deleted the old Phase review committee, consolidator, validator, and fixer. This phase does not restore them.
+- `source_of_truth/agents/04i-local-review-fixer.agent.md` owns one plan-independent repair pass.
+- `source_of_truth/skills/local-final-check-conventions/SKILL.md` and `local-final-check-report/SKILL.md` define the current report root, evidence boundary, severity model, and report template.
+- `scripts/propagate_master_assets.py` validates aliases and emits harness-specific command surfaces.
+- `tests/test_local_final_checks.py` and `tests/test_propagate_master_assets.py` guard the workflow.
 - `source_of_truth/` remains the only authoring surface. The maintainer runs propagation after source changes.
-
-Suggested implementation shape, to be verified by Phase Execute against current source and tests: rename the source orchestrator only after alias emission can preserve the existing command name.
 
 ## Dependencies & Risks
 
-- **Dependency**: Phase 04 must remove the phase-close review chorus from Phase Execute before this command becomes its sole local-review handoff.
-- **Dependency**: alias validation and emission must work across Claude, Codex, OpenCode, and Cursor before the current command file can retire safely.
+- **Dependency**: Phase 04 removed the phase-close review chorus before this command became the local-review handoff.
+- **Dependency**: alias validation and emission cover Claude, Codex, OpenCode, and Cursor.
 - **Dependency**: GitHub mirrors the authored agent but exposes no generated command-alias surface. Tests and documentation must state this difference.
 - **Risk**: changing the primary command can strand callers or deployed files. Mitigation: add alias support first, test both invocation surfaces, then reconcile generated-file retirement rules.
 - **Risk**: a report timestamp containing colons is not portable to Windows. Mitigation: use a UTC timestamp format that is safe on every supported filesystem.
-- **Risk**: optional enrichment may leak into evaluators that should judge only the diff. Mitigation: materialize one confirmed enrichment list and pass it only to the synthesizer.
+- **Risk**: optional judgment enrichment may leak into evaluators. Mitigation: pass it only to the synthesizer. Pass coverage evidence only to Test Health and synthesis.
 - **Risk**: removing an evaluator can strand an internal procedure or leave a report consumer dangling. Mitigation: search agent bodies, skills, instructions, tests, and documentation for both the display name and filename before retirement.
 - **Risk**: repair can turn an advisory command into an unbounded implementation loop. Mitigation: let the synthesizer emit candidates once and permit one local-review fixer pass without a review rerun.
 - **Risk**: repair changes the checkout after the readiness verdict. Mitigation: preserve the pre-repair report and write a separate repair report with every outcome and regression result.
@@ -135,37 +133,37 @@ Suggested implementation shape, to be verified by Phase Execute against current 
 
 ## Success Criteria
 
-- [ ] `phase-final-checks` and `pr-review` invoke the same user-facing agent on Claude, Codex, OpenCode, and Cursor.
-- [ ] GitHub receives the authored agent through its native mirror without a fabricated slash-command alias.
-- [ ] Alias parsing rejects invalid aliases, hidden-agent aliases, and collisions before generating output.
-- [ ] The command confirms one base and uses the resulting fixed range for every evaluator.
-- [ ] The command filters its own branch and tracking reference from automatic base suggestions.
-- [ ] A confirmed empty range produces a completed no-change readiness report.
-- [ ] Baseline-worktree failure stops the run before evaluator fan-out.
-- [ ] A later evaluator failure is recorded and does not discard usable reports.
-- [ ] The change narrator never receives plans, QA records, approval summaries, or merge-request context.
-- [ ] Only the readiness synthesizer receives optional enrichment.
-- [ ] Change Narrator reports outward impact exactly when code, schema, or configuration changes.
-- [ ] Test Health falsifies changed tests exactly when test files change.
-- [ ] Dependency review runs exactly when a dependency manifest or lockfile changes.
-- [ ] Test health runs exactly when tests change or coverage evidence is supplied.
-- [ ] Cleanliness checks cover branch-added debug statements, TODO or FIXME markers, temporary flags, and commented-out code.
-- [ ] No separate artifact-sweeper, plan-blind, blast-radius, or test-falsification lane remains.
-- [ ] The command writes the readiness report before it asks whether to repair findings.
-- [ ] Declining repair leaves the checkout unchanged and completes the workflow.
-- [ ] Repair considers only synthesizer-confirmed findings from security, outward-impact, and test-falsification checks.
-- [ ] Local validation and repair work without a phase plan, task name, review cycle, or implementation record.
-- [ ] An empty repair-candidate list skips the local-review fixer.
-- [ ] An accepted repair request invokes at most one fixer pass against current `HEAD`.
-- [ ] Every accepted repair writes a separate report with per-finding status, changed files, baseline tests, and post-repair results.
-- [ ] The repair report does not overwrite or silently upgrade the pre-repair readiness verdict.
-- [ ] The workflow never pushes changes, posts review comments, or requires an open merge request.
-- [ ] Report paths use a cross-platform-safe UTC timestamp and remain under one local-review root.
-- [ ] Retired source agents have no live roster entries, spawn instructions, instruction globs, tests, or documentation references.
-- [ ] Contract tests fail when alias identity, range consistency, evaluator conditions, or the repair bound is removed.
-- [ ] Catalog documentation reports counts measured from the completed source tree.
-- [ ] Authored changes stay within `source_of_truth/`, `scripts/`, `tests/`, and repository documentation before maintainer propagation.
-- [ ] No generated file under `ports/` or `.github/` is edited by an agent.
+- [x] `phase-final-checks` and `pr-review` invoke the same user-facing agent on Claude, Codex, OpenCode, and Cursor.
+- [x] GitHub receives the authored agent through its native mirror without a fabricated slash-command alias.
+- [x] Alias parsing rejects invalid aliases, hidden-agent aliases, and collisions before generating output.
+- [x] The command confirms one base and uses the resulting fixed range for every evaluator.
+- [x] The command filters its own branch and tracking reference from automatic base suggestions.
+- [x] A confirmed empty range produces a completed no-change readiness report.
+- [x] Baseline-worktree failure stops the run before evaluator fan-out.
+- [x] A later evaluator failure is recorded and does not discard usable reports.
+- [x] The change narrator never receives plans, QA records, approval summaries, or merge-request context.
+- [x] Only the readiness synthesizer receives judgment enrichment. Test Health receives coverage evidence as direct evaluator input.
+- [x] Change Narrator reports outward impact exactly when code, schema, or configuration changes.
+- [x] Test Health falsifies changed tests exactly when test files change.
+- [x] Dependency review runs exactly when a dependency manifest or lockfile changes.
+- [x] Test health runs exactly when tests change or coverage evidence is supplied.
+- [x] Cleanliness checks cover branch-added debug statements, TODO or FIXME markers, temporary flags, and commented-out code.
+- [x] No separate artifact-sweeper, plan-blind, blast-radius, or test-falsification lane remains.
+- [x] The command writes the readiness report before it asks whether to repair findings.
+- [x] Declining repair leaves the checkout unchanged and completes the workflow.
+- [x] Repair considers only synthesizer-confirmed findings from security, outward-impact, and test-falsification checks.
+- [x] Local validation and repair work without a phase plan, task name, review cycle, or implementation record.
+- [x] An empty repair-candidate list skips the local-review fixer.
+- [x] An accepted repair request invokes at most one fixer pass against current `HEAD`.
+- [x] Every accepted repair writes a separate report with per-finding status, changed files, baseline tests, and post-repair results.
+- [x] The repair report does not overwrite or silently upgrade the pre-repair readiness verdict.
+- [x] The workflow never pushes changes, posts review comments, or requires an open merge request.
+- [x] Report paths use a cross-platform-safe UTC timestamp and remain under one local-review root.
+- [x] Retired source agents have no live roster entries, spawn instructions, instruction globs, tests, or documentation references.
+- [x] Contract tests fail when alias identity, range consistency, evaluator conditions, or the repair bound is removed.
+- [x] Catalog documentation reports counts measured from the completed source tree.
+- [x] Authored changes stay within `source_of_truth/`, `scripts/`, `tests/`, and repository documentation before maintainer propagation.
+- [x] No generated file under `ports/` or `.github/` is edited by an agent.
 
 ## QA Considerations
 
@@ -176,13 +174,10 @@ Suggested implementation shape, to be verified by Phase Execute against current 
 - A manual dry read must confirm that both command names describe one local workflow and never promise forge posting.
 - Port synchronization tests will remain red after source edits until the maintainer runs propagation.
 
-## Notes for Phase - Execute
+## Implementation Notes
 
-Prefer two features. Keep each feature's tests and documentation updates inside that feature.
-
-1. **Create the single invocation and range lifecycle.** Add validated alias emission, establish the primary command, preserve base confirmation, define the portable report root, and remove forge integration. Keep `pr-review` working throughout the transition.
-2. **Reduce the roster and add bounded repair.** Apply the conditions, isolate enrichment, fold artifact checks into cleanliness, extend existing reports, and add one plan-independent local-review fixer.
-
-The first feature must land before the current orchestrator filename or generated command is retired. The second feature must remove each evaluator and its consumer in the same change.
-
-The readiness report remains the pre-repair judgment. Record one accepted repair pass in a separate report and do not rerun the open-ended review roster.
+- Alias validation rejects invalid syntax, hidden-agent aliases, and invocation collisions before output emission.
+- Cleanliness owns the retired artifact sweeper's checks.
+- Test Health works directly from changed tests and supplied coverage evidence. It no longer needs Test Analyst.
+- The readiness report remains the pre-repair judgment. One accepted repair pass writes a separate report and never reruns the roster.
+- Maintainer propagation remains pending. Generated ports intentionally retain the prior command until that manual step.

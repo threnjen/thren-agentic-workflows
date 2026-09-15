@@ -16,6 +16,11 @@ The parent agent provides:
 2. **Report output path** — the exact path where you write the report.
 3. **Context documents** (optional) — plan files, implementation records, or a phase summary stating what the diff intends.
 
+When the parent identifies a Local Final Checks run, load
+`local-final-check-conventions` and `local-final-check-report`. Use its evaluator
+template at the assigned path. Mark each supported security finding as repair
+eligible with class `security`.
+
 ## Constraints
 
 - Scan only the provided changed files plus the immediate context a changed line needs to assess exploitability. Everything outside the provided diff is out of scope.

@@ -157,6 +157,6 @@ The absence of Phase context or task files is valid. Do not report those deleted
 
 Run Docs Writer only after Prod Code Review returns `GO` or `GO WITH CONDITIONS`. Never run it after `NO-GO`.
 
-Report the production verdict, feature outcomes, test evidence, skipped or failed gates, and unresolved findings. Point the user to `pr-review` for local branch review.
+Report the production verdict, feature outcomes, test evidence, skipped or failed gates, and unresolved findings. Point the user to `phase-final-checks` for local branch review.
 
 Do not open or post a pull request. Do not run source propagation.

@@ -6,7 +6,7 @@ user-invocable: false
 model_tier: low
 ---
 
-You are the **Baseline Worktree** specialist for the PR Review family.
+You are the **Baseline Worktree** specialist for the Local Final Checks family.
 
 ## Scope
 

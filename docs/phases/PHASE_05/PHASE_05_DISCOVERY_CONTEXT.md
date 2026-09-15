@@ -9,9 +9,9 @@
 
 ## Current Repository Baseline
 
-- The current repository exposes `04 PR - Review` as its local pre-PR review command.
-- The current command owns base confirmation, evaluator fan-out, readiness synthesis, and optional forge posting.
-- Phase 04 will remove the close-review chorus from Phase Execute before this phase changes the local command.
+- The repository entered this phase with a pull-request-named local review command.
+- At entry, that command owned base confirmation, evaluator fan-out, readiness synthesis, and optional forge posting.
+- Phase 04 removed the close-review chorus before this phase changed the local command.
 - Agent counts must be derived from the finished source tree. No external count is a deletion target.
 
 ## Decisions Carried Into This Phase

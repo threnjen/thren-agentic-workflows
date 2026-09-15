@@ -24,10 +24,8 @@ IDENTITIES = (
     ("04f", "-prod-code-review", "03f", "-prod-code-review", "Prod Code Review", False),
     ("04h", "-unity-reviewer", "03h", "-unity-reviewer", "Unity Reviewer", False),
     ("04i", "-feature-qa-runner", "03i", "-feature-qa-runner", "Feature - QA Runner", False),
-    ("05", "-pr-review", "04", "-pr-review", "PR - Review", True),
     ("05" + "a", "-baseline-worktree", "04a", "-baseline-worktree", "Baseline Worktree", False),
     ("05" + "b", "-change-narrator", "04b", "-change-narrator", "Change Narrator", True),
-    ("05" + "c", "-artifact-sweeper", "04c", "-artifact-sweeper", "Artifact Sweeper", True),
     ("05" + "d", "-consistency-auditor", "04d", "-consistency-auditor", "Consistency Auditor", True),
     ("05" + "e", "-dependency-auditor", "04e", "-dependency-auditor", "Dependency Auditor", True),
     ("05" + "f", "-test-health", "04f", "-test-health", "Test Health", True),
@@ -130,7 +128,7 @@ def test_no_pre_renumber_identifier_survives_in_authored_scope() -> None:
 
 
 def test_identifier_scan_fails_on_one_restored_identifier() -> None:
-    old_name = _display("05", "PR - Review")
+    old_name = _display("04", "Phase - Execute")
     mutated = [("README.md", "clean\n" + old_name + "\n")]
     errors = _identifier_errors(mutated)
     assert any(error.startswith("README.md:2:") and old_name in error for error in errors)
@@ -232,7 +230,7 @@ def test_generated_tree_has_no_pre_renumber_output_orphan() -> None:
         assert not (dot_github_agents / f"{old_slug}.agent.md").exists()
 
     for old_slug, new_slug, _old_name, _new_name, _display_name, _label in IDENTITY_ROWS:
-        if old_slug in {"04" + "-phase-execute", "05" + "-pr-review"}:
+        if old_slug == "04" + "-phase-execute":
             assert not (ports / "codex" / "agents" / f"{old_slug}.toml").exists()
             assert (ports / "codex" / "agents" / f"{new_slug}.toml").is_file()
         assert (opencode / f"{new_slug}.md").is_file()
