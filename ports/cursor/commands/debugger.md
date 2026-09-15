@@ -120,7 +120,9 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 # Subagent Delegation Depth
 
-Delegation depth is one. Only the user-invocable root orchestrator may spawn agents. Child agents never spawn agents. When work needs fan-out, the root spawns sibling agents and coordinates them through exclusive artifact ownership and compact returns.
+In-process fan-out MUST remain root-only at depth one. Only the user-invocable root orchestrator may create in-process children. Child agents MUST NOT use collaboration-tool fan-out or spawn in-process descendants. When work needs in-process fan-out, the root MUST coordinate sibling agents through exclusive artifact ownership and compact returns.
+
+Board-mediated spawning MAY recurse through Crosswire's existing durable intake and watcher path. Crosswire records parentage, applies registry-driven enforcement, and bounds each chain with `SpawnConfig.max_depth`; a request beyond that bound receives `max_depth_exceeded` and persists `max_depth_refused`. Board-mediated children MUST retain intake, claim, parent identity, chain, recovery, reconciliation, and enforcement checks.
 
 ## Load Canary
 

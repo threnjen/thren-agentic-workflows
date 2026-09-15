@@ -81,6 +81,8 @@ benchmarks/ packages/ tests/
   - cursor → `~/.cursor` (agents, commands, rules, skills; needs Cursor 2.4+)
   - github → `<repo>/.github` (verbatim mirror of the mirrored subdirs)
 - Deploy selection persists to `.deploy-config.json` (gitignored) unless `--no-save`.
+  The file stores `harnesses` and the opt-in boolean `comms_profile`, which defaults
+  to `false` for legacy files and invalid values.
 - Deploy also splices a baseline instructions file per harness (`deploy_baseline`),
   rendered from `source_of_truth/baseline/baseline-instructions.md` with real home
   paths substituted at deploy time (no OS branching — `Path.home()` handles it):
@@ -94,16 +96,24 @@ benchmarks/ packages/ tests/
   reads its bullet list with `^- ([a-z0-9-]+)$`, so surrounding prose can change freely.
   Each bullet names `source_of_truth/instructions/<name>.instructions.md`, which must carry
   `baseline: true`. `_instruction_body` strips the frontmatter, drops the trailing Load Canary
-  section, and demotes the H1 to an H2. Currently 11 sections: `agent-discovery`,
+  section, and demotes the H1 to an H2. The profile-off baseline uses eleven sections:
+  `agent-discovery`,
   `challenge-assumptions`, `code-change-strategy`, `code-review-graph`,
   `codebase-context-bootstrap`, `language-standards`, `learnings-bootstrap`,
   `output-verbosity-policy`, `proactive-research`, `prose-standards`, `question-hygiene`.
+  A disabled communications profile deploys these eleven sections. An enabled profile
+  also deploys `comms-protocol`, for twelve sections.
 - Deploy also splices `<!-- baseline-canary -->`, one aggregate canary naming the count and
   every section it wrote. Per-instruction canaries are stripped on the way in, so without it
   a stale global file reads identically to a current one. A canary whose section list does
   not match the template means that machine has not deployed since the template changed.
 - Only sentinel blocks are replaced/appended, content outside them is never touched;
   idempotent (second run → `unchanged`); every failure returns a status, never raises.
+- Enabled communications runs `crosswire-turn-hook --probe --config PATH` before any
+  registration write and accepts only the exact `CROSSWIRE_HOOK_PROBE_OK` output.
+  The shared lifecycle owns the `<!-- crosswire-comms-registration -->` marker,
+  atomic replacement, idempotence, and removed-content reporting. Set `comms_profile`
+  to `false` and redeploy to remove owned registrations and the contract section.
 - `RETIRED_BASELINE_SECTIONS` (`deploy_agents.py`) names sections this repo no longer splices
   and actively deletes. Dropping a name from the template only stops rewriting the block;
   listing it as retired removes the stale one a previous deploy already wrote, and it stays
@@ -112,6 +122,44 @@ benchmarks/ packages/ tests/
   companion-tool bootstrap installs the MCP server regardless — the retirement drops text, not tooling.
 - The cursor baseline `.mdc` deliberately carries NO generated marker so the
   `~/.cursor/rules` prune pass treats it as foreign and leaves it alone.
+
+Registration targets resolve from `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, and
+`OPENCODE_CONFIG_DIR` through the same root helper as asset deployment. Agents do not
+run propagation. A maintainer must run `python3 scripts/propagate_master_assets.py --once`
+after source changes.
+
+## Feature 07 Live Evidence and Rollback
+
+- The enabled `comms_profile` writes the Claude `Stop` registration to `settings.json`, the Codex
+  top-level `notify` registration to `config.toml`, and the OpenCode plugin to exactly
+  `plugins/crosswire-comms.ts` below each resolved harness root.
+- Each enabled registration requires the explicit command
+  `crosswire-turn-hook --probe --config PATH` and the exact stdout token
+  `CROSSWIRE_HOOK_PROBE_OK` with exit code zero. The generated hook configuration uses the shared
+  board, a valid `HostConfig` shape, a ten-second watcher lease, and actual enforced board session
+  IDs before correction evidence.
+- A live turn and correction run must retain a bounded audit envelope, use its
+  `unstructured_count` for compliance, and preserve redacted row and delivery metadata. Do not
+  include agent bodies, credentials, or hook configuration contents in Markdown evidence.
+- Feature 07's real-root snapshot is explicitly post-deployment and cannot prove AC7. A controlled
+  disposable-root cycle did capture an independent profile-off snapshot, prove enabled registration
+  creation, remove all owned registrations, and restore every affected file byte-for-byte.
+- Rollback is `comms_profile: false` followed by `python3 deploy_agents.py`. The removal report is
+  the recovery record for owned Claude groups, the Codex line, and the OpenCode plugin. Agents do
+  not run propagation. A maintainer runs `python3 scripts/propagate_master_assets.py --once`
+  after source changes.
+- The selected Phase 03C rollback contract accepts this controlled disposable-root comparison only.
+  It requires all six destinations to restore byte-for-byte, foreign content to survive, owned
+  content to be removed and reported, and recovery material to remain available. It does not prove
+  historical bytes in real user-global roots. The existing bounded atomic replacement failure test
+  proves that prior valid output remains available when replacement fails. The genuine-backup route
+  is not selected.
+- The profile-off baseline has eleven technical sections. An enabled comms profile has twelve
+  sections including `comms-protocol`. Feature 09 revision 13 remains terminal failed with zero
+  attributable rows, no percentage, open `XD-3`, and no retry. The current production decision is
+  **NO-GO**, regardless of controlled rollback success.
+- Linux final evidence does not imply Mac parity. Mac hermetic and live-parity runs remain
+  independent carry-forward work.
 
 ## Important Script Facts
 

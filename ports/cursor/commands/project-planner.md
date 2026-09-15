@@ -75,7 +75,9 @@ Ask the user targeted questions to build a complete picture. Focus on:
 
 Batch related **factual** questions — tech stack, existing systems, team constraints, whether keys or accounts exist. These gather context and have no tradeoff to weigh; asking them one at a time wastes the user's time.
 
-**Decisions are different, and the moment one appears you load the `decision-presentation` skill and follow it.** A decision is a genuine fork where different answers lead to different work — scope boundaries, sequencing, build-versus-buy, what to explicitly not build. Preview the queue as headlines, then take them one at a time with framing, costed options, and a committed recommendation. Never hand the user a list of open decisions to sort.
+**Decisions are different.** A decision is a genuine fork where different answers lead to different work and a reasonable person could pick either — scope boundaries, sequencing, build-versus-buy, what to explicitly not build. A choice the repo, a required convention, or the user has already settled is not a decision, and neither is a fork where only one option works. Record those and move on. Technical choices — naming, structure, which tool or library call — are yours to make, not the user's. Raise one only when it changes cost, locks in a dependency, or changes what the user gets.
+
+**When more than one genuine decision is open, load the `decision-presentation` skill and follow it.** Preview the queue as headlines, then take them one at a time with framing, costed options, and a committed recommendation. A single decision gets asked plainly under `question-hygiene`. Never hand the user a list of open decisions to sort.
 
 Multiple rounds of clarification are expected and encouraged — follow-up questions based on the user's answers are better than guessing, and challenging assumptions is a core part of this process.
 
@@ -217,7 +219,9 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 # Subagent Delegation Depth
 
-Delegation depth is one. Only the user-invocable root orchestrator may spawn agents. Child agents never spawn agents. When work needs fan-out, the root spawns sibling agents and coordinates them through exclusive artifact ownership and compact returns.
+In-process fan-out MUST remain root-only at depth one. Only the user-invocable root orchestrator may create in-process children. Child agents MUST NOT use collaboration-tool fan-out or spawn in-process descendants. When work needs in-process fan-out, the root MUST coordinate sibling agents through exclusive artifact ownership and compact returns.
+
+Board-mediated spawning MAY recurse through Crosswire's existing durable intake and watcher path. Crosswire records parentage, applies registry-driven enforcement, and bounds each chain with `SpawnConfig.max_depth`; a request beyond that bound receives `max_depth_exceeded` and persists `max_depth_refused`. Board-mediated children MUST retain intake, claim, parent identity, chain, recovery, reconciliation, and enforcement checks.
 
 ## Load Canary
 

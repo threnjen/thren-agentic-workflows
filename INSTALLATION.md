@@ -9,6 +9,8 @@ python3 deploy_agents.py
 
 The first run asks which harnesses you use (Claude, Codex, OpenCode, Cursor, GitHub) and
 saves the choice to `.deploy-config.json` (gitignored). Subsequent runs reuse it.
+The saved file also carries `"comms_profile": false` by default. Set it to `true` only
+after installing and probing Crosswire.
 
 Common variants:
 
@@ -33,11 +35,161 @@ home paths at deploy time (so it works unchanged on Mac, Windows, or Linux):
 | cursor | `~/.cursor/rules/baseline-instructions.mdc` (an `alwaysApply` rule) |
 | github | `<repo>/.github/copilot-instructions.md` |
 
-The baseline contains three sections — Context7 usage, code-review-graph usage, and
-agent/skill discovery — each wrapped in HTML sentinel comments (for example
-`<!-- context7 -->`). Deploy only replaces content between matching sentinels (or
-appends a missing section); everything else in the file is yours and is never touched.
-Re-running deploy is idempotent and reports the file as `unchanged`.
+The baseline contains eleven technical sections by default. The opt-in communications
+profile adds the `comms-protocol` section for a twelve-section enabled baseline.
+Each section is wrapped in an HTML sentinel comment, and deploy only replaces content
+between matching sentinels. Everything else in the file remains yours.
+
+With communications enabled, selected harnesses run the explicit
+`crosswire-turn-hook --probe --config PATH` check before a registration writer mutates
+its configuration. Only the exact `CROSSWIRE_HOOK_PROBE_OK` output permits a write.
+The deployment report includes each target path and lifecycle status. An enabled
+registration failure returns status 1 after reporting any baseline that was already
+written, while the failed registration itself remains unchanged.
+
+To roll back, set `"comms_profile": false` in `.deploy-config.json` and run
+`python3 deploy_agents.py`. The deployment removes owned registrations and the contract
+section while preserving foreign content. It reports removed owned content for recovery.
+
+## Claude Code Registration
+
+When the communications profile is enabled, Claude receives one owned `Stop` hook in
+`settings.json` under the resolved Claude root:
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "crosswire-turn-hook --adapter claude --config PATH # <!-- crosswire-comms-registration -->",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+`CLAUDE_CONFIG_DIR` selects the Claude root. Without it, deployment uses `~/.claude`.
+The default Crosswire config path is `hook-config.json` under that root until a host
+configuration contract establishes a user-global path. Pass an explicit path to the
+registration lifecycle when embedding deployment.
+
+Deployment runs `crosswire-turn-hook --probe --config PATH` before it writes. Only
+the exact `CROSSWIRE_HOOK_PROBE_OK` line permits a write. The report identifies the
+target and returns `created`, `updated`, `unchanged`, `removed`, or `failed` status.
+
+With the profile disabled, deployment removes every `Stop` group carrying the exact
+trailing `# <!-- crosswire-comms-registration -->` ownership form, including hand-edited
+commands that retain that form. Marker text embedded in a foreign command is not ownership.
+The verbose report includes the removed JSON group so an operator can recover edits.
+Foreign groups and unrelated settings stay untouched. Agents do not run propagation.
+A maintainer must run it after source changes.
+
+## Codex Registration
+
+When the communications profile is enabled, deployment adds one owned top-level `notify`
+assignment to `config.toml` under the resolved Codex root:
+
+```toml
+notify = ["crosswire-turn-hook", "--adapter", "codex", "--config", "/path/to/hook-config.json"] # <!-- crosswire-comms-registration -->
+```
+
+`CODEX_HOME` selects the Codex root. Without it, deployment uses `~/.codex`. The
+registration preserves unrelated TOML bytes and owns only the one physical assignment
+line with the exact trailing comment. A foreign top-level `notify` assignment is left
+untouched and causes a bounded deployment failure rather than a duplicate key.
+
+Before an enabled write, deployment runs `crosswire-turn-hook --probe --config PATH`.
+Only a zero exit status with the exact `CROSSWIRE_HOOK_PROBE_OK` line permits mutation.
+Failure output, unexpected output, timeout, launch failure, or a nonzero exit leaves the
+target unchanged. The default Crosswire host configuration is `hook-config.json` under
+the resolved Codex root, unless deployment supplies an explicit path.
+
+To roll back Codex registration, set `"comms_profile": false` and deploy again. The
+report prints every removed owned line, including hand-edited content, for recovery.
+Foreign TOML remains unchanged. Agents do not run propagation. A maintainer must run it
+after source changes.
+
+## OpenCode Registration
+
+When the communications profile is enabled, deployment writes one owned TypeScript plugin
+to `plugins/crosswire-comms.ts` below the resolved OpenCode root:
+
+```text
+~/.config/opencode/plugins/crosswire-comms.ts
+```
+
+`OPENCODE_CONFIG_DIR` selects the OpenCode root. Without it, deployment uses
+`~/.config/opencode`. The plugin handles `session.idle`, preserves the session and project
+context, and invokes `crosswire-turn-hook --adapter opencode --config PATH` with an argument
+vector and JSON on standard input. The configuration path is serialized as a TypeScript
+string literal, so shell characters remain data.
+
+Before an enabled write, deployment runs the shared probe and accepts only the exact
+`CROSSWIRE_HOOK_PROBE_OK` line. Failure output, unexpected output, timeout, launch failure,
+invalid paths, symlinked paths, or an unowned target leave the target unchanged. Foreign
+plugin files remain byte-identical.
+
+To roll back OpenCode registration, set `"comms_profile": false` and deploy again. The
+deployment removes only `crosswire-comms.ts` when it carries the exact
+`<!-- crosswire-comms-registration -->` marker, and prints the raw removed content for
+recovery. Agents do not run propagation. A maintainer must run it after source changes.
+
+## Crosswire Live Verification and Rollback Evidence
+
+Feature 07 verified the enabled profile against these user-global files and configuration paths:
+
+| Harness | Baseline | Registration | Hook configuration |
+|---|---|---|---|
+| Claude | `$CLAUDE_CONFIG_DIR/CLAUDE.md` or `~/.claude/CLAUDE.md` | `settings.json` | `hook-config.json` below the resolved root |
+| Codex | `$CODEX_HOME/AGENTS.md` or `~/.codex/AGENTS.md` | `config.toml` | `hook-config.json` below the resolved root |
+| OpenCode | `$OPENCODE_CONFIG_DIR/AGENTS.md` or `~/.config/opencode/AGENTS.md` | `plugins/crosswire-comms.ts` | `hook-config.json` below the resolved root |
+
+Before enabling the profile, place a valid host configuration at each resolved `hook-config.json`
+path. Use the shared board identity and record only paths and redacted validation results. Run the
+exact probe for each path:
+
+```bash
+crosswire-turn-hook --probe --config PATH
+```
+
+Accept only exit code zero with exactly `CROSSWIRE_HOOK_PROBE_OK`. A successful deployment then
+reports the target path, probe token, and registration status. The OpenCode target is exactly
+`plugins/crosswire-comms.ts`, and ownership requires the standalone
+`// <!-- crosswire-comms-registration -->` line.
+
+Keep the Phase 01 watcher in the authorized login tmux session while measuring turns and
+corrections. Query bounded rows with `python -m crosswire.cli --repository REPOSITORY
+--store-root STORE_ROOT audit --view turn-results --json --created-after ISO
+--created-before ISO`. Derive compliance from that envelope's
+`unstructured_count` and sample size. Do not count skipped or out-of-window turns.
+
+For rollback, set `"comms_profile": false` and run `python3 deploy_agents.py`. The report retains
+removed Claude groups, the Codex line, and OpenCode target content. Compare raw bytes, SHA-256
+hashes, existence, and newline state with the pre-phase snapshot before deleting any evidence.
+Feature 07 proved this byte-identity procedure in a controlled disposable-root cycle. The real
+machine snapshot was captured after an earlier deployment and does not prove independent pre-phase
+bytes. The selected Phase 03C contract accepts the controlled cycle only when all six destinations
+match, foreign content survives, owned content is removed and reported, and recovery material is
+retained. The bounded atomic replacement failure test proves prior valid output remains available
+when replacement fails. Do not claim historical real-root rollback identity. The genuine-backup
+route is not selected.
+
+The profile-off baseline has eleven technical sections. An enabled comms profile has twelve
+sections including `comms-protocol`. Feature 09 revision 13 remains terminal failed with zero
+attributable rows, no compliance percentage, open `XD-3`, and no retry authorization. The current
+production decision is **NO-GO**, even when the controlled rollback comparison passes.
+
+After source changes, a maintainer must run
+`python3 scripts/propagate_master_assets.py --once` before deployment. Agents do not run
+propagation. Preserve the audit envelope, snapshot manifest, removal report, and live evidence
+until review accepts them.
 
 ## Using Named Agents in Codex
 
@@ -99,12 +251,14 @@ Both are best-effort: if a tool cannot be set up (for example, no Node.js on PAT
 Context7), deploy prints a warning explaining why and continues — a failed tool install
 never blocks asset deployment.
 
-Deploy copies from `ports/`. If you have edited anything under `source_of_truth/`, first
-regenerate the outputs:
+Deploy copies from `ports/`. If you have edited anything under `source_of_truth/`, ask a
+maintainer to regenerate the outputs:
 
 ```bash
 python3 scripts/propagate_master_assets.py --once
 ```
+
+Agents do not run propagation. The maintainer must run it after source changes.
 
 **GitHub Copilot users**: the github harness deploys into this repo's own `.github/`;
 to use the agents from another project, open this repo in your VS Code workspace

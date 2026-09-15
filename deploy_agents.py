@@ -22,19 +22,57 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Mapping, Sequence, Tuple
+from typing import Callable, Dict, List, Mapping, Sequence, Tuple
 
-from scripts.asset_paths import PORTS_DIR, REPO_ROOT, file_has_generated_marker, poll_watch
+from scripts.asset_paths import (
+    GENERATED_AGENT_MARKDOWN_HEADER,
+    PORTS_DIR,
+    REPO_ROOT,
+    file_has_generated_marker,
+    generated_marker_line_index,
+    poll_watch,
+)
 
 CONFIG_PATH = REPO_ROOT / ".deploy-config.json"
 
 HARNESSES = ("claude", "codex", "opencode", "cursor", "github")
+COMMS_PROFILE_KEY = "comms_profile"
+REGISTRATION_OWNERSHIP_TAG = "<!-- crosswire-comms-registration -->"
+PROBE_SUCCESS_TOKEN = "CROSSWIRE_HOOK_PROBE_OK"
+PROBE_FAILURE_TOKEN = "CROSSWIRE_HOOK_PROBE_FAILED"
+PROBE_TIMEOUT_SECONDS = 10
+OPENCODE_PLUGIN_BASENAME = "crosswire-comms.ts"
+OPENCODE_PLUGIN_SOURCE = REPO_ROOT / "source_of_truth" / "plugins" / OPENCODE_PLUGIN_BASENAME
+OPENCODE_CONFIG_PLACEHOLDER = "__CROSSWIRE_CONFIG_PATH__"
+
+
+@dataclass(frozen=True)
+class DeployConfig:
+    """Normalized persisted deployment selection."""
+
+    harnesses: List[str]
+    comms_profile: bool = False
+
+
+@dataclass(frozen=True)
+class RegistrationAdapter:
+    """Format-specific seams consumed by the shared registration lifecycle."""
+
+    target_path: Callable[[Path], Path]
+    config_path: Callable[[Path], Path]
+    upsert: Callable[[bytes, Path], bytes]
+    remove: Callable[[bytes], Tuple[bytes, str]]
+    delete_on_remove: bool = False
 
 # `code-review-graph install --platform` vocabulary, keyed by our harness name.
 # Only the harnesses this repo ports to get configured; the tool's other
@@ -68,6 +106,41 @@ CURSOR_BASELINE_FRONTMATTER = "---\nalwaysApply: true\n---\n\n"
 GITHUB_MIRRORED_SUBDIRS = ("agents", "hooks", "instructions", "learnings", "skills")
 
 
+def _environment_root(
+    env_var: str,
+    default: str | Path,
+    *,
+    home: Path,
+    environ: Mapping[str, str],
+) -> Path:
+    raw = environ.get(env_var, "")
+    return Path(raw).expanduser() if raw else home / default
+
+
+def harness_root(
+    harness: str,
+    *,
+    home: Path | None = None,
+    environ: Mapping[str, str] | None = None,
+) -> Path:
+    """Resolve the configuration root using the same rules as asset deployment."""
+    home = Path(home).expanduser() if home else Path.home()
+    environ = os.environ if environ is None else environ
+    if harness == "claude":
+        return _environment_root("CLAUDE_CONFIG_DIR", ".claude", home=home, environ=environ)
+    if harness == "codex":
+        return _environment_root("CODEX_HOME", ".codex", home=home, environ=environ)
+    if harness == "opencode":
+        return _environment_root(
+            "OPENCODE_CONFIG_DIR", Path(".config") / "opencode", home=home, environ=environ
+        )
+    if harness == "cursor":
+        return home / ".cursor"
+    if harness == "github":
+        return REPO_ROOT / ".github"
+    raise ValueError(f"unknown harness: {harness}")
+
+
 def harness_mappings(
     harness: str,
     *,
@@ -78,20 +151,16 @@ def harness_mappings(
     home = Path(home).expanduser() if home else Path.home()
     environ = os.environ if environ is None else environ
 
-    def root(env_var: str, default: str | Path) -> Path:
-        raw = environ.get(env_var, "")
-        return Path(raw).expanduser() if raw else home / default
-
     port = PORTS_DIR / harness
     if harness == "claude":
-        base = root("CLAUDE_CONFIG_DIR", ".claude")
+        base = harness_root(harness, home=home, environ=environ)
         # learnings/ has no runtime destination under the config dir: every
         # consumer reads `.github/learnings/` in the working repo, so a copy
         # here would be read by nothing. Cursor is the exception - its
         # learnings ship as agent-requested rules under rules/.
         return [(port / sub, base / sub) for sub in ("agents", "commands", "skills")]
     if harness == "codex":
-        base = root("CODEX_HOME", ".codex")
+        base = harness_root(harness, home=home, environ=environ)
         # codex profiles/ has no documented runtime destination and is not
         # deployed; neither does learnings/ (see the claude branch above).
         return [
@@ -99,16 +168,16 @@ def harness_mappings(
             (port / "skills", home / ".agents" / "skills"),
         ]
     if harness == "opencode":
-        base = root("OPENCODE_CONFIG_DIR", Path(".config") / "opencode")
+        base = harness_root(harness, home=home, environ=environ)
         return [(port / sub, base / sub) for sub in ("agents", "skills")]
     if harness == "cursor":
-        base = home / ".cursor"
+        base = harness_root(harness, home=home, environ=environ)
         return [
             (port / sub, base / sub)
             for sub in ("agents", "commands", "rules", "skills")
         ]
     if harness == "github":
-        base = REPO_ROOT / ".github"
+        base = harness_root(harness, home=home, environ=environ)
         return [(port / sub, base / sub) for sub in GITHUB_MIRRORED_SUBDIRS]
     raise ValueError(f"unknown harness: {harness}")
 
@@ -219,18 +288,14 @@ def baseline_destination(
     home = Path(home).expanduser() if home else Path.home()
     environ = os.environ if environ is None else environ
 
-    def root(env_var: str, default: str | Path) -> Path:
-        raw = environ.get(env_var, "")
-        return Path(raw).expanduser() if raw else home / default
-
     if harness == "claude":
-        return root("CLAUDE_CONFIG_DIR", ".claude") / "CLAUDE.md"
+        return harness_root(harness, home=home, environ=environ) / "CLAUDE.md"
     if harness == "codex":
-        return root("CODEX_HOME", ".codex") / "AGENTS.md"
+        return harness_root(harness, home=home, environ=environ) / "AGENTS.md"
     if harness == "opencode":
-        return root("OPENCODE_CONFIG_DIR", Path(".config") / "opencode") / "AGENTS.md"
+        return harness_root(harness, home=home, environ=environ) / "AGENTS.md"
     if harness == "cursor":
-        return home / ".cursor" / "rules" / "baseline-instructions.mdc"
+        return harness_root(harness, home=home, environ=environ) / "rules" / "baseline-instructions.mdc"
     if harness == "github":
         # Copilot's repo-wide instructions file; .github/AGENTS.md would only
         # scope to files under .github/ (nearest-file precedence).
@@ -299,6 +364,12 @@ def _instruction_body(name: str) -> str:
     if text.startswith("---\n"):
         end = text.index("\n---\n", 3) + len("\n---\n")
         text = text[end:]
+    lines = text.splitlines()
+    marker_index = generated_marker_line_index(text)
+    if marker_index >= 0 and marker_index < len(lines):
+        if lines[marker_index] == GENERATED_AGENT_MARKDOWN_HEADER:
+            del lines[marker_index]
+            text = "\n".join(lines) + "\n"
     text = re.sub(r"\n#{2,}\s*Load Canary\s*\n.*\Z", "\n", text, flags=re.DOTALL)
     text = re.sub(r"\A\s*# ", "## ", text)
     return text.strip("\n")
@@ -335,7 +406,10 @@ def _strip_section(existing: str, name: str) -> str:
     pattern = re.compile(r"\n*" + re.escape(sentinel) + r"\n?.*?" + re.escape(sentinel) + r"\n*", re.DOTALL)
     if not pattern.search(existing):
         return existing
-    stripped = pattern.sub("\n\n", existing, count=1)
+    match = pattern.search(existing)
+    assert match is not None
+    replacement = "\n" if match.end() == len(existing) else "\n\n"
+    stripped = existing[: match.start()] + replacement + existing[match.end() :]
     return stripped.lstrip("\n")
 
 
@@ -357,8 +431,10 @@ def deploy_baseline(
     *,
     home: Path | None = None,
     environ: Mapping[str, str] | None = None,
+    comms_enabled: bool = False,
 ) -> Dict[str, str]:
     """Splice the rendered baseline sections into the harness's global file."""
+    comms_enabled = _normalize_comms_profile(comms_enabled)
     home = Path(home).expanduser() if home else Path.home()
     environ = os.environ if environ is None else environ
 
@@ -390,6 +466,9 @@ def deploy_baseline(
         updated = CURSOR_BASELINE_FRONTMATTER
     for name in RETIRED_BASELINE_SECTIONS:
         updated = _strip_section(updated, name)
+    if not comms_enabled:
+        sections.pop("comms-protocol", None)
+        updated = _strip_section(updated, "comms-protocol")
     updated = _splice_section(
         updated, BASELINE_CANARY_SECTION, _baseline_canary_body(tuple(sections))
     )
@@ -406,6 +485,776 @@ def deploy_baseline(
     except OSError as exc:
         return {"status": "failed", "detail": str(exc)}
     return {"status": "created" if created else "updated", "path": str(dest)}
+
+
+def _reject_nonstandard_json_constant(value: str) -> object:
+    raise ValueError(f"non-standard JSON constant: {value}")
+
+
+def _reject_duplicate_json_object(
+    pairs: List[Tuple[str, object]],
+) -> Dict[str, object]:
+    document: Dict[str, object] = {}
+    for key, value in pairs:
+        if key in document:
+            raise ValueError(f"duplicate JSON object key: {key}")
+        document[key] = value
+    return document
+
+
+_CLAUDE_JSON_DECODER = json.JSONDecoder(
+    parse_constant=_reject_nonstandard_json_constant,
+    object_pairs_hook=_reject_duplicate_json_object,
+)
+
+
+def _claude_json_skip_whitespace(text: str, index: int) -> int:
+    while index < len(text) and text[index] in " \t\r\n":
+        index += 1
+    return index
+
+
+def _claude_json_object_members(text: str, start: int) -> List[Tuple[str, int, int]]:
+    if text[start] != "{":
+        raise ValueError("JSON value is not an object")
+    members: List[Tuple[str, int, int]] = []
+    index = _claude_json_skip_whitespace(text, start + 1)
+    if index < len(text) and text[index] == "}":
+        return members
+    keys: set[str] = set()
+    while True:
+        index = _claude_json_skip_whitespace(text, index)
+        key, index = _CLAUDE_JSON_DECODER.raw_decode(text, index)
+        if not isinstance(key, str):
+            raise ValueError("JSON object key is not a string")
+        if key in keys:
+            raise ValueError(f"duplicate JSON object key: {key}")
+        keys.add(key)
+        index = _claude_json_skip_whitespace(text, index)
+        if index >= len(text) or text[index] != ":":
+            raise ValueError("JSON object member has no colon")
+        value_start = _claude_json_skip_whitespace(text, index + 1)
+        _, value_end = _CLAUDE_JSON_DECODER.raw_decode(text, value_start)
+        members.append((key, value_start, value_end))
+        index = _claude_json_skip_whitespace(text, value_end)
+        if index >= len(text):
+            raise ValueError("unterminated JSON object")
+        if text[index] == "}":
+            return members
+        if text[index] != ",":
+            raise ValueError("JSON object member has no separator")
+        index += 1
+
+
+def _claude_json_array_items(text: str, start: int) -> List[Tuple[int, int]]:
+    if text[start] != "[":
+        raise ValueError("JSON value is not an array")
+    items: List[Tuple[int, int]] = []
+    index = _claude_json_skip_whitespace(text, start + 1)
+    if index < len(text) and text[index] == "]":
+        return items
+    while True:
+        value_start = _claude_json_skip_whitespace(text, index)
+        _, value_end = _CLAUDE_JSON_DECODER.raw_decode(text, value_start)
+        items.append((value_start, value_end))
+        index = _claude_json_skip_whitespace(text, value_end)
+        if index >= len(text):
+            raise ValueError("unterminated JSON array")
+        if text[index] == "]":
+            return items
+        if text[index] != ",":
+            raise ValueError("JSON array item has no separator")
+        index += 1
+
+
+def _claude_json_member(
+    text: str, object_start: int, name: str
+) -> Tuple[int, int] | None:
+    for key, value_start, value_end in _claude_json_object_members(text, object_start):
+        if key == name:
+            return value_start, value_end
+    return None
+
+
+def _claude_settings_document(existing: bytes) -> Tuple[str, Dict[str, object]]:
+    if not existing:
+        return "", {}
+    text = existing.decode("utf-8")
+    document = _CLAUDE_JSON_DECODER.decode(text)
+    if not isinstance(document, dict):
+        raise ValueError("Claude settings root must be an object")
+    hooks = document.get("hooks")
+    if "hooks" in document and not isinstance(hooks, dict):
+        raise ValueError("Claude settings hooks must be an object")
+    if isinstance(hooks, dict):
+        for event, groups in hooks.items():
+            if not isinstance(event, str) or not isinstance(groups, list):
+                raise ValueError("Claude hook event collections must be arrays")
+            for group in groups:
+                if not isinstance(group, dict):
+                    raise ValueError("Claude hook groups must be objects")
+                nested_hooks = group.get("hooks")
+                if not isinstance(nested_hooks, list):
+                    raise ValueError("Claude hook group hooks must be an array")
+                if any(not isinstance(hook, dict) for hook in nested_hooks):
+                    raise ValueError("Claude hook entries must be objects")
+    return text, document
+
+
+def _claude_command(config_path: Path) -> str:
+    quoted_path = shlex.quote(str(config_path))
+    return (
+        f"crosswire-turn-hook --adapter claude --config {quoted_path} "
+        f"# {REGISTRATION_OWNERSHIP_TAG}"
+    )
+
+
+def _claude_group(config_path: Path) -> Dict[str, object]:
+    return {
+        "matcher": "",
+        "hooks": [
+            {
+                "type": "command",
+                "command": _claude_command(config_path),
+                "timeout": 10,
+            }
+        ],
+    }
+
+
+def _claude_json_compact(value: object) -> str:
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+def _claude_json_insert_member(
+    text: str, object_start: int, object_end: int, key: str, value: object
+) -> str:
+    member = f"{json.dumps(key)}:{_claude_json_compact(value)}"
+    content_start = object_start + 1
+    content_end = object_end - 1
+    trimmed_end = content_end
+    while trimmed_end > content_start and text[trimmed_end - 1] in " \t\r\n":
+        trimmed_end -= 1
+    if trimmed_end == content_start:
+        return text[:content_start] + member + text[content_start:]
+    return text[:trimmed_end] + "," + member + text[trimmed_end:]
+
+
+def _claude_json_append_array_item(text: str, array_start: int, value: object) -> str:
+    _, array_end = _CLAUDE_JSON_DECODER.raw_decode(text, array_start)
+    items = _claude_json_array_items(text, array_start)
+    item = _claude_json_compact(value)
+    if items:
+        trailing = text[items[-1][1] : array_end - 1]
+        return text[: items[-1][1]] + "," + trailing + item + text[array_end - 1 :]
+    insertion = _claude_json_skip_whitespace(text, array_start + 1)
+    return text[:insertion] + item + text[insertion:]
+
+
+def _owned_command_span(
+    text: str, group_start: int
+) -> Tuple[int, int, str] | None:
+    nested_member = _claude_json_member(text, group_start, "hooks")
+    if nested_member is None:
+        return None
+    nested_start, _ = nested_member
+    for hook_start, _ in _claude_json_array_items(text, nested_start):
+        command_member = _claude_json_member(text, hook_start, "command")
+        if command_member is None:
+            continue
+        command_start, command_end = command_member
+        command, _ = _CLAUDE_JSON_DECODER.raw_decode(text, command_start)
+        if isinstance(command, str) and command.endswith(
+            f"# {REGISTRATION_OWNERSHIP_TAG}"
+        ):
+            return command_start, command_end, command
+    return None
+
+
+def _claude_stop_array(text: str) -> Tuple[int, List[Tuple[int, int]]] | None:
+    root_start = _claude_json_skip_whitespace(text, 0)
+    hooks_member = _claude_json_member(text, root_start, "hooks")
+    if hooks_member is None:
+        return None
+    hooks_start, _ = hooks_member
+    stop_member = _claude_json_member(text, hooks_start, "Stop")
+    if stop_member is None:
+        return None
+    stop_start, _ = stop_member
+    return stop_start, _claude_json_array_items(text, stop_start)
+
+
+def _remove_owned_stop_groups(
+    text: str, stop_start: int, items: List[Tuple[int, int]]
+) -> Tuple[str, str, int]:
+    owned: List[int] = []
+    removed: List[str] = []
+    for index, (item_start, item_end) in enumerate(items):
+        if _owned_command_span(text, item_start) is not None:
+            owned.append(index)
+            removed.append(text[item_start:item_end])
+    if not owned:
+        return text, "", 0
+
+    edits: List[Tuple[int, int]] = []
+    cluster_start = cluster_end = owned[0]
+    clusters: List[Tuple[int, int]] = []
+    for index in owned[1:]:
+        if index == cluster_end + 1:
+            cluster_end = index
+        else:
+            clusters.append((cluster_start, cluster_end))
+            cluster_start = cluster_end = index
+    clusters.append((cluster_start, cluster_end))
+    for first, last in clusters:
+        if first > 0:
+            edits.append((items[first - 1][1], items[last][1]))
+        elif last + 1 < len(items):
+            edits.append((items[first][0], items[last + 1][0]))
+        else:
+            edits.append((items[first][0], items[last][1]))
+    updated = text
+    for start, end in reversed(edits):
+        updated = updated[:start] + updated[end:]
+    return updated, "\n".join(removed), len(owned)
+
+
+def _claude_upsert(existing: bytes, config_path: Path) -> bytes:
+    text, _ = _claude_settings_document(existing)
+    owned_group = _claude_group(config_path)
+    if not text:
+        return (json.dumps({"hooks": {"Stop": [owned_group]}}, indent=2) + "\n").encode(
+            "utf-8"
+        )
+    stop_data = _claude_stop_array(text)
+    if stop_data is None:
+        root_start = _claude_json_skip_whitespace(text, 0)
+        hooks_member = _claude_json_member(text, root_start, "hooks")
+        if hooks_member is None:
+            _, root_end = _CLAUDE_JSON_DECODER.raw_decode(text, root_start)
+            updated = _claude_json_insert_member(
+                text, root_start, root_end, "hooks", {"Stop": [owned_group]}
+            )
+            return updated.encode("utf-8")
+        hooks_start, hooks_end = hooks_member
+        updated = _claude_json_insert_member(
+            text, hooks_start, hooks_end, "Stop", [owned_group]
+        )
+        return updated.encode("utf-8")
+
+    stop_start, items = stop_data
+    owned_info: List[Tuple[int, int, str]] = []
+    owned_indices: List[int] = []
+    for index, (item_start, item_end) in enumerate(items):
+        command_span = _owned_command_span(text, item_start)
+        if command_span is not None:
+            owned_indices.append(index)
+            owned_info.append(command_span)
+    desired = str(owned_group["hooks"][0]["command"])
+    if len(owned_indices) == 1 and owned_info[0][2] == desired:
+        return existing
+    if len(owned_indices) == 1:
+        command_start, command_end, _ = owned_info[0]
+        updated = text[:command_start] + json.dumps(desired) + text[command_end:]
+        return updated.encode("utf-8")
+    if owned_indices:
+        updated, _, _ = _remove_owned_stop_groups(text, stop_start, items)
+        stop_data = _claude_stop_array(updated)
+        if stop_data is None:
+            raise ValueError("Claude Stop collection disappeared")
+        stop_start, _ = stop_data
+        updated = _claude_json_append_array_item(updated, stop_start, owned_group)
+        return updated.encode("utf-8")
+    updated = _claude_json_append_array_item(text, stop_start, owned_group)
+    return updated.encode("utf-8")
+
+
+def _claude_remove(existing: bytes) -> Tuple[bytes, str]:
+    if not existing:
+        return existing, ""
+    text, _ = _claude_settings_document(existing)
+    stop_data = _claude_stop_array(text)
+    if stop_data is None:
+        return existing, ""
+    stop_start, items = stop_data
+    updated, removed, _ = _remove_owned_stop_groups(text, stop_start, items)
+    return updated.encode("utf-8"), removed
+
+
+def _claude_target_path(root: Path) -> Path:
+    return root / "settings.json"
+
+
+def _claude_config_path(root: Path) -> Path:
+    # [PROPOSED - name TBD] Portable default until the host config contract
+    # supplies a user-global location. Callers can always inject config_path.
+    return root / "hook-config.json"
+
+
+def _codex_comment_start(text: str) -> int | None:
+    quote: str | None = None
+    escaped = False
+    for index, char in enumerate(text):
+        if quote is not None:
+            if quote == '"' and escaped:
+                escaped = False
+            elif quote == '"' and char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            continue
+        if char in ('"', "'"):
+            quote = char
+        elif char == "#":
+            return index
+    return None
+
+
+def _codex_array_values(value: str) -> List[str]:
+    value = value.strip()
+    if not value.startswith("[") or not value.endswith("]"):
+        raise ValueError("Codex notify value must be an inline array")
+    index = 1
+    values: List[str] = []
+    while True:
+        while index < len(value) - 1 and value[index] in " \t":
+            index += 1
+        if index == len(value) - 1:
+            return values
+        parsed, end = _codex_string_value(value, index)
+        values.append(parsed)
+        index = end
+        while index < len(value) - 1 and value[index] in " \t":
+            index += 1
+        if index == len(value) - 1:
+            return values
+        if value[index] != ",":
+            raise ValueError("Codex notify array has no separator")
+        index += 1
+
+
+def _codex_string_value(value: str, index: int) -> Tuple[str, int]:
+    quote = value[index]
+    if quote == "'":
+        end = value.find(quote, index + 1)
+        if end < 0:
+            raise ValueError("Codex notify literal string is unterminated")
+        parsed = value[index + 1 : end]
+        if any(
+            char in "\r\n" or ord(char) < 0x20 and char != "\t" or ord(char) == 0x7F
+            for char in parsed
+        ):
+            raise ValueError("Codex notify literal string contains a control character")
+        return parsed, end + 1
+    if quote != '"':
+        raise ValueError("Codex notify values must be strings")
+
+    index += 1
+    parsed: List[str] = []
+    escapes = {
+        'b': "\b",
+        't': "\t",
+        'n': "\n",
+        'f': "\f",
+        'r': "\r",
+        '"': '"',
+        "\\": "\\",
+    }
+    while index < len(value):
+        char = value[index]
+        if char == '"':
+            return "".join(parsed), index + 1
+        if char == "\\":
+            index += 1
+            if index >= len(value):
+                break
+            escape = value[index]
+            if escape in escapes:
+                parsed.append(escapes[escape])
+                index += 1
+                continue
+            if escape in ("u", "U"):
+                width = 4 if escape == "u" else 8
+                digits = value[index + 1 : index + 1 + width]
+                if len(digits) != width or any(digit not in "0123456789abcdefABCDEF" for digit in digits):
+                    raise ValueError("Codex notify string has an invalid Unicode escape")
+                codepoint = int(digits, 16)
+                if codepoint > 0x10FFFF or 0xD800 <= codepoint <= 0xDFFF:
+                    raise ValueError("Codex notify string has a non-scalar Unicode escape")
+                parsed.append(chr(codepoint))
+                index += width + 1
+                continue
+            raise ValueError("Codex notify string has an invalid escape")
+        if char in "\r\n" or ord(char) < 0x20 and char != "\t" or ord(char) == 0x7F:
+            raise ValueError("Codex notify basic string contains a control character")
+        parsed.append(char)
+        index += 1
+    raise ValueError("Codex notify basic string is unterminated")
+
+
+def _codex_table_header(body: str) -> bool:
+    comment_start = _codex_comment_start(body)
+    header = body[:comment_start] if comment_start is not None else body
+    stripped = header.strip()
+    return stripped.startswith("[") and stripped.endswith("]")
+
+
+def _codex_line_parts(line: str) -> Tuple[str, str]:
+    if line.endswith("\r\n"):
+        return line[:-2], "\r\n"
+    if line.endswith(("\n", "\r")):
+        return line[:-1], line[-1]
+    return line, ""
+
+
+def _codex_owned_path(body: str, *, strict: bool = True) -> str | None:
+    comment_start = _codex_comment_start(body)
+    comment = body[comment_start:] if comment_start is not None else ""
+    tagged = comment.strip() == f"# {REGISTRATION_OWNERSHIP_TAG}"
+    statement = body[:comment_start] if comment_start is not None else body
+    match = re.fullmatch(r"[ \t]*notify[ \t]*=[ \t]*(.*)", statement)
+    if match is None:
+        return None
+    if not tagged:
+        return None
+    values = _codex_array_values(match.group(1))
+    if strict and (len(values) != 5 or values[:4] != [
+        "crosswire-turn-hook",
+        "--adapter",
+        "codex",
+        "--config",
+    ]):
+        raise ValueError("owned Codex notify assignment has an unexpected argv")
+    return values[4] if len(values) > 4 else ""
+
+
+def _codex_document_lines(text: str) -> List[Tuple[str, bool, str, str]]:
+    lines: List[Tuple[str, bool, str, str]] = []
+    in_table = False
+    for line in text.splitlines(keepends=True):
+        body, ending = _codex_line_parts(line)
+        lines.append((line, not in_table, body, ending))
+        if _codex_table_header(body):
+            in_table = True
+    return lines
+
+
+def _codex_newline(text: str) -> str:
+    if "\r\n" in text:
+        return "\r\n"
+    if "\r" in text:
+        return "\r"
+    return "\n"
+
+
+def _codex_assignment(config_path: Path, newline: str) -> str:
+    values = [
+        "crosswire-turn-hook",
+        "--adapter",
+        "codex",
+        "--config",
+        str(config_path),
+    ]
+    return (
+        f"notify = {json.dumps(values, ensure_ascii=False)} # "
+        f"{REGISTRATION_OWNERSHIP_TAG}{newline}"
+    )
+
+
+def _codex_upsert(existing: bytes, config_path: Path) -> bytes:
+    if not existing:
+        return _codex_assignment(config_path, "\n").encode("utf-8")
+    text = existing.decode("utf-8")
+    lines = _codex_document_lines(text)
+    owned: List[Tuple[int, str]] = []
+    foreign_notify = False
+    first_table = len(lines)
+    for index, (_, top_level, body, ending) in enumerate(lines):
+        if top_level:
+            if _codex_table_header(body):
+                first_table = min(first_table, index)
+                continue
+            if re.fullmatch(r"[ \t]*notify[ \t]*=.*", body):
+                path = _codex_owned_path(body)
+                if path is not None:
+                    owned.append((index, path))
+                else:
+                    foreign_notify = True
+    if owned and len(owned) == 1 and owned[0][1] == str(config_path):
+        return existing
+    if foreign_notify:
+        raise ValueError("foreign or ambiguous top-level Codex notify assignment")
+    newline = _codex_newline(text)
+    if owned:
+        owned_indices = {index for index, _ in owned}
+        first_owned = owned[0][0]
+        output: List[str] = []
+        for index, (line, _, _, ending) in enumerate(lines):
+            if index == first_owned:
+                output.append(_codex_assignment(config_path, ending))
+            elif index in owned_indices:
+                continue
+            else:
+                output.append(line)
+        return "".join(output).encode("utf-8")
+
+    assignment = _codex_assignment(config_path, newline)
+    prefix = "".join(line for line, _, _, _ in lines[:first_table])
+    suffix = "".join(line for line, _, _, _ in lines[first_table:])
+    if prefix and not prefix.endswith(("\n", "\r")):
+        prefix += newline
+    return (prefix + assignment + suffix).encode("utf-8")
+
+
+def _codex_remove(existing: bytes) -> Tuple[bytes, str]:
+    if not existing:
+        return existing, ""
+    text = existing.decode("utf-8")
+    lines = _codex_document_lines(text)
+    owned: set[int] = set()
+    for index, (_, top_level, body, _) in enumerate(lines):
+        if top_level and re.fullmatch(r"[ \t]*notify[ \t]*=.*", body):
+            if _codex_owned_path(body, strict=False) is not None:
+                owned.add(index)
+    if not owned:
+        return existing, ""
+    removed = "".join(lines[index][0] for index in sorted(owned))
+    updated = "".join(line for index, (line, _, _, _) in enumerate(lines) if index not in owned)
+    return updated.encode("utf-8"), removed
+
+
+def _codex_target_path(root: Path) -> Path:
+    return root / "config.toml"
+
+
+def _codex_config_path(root: Path) -> Path:
+    # [PROPOSED - name TBD] Match Claude's portable default under the resolved root.
+    return root / "hook-config.json"
+
+
+def _opencode_target_path(root: Path) -> Path:
+    return root / "plugins" / OPENCODE_PLUGIN_BASENAME
+
+
+def _opencode_config_path(root: Path) -> Path:
+    # [PROPOSED - name TBD] Match the other harnesses' portable default.
+    return root / "hook-config.json"
+
+
+def _opencode_is_owned(existing: bytes) -> bool:
+    ownership_line = f"// {REGISTRATION_OWNERSHIP_TAG}".encode("utf-8")
+    return any(line.strip() == ownership_line for line in existing.splitlines())
+
+
+def _opencode_upsert(existing: bytes, config_path: Path) -> bytes:
+    if existing and not _opencode_is_owned(existing):
+        raise ValueError("OpenCode target is not owned")
+    try:
+        source = OPENCODE_PLUGIN_SOURCE.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ValueError(f"cannot read OpenCode plugin source: {exc}") from exc
+    placeholder = f'"{OPENCODE_CONFIG_PLACEHOLDER}"'
+    if source.count(placeholder) != 1:
+        raise ValueError("OpenCode plugin source has an invalid config placeholder")
+    escaped_path = json.dumps(str(config_path), ensure_ascii=True)
+    return source.replace(placeholder, escaped_path).encode("utf-8")
+
+
+def _opencode_remove(existing: bytes) -> Tuple[bytes, str]:
+    if not _opencode_is_owned(existing):
+        return existing, ""
+    return b"", existing.decode("utf-8")
+
+
+REGISTRATION_ADAPTERS: Dict[str, RegistrationAdapter] = {
+    "claude": RegistrationAdapter(
+        target_path=_claude_target_path,
+        config_path=_claude_config_path,
+        upsert=_claude_upsert,
+        remove=_claude_remove,
+    ),
+    "codex": RegistrationAdapter(
+        target_path=_codex_target_path,
+        config_path=_codex_config_path,
+        upsert=_codex_upsert,
+        remove=_codex_remove,
+    ),
+    "opencode": RegistrationAdapter(
+        target_path=_opencode_target_path,
+        config_path=_opencode_config_path,
+        upsert=_opencode_upsert,
+        remove=_opencode_remove,
+        delete_on_remove=True,
+    ),
+}
+
+
+def _normalize_comms_profile(value: object) -> bool:
+    return value if type(value) is bool else False
+
+
+def _has_symlink_component(path: Path) -> bool:
+    """Whether any existing component of a path is a symlink."""
+    current = path.absolute()
+    while True:
+        if current.is_symlink():
+            return True
+        parent = current.parent
+        if parent == current:
+            return False
+        current = parent
+
+
+def _safe_replace(path: Path, data: bytes) -> None:
+    """Replace a registration file without truncating an existing target."""
+    if _has_symlink_component(path):
+        raise OSError("target path contains a symlink")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except Exception:
+        try:
+            temporary.unlink()
+        except OSError:
+            pass
+        raise
+
+
+def probe_crosswire(
+    config_path: Path,
+    *,
+    probe_runner: Callable[..., object] | None = None,
+    timeout: float = PROBE_TIMEOUT_SECONDS,
+) -> Dict[str, str]:
+    """Run the explicit Crosswire probe and classify its exact stdout token."""
+    if isinstance(timeout, bool):
+        return {"status": "failed", "reason": "invalid-probe-timeout"}
+    try:
+        bounded_timeout = min(float(timeout), PROBE_TIMEOUT_SECONDS)
+    except (TypeError, ValueError):
+        return {"status": "failed", "reason": "invalid-probe-timeout"}
+    if not math.isfinite(bounded_timeout) or bounded_timeout <= 0:
+        return {"status": "failed", "reason": "invalid-probe-timeout"}
+    command = ["crosswire-turn-hook", "--probe", "--config", str(config_path)]
+    runner = subprocess.run if probe_runner is None else probe_runner
+    try:
+        completed = runner(
+            command, capture_output=True, text=True, timeout=bounded_timeout, check=False
+        )
+    except (FileNotFoundError, OSError):
+        return {"status": "failed", "reason": "probe-launch-failed"}
+    except (subprocess.TimeoutExpired, TimeoutError):
+        return {"status": "failed", "reason": "probe-timeout"}
+    except Exception:
+        return {"status": "failed", "reason": "probe-launch-failed"}
+
+    returncode = getattr(completed, "returncode", None)
+    stdout = getattr(completed, "stdout", "")
+    if returncode == 0 and stdout == f"{PROBE_SUCCESS_TOKEN}\n":
+        return {"status": "ok", "token": PROBE_SUCCESS_TOKEN}
+    if returncode == 0 and stdout == f"{PROBE_FAILURE_TOKEN}\n":
+        return {"status": "failed", "reason": "probe-reported-failure"}
+    return {"status": "failed", "reason": "probe-contract-mismatch"}
+
+
+def run_registration(
+    harness: str,
+    adapter: RegistrationAdapter,
+    *,
+    enabled: bool,
+    config_path: Path | None = None,
+    home: Path | None = None,
+    environ: Mapping[str, str] | None = None,
+    probe_runner: Callable[..., object] | None = None,
+    timeout: float = PROBE_TIMEOUT_SECONDS,
+) -> Dict[str, object]:
+    """Run one format adapter through the shared probe-first lifecycle."""
+    enabled = _normalize_comms_profile(enabled)
+    try:
+        root = harness_root(harness, home=home, environ=environ)
+        target = Path(adapter.target_path(root))
+    except Exception:
+        return {
+            "harness": harness,
+            "enabled": enabled,
+            "status": "failed",
+            "detail": "invalid-registration-path",
+        }
+    result: Dict[str, object] = {
+        "harness": harness,
+        "target_path": str(target),
+        "enabled": enabled,
+    }
+    explicit_config: Path | None = None
+    if enabled or config_path is not None:
+        try:
+            explicit_config = Path(
+                config_path if config_path is not None else adapter.config_path(root)
+            )
+        except Exception:
+            result.update(status="failed", detail="invalid-registration-path")
+            return result
+        result["config_path"] = str(explicit_config)
+    if enabled:
+        if explicit_config is None:
+            result.update(status="failed", detail="invalid-registration-path")
+            return result
+        probe = probe_crosswire(explicit_config, probe_runner=probe_runner, timeout=timeout)
+        result["probe"] = probe.get("token", probe.get("reason", "failed"))
+        if probe["status"] != "ok":
+            result.update(status="failed", detail=probe.get("reason", "probe-failed"))
+            return result
+
+    if _has_symlink_component(target):
+        result.update(status="failed", detail="target-is-symlink")
+        return result
+    existed = target.is_file()
+    try:
+        existing = target.read_bytes() if target.is_file() else b""
+    except OSError:
+        result.update(status="failed", detail="target-read-failed")
+        return result
+    if enabled and existed and not existing:
+        result.update(status="failed", detail="target-empty")
+        return result
+    try:
+        if enabled:
+            updated = adapter.upsert(existing, explicit_config)
+            removed = ""
+        else:
+            updated, removed = adapter.remove(existing)
+    except Exception:
+        result.update(status="failed", detail="adapter-failed")
+        return result
+    if not isinstance(updated, bytes):
+        result.update(status="failed", detail="adapter-returned-invalid-bytes")
+        return result
+    if updated == existing:
+        result.update(status="unchanged")
+        if not enabled:
+            result["removed_content"] = removed
+        return result
+    try:
+        if not enabled and adapter.delete_on_remove and not updated:
+            target.unlink()
+        else:
+            _safe_replace(target, updated)
+    except OSError:
+        result.update(status="failed", detail="target-write-failed")
+        return result
+    if enabled:
+        result["status"] = "updated" if existed else "created"
+    else:
+        result["status"] = "removed"
+    if not enabled:
+        result["removed_content"] = removed
+    return result
 
 
 def ensure_code_review_graph(harnesses: Sequence[str] = ()) -> Dict[str, str]:
@@ -526,29 +1375,72 @@ def deploy(
     home: Path | None = None,
     environ: Mapping[str, str] | None = None,
     verbose: bool = True,
+    comms_profile: bool = False,
+    registration_adapters: Mapping[str, RegistrationAdapter] | None = None,
 ) -> Dict[str, Dict[str, object]]:
+    comms_profile = _normalize_comms_profile(comms_profile)
     results: Dict[str, Dict[str, object]] = {}
+    adapters = REGISTRATION_ADAPTERS if registration_adapters is None else registration_adapters
     for name in harnesses:
         results[name] = deploy_harness(name, home=home, environ=environ)
-        baseline = deploy_baseline(name, home=home, environ=environ)
+        baseline = deploy_baseline(
+            name, home=home, environ=environ, comms_enabled=comms_profile
+        )
         if baseline["status"] != "not-applicable":
             results[name]["baseline"] = baseline
+        adapter = adapters.get(name)
+        if adapter is not None:
+            results[name]["registration"] = run_registration(
+                name,
+                adapter,
+                enabled=comms_profile,
+                home=home,
+                environ=environ,
+            )
     if verbose:
         print(json.dumps(results, indent=2))
     return results
 
 
-def load_config(path: Path = CONFIG_PATH) -> List[str]:
+def _read_config_data(path: Path) -> Mapping[str, object]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return []
-    selected = data.get("harnesses", []) if isinstance(data, dict) else []
-    return [name for name in selected if name in HARNESSES]
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
-def save_config(harnesses: List[str], path: Path = CONFIG_PATH) -> None:
-    path.write_text(json.dumps({"harnesses": harnesses}, indent=2) + "\n", encoding="utf-8")
+def _normalize_config_data(data: Mapping[str, object]) -> DeployConfig:
+    selected = data.get("harnesses", [])
+    if not isinstance(selected, list):
+        selected = []
+    harnesses = [name for name in selected if isinstance(name, str) and name in HARNESSES]
+    return DeployConfig(harnesses, _normalize_comms_profile(data.get(COMMS_PROFILE_KEY, False)))
+
+
+def load_config(path: Path = CONFIG_PATH) -> List[str]:
+    return _normalize_config_data(_read_config_data(path)).harnesses
+
+
+def load_comms_profile(path: Path = CONFIG_PATH) -> bool:
+    return _normalize_config_data(_read_config_data(path)).comms_profile
+
+
+def load_config_state(path: Path = CONFIG_PATH) -> DeployConfig:
+    return _normalize_config_data(_read_config_data(path))
+
+
+def save_config(
+    harnesses: List[str],
+    path: Path = CONFIG_PATH,
+    *,
+    comms_profile: bool = False,
+) -> None:
+    comms_profile = _normalize_comms_profile(comms_profile)
+    path.write_text(
+        json.dumps({"harnesses": harnesses, COMMS_PROFILE_KEY: comms_profile}, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def parse_harness_arg(raw: str) -> List[str]:
@@ -591,15 +1483,16 @@ def list_harnesses(selected: List[str]) -> None:
         print("\nNo saved selection (.deploy-config.json missing).")
 
 
-def watch(harnesses: List[str]) -> None:
+def watch(harnesses: List[str], *, comms_profile: bool = False) -> None:
+    comms_profile = _normalize_comms_profile(comms_profile)
     print(f"Starting ports deploy watcher for {{{','.join(harnesses)}}} ...")
-    deploy(harnesses)
+    deploy(harnesses, comms_profile=comms_profile)
 
     def _on_change(changes: List[str]) -> None:
         sample = ", ".join(Path(c).name for c in changes[:5])
         more = "" if len(changes) <= 5 else f" (+{len(changes) - 5} more)"
         print(f"Detected change in ports: {sample}{more}")
-        deploy(harnesses)
+        deploy(harnesses, comms_profile=comms_profile)
 
     poll_watch([PORTS_DIR / name for name in harnesses], _on_change)
 
@@ -617,9 +1510,11 @@ def main() -> int:
         help="Do not install/configure external tools (code-review-graph, Context7).",
     )
     args = parser.parse_args()
+    saved_state = load_config_state(CONFIG_PATH)
 
     if args.list:
-        list_harnesses(load_config(CONFIG_PATH))
+        list_harnesses(saved_state.harnesses)
+        print(f"Comms profile: {'enabled' if saved_state.comms_profile else 'disabled'}")
         return 0
 
     if args.all:
@@ -630,7 +1525,7 @@ def main() -> int:
         except ValueError as exc:
             parser.error(str(exc))
     else:
-        selected = load_config(CONFIG_PATH)
+        selected = saved_state.harnesses
         if not selected:
             if sys.stdin.isatty():
                 selected = prompt_for_harnesses()
@@ -639,17 +1534,22 @@ def main() -> int:
                     "no saved harness selection; pass --harness claude,codex,opencode,cursor or --all"
                 )
 
+    comms_profile = saved_state.comms_profile
     if not args.no_save:
-        save_config(selected, CONFIG_PATH)
+        save_config(selected, CONFIG_PATH, comms_profile=comms_profile)
 
     if not args.skip_tools:
         report_external_tools(ensure_external_tools(selected))
 
     if args.watch:
-        watch(selected)
+        watch(selected, comms_profile=comms_profile)
         return 0
 
-    deploy(selected)
+    results = deploy(selected, comms_profile=comms_profile)
+    for result in results.values():
+        registration = result.get("registration")
+        if isinstance(registration, Mapping) and registration.get("status") == "failed":
+            return 1
     return 0
 
 

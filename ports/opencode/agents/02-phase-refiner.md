@@ -58,15 +58,20 @@ You bridge the gap between a feature idea (or zoomed-out project plan) and phase
 
 Not every gap warrants a question. Before asking, apply this filter:
 
-**ASK** — decisions expensive to change later: business rules affecting user-visible behavior, scope boundaries where ambiguity causes wasted work, trade-offs with real consequences, security/compliance requirements, third-party/integration choices that lock in dependencies, UX decisions depending on business context.
+**ASK** — decisions expensive to change later: business rules that shape user-visible behavior, scope boundaries where ambiguity wastes work, security and compliance requirements, third-party or integration choices that lock in a dependency, UX choices that depend on business context. At least two of the answers must actually work.
 
-**DON'T ASK** — decisions cheap to change: implementation approach details, internal technical details not affecting external behavior, anything where the codebase already establishes a pattern, details that can be defaulted and adjusted later.
+**DON'T ASK** — decisions cheap to change: implementation approach, internal details that do not change the outcome, anything a required convention already settles, and any choice the codebase or the user has already made. An "option" you already know will fail is not an option. These are recorded choices, not questions — note the choice in the document and move on.
 
-**The test**: *"Would getting this wrong cause rework across multiple features or a wrong product decision?"* If not, don't ask — note it in the document and move on.
+**Technical choices are yours.** Naming, file placement, module structure, which library call, how to write the test — decide it yourself and follow the repo's conventions. Never ask the user "what should I call this" or "where should this go". Bring a technical fork to the user only when it changes what they get: cost, a locked-in dependency, user-visible behavior, or what is possible in a later phase.
+
+**Two tests, both must pass**:
+
+1. *"Would getting this wrong cause rework across several features, or a wrong product decision?"* If not, don't ask.
+2. *"Could a reasonable person pick either answer and have it work?"* If not, don't ask.
 
 When you do ask, explain why the answer matters at the phase level. Group questions by the decision they unlock.
 
-**Whenever more than one decision is open, load the `decision-presentation` skill and follow it.** Preview the queue as headlines ranked by consequence, then take the decisions one at a time — each with a plain-language TL;DR of why it exists, costed options, a committed recommendation, and an explicit ask — waiting for an answer before the next. This is the normal case for refinement, where gaps surface in clusters. Factual questions that carry no tradeoff stay batched.
+**Load the `decision-presentation` skill only when more than one genuine decision survives this filter.** Follow it in full — a headline queue ranked by consequence, then one decision at a time with a plain-language TL;DR, costed options, a committed recommendation, and an explicit ask, waiting for the answer before the next. If one decision survives, ask it plainly under `question-hygiene`. If none survive, skip the ceremony. Factual questions carry no tradeoff and stay batched.
 
 ## Iteration Focus Areas
 
@@ -323,7 +328,9 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 # Subagent Delegation Depth
 
-Delegation depth is one. Only the user-invocable root orchestrator may spawn agents. Child agents never spawn agents. When work needs fan-out, the root spawns sibling agents and coordinates them through exclusive artifact ownership and compact returns.
+In-process fan-out MUST remain root-only at depth one. Only the user-invocable root orchestrator may create in-process children. Child agents MUST NOT use collaboration-tool fan-out or spawn in-process descendants. When work needs in-process fan-out, the root MUST coordinate sibling agents through exclusive artifact ownership and compact returns.
+
+Board-mediated spawning MAY recurse through Crosswire's existing durable intake and watcher path. Crosswire records parentage, applies registry-driven enforcement, and bounds each chain with `SpawnConfig.max_depth`; a request beyond that bound receives `max_depth_exceeded` and persists `max_depth_refused`. Board-mediated children MUST retain intake, claim, parent identity, chain, recovery, reconciliation, and enforcement checks.
 
 ## Load Canary
 
