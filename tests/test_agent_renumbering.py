@@ -17,7 +17,6 @@ import propagate_master_assets as propagator  # noqa: E402
 # literals so this guard cannot pass by finding its own old identifiers.
 IDENTITIES = (
     ("04", "-phase-execute", "03", "-phase-execute", "Phase - Execute", True),
-    ("04a", "-feature-plan-expander", "03a", "-feature-plan-expander", "Feature - Plan Expander", False),
     ("04b", "-feature-implementer", "03b", "-feature-implementer", "Feature - Implementer", False),
     ("04c", "-feature-review-and-fix", "03c", "-reviewer-plan-conformance", "Reviewer - Plan Conformance", True),
     ("04d", "-feature-qa-writer", "03d", "-feature-qa-writer", "Feature - QA Writer", False),
@@ -142,6 +141,7 @@ def test_source_map_moves_files_and_numbered_names() -> None:
     source_root = REPO_ROOT / "source_of_truth" / "agents"
 
     assert not (source_root / ("03" + "-feature-decomposer.agent.md")).exists()
+    assert not (source_root / ("03a" + "-feature-plan-expander.agent.md")).exists()
     for old_slug, new_slug, _old_name, new_name, _display_name, _label in IDENTITY_ROWS:
         with_target = source_root / f"{new_slug}.agent.md"
         assert with_target.is_file(), f"renamed source agent is missing: {new_slug}"
@@ -211,12 +211,7 @@ def test_agent_targeting_globs_resolve_and_character_classes_cover_both_families
     assert "**/05?-*.agent.md" not in patterns
     assert "**/03?-*.agent.md" in patterns
     assert "**/04?-*.agent.md" in patterns
-    assert {path for path in agent_paths if fnmatch.fnmatch(path, "**/03?-*.agent.md")} >= {
-        "source_of_truth/agents/03j-reviewer-blast-radius.agent.md",
-        "source_of_truth/agents/03k-reviewer-test-falsification.agent.md",
-        "source_of_truth/agents/03l-reviewer-plan-blind.agent.md",
-        "source_of_truth/agents/03m-finding-consolidator.agent.md",
-    }
+    assert any(fnmatch.fnmatch(path, "**/03?-*.agent.md") for path in agent_paths)
     assert any(fnmatch.fnmatch(path, "**/04?-*.agent.md") for path in agent_paths)
 
 
@@ -254,15 +249,3 @@ def test_unity_and_prod_review_stripped_stems_remain_stable() -> None:
         assert (REPO_ROOT / "ports" / "cursor" / "agents" / f"z-{stem}.md").is_file()
         assert (REPO_ROOT / "ports" / "codex" / "agents" / f"z-{stem}.toml").is_file()
         assert (REPO_ROOT / "ports" / "opencode" / "agents" / f"{new_slug}.md").is_file()
-
-
-def test_post_renumber_committee_agents_remain_at_reserved_identifiers() -> None:
-    agents = {agent.source_slug: agent for agent in propagator.load_source_agents()}
-    expected = {
-        "03j-reviewer-blast-radius",
-        "03k-reviewer-test-falsification",
-        "03l-reviewer-plan-blind",
-        "03m-finding-consolidator",
-    }
-    assert expected <= set(agents)
-    assert not any(slug.startswith(("04j", "05j")) for slug in agents)

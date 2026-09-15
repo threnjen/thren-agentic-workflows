@@ -15,7 +15,7 @@ For **each task** (in priority order), run these steps sequentially. Complete AL
 
 spawn the **z-feature-implementer** subagent:
 
-> "[SUBAGENT-MODE] Implement the plan at `[plan-path]`. Read the plan files, implement all acceptance criteria using Red-Green-Refactor TDD, and write the implementation record to `[plan-path]/[task-name]-implementation.md`. Manifest verification assets — run these affected suites if the change touches a shared contract: [verification-assets, or `not provided`]. Return a summary of what was implemented, the test-execution status with its results artifact path, and any gaps or blockers."
+> "[SUBAGENT-MODE] Implement the plan at `[plan-path]`. Pipeline: `[pipeline]`. Read that pipeline's planning artifacts, implement all acceptance criteria using Red-Green-Refactor TDD, and write `[plan-path]/[task-name]-implementation.md`. Run these affected suites: [verification-assets, or `not provided`]. Return a summary, test-execution status, results artifact path, and blockers."
 
 After the subagent returns:
 - Verify `[plan-path]/[task-name]-implementation.md` exists
@@ -25,21 +25,21 @@ After the subagent returns:
 
 spawn the **z-reviewer-plan-conformance** subagent:
 
-> "[SUBAGENT-MODE] Review and repair the implementation at `[plan-path]`. Read the plan files and implementation record, review all changed code, then fix what you find. You get one round. Write the review record to `[plan-path]/[task-name]-review.md`, and write any defect you could not fix into the implementation record under `## Unfixed findings`. Manifest verification assets — run these affected suites if the change touches a shared contract: [verification-assets, or `not provided`]. Return the verdict, what you repaired, what you left unfixed, and the test-execution status with its results artifact path."
+> "[SUBAGENT-MODE] Review and repair the implementation at `[plan-path]`. Pipeline: `[pipeline]`. Read that pipeline's planning artifacts and the implementation record, then fix what you find. You get one round. Write `[plan-path]/[task-name]-review.md`, and record unresolved defects under `## Unfixed findings`. Run these affected suites: [verification-assets, or `not provided`]. Return the verdict, repairs, unresolved findings, and test-execution status."
 
 The reviewer gets one round. It repairs what it can and records what it cannot. Never spawn it a second time for the same task, and never open a fix round of your own.
 
 After the subagent returns:
 - Verify `[plan-path]/[task-name]-review.md` exists
 - Run the affected suites yourself. A reviewer self-report is not evidence
-- Apply the Test Execution Gate below whatever the verdict. An unfixed finding is recorded, not blocking — the phase-close review sees the same code again
+- Apply the Test Execution Gate below whatever the verdict. Carry every unresolved finding to the caller's final decision.
 
 ### Test Execution Gate
 
 Read the Implementer's and Reviewer's reported test-execution status. Statuses are defined in the `test-execution-evidence` instruction.
 
 - **`executed-green`** → proceed to Step C.
-- **`executed-failing`** → re-spawn the Implementer with the failing test names, then re-spawn the Reviewer. Retry once. If still failing, record it as a blocking status and proceed — the final review surfaces it.
+- **`executed-failing`** → for Phase, return the blocking status without another review round. For Audit or Test, re-spawn the Implementer and Reviewer once with the failing test names. Record a second failure as blocking.
 - **`not-executed`** → do NOT treat this as green. Record `test-execution: not-executed (<reason>)` for the task and report it to the orchestrator as a blocking status. A task with unrun tests cannot be reported complete. The direct-supervisor-attestation exception in the Test Execution Evidence instruction applies only when the user-invocable root orchestrator itself receives an explicit supervisor assertion; subagents still report `not-executed` without an artifact.
 
 Carry the per-task status forward: the orchestrator gates feature and phase completion on it.
@@ -126,10 +126,11 @@ Update the todo list to mark this task as completed. Proceed to the next task.
 
 ## Path Conventions
 
-The orchestrator supplies both tokens in its spawn prompt.
+The orchestrator supplies all three tokens in its spawn prompt.
 
 - `[plan-path]` — the directory containing the task's plan files (phase pipeline: `dev/feature/[0N-task-name]/`; audit and test pipelines supply their own)
 - `[task-name]` — the kebab-case identifier for the task, matching the plan file prefix (including the `0N-` numeric prefix for feature directories)
+- `[pipeline]` — `phase`, `audit`, or `test`; shared agents never infer it from files
 
 Token bindings are owned by the `dev-task-folder` instruction.
 
@@ -140,7 +141,7 @@ Token bindings are owned by the `dev-task-folder` instruction.
 
 ## Post-Loop: Documentation Update
 
-After all tasks are complete and reported to the user, spawn the **Docs Writer** subagent to update any documentation that may be stale:
+After all tasks are complete and reported to the user, spawn the **Docs Writer** subagent to update any documentation that may be stale. A Phase caller applies its own production-verdict gate first.
 
 > "[SUBAGENT-MODE] [Describe what was just completed — include the pipeline type (phase/audit/test), name/scope, and list of completed tasks/features]. Update any stale documentation across the repository. Return a summary of which documents were updated and what changed."
 

@@ -99,7 +99,7 @@ Each task should be independently implementable.
 
 For **each task** (in priority order), run the implementation pipeline loop.
 
-Load the `implementation-pipeline-loop` skill and execute Steps A through D for each task, using `dev/feature/[0N-task-name]/[fix-name]/` as the `[plan-path]` and `[fix-name]` as the task identifier.
+Load the `implementation-pipeline-loop` skill and execute Steps A through D for each task. Use `dev/feature/[0N-task-name]/[fix-name]/` as `[plan-path]`, `[fix-name]` as `[task-name]`, and `test` as `[pipeline]`.
 
 ### Phase 8: Report to User
 
@@ -114,4 +114,3 @@ Follow the Post-Loop: Documentation Update section from the `implementation-pipe
 ## Pipeline Asymmetry (by design)
 
 This orchestrator omits QA Writer and Prod Code Review steps. Test remediation tasks are scoped to test code, which is self-validating (tests pass or fail).
-

@@ -60,7 +60,7 @@ finding's title or severity.
 
 For each task in priority order, load the `implementation-pipeline-loop` skill
 and execute Steps A through D with `dev/[audit-name]/[task-name]/` as
-`[plan-path]` and `[task-name]` as the task identifier. Test failures are
+`[plan-path]`, `[task-name]` as the task identifier, and `audit` as `[pipeline]`. Test failures are
 handled by that skill's Test Failure Handling section.
 
 ## 4a. Per-task diff security scan
@@ -89,7 +89,7 @@ Do not stage the report. It lives under `dev/`, which no checkpoint stages.
 
 After every task is implemented and reviewed, spawn **Feature - QA Writer**:
 
-> "Write the consolidated release QA documents covering ALL tasks in this audit
+> "Pipeline: audit. Write the consolidated release QA documents covering ALL tasks in this audit
 > remediation. Read all documents (plan, context, tasks, implementation record,
 > review record) and source code from the following task folders: [list all
 > `dev/[audit-name]/[task-name]/` paths]. Write the manual QA plan to
@@ -124,7 +124,7 @@ Never hand the user a command this step could have run.
 
 Spawn **Prod Code Review**:
 
-> "Perform the final pre-production readiness analysis for the audit
+> "Pipeline: audit. Perform the final pre-production readiness analysis for the audit
 > remediation. The following task folders contain all pipeline documents: [list
 > all `dev/[audit-name]/[task-name]/` paths]. The manual QA plan is at
 > `dev/[audit-name]/[audit-name]-qa.md`. The automated QA document, with its run

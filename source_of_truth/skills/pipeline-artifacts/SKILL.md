@@ -14,9 +14,10 @@ Inside `dev/feature/[0N-task-name]/`:
 
 | Suffix | Producer | Content |
 |--------|----------|---------|
-| `-plan.md` | Phase - Execute | Plan with stages and acceptance criteria |
-| `-context.md` | Feature - Plan Expander | Key files, decisions, constraints |
-| `-tasks.md` | Feature - Plan Expander | Ordered checklist of work items |
+| `-plan.md` | Feature - Plan Author for Phase; Audit or Test planner otherwise | Plan with stages and acceptance criteria |
+| `-delta.md` | Feature - Plan Author in Phase selection mode | Selected feature's verified repository findings |
+| `-context.md` | Audit or Test planner | Key files, decisions, constraints |
+| `-tasks.md` | Audit or Test planner | Ordered checklist of work items |
 | `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results |
 | `-review.md` | 03c Reviewer - Plan Conformance | Verdict and issues found |
 | `-qa.md` | Feature - QA Writer (per-feature mode) | Manual QA plan for a single feature |
@@ -26,6 +27,8 @@ Inside `dev/feature/[0N-task-name]/`:
 | `-summary.md` | Auditor subagents, Web Researcher | Executive summary with priority actions or recommendations |
 
 Web Researcher writes to `dev/research/[topic-name]/`, not `dev/feature/`.
+
+Phase consumers require the plan, delta, and execution manifest. Audit and Test consumers require the plan, context, and tasks. Shared agents receive `pipeline: phase | audit | test` and never infer the contract from present files.
 
 ## Consolidated QA Documents
 

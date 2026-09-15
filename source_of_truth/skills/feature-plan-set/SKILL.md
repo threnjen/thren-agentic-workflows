@@ -5,19 +5,25 @@ description: "Write feature plan documents for implementation. Use when: decompo
 
 # Feature Plan Set
 
-The three-file plan convention: `-plan.md` is produced by Phase - Execute; `-context.md` and `-tasks.md` are produced by the 03a-feature-plan-expander. All three files are consumed by 03b-feature-implementer, 03c-reviewer-plan-conformance, 03d-feature-qa-writer, and orchestrators.
+The invoking pipeline selects one artifact contract explicitly:
 
-When Phase - Execute decomposes a phase, it must also produce the phase-level execution manifest at `dev/feature/[phase-name]-execution-manifest.md`. This manifest is not part of any single feature bundle. It is the living schedule and dependency contract consumed by Phase - Execute.
+| Pipeline | Required planning artifacts |
+|----------|-----------------------------|
+| Phase | `-plan.md`, selection-time `-delta.md`, and the phase execution manifest |
+| Audit or Test | `-plan.md`, `-context.md`, and `-tasks.md` |
+
+Shared consumers never infer a contract from whichever files happen to exist.
+
+Feature - Plan Author produces Phase plans, deltas, and the execution manifest. Audit and Test keep their existing producers for context and task files.
 
 ## File Structure
 
-Each independent work item gets three files:
+Each Phase work item gets two files over its lifecycle:
 
 ```
 dev/feature/[0N-task-name]/
 ├── [0N-task-name]-plan.md       # The plan with stages and acceptance criteria
-├── [0N-task-name]-context.md    # Key files, decisions, constraints
-└── [0N-task-name]-tasks.md      # Checklist of work items
+└── [0N-task-name]-delta.md      # Selection-time repository findings
 ```
 
 Each decomposed phase also gets one manifest:
@@ -26,9 +32,11 @@ Each decomposed phase also gets one manifest:
 dev/feature/[phase-name]-execution-manifest.md
 ```
 
-The manifest must list the phase document path, ordered feature task names, each feature's prerequisites, key files modified, sequential reasons, expected bundle files, and verification assets.
+The manifest must list the phase document path, ordered feature task names, each feature's prerequisites, key files modified, sequential reasons, expected artifacts, and verification assets.
 
-The manifest is a living execution schedule. It is rewritten during execution, not frozen after decomposition. Phase - Execute rewrites it when it selects a feature, expands or changes its plan, records an implementation result, resolves the feature's model route, completes a feature, or completes revalidation of affected future features.
+The manifest is a living execution schedule. It is rewritten during execution, not frozen after decomposition. Feature - Plan Author rewrites it when Phase - Execute selects a feature, records an implementation result, resolves the feature's model route, completes a feature, or completes revalidation of affected future features.
+
+The manifest also owns the Phase Environment State, test baseline, lint and format commands, phase test pattern, durable checkpoints, and per-feature verification assets.
 
 The prerequisite graph orders the features. A feature is eligible once every feature it names as a prerequisite is complete. The graph sets order and drives revalidation. It never authorizes two concurrent feature builds.
 
@@ -50,7 +58,7 @@ Expected read and write sets are revalidation evidence only. They never authoriz
 
 ## Lightweight Plan
 
-Before scheduling, Phase - Execute writes one lightweight `-plan.md` per candidate feature. Each plan carries acceptance criteria, scope, dependency hypotheses, and expected file impact. It contains no context or task document. The Plan Expander adds companion files only for the selected feature.
+Before scheduling, Feature - Plan Author writes one lightweight `-plan.md` per candidate feature. Each plan carries acceptance criteria, scope, dependency hypotheses, and expected file impact. Initial mode writes no context, task, or delta file.
 
 **Naming**: `[0N-task-name]` is a zero-padded two-digit prefix followed by a short, descriptive, kebab-case identifier (e.g., `01-auth-login`, `02-rate-limiter`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order. `[phase-name]` is always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number (e.g., `PHASE_03`), matching the phase directory under `docs/phases/`.
 
@@ -121,16 +129,25 @@ A concrete name is any file path, method, class, field, XML element, USS class, 
 
 For a test method, a fourth option applies: omit the name and describe the scenario instead. Never present an invented name as established fact. The implementer chooses the final idiomatic name for a `[PROPOSED - name TBD]` symbol and records it in implementation notes.
 
+## Selection Delta (`-delta.md`)
+
+Feature - Plan Author writes one delta only when Phase - Execute selects a feature. The delta contains:
+
+- **Key Files** — verified files and symbols the feature reads or changes.
+- **Current Constraints** — applicable repository rules, plan non-goals, and relevant learnings.
+- **Verification Assets** — existing tests and commands that exercise the selected scope.
+- **Discoveries** — facts that validate or contradict the plan.
+
+Selection mode may patch only the selected plan. It patches the plan only when verified source contradicts it. The delta records the contradiction and the patch.
+
 ## Phase-Level Discovery
 
-Some discovery results describe the phase, not one feature, and are identical across every feature bundle. Phase - Execute captures each one **once** and passes it to every Plan Expander it spawns. An Expander writes the supplied values through and does not rediscover them:
+Feature - Plan Author captures Phase Environment State once in initial mode. It writes the results into the manifest, not a per-feature file.
 
-| Result | Used in |
+| Result | Manifest location |
 |---|---|
-| Tech stack, test runner command, test pass/fail baseline, lint command, format command | `-context.md` **Environment State** |
-| Phase-scoped test directory pattern found, and whether a current-phase consolidated test file is recommended | Discovery Delta, manifest verification assets |
-
-Running the test suite once per feature to produce the same baseline table is waste. An Expander runs its own detection only when Phase - Execute supplied no block, and says so in its return.
+| Tech stack, test runner command, test baseline, lint command, format command | `## Environment State` |
+| Phase test pattern and shared or feature verification assets | `## Verification Assets` and the relevant feature entry |
 
 ## Stage Format
 
@@ -152,18 +169,18 @@ All other stages:
 **Status**: Not Started
 ```
 
-## Context File (`-context.md`)
+## Audit and Test Context File (`-context.md`)
 
 This is the complete section inventory. Write **every** section; downstream agents read them by name, so an omitted section is a silent gap, not a shorter document.
 
 - **Key Files** — table of files and modules relevant to this feature, each with its role and change type (Create, Modify, Read-only reference). Separate files being changed from read-only reference files.
-- **Discovery Delta** — Plan Expander findings that validate, contradict, or refine the plan, including missing references, better existing API names, companion files, exact assertion tests, and framework constraints
+- **Discovery Delta** — findings that validate, contradict, or refine the plan, including missing references, better existing API names, companion files, exact assertion tests, and framework constraints
 - **Architectural Decisions** — decisions made during planning (what was chosen and why)
 - **Constraints** — constraints from the Phase document, codebase conventions, or the plan's non-goals
 - **Scope Boundaries** — files, systems, or behaviors the implementer should preserve or intentionally not touch
 - **Relationships to Sibling Plans** — shared prerequisites and cross-feature dependencies
 - **Suggested Implementation Order** — ordering relative to sibling features, when the plan specifies one
-- **Environment State** — tech stack, test runner command, lint/format commands, and test baseline; pre-captured by the Plan Expander so the Implementer skips discovery
+- **Environment State** — tech stack, test runner command, lint and format commands, and test baseline
 - **Relevant Learnings** — filtered excerpts from `docs/learnings/` applicable to this feature's domain
 
 ### Discovery Delta section template
@@ -208,7 +225,7 @@ This is the complete section inventory. Write **every** section; downstream agen
 Record "None applicable" if no entries match.]
 ```
 
-## Tasks File (`-tasks.md`)
+## Audit and Test Tasks File (`-tasks.md`)
 
 An ordered checklist of concrete work items derived from the plan, **always grouped under stage headers** — one section per plan stage, in plan order. A flat, ungrouped task list is a format error. If the plan has no explicit stage boundaries, infer groupings from the AC structure (e.g. data/schema tasks as Stage 1, logic tasks as Stage 2, test-verification tasks as Stage 3).
 
@@ -219,13 +236,13 @@ An ordered checklist of concrete work items derived from the plan, **always grou
 - [ ] Another task
 ```
 
-The `- [ ] ` checkbox syntax is consumed by the Implementer, which checks tasks off in place; do not vary it.
+The `- [ ] ` checkbox syntax is consumed by Audit and Test implementer runs. Do not vary it.
 
 ## Decomposition Rules
 
 - **Independence criterion**: Two items are independent if they can be implemented, tested, and shipped without depending on each other
 - Each independent item gets its own `dev/feature/[0N-task-name]/` folder
-- If items share prerequisites, note the dependency in each context file but keep plans separate
+- If items share prerequisites, record the dependency in the Phase manifest or each Audit/Test context file
 - Only combine items when tightly coupled (implementing one without the other leaves the codebase broken)
 - Assign numeric prefixes based on dependency order: prerequisites get lower numbers, dependents get higher numbers
 - Where B needs A, B must name A in its prerequisites. Never rely on execution order alone to express that, because a reorder would silently drop the constraint.
@@ -247,4 +264,4 @@ Before delivering plan documents, verify:
 - [ ] Refactor/rewire changes include an explicit test-impact plan and maintenance tasks for affected tests
 - [ ] Observability and operability considered; any new normal-path logs are justified
 - [ ] **Integration check**: If the phase has multiple features that must run together, an integration/bootstrap feature exists as the final numbered task with acceptance criteria verifying the combined output is launchable and observable
-- [ ] **Manifest check**: For phase decomposition, `dev/feature/[phase-name]-execution-manifest.md` exists and includes the ordered feature list, each feature's prerequisites, the prerequisite graph, expected bundle files, and `## Verification Assets`
+- [ ] **Manifest check**: For phase decomposition, `dev/feature/[phase-name]-execution-manifest.md` exists and includes the ordered feature list, each feature's prerequisites, the prerequisite graph, expected artifacts, `## Environment State`, and `## Verification Assets`

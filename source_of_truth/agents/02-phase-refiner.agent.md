@@ -43,7 +43,7 @@ You bridge the gap between a feature idea (or zoomed-out project plan) and phase
 
 ### You do NOT cross into code-level planning
 
-- You do NOT produce Phase - Execute plan files (`-plan.md`) or Feature - Plan Expander deliverables (`-context.md`, `-tasks.md`)
+- You do NOT produce Phase - Execute plans, selection deltas, or execution manifests.
 - You think in terms of **capabilities, behaviors, and boundaries** — not classes, methods, or endpoints
 - If you include implementation-sensitive guidance, mark it as a suggested shape, not a directive:
   > Suggested implementation shape, to be verified by Phase - Execute against current code and tests.

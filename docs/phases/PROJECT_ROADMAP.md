@@ -11,6 +11,8 @@ One authored corpus of agents, skills, and instructions that propagates to every
 | 01 | Creative Writing Profile and Developmental Editor Toolkit | Complete | None | Large | Creative agent roster, profile instruction with skill allow-list, four creative skills, baseline trim, guard tests, and user documentation. |
 | 02 | Merged Feature Scheduling and Phase Execution | Complete | 01 | Large | Provides one living-schedule orchestrator with just-in-time plan expansion, per-feature revalidation, model-tier routing, session preflight, integration guards, and post-renumber harness outputs. Phase 03 supersedes its per-feature reviewer committee and consolidated fix loops. |
 | 03 | Phase Execute Loop Simplification | Complete | 02 | Medium | Collapses the per-feature reviewer committee into one review-and-fix agent, moves the full nine-agent chorus to phase close as a single pass, caps repair at one round with no audit re-run, and reorders QA to measure final code. |
+| 04 | Slim Phase Planning and Execution | Implemented — propagation pending | 03 | Large | Uses a living plan-and-delta schedule, deletes the superseded planner and orphaned review agents, then reduces Phase Execute to sequential implementation, optional QA, Prod Code Review, and conditional documentation. |
+| 05 | Unified Local Final Checks | Planned | 04 | Large | Replaces overlapping local review behavior with one confirmed-range command, preserves `pr-review` as an alias, and offers one optional validated repair pass. |
 
 ## Constraints & Non-Goals
 

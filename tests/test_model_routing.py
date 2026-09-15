@@ -16,7 +16,7 @@ import propagate_master_assets as mod  # noqa: E402
 
 
 PIPELINE_AGENT_SLUGS = (
-    "03a-feature-plan-expander",
+    "03o-feature-plan-author",
     "03b-feature-implementer",
     "03c-reviewer-plan-conformance",
     "03h-unity-reviewer",

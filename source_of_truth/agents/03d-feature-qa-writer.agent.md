@@ -28,14 +28,14 @@ Write boundaries: per the auto-loaded read-only agent constraints.
 
 The orchestrator provides:
 
-1. **Feature/task folder list** — One or more directories, each containing pipeline documents:
-   - `[0N-task-name]-plan.md`, `[0N-task-name]-context.md`, `[0N-task-name]-tasks.md`
-   - `[0N-task-name]-implementation.md`
-   - `[0N-task-name]-review.md`
+1. **Pipeline** — `phase`, `audit`, or `test`. Never infer it from present files.
+2. **Feature/task folder list** — One or more directories containing:
+   - Phase: plan, selection delta, execution manifest, implementation record, and review record
+   - Audit or Test: plan, context, tasks, implementation record, and review record
    - Source code and tests referenced by the implementation record
-2. **Manual QA output path** — Where to write the consolidated manual QA document (e.g., `docs/phases/[phase-name]/[phase-name]_QA.md` or `dev/feature/[phase-name]-qa.md`)
-3. **Automated QA output path** — Where to write the consolidated automated QA document (e.g., `docs/phases/[phase-name]/[phase-name]_QA_AUTOMATED.md` or `dev/feature/[phase-name]-qa-automated.md`)
-4. **Coverage map output path** — Where to write the consolidated coverage map (e.g., `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` or `dev/feature/[phase-name]-coverage-map-qa.md`)
+3. **Manual QA output path** — Where to write the consolidated manual QA document.
+4. **Automated QA output path** — Where to write the consolidated automated QA document.
+5. **Coverage map output path** — Where to write the consolidated coverage map.
 
 If any output path is missing from the invocation, or you are running in per-feature mode, load the `pipeline-artifacts` skill and resolve the paths from its Standard File Naming and Consolidated QA Documents tables.
 
@@ -78,7 +78,7 @@ For each category below, only the *italicized aspect* warrants manual QA—the u
 
 For **each** feature/task folder provided by the orchestrator, read all available documents:
 
-1. **Plan documents** — `[0N-task-name]-plan.md` for scope, objectives, and acceptance criteria; `[0N-task-name]-context.md` for key files, decisions, and constraints; `[0N-task-name]-tasks.md` for the ordered work checklist
+1. **Planning artifacts** — read the Phase plan, selection delta, and manifest, or the Audit/Test plan, context, and tasks.
 2. **Implementation record** — `[0N-task-name]-implementation.md` to identify changed files, new endpoints, UI components, integrations
 3. **Review record** — `[0N-task-name]-review.md` for flagged risks, edge cases, and reviewer concerns
 4. **Source code** — Scan changed files to understand actual behavior and integration points

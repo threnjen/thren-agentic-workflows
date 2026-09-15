@@ -44,25 +44,15 @@ PREFLIGHT_FIELDS = (
     "resolved_route",
     "resolution_status",
 )
-REPORT_PATHS = {
-    "03j-reviewer-blast-radius": "03j-reviewer-blast-radius-report.md",
-    "03k-reviewer-test-falsification": "03k-reviewer-test-falsification-report.md",
-    "03l-reviewer-plan-blind": "03l-reviewer-plan-blind-report.md",
-    "03m-finding-consolidator": "03m-finding-consolidator-candidates.md",
-    "03n-finding-validator": "03n-finding-validator-fix-list.md",
+PHASE_CREATED_AGENTS = {
+    "03o-feature-plan-author",
+    "03b-feature-implementer",
+    "03c-reviewer-plan-conformance",
+    "03d-feature-qa-writer",
+    "03i-feature-qa-runner",
+    "03f-prod-code-review",
+    "docs-writer",
 }
-FINDING_FIELDS = ("severity", "lane", "evidence", "reviewer")
-FIX_LIST_FIELDS = (
-    "id",
-    "severity",
-    "lane",
-    "finding",
-    "evidence",
-    "reviewers",
-    "action",
-    "status",
-)
-PHASE_CREATED_AGENTS = set(REPORT_PATHS)
 FILE_TYPE_PATTERNS = {
     "**/*.cs",
     "**/*.py",
@@ -138,12 +128,11 @@ def _unresolved_agent_targeting_patterns(
 
 
 def test_phase_consumers_resolve_producer_contracts() -> None:
-    """Every named Phase 02 handoff has a producer and a consumer."""
+    """Every slim Phase handoff has a producer and explicit consumers."""
     agents = _agents()
     phase = _read(PHASE_PATH)
     manifest_skill = _read(MANIFEST_SKILL_PATH)
     loop_skill = _read(LOOP_SKILL_PATH)
-    record_skill = _read(RECORD_SKILL_PATH)
     conventions = _read(PREFLIGHT_INSTRUCTIONS_PATH)
 
     assert not _missing_tokens(manifest_skill, tuple(f"`{field}`" for field in MANIFEST_FIELDS))
@@ -152,26 +141,36 @@ def test_phase_consumers_resolve_producer_contracts() -> None:
     assert not _missing_tokens(phase, tuple(f"`{field}`" for field in PREFLIGHT_FIELDS))
     assert not _missing_tokens(conventions, tuple(f"`{field}`" for field in PREFLIGHT_FIELDS))
 
-    for slug, report_name in REPORT_PATHS.items():
-        body = agents[slug].body
-        assert report_name in body, f"{slug} does not produce {report_name}"
-        assert report_name in phase, f"phase does not consume {report_name}"
+    assert "`-plan.md`" in phase
+    assert "`-delta.md`" in phase
+    assert "execution manifest" in phase
+    assert "pipeline: phase" in phase
+    assert "[pipeline]" in loop_skill
 
-    for slug in REPORT_PATHS:
-        if slug == "03m-finding-consolidator":
-            continue
+    for slug in (
+        "03b-feature-implementer",
+        "03c-reviewer-plan-conformance",
+        "03d-feature-qa-writer",
+        "03f-prod-code-review",
+    ):
         body = agents[slug].body
-        assert not _missing_tokens(body, FINDING_FIELDS)
-
-    validator = agents["03n-finding-validator"].body
-    assert not _missing_tokens(validator, FIX_LIST_FIELDS)
-    assert "final fix list" in phase
-    assert "Review findings" in record_skill
+        assert "phase" in body and "audit" in body and "test" in body
+        assert "Never infer" in body
 
     routing = propagator.load_model_routing()
     assert set(routing) == set(propagator.MODEL_TIERS)
     assert all(tier in phase for tier in propagator.MODEL_TIERS)
     assert "load_model_routing()" not in phase
+
+
+def test_shared_consumers_receive_explicit_pipeline_contracts() -> None:
+    audit = _read(REPO_ROOT / "source_of_truth/skills/audit-remediation-pipeline/SKILL.md")
+    test = _read(REPO_ROOT / "source_of_truth/agents/test-orchestrator.agent.md")
+    phase = _read(PHASE_PATH)
+    assert "pipeline: phase" in phase
+    assert "`audit` as `[pipeline]`" in audit
+    assert "Pipeline: audit" in audit
+    assert "`test` as `[pipeline]`" in test
 
 
 def test_phase_spawn_roster_and_frontmatter_references_resolve() -> None:
@@ -314,8 +313,6 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
     manifest = _read(MANIFEST_SKILL_PATH)
     loop = _read(LOOP_SKILL_PATH)
     routing_text = _read(ROUTING_PATH)
-    agents = _agents()
-
     cases = (
         ("manifest", manifest, tuple(f"`{field}`" for field in MANIFEST_FIELDS)),
         (
@@ -324,31 +321,33 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
             ("`execution_order`", "`expected_write_set`", "`last_validation_commit`"),
         ),
         ("routing", routing_text, ('"low":', '"medium":', '"high":')),
-        ("committee", phase, tuple(REPORT_PATHS.values())),
         (
-            "phase-close roster",
+            "selection",
             phase,
             (
-                "The roster is nine reviewers in three classes.",
-                "**Repair-eligible (four)**",
-                "**Advisory only (three)**",
-                "Eligibility is set by lane, by blast radius.",
-                "Only a finding from a repair-eligible lane can open it.",
-                "`04d` consistency drift in particular is never auto-repaired",
-                "Give it only the candidates drawn from the four repair-eligible lanes.",
-                "Do not re-run the audits.",
-                "Never open a second round.",
+                "exactly one `-delta.md`",
+                "only when verified source contradicts",
+                "must not create or require a context file, task file, or replacement checklist",
             ),
         ),
         (
-            "review and fix",
+            "bounded feature loop",
             phase,
             (
-                "The reviewer gets one round of review.",
-                "never open a fix round of your own",
-                "An unfixed finding that leaves the suite green is not a blocker here",
-                "Only a `production-blocker` can block dependents",
-                "There is no exempt test and no baseline list to check against",
+                "one review-and-repair pass",
+                "always a production blocker",
+                "block every dependent feature",
+                "recorded revert commit",
+                "There is no exempt test",
+            ),
+        ),
+        (
+            "close",
+            phase,
+            (
+                "Skipped QA is excluded from `all-approved`",
+                "Run Docs Writer only after Prod Code Review returns `GO` or `GO WITH CONDITIONS`",
+                "Point the user to `pr-review`",
             ),
         ),
     )
@@ -357,11 +356,6 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
         for token in tokens:
             mutated = text.replace(token, "", 1)
             assert token in _missing_tokens(mutated, tokens), f"inert {label} guard: {token}"
-
-    for slug, report_name in REPORT_PATHS.items():
-        body = agents[slug].body
-        assert report_name in body
-        assert report_name in _missing_tokens(body.replace(report_name, "", 1), (report_name,))
 
     routing = propagator.load_model_routing()
     assert set(routing) == set(propagator.MODEL_TIERS)

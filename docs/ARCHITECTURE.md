@@ -32,7 +32,7 @@ flowchart TD
     Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
-    SOT --> Agents[66 agent definitions]
+    SOT --> Agents[59 agent definitions]
     SOT --> Skills[50 skill directories]
     SOT --> Instructions[24 instruction files]
 
@@ -132,7 +132,7 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 66 agent definitions (16 user-invocable, 50 hidden subagents), all using
+- `agents/` — 59 agent definitions (16 user-invocable, 43 hidden subagents), all using
   the `.agent.md` suffix. Loading keys off `name`/`description` frontmatter, not the
   suffix, so the source glob stays `*.md`.
 - `skills/` — 50 directory-based skills, each rooted at `SKILL.md`.
@@ -155,8 +155,8 @@ platform-specific transformations:
 - Claude emission splits by invocability: a hidden agent emits a subagent file only; a
   user-invocable agent emits a slash command, **plus** a subagent file when some
   orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
-  it. That is why `ports/claude/agents` (52) and `ports/claude/commands` (16) differ:
-  50 hidden subagents plus the two dual-use agents (Docs Writer,
+  it. That is why `ports/claude/agents` (45) and `ports/claude/commands` (16) differ:
+  43 hidden subagents plus the two dual-use agents (Docs Writer,
   Web Researcher)
 - applicable instruction content is inlined when the destination platform does not
   support `instructions/` directly
@@ -231,27 +231,17 @@ flowchart TD
     DocsWriter[Docs Writer]
 
     PlanAuthor[03o Feature - Plan Author]
-    PlanExpander[03a Feature - Plan Expander]
     Implementer[03b Feature - Implementer]
-    Committee["Review committee — 03c Plan Conformance, 03j Blast Radius, 03k Test Falsification, 03l Plan Blind, 04h Cleanliness"]
-    Consolidator[03m Finding Consolidator]
-    Validator[03n Finding Validator]
-    Fixer[03p Feature - Fixer]
+    PlanReview[03c Plan Conformance]
     QA[03d Feature - QA Writer]
-    Security[03e Diff Security Scan]
 
     Planner --> Refiner
     Refiner --> PhaseExecute
 
     PhaseExecute --> PlanAuthor
-    PhaseExecute --> PlanExpander
     PhaseExecute --> Implementer
-    PhaseExecute --> Committee
-    Committee --> Consolidator
-    Consolidator --> Validator
-    Validator --> Fixer
+    PhaseExecute --> PlanReview
     PhaseExecute --> QA
-    PhaseExecute --> Security
     PhaseExecute --> ProdReview
 
     Audit --> AuditorCode[Auditor - Code]
@@ -272,17 +262,12 @@ flowchart TD
     ClientDeliverable --> DocsWriter
 ```
 
-**Phase - Execute** runs one feature at a time through five stages. It implements, then
-spawns a concurrent review committee over the feature diff — plan conformance, blast
-radius, test falsification, plan-blind behavior, and cleanliness, plus the Unity Reviewer
-and the Dependency Auditor when their conditions hold. Every report feeds **03m Finding
-Consolidator**, which deduplicates without judging, then **03n Finding Validator**, which
-independently proves or rejects each serious candidate. Only confirmed Critical, Blocker,
-and High production defects reach **03p Feature - Fixer**, which repairs against a
-regression baseline. The implementer never applies its own review findings, and the
-orchestrator never merges, validates, or ranks findings itself. After the feature loop
-closes it runs QA, then the phase-close audits (consistency, test health, diff security)
-over the whole phase diff, then the Prod Code Review gate.
+**Phase - Execute** uses Feature - Plan Author for initial decomposition, one selection
+delta per feature, and bounded manifest revalidation. It implements one feature at a time,
+runs one Plan Conformance review-and-repair pass, and then applies an integration gate.
+Optional consolidated QA runs only when selected. Prod Code Review closes the run, and
+Docs Writer runs only after a positive verdict. Local branch review remains a separate
+command.
 
 The audit orchestrator runs a matrix of audit types by targets. A target is a
 directory or a git ref; ref targets are materialized as detached read-only

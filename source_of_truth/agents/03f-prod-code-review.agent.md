@@ -28,17 +28,24 @@ Run all phases at full depth.
 
 ## Required Inputs
 
-Never halt or ask for a missing document — you run unattended and no one is there to answer. Inventory what is available, record every missing document as a finding in Cross-Document Issues (severity Blocker for a missing implementation or review record, High otherwise), name it in the Document Inventory `Present: No` row, carry it into the Executive Summary, and let it drive the verdict — an incomplete document chain cannot be GO.
+Never halt or ask for a missing required document. Inventory what is available and record each missing required document as a finding. Use Blocker for a missing implementation or review record and High otherwise. Phase QA documents are optional when the orchestrator records `qa: skipped (user choice)`.
 
-**Per-feature documents** (in each `dev/feature/[0N-task-name]/` or `dev/[audit-name]/[task-name]/` folder):
+The invocation names `pipeline: phase | audit | test`. Never infer it from present files.
+
+**Per-feature documents**:
 
 | Document | Source Agent | Expected File |
 |----------|-------------|---------------|
-| Feature plan | 03 Phase - Execute | `[0N-task-name]-plan.md` |
-| Context document | Feature - Plan Expander | `[0N-task-name]-context.md` |
-| Task checklist | Feature - Plan Expander | `[0N-task-name]-tasks.md` |
+| Plan | Phase Plan Author, Audit, or Test planner | `[task-name]-plan.md` |
+| Phase selection delta | Feature - Plan Author | `[task-name]-delta.md` |
+| Audit/Test context | Audit or Test planner | `[task-name]-context.md` |
+| Audit/Test tasks | Audit or Test planner | `[task-name]-tasks.md` |
 | Implementation record | Feature - Implementer | `[0N-task-name]-implementation.md` |
 | Review record | 03c Reviewer - Plan Conformance | `[0N-task-name]-review.md` |
+
+Phase also requires its execution manifest. A Phase run does not require context or task files. Audit and Test do not require a selection delta or Phase manifest.
+
+Record the Phase execution manifest in the Document Inventory before the per-feature rows.
 
 **Consolidated QA document** (provided by the orchestrator):
 
@@ -116,11 +123,11 @@ Produce a traceability matrix in either mode:
 3. Check that the QA plan tests nothing the automated tests already cover fully
 4. Verify the QA plan covers each feature plan's non-goals as negative test cases where appropriate (confirm feature does NOT do X)
 
-#### 2E. Context Document Accuracy
+#### 2E. Planning Detail Accuracy
 
-1. Verify key files listed in the context document still exist and are relevant
-2. Check that architectural decisions noted in the context document were followed in implementation
-3. Verify constraints from the context document were respected
+1. Verify key files in the Phase delta or Audit/Test context still exist and remain relevant.
+2. Verify the implementation followed the recorded decisions.
+3. Verify the implementation respected the recorded constraints.
 
 ### Phase 3: Implementation Verification
 
@@ -181,7 +188,7 @@ State one of:
 | **GO WITH CONDITIONS** | Minor gaps exist but can be addressed during QA or are low-risk. List the conditions that must be monitored. |
 | **NO-GO** | Significant gaps, contradictions, or risks that must be resolved before manual QA begins. List all blocking issues. |
 
-Manual QA has not run when you reach this gate, and it never runs before it. An unexecuted manual checklist is the expected state, not a gap. Never make it a blocking item and never list it as a condition. Judge the phase on what the pipeline verified: review verdicts, the test-execution gate, the automated QA run, the security scan, and the phase-close audits.
+Manual QA has not run when you reach this gate. Its unchecked items are expected and never block the verdict. Judge the run on its conformance verdicts, integration gates, selected automated QA, and available planning and implementation evidence. Skipped optional QA is not failed evidence.
 
 ### Executive Summary
 
@@ -197,9 +204,10 @@ Three to five sentences covering:
 
 | Document | File | Source | Present | Notes |
 |----------|------|--------|---------|-------|
-| Feature Plan | `[0N-task-name]-plan.md` | 03 Phase - Execute | Yes/No | — |
-| Context | `[0N-task-name]-context.md` | Feature - Plan Expander | Yes/No | — |
-| Tasks | `[0N-task-name]-tasks.md` | Feature - Plan Expander | Yes/No | — |
+| Plan | `[task-name]-plan.md` | Pipeline planner | Yes/No | — |
+| Phase Delta | `[task-name]-delta.md` | Feature - Plan Author | Yes/No/N/A | Required for Phase only |
+| Audit/Test Context | `[task-name]-context.md` | Audit or Test planner | Yes/No/N/A | Not used by Phase |
+| Audit/Test Tasks | `[task-name]-tasks.md` | Audit or Test planner | Yes/No/N/A | Not used by Phase |
 | Implementation Record | `[0N-task-name]-implementation.md` | Feature - Implementer | Yes/No | — |
 | Review Record | `[0N-task-name]-review.md` | 03c Reviewer - Plan Conformance | Yes/No | — |
 
