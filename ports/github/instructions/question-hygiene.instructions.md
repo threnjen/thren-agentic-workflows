@@ -6,18 +6,18 @@ baseline: true
 
 # Question Hygiene
 
-Question Triage governs **when** to ask the user a question. This file governs **how**. Every decision question must stand alone for someone who has not read the conversation, has not seen your files, and has kept none of your earlier analysis.
+Question Triage governs **when** to ask the user a question. This file governs **how**. Every decision question must stand alone for someone who has not read the conversation or seen your files and does not remember any earlier analysis.
 
-Put all of this inside the question itself.
+Include all required context in the question itself.
 
-1. **What the thing is.** Name and describe the subject in plain language. Never point back to a label you introduced earlier, such as "Option B", "the adapter approach", or "the file above". Re-explain it here.
+1. **What the thing is.** Name the subject. Describe it in plain language. Never refer to a label that you introduced earlier, such as "Option B", "the adapter approach", or "the file above". Describe the subject again in the question.
 2. **Why it matters.** State what depends on the decision and what follows from each answer. If no answer changes what you would do, do not ask.
-3. **What each option costs.** Give every option its trade-off inline: effort, complexity, risk, or what it forecloses. Write "A (simpler, but no offline support) or B (more setup, works offline)", never a bare "A or B?".
-4. **Plain language.** No unexplained jargon, internal shorthand, or reference to analysis the user has not seen. Define an essential technical term in a clause.
+3. **What each option costs.** State each option's trade-off inline: effort, complexity, risk, or what it prevents. Write "A (simpler, but no offline support) or B (more setup, works offline)". Never offer only "A or B?".
+4. **Plain language.** Do not use unexplained jargon, internal shorthand, or references to analysis the user has not seen. Define each essential technical term in a clause.
 
-Multiple choice is the easiest format to get wrong. The stem must carry enough context that the choices make sense without scrolling back, and each choice must describe its own trade-off rather than restate its label. If the context will not fit, the question is premature. Do more analysis, or ask something narrower.
+Apply these rules to every multiple-choice question. The question stem, the part before the choices, must provide enough context for the choices to make sense without earlier text. Each choice must state its own trade-off, not merely repeat its label. If you cannot include the required context, the question is premature. Analyze more before asking. Ask a narrower question if needed.
 
-Check every question before you send it: if this were the only text the user could see, could they answer it confidently? Rewrite until yes.
+Check every question before you send it. Could the user answer it confidently if it were the only text they could see? Rewrite the question until the user can answer it confidently.
 
 ## Load Canary
 

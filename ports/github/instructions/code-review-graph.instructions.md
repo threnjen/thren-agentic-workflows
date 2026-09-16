@@ -5,9 +5,9 @@ baseline: true
 
 # Query The Code Graph Before Scanning Files
 
-When a repository has a code-review-graph knowledge graph, query it before you reach for Grep, Glob, or Read. The graph costs fewer tokens and returns callers, dependents, and test coverage, which file scanning cannot give you.
+When a repository has a code-review-graph knowledge graph, query it before using Grep, Glob, or Read. The graph uses fewer tokens than file scanning and returns callers, dependents, and test coverage. File scanning does not provide these results.
 
-A repository has a graph when the `code-review-graph` MCP tools are available and report a non-zero node count. Fall back to Grep, Glob, and Read for whatever the graph does not cover.
+A repository has a graph when the `code-review-graph` MCP tools are available and report a non-zero node count. Fall back to Grep, Glob, and Read for information that the graph does not cover.
 
 ## Which Tool Answers Which Question
 
@@ -24,11 +24,11 @@ A repository has a graph when the `code-review-graph` MCP tools are available an
 
 ## Reviewing Changes
 
-1. Call `detect_changes` for a risk-scored summary of the change.
-2. Call `get_affected_flows` for the execution paths it reaches.
-3. Call `query_graph` with `pattern="tests_for"` to check coverage.
+1. Call `detect_changes` to get a summary with a risk score for the change.
+2. Call `get_affected_flows` to find affected execution paths.
+3. Call `query_graph` with `pattern="tests_for"` to find test coverage.
 
-Read source files only for what those calls leave open. The graph updates on file change, so a stale result means the graph is wrong, not your query.
+Read source files only when those calls leave questions unanswered. The graph updates after a file changes. If a result is stale, the graph is wrong, not your query.
 
 ## Load Canary
 

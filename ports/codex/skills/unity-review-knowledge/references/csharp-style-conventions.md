@@ -1,6 +1,6 @@
 # C# Style Conventions for Unity
 
-*Distilled from: Use a C# style guide for clean and scalable game code (Unity 6 edition)*
+*This reference is distilled from: Use a C# style guide for clean and scalable game code (Unity 6 edition)*
 
 ---
 
@@ -19,7 +19,7 @@
 
 ### Field Prefixes
 
-Unity-scoped. These prefixes apply inside Unity assemblies only; non-Unity C# uses `_camelCase` for private fields (see `csharp-standards`). `[SerializeField]` fields are the further exception — plain `camelCase`, no prefix (see `unity-development`).
+These prefixes apply only inside Unity assemblies. Non-Unity C# uses `_camelCase` for private fields (see `csharp-standards`). `[SerializeField]` fields are an exception. Use plain `camelCase` without a prefix (see `unity-development`).
 
 | Scope | Prefix | Example |
 |-------|--------|---------|
@@ -27,24 +27,24 @@ Unity-scoped. These prefixes apply inside Unity assemblies only; non-Unity C# us
 | Constant | `k_` | `k_MaxItems` |
 | Static | `s_` | `s_instanceCount` |
 
-Alternative: Use `this.` keyword instead of `m_` prefix. Be consistent across codebase.
+Use the `this.` keyword instead of the `m_` prefix as an alternative. Keep the same convention across the codebase.
 
 ### Naming Rules
 
-- **Booleans**: Prefix with verb — `isDead`, `hasStarted`, `canJump`
-- **Methods**: Start with verb — `GetDirection`, `FindTarget`, `SetInitialPosition`
-- **Bool-returning methods**: Phrase as question — `IsGameOver()`, `HasStartedTurn()`
-- **Variables**: Use nouns, avoid abbreviations (except math/loops)
-- **Events**: Verb phrase with tense — `OpeningDoor` (before), `DoorOpened` (after)
-- **Event raisers**: Prefix with `On` — `OnDoorOpened()`
-- **Don't**: Use jokes/puns, Hungarian notation, redundant names (`Player.PlayerScore` → `Player.Score`)
+- **Booleans**: Prefix boolean names with a verb: `isDead`, `hasStarted`, `canJump`
+- **Methods**: Start method names with a verb: `GetDirection`, `FindTarget`, `SetInitialPosition`
+- **Bool-returning methods**: Phrase methods that return bool as questions: `IsGameOver()`, `HasStartedTurn()`
+- **Variables**: Use nouns for variable names. Avoid abbreviations except in math and loops.
+- **Events**: Name events with a verb phrase and tense: `OpeningDoor` (before), `DoorOpened` (after)
+- **Event raisers**: Prefix event raisers with `On`: `OnDoorOpened()`
+- **Do not**: Use jokes or puns, Hungarian notation, or redundant names (`Player.PlayerScore` → `Player.Score`)
 
 ### Enum Rules
 
-- Singular noun for standard enums: `enum FireMode`
-- Plural for `[Flags]`: `[Flags] enum AttackModes`
-- PascalCase for both name and values
-- No prefix or suffix on names
+- Use a singular noun for standard enum names: `enum FireMode`
+- Use a plural noun for `[Flags]` enum names: `[Flags] enum AttackModes`
+- Use PascalCase for enum names and values.
+- Do not add a prefix or suffix to enum names.
 
 ---
 
@@ -52,25 +52,25 @@ Alternative: Use `this.` keyword instead of `m_` prefix. Be consistent across co
 
 ### Class Member Order
 
-1. Fields
-2. Properties
-3. Events / Delegates
-4. MonoBehaviour Methods (`Awake`, `Start`, `OnEnable`, `OnDisable`, `OnDestroy`)
-5. Public Methods
-6. Private Methods
+1. Place fields first.
+2. Place properties second.
+3. Place events and delegates third.
+4. Place MonoBehaviour methods (`Awake`, `Start`, `OnEnable`, `OnDisable`, `OnDestroy`) fourth.
+5. Place public methods fifth.
+6. Place private methods sixth.
 
 ### File Rules
 
-- One MonoBehaviour per file; filename must match the MonoBehaviour name
-- Other internal classes are permitted in the same file
-- Group dependent/similar methods together
-- Organize top-down like a newspaper: high-level methods first, details below
+- Keep one MonoBehaviour in each file. Match the filename to the MonoBehaviour name.
+- You may place other internal classes in the same file.
+- Group dependent or similar methods together.
+- Organize methods from high-level to detailed, like a newspaper.
 
 ### Namespace Conventions
 
-- PascalCase, no symbols/underscores: `MyApplication.GameFlow`
-- Sub-namespaces via dot operator: `MyApplication.AI`, `MyApplication.UI`
-- Mirror folder structure in namespace hierarchy
+- Use PascalCase for namespaces. Do not use symbols or underscores: `MyApplication.GameFlow`
+- Use dot-separated sub-namespaces: `MyApplication.AI`, `MyApplication.UI`
+- Mirror the folder structure in the namespace hierarchy.
 
 ---
 
@@ -78,93 +78,94 @@ Alternative: Use `this.` keyword instead of `m_` prefix. Be consistent across co
 
 ### Braces & Indentation
 
-- Choose Allman (opening brace on new line) or K&R (same line) — be consistent
-- **Never omit braces**, even for single-line statements
-- Standard indent: 4 or 2 spaces (team agreement, enforce via EditorConfig)
-- Indent case statements from switch; always include default case
+- Choose Allman (opening brace on new line) or K&R (same line).
+- Keep the brace style consistent.
+- **Never omit braces**, even for single-line statements.
+- Use four or two spaces for standard indentation, based on the team agreement. Enforce the choice through EditorConfig.
+- Indent case statements from `switch`. Always include a default case.
 
 ### Spacing
 
-- Single space after comma in arguments: `DoSomething(a, b, c)`
-- Single space before flow control: `while (x == y)`, not `while(x==y)`
-- Single space around operators: `if (x == y)`, not `if (x==y)`
-- No space between method name and parenthesis: `DoSomething()`, not `DoSomething ()`
-- Line width: 80–120 characters max
+- Use a single space after commas in arguments: `DoSomething(a, b, c)`
+- Use a single space before flow-control parentheses: `while (x == y)`, not `while(x==y)`
+- Use a single space around operators: `if (x == y)`, not `if (x==y)`
+- Do not add a space between a method name and its parenthesis: `DoSomething()`, not `DoSomething ()`
+- Limit line width to 80–120 characters.
 
 ### Vertical Spacing
 
-- Two blank lines between variable declarations and methods
-- Two blank lines between classes and interfaces
-- Group related methods together
+- Leave two blank lines between variable declarations and methods.
+- Leave two blank lines between classes and interfaces.
+- Group related methods together.
 
 ### Regions
 
-- Avoid `#region` — if your class needs regions, it's too large. Break into smaller classes.
+- Avoid `#region`. If your class needs regions, the class is too large. Break it into smaller classes.
 
 ---
 
 ## Properties & Serialization
 
-- Expression-bodied for single-line read-only: `public int MaxHealth => m_maxHealth;`
-- Auto-implemented for simple get/set: `public int Health { get; private set; }`
-- Use `[SerializeField]` on private fields (better encapsulation than public)
-- Use `[Range(min, max)]` for numeric Inspector fields
-- Group related data in `[Serializable]` structs/classes
-- Don't use redundant initializers (`= 0` on int, `= null` on reference types)
+- Use expression-bodied syntax for single-line read-only members: `public int MaxHealth => m_maxHealth;`
+- Use auto-implemented properties for simple get/set members: `public int Health { get; private set; }`
+- Use `[SerializeField]` on private fields because it provides better encapsulation than public fields.
+- Use `[Range(min, max)]` for numeric Inspector fields.
+- Group related data in `[Serializable]` structs or classes.
+- Do not use redundant initializers, such as `= 0` on int or `= null` on reference types.
 
 ---
 
 ## Variables
 
-- One declaration per line
-- Use `var` when type is obvious from context: `var list = new List<int>();`
-- Avoid `var` when ambiguous: `var result = GetItems();` — type unclear
-- Favor readability: `CanScrollHorizontally` over `ScrollableX`
-- Specify access modifiers consistently (either always explicit or always omit default)
+- Write one declaration per line.
+- Use `var` when the type is obvious from context: `var list = new List<int>();`
+- Do not use `var` when the type is unclear from context: `var result = GetItems();`
+- Favor readability by using `CanScrollHorizontally` instead of `ScrollableX`.
+- Specify access modifiers consistently. Always write them, or always omit default access modifiers.
 
 ---
 
 ## Methods
 
-- Fewer arguments = better; reduce for readability and testability
-- Avoid side effects — method should only do what its name says
-- Don't use flag parameters to branch behavior; create separate methods instead
+- Keep argument counts low to improve readability and testability.
+- Avoid side effects. Make each method do only what its name says.
+- Do not use flag parameters to branch behavior. Create separate methods instead.
   - Bad: `GetAngle(bool returnRadians)`
   - Good: `GetAngleInDegrees()` and `GetAngleInRadians()`
-- Avoid excessive overloading; each overload should have a distinct parameter count
+- Avoid excessive overloading. Give each overload a distinct parameter count.
 
 ---
 
 ## Comments
 
-- **Don't comment bad code — rewrite it**
-- Well-named methods/variables replace most comments
-- Use `[Tooltip("...")]` on serialized fields instead of comments
-- Use `/// <summary>` XML tags for public API methods
-- Delete commented-out code (use source control)
-- Keep TODOs current; delete ones you won't do (YAGNI)
-- No journal comments, no attribution comments, no asterisk blocks
-- Useful comments explain "why", not "what"
+- **Do not comment bad code. Rewrite it.**
+- Well-named methods and variables replace most comments.
+- Use `[Tooltip("...")]` on serialized fields instead of comments.
+- Use `/// <summary>` XML tags for public API methods.
+- Delete commented-out code. Use source control.
+- Keep TODOs current. Delete TODOs that you will not complete (YAGNI).
+- Do not use journal comments, attribution comments, or asterisk blocks.
+- Useful comments explain "why", not "what".
 
 ---
 
 ## Guiding Principles
 
 - **KISS**: Keep code simple. Avoid unnecessary complexity.
-- **YAGNI**: Don't build features you might need. Build what you need now.
-- **DRY**: Extract repeated logic into shared methods. Don't copy-paste.
-- **SRP**: Each class/method does one thing. If a class needs regions, it's too big.
+- **YAGNI**: Do not build features you might need. Build what you need now.
+- **DRY**: Extract repeated logic into shared methods. Do not copy-paste.
+- **SRP**: Make each class or method do one thing. If a class needs regions, the class is too big.
 - **Consistency**: Apply the same approach to similar things everywhere.
-- **Don't code around problems**: Investigate root cause, don't apply band-aids.
+- **Do not code around problems**: Investigate the root cause. Do not apply band-aids.
 
 ---
 
 ## Code Smells to Flag
 
-- Classes exceeding ~200–300 lines
-- Methods with more than 3–4 parameters
-- God objects doing too many things
-- Duplicate/copy-pasted logic
-- Enigmatic or joke naming
-- Small changes requiring changes in many places (fragility)
-- Code that can't be reused without dragging dependencies (immobility)
+- Flag classes that exceed approximately 200–300 lines.
+- Flag methods with more than 3–4 parameters.
+- Flag god objects that perform too many tasks.
+- Flag duplicate or copy-pasted logic.
+- Flag enigmatic or joke names.
+- Flag small changes that require changes in many places (fragility).
+- Flag code that cannot be reused without dragging dependencies (immobility).

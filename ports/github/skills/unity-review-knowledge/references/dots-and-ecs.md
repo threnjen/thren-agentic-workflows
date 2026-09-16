@@ -9,61 +9,61 @@
 DOTS (Data-Oriented Technology Stack) is for **high-volume, data-parallel workloads**: thousands of entities with uniform processing. It is not a replacement for all MonoBehaviour code.
 
 **Use DOTS for:**
-- Thousands of similar entities (crowds, bullets, particles, grid cells)
-- CPU-bound simulation that benefits from cache-coherent data layout
-- Workloads that parallelize well across cores (spatial queries, pathfinding, physics)
+- Process thousands of similar entities with DOTS (crowds, bullets, particles, grid cells).
+- Use DOTS for CPU-bound simulation that benefits from cache-coherent data layout.
+- Use DOTS for workloads that parallelize well across cores (spatial queries, pathfinding, physics).
 
-**Don't use DOTS for:**
-- Small object counts where MonoBehaviour is sufficient
-- Complex unique behaviors per entity (state machines with many branches)
-- UI, audio, or other systems with strong Unity API dependencies
-- Mixed GameObject/Entity architectures without clear boundaries
+**Do not use DOTS for:**
+- Do not use DOTS for small object counts where MonoBehaviour is sufficient.
+- Do not use DOTS for complex unique behaviors per entity (state machines with many branches).
+- Do not use DOTS for UI, audio, or other systems with strong Unity API dependencies.
+- Do not use DOTS for mixed GameObject/Entity architectures without clear boundaries.
 
 ---
 
 ## Burst Compiler Rules
 
-- **Flag**: Managed objects (classes) in Burst code — Burst compiles a subset of C# that excludes class instances
-- **Require**: `[BurstCompile]` attribute on all job structs and `ISystem.OnUpdate`
-- **Require**: `NativeArray<T>` / `NativeList<T>` instead of managed arrays — unmanaged, GC-free
-- **Require**: `Unity.Mathematics` types (`float3`, `quaternion`) over `UnityEngine` equivalents in Burst context
-- **Flag**: I/O operations (file reads, network calls) in jobs — use async APIs from main thread
-- **Flag**: `static` variables in Burst jobs — not supported
+- **Flag** managed objects (classes) in Burst code. Burst compiles a subset of C# that excludes class instances.
+- **Require** the `[BurstCompile]` attribute on all job structs and `ISystem.OnUpdate`.
+- **Require** `NativeArray<T>` / `NativeList<T>` instead of managed arrays. These types are unmanaged and GC-free.
+- **Require** `Unity.Mathematics` types (`float3`, `quaternion`) instead of `UnityEngine` equivalents in Burst context.
+- **Flag** I/O operations (file reads, network calls) in jobs. Use async APIs from the main thread.
+- **Flag** `static` variables in Burst jobs. Burst jobs do not support them.
 
 ---
 
 ## Job System Constraints
 
-- **Only the main thread can schedule jobs** — flag job scheduling from worker threads
-- Declare job dependencies explicitly; jobs sharing data must have ordered dependencies
-- Call `Complete()` on scheduled jobs before accessing their output data on main thread
-- Each job must have isolated private data; shared data requires dependency declaration
-- Pass only **blittable data** into jobs (no reference types)
-- Return results via `NativeContainer` types
-- Schedule jobs early in frame; avoid synchronization points that block main thread
+- **Only the main thread can schedule jobs**. Flag any job scheduling from worker threads.
+- Declare job dependencies explicitly. Jobs that share data must have ordered dependencies.
+- Call `Complete()` on scheduled jobs before accessing their output data on the main thread.
+- Keep each job's data isolated and private. Shared data requires a dependency declaration.
+- Pass only **blittable data** into jobs. Do not pass reference types.
+- Return results via `NativeContainer` types.
+- Schedule jobs early in the frame. Avoid synchronization points that block the main thread.
 
 ---
 
 ## ECS Patterns
 
-- Entity components must be **unmanaged structs only** (no classes) — required for Burst compatibility
-- Systems should be `partial struct` implementing `ISystem` with `[BurstCompile]` on `OnUpdate`
-- Use entity queries to batch-process entities with matching component types (cache-friendly)
-- **Don't mix GameObjects and Entities** without clear architectural boundaries
+- Entity components must be **unmanaged structs only**. Do not use classes. This restriction is required for Burst compatibility.
+- Systems should be `partial struct` types that implement `ISystem` with `[BurstCompile]` on `OnUpdate`.
+- Use entity queries to batch-process entities with matching component types. This approach is cache-friendly.
+- **Do not mix GameObjects and Entities** without clear architectural boundaries.
 
 ---
 
 ## Structural Changes
 
-- Adding/removing components moves entities between archetypes — **expensive operation**
-- **Flag**: Structural changes in tight loops — batch or defer them
-- Monitor chunk allocation; too many unique archetypes fragments memory
-- Use `EntityCommandBuffer` for deferred structural changes
+- Adding or removing components moves entities between archetypes. This operation is expensive.
+- **Flag** structural changes in tight loops. Batch or defer them.
+- Monitor chunk allocation. Too many unique archetypes fragment memory.
+- Use `EntityCommandBuffer` for deferred structural changes.
 
 ---
 
 ## Performance Expectations
 
-- Burst-compiled jobs have documented speedups of 245x+ over equivalent managed C#
-- Primary benefit is cache-coherent data access and SIMD vectorization
-- Main overhead is learning curve and architectural constraints
+- Burst-compiled jobs have documented speedups of 245x+ over equivalent managed C#.
+- The primary benefit is cache-coherent data access and SIMD vectorization.
+- The main overhead comes from the learning curve and architectural constraints.

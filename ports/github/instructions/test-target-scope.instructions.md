@@ -5,21 +5,21 @@ applyTo: "**/03b-feature-implementer.agent.md,**/03c-reviewer-plan-conformance.a
 
 # Test Target Scope
 
-A test asserts on executable behavior — inputs, outputs, side effects. Nothing else earns a test.
+A test checks executable behavior: inputs, outputs, and side effects. Do not test anything else.
 
-## Never a test target
+## Do not use these as test targets
 
-- `docs/` and any README-style prose
-- `dev/` and every other gitignored or scratch directory, whose contents are ephemeral pipeline artifacts
-- Markdown files in general
+- Do not test files under `docs/` or any README-style prose.
+- Do not test `dev/` or any other Git-ignored or scratch directory. These directories contain temporary pipeline artifacts.
+- Do not test Markdown files in general.
 
-A pipeline document, a phase summary, or a plan file is an artifact of the work, not a unit under test. Verify it with a QA check or a review step.
+A pipeline document, phase summary, or plan file is a work artifact, not a test unit. Verify it with a QA check or review step.
 
-## The one exception
+## One exception
 
-Assert on file content when the repository's own deliverable **is** that content — a prose corpus, an agent-definition set, a generated-output contract. The guard is then a real guard. Commit it to the tracked suite and follow the `guard-integrity` skill, which exists for this case.
+Test file content when the repository's own deliverable **is** that content, such as a prose corpus, an agent-definition set, or a generated-output contract. This test is a real guard. Commit it to the tracked suite. Follow the `guard-integrity` skill for this case.
 
-The exception applies only when the repository ships the text as its product. "The change I made was in a `.md` file" is not that.
+Apply the exception only when the repository ships the text as its product. A change to a `.md` file alone does not qualify.
 
 ## Load Canary
 

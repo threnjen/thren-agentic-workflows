@@ -7,15 +7,15 @@ user-invocable: false
 
 # Auditor Conventions
 
-Common conventions for every auditor subagent and any agent that produces, queues, or compares audit findings. Load this skill first, then follow domain-specific instructions in your agent definition. Where your agent also loads a narrower conventions skill for its own family (for example `pr-review-conventions`), that skill governs wherever the two differ.
+These conventions apply to every auditor subagent and every agent that produces, queues, or compares audit findings. Load this skill first. Then follow domain-specific instructions in your agent definition. If your agent also loads a narrower conventions skill for its family, follow that skill wherever the two differ.
 
 ## Standard Constraints
 
-- Complete the FULL audit before producing any deliverables
-- DO NOT suggest fixes inline — only report findings with file:line references
-- DO NOT skip any audit category — be comprehensive across all in-scope files
-- DO NOT give vague feedback — every finding must cite specific files and locations
-- DO NOT edit source files — you only create report documents
+- Complete the FULL audit before producing deliverables.
+- DO NOT suggest fixes inline. Report only findings with file:line references.
+- DO NOT skip any audit category. Cover every in-scope file.
+- DO NOT give vague feedback. Cite specific files and locations for every finding.
+- DO NOT edit source files. Create report documents only.
 
 Your agent definition adds domain-specific constraints (scope focus, additional prohibitions).
 
@@ -26,7 +26,7 @@ all of the following. Detail, repetition, severity, and agreement between
 auditors are not substitutes for evidence.
 
 1. **Population:** Mechanically enumerate findings and reconcile every stated
-   total. Quarantine contradictory counts; never choose one silently.
+   total. Quarantine contradictory counts. Never choose one silently.
 2. **Production path:** Read the exact construct, its reachable production
    callers, and its constraining tests. Test-only bypasses, invalid object
    states, and hypothetical future callers are not current production defects
@@ -55,8 +55,8 @@ this condition`, and `has no fixed cap` are different claims from `will`,
 ## Deliverables
 
 This section governs a **full-repository audit**. A narrower conventions skill
-loaded by your agent, or explicit paths in the spawn prompt, replace it — write
-to the paths and return in the shape you were given.
+loaded by your agent or explicit paths in the spawn prompt replace it. Write to
+the specified paths and return in the specified shape.
 
 Your output is a report document saved to `dev/[audit-name]/`:
 - `[audit-name]-report.md` — Full structured findings
@@ -70,8 +70,8 @@ paths, findings-by-severity totals, and status — never bulk report content.
 
 ## Scope Determination
 
-When spawnd, determine scope with the user — or, when invoked as a subagent
-with scope stated in the spawn prompt, take that scope as-is without asking:
+When spawned, determine scope with the user. When the spawn prompt states the
+scope, take it as-is without asking:
 - **Full codebase** — All in-scope files (default if unspecified)
 - **Specific files/directories** — As specified by the user
 - **Single file or module** — Deep audit of one area
@@ -84,62 +84,62 @@ An audit runs against one **target repository root** and writes to one
 **output root**. They are not always the same directory.
 
 - The spawn prompt may name a target root explicitly (`Target repository:
-  <abs-path>`). When it does, audit that tree and no other, and express every
-  finding path **relative to that target root** — never as an absolute path and
-  never relative to your working directory.
+  <abs-path>`). When it does, audit that tree and no other. Express every
+  finding path **relative to that target root**. Never use an absolute path or a
+  path relative to your working directory.
 - When no target is named, the target root is the current repository, and the
   output root is the same.
 - The target tree is **read-only**. When the output root is a different
-  repository, write deliverables there; never create files inside a target you
-  were not told to write to.
-- State the target root and the output root in the report header, along with
-  the counts that scale it (files audited, projects, lines). A later comparison
-  depends on those numbers being stated.
+  repository, write deliverables there. Never create files inside a target
+  unless the prompt tells you to write there.
+- State the target root and output root in the report header. Include the
+  counts that scale with the target (files audited, projects, and lines). Later
+  comparisons depend on these counts.
 
 ## Multi-Target Audits
 
-The caller may run the same audit against several targets so the results can be
-compared (typically an older and a newer revision of one product). Each target
-gets its own independent audit run and its own report.
+The caller may run the same audit against several targets for comparison,
+typically an older and newer revision of one product. Each target gets an
+independent audit run and report.
 
-- **Each run is independent.** Audit the target you were given on its own
-  terms. Do not read another target's tree, and do not read another run's
-  report — a comparison is only meaningful if neither side was anchored to the
-  other. The comparison itself is a separate step, performed by Auditor - Delta.
+- **Each run is independent.** Audit the assigned target on its own terms. Do
+  not read another target's tree or another run's report. A comparison is
+  meaningful only when neither side anchors to the other. Auditor - Delta
+  performs the comparison as a separate step.
 - **Identical prompts.** The caller must give every run the same instruction
-  text, varying only the target root, the snapshot label, and the output path.
-  If your spawn prompt appears to have been tailored to one side (extra hints,
-  a list of things to look for, a prior report's conclusions), say so in your
-  Coverage and Limitations section — it bounds what any comparison can claim.
+  text. Vary only the target root, snapshot label, and output path. If the spawn
+  prompt appears tailored to one side (extra hints, a list of things to inspect,
+  or prior report conclusions), say so in Coverage and Limitations. This limits
+  what any comparison can claim.
 - **Snapshot label.** The caller assigns each run a label (`orig-code`,
-  `20260725`, a short sha). Use it in the report header and in the deliverable
-  filenames it names.
+  `20260725`, or a short sha). Use it in the report header and in the deliverable
+  filenames.
 - **Layout.** Per-target deliverables go to `dev/[audit-name]/<snapshot-label>/`
   under the output root, and comparison documents, when produced, go to
   `dev/[audit-name]/[audit-name]-delta-<baseline-label>-to-<current-label>*.md`.
-- **One output root: the newer snapshot.** Every deliverable from every target
-  is written under the newer comparison point — the later checkout, or the
-  branch under review rather than the branch it targets. An older target is
-  read-only and receives no files, including its own report. If your spawn
-  prompt names an output path outside the tree you are auditing, that is
-  intentional; write where you are told.
-- **Record your own limits.** Coverage and Limitations is the section a delta
-  leans on hardest: what you could not read, could not resolve, did not
-  decompile, did not execute. Write it for a reader who will hold it against a
-  second report of the same product.
+- **One output root: the newer snapshot.** Write every target's deliverable
+  under the newer comparison point. This is the later checkout or the branch
+  under review, rather than its target branch. Keep the older target read-only.
+  Do not write its own report under that target. If the spawn prompt names an output path
+  outside the audited tree, write to that path as instructed.
+- **Record your own limits.** A delta relies heavily on Coverage and
+  Limitations. State what you could not read, resolve, decompile, or execute.
+  Write for a reader who will compare this report with a second report of the
+  same product.
 
 ## Unity Detection
 
-Before discovery, test the target repository against the canonical Unity detection predicate
-in the auto-loaded `tech-stack-detection` instruction.
+Before discovery, test the target repository against the canonical Unity
+detection predicate in the auto-loaded `tech-stack-detection` instruction.
 
-On a match, load both `unity-development` and
-`unity-review-knowledge` before proceeding, then apply the Unity guidance your
-agent definition names for your domain.
+When the predicate matches, load `unity-development` and
+`unity-review-knowledge` before proceeding. Then apply the Unity guidance named
+for your domain in the agent definition.
 
 ## File-Type Taxonomy
 
-All auditable files fall into these categories. Each auditor declares which categories are in scope.
+All auditable files fall into these categories. Each auditor declares its
+in-scope categories.
 
 | Category | File Types |
 |----------|-----------|
@@ -156,13 +156,21 @@ All auditable files fall into these categories. Each auditor declares which cate
 
 ### Always Excluded
 
-Regardless of audit domain, exclude generated and cached directories:
+Regardless of audit domain, exclude these generated and cached directories:
 - `__pycache__/`, `.venv/`, `node_modules/`, `target/`, `build/`, `dist/`
-- Generated files and build artifacts
+- Exclude generated files and build artifacts.
 
 ## Process
 
-Discover all in-scope files → Read each thoroughly → Evaluate against all audit categories → Cross-reference for patterns → Apply the audit finding truth gate → Classify severity → Report.
+Complete these steps in order:
+
+1. Discover all in-scope files.
+2. Read each file thoroughly.
+3. Evaluate every file against all audit categories.
+4. Cross-reference files for patterns.
+5. Apply the audit finding truth gate.
+6. Classify severity.
+7. Report.
 
 ## Report Structure
 
@@ -174,7 +182,7 @@ Discover all in-scope files → Read each thoroughly → Evaluate against all au
 
 ### 2. Findings by Category
 
-For each audit category, present a table:
+Present a table for each audit category:
 
 | # | File(s) | Line(s) | Severity | Finding | Detail |
 |---|---------|---------|----------|---------|--------|
@@ -189,7 +197,8 @@ For each audit category, present a table:
 
 ### 3. Cross-Cutting Observations
 
-Patterns spanning multiple files: consistency issues, DRY violations with locations, patterns to standardize.
+Record patterns that span multiple files. Include consistency issues, DRY
+violations with locations, and patterns to standardize.
 
 ### 4. Recommended Priority Order
 
@@ -199,7 +208,8 @@ Patterns spanning multiple files: consistency issues, DRY violations with locati
 
 ## Severity Levels
 
-All auditors use this 4-level structure. Each auditor defines domain-specific meanings in its agent file.
+All auditors use this four-level structure. Each auditor defines domain-specific
+meanings in its agent file.
 
 | Level | General Guideline |
 |-------|-------------------|
@@ -210,17 +220,30 @@ All auditors use this 4-level structure. Each auditor defines domain-specific me
 
 ## Findings, Verdicts, and What Counts as Closed
 
-- **"Remediated in code" is not "verified."** A fix without a re-run gate is not a verdict; status lines move only on fresh final-state evidence. Verdicts are issued by the user — no agent writes a status line.
-- **Every finding must name the revision it examined.** An artifact that does not name its revision cannot be reconciled later, and a release dossier must confirm each artifact post-dates the code it covers.
-- **Missing or incomplete required checks are a hard gate: the verdict is `NO-GO`.** A failed, hung, or unavailable evaluator never becomes a passing result, and a later success never repairs an earlier failure. Enumerate every such case by name with a concrete reason.
-- **A fixed budget is never relaxed to make a gate pass.** If it is genuinely unachievable, the honest outcome is a user-approved acceptance-criterion change carrying proof that a deliberately broken implementation still fails the new gate.
-- **When the honest fix needs capability the scope excludes, record the finding open with routing.** Redefining the finding to fit the scope closes nothing, and "a future rebuild will handle it" is a prediction unless it names the capability that rebuild must gain.
+- **"Remediated in code" is not "verified."** A fix without a re-run gate is
+  not a verdict. Move status lines only on fresh final-state evidence. The user
+  issues verdicts. No agent writes a status line.
+- **Every finding must name the revision it examined.** An artifact without its
+  revision cannot be reconciled later. A release dossier must confirm that each
+  artifact post-dates the code it covers.
+- **Missing or incomplete required checks are a hard gate: the verdict is `NO-GO`.**
+  A failed, hung, or unavailable evaluator never becomes a passing result. A
+  later success never repairs an earlier failure. Enumerate every such case by
+  name and give a concrete reason.
+- **A fixed budget is never relaxed to make a gate pass.** If the budget is
+  genuinely unachievable, the honest outcome is a user-approved
+  acceptance-criterion change. Include proof that a deliberately broken
+  implementation still fails the new gate.
+- **When the honest fix needs capability the scope excludes, record the finding open with routing.**
+  Redefining the finding to fit the scope closes nothing. "A future rebuild
+  will handle it" is a prediction unless it names the capability that rebuild
+  must gain.
 
 ## Open-Items Queue Entries
 
-An open-items queue is a standalone work list selected from audit findings. Its
-reader is a remediation research agent that may never see the report it came
-from. Every entry, in every mode:
+An open-items queue is a standalone work list selected from audit findings. A
+remediation research agent reads it and may never see the source report. Use
+this shape for every entry and mode:
 
 ```markdown
 ### <N>. [<state>] <title>
@@ -235,62 +258,61 @@ from. Every entry, in every mode:
   behavior — or "none recorded">
 ```
 
-- **Subsystem ownership.** Every item gets one `Subsystem`: the smallest stable
-  runtime, component, or responsibility boundary that owns the remediation —
-  never the dimension, the severity, a directory chosen for convenience, or a
-  proposed work phase. Use the same concise name for items with the same
-  production owner.
-- **Self-contained entries.** Every entry must be actionable without the
-  document it was derived from. Repeat the evidence rather than
-  cross-referencing a section number.
-- **No fixes.** The queue states defects and constraints. Researching and
-  proposing the fix is the next agent's job; prejudging it here narrows what
-  that agent considers.
+- **Subsystem ownership.** Give every item one `Subsystem`. Use the smallest
+  stable runtime, component, or responsibility boundary that owns remediation.
+  Never use the dimension, severity, a convenient directory, or a proposed
+  work phase. Use the same concise name for items with the same production
+  owner.
+- **Self-contained entries.** Make every entry actionable without its source
+  document. Repeat the evidence instead of cross-referencing a section number.
+- **No fixes.** State defects and constraints in the queue. The next agent
+  researches and proposes the fix. Prejudging the fix narrows that agent's
+  options.
 - **Header.** State the current snapshot (ref plus resolved SHA, or explicitly a
   dirty tree), the selection rule, the queued count, and what the selection
-  excluded, by count and severity.
+  excluded by count and severity.
 - Order sections by severity, most severe first, then by dimension.
 - Write the file even when nothing was selected, and say so plainly. An empty
-  queue is a real result; a missing file is ambiguous.
+  queue is a real result. A missing file is ambiguous.
 
 A comparative delta extends this entry shape with attribution and closure
-fields — see `audit-delta-report` section 5. Nothing else does.
+fields. See `audit-delta-report` section 5. No other document extends it.
 
 ## Domain-Specific Extensions
 
-Your agent definition may add sections beyond this common format (e.g., Auditor - Refactor adds Dependency Graph Observations and Risk Matrix).
+Your agent definition may add sections beyond this common format. For example,
+Auditor - Refactor adds Dependency Graph Observations and Risk Matrix.
 
 ## Comparative Scans
 
-When two independent scans of the same dimension are compared (e.g., two sides
-of an engagement pair), these rules make them comparable:
+Use these rules when comparing two independent scans of the same dimension,
+such as two sides of an engagement pair:
 
-- **Report against report, never a git diff.** The two scans' reports are the
-  inputs; the trees are consulted only to settle a specific question.
-- **Stable categories**: the producing agent's own category names are the
-  canonical comparison categories — security uses Auditor - Security's 10 scope
-  categories, code quality uses Auditor - Code's 14 audit categories, infra
-  uses Auditor - Infra's 14 audit categories, dependencies uses the dependency
+- **Report against report, never a git diff.** Use the two scan reports as the
+  inputs. Consult the trees only to settle a specific question.
+- **Stable categories**: Use the producing agent's category names as the
+  canonical comparison categories. Security uses Auditor - Security's 10 scope
+  categories. Code quality uses Auditor - Code's 14 audit categories. Infra
+  uses Auditor - Infra's 14 audit categories. Dependencies uses the dependency
   inventory and duplicate-library checks. Never rename, merge, or invent
   categories across scans.
-- **Severity**: the 4-level scale above (see Severity Levels). Compare
+- **Severity**: Use the 4-level scale above (see Severity Levels). Compare
   severities only by these labels.
-- **Posture first, then issue identity** — in every dimension. The headline
-  comparison is posture-level: counts by category × severity on each side, the
-  before/after of the results themselves. Per-finding matching then
-  substantiates it: two findings match when they are the **same underlying
-  issue**, judged from category, description, and evidence; a matching file path
-  from `Location` is corroborating evidence, never the key — code moves in
-  refactors and rewrites, and line numbers shift between revisions. The
-  scan-local `ID` column is never used for cross-scan matching. An original
-  finding that can be neither confidently matched nor confidently ruled out is
-  treated as possibly persisting (unfixed), flagged for review — never silently
-  counted as fixed.
+- **Posture first, then issue identity** — in every dimension. Compare posture
+  first by category × severity counts on each side. This comparison shows the
+  before and after results. Then match individual findings to substantiate the
+  posture comparison. Two findings match when they are the **same underlying
+  issue**, judged from category, description, and evidence. Treat a matching
+  `Location` file path as corroborating evidence, never as the key. Code moves
+  during refactors and rewrites, and line numbers shift between revisions. Never
+  use the scan-local `ID` column for cross-scan matching. Treat an original
+  finding that cannot be confidently matched or ruled out as possibly persisting
+  (unfixed). Flag it for review. Never silently count it as fixed.
 - **Unmatched findings are never dropped, and are never classified from
-  silence.** A finding appearing on only one side is *newly reported* or *no
-  longer reported* — reporting states, not verdicts about the code. Whether it
-  is a regression, a pre-existing defect, or genuinely resolved is an
-  attribution question this skill does not answer. `audit-delta-report`'s
-  disposition taxonomy and its attribution probe are authoritative and override
-  anything here; a consumer that produces no delta reports the two reporting
-  states and says the attribution was not established.
+  silence.** A finding on only one side is *newly reported* or *no longer
+  reported*. These are reporting states, not verdicts about the code. This
+  skill does not answer whether the finding is a regression, a pre-existing
+  defect, or genuinely resolved. `audit-delta-report`'s disposition taxonomy
+  and attribution probe are authoritative and override anything here. A
+  consumer that produces no delta must report both reporting states and say that
+  attribution was not established.

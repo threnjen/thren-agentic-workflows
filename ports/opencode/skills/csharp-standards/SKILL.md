@@ -6,38 +6,38 @@ description: "The complete non-Unity C# standard — hard rules plus depth: nami
 
 # C# Standards
 
-Self-contained: the Rules section is the standard; everything after it is the why and the deciding test.
+This skill is self-contained. The Rules section defines the standard. Later sections explain the reasons and the deciding test.
 
-Scope: non-Unity C#. Inside Unity assemblies, `unity-development` overrides several rules here (private-field prefix, DTO shape, nullable enablement, null checks on engine objects) — load that skill instead.
+This skill covers non-Unity C#. Inside Unity assemblies, `unity-development` overrides several rules here. These rules cover the private-field prefix, DTO shape, nullable enablement, and null checks on engine objects. Load that skill instead.
 
-PAIRED ASSET: `instructions/csharp-style.instructions.md` carries the same rules for Cursor and Copilot, which reach them by file glob rather than by loading this skill. Change both together.
+PAIRED ASSET: `instructions/csharp-style.instructions.md` carries the same rules for Cursor and Copilot. Those harnesses reach the rules through file globs instead of loading this skill. Change both files together.
 
 ## Rules
 
-- **Naming:** PascalCase for types, methods, properties, public members, namespaces, constants. `camelCase` for locals and parameters. **`_camelCase` for private/protected/internal fields — non-Unity C# only.** `I` prefix on interfaces. Acronyms are single words (`MyRpc`). One core class per file, filename matching it. Booleans read as a true/false statement (`CanRefund`, `IsEligibleForRefund`). No `Manager`/`Helper`/`Util`/`Data` suffix unless you can state the class's single responsibility.
-- **Access and immutability:** most restrictive modifier that works — start `private`. No public setter unless external mutation is an explicit requirement; expose an intent-revealing transition method instead. `readonly` on construction-only fields. `record` for behavior-free DTOs; a class for anything owning behavior.
-- **Nulls:** nullable reference types enabled (`<Nullable>enable</Nullable>`). Never return `null` for an empty collection — return `[]`. A possibly-missing single object returns `T?`. Never pass a literal `null` argument; use an overload or a named optional parameter.
-- **Async:** `async` only for real I/O, never speculatively. Never `async void` outside event handlers. Every public async method calling external infrastructure takes a `CancellationToken`. Never `.Result` or `.Wait()` — `await`.
-- **Error handling:** catch the specific exception you expect; bare `Exception` only at a top-level boundary. Never swallow silently. Never use exceptions for control flow.
-- **Collections:** inputs take the most restrictive type (`IReadOnlyList<>`, `IEnumerable<>`); outputs return `IList<>` when transferring ownership, most restrictive otherwise. `List<>` over arrays for public members. Remove during iteration via `RemoveAll(predicate)` or a replacement container.
-- **`var`:** only when the type is unambiguous from the right-hand side.
-- **Member order:** nested types → static/const/readonly fields → fields and properties → constructors → methods; public before private within each group. Modifier order `public protected internal private new abstract virtual override sealed static readonly extern unsafe volatile async`. `using` directives alphabetical, `System.*` first, outside any namespace.
-- **Formatting:** 2-space indent, 100 columns, braces always, one statement per line, no line break before an opening brace or between `}` and `else`.
-- **Misc:** `const` where possible, `readonly` as fallback, no magic numbers. Expression bodies on lambdas and single-line read-only properties only. Delegates invoked null-conditionally (`OnThing?.Invoke()`). `out` for non-input returns, placed last; `ref` only to mutate a genuine input. A named class over `Tuple<>`. Namespaces at most two levels deep. Extension methods only when the source type cannot be changed.
+- **Naming:** Use PascalCase for types, methods, properties, public members, namespaces, and constants. Use `camelCase` for locals and parameters. **Use `_camelCase` for private, protected, and internal fields in non-Unity C#.** Prefix interfaces with `I`. Treat acronyms as single words, such as `MyRpc`. Put one core class in each file and match the filename to the class. Name booleans as true/false statements, such as `CanRefund` and `IsEligibleForRefund`. Do not use `Manager`, `Helper`, `Util`, or `Data` suffixes unless you can state the class's single responsibility.
+- **Access and immutability:** Use the most restrictive modifier that works. Start with `private`. Do not use a public setter unless external mutation is an explicit requirement. Expose an intent-revealing transition method instead. Mark construction-only fields `readonly`. Use `record` for behavior-free DTOs. Use a class for anything that owns behavior.
+- **Nulls:** Enable nullable reference types (`<Nullable>enable</Nullable>`). Never return `null` for an empty collection. Return `[]` instead. Return `T?` for a possibly missing single object. Never pass a literal `null` argument. Use an overload or a named optional parameter instead.
+- **Async:** Use `async` only for real I/O. Never use it speculatively. Never use `async void` outside event handlers. Every public async method that calls external infrastructure must take a `CancellationToken`. Never use `.Result` or `.Wait()`. Use `await` instead.
+- **Error handling:** Catch the specific exception you expect. Use bare `Exception` only at a top-level boundary. Never swallow an exception silently. Never use exceptions for control flow.
+- **Collections:** Use the most restrictive type for inputs, such as `IReadOnlyList<>` or `IEnumerable<>`. Return `IList<>` for outputs when transferring ownership. Otherwise, return the most restrictive type. Prefer `List<>` to arrays for public members. Remove items during iteration with `RemoveAll(predicate)` or a replacement container.
+- **`var`:** Use `var` only when the type is unambiguous from the right-hand side.
+- **Member order:** Order members as nested types, then static/const/readonly fields, then fields and properties, then constructors, and then methods. Place public members before private members within each group. Order modifiers as `public protected internal private new abstract virtual override sealed static readonly extern unsafe volatile async`. Keep `using` directives alphabetical, place `System.*` directives first, and place all directives outside any namespace.
+- **Formatting:** Use 2-space indentation and a 100-column limit. Always use braces. Put one statement on each line. Do not break lines before an opening brace or between `}` and `else`.
+- **Misc:** Use `const` where possible and `readonly` as fallback. Do not use magic numbers. Use expression bodies only on lambdas and single-line read-only properties. Invoke delegates null-conditionally (`OnThing?.Invoke()`). Use `out` for non-input returns and place it last. Use `ref` only to mutate a genuine input. Prefer a named class to `Tuple<>`. Keep namespaces at most two levels deep. Use extension methods only when the source type cannot be changed.
 
 ## Objects own behavior
 
-A class of properties with no methods is a struct with extra steps. If domain objects are pure data and all logic sits in `*Service`/`*Handler`/`*Helper`, that is procedural code in an OO language.
+A class with properties but no methods adds unnecessary ceremony when it could be a struct. If domain objects contain only data and all logic sits in `*Service`/`*Handler`/`*Helper`, the code is procedural despite using an object-oriented language.
 
-Service classes are legitimate in exactly two situations: coordinating an operation that genuinely spans multiple domain objects, or calling external infrastructure. The test: could this method live on the object it operates on? If yes, it must.
+Use service classes in exactly two situations. They can coordinate an operation that genuinely spans multiple domain objects or call external infrastructure. Ask whether each method could live on the object it operates on. If it could, place it there.
 
 ## Abstraction is earned
 
-Create an abstraction when two concrete things must be treated as one — not before. `IOrderService` with exactly one implementation is indirection with no payoff. A real test double counts as the second implementation; an imagined future one does not.
+Create an abstraction when two concrete things must be treated as one. Do not create one earlier. An `IOrderService` with exactly one implementation adds indirection without payoff. A real test double counts as the second implementation. An imagined future implementation does not count.
 
 ## Complexity belongs at the edges
 
-Domain logic is synchronous, I/O-free, and knows nothing of databases, HTTP, or the file system. Only the boundary layer orchestrates async work. A domain method that is `async` by convention has leaked infrastructure into the core — which is also why speculative `async` is banned: it propagates up the whole call stack.
+Domain logic is synchronous and I/O-free. It knows nothing about databases, HTTP, or the file system. Only the boundary layer orchestrates async work. A domain method that is `async` by convention has leaked infrastructure into the core. Speculative `async` is also banned because it propagates up the whole call stack.
 
 ## Nulls in practice
 
@@ -48,7 +48,7 @@ public Order GetById(int id) => _orders.FirstOrDefault(o => o.Id == id);
 public Order? GetById(int id) => _orders.FirstOrDefault(o => o.Id == id);
 ```
 
-Expected absence is not exceptional. A repository returning `Order?` plus `if (order is null)` replaces a `try`/`catch (OrderNotFoundException)`.
+Expected absence is not exceptional. When a repository returns `Order?`, use `if (order is null)` instead of `try`/`catch (OrderNotFoundException)`.
 
 ## Immutability in practice
 
@@ -64,12 +64,12 @@ public class Order {
 }
 ```
 
-The public setter is the default worth resisting: it declares that anything, anywhere, may change the value, which is almost never the intent.
+Resist public setters by default. A public setter allows anything, anywhere, to change the value. That is almost never the intent.
 
 ## `var` ambiguity test
 
-If a reader must open the method signature to learn the type, write the type out. `var order = new Order()` is fine; `var result = _repository.GetSummary(id)` is not.
+If a reader must open the method signature to learn the type, write the type explicitly. `var order = new Order()` is fine. `var result = _repository.GetSummary(id)` is not.
 
 ## Tests
 
-`dotnet test`; `dotnet test --filter "FullyQualifiedName~TestName"` for one test. TDD discipline and test-status reporting are governed by `test-execution-evidence.instructions.md`, not here.
+Run all tests with `dotnet test`. Run one test with `dotnet test --filter "FullyQualifiedName~TestName"`. The `test-execution-evidence.instructions.md` instruction governs TDD discipline and test-status reporting.

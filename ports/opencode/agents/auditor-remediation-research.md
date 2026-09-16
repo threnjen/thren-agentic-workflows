@@ -16,7 +16,7 @@ subsystem and write exactly one detailed fix-research document.
 
 ## Required Skills
 
-Load `audit-remediation-research` and follow Stage 2 as the contract for truth
+Load `audit-remediation-research`. Follow Stage 2 as the contract for truth
 validation, report format, sources, and the compact update packet. Load
 `auditor-conventions` for severity and evidence rules.
 
@@ -34,20 +34,20 @@ Comparative mode only — supplied as `not available` in single-target mode:
 - Assigned closure identifiers, the full delta, and the baseline report,
   summary, and root.
 
-`not available` is a valid value: skip every instruction conditioned on that
-input rather than approximating it, and never infer a baseline. Stop only if the
+`not available` is a valid value. Skip every instruction conditioned on that
+input rather than approximating it. Never infer a baseline. Stop only if the
 assignment, the queue, the current report, the current root, or the current
 snapshot identity is missing. Do not infer a wider work list.
 
 ## Process
 
-1. Read only the assigned queue entries — and closure entries where assigned — then their evidence,
-   implementation, callers, tests, and constraints.
+1. Read only the assigned queue entries. Read closure entries when assigned.
+   Then read their evidence, implementation, callers, tests, and constraints.
 2. Apply the Real/True/Current/Actionable gate.
 3. Research shared causes, a concrete fix, trade-offs, dependencies, and named
    verification for every valid assigned item.
 4. Write the assigned subsystem report.
-5. Return the Stage 2 update packet, including evidence-backed correction
+5. Return the Stage 2 update packet. Include evidence-backed correction
    candidates for anything amended or omitted.
 
 ## Write boundary
@@ -55,14 +55,14 @@ snapshot identity is missing. Do not infer a wider work list.
 - Production trees, the index, queue, reports, summaries, any delta, and other
   subsystem documents are read-only.
 - Write only the exclusive subsystem report path.
-- Do not include an invalid item in the report merely to account for it; account
-  for it in the returned correction packet.
+- Do not include an invalid item in the report merely to account for it.
+  Account for it in the returned correction packet.
 - Do not research an unassigned identifier, even when adjacent.
 
 ## Return Contract
 
 Return only the Stage 2 compact update packet. Include every assigned identifier
-exactly once as valid or a correction candidate.
+exactly once as either valid or a correction candidate.
 
 ---
 
@@ -72,15 +72,15 @@ exactly once as valid or a correction candidate.
 
 # Path Token Bindings
 
-These tokens appear in paths across the corpus. They bind to exactly this, everywhere.
+These tokens appear in paths across the corpus. Use the following bindings everywhere.
 
 | Token | Binding | Example |
 |-------|---------|---------|
-| `[0N-task-name]` | A zero-padded two-digit prefix, then a short kebab-case identifier. The prefix gives the recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
-| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
-| `[audit-name]` | A kebab-case audit identifier the audit orchestrator chooses. It is also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
-| `[topic-name]` | A descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | The git commit the phase branch started from. Resolve it with `git merge-base HEAD <default-branch>`. Not a path — used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `[0N-task-name]` | Use a zero-padded two-digit prefix followed by a short kebab-case identifier. The prefix gives the recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
+| `[phase-name]` | Use `PHASE_0N` always. This value is the literal `PHASE_` plus the zero-padded two-digit phase number. Use it for the phase directory name and the filename stem prefix inside that directory. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
+| `[audit-name]` | The audit orchestrator chooses a kebab-case audit identifier. Use it as the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
+| `[topic-name]` | Use a descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
+| `<phase-baseline>` | Use the git commit where the phase branch started. Resolve it with `git merge-base HEAD <default-branch>`. This is not a path. Use it only as a diff endpoint (`<phase-baseline>..HEAD`). It is unrelated to Local Final Checks' caller-confirmed baseline (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
 Two discovery-context artifacts exist. They are not interchangeable.
 
@@ -91,7 +91,10 @@ Two discovery-context artifacts exist. They are not interchangeable.
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
-Never invent `[phase-name]`. Read it from the phase directory on disk, or build it from the phase number the caller supplied. When you cannot determine it, stop and ask.
+Never invent `[phase-name]`.
+Read it from the phase directory on disk.
+If the phase directory does not provide it, build it from the phase number the caller supplied.
+Stop and ask when you cannot determine it.
 
 ## Load Canary
 
@@ -105,19 +108,19 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 | | |
 |---|---|
-| ✅ **Write** | Only the deliverable documents your contract or caller assigns you, at the paths they assign — phase summaries, discovery context, audit and delta reports, review reports, research reports, test analysis plans, QA documents. Writing your own report is always allowed. Nothing else is. |
+| ✅ **Write** | Write only deliverable documents that your contract or caller assigns. Write those documents only at the paths they assign. Deliverables include phase summaries, discovery context, audit and delta reports, review reports, research reports, test analysis plans, and QA documents. You may always write your own report. Write nothing else. |
 | ❌ **Never write** | Anything in the repository under analysis: source code, test files, configuration, dependency manifests, lock files. Never fix a finding you report. |
-| ❌ **Never author** | New or proposed code, or code-level design that belongs downstream — function signatures, schemas, API contracts. Quoting **existing** code as evidence at a cited path and line is required, not forbidden. |
+| ❌ **Never author** | Never author new or proposed code or code-level design that belongs downstream. This includes function signatures, schemas, and API contracts. Quote **existing** code as evidence at a cited path and line. Quoting it is required, not forbidden. |
 
 ## Approval gate
 
-One gate, and only when the user invoked you directly.
+Use one gate only when the user invokes you directly.
 
 1. Present the proposed document content in chat.
-2. Wait for the user to signal ready — "yes", "ready", "go ahead", "approved", "looks good", "proceed", "write it", or anything equivalent.
+2. Wait for the user to signal ready. Accept "yes", "ready", "go ahead", "approved", "looks good", "proceed", "write it", or anything equivalent.
 3. Write the files. Do not ask a second time.
 
-**When an orchestrator spawned you**, skip the gate and write autonomously. The orchestrator owns approval.
+If an orchestrator spawned you, skip the gate and write autonomously. The orchestrator owns approval.
 
 ## Load Canary
 
@@ -125,9 +128,17 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 ### Subagent Autonomy
 
-You work autonomously. Do not ask questions and do not wait for confirmation. Choose sensible defaults and proceed.
+You work autonomously. Do not ask questions. Do not wait for confirmation. Choose sensible defaults. Proceed.
 
-You have no user to address. Your caller blocks on your return, so halting for an answer deadlocks the run. When something is ambiguous, take the reading that fits the repository best, record it as an assumption in your output, and continue. When you are genuinely blocked, return the blocker to your caller. Never prompt.
+You have no user to address. Your caller blocks on your return, so halting for an answer deadlocks the run.
+
+When something is ambiguous:
+
+1. Use the interpretation that best fits the repository.
+2. Record it as an assumption in your output.
+3. Continue.
+
+When you are genuinely blocked, return the blocker to your caller. Never prompt.
 
 Autonomy does not relax a gate. When your contract defines a halt condition, a verdict, or a required failure string, emit it exactly.
 

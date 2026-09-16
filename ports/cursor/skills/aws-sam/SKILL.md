@@ -7,7 +7,7 @@ user-invocable: false
 
 # AWS SAM Skill
 
-Conventions for authoring AWS SAM templates in this codebase. Apply these rules whenever creating or reviewing `template.yaml` files.
+Use these conventions when authoring AWS SAM templates in this codebase. Apply these rules whenever creating or reviewing `template.yaml` files.
 
 ## Architecture
 
@@ -26,7 +26,7 @@ Globals:
 
 ### Lambda Log Groups
 
-Create the log group before the Lambda using `DependsOn`.
+Create the log group before the Lambda function. Use `DependsOn` to enforce the order.
 
 ```yaml
   MyFunctionLogGroup:
@@ -45,7 +45,7 @@ Create the log group before the Lambda using `DependsOn`.
 
 ### API Gateway — Access Log Group
 
-The access log group name is a free-form string. Create it manually and reference it in `AccessLogSetting`.
+The access log group name is a free-form string. Create the log group manually. Reference it in `AccessLogSetting`.
 
 ```yaml
   MyApiAccessLogGroup:
@@ -64,7 +64,7 @@ The access log group name is a free-form string. Create it manually and referenc
 
 ### API Gateway — Execution Log Group
 
-The execution log group name is fixed by AWS: `API-Gateway-Execution-Logs_{rest-api-id}/{stage}`. Create it with `DependsOn: MyApi` — the log group name requires the API's physical ID, so the API must be created first. This is unavoidable and acceptable.
+AWS fixes the execution log group name: `API-Gateway-Execution-Logs_{rest-api-id}/{stage}`. Create it with `DependsOn: MyApi`. The log group name requires the API's physical ID. Create the API first. This dependency is unavoidable and acceptable.
 
 ```yaml
   MyApiExecutionLogGroup:
@@ -85,12 +85,12 @@ The execution log group name is fixed by AWS: `API-Gateway-Execution-Logs_{rest-
 
 ## Node.js Runtime
 
-Use `npm run build` (TypeScript compiled by `tsc`) — do **not** use esbuild.
+Use `npm run build` to compile TypeScript with `tsc`. Do **not** use esbuild.
 
 - Run `npm run build` in CI before `sam build`.
-- `tsc` output lands in `dist/` (e.g. `dist/handlers/health.js`).
+- The `tsc` output goes to `dist/` (e.g. `dist/handlers/health.js`).
 - Set `Handler` to reflect the `dist/` outDir: `dist/handlers/health.handler`.
-- `CodeUri: .` points SAM at the package root (`src-node/`); SAM runs `npm install --production` and picks up the pre-compiled `dist/` files.
+- Set `CodeUri: .` to point SAM at the package root (`src-node/`). SAM runs `npm install --production`. SAM then uses the pre-compiled `dist/` files.
 
 ```yaml
   MyNodeFunction:
@@ -109,9 +109,9 @@ CI step order:
 
 ## Python Runtime
 
-- `CodeUri: .` points SAM at `src-python/`.
+- Set `CodeUri: .` to point SAM at `src-python/`.
 - SAM installs dependencies from `src-python/requirements.txt`.
-- Handler path is relative to `src-python/`: `handlers/backend.handler`.
+- Set the handler path relative to `src-python/`: `handlers/backend.handler`.
 
 ```yaml
   MyPythonFunction:
@@ -134,7 +134,7 @@ Globals:
 
 ## Cross-Stack Handoff via SSM
 
-Publish Lambda ARNs and Terraform-owned resource references through SSM Parameter Store. Consume them with CloudFormation dynamic references.
+Publish Lambda ARNs and Terraform-owned resource references through SSM Parameter Store. Use CloudFormation dynamic references to consume them.
 
 ```yaml
 # Publish
@@ -151,7 +151,7 @@ Publish Lambda ARNs and Terraform-owned resource references through SSM Paramete
 
 ## IAM Policy — CloudWatch Logs
 
-When a Lambda log group is manually created, the Lambda role still needs stream/event permissions (it no longer needs `CreateLogGroup` since the group pre-exists, but scoping `CreateLogGroup` to `Resource: "*"` is harmless and avoids deploy-order sensitivity).
+The Lambda role still needs stream and event permissions when you create the Lambda log group manually. The role does not need `CreateLogGroup` because the group already exists. Scoping `CreateLogGroup` to `Resource: "*"` is harmless and avoids deploy-order sensitivity.
 
 ```yaml
 - Sid: CloudWatchLogsAccess
@@ -164,7 +164,7 @@ When a Lambda log group is manually created, the Lambda role still needs stream/
 
 ## Required Tags
 
-Apply via `Globals.Function.Tags`:
+Apply the required tags through `Globals.Function.Tags`:
 
 ```yaml
 Globals:

@@ -7,18 +7,19 @@ user-invocable: false
 
 # Pipeline Artifacts
 
-Path tokens (`[0N-task-name]`, `[phase-name]`, `[audit-name]`, `[topic-name]`) are bound in
-the auto-loaded path-token instruction. This file only says who writes what, and where.
+The auto-loaded path-token instruction binds these path tokens: `[0N-task-name]`, `[phase-name]`, `[audit-name]`, and `[topic-name]`.
+This file identifies each artifact's producer, location, and content.
 
 ## Standard File Naming
 
-Inside `dev/feature/[0N-task-name]/`:
+Store the files inside `dev/feature/[0N-task-name]/`:
 
 | Suffix | Producer | Content |
 |--------|----------|---------|
-| `-plan.md` | Phase - Execute | Plan with stages and acceptance criteria |
-| `-context.md` | Feature - Plan Expander | Key files, decisions, constraints |
-| `-tasks.md` | Feature - Plan Expander | Ordered checklist of work items |
+| `-plan.md` | Feature - Plan Author for Phase; Audit or Test planner otherwise | Plan with stages and acceptance criteria |
+| `-delta.md` | Feature - Plan Author in Phase selection mode | Selected feature's verified repository findings |
+| `-context.md` | Audit or Test planner | Key files, decisions, constraints |
+| `-tasks.md` | Audit or Test planner | Ordered checklist of work items |
 | `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results |
 | `-review.md` | 03c Reviewer - Plan Conformance | Verdict and issues found |
 | `-qa.md` | Feature - QA Writer (per-feature mode) | Manual QA plan for a single feature |
@@ -29,14 +30,15 @@ Inside `dev/feature/[0N-task-name]/`:
 
 Web Researcher writes to `dev/research/[topic-name]/`, not `dev/feature/`.
 
+Phase pipeline agents require the plan, delta, and execution manifest. Audit and Test pipeline agents require the plan, context, and tasks. Shared agents receive `pipeline: phase | audit | test` and never infer the contract from present files.
+
 ## Consolidated QA Documents
 
-In **batch mode** the orchestrator produces one consolidated QA document after all
-features/tasks are implemented and reviewed. In **per-feature mode** QA documents are produced
-per-feature inside the feature's own directory (see the table above).
+In **batch mode**, the orchestrator produces one consolidated QA document after the pipeline implements and reviews all
+features/tasks. In **per-feature mode**, place QA documents inside each feature's own directory (see the table above).
 
 Every run produces three documents. `Feature - QA Writer` writes all three. `Feature - QA Runner`
-executes the automated one and records results into it.
+executes the automated QA document and records results in that document.
 
 | Document | Phase pipeline (batch mode) | Audit pipeline | Fallback |
 |----------|-----------------------------|----------------|----------|
@@ -44,12 +46,12 @@ executes the automated one and records results into it.
 | Automated QA | `docs/phases/[phase-name]/[phase-name]_QA_AUTOMATED.md` | `dev/[audit-name]/[audit-name]-qa-automated.md` | `dev/feature/[phase-name]-qa-automated.md` |
 | Coverage Map | `docs/phases/[phase-name]/[phase-name]_QA_COVERAGE_MAP.md` | `dev/[audit-name]/[audit-name]-coverage-map-qa.md` | `dev/feature/[phase-name]-coverage-map-qa.md` |
 
-The manual QA path keeps its existing name. Everything that already points at `_QA.md` still
-resolves, and what it resolves to is now purely human work.
+The manual QA path keeps its existing name. Existing references to `_QA.md` still resolve to the manual QA plan.
+The resolved path now serves human work only.
 
-`docs/QA_AUTOMATED.md` is a different artifact with a different owner — a repository-wide runbook
-written by `QA - Doc Generator` and executed by `QA - Runner` under the `qa-run` skill. Do not
-conflate the two, and do not point `Feature - QA Runner` at it.
+`docs/QA_AUTOMATED.md` is a separate artifact with a separate owner. `QA - Doc Generator` writes it as a
+repository-wide runbook. `QA - Runner` executes it under the `qa-run` skill. Do not conflate these documents,
+and do not point `Feature - QA Runner` at `docs/QA_AUTOMATED.md`.
 
-Prod Code Review writes its GO/NO-GO analysis to the path the caller supplies; only when no
-path is supplied does it fall back to `[first task folder]/[0N-task-name]-qa-analysis.md`.
+Prod Code Review writes its GO/NO-GO analysis to the path the caller supplies. If the caller supplies no path,
+it falls back to `[first task folder]/[0N-task-name]-qa-analysis.md`.

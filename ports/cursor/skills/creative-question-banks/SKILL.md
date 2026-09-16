@@ -9,18 +9,19 @@ user-invocable: false
 
 # Creative Question Banks
 
-Questions to ask the writer. Nothing here supplies an answer, an option, or a premise about
-their work — a question that carries its own answer is an Interrogate violation, and
-`creative-compliance` governs that.
+Ask the writer these questions. These banks supply no answer, option, or premise about the
+writer's work. A question that carries its own answer violates Interrogate mode. The
+`creative-compliance` skill governs that violation.
 
-Use the writer's own nouns when you ask. Substitute their character, place, and faction names
-for the bracketed slots. Never fill a slot with a name you invented.
+Use the writer's own nouns when you ask. Substitute the writer's character, place, and faction
+names for the bracketed slots. Never fill a slot with a name you invented.
 
 ## How to Use These
 
-Ask one at a time. Wait. A follow-up drawn from the writer's answer beats the next question
-on the list. Reach first for the areas `_editor-notes/user-patterns.md` shows the writer
-engages with, and treat an avoidance pattern as information rather than a target.
+Ask one question at a time. Wait for the writer's answer. Prefer a follow-up that uses the writer's
+answer rather than the next question on the list. Start with the areas that
+`_editor-notes/user-patterns.md` shows the writer engages with.
+Treat an avoidance pattern as information rather than a target.
 
 ## Worldbuilding
 

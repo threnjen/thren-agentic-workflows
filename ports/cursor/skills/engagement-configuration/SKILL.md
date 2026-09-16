@@ -9,37 +9,38 @@ user-invocable: false
 
 This skill defines the format of an engagement configuration file and the
 validation rules an orchestrator applies when loading it. The schema section
-below is the **load contract**: the Client Deliverable orchestrator loads and
-validates configs against it before spawning any stage, the preparation stage
-re-checks against it, and the graph baseline capture procedure reuses
-its field vocabulary. Field names defined here are canonical — downstream
-consumers must use them verbatim.
+is the **load contract**. The Client Deliverable orchestrator loads and
+validates configs against it before spawning any stage. The preparation stage
+checks each config against it again. The procedure that captures graph
+baselines reuses its field vocabulary. Field names defined here are canonical.
+Downstream consumers must use them verbatim.
 
-There is no executable validator; validation is behavior the loading
-orchestrator performs by following the rules in this skill.
+There is no executable validator. The loading orchestrator validates configs
+by following the rules in this skill.
 
 ## Config Location Convention
 
-The config is a single YAML file. By convention it is named
+The config is a single YAML file. By convention, the config uses the name
 `engagement.yaml` and lives at the root of the engagement's working
-directory, but any path works. The user authors the file and points the
-orchestrator at it; the orchestrator never scans the filesystem for a config
-nobody pointed at, and never gathers configuration interactively.
+directory. Any path still works. The user authors the file and points the
+orchestrator at it. The orchestrator never scans the filesystem for a config
+that no caller referenced. It never gathers configuration
+interactively.
 
 ## Bootstrapping a New Config
 
-`engagement-template.yaml`, beside this file, is the canonical starting
-config: a commented fill-in-the-blank version of the schema below. The
-Client Deliverable orchestrator copies it into a new workspace as
-`engagement.yaml` and hands the user its path — that copy, not an interview,
-is how a config gets authored. Keep the template in step with the schema:
-every required field appears in it uncommented, every optional field appears
-commented out.
+The canonical starting config is `engagement-template.yaml`, beside this
+file. It contains a commented fill-in-the-blank version of the schema below.
+The Client Deliverable orchestrator copies it into a new workspace as
+`engagement.yaml`. It gives the user that copy's path. The user authors the
+config from that copy, not through an interview. Keep the template in step
+with the schema. The template leaves every required field uncommented. It
+comments out every optional field.
 
-A copy still containing the literal `FILL ME` is **unfilled, not invalid** —
-it has not been authored yet. Do not run the Validation Rules against it or
-emit their errors; say plainly which file is waiting and which lines still
-read `FILL ME`.
+A copy that still contains the literal `FILL ME` is **unfilled, not invalid**.
+The config has not been authored yet. Do not run the Validation Rules against
+it. Do not emit their errors. State plainly which file is waiting and which
+lines still read `FILL ME`.
 
 ## Schema
 
@@ -53,21 +54,21 @@ Top-level fields:
 
 ### Multi-document SOWs
 
-An engagement whose contract spans a base SOW plus updates and amendments
-lists them all under `sow_document`, **lowest priority first**: each entry
-supersedes every entry before it wherever they conflict. A single path is
-shorthand for a one-entry list; consumers treat both forms identically and
-never assume a single document.
+An engagement may have a contract that spans a base SOW, updates, and
+amendments. List all documents under `sow_document`, **lowest priority
+first**. Each entry supersedes every earlier entry wherever they conflict. A
+single path is shorthand for a one-entry list. Consumers treat both forms
+identically. Consumers never assume a single document.
 
-No document is merged, rewritten, or combined into a master copy — the list
-*is* the resolution order. A consumer citing a SOW obligation cites the
-specific document it came from, and when two documents cover the same
-obligation it reports the winning one. This ordering is the only conflict
-rule; there is no per-clause negotiation.
+The workflow never merges, rewrites, or combines documents into a master copy.
+The list *is* the resolution order. A consumer citing a SOW obligation cites
+the specific document it came from. The consumer reports the winning one when
+two documents cover the same obligation. This ordering is the only conflict
+rule. There is no per-clause negotiation.
 
 `sow_document` and `deliverables_spec` are engagement-confidential. Their
 contents must never be copied into generated outputs, reports, or committed
-artifacts; only the paths appear in the config.
+artifacts. Only the paths appear in the config.
 
 ### Comparison pairs
 
@@ -84,13 +85,13 @@ Each entry in `pairs` is one comparison and has:
 | `code_delta_path` | no | Path to an already-completed code-scan delta report for this pair (original vs. upgraded). When present, the code dimension is not scanned on either side; the supplied delta is consumed directly |
 | `infra_delta_path` | no | Path to an already-completed infra-scan delta report for this pair. Same effect for the infra dimension |
 
-`code_delta_path` and `infra_delta_path` are independent — supplying one
-does not imply the other. Supplying neither is the normal case: both
-dimensions are scanned fresh on both sides.
+`code_delta_path` and `infra_delta_path` are independent. Supplying one does
+not imply the other. Supplying neither is the normal case. Both dimensions
+are scanned fresh on both sides.
 
-Exactly one side is `original` and exactly one side is `upgraded` — the role
-is expressed by which key the side sits under, so a pair with both roles
-present has them by construction; a pair missing either key is invalid.
+Exactly one side is `original`, and exactly one side is `upgraded`. The role
+comes from the key under which each side appears. A pair with both keys
+therefore has both roles. A pair missing either key is invalid.
 
 Side fields by pair type:
 
@@ -99,32 +100,33 @@ Side fields by pair type:
 - **`type: branch`** — the pair contains `repo_path`, and `original` and
   `upgraded` each contain `branch`: the branch name for that side.
 
-Either side may also carry `code_audit_path` and `infra_audit_path`: paths to
-a **directory** holding that side's already-completed audit for that
-dimension. They are how an engagement reuses audits it already ran instead
-of re-scanning. A dimension counts as supplied only when **both** sides
-declare it; one side alone is a validation error, because a comparison needs
-two sides. A supplied dimension is not scanned on either side — see the
+Either side may also carry `code_audit_path` and `infra_audit_path`. Each path
+names a **directory** holding that side's completed audit for one dimension.
+These paths let an engagement reuse existing audits instead of scanning
+again. A dimension counts as supplied only when **both** sides declare it. One
+side alone is a validation error because a comparison needs two sides.
+The orchestrator does not scan a supplied dimension on either side. See the
 `engagement-pair-loop` skill for what the loop does with it.
 
 `code_audit_path`/`infra_audit_path` (per-side audit directories) and
-`code_delta_path`/`infra_delta_path` (a pair-level delta file, below) are
-two independent ways to supply a dimension, and may both be present: the
-audits are the per-side evidence and the delta is the comparison. Supplying
-either form skips that dimension's scans.
+`code_delta_path`/`infra_delta_path` (a pair-level delta file, below)
+independently supply a dimension. Both forms may be present. The audits are
+the per-side evidence. The delta is the comparison. Supplying either form
+skips that dimension's scans.
 
-Every supplied path may point anywhere on disk — inside a repository, in some
-other engagement's output, anywhere. The loop copies each supplied document
-into the engagement's `pairs/` tree and works from that copy; the original is
-never modified or written back to.
+Every supplied path may point anywhere on disk, including inside a repository
+or another engagement's output. The loop copies each supplied document into
+the engagement's `pairs/` tree. The loop works from that copy. It never
+modifies or writes back the original.
 
-Either side may also carry `manual_qa_paths`: a list of paths, relative to
-that side's repository root, naming that repository's manual QA
+Either side may also carry `manual_qa_paths`. The field lists paths relative
+to that side's repository root. The paths name that repository's manual QA
 document(s). It **overrides** the default manual-QA gate target
-(`docs/QA_USER.md`) for that side — a repository whose manual QA lives in
-`docs/QA_MICK.md` declares it here and is never asked for `QA_USER.md`.
-Absent, the default applies. This overrides only the manual QA document;
-the automated runbook is always `docs/QA_AUTOMATED.md`.
+(`docs/QA_USER.md`) for that side. A repository whose manual QA lives in
+`docs/QA_MICK.md` declares it here. The gate never asks that repository for
+`QA_USER.md`. If the field is absent, the default applies. This overrides only
+the manual QA document. The automated runbook is always
+`docs/QA_AUTOMATED.md`.
 
 ### Paths
 
@@ -137,8 +139,8 @@ resolve against **their own side's repository root**, not the config.
 
 ### Annotated example
 
-The example below shows N=2 purely for illustration — a config may declare
-any number of pairs; the pair count is unbounded and never assumed.
+The example below shows N=2 only for illustration. A config may declare any
+number of pairs. The pair count is unbounded and never assumed.
 
 ```yaml
 sow_document:                         # a list: later entries supersede earlier
@@ -177,7 +179,7 @@ pairs:
 
 Validation runs when the orchestrator loads the config, **before any
 preparation work starts**. Any violation halts preparation immediately
-(fail fast); nothing is prepared against a partially valid config. Every
+(fail fast). Nothing is prepared against a partially valid config. Every
 violation produces a specific, named error identifying the pair, the field,
 and what was expected:
 
@@ -209,7 +211,7 @@ Explicitly allowed (do not over-validate):
 ## Not Validation Failures
 
 Missing supporting artifacts — documentation or code graphs for a declared
-repository — are **not** config validation failures. They are work for the
-preparation stage, which regenerates them after the config validates.
+repository — are **not** config validation failures. The preparation stage
+regenerates them after the config validates.
 Validation covers only the config's own declarations (paths, branches,
 roles, structure).

@@ -6,11 +6,11 @@ description: "Implementation and review rules for Unity C# projects. Covers runt
 
 # Unity Development Skill
 
-Stack-specific rules for Unity C# projects. These rules supplement the standard implementation and review workflows — they do not replace them.
+These rules apply to Unity C# projects. They supplement standard implementation and review workflows. They do not replace them.
 
 ## Preflight (read these files before writing any code)
 
-Before writing any Unity-specific code, read the following project files and document each finding in the implementation record's summary. These are not advisory — skipping one means writing code against assumptions that may be wrong.
+Before writing Unity-specific code, read the following project files. Record each finding in the implementation record's summary. These checks are required. Skipping one may lead to incorrect assumptions.
 
 ### 1. Input handling mode
 **Read:** `ProjectSettings/ProjectSettings.asset` — search for `activeInputHandler:`.
@@ -19,14 +19,14 @@ Before writing any Unity-specific code, read the following project files and doc
 |-------|---------|-------------|
 | `0` | Legacy input | `Input.GetMouseButtonDown`, `Input.mousePosition`, etc. |
 | `1` | New Input System | `Mouse.current.leftButton.wasPressedThisFrame`, etc. |
-| `2` | Both | Prefer new Input System API; legacy calls still work |
+| `2` | Both | Prefer new Input System API. Legacy calls still work |
 
 **Record in implementation record:** `activeInputHandler: <value> — using <which API>`.
 
 ### 2. Assembly reference graph
-**Read:** the `.asmdef` file for every assembly you will create or modify. (For the View layer: `Assets/Scripts/View/Combat/View.asmdef`. For Controllers: `Assets/Scripts/Controllers/Controllers.asmdef`. For Tests, discover the project's EditMode test assembly; the verified reference convention places it under `Assets/Tests/Editor/`.)
+**Read:** the `.asmdef` file for every assembly you will create or modify. For the View layer, read `Assets/Scripts/View/Combat/View.asmdef`. For Controllers, read `Assets/Scripts/Controllers/Controllers.asmdef`. For Tests, find the project's EditMode test assembly. The verified reference convention places it under `Assets/Tests/Editor/`.
 
-For each new `using` directive you add to any `.cs` file, confirm the assembly named after `using` appears in that `.asmdef`'s `"references"` array or is a known implicit dependency (e.g., `System`, `System.Collections.Generic`, `UnityEngine` when `noEngineReferences` is `false`).
+For each new `using` directive you add to a `.cs` file, confirm that its assembly appears in that `.asmdef` file's `"references"` array. A known implicit dependency also satisfies this rule, including `System`, `System.Collections.Generic`, and `UnityEngine` when `noEngineReferences` is `false`.
 
 **Record in implementation record:** every new assembly reference added and why.
 
@@ -38,14 +38,14 @@ If your feature creates a new `MonoBehaviour`, one of these must be true:
 - An existing MonoBehaviour calls `AddComponent<T>()` to create it at runtime (find the call site).
 - It is instantiated from a prefab (find the prefab and confirm the component is on it).
 
-If none of these are true, the component is **dead code** — it will never be instantiated, never receive `Awake`/`Start`/`Update`, and every method on it is unreachable.
+If none of these are true, the component is **dead code**. Unity will never instantiate it or call its `Awake`/`Start`/`Update` methods. Every method on it is unreachable.
 
 **Record in implementation record:** "`[ComponentName]` is attached to `[GameObject]` via [scene / AddComponent at X / prefab at Y]."
 
 ### 4. Render pipeline
 **Read:** `Project Settings > Graphics` (or `Assets/` for the active pipeline asset) or search for `ScriptableRendererFeature`/`UniversalRenderPipelineAsset` in the project.
 
-If your feature creates any renderable object at runtime (`new GameObject(..., typeof(LineRenderer))`, `new GameObject(..., typeof(SpriteRenderer))`, `new GameObject(..., typeof(MeshRenderer))`), confirm the material you assign (or the default Unity assigns) is compatible with the active pipeline:
+If your feature creates any renderable object at runtime (`new GameObject(..., typeof(LineRenderer))`, `new GameObject(..., typeof(SpriteRenderer))`, `new GameObject(..., typeof(MeshRenderer))`), confirm that the material you assign is compatible with the active pipeline. Apply the same check to Unity's default material:
 - **Built-in RP:** default materials work.
 - **URP:** the built-in `Default-Line` material does not work. Either instantiate a URP-compatible material (e.g., `new Material(Shader.Find("Universal Render Pipeline/Lit"))`) or share one from an existing renderer in the scene (e.g., `boundsRenderer.sharedMaterial`).
 
@@ -62,15 +62,15 @@ At the top of the implementation record's Summary section, add a **Preflight** b
 - Pipeline: URP. LineRenderer material shared from boundsRenderer.sharedMaterial
 ```
 
-This block is not a formality — it tells the reviewer exactly which project-configuration decisions were made and verified, so they don't have to re-derive them.
+This block records the project-configuration decisions that you made and verified. The reviewer does not need to derive them again.
 
 ---
 
 ## C# Carve-outs Inside Unity Assemblies
 
-General C# standards (`csharp-standards`, `instructions/csharp-style.instructions.md`) apply, with these Unity-only overrides. Each wins inside Unity assemblies only, for the reason stated.
+General C# standards (`csharp-standards`, `instructions/csharp-style.instructions.md`) apply with these Unity-only overrides. These overrides apply only inside Unity assemblies. Each rule states its reason.
 
-- **Never use `?.`, `??`, or `??=` on a `UnityEngine.Object` subclass** (`GameObject`, `Component`, MonoBehaviour, `ScriptableObject`). Unity overloads `==`/`!=` so a *destroyed* object compares equal to `null` while the managed reference is not null; the null-conditional and null-coalescing operators bypass that overload and see the live reference. So `destroyed?.transform` still executes, and `_cached ??= GetComponent<T>()` keeps a destroyed component forever. Use an explicit `== null` / `!= null` check.
+- **Never use `?.`, `??`, or `??=` on a `UnityEngine.Object` subclass** (`GameObject`, `Component`, MonoBehaviour, `ScriptableObject`). Unity overloads `==`/`!=`. A *destroyed* object compares equal to `null` while its managed reference is not null. The null-conditional and null-coalescing operators bypass that overload and see the live reference. Therefore, `destroyed?.transform` still executes. `_cached ??= GetComponent<T>()` keeps a destroyed component forever. Use an explicit `== null` / `!= null` check.
   ```csharp
   // NEVER
   var t = _maybeDestroyed?.transform;
@@ -79,11 +79,11 @@ General C# standards (`csharp-standards`, `instructions/csharp-style.instruction
   if (_maybeDestroyed != null) { var t = _maybeDestroyed.transform; }
   if (_cached == null) { _cached = GetComponent<Rigidbody>(); }
   ```
-- **`[SerializeField]` private fields are `camelCase` with no leading underscore**, and are never `readonly` or `init`. The Inspector derives its label from the field name, and the deserializer assigns them after construction. Non-serialized private fields keep `_camelCase` — the attribute is the signal distinguishing the two. Do not widen them to a public setter.
-- **Types serialized by `JsonUtility` are `[Serializable] class`/`struct` with public fields**, not `record`. `JsonUtility` ignores records, `init` setters, and properties — a `record` DTO silently round-trips as all-default. With Newtonsoft.Json or System.Text.Json the general `record` rule applies.
-- **Enable nullable reference types per assembly, not via `.csproj`** — Unity regenerates it on every import, and a per-`.asmdef` `csc.rsp` is not honored. Use `Assets/csc.rsp` containing `-nullable:enable` for the predefined `Assembly-CSharp`, and a file-scoped `#nullable enable` at the top of every file in an `.asmdef` assembly. Enable pure-domain assemblies (no `UnityEngine` surface) first; the engine boundary generates noise that buries real findings.
-- **`record` and `init` need an `IsExternalInit` polyfill** — Unity's .NET Standard 2.1 runtime omits it and the compiler fails with `CS0518`. One `internal static class IsExternalInit { }` in `namespace System.Runtime.CompilerServices` per assembly.
-- **Never touch the Unity API from a `Task` continuation without marshalling back to the main thread** — continuations do not resume on it and most engine APIs throw off it. Use coroutines or `Awaitable`/`UniTask` for frame-paced logic; reserve `Task` for background I/O at the edge.
+- **`[SerializeField]` private fields are `camelCase` with no leading underscore**, and are never `readonly` or `init`. The Inspector derives its label from the field name. The deserializer assigns the fields after construction. Non-serialized private fields keep `_camelCase`. The attribute distinguishes the two forms. Do not widen them to a public setter.
+- **Types serialized by `JsonUtility` are `[Serializable] class`/`struct` with public fields**, not `record`. `JsonUtility` ignores records, `init` setters, and properties. A `record` DTO silently round-trips as all-default. With Newtonsoft.Json or System.Text.Json, the general `record` rule applies.
+- **Enable nullable reference types per assembly, not via `.csproj`**. Unity regenerates project settings on every import. A per-`.asmdef` `csc.rsp` is not honored. Use `Assets/csc.rsp` containing `-nullable:enable` for the predefined `Assembly-CSharp`. Add a file-scoped `#nullable enable` at the top of every file in an `.asmdef` assembly. Enable pure-domain assemblies (no `UnityEngine` surface) first. The engine boundary generates noise that buries real findings.
+- **`record` and `init` need an `IsExternalInit` polyfill**. Unity's .NET Standard 2.1 runtime omits it. The compiler then fails with `CS0518`. Add one `internal static class IsExternalInit { }` in `namespace System.Runtime.CompilerServices` per assembly.
+- **Never touch the Unity API from a `Task` continuation without marshalling back to the main thread**. Continuations do not resume on the main thread. Most engine APIs throw when called off it. Use coroutines or `Awaitable`/`UniTask` for frame-paced logic. Reserve `Task` for background I/O at the edge.
 
 ## Runtime Wiring Rules
 
@@ -91,8 +91,8 @@ Every feature must be reachable at runtime. Unity does not auto-discover or auto
 
 ### 1. Every New System Needs an Explicit Caller
 
-- **MonoBehaviours** are called by Unity's lifecycle (`Awake`, `Start`, `Update`, etc.) — but only if attached to an active GameObject in the scene or created via `AddComponent<T>()`
-- **Pure C# classes** (state machines, managers, subsystems) have NO lifecycle. If the class has per-frame methods (e.g., `UpdateCursor()`, `Tick()`, `Process()`), a MonoBehaviour must call them from its `Update()` or equivalent
+- **MonoBehaviours** receive calls from Unity's lifecycle (`Awake`, `Start`, `Update`, etc.). Unity calls them only when they are attached to an active GameObject in the scene or created via `AddComponent<T>()`.
+- **Pure C# classes** (state machines, managers, subsystems) have no lifecycle. If a class has per-frame methods (e.g., `UpdateCursor()`, `Tick()`, `Process()`), a MonoBehaviour must call them from its `Update()` or equivalent.
 - **For every new class**, document in the implementation record: "Called by [X] in [Y method]"
 
 ### 2. Bootstrap / Entry Point Verification
@@ -100,45 +100,45 @@ Every feature must be reachable at runtime. Unity does not auto-discover or auto
 If the project has a bootstrap script (e.g., `GameBootstrap.cs`, a scene initializer):
 
 - Every new system that needs initialization must be added to the bootstrap
-- Initialization order matters — verify dependencies are initialized before dependents
+- Check that dependencies initialize before dependents.
 - If the bootstrap uses `[RuntimeInitializeOnLoadMethod]`, the initialization runs before scene objects are available
-- After modifying the bootstrap, verify the full initialization chain still makes sense (read the whole file, don't just append)
+- After modifying the bootstrap, read the whole file and verify the full initialization chain. Do not append blindly.
 
 ### 3. Map/Registry Integration
 
 If the project uses a Map, Grid, or entity registry pattern:
 
 - New entity types must be registered via the project's spawn/despawn pipeline (e.g., `Map.NotifySpawned()`)
-- Do NOT register entities directly in tests if production code uses a different path — this masks integration gaps
+- Do not register entities directly in tests when production code uses a different path. Direct registration hides integration gaps.
 - Verify that all subsystems that need spawn/despawn awareness are wired into the notification chain
 
 ## MonoBehaviour Lifecycle Gotchas
 
-- **`AddComponent<T>()` triggers `Awake()` synchronously.** Fields set after the `AddComponent` call are NOT available in `Awake()`. Use `Start()` or a deferred init method for anything set post-construction.
-- **`Destroy()` is deferred to end of frame.** `DestroyImmediate()` runs immediately but should only be used in Editor code or tests. Don't rely on `Destroy()` having taken effect within the same frame.
+- **`AddComponent<T>()` triggers `Awake()` synchronously.** Fields set after the `AddComponent` call are not available in `Awake()`. Use `Start()` or a deferred init method for anything set post-construction.
+- **`Destroy()` is deferred to end of frame.** `DestroyImmediate()` runs immediately but should only be used in Editor code or tests. Do not rely on `Destroy()` having taken effect within the same frame.
 - **Execution order is not guaranteed** between MonoBehaviours unless explicitly set via Script Execution Order or `[DefaultExecutionOrder]`.
 
 ## UI Toolkit Rules
 
 ### ScrollView Child Routing
 
-`ScrollView` routes `Add()` calls to its internal `contentContainer`, but `childCount` and `Children()` enumerate the root element's direct children (scroll bars, viewport). **Always use**:
+`ScrollView` routes `Add()` calls to its internal `contentContainer`. `childCount` and `Children()` enumerate the root element's direct children, such as scroll bars and the viewport. **Always use**:
 
 ```csharp
 scrollView.contentContainer.childCount    // NOT scrollView.childCount
 scrollView.contentContainer.Children()    // NOT scrollView.Children()
 ```
 
-This bug has recurred multiple times. It is the single most common UI Toolkit mistake in this pipeline.
+This bug has recurred multiple times. It is the most common UI Toolkit mistake in this pipeline.
 
 ### VisualTreeAsset Instantiation
 
-- Use `visualTreeAsset.CloneTree(parent)` — NOT `visualTreeAsset.Instantiate()`
+- Use `visualTreeAsset.CloneTree(parent)`. Do not use `visualTreeAsset.Instantiate()`.
 - `Instantiate()` wraps content in a `TemplateContainer` that breaks `position: absolute` layout
 
 ### Stylesheet Loading
 
-- Reference stylesheets from UXML via `<Style src="...">` — NOT via `Resources.Load<StyleSheet>()`
+- Reference stylesheets from UXML via `<Style src="...">`. Do not use `Resources.Load<StyleSheet>()`.
 - `Resources.Load<StyleSheet>()` is unreliable in Unity 6
 
 ### PanelSettings
@@ -149,85 +149,85 @@ This bug has recurred multiple times. It is the single most common UI Toolkit mi
 
 ### Tooltip Testing
 
-- `VisualElement.tooltip` is appropriate when tests only need to verify the tooltip property state
-- If EditMode panel tests must verify hover-triggered tooltip visibility, assume native tooltip behavior is insufficient unless the codebase already proves otherwise
-- For hover visibility, prefer a small runtime overlay driven by `PointerEnterEvent` and `PointerLeaveEvent`, with tests using the real panel/controller structure
-- Plans that touch UI Toolkit tooltips should still mark related `.uxml`, `.uss`, and test root builder files as `(verify)` when companion changes are uncertain
+- Use `VisualElement.tooltip` when tests only need to verify the tooltip property state.
+- If EditMode panel tests must verify hover-triggered tooltip visibility, assume native tooltip behavior is insufficient unless the codebase already proves otherwise.
+- For hover visibility, prefer a small runtime overlay driven by `PointerEnterEvent` and `PointerLeaveEvent`. Use the real panel/controller structure in tests.
+- For plans that touch UI Toolkit tooltips, mark related `.uxml`, `.uss`, and test root builder files as `(verify)` when companion changes are uncertain.
 
 ### Working Code + Warning ≠ Broken
 
-- Don't replace working UI code to suppress cosmetic warnings (e.g., "No Theme Style Sheet")
+- Do not replace working UI code to suppress cosmetic warnings (e.g., "No Theme Style Sheet").
 - Never add an early `return` that gates all downstream functionality on an optional dependency
 - If the current approach works, make improvements additive, not replacements
 
 ## Refactor / Rewire Test Preservation Rules
 
-- Before planning a refactor, runtime rewire, API change, or behavior change, inventory the affected Unity tests and harnesses: the project's EditMode directory (verified reference convention: `Assets/Tests/Editor`), `Assets/Tests/PlayMode`, any phase-scoped or editor tests, and UI Toolkit test root builders. Plan them as part of the work, not as a deferred cleanup.
-- If the change alters a public API, bootstrap path, serialized asset layout, scene wiring, prefab, event contract, or lifecycle behavior, assume related tests will need updates and include those files in the plan's scope and verification assets.
-- When a Unity test becomes obsolete because production behavior changed, update or retire it in the same feature and document the reason. Leave no orphaned or silently broken tests behind.
-- For controller, UI Toolkit, or scene-wiring changes, include the corresponding test assembly and test root builder files in the planned scope and explicitly note whether each needs test updates.
+- Before planning a refactor, runtime rewire, API change, or behavior change, inventory the affected Unity tests and harnesses. Include the project's EditMode directory (verified reference convention: `Assets/Tests/Editor`), `Assets/Tests/PlayMode`, phase-scoped or editor tests, and UI Toolkit test root builders. Plan these files as part of the work. Do not defer them as cleanup.
+- If the change alters a public API, bootstrap path, serialized asset layout, scene wiring, prefab, event contract, or lifecycle behavior, assume related tests will need updates. Include those files in the plan's scope and verification assets.
+- When a Unity test becomes obsolete because production behavior changed, update or retire it in the same feature. Document the reason. Leave no orphaned or silently broken tests behind.
+- For controller, UI Toolkit, or scene-wiring changes, include the corresponding test assembly and test root builder files in the planned scope. State whether each file needs test updates.
 
 ## Test Execution
 
-Unity Test Framework is the authoritative runner. Compilation success and focused harnesses are not test execution — see the `test-execution-evidence` instruction.
+Unity Test Framework is the authoritative runner. Compilation success and focused harnesses do not count as test execution. See the `test-execution-evidence` instruction.
 
 `-batchmode` is mandatory for every agent-driven Unity test run. Never assume a bare `Unity` executable is on `PATH`.
 
-**Editor discovery.** Never assume a bare `Unity` executable is on `PATH`. Resolve the editor path in this order and stop at the first hit:
+**Editor discovery.** Resolve the editor path in this order. Stop at the first hit:
 
-1. The `VISUAL_VERIFICATION_UNITY` environment variable, if set. The name is historical; it is a machine-wide Unity editor path and applies to every Unity run, not only capture runs.
-2. A machine-local override file `dev/com.threnjen.visual-verification.local.json` containing `{ "unityEditorPath": "…" }`, if present. The filename is historical in the same way.
-3. Derive it from the project's Unity version in `<execution-unity-project>/ProjectSettings/ProjectVersion.txt` plus the Unity Hub layout. Check both the default location (`…/Hub/Editor/<version>/Editor/Unity.exe`) and any custom editor-install location Hub records in its own config (`%APPDATA%/UnityHub/` on Windows, `~/Library/Application Support/UnityHub/` on macOS, `~/.config/UnityHub/` on Linux). This covers an editor relocated to another drive.
+1. Use the `VISUAL_VERIFICATION_UNITY` environment variable if it is set. The name is historical. The path is machine-wide and applies to every Unity run, not only capture runs.
+2. Use the machine-local override file `dev/com.threnjen.visual-verification.local.json` if it exists. It must contain `{ "unityEditorPath": "…" }`. The filename is historical.
+3. Derive the path from the project's Unity version in `<execution-unity-project>/ProjectSettings/ProjectVersion.txt` and the Unity Hub layout. Check the default location (`…/Hub/Editor/<version>/Editor/Unity.exe`). Also check any custom editor-install location recorded in the Hub config. Hub config uses `%APPDATA%/UnityHub/` on Windows, `~/Library/Application Support/UnityHub/` on macOS, and `~/.config/UnityHub/` on Linux. This covers an editor relocated to another drive.
 
 This skill is the single canonical implementation of editor discovery.
 
-**Project paths.** Resolve `<main-repo-root>` as the Git checkout root and `<unity-project-relative-path>` as `.` for a root Unity layout or the nested directory containing `Assets/` and `ProjectSettings/` (for example `game`). A shadow `<worktree-root>` is a checkout of the whole repository. Set `<execution-unity-project>` to `<worktree-root>/<unity-project-relative-path>`; for the main-checkout fallback use `<main-repo-root>/<unity-project-relative-path>`. Never pass a monorepo root without a Unity project to `-projectPath`.
+**Project paths.** Resolve `<main-repo-root>` as the Git checkout root. Resolve `<unity-project-relative-path>` as `.` for a root Unity layout, or as the nested directory containing `Assets/` and `ProjectSettings/`, such as `game`. A shadow `<worktree-root>` is a checkout of the whole repository. Set `<execution-unity-project>` to `<worktree-root>/<unity-project-relative-path>`. For the main-checkout fallback, use `<main-repo-root>/<unity-project-relative-path>`. Never pass a monorepo root without a Unity project to `-projectPath`.
 
 | Platform | Required flags |
 |----------|----------------|
 | EditMode | `-batchmode -nographics` |
-| PlayMode | `-batchmode` with graphics enabled; exclude `-nographics` |
+| PlayMode | `-batchmode` with graphics enabled. They exclude `-nographics` |
 
 ```bash
 "<resolved-unity-editor>" -batchmode -nographics -runTests -projectPath "<execution-unity-project>" -testPlatform EditMode -testResults "<absolute-main-checkout>/dev/test-results/<results.xml>" -logFile "<absolute-main-checkout>/dev/test-results/<unity.log>"
 "<resolved-unity-editor>" -batchmode -runTests -projectPath "<execution-unity-project>" -testPlatform PlayMode -testResults "<absolute-main-checkout>/dev/test-results/<results.xml>" -logFile "<absolute-main-checkout>/dev/test-results/<unity.log>"
 ```
 
-- Never pair `-quit` with `-runTests`; Unity can exit before the tests execute and return a false-green zero exit code.
-- **Affected-suite runs use `-testFilter`** — a semicolon-separated list of full test names or a regex, negation supported. Scope it to the suites exercising the changed symbol. Gate runs (feature integration gate, phase end) are unfiltered.
-- `-testResults` always receives an absolute path under the main checkout's `dev/test-results/`; `-logFile` uses the same absolute artifact directory. The shadow worktree is an execution target only. Never read results from the shadow worktree; never read logs from it either.
+- Never pair `-quit` with `-runTests`. Unity can exit before the tests execute and return a false-green zero exit code.
+- **Affected-suite runs use `-testFilter`**. Use a semicolon-separated list of full test names or a regex, with negation supported. Scope the filter to the suites that exercise the changed symbol. Gate runs (feature integration gate, phase end) are unfiltered.
+- `-testResults` always receives an absolute path under the main checkout's `dev/test-results/`. `-logFile` uses the same absolute artifact directory. The shadow worktree is an execution target only. Never read results from the shadow worktree. Never read logs from it either.
 
-**Precondition.** Commit before testing in a shadow worktree; it can represent only committed code. The normal per-feature commit usually satisfies this precondition. A dirty checkout requires a commit before this procedure begins.
+**Precondition.** Commit before testing in a shadow worktree. It can represent only committed code. The normal per-feature commit usually satisfies this precondition. A dirty checkout requires a commit before this procedure begins.
 
 ### Execution Ladder
 
-1. **Persistent shadow worktree.** From `<main-repo-root>`, run `git worktree prune`, then use the one fixed detached sibling `<project-dir>-agent-tests/` as `<worktree-root>`. Before reuse, verify that an existing path is a registered worktree for this repository; never overwrite foreign content. On first use, announce its path, approximate disk cost, and multi-minute first import, then create it with `git worktree add --detach "<project-dir>-agent-tests/" "<committed-sha>"`. On every use, refresh it with `git -C "<project-dir>-agent-tests/" checkout --detach "<committed-sha>"`. Before running Unity, verify the worktree has no tracked changes or untracked files and no ignored content outside `<execution-unity-project>/Library/` (or its root-layout equivalent); otherwise stop and report `not-executed` without deleting or overwriting anything. Its gitignored `Library/` remains in place. Run the appropriate headless command against `<execution-unity-project>` once while the main Editor remains open and usable.
+1. **Persistent shadow worktree.** From `<main-repo-root>`, run `git worktree prune`. Then use the one fixed detached sibling `<project-dir>-agent-tests/` as `<worktree-root>`. Before reuse, verify that the existing path is a registered worktree for this repository. Never overwrite foreign content. On first use, announce its path, approximate disk cost, and multi-minute first import. Then create it with `git worktree add --detach "<project-dir>-agent-tests/" "<committed-sha>"`. On every use, refresh it with `git -C "<project-dir>-agent-tests/" checkout --detach "<committed-sha>"`. Before running Unity, verify that the worktree has no tracked changes or untracked files and no ignored content outside `<execution-unity-project>/Library/` (or its root-layout equivalent). Otherwise, stop and report `not-executed` without deleting or overwriting anything. Its gitignored `Library/` remains in place. Run the appropriate headless command against `<execution-unity-project>` once while the main Editor remains open and usable.
 2. **Licensing or lock fallback.** If rung 1 fails because of licensing or a project lock, ask the user to close the Editor once. After it closes, the agent runs the headless command once in the main checkout. Never delegate the test run to the user.
 3. **Decline or unattended fallback.** Never launch a GUI and never refuse silently. A decline reports `not-executed`. Treat unattended non-response as a decline and report exactly `not-executed: editor open, user unavailable`.
 
-The one shadow worktree persists indefinitely. Per-run worktree creation is an anti-pattern because it discards `Library/` and repeats the cold import. Teardown is manual only: after validating the fixed path belongs to this repository, the maintainer may run `git -C "<main-checkout>" worktree remove "<project-dir>-agent-tests/"`. Never automate teardown.
+The one shadow worktree persists indefinitely. Per-run worktree creation is an anti-pattern. It discards `Library/` and repeats the cold import. Teardown is manual only. After validating that the fixed path belongs to this repository, the maintainer may run `git -C "<main-checkout>" worktree remove "<project-dir>-agent-tests/"`. Never automate teardown.
 
-**Reading the results XML.** Exit code zero is not evidence. Root `<test-run total= passed= failed=>` gives the counts; failing test names come from `<test-case result="Failed">`. A run reporting zero tests discovered is `not-executed`.
+**Reading the results XML.** Exit code zero is not evidence. Root `<test-run total= passed= failed=>` gives the counts. Failing test names come from `<test-case result="Failed">`. A run reporting zero tests discovered is `not-executed`.
 
 ## Test Authenticity Rules
 
-### Don't Mock Framework Types with Simplified Stand-ins
+### Do Not Mock Framework Types with Simplified Stand-ins
 
-When tests substitute a plain `VisualElement` for a `ScrollView` (or any framework widget with different internal routing/behavior), the test will pass but runtime will break. This pattern has caused repeated bugs.
+When tests substitute a plain `VisualElement` for a `ScrollView`, the test will pass while runtime breaks. The same risk applies to any framework widget with different internal routing or behavior. This pattern has caused repeated bugs.
 
 **Rule:** If the code under test interacts with framework-specific behavior (child routing, layout, event bubbling), use the real framework type in tests or document the gap explicitly.
 
-### Don't Bypass the Spawn/Registration Pipeline
+### Do Not Bypass the Spawn/Registration Pipeline
 
-Tests that call `RegisterTickable()`, `AddToGrid()`, or similar registration methods directly — when production code goes through `Map.NotifySpawned()` or equivalent — will pass while runtime integration is broken.
+Tests may call `RegisterTickable()`, `AddToGrid()`, or similar registration methods directly. If production code goes through `Map.NotifySpawned()` or an equivalent path, those tests will pass while runtime integration remains broken.
 
 **Rule:** Tests should exercise the same code paths as production wherever possible. If a shortcut is necessary for test isolation, add a comment: `// NOTE: Bypasses Map.NotifySpawned() — integration tested in [X]`.
 
 ### Verify Event Handlers Do Real Work
 
-Tests that verify "event was fired" are necessary but insufficient. If a UI confirm button fires an event and the handler only hides panels without performing the domain action (e.g., `building.Destroy()`), the test passes but the feature doesn't work.
+Tests that verify "event was fired" are necessary but insufficient. If a UI confirm button fires an event but the handler only hides panels, the test passes while the feature fails. Also verify the domain action, such as `building.Destroy()`.
 
-**Rule:** For any event handler test, also verify the downstream side effect (entity destroyed, state changed, etc.) — or note the gap in the implementation record.
+**Rule:** For any event handler test, also verify the downstream side effect, such as an entity destroyed or state changed. Otherwise, note the gap in the implementation record.
 
 ## Rendering Patterns
 
@@ -248,73 +248,73 @@ mesh = newMesh;
 
 ### Avoid Per-Frame Allocations
 
-- Don't allocate `MaterialPropertyBlock`, `List<T>`, or other objects inside per-frame rendering methods
-- Cache them as instance fields and reuse
-- Unity's GC is generational but frequent small allocations still cause frame hitches
+- Do not allocate `MaterialPropertyBlock`, `List<T>`, or other objects inside per-frame rendering methods.
+- Cache those objects as instance fields and reuse them.
+- Unity's GC is generational. Frequent small allocations still cause frame hitches.
 
 ### Batch Renderer State Changes
 
-Batch renderers that only rebuild on add/remove won't reflect per-entity state changes (e.g., degradation tinting). Use dirty flags or periodic polling to trigger rebuilds on state changes.
+Batch renderers that rebuild only on add/remove do not reflect per-entity state changes, such as degradation tinting. Use dirty flags or periodic polling to trigger rebuilds when state changes.
 
 ## Shader Safety
 
-- Verify any `Shader.Find()` string argument exists in the target Unity version
-- For opaque colored quads, use an opaque shader (`Unlit/Color`, custom vertex color) — not `Sprites/Default` (transparency shader)
-- Safe built-in shaders: `Sprites/Default`, `Unlit/Color`, `Standard`
+- Verify that each `Shader.Find()` string argument exists in the target Unity version.
+- For opaque colored quads, use an opaque shader (`Unlit/Color`, custom vertex color). Do not use `Sprites/Default`, which is a transparency shader.
+- Safe built-in shaders include `Sprites/Default`, `Unlit/Color`, and `Standard`.
 
 ## Assembly Definition Conventions
 
-- The **Preflight (#2)** has already verified that every new `using` directive maps to an explicit `.asmdef` reference — do not skip it.
+- The **Preflight (#2)** check already confirms that every new `using` directive maps to an explicit `.asmdef` reference. Do not skip it.
 - Reference assemblies by GUID in `.asmdef` files when possible (more robust to renames).
 - `TheMovies.Core.Data` must have zero direct Unity assembly references (pure C# data layer).
-- Verify the dependency DAG: Data ← Simulation ← Rendering, Data ← UI, etc. No circular references.
+- Verify the dependency DAG: Data ← Simulation ← Rendering and Data ← UI. Do not add circular references.
 
 ## Input System
 
-- The **Preflight (#1)** has already determined `activeInputHandler` — read the Preflight block in the implementation record.
+- The **Preflight (#1)** check already determined `activeInputHandler`. Read the Preflight block in the implementation record.
 - If using "Both" mode, prefer migrating to Input System actions over adding more legacy `Input.GetKeyDown()` calls.
-- Legacy input calls accumulate tech debt — each new `Input.GetKeyDown()` is one more thing to migrate later.
+- Legacy input calls accumulate tech debt. Each new `Input.GetKeyDown()` call adds another migration task.
 
 ## Save/Load Considerations
 
-- After loading, all subsystems must be rewired to new object instances (Grid, Map, etc.)
-- A `LoadManager` that replaces references without notifying subsystems produces stale-reference bugs that are invisible until the player loads a save
-- Verify: does every subsystem that holds a Grid/Map reference get updated after load?
+- After loading, rewire all subsystems to the new object instances, such as Grid and Map.
+- A `LoadManager` that replaces references without notifying subsystems produces stale-reference bugs. These bugs remain invisible until the player loads a save.
+- Verify that every subsystem holding a Grid/Map reference gets updated after load.
 
 ## Serialized Assets: Generate via Unity, Never Hand-Author
 
-Unity's serialized assets — `.prefab`, `.unity` scenes, `.mat`, `.asset` (including SRP pipeline/renderer assets), and `.meta` files — are produced by the Unity Editor's serializer. The Editor is the sole authority for GUIDs, fileIDs, class ids, required-component dependencies, and version-correct format. An agent hand-writing these files is impersonating that serializer **blind**: no access to the real GUID database, no enforcement of component dependencies, no way to validate the output. This is the single most common source of "compiles green, tests pass, but nothing renders / NRE every frame" failures.
+Unity's serializer produces `.prefab`, `.unity` scenes, `.mat`, `.asset` files (including SRP pipeline/renderer assets), and `.meta` files. The Editor is the sole authority for GUIDs, fileIDs, class ids, required-component dependencies, and version-correct format. An agent that hand-writes these files impersonates that serializer **blind**. The agent has no access to the real GUID database, no component-dependency enforcement, and no way to validate the output. This is the single most common source of "compiles green, tests pass, but nothing renders / NRE every frame" failures.
 
-**Headless asset-database import.** Use `"<resolved-unity-editor>" -batchmode -quit -projectPath "<execution-unity-project>" -logFile -` with the editor and root-or-nested Unity project path resolved by Test Execution; for a controlled main-checkout check, `<execution-unity-project>` is `<main-repo-root>/<unity-project-relative-path>`. This asks Unity's asset database to import and generate missing `.meta`/GUID files without a human-opened or GUI-opened Editor; treat regeneration as unverified until a controlled missing-`.meta` run succeeds on the target Unity version. Unity's serializer remains the sole authority for every generated file.
+**Headless asset-database import.** Use `"<resolved-unity-editor>" -batchmode -quit -projectPath "<execution-unity-project>" -logFile -`. Use the editor and root-or-nested Unity project path resolved by Test Execution. For a controlled main-checkout check, `<execution-unity-project>` is `<main-repo-root>/<unity-project-relative-path>`. This asks Unity's asset database to import and generate missing `.meta`/GUID files without a human-opened or GUI-opened Editor. The rule is: treat regeneration as unverified until a controlled missing-`.meta` run succeeds on the target Unity version. Unity Editor's serializer remains the sole authority for every generated file.
 
 **Rule: do not hand-author serialized Unity assets from scratch.** Build them by running the Unity Editor API in batch mode (an `Editor/` script Unity executes), so Unity generates the asset, its GUIDs, and its `.meta`:
 
 - Prefabs → construct the GameObject with `new GameObject(...)` + `AddComponent<T>()`, then `PrefabUtility.SaveAsPrefabAsset`.
 - Scenes → `EditorSceneManager.NewScene`/`OpenScene`, build contents, `EditorSceneManager.SaveScene`.
 - Materials / ScriptableObjects / SRP assets → `new Material(Shader.Find(...))` / `ScriptableObject.CreateInstance<T>()` (or the type's `Create()` helper) + `AssetDatabase.CreateAsset`.
-- Sprites/textures → import a real source file; never invent a texture/sprite `.meta` GUID.
+- Sprites/textures → import a real source file. Never invent a texture/sprite `.meta` GUID.
 
-Run via `-batchmode -executeMethod <Type>.<Method> -quit`, then confirm the assets imported without errors.
+Run via `-batchmode -executeMethod <Type>.<Method> -quit`. Then confirm that the assets imported without errors.
 
-**Boundary:** a *surgical edit* to an existing, Unity-generated asset (changing a serialized value in a file the Editor already produced) is acceptable. *Authoring a whole asset as raw YAML* is the anti-pattern. The risk is highest in unattended pipeline runs where no human Play-tests each step.
+**Boundary:** a *surgical edit* to an existing, Unity-generated asset is acceptable. This means changing a serialized value in a file the Editor already produced. *Authoring a whole asset as raw YAML* is the anti-pattern. The risk is highest in unattended pipeline runs where no human Play-tests each step.
 
 ### Invalid-asset red flags (when producing OR reviewing any serialized asset)
 
-- A `MonoBehaviour.m_Script` GUID of `0000000000000000f000000000000000` (builtin-extra — valid only for builtin fonts/textures/materials, **never** a script), or any `m_Script`/asset GUID with no matching `.cs.meta` or package meta → silent "missing script" → `null` at runtime.
-- A class-id tag that doesn't match the component body: `SpriteRenderer` is `!u!212` (not `!u!23` = MeshRenderer); UI elements need `RectTransform` (`!u!224`), not `Transform` (`!u!4`).
-- **(uGUI / legacy UI only)** A UI `Graphic` (`Image`/`Text`) missing its required `CanvasRenderer` (`!u!222`) and `RectTransform`; a `Canvas` missing a `RectTransform`. (UI Toolkit projects use `UIDocument`/`PanelSettings` instead — not applicable.)
-- An asset reference (`m_Sprite`, `m_Materials`, `m_Font`, renderer/pipeline) whose GUID no existing `.meta` defines → dangling reference → renders nothing, no error.
-- **(URP only)** A render-pipeline chain that doesn't fully resolve: `QualitySettings`/`GraphicsSettings` → URP pipeline `.asset` → renderer `.asset` must all exist. A missing link silently disables sprite/line rendering with no console error. (Built-in Render Pipeline projects have no such chain.)
-- A serialized field reported as "wired" whose target component's script GUID does not resolve — a present fileID is **not** proof the reference resolves.
+- A `MonoBehaviour.m_Script` GUID of `0000000000000000f000000000000000` is builtin-extra. It is valid only for builtin fonts, textures, and materials, and **never** for a script. Any `m_Script`/asset GUID without a matching `.cs.meta` or package meta produces a silent "missing script" and `null` at runtime.
+- A class-id tag must match the component body. `SpriteRenderer` is `!u!212`, not `!u!23` (`MeshRenderer`). UI elements need `RectTransform` (`!u!224`), not `Transform` (`!u!4`).
+- **(uGUI / legacy UI only)** A UI `Graphic` (`Image`/`Text`) needs its required `CanvasRenderer` (`!u!222`) and `RectTransform`. A `Canvas` needs a `RectTransform`. UI Toolkit projects use `UIDocument`/`PanelSettings` instead. This check does not apply to them.
+- An asset reference (`m_Sprite`, `m_Materials`, `m_Font`, renderer/pipeline) must point to a GUID defined by an existing `.meta` file. Otherwise, the dangling reference renders nothing and reports no error.
+- **(URP only)** The render-pipeline chain must resolve fully: `QualitySettings`/`GraphicsSettings` → URP pipeline `.asset` → renderer `.asset`. All links must exist. A missing link silently disables sprite/line rendering with no console error. Built-in Render Pipeline projects have no such chain.
+- A serialized field reported as "wired" must target a component whose script GUID resolves. A present fileID is **not** proof that the reference resolves.
 
 
 ## Pre-Handoff Checklist (Unity-Specific)
 
-Before writing the implementation record, confirm each of these. Items 1–4 are covered by the Preflight section above — this checklist is a final verification pass, not a substitute.
+Before writing the implementation record, confirm each item. The Preflight section covers items 1–4. This checklist is a final verification pass, not a substitute.
 
-1. **Preflight complete** — Re-read the `## Preflight` block in your implementation record. Does it cover all four checks (input, assemblies, scene wiring, pipeline)? If any are missing, go back and do them before proceeding.
-2. **Bootstrap updated** — If the feature adds a new system, is it initialized in the bootstrap script in the correct order?
-3. **Def wiring** — If new CompProperties or Def fields were added, does `DefLoader`/`DefSerializer` know how to deserialize them? Is the naming convention followed (`CompX` → `CompProperties_X`)?
-4. **TickerType match** — If a new `ThingComp` overrides `CompTickRare` or `CompTickLong`, does the parent Thing's Def set the matching `tickerType`?
-5. **PlacedSize vs def.size** — Any code computing building footprints uses `Building.PlacedSize` (the actual placed/rotated size), NOT `def.size` (blueprint size).
-6. **Serialized assets generated, not hand-written** — Any new/changed `.prefab`/`.unity`/`.mat`/`.asset` was produced via the Unity Editor API (batch-mode `Editor/` script), not hand-authored YAML. No fabricated GUIDs, no `0000…f000` `m_Script` references, no missing required components or dangling asset references. See "Serialized Assets: Generate via Unity, Never Hand-Author".
+1. **Preflight complete** — Re-read the `## Preflight` block in your implementation record. Check that it covers all four checks: input, assemblies, scene wiring, and pipeline. If any check is missing, complete it before proceeding.
+2. **Bootstrap updated** — If the feature adds a new system, verify that the bootstrap script initializes it in the correct order.
+3. **Def wiring** — If new CompProperties or Def fields were added, check that `DefLoader`/`DefSerializer` can deserialize them. Check that the naming convention is followed (`CompX` → `CompProperties_X`).
+4. **TickerType match** — If a new `ThingComp` overrides `CompTickRare` or `CompTickLong`, check that the parent Thing's Def sets the matching `tickerType`.
+5. **PlacedSize vs def.size** — Code that computes building footprints must use `Building.PlacedSize` (the actual placed/rotated size), not `def.size` (blueprint size).
+6. **Serialized assets generated, not hand-written** — Any new or changed `.prefab`/`.unity`/`.mat`/`.asset` must be produced via the Unity Editor API (batch-mode `Editor/` script), not hand-authored YAML. Do not fabricate GUIDs. Do not use `0000…f000` `m_Script` references. Do not omit required components or leave dangling asset references. See "Serialized Assets: Generate via Unity, Never Hand-Author".
