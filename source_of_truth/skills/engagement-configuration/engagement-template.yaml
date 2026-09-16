@@ -1,63 +1,64 @@
-# Engagement configuration — fill this out, then resume the Client Deliverable agent.
+# Complete this engagement configuration. Then resume the Client Deliverable agent.
 #
-# Replace every FILL ME. Delete any optional line you don't need (they are
-# commented out with ##, and each shows a worked example of what goes there).
-# Paths can be absolute, or relative to THIS file.
-# Nothing here is sent anywhere — only paths are ever quoted back to you.
+# Replace every FILL ME.
+# Delete each optional line you do not need. Optional lines start with ## and show an example value.
+# Paths may be absolute or relative to this file.
+# This file sends nothing. The workflow quotes only paths back to you.
 
 # ---------------------------------------------------------------------------
 # The paperwork
 # ---------------------------------------------------------------------------
 
-# The SOW / contract. Got several — a base SOW, an update, amendments? List
-# them all, LOWEST priority first: each one overrides everything above it
-# wherever they disagree. Don't merge them by hand; the order is the answer.
+# List every SOW or contract document, including any base SOW, update, or amendment.
+# List documents from LOWEST priority to highest priority.
+# Each later document overrides every earlier document wherever they disagree.
+# Do not merge documents by hand. The order determines the result.
 sow_document:
   - FILL ME                 # e.g. /Users/you/repos/ops/projects/acme/acme-sow1.md
 ##  - /Users/you/repos/ops/projects/acme/sow-update-20260707.md
 ##  - /Users/you/repos/ops/projects/acme/sow-amendments.md   # wins on conflict
 
-deliverables_spec: FILL ME  # the document saying what you owe the client
+deliverables_spec: FILL ME  # the document that states what you owe the client
                             # e.g. /Users/you/repos/ops/projects/acme/deliverables-spec.md
 
 # ---------------------------------------------------------------------------
 # What you're comparing
 # ---------------------------------------------------------------------------
-# One entry per before/after comparison. Copy the whole block for a second
-# comparison — there is no limit. A second, fully worked example is at the
-# bottom of this file.
+# Add one entry for each before-and-after comparison.
+# Copy the full block for each additional comparison. You can add any number of comparisons.
+# A second fully worked example appears at the bottom of this file.
 
 pairs:
-  - name: FILL ME           # short label for this comparison, e.g. widget-api
-    type: repo              # 'repo' = two separate folders. See the branch example below.
+  - name: FILL ME           # use a short label for this comparison, such as widget-api
+    type: repo              # 'repo' means two separate folders. See the branch example below.
 
     original:               # the OLD codebase
-      path: FILL ME         # e.g. /Users/you/repos/acme/widget-api-orig
+      path: FILL ME         # Example: /Users/you/repos/acme/widget-api-orig
 
-      ## Already ran the code or infra audits? Point at each side's audit
+      ## If you already ran code or infrastructure audits, point to each side's audit paths.
       code_audit_path:  /Users/you/repos/acme/widget-api/dev/code-audit/orig-code/codex
       infra_audit_path: /Users/you/repos/acme/widget-api/dev/infra-audit/orig-code/codex
 
     upgraded:               # the NEW codebase
-      path: FILL ME         # e.g. /Users/you/repos/acme/widget-api
+      path: FILL ME         # Example: /Users/you/repos/acme/widget-api
 
-      ## Already ran the code or infra audits? Point at each side's audit
+      ## If you already ran code or infrastructure audits, point to each side's audit paths.
       code_audit_path:  /Users/you/repos/acme/widget-api/dev/code-audit/20260804/codex
       infra_audit_path: /Users/you/repos/acme/widget-api/dev/infra-audit/20260804/codex
 
-      ## Manual QA lives somewhere other than docs/QA_USER.md? Name it here and
-      ## that becomes the file the QA gate checks — you will not be asked for
-      ## QA_USER.md. List as many as apply. The automated runbook is always
+      ## If manual QA uses a file other than docs/QA_USER.md, list each applicable file here.
+      ## The QA gate checks each listed file. It does not request QA_USER.md.
+      ## The automated runbook path remains unchanged.
       manual_qa_paths:
             - docs/QA_USER-MICK.md
           
-    ## Also have a finished delta report comparing the two sides? Add it too
+    ## If you have finished delta reports for the two sides, add their paths here.
       code_delta_path: /Users/you/repos/acme/widget-api/dev/code-audit/20260804/codex/delta.md
       infra_delta_path: /Users/you/repos/acme/widget-api/dev/infra-audit/20260804/codex/delta.md
 
 # ---------------------------------------------------------------------------
-# A second pair, fully worked, showing every optional field in place.
-# Uncomment and adapt, or delete.
+# This second pair shows every optional field.
+# Uncomment and adapt this pair. Delete it if you do not need it.
 # ---------------------------------------------------------------------------
 ##  - name: widget-uploader
 ##    type: repo
@@ -76,12 +77,12 @@ pairs:
 ##    infra_delta_path: /Users/you/repos/acme/widget-uploader/dev/infra-audit/20260806/codex/delta.md
 
 # ---------------------------------------------------------------------------
-# Comparing two branches of ONE repo instead of two folders? It looks like
-# this — uncomment and adapt, and delete the repo-style pair above.
+# To compare two branches of ONE repo instead of two folders, use this example.
+# Uncomment and adapt it. Delete the repo-style pair above.
 # ---------------------------------------------------------------------------
 ##  - name: web-frontend
 ##    type: branch
-##    repo_path: /Users/you/repos/acme/web-frontend   # the repo holding both branches
+##    repo_path: /Users/you/repos/acme/web-frontend   # the repo that holds both branches
 ##    original:
 ##      branch: main
 ##    upgraded:

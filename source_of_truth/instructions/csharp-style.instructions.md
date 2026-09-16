@@ -17,17 +17,18 @@ applyTo: "**/*.cs"
 
 - Acronyms are single words: `MyRpc` not `MyRPC`
 - `const`, `static`, `readonly` do not affect naming conventions
-- One core class per file; filename matches the main class
-- Booleans read as a true/false statement: `CanRefund(order)`, `IsEligibleForRefund` — never `CheckRefund`
-- No `Manager` / `Helper` / `Util` / `Data` class-name suffix unless you can state the class's single responsibility
+- Put one core class in each file.
+- Match the filename to the main class.
+- Name booleans as true/false statements: `CanRefund(order)`, `IsEligibleForRefund` — never `CheckRefund`.
+- Do not use a `Manager` / `Helper` / `Util` / `Data` class-name suffix unless you can state the class's single responsibility.
 
-Inside Unity assemblies the private-field prefix differs — see `skills/unity-development`.
+The private-field prefix differs inside Unity assemblies. See `skills/unity-development`.
 
 ## Organization
 
 **Modifier order:** `public protected internal private new abstract virtual override sealed static readonly extern unsafe volatile async`
 
-**`using` order:** Alphabetical; `System.*` imports first; declared outside any namespace.
+**`using` order:** Order using directives alphabetically. Place `System.*` directives first. Declare all directives outside any namespace.
 
 **Class member order:**
 1. Nested classes, enums, delegates, events
@@ -36,71 +37,83 @@ Inside Unity assemblies the private-field prefix differs — see `skills/unity-d
 4. Constructors and finalizers
 5. Methods
 
-Within each group: Public → Internal → Protected internal → Protected → Private
+Within each group, order members as Public → Internal → Protected internal → Protected → Private.
 
 ## Formatting
 
-- 2-space indent; no tabs; 100-column limit
-- One statement per line; one assignment per statement
-- Braces always required (even when optional)
-- No line break before opening brace; no line break between `}` and `else`
-- Space after `if`/`for`/`while`/commas; no space inside parentheses
-- Line continuations: 4-space indent
+- Use 2-space indentation.
+- Do not use tabs.
+- Limit lines to 100 columns.
+- Put one statement on each line.
+- Put one assignment on each line.
+- Always use braces, even when optional.
+- Do not break a line before an opening brace.
+- Do not break a line between `}` and `else`.
+- Put a space after `if`, `for`, `while`, and commas.
+- Do not put spaces inside parentheses.
+- Indent line continuations by 4 spaces.
 
 ## C# Rules
 
-**Constants:** Always `const` when possible; `readonly` as fallback; no magic numbers.
+**Constants:** Always use `const` when possible. Use `readonly` as a fallback. Do not use magic numbers.
 
 **Collections:**
-- Inputs: most restrictive type (`IReadOnlyList<>`, `IReadOnlyCollection<>`, `IEnumerable<>`)
-- Outputs: `IList<>` when transferring ownership; most restrictive option otherwise
-- Prefer `List<>` over arrays for public members; arrays only for fixed-size or multidimensional data
+- Inputs: Use the most restrictive type (`IReadOnlyList<>`, `IReadOnlyCollection<>`, `IEnumerable<>`).
+- Outputs: Return `IList<>` when transferring ownership. Otherwise, return the most restrictive option.
+- Prefer `List<>` over arrays for public members. Use arrays only for fixed-size or multidimensional data.
 
-**Properties:** Single-line read-only → expression body (`=>`). All others → `{ get; set; }`.
+**Properties:** Use an expression body (`=>`) for single-line read-only properties. Use `{ get; set; }` for all other properties.
 
-**Expression body:** Lambdas and properties only — not on method definitions.
+**Expression body:** Use expression bodies only for lambdas and properties. Do not use them on method definitions.
 
-**Structs vs Classes:** Almost always use a class. Structs only for small value-type-like objects (e.g., `Vector3`, `Quaternion`, `Bounds`).
+**Structs vs Classes:** Almost always use a class. Use a struct only for a small value-type-like object, such as `Vector3`, `Quaternion`, or `Bounds`.
 
-**Lambdas:** Non-trivial (>~2 statements) or reused lambdas → named methods.
+**Lambdas:** Use named methods for non-trivial (>~2 statements) or reused lambdas.
 
-**LINQ:** Single-line calls preferred; member extension methods (`list.Where(x)`) over SQL-style keywords; avoid `Container.ForEach(...)` for more than one statement.
+**LINQ:** Prefer single-line calls. Prefer member extension methods (`list.Where(x)`) over SQL-style keywords. Avoid `Container.ForEach(...)` when it contains more than one statement.
 
-**`var`:** Use when type is obvious from context. Avoid for basic types, compiler-resolved numerics, or when the type aids readability.
+**`var`:** Use var when the type is obvious from context. Avoid var for basic types, compiler-resolved numerics, or when an explicit type aids readability.
 
-**Delegates:** Always call via null-conditional: `SomeDelegate?.spawn()`.
+**Delegates:** Always invoke delegates with null-conditional syntax: `SomeDelegate?.spawn()`.
 
-**`ref`/`out`:** Use `out` for non-input returns (placed after all other params). Use `ref` only when mutating an input is necessary — not as a performance optimization for structs.
+**`ref`/`out`:** Use `out` for non-input returns. Place this parameter after all other parameters. Use `ref` only when mutating an input is necessary. Do not use it as a performance optimization for structs.
 
 **Return types:** Prefer a named class over `Tuple<>` for complex return types.
 
-**Extension methods:** Only when source is unavailable or unfeasible to change; only for core general features; err on the side of not adding them.
+**Extension methods:** Use extension methods only when the source is unavailable or infeasible to change. Use them only for core general features. Prefer not to add them.
 
-**Namespaces:** Max 2 levels deep; do not force file/folder layout to match namespaces.
+**Namespaces:** Keep namespaces to at most 2 levels. Do not force the file or folder layout to match namespaces.
 
-**Null/struct returns:** Prefer `bool` success + `out` struct. Nullable structs acceptable when they significantly improve readability.
+**Null/struct returns:** Prefer a `bool` success result with an `out` struct. Accept nullable structs when they significantly improve readability.
 
-**Removing during iteration:** Use `list.RemoveAll(predicate)` when possible; otherwise build a replacement container.
+**Removing during iteration:** Use `list.RemoveAll(predicate)` when possible. Otherwise, build a replacement container.
 
-**Field initializers:** Encouraged.
+**Field initializers:** Prefer field initializers.
 
-**Object initializers:** Fine for plain data types; avoid for classes or structs that have constructors.
+**Object initializers:** You may use object initializers for plain data types. Avoid them for classes or structs that have constructors.
 
 ## Access and Immutability
 
-Most restrictive modifier that works; start `private`. No public setter unless external mutation is an explicit requirement — expose an intent-revealing transition method (`Submit()`) and keep the setter `private`. `readonly` on construction-only fields. `record` for behavior-free DTOs; a class for anything owning behavior.
+- Use the most restrictive modifier that works.
+- Start with `private`.
+- Do not use a public setter unless external mutation is an explicit requirement.
+- Expose an intent-revealing transition method (`Submit()`) instead.
+- Keep the setter `private`.
+- Mark construction-only fields `readonly`.
+- Use `record` for behavior-free DTOs.
+- Use a class for anything that owns behavior.
 
 ## Nulls
 
-Nullable reference types enabled (`<Nullable>enable</Nullable>`). Never return `null` for an empty collection — return `[]`. A possibly-missing single object returns `T?`. Never pass a literal `null` argument.
+Enable nullable reference types (`<Nullable>enable</Nullable>`). Never return `null` for an empty collection. Return `[]` instead. Return `T?` for a single object that may be missing. Never pass a literal `null` argument.
 
 ## Async
 
-`async` only for real I/O — never because it might be needed later. Never `async void` outside event handlers. Every public async method that calls external infrastructure takes a `CancellationToken`. Never `.Result` or `.Wait()` — `await`.
+Use `async` only for real I/O. Do not use it because it might be needed later. Never use `async void` outside event handlers. Require every public async method that calls external infrastructure to take a `CancellationToken`. Never use `.Result` or `.Wait()`. Use `await` instead.
 
 ## Error Handling
 
-Catch the specific exception you expect; bare `Exception` only at a top-level boundary. Never swallow silently. Never use exceptions for control flow — model expected absence in the return type.
+Catch the specific exception you expect. Use bare `Exception` only at a top-level boundary. Never swallow exceptions silently. Never use exceptions for control flow. Model expected absence in the return type.
 
 ## Load Canary
 

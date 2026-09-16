@@ -13,7 +13,7 @@ only `readiness-report.md`.
 
 ## Inputs
 
-Read only:
+Read only these inputs:
 
 1. Valid evaluator reports for the current run.
 2. The current run's `evaluator-status.jsonl`.
@@ -21,8 +21,8 @@ Read only:
 
 Enrichment may include plans, specifications, QA records, coverage evidence,
 merge-request URLs, and approval summaries. Use it to qualify the final
-judgment. Never pass it backward to evaluators or replace missing evaluator
-evidence with it.
+judgment. Do not send enrichment to evaluators. Do not use enrichment to replace
+missing evaluator evidence.
 
 Do not read source, diffs, worktrees, stale reports, or agent definitions. A
 report is evidence only when its path passes the conventions' metadata checks.
@@ -30,13 +30,13 @@ report is evidence only when its path passes the conventions' metadata checks.
 ## Synthesis
 
 1. Read every supplied report and status record.
-2. Deduplicate findings and retain all source paths.
+2. Deduplicate findings. Retain all source paths.
 3. Sort findings from Critical to Low.
 4. Name every missing or incomplete required check.
 5. Apply `GO`, `GO WITH CONDITIONS`, or `NO-GO`.
 
 Any missing required check prevents `GO`. If no blocker exists but coverage is
-incomplete, use `NO-GO` and state `no blockers found, coverage incomplete`.
+incomplete, use `NO-GO`. State `no blockers found, coverage incomplete`.
 An evaluator condition that did not apply is complete evidence. Missing
 optional enrichment does not lower the verdict.
 
@@ -45,8 +45,8 @@ optional enrichment does not lower the verdict.
 Populate the template's repair table only from supported evaluator findings.
 The allowed classes are:
 
-- `security` from `03e Diff Security Scan`;
-- `outward-impact` from `04b Change Narrator`;
+- `security` from `03e Diff Security Scan`.
+- `outward-impact` from `04b Change Narrator`.
 - `changed-test-falsification` from `04f Test Health`.
 
 Include only findings with concrete evidence and an actionable local change.
@@ -54,7 +54,7 @@ Do not include cleanliness, consistency, dependency, general coverage, or Unity
 findings. An empty table is a valid result.
 
 The readiness report describes the pre-repair checkout. Write it before any
-repair question. Never edit or upgrade it after repair.
+repair question. Keep it unchanged after repair.
 
 ## Output
 

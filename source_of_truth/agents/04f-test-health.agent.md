@@ -25,12 +25,13 @@ the changed path, overly broad exception assertions, and guards that never
 exercise their negative case.
 
 Use mutation or negation evidence already present in the diff when available.
-Do not edit tests or run a mutation tool. A test-health finding is repair
-eligible only when the evidence shows a changed test lacks authentic failure
-power. Label it `changed-test-falsification`.
 
-If no test file changed, state that falsification did not apply. This is a
-completed conditional result.
+Do not edit tests. Do not run a mutation tool. A test-health finding qualifies
+for repair only when evidence shows that a changed test lacks authentic failure
+power. Label the finding `changed-test-falsification`.
+
+If no test file changed, state that falsification did not apply. Mark the
+conditional result complete.
 
 ## Coverage Evidence
 
@@ -39,8 +40,8 @@ artifact covers. Report a measured delta only when comparable base and head
 evidence exists. Otherwise state the precise limitation. Never infer coverage
 from test counts.
 
-Coverage findings are advisory and are not repair candidates for the bounded
-fixer.
+Treat coverage findings as advisory. Exclude them from repair candidates for
+the bounded fixer.
 
 ## Report
 

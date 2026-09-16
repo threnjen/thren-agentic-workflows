@@ -9,12 +9,12 @@ baseline: true
 ## Requirements
 
 - Load `base-code-guidelines` before you write, fix, or review code. Skipping it creates duplicate implementations.
-- Scope a change by the responsibility it changes, not by lines touched. Caller updates the change forces stay in scope.
+- Scope a change by the responsibility it changes, not by lines touched. Keep updates to callers within the change's scope.
 - Search for an existing implementation of the same responsibility before you add a sibling function, class, fixture, or helper.
 
 ## Traps
 
-- An existing implementation almost fits. Weigh extending its contract against adding a sibling. Reuse it only when both callers keep one cohesive responsibility.
+- An existing implementation almost fits. Weigh extending its contract against adding a sibling. Reuse it only when both callers share one cohesive responsibility.
 - Reuse touches several callers. Update and test every one. File count does not turn a required contract change into scope creep.
 - Similar syntax hides different meaning. Keep implementations apart when reuse would couple responsibilities that change for different reasons.
 

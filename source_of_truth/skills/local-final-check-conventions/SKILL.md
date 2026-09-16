@@ -5,7 +5,7 @@ description: "Shared evidence, attribution, report, and partial-failure rules fo
 
 # Local Final Check Conventions
 
-Apply these rules to a local review of one confirmed `base..HEAD` range. Apply
+Use these rules for a local review of one confirmed `base..HEAD` range. Use
 `auditor-conventions` for shared severity definitions. Load
 `local-final-check-report` when writing a report.
 
@@ -13,16 +13,15 @@ Apply these rules to a local review of one confirmed `base..HEAD` range. Apply
 
 The orchestrator supplies the fixed base and head, a clean baseline worktree,
 `changed-files.txt`, `range.diff`, and one output path. Never derive another
-base, create a worktree, or modify either tree.
+base. Never create a worktree. Never modify either tree.
 
-Findings must map to lines the range added or behavior those lines changed. A
-touched file does not make its pre-existing defects attributable to the range.
-Use the supplied diff artifacts as the authoritative attribution source.
+Map every finding to lines the range added or to behavior those lines changed.
+Do not attribute pre-existing defects in a touched file to the range. Use the
+supplied diff artifacts as the authoritative attribution source.
 
 Plans, specifications, QA records, merge-request context, and approval
-summaries are synthesis enrichment. Evaluators do not receive them. Coverage
-evidence is direct Test Health input because it measures that evaluator's
-subject.
+summaries enrich synthesis only. Do not provide them to evaluators. Coverage
+evidence is direct Test Health input.
 
 ## Reports
 
@@ -49,14 +48,15 @@ High, Medium, and Low from `auditor-conventions`.
 - A condition that does not apply is complete evidence, not `NOT RUN`.
 - Missing optional synthesis enrichment does not prevent `GO`.
 
-Treat a report as present only when it is readable, regular, non-empty, and
+Treat a report as present only when it is readable, a regular file, non-empty, and
 under the current run root. This validates metadata, not the report's claims.
 
 ## Read-Only Evaluation
 
-Evaluators write reports only. They never edit source, install dependencies,
-run state-changing commands, commit, push, or post externally. A shell-enabled
-evaluator may use read-only commands for its assigned check.
+Evaluators write reports only. They never edit source. They never install
+dependencies. They never run state-changing commands. They never commit. They
+never push. They never post externally. A shell-enabled evaluator may use
+read-only commands for its assigned check.
 
-Return only the report path, status, and key outcome or failure reason. Keep the
+Return only the report path, status, and key outcome or failure reason. Limit the
 return to ten lines.

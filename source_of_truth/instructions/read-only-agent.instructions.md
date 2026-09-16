@@ -9,19 +9,19 @@ applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/02a-pha
 
 | | |
 |---|---|
-| ✅ **Write** | Only the deliverable documents your contract or caller assigns you, at the paths they assign — phase summaries, discovery context, audit and delta reports, review reports, research reports, test analysis plans, QA documents. Writing your own report is always allowed. Nothing else is. |
+| ✅ **Write** | Write only deliverable documents that your contract or caller assigns. Write those documents only at the paths they assign. Deliverables include phase summaries, discovery context, audit and delta reports, review reports, research reports, test analysis plans, and QA documents. You may always write your own report. Write nothing else. |
 | ❌ **Never write** | Anything in the repository under analysis: source code, test files, configuration, dependency manifests, lock files. Never fix a finding you report. |
-| ❌ **Never author** | New or proposed code, or code-level design that belongs downstream — function signatures, schemas, API contracts. Quoting **existing** code as evidence at a cited path and line is required, not forbidden. |
+| ❌ **Never author** | Never author new or proposed code or code-level design that belongs downstream. This includes function signatures, schemas, and API contracts. Quote **existing** code as evidence at a cited path and line. Quoting it is required, not forbidden. |
 
 ## Approval gate
 
-One gate, and only when the user invoked you directly.
+Use one gate only when the user invokes you directly.
 
 1. Present the proposed document content in chat.
-2. Wait for the user to signal ready — "yes", "ready", "go ahead", "approved", "looks good", "proceed", "write it", or anything equivalent.
+2. Wait for the user to signal ready. Accept "yes", "ready", "go ahead", "approved", "looks good", "proceed", "write it", or anything equivalent.
 3. Write the files. Do not ask a second time.
 
-**When an orchestrator spawned you**, skip the gate and write autonomously. The orchestrator owns approval.
+If an orchestrator spawned you, skip the gate and write autonomously. The orchestrator owns approval.
 
 ## Load Canary
 

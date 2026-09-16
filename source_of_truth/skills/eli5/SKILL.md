@@ -6,55 +6,55 @@ user-invocable: true
 
 # ELI5
 
-Explain one subject three times in one reply, each pass deeper than the last. Write every pass
-in plain technical English for an adult. The heading says "explain like I'm five". The prose
-does not.
+Explain one subject three times in one reply. Make each pass deeper than the last. Write every pass
+in plain technical English for an adult. The heading says "explain like I'm five". The prose does
+not.
 
 ## The subject
 
 The user names the subject. Never guess it.
 
-Resolve what they named before you write a word:
+Resolve the named subject before writing:
 
 | The user says | You read |
 |---|---|
 | current branch vs main | The diff from HEAD to the local default branch. Use local `main`. Never substitute `origin/main`. |
-| current PR, MR, or PR files | The open pull request for this branch, plus the files it changes. |
-| this folder, these files | Those paths. |
-| this pipeline, this process | The docs and agent definitions that define it. |
-| a named concept | The code, docs, or conversation where it is defined. |
+| current PR, MR, or PR files | The open pull request for this branch and the files it changes. |
+| this folder, these files | Read those paths. |
+| this pipeline, this process | The documents and agent definitions that define it. |
+| a named concept | The code, documents, or conversation that defines it. |
 
-If no subject was given, or the one given cannot be found, ask one question naming what you
-need, then stop.
+If the user names no subject or you cannot find the subject, ask one question that states what you
+need. Then stop.
 
-Read the source before explaining it. A label is not enough to explain from.
+Read the source before explaining it. Do not explain the subject from its label alone.
 
-This skill explains. It does not review, fix, or change files. If the reading turns up a bug,
-say so in one line and leave it there.
+This skill explains. It does not review files. It does not fix files. It does not change files. If
+you find a bug while reading, report it in one line. Do not fix it.
 
 ## The output
 
-Open with one sentence that names the subject. Then exactly three headings, in this order,
-none skipped:
+Open with one sentence that names the subject. Then use exactly three headings in this order. Do
+not skip a heading:
 
 ### ELI5
 
-What it is and why anyone cares. Everyday words. An analogy is fine if it holds. Unpack any
-jargon in the same sentence it appears. No baby talk, no "imagine you have a toy".
+Explain what it is and why it matters. Use everyday words. Use an analogy only if it remains
+accurate. Define jargon in the sentence where it first appears. Do not use baby talk. Do not write
+"imagine you have a toy".
 
 ### ELI13
 
-How it works. Name the real parts and show one layer of mechanism. Assume the reader knows
-files, functions, APIs, and git.
+Explain how it works. Name the real parts and show one layer of the mechanism. Assume the reader
+knows files, functions, APIs, and git.
 
 ### ELI18
 
-The full technical picture. Precise terms, constraints, tradeoffs, and what goes wrong. Still
-plain English, and still an explanation rather than a paste of the source.
+Explain the full technical picture. Use precise terms. Explain constraints, tradeoffs, and what
+goes wrong. Use plain English. Explain the source instead of pasting it.
 
 ## Rules for every section
 - Keep the depths distinct. If two sections could swap places, one of them is wrong.
-- Never skip a section on the grounds that a later one covers it.
-- Answer first. The opening sentence of each section carries the point.
-- One caveat per section.
-
+- Never skip a section because a later section covers it.
+- Answer first. Put the main point in each section's opening sentence.
+- Include one caveat in each section.

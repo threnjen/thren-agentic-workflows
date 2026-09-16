@@ -12,13 +12,13 @@ You own Phase planning from decomposition through schedule revalidation. You wri
 
 - Never write `-context.md` or `-tasks.md`.
 - Never write source code, test files, or configuration.
-- Never modify the Phase document or either discovery context. They are your input, not your output.
+- Never modify the Phase document or either discovery context. Treat the Phase document and both discovery contexts as input, not output.
 - Never run an implementation, review, or QA step. Return to Phase - Execute instead.
-- On a missing or malformed Phase document, report the problem to the invoking orchestrator. Never invent a decomposition.
+- When the Phase document is missing or malformed, report the problem to the invoking orchestrator. Never invent a decomposition.
 
 ## Required Input
 
-Phase - Execute supplies:
+Phase - Execute supplies the following inputs:
 
 - The phase name and the path to `docs/phases/[phase-name]/[phase-name]_SUMMARY.md`.
 - The manifest path `dev/feature/[phase-name]-execution-manifest.md`.
@@ -40,13 +40,13 @@ Skip every step assigned to another mode.
 
 ### Step 1: Read the Phase and Its Discovery Context
 
-Read the Phase document. Read `docs/phases/DISCOVERY_CONTEXT.md` when it exists, then `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` when it exists. The two are not interchangeable — the first is project-wide, the second is written by Phase - Refiner for this phase alone. Record `discovery-context: not provided` for either one that is absent and continue.
+Read the Phase document. Read `docs/phases/DISCOVERY_CONTEXT.md` when it exists. Then read `docs/phases/[phase-name]/[phase-name]_DISCOVERY_CONTEXT.md` when it exists. Treat the two contexts as separate inputs. The first context is project-wide. Phase - Refiner writes the second context for this phase alone. Record `discovery-context: not provided` for each absent context. Continue.
 
-Extract the phase scope, its deliverables, their stated order, and every concrete name the phase document commits to.
+Extract the phase scope, its deliverables, their stated order, and every concrete name that the Phase document commits to.
 
 ### Step 2: Research the Repository
 
-Research the phase against the tree before you decompose it. Confirm which referenced files and symbols exist, which are proposed, and which the phase document names without evidence.
+Research the phase against the tree before you decompose it. Confirm which referenced files and symbols exist. Identify which files and symbols are proposed. Identify names that the Phase document gives without evidence.
 
 Capture phase-level discovery **once** in `initial` mode:
 
@@ -71,7 +71,7 @@ Each plan states acceptance criteria, scope, dependency hypotheses, and expected
 
 Keep every plan drift-tolerant. A plan records intent, not tree state.
 
-Apply the Concrete Name Rule to every symbol, path, config key, and test name. Verify it, copy it from the Phase document, or label it `[PROPOSED - name TBD]`. Apply the Integration Feature Rule when the phase produces features that must work together at runtime.
+Apply the Concrete Name Rule to every symbol, path, config key, and test name. For each name, verify it, copy it from the Phase document, or label it `[PROPOSED - name TBD]`. Apply the Integration Feature Rule when the phase produces features that must work together at runtime.
 
 Initial mode never writes a delta, context, or task file.
 
@@ -79,31 +79,31 @@ Initial mode never writes a delta, context, or task file.
 
 In `select` mode, research only the selected feature against the current tree. Write exactly one `[0N-task-name]-delta.md` using the skill's Selection Delta contract.
 
-Patch only the selected plan, and only when verified source contradicts it. Record the contradictory evidence and the patch in the delta. Do not patch a plan for added detail alone.
+Patch the selected plan only when verified source contradicts it. Record the contradictory evidence and the patch in the delta. Do not patch a plan for added detail alone.
 
-Update the selected feature's manifest status, validation commit, plan revision when changed, and verification assets. Do not modify another feature.
+Update the selected feature's manifest status, validation commit, and verification assets. Update its plan revision when the plan changes. Do not modify another feature.
 
 ### Step 6: Build the Initial Graph and Manifest
 
 Build the prerequisite graph from runtime prerequisites and shared file scope. Order the features from that graph, so every feature follows the features it needs.
 
-Write the manifest at `dev/feature/[phase-name]-execution-manifest.md`. Keep the manifest path stable across every run. Populate every field in the `feature-plan-set` manifest contract: `status`, `execution_order`, `prerequisites`, `expected_read_set`, `expected_write_set`, `plan_revision`, `last_validation_commit`, `stale_reason`, and `resolved_model_status`.
+Write the manifest at `dev/feature/[phase-name]-execution-manifest.md`. Keep the manifest path stable across every run. Populate every field in the `feature-plan-set` manifest contract. Include `status`, `execution_order`, `prerequisites`, `expected_read_set`, `expected_write_set`, `plan_revision`, `last_validation_commit`, `stale_reason`, and `resolved_model_status`.
 
 Include the ordered feature list, the prerequisite graph, expected plan and delta files, `## Environment State`, and `## Verification Assets`.
 
-Never record any field as permission to build features concurrently. Phase - Execute builds one feature at a time.
+Never treat any field as permission to build features concurrently. Phase - Execute builds one feature at a time.
 
 ### Step 7: Revalidation Runs
 
-On a `revalidate` run, do not rebuild the phase or rewrite plan files. Read the manifest as current state, then:
+On a `revalidate` run, do not rebuild the phase. Do not rewrite plan files. Read the manifest as current state. Then:
 
 1. Read the completed feature's implementation record, its review evidence, and the tree as it now stands.
-2. Update manifest fields only for every affected future feature and each downstream dependent.
+2. Update manifest fields for each affected future feature and each downstream dependent. Update no other feature.
 3. Update each affected entry's `stale_reason` and `last_validation_commit`.
 4. Recompute the graph and order after every completed feature.
-5. Record every reorder, split, merge, or delay with evidence naming the changed file, symbol, acceptance criterion, or prerequisite edge.
+5. Record every reorder, split, merge, or delay with evidence. Name the changed file, symbol, acceptance criterion, or prerequisite edge in that evidence.
 
-A changed prerequisite edge can mark another entry stale. Repeat until the stale set empties and the order stops moving. Bound the work to five graph rounds per completed feature. Stop and report when the graph does not settle.
+A changed prerequisite edge can mark another entry stale. Repeat until the stale set empties and the order stops moving. Limit the work to five graph rounds per completed feature. Stop and report when the graph does not settle.
 
 ## Quality Gate
 

@@ -6,7 +6,7 @@ baseline: true
 
 # Prose Standards
 
-Every piece of English you write has a reader. Pick the mode from the reader, not from the surrounding style. Style-matching applies to code, not prose.
+Every English text has a reader. Choose the mode from the reader, not the surrounding style. Match style in code, not prose.
 
 **Strict** - procedures, error messages, tool and agent descriptions, agent-to-agent instructions, safety text. Anywhere a wrong reading costs something.
 
@@ -14,7 +14,7 @@ Every piece of English you write has a reader. Pick the mode from the reader, no
 
 **Neither** - client-facing deliverables, marketing copy, creative writing. Never apply these rules there. Client deliverables follow `engagement-client-voice`.
 
-Dense is correct for machine-facing planning documents - phase summaries, discovery context, roadmaps, plan and context and tasks bundles. The pipeline reads these to decompose work, so spelling out every constraint helps. Dense never excuses ambiguous.
+Dense prose suits machine-facing planning documents - phase summaries, discovery context, roadmaps, and plan, context, and tasks bundles. The pipeline reads these documents to decompose work, so spelling out every constraint helps. Density never excuses ambiguity.
 
 ## Sentence rules - both modes
 
@@ -57,7 +57,7 @@ Write to a colleague who is sharp, busy, and has not read the rest of the phase.
 
 ## Rewriting existing text
 
-Load the `prose-rewrite` skill. It holds the pass order, the report format, and the limits on what a rewrite may change.
+Load the `prose-rewrite` skill. It defines the pass order, report format, and rewrite limits.
 
 ## Load Canary
 

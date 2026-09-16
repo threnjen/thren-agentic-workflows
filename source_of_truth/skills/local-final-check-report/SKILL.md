@@ -67,13 +67,13 @@ Write `readiness-report.md`.
 1. <ACTION_OR_NONE>
 ```
 
-The repair-candidate class must be `security`, `outward-impact`, or
-`changed-test-falsification`. Omit every other finding from that table. Preserve
-the readiness report after writing it.
+Set each repair-candidate class to `security`, `outward-impact`, or
+`changed-test-falsification`. Omit every other finding from that table. Do not
+change the readiness report after you write it.
 
 ## Repair Report
 
-Write `repair-report.md` without changing the readiness report.
+Write `repair-report.md`. Do not change the readiness report.
 
 ```markdown
 # Local Repair Report — <BASE_SHORT>..<PRE_REPAIR_HEAD_SHORT>
