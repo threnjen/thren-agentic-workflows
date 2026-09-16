@@ -1,6 +1,6 @@
 """Retirement guard for the five phase-shaped Phase Final Review evaluators.
 
-The PR-Review rescope (see `.github/learnings/cross-phase-decisions.md`) retired
+The earlier local-review rescope retired
 five evaluators whose premise was a multi-subphase phase: a PR has no subphases
 and no acceptance criteria of its own. This module is the standing proof that
 they are gone and stay gone -- from source, from all three generated roots, and
@@ -45,16 +45,16 @@ EXEMPT_PREFIXES = (
     # work, not live harness wiring.
     #
     # Scoped to `dev/feature/`, NOT all of `dev/`: `dev/phase-final-review/
-    # fixtures/` is live wiring -- the surviving PR Review evaluators and the
+    # fixtures/` was live wiring for the surviving local-review evaluators and the
     # orchestrator name it as their fixture root -- so it must stay swept.
     "dev/feature/",
 )
 
 # `EXEMPT_SKILL_DIRS` lived here. It time-boxed the two skills whose report
-# rosters named retired evaluators, because `03-pr-review-conventions-skills`
+# rosters named retired evaluators, because the conventions-skill change
 # owned those files and rewriting them from feature `02` would have collided.
 # Feature `03` has landed: both directories are renamed (`phase-final-review-*`
-# -> `pr-review-*`) and the retired-evaluator templates are dropped, so the
+# completed and the retired-evaluator templates are dropped, so the
 # exemption stopped excepting anything and became a hole in the sweep. Removed
 # in that same pass, with `test_time_boxed_skill_exemption_is_still_load_bearing`
 # -- exactly as both were designed to be. The renamed skills are now swept like

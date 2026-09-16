@@ -115,28 +115,22 @@ def _delta_errors(text: str) -> set[str]:
 
 
 def _phase_errors(text: str) -> set[str]:
-    """Phase - Execute must carry no audit bookend and must keep a phase-close audit.
-
-    The bookend ran a two-snapshot audit matrix, a delta, and an attribution
-    pass at every phase close. It was removed because it was declined every
-    time. Auditor - Refactor's architecture backstop outlived it, then was cut
-    too: it duplicated Prod Code Review as a second phase-close gate. What must
-    survive is the property the backstop carried and the level-closure rows
-    never did - a phase-close audit whose absence blocks all-approved.
-    """
+    """Phase - Execute must carry no audit or local-review closing stage."""
     errors: set[str] = set()
-    for phrase in ("bookend", "audit-comparison", "Auditor - Delta", "Auditor - Attribution", "Baseline Worktree", "Auditor - Refactor"):
+    for phrase in (
+        "bookend",
+        "audit-comparison",
+        "Auditor - Delta",
+        "Auditor - Attribution",
+        "Baseline Worktree",
+        "Auditor - Refactor",
+        "Phase-Close Review",
+        "03e Diff Security Scan",
+        "04d Consistency Auditor",
+        "04f Test Health",
+    ):
         if phrase in text:
-            errors.add(f"audit bookend residue: {phrase}")
-    heading = "### Step 3: Phase-Close Review"
-    if heading not in text:
-        errors.add("phase-close audit")
-        return errors
-    audits = _section(text, heading, "### Step 5:")
-    if "Spawn **04d Consistency Auditor**, **04f Test Health**, and **03e Diff Security Scan** concurrently" not in audits:
-        errors.add("phase-close audit")
-    if "phase-close-audits: absent" not in audits:
-        errors.add("absent audit is not clean")
+            errors.add(f"phase close residue: {phrase}")
     return errors
 
 
@@ -160,9 +154,9 @@ def _topology_errors() -> set[str]:
     stale = removed & set(phase.subagents)
     if stale:
         errors.add(f"Phase Execute still rosters bookend leaves: {sorted(stale)}")
-    for leaf in ("04d Consistency Auditor", "04f Test Health"):
-        if leaf not in set(phase.subagents):
-            errors.add(f"Phase Execute dropped the phase-close audit leaf: {leaf}")
+    for leaf in ("04d Consistency Auditor", "04f Test Health", "03e Diff Security Scan"):
+        if leaf in set(phase.subagents):
+            errors.add(f"Phase Execute still rosters phase-close leaf: {leaf}")
     return errors
 
 
@@ -185,7 +179,6 @@ def test_finalized_skill_and_consumers_have_no_contract_errors() -> None:
         ("skill output root", SKILL_PATH, "Every report, summary, delta, queue, and attribution update is written below\n  this root.", _skill_errors, "output root confinement"),
         ("skill cleanup", SKILL_PATH, "After the attribution stage completes", _skill_errors, "cleanup after attribution"),
         ("delta matrix", DELTA_PATH, "State the matrix back to the user", _delta_errors, "delta matrix confirmation"),
-        ("phase-close audit", PHASE_EXECUTE_PATH, "Spawn **04d Consistency Auditor**, **04f Test Health**, and **03e Diff Security Scan** concurrently", _phase_errors, "phase-close audit"),
     ],
 )
 def test_load_bearing_deletion_is_red(
@@ -201,42 +194,14 @@ def test_load_bearing_deletion_is_red(
 
 
 @pytest.mark.parametrize(
-    ("label", "replacement", "mutation", "expected"),
-    [
-        (
-            "bookend returns",
-            "Spawn **04d Consistency Auditor**, **04f Test Health**, and **03e Diff Security Scan** concurrently",
-            "Run the accepted audit bookend, then spawn `04d Consistency Auditor` and `04f Test Health` concurrently",
-            "audit bookend residue: bookend",
-        ),
-        (
-            "refactor auditor returns",
-            "Spawn **04d Consistency Auditor**, **04f Test Health**, and **03e Diff Security Scan** concurrently",
-            "Spawn **Auditor - Refactor** concurrently",
-            "audit bookend residue: Auditor - Refactor",
-        ),
-        (
-            "phase-close audit heading dropped",
-            "### Step 3: Phase-Close Review",
-            "### Step 3: Notes",
-            "phase-close audit",
-        ),
-        (
-            "absent audit reads clean",
-            "phase-close-audits: absent",
-            "phase-close-audits: fine",
-            "absent audit is not clean",
-        ),
-    ],
+    "residue",
+    ("audit-comparison", "Phase-Close Review", "03e Diff Security Scan"),
 )
-def test_semantic_negation_kills_the_named_guard(
-    label: str, replacement: str, mutation: str, expected: str,
-) -> None:
+def test_phase_close_residue_guard_is_load_bearing(residue: str) -> None:
     original = _read(PHASE_EXECUTE_PATH)
-    assert replacement in original, f"mutation target missing: {label}"
-    errors = _phase_errors(original.replace(replacement, mutation))
-    assert expected in errors, f"{label} did not trip {expected}: {sorted(errors)}"
     assert not _phase_errors(original)
+    errors = _phase_errors(original + f"\n{residue}\n")
+    assert f"phase close residue: {residue}" in errors
 
 
 def test_focused_module_never_reads_generated_outputs() -> None:

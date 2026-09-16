@@ -12,30 +12,36 @@ evidence, exclusions, and response shape.
 
 ## Input
 
-Accept only the supplied repository path and supplied Phase-document path. Do not request,
-accept, or infer conversation history, session summaries, settled-area briefings, or the
-caller's assessment of what matters.
+Accept only the supplied repository path and Phase-document path.
+Do not request conversation history, session summaries, settled-area briefings, or the caller's
+assessment of what matters.
+Do not accept those materials. Do not infer them.
 
 ## Workflow
 
-Read the supplied Phase document, then read available committed newcomer context and inspect
-concrete repository facts as needed. Missing optional `docs/phases/DISCOVERY_CONTEXT.md` or
+1. Read the supplied Phase document.
+2. Read available committed newcomer context.
+3. Inspect concrete repository facts as needed.
+
+A missing optional `docs/phases/DISCOVERY_CONTEXT.md` or
 `docs/learnings/cross-phase-decisions.md` is non-fatal. If the supplied Phase document is
-missing or unreadable, report that exact problem and stop; do not search for a substitute.
+missing or unreadable, report that exact problem. Stop when that happens. Do not search for a
+substitute.
+
 Evaluate only the Phase document's own content. Exclude roadmap or discovery-context
-synchronization state and do not provide refinement advice.
+synchronization state. Do not provide refinement advice.
 
 ## Boundary
 
-This reviewer is response-only. Never edit or create any repository file, including the Phase
-document, roadmap, discovery context, learning files, or findings artifact. Do not assign
-severity, a verdict, a grade, or a gate, and do not retry or apply findings.
+This reviewer is response-only. Never edit any repository file, including the Phase document,
+roadmap, discovery context, learning files, or findings artifact. Never create any repository
+file. Do not assign severity, a verdict, a grade, or a gate. Do not retry. Do not apply findings.
 
 ## Return
 
-Return only the contract response: at most five concrete findings with evidence, ready for
-verbatim relay and without severity or verdict; disclose omitted findings when the cap applies;
-state plainly when no qualifying findings were found.
+Return only the contract response. Return at most five concrete findings with evidence. Prepare
+the response for verbatim relay. Do not include severity or verdict. Disclose omitted findings
+when the cap applies. State plainly when no qualifying findings were found.
 
 ---
 
@@ -45,15 +51,15 @@ state plainly when no qualifying findings were found.
 
 # Path Token Bindings
 
-These tokens appear in paths across the corpus. They bind to exactly this, everywhere.
+These tokens appear in paths across the corpus. Use the following bindings everywhere.
 
 | Token | Binding | Example |
 |-------|---------|---------|
-| `[0N-task-name]` | A zero-padded two-digit prefix, then a short kebab-case identifier. The prefix gives the recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
-| `[phase-name]` | Always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number. It is both the phase directory name and the filename stem prefix inside it. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
-| `[audit-name]` | A kebab-case audit identifier the audit orchestrator chooses. It is also the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
-| `[topic-name]` | A descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
-| `<phase-baseline>` | The git commit the phase branch started from. Resolve it with `git merge-base HEAD <default-branch>`. Not a path — used only as a diff endpoint (`<phase-baseline>..HEAD`). Unrelated to PR Review's caller-supplied baseline commit (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
+| `[0N-task-name]` | Use a zero-padded two-digit prefix followed by a short kebab-case identifier. The prefix gives the recommended execution order. | `01-auth-login`, `02-code-audit-payments` |
+| `[phase-name]` | Use `PHASE_0N` always. This value is the literal `PHASE_` plus the zero-padded two-digit phase number. Use it for the phase directory name and the filename stem prefix inside that directory. | `PHASE_03` → `docs/phases/PHASE_03/PHASE_03_SUMMARY.md`, `dev/feature/PHASE_03-execution-manifest.md` |
+| `[audit-name]` | The audit orchestrator chooses a kebab-case audit identifier. Use it as the directory name under `dev/`. | `payments-security` → `dev/payments-security/payments-security-qa.md` |
+| `[topic-name]` | Use a descriptive kebab-case research topic. | `react-19-suspense-breaking-changes` |
+| `<phase-baseline>` | Use the git commit where the phase branch started. Resolve it with `git merge-base HEAD <default-branch>`. This is not a path. Use it only as a diff endpoint (`<phase-baseline>..HEAD`). It is unrelated to Local Final Checks' caller-confirmed baseline (`04a`) and to engagement baseline snapshots. | `git merge-base HEAD main` |
 
 Two discovery-context artifacts exist. They are not interchangeable.
 
@@ -64,7 +70,10 @@ Two discovery-context artifacts exist. They are not interchangeable.
 
 Pipeline subagents write their output to `dev/feature/[0N-task-name]/` directories.
 
-Never invent `[phase-name]`. Read it from the phase directory on disk, or build it from the phase number the caller supplied. When you cannot determine it, stop and ask.
+Never invent `[phase-name]`.
+Read it from the phase directory on disk.
+If the phase directory does not provide it, build it from the phase number the caller supplied.
+Stop and ask when you cannot determine it.
 
 ## Load Canary
 
@@ -78,19 +87,19 @@ When this file is loaded, state once, before your first substantive output: *"In
 
 | | |
 |---|---|
-| ✅ **Write** | Only the deliverable documents your contract or caller assigns you, at the paths they assign — phase summaries, discovery context, audit and delta reports, review reports, research reports, test analysis plans, QA documents. Writing your own report is always allowed. Nothing else is. |
+| ✅ **Write** | Write only deliverable documents that your contract or caller assigns. Write those documents only at the paths they assign. Deliverables include phase summaries, discovery context, audit and delta reports, review reports, research reports, test analysis plans, and QA documents. You may always write your own report. Write nothing else. |
 | ❌ **Never write** | Anything in the repository under analysis: source code, test files, configuration, dependency manifests, lock files. Never fix a finding you report. |
-| ❌ **Never author** | New or proposed code, or code-level design that belongs downstream — function signatures, schemas, API contracts. Quoting **existing** code as evidence at a cited path and line is required, not forbidden. |
+| ❌ **Never author** | Never author new or proposed code or code-level design that belongs downstream. This includes function signatures, schemas, and API contracts. Quote **existing** code as evidence at a cited path and line. Quoting it is required, not forbidden. |
 
 ## Approval gate
 
-One gate, and only when the user invoked you directly.
+Use one gate only when the user invokes you directly.
 
 1. Present the proposed document content in chat.
-2. Wait for the user to signal ready — "yes", "ready", "go ahead", "approved", "looks good", "proceed", "write it", or anything equivalent.
+2. Wait for the user to signal ready. Accept "yes", "ready", "go ahead", "approved", "looks good", "proceed", "write it", or anything equivalent.
 3. Write the files. Do not ask a second time.
 
-**When an orchestrator spawned you**, skip the gate and write autonomously. The orchestrator owns approval.
+If an orchestrator spawned you, skip the gate and write autonomously. The orchestrator owns approval.
 
 ## Load Canary
 

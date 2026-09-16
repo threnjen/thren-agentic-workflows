@@ -8,28 +8,28 @@
 
 ### Zero-Allocation Gameplay Loop
 
-The target is **zero GC allocations in Update/LateUpdate/FixedUpdate**. Flag any of these in hot paths:
+The target is **zero GC allocations in Update/LateUpdate/FixedUpdate**. Flag each item below when it appears in a hot path:
 
-- String creation/manipulation — use `StringBuilder` for runtime string building
-- `GameObject.tag` comparison — use `CompareTag()` instead (avoids string alloc)
-- `new WaitForSeconds()` in coroutines — cache and reuse
-- LINQ expressions — hidden boxing and enumerator allocation
-- Regular expressions — allocate behind the scenes
-- Lambda captures — lambdas capturing `this`, instance members, or locals create delegates + GC traffic
-- Declaring/populating `List<T>` or collections every frame — make them class members, call `Clear()` per frame
-- Returning arrays from Unity APIs — cache the results
-- Boxing value types (int/float/struct → object) — use concrete generics
+- Avoid string creation and manipulation in hot paths. Use `StringBuilder` for runtime string building.
+- Use `CompareTag()` instead of comparing `GameObject.tag`. This avoids string allocation.
+- Cache and reuse `new WaitForSeconds()` instances in coroutines.
+- Avoid LINQ expressions because they involve hidden boxing and enumerator allocation.
+- Avoid regular expressions in hot paths. They allocate behind the scenes.
+- Avoid lambda captures in hot paths. Lambdas that capture `this`, instance members, or locals create delegates and GC traffic.
+- Do not declare or populate `List<T>` or other collections every frame. Make them class members. Call `Clear()` each frame.
+- Cache arrays returned from Unity APIs.
+- Avoid boxing value types (int/float/struct → object). Use concrete generics.
 
 ### GC Timing
 
-- Call `GC.Collect()` only during non-interactive moments (loading screens, menus)
-- Enable Incremental GC to spread collection across frames (~1ms overhead per frame from read-write barriers)
+- Call `GC.Collect()` only during non-interactive moments, such as loading screens and menus.
+- Enable Incremental GC to spread collection across frames. Read-write barriers add ~1ms overhead per frame.
 
 ### Memory Budget
 
-- Profile on lowest-spec target device
-- Use ~80–90% of physical RAM as budget (not 100%)
-- Mobile: Reserve ~35% frame time idle for thermal throttling (use 22ms budget for 30fps, not 33.33ms)
+- Profile on the lowest-spec target device.
+- Use ~80–90% of physical RAM as the budget, not 100%.
+- For mobile, reserve ~35% of frame time as idle time for thermal throttling. Use a 22ms budget for 30fps, not 33.33ms.
 
 ---
 
@@ -37,33 +37,33 @@ The target is **zero GC allocations in Update/LateUpdate/FixedUpdate**. Flag any
 
 ### Update Loop Rules
 
-- **Remove empty `Update()`, `LateUpdate()`, `FixedUpdate()` methods** — even empty ones have overhead
-- Only execute logic when state changes, not every frame
-- Time-slice expensive work: `if (Time.frameCount % interval == 0)` or process 1/N of data each frame
+- **Remove empty `Update()`, `LateUpdate()`, and `FixedUpdate()` methods.** Empty methods still have overhead.
+- Execute logic only when the state changes. Do not execute logic every frame.
+- Time-slice expensive work by using `if (Time.frameCount % interval == 0)` or by processing 1/N of the data each frame.
 
 ### Caching
 
-- Cache `GetComponent<T>()` in `Awake()`/`Start()`, never in `Update()`
-- Cache `Camera.main` reference
-- Use `Animator.StringToHash()` and `Shader.PropertyToID()` — cache the hash values
+- Cache `GetComponent<T>()` in `Awake()` or `Start()`. Never call it in `Update()`.
+- Cache a `Camera.main` reference.
+- Use `Animator.StringToHash()` and `Shader.PropertyToID()`. Cache the resulting hash values.
 
 ### API & Interop
 
-- Don't use `AddComponent<T>()` at runtime — instantiate prefabs with components pre-attached
-- Use `Transform.SetPositionAndRotation()` to update both in one call
-- Minimize C#↔C++ interop boundary crossings — custom `UpdateManager` for thousands of objects
+- Do not use `AddComponent<T>()` at runtime. Instantiate prefabs with components pre-attached.
+- Use `Transform.SetPositionAndRotation()` to update both in one call.
+- Minimize C#↔C++ interop boundary crossings. Use a custom `UpdateManager` for thousands of objects.
 
 ### Object Pooling
 
-- Use `UnityEngine.Pool` namespace (Unity 2021+) for frequently instantiated/destroyed objects
-- Initialize pools during loading screens before gameplay starts
-- Set max pool size to prevent unbounded growth
+- Use the `UnityEngine.Pool` namespace (Unity 2021+) for frequently instantiated and destroyed objects.
+- Initialize pools during loading screens before gameplay starts.
+- Set a maximum pool size to prevent unbounded growth.
 
 ### Data & Algorithms
 
-- Choose correct collection: List vs Array vs Dictionary per use case
-- Avoid LINQ in performance-critical code
-- Use `StringBuilder` for string concatenation
+- Choose the correct collection for each use case: List, Array, or Dictionary.
+- Avoid LINQ in performance-critical code.
+- Use `StringBuilder` for string concatenation.
 
 ---
 
@@ -71,39 +71,39 @@ The target is **zero GC allocations in Update/LateUpdate/FixedUpdate**. Flag any
 
 ### Draw Call Reduction
 
-- **Static Batching**: Mark non-moving meshes as Batching Static
-- **GPU Instancing**: Enable on materials with identical mesh+material (trees, buildings, grass)
-- **SRP Batcher**: Enable in Pipeline Asset; minimize Shader Variants and Keywords
-- Use `Renderer.sharedMaterial`, NOT `Renderer.material` (avoids material instance creation)
-- Use texture atlases — fewer materials = fewer draw calls
-- Use Frame Debugger (Window > Analysis > Frame Debugger) to identify unnecessary draws
+- **Static Batching**: Mark non-moving meshes as Batching Static.
+- **GPU Instancing**: Enable GPU Instancing on materials with identical mesh and material (trees, buildings, grass).
+- **SRP Batcher**: Enable the SRP Batcher in the Pipeline Asset. Minimize Shader Variants and Keywords.
+- Use `Renderer.sharedMaterial`, not `Renderer.material`. This avoids material instance creation.
+- Use texture atlases. Fewer materials produce fewer draw calls.
+- Use the Frame Debugger (Window > Analysis > Frame Debugger) to identify unnecessary draws.
 
 ### Culling
 
-- Use `Camera.layerCullDistances` for per-layer distance culling
-- Enable Occlusion Culling for complex indoor scenes (mark objects as Occluders/Occludees)
-- GPU Resident Drawer + GPU Occlusion Culling in Unity 6 for automatic draw call reduction
+- Use `Camera.layerCullDistances` for distance culling by layer.
+- Enable Occlusion Culling for complex indoor scenes. Mark objects as Occluders or Occludees.
+- Use GPU Resident Drawer and GPU Occlusion Culling in Unity 6 to reduce draw calls automatically.
 
 ### Shader Rules
 
-- Remove unused nodes from Shader Graphs
-- Bake values into textures instead of computing in shader (pre-brighten texture > brightness node)
-- Use `half` precision instead of `float` on mobile
-- Reduce branching; blend instead of if/else
-- Use `#pragma shader_feature` (not `multi_compile`) for material-specific variants — unused get stripped
-- Strip unused shaders from Graphics Settings → Always Included
+- Remove unused nodes from Shader Graphs.
+- Bake values into textures instead of computing them in a shader (pre-brighten texture > brightness node).
+- Use `half` precision instead of `float` on mobile.
+- Reduce branching. Blend instead of using if/else.
+- Use `#pragma shader_feature`, not `multi_compile`, for material-specific variants. Unused variants get stripped.
+- Strip unused shaders from Graphics Settings → Always Included.
 
 ### Overdraw
 
-- Minimize overlapping transparent geometry
-- Reduce particle system overlap
-- Consolidate overlapping UI elements
-- Visualize: Scene view > Overdraw mode (Built-in) or Rendering Debugger > TransparencyOverdraw (HDRP)
+- Minimize overlapping transparent geometry.
+- Reduce particle system overlap.
+- Consolidate overlapping UI elements.
+- Visualize overdraw in Scene view > Overdraw mode (Built-in) or Rendering Debugger > TransparencyOverdraw (HDRP).
 
 ### LOD & Dynamic Resolution
 
-- Use LOD Groups: lower-res meshes + simpler materials at distance
-- Enable Dynamic Resolution (`Camera.allowDynamicResolution`) for GPU-bound frames
+- Use LOD Groups with lower-res meshes and simpler materials at distance.
+- Enable Dynamic Resolution (`Camera.allowDynamicResolution`) for GPU-bound frames.
 
 ---
 
@@ -111,52 +111,52 @@ The target is **zero GC allocations in Update/LateUpdate/FixedUpdate**. Flag any
 
 ### Texture Rules
 
-- Use power-of-two sizes for compression compatibility
-- **Disable Read/Write** unless generating textures at runtime (doubles memory)
-- Disable mipmaps for fixed-size sprites/UI (2D); keep for 3D distance rendering
-- Enable Texture Streaming (Quality Settings) for large 3D scenes
-- Compression formats: ASTC (iOS/Android), BC7/DXT1 (PC/Console)
+- Use power-of-two sizes for compression compatibility.
+- **Disable Read/Write** unless generating textures at runtime. Read/Write doubles memory.
+- Disable mipmaps for fixed-size sprites and UI (2D). Keep mipmaps for 3D distance rendering.
+- Enable Texture Streaming (Quality Settings) for large 3D scenes.
+- Use ASTC (iOS/Android) and BC7/DXT1 (PC/Console) compression formats.
 
 ### Mesh Rules
 
-- Enable Mesh Compression (reduces disk, not runtime memory)
-- **Disable Read/Write** on meshes (duplicates in memory; default was enabled pre-2019.2)
-- Disable rigs/BlendShapes if not animated
-- Enable `Optimize Mesh Data` to strip unused vertex attributes
-- Use Player Settings > Vertex Compression for per-channel compression
+- Enable Mesh Compression. It reduces disk usage, not runtime memory.
+- **Disable Read/Write** on meshes. Read/Write duplicates mesh data in memory. The default was enabled pre-2019.2.
+- Disable rigs and BlendShapes if they are not animated.
+- Enable `Optimize Mesh Data` to strip unused vertex attributes.
+- Use Player Settings > Vertex Compression for per-channel compression.
 
 ---
 
 ## Physics
 
-- Replace mesh colliders with primitives or simplified geometry
-- Enable `Prebake Collision Meshes`
-- Simplify Layer Collision Matrix to minimum needed
-- Use non-allocating physics queries: `OverlapSphereNonAlloc`, `RaycastCommand` batch with Job System
-- Disable `autoSyncTransforms`; manually call `Physics.SyncTransforms()` when needed
-- Move Rigidbody via `Rigidbody.position`/`Rigidbody.MovePosition()`, not `transform.position`
-- Physics in `FixedUpdate()`, never in `Update()`
+- Replace mesh colliders with primitives or simplified geometry.
+- Enable `Prebake Collision Meshes`.
+- Simplify the Layer Collision Matrix to the minimum required.
+- Use non-allocating physics queries. Use `OverlapSphereNonAlloc` and batch `RaycastCommand` with Job System.
+- Disable `autoSyncTransforms`. Call `Physics.SyncTransforms()` manually when needed.
+- Move a Rigidbody via `Rigidbody.position` or `Rigidbody.MovePosition()`, not `transform.position`.
+- Run physics in `FixedUpdate()`, never in `Update()`.
 
 ---
 
 ## Animation
 
-- Generic rigs over Humanoid when possible (Humanoid = 30–50% more CPU from IK/retargeting)
-- Don't use Animator for simple tweens — use DOTween or easing functions
-- Avoid scale curves in animation clips (translation/rotation are cheaper)
-- Set Culling Mode: "Based on Renderers" + disable "Update When Offscreen"
-- Use `Animator.StringToHash()` for parameter lookups
-- Separate animating hierarchies — don't share common parents (threading bottleneck)
+- Prefer Generic rigs over Humanoid when possible. Humanoid uses 30–50% more CPU from IK/retargeting.
+- Do not use Animator for simple tweens. Use DOTween or easing functions.
+- Avoid scale curves in animation clips. Translation and rotation are cheaper.
+- Set Culling Mode to "Based on Renderers". Disable "Update When Offscreen".
+- Use `Animator.StringToHash()` for parameter lookups.
+- Separate animating hierarchies. Do not share common parents because they create a threading bottleneck.
 
 ---
 
 ## Audio
 
-- Force To Mono on spatial audio sources (stereo = 2x memory + CPU conversion)
-- Load Type by size: <200KB → Decompress On Load; >350KB → Streaming
-- Mobile sample rate: 22050Hz sufficient (never 48000Hz)
-- Minimize SFX Reverb groups — expensive even with no signal
-- Avoid single-child mixer groups — combine into one
+- Set Force To Mono on spatial audio sources. Stereo uses 2x memory and CPU conversion.
+- Set Load Type by size: use Decompress On Load for <200KB and Streaming for >350KB.
+- Use a 22050Hz sample rate on mobile. It is sufficient. Never use 48000Hz.
+- Minimize SFX Reverb groups. They are expensive even with no signal.
+- Avoid single-child mixer groups. Combine them into one.
 
 ---
 
@@ -164,19 +164,19 @@ The target is **zero GC allocations in Update/LateUpdate/FixedUpdate**. Flag any
 
 ### UGUI
 
-- Split into multiple Canvases by update frequency (static vs dynamic)
-- Disable Raycast Target on non-interactive elements
-- Disable GraphicRaycaster on non-interactive Canvases
-- Avoid Layout Groups (inherently expensive); use anchors instead
-- Reuse pooled UI elements for large lists (not 1 element per item)
-- Disable Canvas component (not GameObject) to hide without mesh rebuild
-- Fullscreen UI: disable 3D camera and background Canvases
+- Split the UI into multiple Canvases by update frequency, such as static and dynamic.
+- Disable Raycast Target on non-interactive elements.
+- Disable GraphicRaycaster on non-interactive Canvases.
+- Avoid Layout Groups because they are inherently expensive. Use anchors instead.
+- Reuse pooled UI elements for large lists. Do not create 1 element per item.
+- Disable the Canvas component, not the GameObject, to hide the UI without rebuilding the mesh.
+- For fullscreen UI, disable the 3D camera and background Canvases.
 
 ### UI Toolkit (Recommended for Unity 6)
 
-- Lean stylesheets with minimal selectors
-- Heavy operations only during init, not per-frame
-- Unsubscribe event handlers when no longer needed
+- Use lean stylesheets with minimal selectors.
+- Run heavy operations during initialization, not per frame.
+- Unsubscribe event handlers when no longer needed.
 
 ---
 
@@ -190,36 +190,36 @@ The target is **zero GC allocations in Update/LateUpdate/FixedUpdate**. Flag any
 | 30 fps | 33.33 ms | Mobile acceptable |
 | 30 fps (mobile thermal) | ~22 ms | Reserve 35% for cooling headroom |
 
-**Always measure in milliseconds, not FPS.** FPS is deceptive — a 1.11ms regression looks like only 4 FPS drop at 60fps but is the same absolute cost.
+**Always measure in milliseconds, not FPS.** FPS is deceptive. A 1.11ms regression looks like only a 4 FPS drop at 60fps, but it has the same absolute cost.
 
 ### CPU vs GPU Bound
 
-- **CPU-bound**: `Gfx.WaitForCommands` in Profiler — GPU waiting for CPU
-- **GPU-bound**: `Gfx.WaitForPresentOnGfxThread` or `Gfx.PresentFrame` — CPU waiting for GPU
-- If render thread busy in `Camera.Render`: CPU-side bottleneck (too many draw calls)
+- **CPU-bound**: `Gfx.WaitForCommands` in Profiler means that the GPU waits for the CPU.
+- **GPU-bound**: `Gfx.WaitForPresentOnGfxThread` or `Gfx.PresentFrame` means that the CPU waits for the GPU.
+- If the render thread is busy in `Camera.Render`, treat it as a CPU-side bottleneck caused by too many draw calls.
 
 ### Profiler Best Practices
 
-- Profile on target device, not Editor (Editor inflates memory/CPU)
-- Enable only needed Profiler modules (each adds overhead)
-- Use `ProfilerMarker` for custom instrumentation without Deep Profiling overhead
-- Deep Profiling: only for specific slowdown investigation (high overhead)
-- Use Profile Analyzer for statistical comparison (before/after)
-- Use Memory Profiler snapshots to track leaks over time
+- Profile on the target device, not in the Editor. The Editor inflates memory and CPU use.
+- Enable only the Profiler modules you need. Each module adds overhead.
+- Use `ProfilerMarker` for custom instrumentation without Deep Profiling overhead.
+- Use Deep Profiling only for a specific slowdown investigation. It has high overhead.
+- Use Profile Analyzer for statistical comparison (before/after).
+- Use Memory Profiler snapshots to track leaks over time.
 
 ### Debug Stripping
 
-- Remove `Debug.Log()` from builds, especially in Update loops
-- Use `[System.Diagnostics.Conditional("ENABLE_LOG")]` attribute
-- Disable Stack Trace logging in release builds
+- Remove `Debug.Log()` from builds, especially in Update loops.
+- Use the `[System.Diagnostics.Conditional("ENABLE_LOG")]` attribute.
+- Disable Stack Trace logging in release builds.
 
 ---
 
 ## Project Configuration
 
-- IL2CPP for release builds (better runtime performance); Mono for fast iteration
-- Disable Auto Graphics API; remove unsupported APIs per platform
-- Strip unnecessary shader variants
-- Asset Serialization: Force Text (version control friendly)
-- Use Addressables for asset loading; disable CRC on consoles
-- Flat scene hierarchies (deep nesting = Transform computation overhead)
+- Use IL2CPP for release builds because it provides better runtime performance. Use Mono for fast iteration.
+- Disable Auto Graphics API. Remove unsupported APIs for each platform.
+- Strip unnecessary shader variants.
+- Set Asset Serialization to Force Text. Force Text is version-control friendly.
+- Use Addressables for asset loading. Disable CRC on consoles.
+- Use flat scene hierarchies. Deep nesting adds Transform computation overhead.

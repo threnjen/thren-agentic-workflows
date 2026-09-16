@@ -5,9 +5,9 @@ applyTo: "source_of_truth/agents/0[12]-*.agent.md"
 
 # Documentation Freshness Check
 
-After discovery, check that `README.md` exists at the repository root and `docs/CODEBASE_CONTEXT.md` exists.
+After discovery, check that `README.md` exists at the repository root. Then check that `docs/CODEBASE_CONTEXT.md` exists.
 
-If either is missing and the repository is not genuinely brand new, spawn `@Docs Writer` as a subagent to write it. Do not continue until both files exist. If the repository is genuinely brand new with nothing substantive to report, note that exception and continue.
+If either file is missing and the repository is not genuinely brand new, spawn `@Docs Writer` as a subagent to write the missing file. Do not continue until both files exist. If the repository is genuinely brand new with nothing substantive to report, note the exception. Then continue.
 
 This is not a user-approval gate. The missing documentation is a bootstrap dependency, not an optional follow-up.
 

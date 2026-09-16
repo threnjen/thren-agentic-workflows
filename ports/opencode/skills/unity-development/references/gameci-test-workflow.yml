@@ -1,6 +1,7 @@
-# Inert reference template. Copy this file deliberately into a repository's
-# .github/workflows/ directory only after replacing <UNITY_PROJECT_PATH>.
-# Validate the copied workflow and configure its referenced secrets before use.
+# This file is an inert reference template. You must deliberately copy it into a
+# repository's .github/workflows/ directory after replacing <UNITY_PROJECT_PATH>.
+# You must validate the copied workflow before use.
+# You must configure the referenced secrets before use.
 name: Unity tests
 
 on:

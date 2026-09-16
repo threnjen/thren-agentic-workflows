@@ -5,16 +5,16 @@ applyTo: "**/*.ts,**/*.tsx,**/*.mts,**/*.cts"
 
 # TypeScript Rules
 
-- **Modules:** ES module syntax only — never `require()`, never `namespace`, never `export default`, never `export let`. Export only what is used outside the module. `import type` / `export type` for type-only bindings.
-- **Types:** never `any` — use `unknown` and narrow. Never `@ts-ignore`, `@ts-expect-error`, or `@ts-nocheck` in production code.
-- **Trust boundaries:** validate request bodies, external API responses, env vars, and file/queue contents with a Zod schema at the edge — parse, don't assert. Validate once, then trust internally.
-- **Async:** every promise is awaited or explicitly handled — never disable `no-floating-promises`. Independent operations run under `Promise.all`. Never mix `.then()` and `await` in one function. No `*Sync` calls outside startup scripts.
-- **Errors:** throw only `Error` subclasses, always with `new`. An empty catch block requires a comment saying why swallowing is correct.
-- **Logging:** a structured logger (Pino) with context as fields. `console.*` only for deliberate CLI output.
-- **Observability:** log every boundary call, its outcome, every unpredictable branch, and every caught exception, with the values as fields. Instrument on the way in, never after a bug appears.
-- **Variables:** `const`/`let` only, never `var`. `===`/`!==` always — `== null` is the one exception.
-- **Dependencies:** commit `package-lock.json`; CI installs with `npm ci`.
-- **Tooling:** `tsc --noEmit` strict and typescript-eslint strict are enforced. Never disable them.
+- **Modules:** Use ES module syntax only. Never use `require()`, `namespace`, `export default`, or `export let`. Export only what is used outside the module. Use `import type` and `export type` for type-only bindings.
+- **Types:** Never use `any`. Use `unknown` and narrow it. Never use `@ts-ignore`, `@ts-expect-error`, or `@ts-nocheck` in production code.
+- **Trust boundaries:** Validate request bodies, external API responses, env vars, and file/queue contents with a Zod schema at the edge. Parse, do not assert. Validate once, then trust internally.
+- **Async:** Await every promise or handle it explicitly. Never disable `no-floating-promises`. Run independent operations under `Promise.all`. Never mix `.then()` and `await` in one function. Do not call `*Sync` outside startup scripts.
+- **Errors:** Throw only `Error` subclasses. Always use `new`. An empty catch block requires a comment that explains why swallowing is correct.
+- **Logging:** Use a structured logger (Pino) with context as fields. Use `console.*` only for deliberate CLI output.
+- **Observability:** Log every boundary call and its outcome. Log every unpredictable branch and every caught exception with the values as fields. Instrument on the way in, never after a bug appears.
+- **Variables:** Use only `const` and `let`. Never use `var`. Always use `===` and `!==`. `== null` is the one exception.
+- **Dependencies:** Commit `package-lock.json`. CI installs with `npm ci`.
+- **Tooling:** The project enforces strict `tsc --noEmit` and strict typescript-eslint. Never disable them.
 
 ## Load Canary
 

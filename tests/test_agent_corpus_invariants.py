@@ -34,7 +34,7 @@ SOT_DIR = REPO_ROOT / "source_of_truth"
 AGENTS_DIR = SOT_DIR / "agents"
 SKILLS_DIR = SOT_DIR / "skills"
 VALID_AGENT_FRONTMATTER_KEYS = frozenset(
-    {"name", "description", "tools", "agents", "user-invocable", "profile", "model_tier"}
+    {"name", "description", "tools", "agents", "aliases", "user-invocable", "profile", "model_tier"}
 )
 
 

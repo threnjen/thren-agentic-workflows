@@ -10,7 +10,7 @@ subsystem and write exactly one detailed fix-research document.
 
 ## Required Skills
 
-Load `audit-remediation-research` and follow Stage 2 as the contract for truth
+Load `audit-remediation-research`. Follow Stage 2 as the contract for truth
 validation, report format, sources, and the compact update packet. Load
 `auditor-conventions` for severity and evidence rules.
 
@@ -28,20 +28,20 @@ Comparative mode only — supplied as `not available` in single-target mode:
 - Assigned closure identifiers, the full delta, and the baseline report,
   summary, and root.
 
-`not available` is a valid value: skip every instruction conditioned on that
-input rather than approximating it, and never infer a baseline. Stop only if the
+`not available` is a valid value. Skip every instruction conditioned on that
+input rather than approximating it. Never infer a baseline. Stop only if the
 assignment, the queue, the current report, the current root, or the current
 snapshot identity is missing. Do not infer a wider work list.
 
 ## Process
 
-1. Read only the assigned queue entries — and closure entries where assigned — then their evidence,
-   implementation, callers, tests, and constraints.
+1. Read only the assigned queue entries. Read closure entries when assigned.
+   Then read their evidence, implementation, callers, tests, and constraints.
 2. Apply the Real/True/Current/Actionable gate.
 3. Research shared causes, a concrete fix, trade-offs, dependencies, and named
    verification for every valid assigned item.
 4. Write the assigned subsystem report.
-5. Return the Stage 2 update packet, including evidence-backed correction
+5. Return the Stage 2 update packet. Include evidence-backed correction
    candidates for anything amended or omitted.
 
 ## Write boundary
@@ -49,11 +49,11 @@ snapshot identity is missing. Do not infer a wider work list.
 - Production trees, the index, queue, reports, summaries, any delta, and other
   subsystem documents are read-only.
 - Write only the exclusive subsystem report path.
-- Do not include an invalid item in the report merely to account for it; account
-  for it in the returned correction packet.
+- Do not include an invalid item in the report merely to account for it.
+  Account for it in the returned correction packet.
 - Do not research an unassigned identifier, even when adjacent.
 
 ## Return Contract
 
 Return only the Stage 2 compact update packet. Include every assigned identifier
-exactly once as valid or a correction candidate.
+exactly once as either valid or a correction candidate.

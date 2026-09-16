@@ -1,12 +1,12 @@
 ---
 description: "Sentence and mode discipline for every piece of English an agent writes. Audience is an ENUMERATED agent roster - the user-invocable technical agents, whose filename shapes are unrelated, so no glob selects them without also catching subagents. Enumeration is deliberate. `client-deliverable` is absent on purpose: its output follows `engagement-client-voice`. The creative agents are withheld automatically by the profile gate, not by this roster."
-applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-phase-execute.agent.md,**/04-pr-review.agent.md,**/auditor.agent.md,**/debugger.agent.md,**/delta-auditor.agent.md,**/docs-writer.agent.md,**/instructions-manager.agent.md,**/pr-author.agent.md,**/qa-bootstrap.agent.md,**/single-feature-agent.agent.md,**/test-orchestrator.agent.md,**/web-research-specialist.agent.md"
+applyTo: "**/01-project-planner.agent.md,**/02-phase-refiner.agent.md,**/03-phase-execute.agent.md,**/04-phase-final-checks.agent.md,**/auditor.agent.md,**/debugger.agent.md,**/delta-auditor.agent.md,**/docs-writer.agent.md,**/instructions-manager.agent.md,**/pr-author.agent.md,**/qa-bootstrap.agent.md,**/single-feature-agent.agent.md,**/test-orchestrator.agent.md,**/web-research-specialist.agent.md"
 baseline: true
 ---
 
 # Prose Standards
 
-Every piece of English you write has a reader. Pick the mode from the reader, not from the surrounding style. Style-matching applies to code, not prose.
+Every English text has a reader. Choose the mode from the reader, not the surrounding style. Match style in code, not prose.
 
 **Strict** - procedures, error messages, tool and agent descriptions, agent-to-agent instructions, safety text. Anywhere a wrong reading costs something.
 
@@ -14,7 +14,7 @@ Every piece of English you write has a reader. Pick the mode from the reader, no
 
 **Neither** - client-facing deliverables, marketing copy, creative writing. Never apply these rules there. Client deliverables follow `engagement-client-voice`.
 
-Dense is correct for machine-facing planning documents - phase summaries, discovery context, roadmaps, plan and context and tasks bundles. The pipeline reads these to decompose work, so spelling out every constraint helps. Dense never excuses ambiguous.
+Dense prose suits machine-facing planning documents - phase summaries, discovery context, roadmaps, and plan, context, and tasks bundles. The pipeline reads these documents to decompose work, so spelling out every constraint helps. Density never excuses ambiguity.
 
 ## Sentence rules - both modes
 
@@ -57,7 +57,7 @@ Write to a colleague who is sharp, busy, and has not read the rest of the phase.
 
 ## Rewriting existing text
 
-Load the `prose-rewrite` skill. It holds the pass order, the report format, and the limits on what a rewrite may change.
+Load the `prose-rewrite` skill. It defines the pass order, report format, and rewrite limits.
 
 ## Load Canary
 

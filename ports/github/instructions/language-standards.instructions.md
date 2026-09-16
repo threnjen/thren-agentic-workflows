@@ -6,7 +6,7 @@ baseline: true
 
 # Language Standards
 
-Before writing or reviewing code, load the skill for its language and follow it — the skill is that language's authoritative standard.
+Before writing or reviewing code, load and follow the skill for that language. The skill is authoritative for that language.
 
 | Language | Skill |
 |---|---|

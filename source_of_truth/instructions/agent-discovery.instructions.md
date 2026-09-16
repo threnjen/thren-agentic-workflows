@@ -5,15 +5,15 @@ baseline: true
 
 # Agent and Skill Discovery
 
-When the user asks {harness_title} to act as a named agent, look for its definition in:
+When the user asks {harness_title} to act as a named agent, look for the agent definition in:
 
 {agent_paths}
 
-When the user names a skill that is not already in the session catalog, look for it in:
+When the user names a skill that is not already in the session catalog, look for its definition in:
 
 {skill_paths}
 
-Read the whole definition before you start work. Do not spawn a subagent merely because the user asked {harness_title} to act in that role.
+Read the entire definition before you start work. Do not spawn a subagent merely because the user asked {harness_title} to act in that role.
 
 ## Load Canary
 

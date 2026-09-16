@@ -7,87 +7,125 @@ user-invocable: false
 
 # Decision Presentation
 
-When several decisions are open, you present them one at a time. A list of everything you want
-to discuss is a list the user has to sort — you are handing back the work you were asked to do.
+When several decisions are open, present them one at a time. A list of everything you want to
+discuss forces the user to sort it. That returns the requested work to the user.
+
+## Gate first: drop the non-decisions
+
+An empty decision queue (a list of open decisions) is acceptable. When the work follows a required
+convention, matches a pattern the repository already uses, or has one answer that works, there is
+nothing to decide. Do not invent items so the user has something to choose.
+
+An item enters the queue only when all three conditions are true:
+
+1. **Two or more options actually work.** An option you already know will fail is not an option.
+2. **Different answers lead to different work**, and a reasonable person could pick either.
+3. **Nothing already settles it** — not the repository, not a module contract, not a naming or
+   language rule, and not a pattern the codebase follows everywhere.
+
+If any check fails, follow these steps:
+
+1. Pick the answer that works.
+2. State your choice in one line.
+3. Record it.
+4. Continue.
+
+Never present "follow the required convention" and "do it a way that will not work" as equal
+choices.
+
+Make technical choices yourself. Decide what to name a function and where a helper lives. Choose
+the library call and module structure. Apply the repository's conventions. Continue.
+The user asked you to complete the work. Do not describe every possible technical choice. Present
+a technical choice only when it changes the user's result: cost, a dependency that is hard to
+remove, behavior visible to the user, or future capability. Make all other technical choices
+yourself.
 
 ## Open with the queue, as headlines
 
-Before the first decision, preview everything queued: a short ranked list, one line each, no
-options and no analysis. The user gets the shape of the workload without having to face it.
+Before the first decision, preview the full queue as a short ranked list with one line for each
+decision. Include no options or analysis. This lets the user see the workload before reviewing
+each decision.
 
-Rank by consequence, not by the order you found them. If one decision changes the answer to
-another, say so and take it first.
+Rank decisions by consequence, not by discovery order. If one decision changes another decision's
+answer, address the first decision before the second.
 
-The preview carries **headlines only**. The moment it carries each item's options and costs it
-has become the barrage it exists to replace.
+The preview contains **headlines only**. If it contains options and costs, it recreates the full
+list that this format avoids.
 
 ## Then one at a time
 
 For each item, in this order:
 
-1. **A header naming the decision.** Not "Question 3" — what the decision is about.
-2. **A TL;DR of why this decision exists.** Plain language, two or three sentences. What breaks
-   or gets harder if it goes the wrong way. This is the part that gets skipped under load and
-   the part that carries the most value.
-3. **One to three options**, each with its cost stated inline — effort, risk, complexity, or
-   what it forecloses. Never a bare label.
-4. **Your recommendation, and the reason it is best.** Commit to one.
-5. **An explicit ask**, on its own line.
+1. **Name the decision in a header.** Do not use "Question 3".
+2. **Explain why this decision exists in a TL;DR (short summary).** State the reason in plain
+   language in two or three sentences. Explain what breaks or becomes harder if the user chooses
+   incorrectly.
+   Users skip this section when they are busy, although it carries the most value.
+3. **Present one to three options.** State each option's cost inline. Include effort, risk,
+   complexity, or a capability the option removes. Do not use a bare label.
+4. **Give one recommendation and its reason.** Explain why it is best.
+5. **End with an explicit ask.** Put it on its own line.
 
-Then stop and wait. Do not stack the next decision behind this one, and do not answer your own
-question and proceed.
+Then stop and wait. Do not present the next decision. Do not answer your own question before the
+user responds.
 
-After each answer, restate it in one line and move on. If the answer changes a later queued
-item, say which and how.
+After each answer, restate it in one line. Then continue. If the answer changes a later decision,
+identify that decision and the change.
 
 ## Resolve the recommendation; never omit it
 
-Either recommend one option and say why, or state plainly that the options are genuinely
-equivalent and give the reason. Both are legitimate answers. Silence is not.
+Recommend one option and state why. If the options are genuinely equivalent, state that plainly.
+Explain why. Both answers are legitimate. Do not omit either the recommendation or the
+statement that the options are equivalent.
 
-Do not manufacture a favorite to look decisive — a fabricated recommendation is
-indistinguishable from a real one at the point where someone acts on it. Do not hedge across
-two options and call it a recommendation.
+Do not invent a recommendation to appear decisive. An invented recommendation is
+indistinguishable from a valid one when someone acts on it. Do not present two options as one
+recommendation.
 
-Recommend against the user's stated leaning when the evidence says so. Being overruled is a
-normal outcome and costs nothing; being agreeable costs them the decision.
+Recommend against the user's stated leaning when the evidence supports that choice. The user may
+overrule you. That costs nothing. Agreeing without evidence costs the user the decision.
 
 ## When the user asks to see everything at once
 
-Grant it. Show the full queue with headlines and, if asked, the options — but keep the
-structure. Never fall back to unstructured prose, because losing the per-option costs and
-recommendations happens exactly when the user has the most to weigh.
+Show the full decision queue with headlines. Include options only when the user asks. Keep the
+structure. Unstructured prose hides the cost and recommendation for each option.
 
-"Show me what's open" and "let's do them all now" are different requests. The first is nearly
-free. Confirm which one they mean before dumping everything.
+"Show me what's open" and "let's do them all now" are different requests. The first requires
+little additional work. Confirm which request the user means before showing all decisions.
 
 ## Scope: this is for decisions, not for questions
 
-Run this for genuine forks — real tradeoffs where different answers lead to different work.
+Use this skill for genuine decisions with real tradeoffs. Different answers must lead to different
+work.
 
 **Do not run it for factual or context-gathering questions.** "Which database are you using",
-"do you have API keys for this", "should this go in the existing module" — batch those, ask
-them plainly, move on. Ceremony on trivia trains the user to skim, and a format they skim is a
-format that fails on the decision that mattered.
+"do you have API keys for this", "should this go in the existing module" — batch those questions
+and ask them plainly. Continue. Using this format for simple questions trains users to skim it.
+Skimming can hide an important decision.
 
-If you cannot state a real cost for at least two options, it is not a decision. Pick the
-obvious default, say you picked it, and continue.
+If you cannot state a real cost for at least two options, treat the item as a non-decision. Then
+follow these steps:
+
+1. Use the gate above.
+2. Pick the working answer.
+3. State your choice.
+4. Continue.
 
 ## Failure modes
 
-- **The preamble becomes the checklist.** If the preview has costs and options in it, you have
-  reintroduced the wall of text with extra steps.
-- **Asking without deciding.** Presenting three options and no recommendation puts the whole
-  analytical burden back on the user.
-- **Batching under time pressure.** When the queue is long, the temptation is to collapse it.
-  That is precisely when sequencing matters most.
-- **Continuing past an unanswered ask.** If you asked, wait. If you did not need to wait, you
-  should not have asked.
-- **Re-litigating a settled decision.** Once answered, it is closed. Reopen only on new
-  information, and say what the new information is.
+- **The preamble becomes the checklist.** If the preview includes costs and options, it becomes
+  the full checklist again.
+- **Asking without deciding.** Presenting three options without a recommendation makes the user
+  do all the analysis.
+- **Batching under time pressure.** When the queue is long, the temptation is to combine items.
+  Keep the sequence because long queues need one decision at a time.
+- **Continuing past an unanswered ask.** If you ask a question, wait for the answer. Do not ask a
+  question that does not require an answer.
+- **Re-litigating a settled decision.** Once answered, close the decision. Reopen it only when new
+  information appears. State the new information.
 
 ## Related
 
-`question-hygiene` governs how to phrase a single question so it is answerable standalone.
-This skill governs how to sequence several. Follow both — a well-sequenced question that
-cannot be understood without scrollback still fails.
+`question-hygiene` governs how to phrase one question so users can answer it without context.
+This skill governs how to sequence several questions. Follow both skills. A well-sequenced
+question still fails if users cannot understand it without earlier messages.

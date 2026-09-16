@@ -103,7 +103,7 @@ out with a usage hint rather than guessing.
 | codex | `~/.codex` + `~/.agents/skills` | `CODEX_HOME` | agents; skills |
 | opencode | `~/.config/opencode` | `OPENCODE_CONFIG_DIR` | agents, skills |
 | cursor | `~/.cursor` | — | agents, commands, rules, skills |
-| github | `<repo>/.github` | — | verbatim mirror of `agents`, `hooks`, `instructions`, `skills` |
+| github | `<repo>/.github` | — | native mirror; agent copies route models and omit command-only aliases |
 
 Learnings are not deployed at all. Agents read and write `docs/learnings/` in the
 repository they are working in, and that directory is never seeded or propagated — a

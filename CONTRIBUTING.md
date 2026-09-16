@@ -17,7 +17,7 @@ The repository has two jobs, handled by two scripts:
 
 1. **Transform** — `scripts/propagate_master_assets.py` reads `source_of_truth/` and
    regenerates platform-specific variants under `ports/{claude,codex,opencode,cursor}`.
-   It also mirrors the source verbatim to `ports/github` and to a real `.github/`
+   It also emits GitHub-native copies to `ports/github` and to a real `.github/`
    directory at the repository root (so GitHub Copilot reads the same source). This step
    is for maintainers editing the agents; end users can skip it.
 2. **Deploy** — `deploy_agents.py` copies the generated `ports/` outputs out to the real
@@ -31,10 +31,10 @@ directory). Hand-maintained files are never touched.
 
 ## What's in the Repo
 
-- **66 agent definitions** in `source_of_truth/agents/` (all `*.agent.md`), of
+- **59 agent definitions** in `source_of_truth/agents/` (all `*.agent.md`), of
   which **16 are user-invocable** and **50 are hidden subagents** (`user-invocable: false`)
   that orchestrators spawn automatically.
-- **50 skills** — directory-based capabilities agents load on demand, each rooted at
+- **51 skills** — directory-based capabilities agents load on demand, each rooted at
   `SKILL.md`.
 - **24 instruction files** — cross-cutting guidance applied by `applyTo` file-glob
   matching.
@@ -50,8 +50,8 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ├── README.md                       # User-facing overview
 ├── CONTRIBUTING.md                 # This file
 ├── source_of_truth/                # THE authoring surface — edit here
-│   ├── agents/                     # 66 agent definitions (catalog lives in USAGE.md)
-│   ├── skills/                     # 50 skill directories, each rooted at SKILL.md
+│   ├── agents/                     # 59 agent definitions (catalog lives in USAGE.md)
+│   ├── skills/                     # 51 skill directories, each rooted at SKILL.md
 │   ├── instructions/               # 24 instruction files matched by applyTo globs
 │   └── baseline/                   # baseline-instructions.md, rendered at deploy time
 ├── ports/                          # Generated outputs — do not edit by hand
@@ -59,7 +59,7 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 │   ├── codex/                      # agents, skills (TOML agents; profiles/ is a cleanup root)
 │   ├── opencode/                   # agents, skills
 │   ├── cursor/                     # agents, commands, rules (.mdc), skills
-│   └── github/                     # verbatim mirror of the source subdirs
+│   └── github/                     # GitHub-native mirror of the source subdirs
 ├── .github/                        # Real mirror of ports/github (for Copilot)
 ├── scripts/
 │   ├── propagate_master_assets.py  # Transform: source_of_truth/ -> ports/ + .github/
@@ -102,7 +102,7 @@ outputs drift; a sync failure means "rerun propagation," not "edit the output."
 
 `source_of_truth/agents/` follows an orchestrator + subagent pattern: the project
 planning pipeline (planner, refiner, decomposer, phase executor), the feature
-implementation pipeline (plan expander, implementer, reviewer, QA writer, QA runner), PR Review
+implementation pipeline (plan expander, implementer, reviewer, QA writer, QA runner), Local Final Checks
 orchestration and evaluators, the audit orchestrator and its auditors
 (code, infra, refactor, security, delta, remediation research, remediation
 reconciler), the Client Deliverable

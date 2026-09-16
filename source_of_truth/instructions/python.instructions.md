@@ -5,15 +5,15 @@ applyTo: "**/*.py,**/pyproject.toml"
 
 # Python Rules
 
-- **Environment:** `uv` for everything — never bare `pip` or `python`. `uv run <script>`, `uv pip install -e ".[extras]"`. After any `pyproject.toml` change, re-run `uv pip install -e ".[extras]"`; `uv sync` alone does not re-evaluate editable installs.
-- **Packaging:** never manipulate `sys.path` or `PYTHONPATH`. Fix imports through `pyproject.toml`. Every importable directory has an `__init__.py`.
-- **Imports:** at the top of the file only — never inside a function, method, conditional, or loop. No new `import *`.
-- **Data containers:** `@dataclass` for data you own (mutable defaults via `field(default_factory=...)`); Pydantic v2 `BaseModel` for anything crossing a trust boundary — user input, API responses, config; `TypedDict` for dict shapes you don't own; a full class only when there is real behavior.
-- **Logging:** one module-level `logger = logging.getLogger(__name__)`, lazy `%s` args, `exc_info=True` on errors. `print` only for deliberate CLI output.
-- **Observability:** log every boundary call, its outcome, every unpredictable branch, and every caught exception, with the values involved. Instrument on the way in, never after a bug appears.
-- **SQL:** parameterized queries only — never f-strings.
+- **Environment:** Use `uv` for everything. Never use bare `pip` or `python`. Run `uv run <script>` or `uv pip install -e ".[extras]"`. After any `pyproject.toml` change, run `uv pip install -e ".[extras]"` again. `uv sync` alone does not re-evaluate editable installs.
+- **Packaging:** Do not manipulate `sys.path` or `PYTHONPATH`. Fix imports through `pyproject.toml`. Ensure every importable directory has an `__init__.py`.
+- **Imports:** Put imports only at the top of the file. Never put them inside a function, method, conditional, or loop. Do not add new `import *` statements.
+- **Data containers:** Use `@dataclass` for data you own. Use `field(default_factory=...)` for mutable defaults. Use Pydantic v2 `BaseModel` for anything crossing a trust boundary, including user input, API responses, and config. Use `TypedDict` for dict shapes you do not own. Use a full class only when it has real behavior.
+- **Logging:** Define one module-level `logger = logging.getLogger(__name__)`. Use lazy `%s` args. Set `exc_info=True` on errors. Use `print` only for deliberate CLI output.
+- **Observability:** Log every boundary call, its outcome, every unpredictable branch, and every caught exception with the values involved. Instrument on the way in, never after a bug appears.
+- **SQL:** Use parameterized queries only. Never use f-strings.
 - **Async:** never call blocking I/O inside an `async` function.
-- **Tooling:** Ruff and Pyright (`strict` on greenfield) are enforced. Never disable them, never add ignore comments.
+- **Tooling:** Enforce Ruff and Pyright (`strict` on greenfield). Never disable them. Never add ignore comments.
 
 ## Load Canary
 

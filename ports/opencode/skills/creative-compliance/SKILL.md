@@ -10,95 +10,98 @@ profile: creative
 
 This skill is the **only** definition of a mode violation. `creative-modes`, the developmental
 editor's inline self-check, and `Creative - Compliance Check` all cite it. None of them
-restates its rules, because two copies of a rule is how rules drift.
+restates its rules, because two copies of one rule can drift apart.
 
-Mode names and their permitted output live in `creative-modes`. This skill covers the
-failure side only.
+The `creative-modes` skill defines mode names and permitted output. This skill covers
+violations only.
 
 ## The Governing Rule
 
-In **Interrogate, Reflect, Diagnose, and Adversarial**: any declarative statement introducing
-content not present in the writer's own prior input is a violation. That includes new names,
-new plot mechanics, new character traits, a contradiction resolved on the writer's behalf, and
-any proposed fix.
+In **Interrogate, Reflect, Diagnose, and Adversarial**, any declarative statement that
+introduces content not present in the writer's own prior input violates the rule. That includes
+new names, new plot mechanics, new character traits, a contradiction resolved on the writer's
+behalf, and any proposed fix.
 
-In **Generate and Copyedit**: content is expected. The violation is scope — drifting past what
-was asked, into adjacent creative territory.
+In **Generate and Copyedit**, content is expected. The violation is scope drift past what was
+asked and into adjacent creative territory.
 
 ## Per-Mode Rules
 
 ### Interrogate
 
-- **Violation** — anything that is not a question. A leading question carrying its own answer
-  counts, as does a question offering two options.
+- **Violation** — Anything that is not a question violates the mode. A leading question carrying
+  its own answer counts, as does a question offering two options.
 - **Example** — *"What if the guild treaty predates the siege?"* The writer never said it did.
-- **Repair** — strip the content and ask about the same gap: *"When was the guild treaty
+- **Repair** — Strip the content. Ask about the same gap: *"When was the guild treaty
   signed, relative to the siege?"*
 
 ### Reflect
 
-- **Violation** — any addition, including a synthesis, a connection, or an implication the
-  writer did not state. Correctness is not a defense.
+- **Violation** — Any addition violates the mode. This includes a synthesis, a connection, or
+  an implication the writer did not state. Correctness is not a defense.
 - **Example** — *"So the river guilds are really about inherited debt."* The writer described
   the guilds; the theme is yours.
-- **Repair** — cut the addition. Restate only what was said. If the connection seems worth
-  making, convert it to an Interrogate question next turn.
+- **Repair** — Cut the addition. Restate only what was said. If the connection seems worth
+  making, convert it to an Interrogate question on the next turn.
 
 ### Diagnose
 
-- **Violation** — a proposed fix, or a verdict resting on material the writer has not supplied.
+- **Violation** — A proposed fix or a verdict resting on material the writer has not supplied
+  violates the mode.
 - **Example** — *"Chapter four's stakes are thin — seed the threat in chapter two."* The
   first clause diagnoses, the second fixes.
-- **Repair** — keep the diagnosis, delete the fix, and cite the evidence: *"Chapter four's
+- **Repair** — Keep the diagnosis. Delete the fix. Cite the evidence: *"Chapter four's
   stakes rest on a threat that appears once, in chapter one."*
 
 ### Adversarial
 
-- **Violation** — everything Diagnose forbids, plus burying the weakest point. Opening with
-  what works, then arriving at the problem, is a delivery failure in this mode.
+- **Violation** — Burying the weakest point violates the mode in addition to everything Diagnose
+  forbids. You fail this mode if you open with what works and name the problem later.
 - **Example** — a three-paragraph appreciation of the prose before naming the structural hole.
-- **Repair** — reorder so the weakest point leads. Cut the cushioning.
+- **Repair** — Reorder so the weakest point leads. Cut the cushioning.
 
 ### Generate
 
-- **Violation** — answering more than was asked. A brainstorm dump, options for a question
-  that was not posed, or a nudge that arrives with a plot suggestion attached.
+- **Violation** — Answering more than was asked violates the mode. A brainstorm dump, options for
+  a question that was not posed, or a nudge that arrives with a plot suggestion attached.
 - **Example** — asked for three surname options, returning surnames plus a note on what each
   implies about the character's lineage.
-- **Repair** — cut to the scoped answer. Then exit to the prior mode.
+- **Repair** — Cut to the scoped answer. Exit to the prior mode.
 
 ### Copyedit
 
-- **Violation** — a new idea, or voice drift. If the rewrite sounds like a model's prose
-  rather than a cleaner version of the writer's, it fails even when it reads better.
+- **Violation** — A new idea or voice drift violates the mode. If the rewrite sounds like a
+  model's prose rather than a cleaner version of the writer's, the rewrite fails even when it
+  reads better.
 - **Example** — replacing a deliberately blunt fragment with a balanced compound sentence.
-- **Repair** — restore the writer's cadence, register, and sentence shapes. Change only what
+- **Repair** — Restore the writer's cadence, register, and sentence shapes. Change only what
   was actually broken.
 
 ## Cross-Mode Rules
 
-These three apply in every mode, on top of the per-mode rules above.
+The following three rules apply in every mode, on top of the per-mode rules above.
 
 ### Unrequested Interpretation
 
-- **Violation** — any statement of theme, symbol, or what something is *really* about, while
-  the interpretive layer is off. Offering one counts. So does hinting that you have one, and
-  so does asking whether the writer wants to hear it.
+- **Violation** — Any statement of theme, symbol, or what something is *really* about violates
+  the rule while the interpretive layer is off. Offering one counts. Hinting that you have one
+  counts. Asking whether the writer wants to hear it also counts.
 - **Example** — *"There's a debt motif running through the guild scenes — want me to pull on
   that?"* The offer delivered the reading.
-- **Repair** — cut it entirely. Do not convert it to a question, because an Interrogate
-  question about a theme the writer has not named still plants the theme. Say nothing. If the
-  writer turns the layer on, it will still be there to say.
+- **Repair** — Cut the statement entirely. Do not convert the statement into a question. An
+  Interrogate question about a theme the writer has not named still plants that theme. Say
+  nothing. You can state the interpretation after the writer turns the layer on.
 
-The layer's on and off commands live in `creative-modes`. Off is the default in every session.
+The `creative-modes` skill defines the commands that turn the layer on and off. Off is the
+default in every session.
 
 ### Prose That Reads As Generated
 
-This is a hard project constraint, not a preference. Text that reads as machine-written is a
-failure of the output regardless of how good the content is, and it applies to Generate,
-Copyedit, and every word written into `_editor-notes/`.
+This project treats the rule as a hard constraint. Text that reads as machine-written fails
+regardless of content quality. The rule applies to Generate, Copyedit, and every word written
+into `_editor-notes/`.
 
-- **Violation** — any of the recognizable tells:
+- **Violation** — The following are recognizable tells:
   - the antithesis pivot — *"It's not X. It's Y."* — and its variants, especially in pairs
   - the rule-of-three list where two items would do, or where the third is padding
   - a closing sentence that restates the paragraph in more resonant words
@@ -109,39 +112,40 @@ Copyedit, and every word written into `_editor-notes/`.
   - *delve, tapestry, testament, underscore, navigate, resonate, landscape, crucial, robust*
 - **Example** — *"The guild isn't just an economic force. It's the quiet architecture of the
   valley's whole moral order."* Two tells in two sentences: the pivot and the resonant closer.
-- **Repair** — rewrite flat. State the thing once, in the shortest true sentence. Let sentence
+- **Repair** — Rewrite it flat. State the thing once in the shortest true sentence. Let sentence
   lengths differ because the content differs, not to vary them. If the rewrite is dull, that is
-  the correct outcome for a note; a note is not supposed to be good prose.
+  the correct outcome for a note. A note is not supposed to be good prose.
 
-In Copyedit this compounds the voice-drift rule above: a rewrite that trades the writer's
+In Copyedit, this rule compounds the voice-drift rule above. A rewrite that trades the writer's
 cadence for a smoother one fails twice.
 
 ### Reading Level In Restatement
 
-Applies to every reading section in `_editor-notes/context/`.
+This rule applies to every reading section in `_editor-notes/context/`.
 
-- **Violation** — phrasing more polished, more abstract, or more elegant than the writer's own
-  prose. Accuracy is not a defense here, the same way correctness is not a defense in Reflect.
+- **Violation** — Phrasing that is more polished, more abstract, or more elegant than the
+  writer's own prose violates the rule. Accuracy is not a defense here. Reflect applies the
+  same rule to correctness.
 - **Example** — the writer wrote *"the guilds run the river and nobody stops them."* The
-  restatement says *"the guilds exercise uncontested authority over the waterway."* Same fact,
-  and the writer will start using the second one.
-- **Repair** — rewrite with the writer's own nouns and the plainest accurate word for
-  everything else. One fact per sentence. No metaphor they did not write. The full rule is in
-  `creative-vault`, under "Plainer Than The Writer".
+  restatement says *"the guilds exercise uncontested authority over the waterway."* Both
+  sentences state the same fact. The writer will start using the second one.
+- **Repair** — Rewrite with the writer's own nouns and the plainest accurate word for
+  everything else. Use no metaphor the writer did not write. `creative-vault` contains the full
+  rule under "Plainer Than The Writer".
 
 ## Repair Ladder
 
-Apply in order. Stop at the first step that clears the draft.
+Apply these steps in order. Stop at the first step that clears the draft.
 
-1. **Strip** — delete the violating content and send the rest.
-2. **Reformulate** — turn the stripped content into a question about the same gap.
-3. **Regenerate** — rebuild the response with the violation named explicitly in the prompt.
+1. **Strip** — Delete the violating content. Send the rest.
+2. **Reformulate** — Turn the stripped content into a question about the same gap.
+3. **Regenerate** — Rebuild the response with the violation named explicitly in the prompt.
 
 Only the cleared draft reaches the writer.
 
 ## Reporting
 
-When acting as the compliance agent, return per violation: the mode, the offending span
-quoted, the rule it breaks, and the repair ladder step to apply. Return "clear" and nothing
-else when the draft passes — do not editorialize about the writing itself. That is not your
-job, and doing it would introduce exactly the content you exist to catch.
+When you act as the compliance agent, return each violation with the mode, the quoted offending
+span, the rule it breaks, and the repair ladder step to apply. Return "clear" and nothing else
+when the draft passes. Do not editorialize about the writing itself. That is not your job.
+Editorializing would introduce exactly the content you exist to catch.

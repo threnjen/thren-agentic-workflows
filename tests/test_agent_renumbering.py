@@ -17,7 +17,6 @@ import propagate_master_assets as propagator  # noqa: E402
 # literals so this guard cannot pass by finding its own old identifiers.
 IDENTITIES = (
     ("04", "-phase-execute", "03", "-phase-execute", "Phase - Execute", True),
-    ("04a", "-feature-plan-expander", "03a", "-feature-plan-expander", "Feature - Plan Expander", False),
     ("04b", "-feature-implementer", "03b", "-feature-implementer", "Feature - Implementer", False),
     ("04c", "-feature-review-and-fix", "03c", "-reviewer-plan-conformance", "Reviewer - Plan Conformance", True),
     ("04d", "-feature-qa-writer", "03d", "-feature-qa-writer", "Feature - QA Writer", False),
@@ -25,10 +24,8 @@ IDENTITIES = (
     ("04f", "-prod-code-review", "03f", "-prod-code-review", "Prod Code Review", False),
     ("04h", "-unity-reviewer", "03h", "-unity-reviewer", "Unity Reviewer", False),
     ("04i", "-feature-qa-runner", "03i", "-feature-qa-runner", "Feature - QA Runner", False),
-    ("05", "-pr-review", "04", "-pr-review", "PR - Review", True),
     ("05" + "a", "-baseline-worktree", "04a", "-baseline-worktree", "Baseline Worktree", False),
     ("05" + "b", "-change-narrator", "04b", "-change-narrator", "Change Narrator", True),
-    ("05" + "c", "-artifact-sweeper", "04c", "-artifact-sweeper", "Artifact Sweeper", True),
     ("05" + "d", "-consistency-auditor", "04d", "-consistency-auditor", "Consistency Auditor", True),
     ("05" + "e", "-dependency-auditor", "04e", "-dependency-auditor", "Dependency Auditor", True),
     ("05" + "f", "-test-health", "04f", "-test-health", "Test Health", True),
@@ -131,7 +128,7 @@ def test_no_pre_renumber_identifier_survives_in_authored_scope() -> None:
 
 
 def test_identifier_scan_fails_on_one_restored_identifier() -> None:
-    old_name = _display("05", "PR - Review")
+    old_name = _display("04", "Phase - Execute")
     mutated = [("README.md", "clean\n" + old_name + "\n")]
     errors = _identifier_errors(mutated)
     assert any(error.startswith("README.md:2:") and old_name in error for error in errors)
@@ -142,6 +139,7 @@ def test_source_map_moves_files_and_numbered_names() -> None:
     source_root = REPO_ROOT / "source_of_truth" / "agents"
 
     assert not (source_root / ("03" + "-feature-decomposer.agent.md")).exists()
+    assert not (source_root / ("03a" + "-feature-plan-expander.agent.md")).exists()
     for old_slug, new_slug, _old_name, new_name, _display_name, _label in IDENTITY_ROWS:
         with_target = source_root / f"{new_slug}.agent.md"
         assert with_target.is_file(), f"renamed source agent is missing: {new_slug}"
@@ -211,12 +209,7 @@ def test_agent_targeting_globs_resolve_and_character_classes_cover_both_families
     assert "**/05?-*.agent.md" not in patterns
     assert "**/03?-*.agent.md" in patterns
     assert "**/04?-*.agent.md" in patterns
-    assert {path for path in agent_paths if fnmatch.fnmatch(path, "**/03?-*.agent.md")} >= {
-        "source_of_truth/agents/03j-reviewer-blast-radius.agent.md",
-        "source_of_truth/agents/03k-reviewer-test-falsification.agent.md",
-        "source_of_truth/agents/03l-reviewer-plan-blind.agent.md",
-        "source_of_truth/agents/03m-finding-consolidator.agent.md",
-    }
+    assert any(fnmatch.fnmatch(path, "**/03?-*.agent.md") for path in agent_paths)
     assert any(fnmatch.fnmatch(path, "**/04?-*.agent.md") for path in agent_paths)
 
 
@@ -237,7 +230,7 @@ def test_generated_tree_has_no_pre_renumber_output_orphan() -> None:
         assert not (dot_github_agents / f"{old_slug}.agent.md").exists()
 
     for old_slug, new_slug, _old_name, _new_name, _display_name, _label in IDENTITY_ROWS:
-        if old_slug in {"04" + "-phase-execute", "05" + "-pr-review"}:
+        if old_slug == "04" + "-phase-execute":
             assert not (ports / "codex" / "agents" / f"{old_slug}.toml").exists()
             assert (ports / "codex" / "agents" / f"{new_slug}.toml").is_file()
         assert (opencode / f"{new_slug}.md").is_file()
@@ -254,15 +247,3 @@ def test_unity_and_prod_review_stripped_stems_remain_stable() -> None:
         assert (REPO_ROOT / "ports" / "cursor" / "agents" / f"z-{stem}.md").is_file()
         assert (REPO_ROOT / "ports" / "codex" / "agents" / f"z-{stem}.toml").is_file()
         assert (REPO_ROOT / "ports" / "opencode" / "agents" / f"{new_slug}.md").is_file()
-
-
-def test_post_renumber_committee_agents_remain_at_reserved_identifiers() -> None:
-    agents = {agent.source_slug: agent for agent in propagator.load_source_agents()}
-    expected = {
-        "03j-reviewer-blast-radius",
-        "03k-reviewer-test-falsification",
-        "03l-reviewer-plan-blind",
-        "03m-finding-consolidator",
-    }
-    assert expected <= set(agents)
-    assert not any(slug.startswith(("04j", "05j")) for slug in agents)

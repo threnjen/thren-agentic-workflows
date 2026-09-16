@@ -2,9 +2,9 @@
 .venv/
 .coverage
 .generated-global-hooks/
-# PR Review run output lands under `dev/pr-review/<base-sha-short>-<UTC-timestamp>/`
+# Local Final Checks output lands under `dev/local-final-checks/<base-sha-short>-<UTC-timestamp>/`
 # and stays ignored with the rest of dev/. The pinned base/head fixture lives at
-# `tests/fixtures/pr-review/pinned-diff-range.md`, outside dev/, so it needs no
+# `tests/fixtures/local-final-checks/pinned-diff-range.md`, outside dev/, so it needs no
 # carve-out here.
 dev/*
 __pycache__/

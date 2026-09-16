@@ -5,8 +5,9 @@ description: "Rule taxonomy (Judgment / Knowledge / Pointer), rule-quality stand
 <!-- Generated from source_of_truth/skills. Do not edit manually. -->
 # AI Instruction File Framework
 
-Authoritative definitions for the Instructions agent set. Workflows live in the agents; this file
-defines only what a rule is and what makes one well-formed. Do not paraphrase it from memory.
+This file provides authoritative definitions for the Instructions agent set. Workflows live in the
+agents. This file defines what a rule is and what makes a rule well-formed. Do not paraphrase it
+from memory.
 
 ## Rule Taxonomy
 
@@ -20,31 +21,32 @@ Instructions must encode **rules the agent cannot infer from reading source code
 
 **Target ratio:** ~60% Judgment, ~30% Pointer, ~10% Knowledge.
 
-Knowledge-heavy instructions produce a measured, reproducible failure mode: the agent summarizes
-instruction content instead of reading source, producing shallower code than no instructions at all.
+Knowledge-heavy instructions produce a measured and reproducible failure mode. The agent summarizes
+instruction content instead of reading the source. The agent then produces shallower code than it
+would without instructions.
 
 ## Rule Quality Standard
 
-One standard, applied by the writer when drafting and by the evaluator's static scan. A rule
-violating any of these is **flagged**, not automatically failed.
+The writer applies one standard when drafting. The evaluator applies it during the static scan. The
+evaluator **flags** a rule that violates any item. It does not fail the rule automatically.
 
 1. **Two-line ceiling** — no rule exceeds 2 lines. Verbose rules fail on weaker models and in longer
-   contexts. Applies to every section.
+   contexts. This ceiling applies to every section.
 2. **No conditionals in Hard Requirements** — a hard requirement must not contain `if`, `when`,
    `unless`, or `depending on`. A requirement that only sometimes applies belongs in **Common
-   Traps**, which is exempt from this rule: a trap is by definition situational and its
+   Traps**, which is exempt from this rule. A trap is situational by definition. Its
    `<gotcha>: <what to do instead>` form is the intended shape. Flag conditionals only in Hard
    Requirements, Standards, and Orientation content.
-3. **No soft language** — `should`, `consider`, `try to`, `where possible` get ignored. Use MUST
-   with a consequence ("will fail code review"). Applies to every section. Measured: the same rule
-   as a soft bullet = FAIL, as MUST = PASS.
+3. **No soft language** — `should`, `consider`, `try to`, and `where possible` are ignored. Use
+   MUST with a consequence ("will fail code review"). Apply this rule to every section. The measured
+   result is FAIL for the same rule as a soft bullet and PASS for the same rule as MUST.
 
 ## Additional Principles
 
-- **Point, don't describe.** Instead of listing what a class provides, point at the file:
+- **Point, don't describe.** Point to the file instead of listing what a class provides:
   `MUST inherit from BaseHandler in handlers/base.py — read that file first`.
 - **Test with code generation, not questions.** "Write an endpoint that handles X" tests whether
-  instructions prevent real bugs; "How do I add an endpoint?" only tests summarization.
+  instructions prevent real bugs. "How do I add an endpoint?" only tests summarization.
 - **Lint file references.** Every path mentioned in an instruction file must exist in the repo.
 
 ## Anti-Patterns
@@ -52,7 +54,7 @@ violating any of these is **flagged**, not automatically failed.
 1. **Soft language** — see rule-quality standard 3.
 2. **Over-scoping** — domain-specific rules in an always-loaded file waste context in unrelated
    conversations. Use scoped files with `applyTo` globs.
-3. **Knowledge rules** — rules describing what the code does rather than what an agent would get
+3. **Knowledge rules** — rules describe what the code does rather than what an agent would get
    wrong.
 
 ## Instruction File Template

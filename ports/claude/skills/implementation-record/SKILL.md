@@ -7,7 +7,7 @@ user-invocable: false
 
 # Implementation Record Template
 
-Write `[task-name]-implementation.md` to `[plan-path]/` using this exact template. The orchestrator supplies both tokens; if it supplied none, default to the phase-pipeline shape `dev/feature/[0N-task-name]/` with `[0N-task-name]` as `[task-name]`, and say so in your return summary.
+Write `[task-name]-implementation.md` to `[plan-path]/` using this exact template. The orchestrator supplies both tokens. If it supplied neither token, default to the phase-pipeline shape `dev/feature/[0N-task-name]/` with `[0N-task-name]` as `[task-name]`. State this default in your return summary.
 
 ```markdown
 # Implementation Record: [Task Name]
@@ -73,8 +73,8 @@ Use exact rubric or plan criterion IDs when available. If a commit SHA is not kn
 
 Additional requirements:
 
-- The `AC Coverage Matrix` must be filled for every planned AC, even if the current status is `Pending`.
+- Fill the `AC Coverage Matrix` for every planned AC, even if the current status is `Pending`.
 - `Evidence Paths` should point to concrete source, test, or artifact locations that a grader can search locally.
-- `Implement Commit SHA` and `Review Commit SHA` may start as `PENDING`, but the columns must exist so later pipeline stages can fill them in.
+- The `Implement Commit SHA` and `Review Commit SHA` fields may start as `PENDING`. Keep both columns so later pipeline stages can fill them in.
 - Keep the `Acceptance Criteria Status` section aligned with the coverage matrix rather than inventing a second source of truth.
-- `Regressions: None` requires `Execution: executed-green`. Anything else records `Unknown — tests not executed`. See the `test-execution-evidence` instruction.
+- `Regressions: None` requires `Execution: executed-green`. For any other execution value, record `Unknown — tests not executed`. See the `test-execution-evidence` instruction.

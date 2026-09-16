@@ -7,94 +7,97 @@ description: "The single classification vocabulary every engagement stage uses w
 # Engagement Evidence Standard
 
 Every engagement stage that judges evidence uses these class names verbatim.
-No stage invents its own vocabulary; a consumer may rely on receiving exactly
+No stage invents its own vocabulary. A consumer may rely on receiving exactly
 these values.
 
 ## The evidence base — what is judged
 
-Comparisons are **docs vs. docs, never git-diff**. The evidence base is the
-retained workspace reports **plus**, per side, the docs-writer set, the code
-graph, and the QA package (`QA_AUTOMATED` with run results, plus the manual QA
-checklist — `QA_USER` by default, or the engagement's configured manual QA
-document(s)).
+Use **docs vs. docs, never git-diff** for comparisons. Use the retained workspace
+reports as the evidence base. For each side, also use the docs-writer set, the
+code graph, and the QA package. The QA package includes `QA_AUTOMATED` with run
+results and the manual QA checklist. Use `QA_USER` by default for the manual QA
+checklist. Use the engagement's configured manual QA document(s) when the
+engagement specifies them.
 
-Docs sets, code graphs, and QA packages live at the passed analysis-branch
-checkout paths **inside the client repositories** (e.g.,
-`docs/CODEBASE_CONTEXT.md`, `docs/QA_AUTOMATED.md`, the manual QA checklist on the
-side's analysis branch); the workspace holds only retained reports and is not
-the whole evidence universe. Never infer absence from the workspace alone —
-declare a source absent only after checking its passed pointer path, and name
-the path checked in the absence note.
+Find docs sets, code graphs, and QA packages at the passed analysis-branch
+checkout paths **inside the client repositories**. Examples include
+`docs/CODEBASE_CONTEXT.md`, `docs/QA_AUTOMATED.md`, and the manual QA checklist
+on the side's analysis branch. The workspace holds only retained reports. It is
+not the whole evidence universe. Never infer absence from the workspace alone.
+Declare a source absent only after checking its passed pointer path. Name the
+checked path in the absence note.
 
 ## Evidence classes — what the evidence supports
 
 | Class | Requires |
 |---|---|
-| `qa-backed` | a completed PASS on an **exact matching** QA check on the upgraded side — a `QA_AUTOMATED` check ID with a run result, or a checked (`- [x]`) expected result in the manual QA checklist |
-| `attested` | an accepted statement from the engagement owner closing a specific finding — remediated, or researched and dispositioned (rules below) |
+| `qa-backed` | a completed PASS on an **exact matching** QA check on the upgraded side. The check must be either a `QA_AUTOMATED` check ID with a run result, or a checked (`- [x]`) expected result in the manual QA checklist |
+| `attested` | an accepted statement from the engagement owner closing a specific finding. The statement must show that the finding was remediated or researched and dispositioned (rules below) |
 | `comparison-only` | before/after comparison evidence (docs sets, graphs, retained reports) with no matching QA check |
 | `unverified` | neither |
 
-- `qa-backed` means the upgraded behavior was observed at the recorded QA
-  standard. It is not, by itself, proof the original side behaved identically.
+- The QA record shows the upgraded behavior at the recorded QA standard. The
+  `qa-backed` class does not, by itself, prove that the original side behaved
+  identically.
 - A generic repository-level PASS with no matching check never yields
-  `qa-backed`; that claim is `unverified`.
-- Only `comparison-only` or better supports a "preserved from the original"
-  statement.
-- In client-facing compliance documents, `unverified` is rendered
-  **NOT VERIFIED**.
-- When the original side has no QA package the runtime evidence is
-  asymmetric — state the asymmetry. Never convert it into a claim that the
-  upgraded behavior was untested, nor into proof of before/after equivalence.
-- "No identifiable delta" means no behavioral delta was established by the
-  comparison evidence. It never means the codebase has no changes, and never
-  means QA was absent.
+  `qa-backed`. Record that claim as `unverified`.
+- Use only `comparison-only` or a stronger class for a "preserved from the
+  original" statement.
+- Render `unverified` as **NOT VERIFIED** in client-facing compliance documents.
+- When the original side has no QA package, runtime evidence is asymmetric.
+  State the asymmetry. Never use it to claim that the upgraded behavior was
+  untested. Never use it as proof of before/after equivalence.
+- "No identifiable delta" means that comparison evidence established no
+  behavioral delta. It never means that the codebase has no changes. It never
+  means that QA was absent.
 
 ## `attested` — owner-stated closure
 
 An explicit statement from the engagement owner closes the identified finding
 **without** rerunning audits, scans, or QA. Two forms qualify.
 
-**Remediation.** The statement identifies the finding, states the corrected
-behavior, and confirms the outcome. "The security items are fixed" is
-insufficient — no finding identified, no behavior stated. "SEC-05 has been
-remediated. JWT audience validation is now enforced." qualifies.
+**Remediation.** The statement must identify the finding. It must state the
+corrected behavior. It must confirm the outcome. "The security items are fixed"
+is insufficient. It identifies no finding and states no behavior. "SEC-05 has
+been remediated. JWT audience validation is now enforced." qualifies.
 
-**Researched disposition.** The owner researched the finding and reached a
-conclusion about it — invalid, already-correct behavior, immaterial, or real
-but accepted at a stated severity. The statement identifies the finding, gives
-the conclusion, and gives the basis in one line. "I researched INFRA-014; the
-path is unreachable in the deployed configuration, so it is trivial" qualifies.
-A bare severity opinion with no basis does not. The owner's own research is
-sufficient basis — never demand an independent re-derivation of it.
+**Researched disposition.** The owner researches the finding and reaches a
+conclusion about it. The conclusion can be invalid, already-correct behavior,
+immaterial, or real but accepted at a stated severity. The statement must
+identify the finding. It must give the conclusion and the basis in one line. "I
+researched INFRA-014; the path is unreachable in the deployed configuration,
+so it is trivial" qualifies. A bare severity opinion with no basis does not
+qualify. The owner's own research is sufficient basis. Never demand an
+independent re-derivation of that research.
 
 **Settled means settled.** An accepted attestation of either form ends the
-matter. No stage re-argues it, re-raises it as an open finding, asks for
-further evidence, or re-surfaces it to the user for reconsideration. The only
-thing that reopens it is retained evidence that directly contradicts it (see
-Conflict below) or the user reopening it.
+matter. No stage may re-argue it. No stage may re-raise it as an open finding.
+No stage may ask for further evidence. No stage may re-surface it to the user
+for reconsideration. Only two events can reopen it. Retained evidence that
+directly contradicts it can reopen it (see Conflict below). The user can also
+reopen it.
 
-**How it is recorded.** The closure is `remediated (attested)` or
-`dispositioned (attested)` — never `qa-backed`. The `engagement-workspace`
-working-state file retains the finding ID, the statement, its form, its date,
-the repository, and the attestor.
+**How it is recorded.** Record the closure as `remediated (attested)` or
+`dispositioned (attested)`. Never record it as `qa-backed`. The
+`engagement-workspace` working-state file retains the finding ID, the statement,
+its form, its date, the repository, and the attestor.
 
-**What it closes, and only that.** The attested finding leaves the
+**What it closes, and only that.** Remove the attested finding from the
 introduced, residual-remediation, and open-work counts. It verifies no
-unrelated behavior and provides no repository-wide assurance. Client documents
-may describe the finding as remediated, or at the severity the owner's research
-established; their methodology note must distinguish an owner attestation from
-independently executed QA.
+unrelated behavior. It provides no repository-wide assurance. Client documents
+may describe the finding as remediated. They may instead use the severity that
+the owner's research established. Each methodology note must distinguish an
+owner attestation from independently executed QA.
 
 **Finalization.** `attested` satisfies the finalization gate for its own
 finding. Never require refreshed audits solely to confirm an accepted
-attestation — after accepting one, re-run synthesis only (findings, security,
-narratives, compliance, manifest, gap review), never the source audits unless
-the user explicitly asks.
+attestation. After accepting the attestation, re-run synthesis only. Synthesis
+includes findings, security, narratives, compliance, manifest, and gap review.
+Never rerun the source audits unless the user explicitly asks.
 
-**Conflict.** Retained evidence that directly contradicts an attestation is
-`conflicted-attestation`: pause finalization for that finding and request
-resolution. Never silently prefer either source.
+**Conflict.** Classify retained evidence that directly contradicts an
+attestation as `conflicted-attestation`. Pause finalization for that finding.
+Request resolution. Never silently prefer either source.
 
 ## Scope classes — how an observed change is treated
 
@@ -103,8 +106,9 @@ any delta.
 
 | Class | Requires | Consequence |
 |---|---|---|
-| `sow-authorized` | expressly required or permitted by the SOW — cite the clause or explicit scope exception | An approved scoped delta under any pair `mode`. Narrated as such; never a framing discrepancy, never an unverified nonconformance |
-| `unresolved` | outside SOW scope, or an ambiguity the SOW does not resolve | A framing discrepancy and a compliance risk |
+| `sow-authorized` | expressly required or permitted by the SOW. Cite the clause or explicit scope exception | Treat the change as an approved scoped delta under any pair `mode`. Narrate the change as such. Never call it a framing discrepancy. Never call it an unverified nonconformance. |
+| `unresolved` | the change falls outside SOW scope, or the SOW does not resolve an ambiguity | Treat the change as a framing discrepancy and a compliance risk |
 
-Only an `unresolved` change, an `unverified` required behavior, or a
-`conflicted-attestation` finding blocks finalization. `attested` never does.
+Finalization is blocked only by an `unresolved` change, an `unverified` required
+behavior, or a `conflicted-attestation` finding. The `attested` class never
+blocks finalization.

@@ -20,18 +20,18 @@ The output is a comparison document, not a remediation plan. It says what
 changed and what the evidence is. It does not prescribe fixes.
 
 Load `auditor-conventions` first for the severity scale and the Comparative
-Scans rules. Two rules from there govern everything below: the producing
-auditor's own category names are the canonical dimensions — never rename, merge,
-or invent them across snapshots — and two findings match when they are the
-**same underlying issue**, judged from description and evidence, with a matching
-path as corroboration only. Code moves; line numbers shift.
+Scans rules. Two rules from that skill govern everything below. The producing
+auditor's category names are the canonical dimensions. Never rename, merge, or
+invent them across snapshots. Two findings match when they are the **same
+underlying issue**, judged from description and evidence. Use a matching path as
+corroboration only. Code moves, so line numbers shift.
 
 The `auditor-conventions` audit finding truth gate applies independently to
 every source finding and every proposed match. Reconcile each report's actual
 rows before trusting its totals. Verify reachable production paths, tests,
-material consequence, contracts, and issue identity against the trees. Omit a
-false or immaterial source finding from the actionable queue and record an
-explicit upstream correction in the delta; never preserve it merely to make
+material consequence, contracts, and issue identity against the trees. Exclude
+a false or immaterial source finding from the actionable queue. Record an
+explicit upstream correction in the delta. Never preserve it merely to make
 inherited arithmetic close. Do not edit the source audits. Quarantine their
 disputed arithmetic and show raw versus supported populations separately.
 
@@ -42,50 +42,49 @@ disputed arithmetic and show raw versus supported populations separately.
 1. **Locate the two reports.** The audit directory is `dev/<audit-name>/`
    (e.g. `dev/code-audit/`, `dev/infra-audit/`). Each snapshot is either a file
    or a subdirectory named for its label (`orig-code/`, `20260725/`). If a
-   snapshot is a directory, the full findings report is the input; read the
-   summary too if one exists, but the report is authoritative.
+   snapshot is a directory, use the full findings report as input. Read the
+   summary too if one exists, but treat the report as authoritative.
 2. **Derive snapshot labels** from the paths (`orig-code`, `20260725`, a branch
    name). Use these labels verbatim in every heading, table column, and filename.
-3. **Locate both source trees.** A delta written only from the two reports is
+3. **Locate both source trees.** A delta that uses only the two reports is
    weaker than one that can settle disagreements against the code. Ask the user
    for the baseline checkout path if it is not obvious (commonly a sibling
    directory such as `<repo>-orig`). If no baseline tree is available, say so in
-   Comparison Limitations and proceed — do not stall.
+   Comparison Limitations and proceed. Do not stall.
 
    When a snapshot is a **git ref** rather than a separate checkout, record the
    branch or tag *and* its resolved commit sha in the header. A branch name
-   alone does not identify a snapshot — it moves, and a delta labelled only
-   `main` cannot be reproduced later. If a side was audited from a dirty
-   working tree rather than a commit, say so in the header and in Comparison
-   Limitations: that side is not reconstructible from git at all.
+   alone does not identify a snapshot because it moves. A delta labelled only
+   `main` cannot be reproduced later. If the audit used a dirty working tree
+   rather than a commit, say so in the header and in Comparison Limitations.
+   That side is not reconstructible from git at all.
 
-   For a branch-versus-branch comparison, state which baseline was used — the
-   target branch's tip, or the merge base — because the two answer different
+   For a branch-versus-branch comparison, state which baseline you used: the
+   target branch's tip or the merge base. These baselines answer different
    questions. Against the tip, changes made on the target branch since the
    branch point appear as findings of the branch under review.
 4. **Read both reports end to end** before classifying anything, including each
    report's own Coverage/Limitations and Positive Observations sections. Those
    two sections drive several dispositions and most of the honest caveats.
 5. **Record the stated totals** from each report. Your reconciliation must equal
-   them. If a report's own internal counts disagree with its stated total, say
-   so explicitly, enumerate the actual finding rows, and correct or quarantine
-   the source artifact before computing a delta. Do not build a reconciled
+   them. If a report's internal counts disagree with its stated total, state that
+   explicitly. Enumerate the actual finding rows. Correct or quarantine the
+   source artifact before computing a delta. Do not build a reconciled
    comparison on contradictory population claims.
 
-Both trees are **read-only**. The only files this work writes are its two
-deliverables.
+Treat both trees as **read-only**. Write only the two deliverables.
 
-Two deliverables, both at the output paths the spawn prompt names — never at
-paths you invent. Both land under the **newer** snapshot's checkout; the
-baseline is read, never written to, and never receives a deliverable.
+Write two deliverables at the output paths named in the spawn prompt. Never
+invent paths. Put both under the **newer** snapshot's checkout. Read the
+baseline only. Never write to it or place a deliverable there.
 
 1. The **full delta** (section 4) — the complete comparison.
-2. The **open-items queue** (section 5) — the actionable findings, attribution
-   kept separate, written to be read on its own by a remediation agent that will
-   never see the full delta.
+2. The **open-items queue** (section 5) — the actionable findings with
+   attribution kept separate. Write it so a remediation agent can read it on
+   its own, without seeing the full delta.
 
-Always write both. The queue is written last, after the full delta's arithmetic
-closes, and is derived from it rather than assembled in parallel.
+Always write both. Write the queue last, after the full delta's arithmetic
+closes. Derive it from the full delta rather than assembling it in parallel.
 
 ---
 
@@ -106,11 +105,10 @@ is either the mapped counterpart of a baseline finding, or `NEW`, or
 | `PRE-EXISTING` | A real, open defect the current report raised and the baseline report did not, whose code position is **materially identical in the baseline tree**. Not attributable to the newer work. |
 | `UNVERIFIED-ORIGIN` | Raised only by the current report, and no baseline tree is available to establish whether the position pre-dates the newer work. |
 
-`NEW` is the regression count, reported alone and never summed with
-`PRE-EXISTING` in any table or sentence. A finding the baseline auditor simply
-did not raise is `PRE-EXISTING`: the code did not get worse, the reporting got
-better. Conflating them sends the next engineer hunting regressions in code
-nobody touched.
+Report `NEW` alone as the regression count. Never sum it with `PRE-EXISTING` in
+any table or sentence. A finding the baseline auditor simply did not raise is
+`PRE-EXISTING`. The code did not get worse. Reporting improved. Conflating them
+sends the next engineer hunting regressions in code nobody touched.
 
 Classification rules:
 
@@ -131,16 +129,15 @@ Classification rules:
   raise it" is not evidence of resolution — that is UNCHANGED-if-verified or
   UNVERIFIED.
 - **Separate re-rating from regression.** When severity moves without the code
-  moving, say which portion is re-rating and which (if any) is a real change in
-  exposure. Do this at the item level and again in Comparison Limitations.
+  moving, identify any re-rating and any real change in exposure. Do this at
+  the item level and again in Comparison Limitations.
 - **Separate "genuine regression" from "artifact of new functionality."** A NEW
-  finding in a subsystem that did not exist at baseline is not the same as the
-  release making existing code worse. Label every NEW Critical/High as one or
-  the other.
+  finding in a subsystem absent at baseline differs from a release worsening
+  existing code. Label every NEW Critical/High as one or the other.
 - **Removing a blind spot is not a change in the code.** When the baseline could
-  not read something (an undecompiled binary, an out-of-repo reference) and the
-  current snapshot can, the resulting finding is TRANSFORMED or PRE-EXISTING,
-  never NEW — state the alternative reading and why you chose yours.
+  not read something (an undecompiled binary, an out-of-repo reference), the
+  current snapshot can read it. Classify the resulting finding as TRANSFORMED or
+  PRE-EXISTING, never NEW. State the alternative reading and why you chose yours.
 - **Merges and splits are allowed** (2 baseline → 1 current, or 1 baseline →
   2 current). Every merge and split must be enumerated in the Reconciliation
   subsection. Each current finding has exactly one owning baseline row.
@@ -148,14 +145,14 @@ Classification rules:
 ### 2A. The co-location probe — required before any NEW
 
 Attribution is a claim about the trees, not about what two auditors chose to
-mention. A **separate attribution agent** executes this probe; the delta agent
+mention. A **separate attribution agent** executes this probe. The delta agent
 marks unmatched findings provisional and hands off the construct identity, per
-section 2D. For each current finding with no matched baseline counterpart:
+section 2D. Apply the following steps to each current finding with no matched
+baseline counterpart:
 
-1. **Find the construct in the baseline tree** — search the whole tree by symbol
-   name and signature, never by path or line: between two snapshots a file may
-   have been renamed, split, or moved, and a path-only miss is not evidence of
-   absence.
+1. **Find the construct in the baseline tree.** Search the whole tree by symbol
+   name and signature, never by path or line. Between snapshots, a file may have
+   been renamed, split, or moved. A path-only miss is not evidence of absence.
 2. **Record one outcome, quoting both excerpts** (or the failed search):
 
 | Baseline state | Disposition |
@@ -166,25 +163,26 @@ section 2D. For each current finding with no matched baseline counterpart:
 | Present but changed, defect pre-dates the change | `PRE-EXISTING` |
 | No baseline tree available | `UNVERIFIED-ORIGIN` — never bare `NEW` |
 
-Every `PRE-EXISTING` carries an `Origin` from this closed set: `baseline auditor
-did not raise it`; `additional lens on baseline <id> — same construct, different
-dimension`; `baseline blind spot now readable`.
+Every `PRE-EXISTING` carries an `Origin` from this closed set. Use one of these
+values: `baseline auditor
+did not raise it`, `additional lens on baseline <id> — same construct, different
+dimension`, or `baseline blind spot now readable`.
 
 ### 2B. Same-position sweep — before classifying anything
 
 Description-only matching mints a fresh `NEW` for every lens the second auditor
-applied. Prevent it mechanically:
+applied. Prevent this outcome mechanically:
 
 - **Index both reports by `(file, enclosing symbol)`.** Adjudicate every shared
   position explicitly and record the verdict: same defect · additional lens on
   the same defect · genuinely different defect at the same location. Never leave
   a shared position unmatched by default.
-- **A self-citation is a hard match signal.** A current finding referencing a
-  baseline finding's ID in its own prose ("beyond the correctness bug (2.1/2.2)")
-  concedes the shared position. Treat it as evidence, not commentary.
-- **A different dimension is not a different defect.** One construct faulted for
-  concurrency by one auditor and performance by the other is one position with
-  two lenses: `PRE-EXISTING`, `Origin: additional lens on baseline <id>`.
+- **A self-citation is a hard match signal.** A current finding that references
+  a baseline finding's ID in its prose ("beyond the correctness bug (2.1/2.2)")
+  concedes the shared position. Treat the reference as evidence, not commentary.
+- **A different dimension is not a different defect.** One auditor may fault a
+  construct for concurrency while the other faults it for performance. Treat it
+  as one position with two lenses: `PRE-EXISTING`, `Origin: additional lens on baseline <id>`.
 
 ### 2C. Calibration guard
 
@@ -194,31 +192,31 @@ the raw current-side count — most of the growth is reporting, not code.
 
 ### 2D. Provisional attribution and the probe handoff
 
-Matching two reports and reading two source trees are different jobs on different
-inputs, so they belong to two agents. The delta agent does the first and never
-probes.
+Matching two reports and reading two source trees use different inputs. Assign
+these jobs to two agents. The delta agent matches reports and never probes.
 
-**The delta agent** marks every current finding with no matched baseline
-counterpart `PROVISIONAL` and lists it under a `## Provisional attribution —
-pending probe` section: item identifier, `path:line`, enclosing symbol, and
-signature. Its arithmetic counts the whole set as one **unattributed** bucket, so
-section 3 closes without any probe having run.
+**The delta agent** marks every current finding without a matched baseline
+counterpart `PROVISIONAL`. List each under a `## Provisional attribution —
+pending probe` section with its item identifier, `path:line`, enclosing symbol,
+and signature. Count the whole set as one **unattributed** bucket. Section 3
+then closes without a probe having run.
 
 **The attribution agent** replaces each provisional marking with its section 2A
-outcome, and owns exactly these fields — nothing else in either document:
+outcome. It owns exactly these fields, and nothing else in either document:
 
-- the item's disposition, `Origin`, baseline position, and probe evidence;
-- the `NEW` and `Pre-existing` columns of the section 3A severity table;
+- the item's disposition, `Origin`, baseline position, and probe evidence.
+- the `NEW` and `Pre-existing` columns of the section 3A severity table.
 - the `NEW`, `PRE-EXISTING`, and `UNVERIFIED-ORIGIN` rows of the Disposition
   Rollup, the `new / pre-existing` split in the dimension table, and the
-  regression count in the Executive Summary;
-- sections 10 and 10a;
-- in the queue: filing each `NEW` entry into the severity-ordered list, moving
-  each `PRE-EXISTING` and `UNVERIFIED-ORIGIN` entry out of the work list and into
-  the header's exclusion counts, and pruning the closure — a closure item whose
-  every dependent settled PRE-EXISTING leaves with them, and an item a surviving
-  queued entry names in `Blocked by` becomes a `D`-numbered closure entry instead
-  of leaving;
+  regression count in the Executive Summary.
+- sections 10 and 10a.
+- in the queue: filing each `NEW` entry into the severity-ordered list.
+- in the queue: moving each `PRE-EXISTING` and `UNVERIFIED-ORIGIN` entry out of
+  the work list and into the header's exclusion counts.
+- in the queue: pruning the closure. When attribution settles every dependent
+  as PRE-EXISTING, remove the closure item with those dependents. Convert an item
+  that a surviving queued entry names in `Blocked by` into a `D`-numbered closure
+  entry instead of leaving it.
 - the calibration guard's verdict.
 
 The bucket's **total is invariant** under probing — only its internal split
@@ -236,7 +234,7 @@ The document must prove its own completeness:
   = the baseline report's stated total.
 - **Current side:** `mapped counterparts + NEW + PRE-EXISTING + UNVERIFIED-ORIGIN`
   = the current report's stated total. Before the probe those three are one
-  `unattributed` bucket (section 2D); the identity holds either way.
+  `unattributed` bucket (section 2D). The identity holds either way.
 - **NEW, PRE-EXISTING, and UNVERIFIED-ORIGIN are excluded from the baseline
   percentage base.** State this explicitly. Express each as a percentage of the
   *current* report's total instead.
@@ -249,10 +247,10 @@ The document must prove its own completeness:
 
 ## 3A. Severity movement must be decomposed, not netted
 
-**Every count in this document that moves must show what it is made of, on the
-same row.** Never a net figure alone, in a table or in prose. A paragraph
-underneath does not repair a misleading table — the table is what gets skimmed,
-quoted, and pasted into a status update.
+**For every moving count, show its components on the same row.** Never show a
+net figure alone in a table or in prose. A paragraph underneath does not repair
+a misleading table. Readers skim, quote, and paste the table into status
+updates.
 
 Build the severity table by tracking the flow through each band:
 
@@ -282,16 +280,16 @@ Each row must satisfy: `Baseline = Resolved + Left band + Carried at band`, and
 `Current = Carried at band + Entered band + NEW + Pre-existing`. Include a
 `**Total**` row.
 
-Then, immediately below the table and before any other prose, state:
+Immediately below the table, before any other prose, state:
 
 - **Turnover in the top bands.** For Critical and High, name the findings that
-  left and the findings that arrived. A band whose continuity is `0 of N` must
-  say so in a sentence — that is a complete population turnover and it is
-  almost always the most important fact in the section.
+  left and the findings that arrived. State when a band's continuity is `0 of N`.
+  That value means complete population turnover. It is almost always the
+  most important fact in the section.
 - **How much of the movement is re-rating.** Split `Entered band` and `Left
   band` into severity re-rating (same code, different judgement) versus real
-  change in exposure. Where a rise is mostly re-rating, say which portion, as
-  the infra example does: "roughly two-thirds re-rating and one-third genuine
+  change in exposure. Where a rise is mostly re-rating, identify the portion.
+  Use the infra example: "roughly two-thirds re-rating and one-third genuine
   worsening."
 - **What the net conceals.** Any band whose net change is small while its
   underlying churn is large gets named explicitly.
@@ -300,14 +298,15 @@ Then, immediately below the table and before any other prose, state:
 
 ## 4. Document structure
 
-Sections are numbered. The starred sections are conditional; everything else is
+Sections are numbered. The starred sections are conditional. Everything else is
 required and appears in this order.
 
-1. **Header** — one line per snapshot: label, path (and ref plus resolved sha,
-   when the snapshot came from a git ref), finding count, and a scale
-   metric (files audited, projects, lines). Then a paragraph fixing the path
-   convention: paths are relative to the snapshot's own root, and where a path
-   exists in both trees with different content, the snapshot is named explicitly.
+1. **Header** — write one line per snapshot. Include the label, path, and ref
+   plus resolved sha when the snapshot came from a git ref. Include the finding
+   count and a scale metric (files audited, projects, lines). Then add a
+   paragraph that fixes the path convention. Paths are relative to the
+   snapshot's own root. When a path exists in both trees with different content,
+   name the snapshot explicitly.
 2. **Executive Summary** — the honest headline in prose, no bullets. Lead with
    where the improvement is concentrated and *why* it is concentrated there
    (usually one structural change resolves many findings at once). Then state
@@ -318,23 +317,24 @@ required and appears in this order.
    act on. Never let a favourable total hide an unfavourable composition, and
    never let a growth in findings read as a growth in defects.
 3. **Severity Movement** — see section 3A. A net-count table is not acceptable
-   here; the movement must be decomposed on the row.
-4. **Disposition Rollup** — the disposition table with counts and % of baseline,
-   the NEW exclusion note, then a **Reconciliation** subsection showing both
-   sides' arithmetic and enumerating every merge and split.
+   here. Decompose the movement on each row.
+4. **Disposition Rollup** — include the disposition table with counts and % of
+   baseline. Add the NEW exclusion note. Then add a **Reconciliation** subsection
+   that shows both sides' arithmetic and enumerates every merge and split.
 5. **Dimension-Level Movement** — table: dimension × (baseline, current, net,
    **of current: carried / new / pre-existing**, assessment). The split is required
-   for the same reason as section 3A: a dimension that fell from 10 to 6 by
-   resolving 9 and adding 5 is not the same dimension, and the net alone says
-   it is. The assessment column is a short clause, not a number restated. Bold
+   for the same reason as section 3A. A dimension that fell from 10 to 6 by
+   resolving 9 and adding 5 is not the same dimension. The net alone hides this
+   fact. The assessment column is a short clause, not a number restated. Bold
    any dimension that regressed. Follow with a paragraph on the dimensions that
    are honestly worse, distinguishing worse-in-count from worse-in-kind.
-6. **\*Dedicated Analysis** — include only when one finding dominates the
-   comparison and a table row cannot carry it (a credential exposure, a
-   collapsed subsystem, a delivery-mechanism change). Structure: what the
-   baseline exposed and to whom → what the current snapshot exposes and to whom
-   → did the blast radius change (narrower in X, wider in Y) → **Verdict**, with
-   the two wrong-but-tempting summaries stated and rejected.
+6. **\*Dedicated Analysis** — include this only when one finding dominates the
+   comparison and a table row cannot carry it. Examples include a credential
+   exposure, a collapsed subsystem, or a delivery-mechanism change. Structure
+   the analysis around four elements. Cover baseline exposure and audience,
+   current exposure and audience, and any blast-radius change (narrower in X,
+   wider in Y). End with the **Verdict**. State and reject the two
+   wrong-but-tempting summaries.
 7. **Critical and High Findings — Item by Item** — every Critical and High from
    *either* side, grouped under `### Criticals` then `### Highs — Resolved and
    Improved`, `### Highs — Unchanged and Transformed`, `### Highs — New`. Item
@@ -352,50 +352,52 @@ required and appears in this order.
    bolded regression judgement (`**Genuine regression.**` /
    `**Artifact of new functionality.**`) plus the explanation.
 
-   For PRE-EXISTING items the Baseline line carries the position the probe found
-   (`Not raised — position present at <path:line>`), and the body leads with
-   `**Not attributable to the newer work.**` followed by the `Origin` and the
+   For PRE-EXISTING items, the Baseline line carries the position the probe found
+   (`Not raised — position present at <path:line>`). Start the body with
+   `**Not attributable to the newer work.**` Then add the `Origin` and the
    probe's paired excerpts. Group them under a `### Highs — Pre-existing,
    Newly Reported` heading, never inside the `New` group.
-8. **Medium, Low, and Info Findings — Rollup** — one subsection per dimension,
-   each a two-column table of `Disposition | Findings`, findings separated by
-   ` · `. Each entry names both sides' locations. Add a `Cross-reference` row
-   for items itemized in document section 7 so the dimension still reads completely
-   without repeating them. Open the section with the completeness statement:
-   every remaining finding from both reports appears exactly once below.
-9. **\*Dependency Delta** — for infra-flavoured audits, or any audit where the
-   dependency surface changed materially. Table: package × (baseline version,
-   current version, change, note). Collapse large shim families into one row and
-   say so. Close with a summary sentence naming the one or two regressions in an
-   otherwise improved surface.
-10. **New Findings Introduced** — all NEW findings, numbered, grouped by
-    severity, most severe first, each with a location and a one-or-two-sentence
-    regression judgement. Close with a count breakdown and a sentence
-    characterizing the NEW Critical/High set specifically. PRE-EXISTING findings
-    never appear here.
-10a. **Pre-existing Findings Newly Reported** — all PRE-EXISTING and
-    UNVERIFIED-ORIGIN findings, same format, each with its `Origin` and probe
-    evidence. Close with the calibration guard's verdict (section 2C) when it
-    triggers.
-11. **Residual Risk** — what remains unaddressed, ranked by severity. Group
+8. **Medium, Low, and Info Findings — Rollup** — add one subsection per
+   dimension. Use a two-column table of `Disposition | Findings`. Separate
+   findings with ` · `. Name both sides' locations in each entry. Add a
+   `Cross-reference` row for items itemized in document section 7. This keeps
+   the dimension complete without repeating those items. Open the section with
+   this completeness statement: every remaining finding from both reports
+   appears exactly once below.
+9. **\*Dependency Delta** — include this for infra-flavoured audits or any audit
+   where the dependency surface changed materially. Use a table with package ×
+   (baseline version, current version, change, note). Collapse large shim
+   families into one row and say so. Close with a summary sentence naming the
+   one or two regressions in an otherwise improved surface.
+10. **New Findings Introduced** — include all NEW findings. Number them and group
+    them by severity, most severe first. Give each finding a location and a
+    one-or-two-sentence regression judgement. Close with a count breakdown and a
+    sentence that characterizes the NEW Critical/High set specifically.
+    PRE-EXISTING findings never appear here.
+10a. **Pre-existing Findings Newly Reported** — include all PRE-EXISTING and
+    UNVERIFIED-ORIGIN findings in the same format. Give each its `Origin` and
+    probe evidence. Close with the calibration guard's verdict (section 2C) when
+    it triggers.
+11. **Residual Risk** — list what remains unaddressed, ranked by severity. Group
     related findings that constitute one risk and say so ("these three findings
     should be treated as one risk, not three"). State up front that this is a
     comparison document, not a remediation plan.
-12. **Comparison Limitations** — bolded lead-ins, one paragraph each. Cover at
-    minimum, and omit any that genuinely does not apply:
-    - **Restructuring that made matching hard** — which findings could not be
-      matched by path, and the rule used to adjudicate them.
+12. **Comparison Limitations** — use bolded lead-ins and one paragraph each.
+    Cover the following points at minimum. Omit any point that genuinely does
+    not apply:
+    - **Restructuring that made matching hard** — identify findings that could
+      not be matched by path. State the rule used to adjudicate them.
     - **Limitations carried forward from either report's own coverage section.**
     - **What neither audit executed** — if both are static, say every
-      runtime-behaviour classification inherits that from both sides.
+      runtime-behaviour classification inherits that limitation from both sides.
     - **Different auditors, different calibration** — list the specific severity
       movements that are re-rating.
-    - **Scope differences** between the two audits, and any metric that is
-      therefore not comparable across them (say so; do not compare it).
-    - **Findings adjudicated outside the two reports** — enumerate each, with
-      the command or file content the conclusion rests on.
-    - **UNVERIFIED items** — one entry each: *why it cannot be settled* and
-      *evidence that would settle it*.
+    - **Scope differences** between the two audits, and any metric that is not
+      comparable across them. Say so, and do not compare it.
+    - **Findings adjudicated outside the two reports** — enumerate each. Include
+      the command or file content that supports the conclusion.
+    - **UNVERIFIED items** — give one entry each. State *why it cannot be
+      settled* and the *evidence that would settle it*.
     - **Related unresolved questions** that bound the document's claims without
       affecting any disposition.
 
@@ -403,84 +405,83 @@ required and appears in this order.
 
 ## 5. The open-items queue
 
-The base entry shape, the subsystem rule, the self-contained-entry rule, the
-no-fixes rule, and the ordering are defined in `auditor-conventions` under
-**Open-Items Queue Entries**. This section is the comparative extension of it:
-the selection rule, the attribution fields, and the dependency closure.
+The `auditor-conventions` skill defines the base entry shape, subsystem rule,
+self-contained-entry rule, no-fixes rule, and ordering under **Open-Items Queue
+Entries**. This section extends those rules for comparisons with a selection
+rule, attribution fields, and dependency closure.
 
-A second, smaller document containing **only the NEW and TRANSFORMED findings**.
-Its reader is a remediation research agent that receives this file, the full
-delta, both snapshot reports and summaries, and the available source trees.
-Write it to stand alone anyway: the queue remains the scoped work list, while
-the other inputs exist to validate it and correct upstream errors.
+Write a second, smaller document containing **only the NEW and TRANSFORMED
+findings**. A remediation research agent receives this file, the full delta,
+both snapshot reports and summaries, and the available source trees. Write the
+queue to stand alone anyway. The queue remains the scoped work list, while the
+other inputs validate it and correct upstream errors.
 
 **Selection.** NEW and TRANSFORMED, plus the **dependency closure** defined
 below. RESOLVED, IMPROVED, UNCHANGED, UNVERIFIED, PRE-EXISTING, and
-UNVERIFIED-ORIGIN are excluded by design: this queue is scoped to what the
-current snapshot introduced or carried across in a new shape, not to everything
-still open. Residual Risk in the full delta remains the complete picture, and
-the two documents disagree on purpose.
+UNVERIFIED-ORIGIN are excluded by design. This queue covers what the current
+snapshot introduced or carried across in a new shape, not everything still
+open. Residual Risk in the full delta remains the complete picture. The two
+documents disagree on purpose.
 
 **A pre-existing defect is not queued work.** `PRE-EXISTING` and
-`UNVERIFIED-ORIGIN` are open defects the newer work did not cause — the same
-class as `UNCHANGED`, differing only in whether the baseline auditor happened to
-raise them. Queueing them spends the remediation research budget on code nobody
-touched, and excluding UNCHANGED while including them is incoherent. They are
-reported in the full delta's section 10a and counted among the queue header's
-exclusions. They enter the queue only through the closure, and only as a named
-dependency.
+`UNVERIFIED-ORIGIN` are open defects the newer work did not cause. They belong
+to the same class as `UNCHANGED`, differing only in whether the baseline
+auditor happened to raise them. Queueing them spends the remediation research
+budget on code nobody touched. Excluding UNCHANGED while including them is
+incoherent. Report them in the full delta's section 10a and count them among
+the queue header's exclusions. They enter the queue only through the closure,
+and only as a named dependency.
 
 **The dependency closure.** Scoping by attribution and scoping by closability
-are different things, and a queue that only does the first hands the next agent
+are different things. A queue that uses only attribution gives the next agent
 a work list it cannot finish. An excluded finding that a queued item cannot be
-fixed without is not a separate concern — it is part of that item's fix.
+fixed without is part of that item's fix, not a separate concern.
 
-So: after selecting NEW and TRANSFORMED, walk every selected item and ask what
-else must change for it to close. Any **still-open** excluded finding that
-answer names joins the queue in its own section. Rules:
+After selecting NEW and TRANSFORMED, walk every selected item and ask what
+else must change for it to close. Any **still-open** excluded finding named by
+that answer joins the queue in its own section. Apply these rules:
 
 - **Eligible pool: open findings only** — UNCHANGED, UNVERIFIED, and IMPROVED
   findings whose residue is still open, plus PRE-EXISTING and UNVERIFIED-ORIGIN.
-  A RESOLVED finding can never be a dependency; it is already closed.
+  A RESOLVED finding can never be a dependency. It is already closed.
 - **Entry is by named dependent.** A finding joins only because a specific
   queued item needs it. Record which item(s) pulled it in. Nothing enters the
   closure because it is severe, adjacent, or obviously worth doing — severity is
-  not a ticket in, and this is the rule that keeps the closure from becoming
-  "everything still open" by degrees.
+  not a ticket in. This rule keeps the closure from becoming "everything still open"
+  by degrees.
 - **Blocking or partial.** State, per dependency, whether the dependent item
   cannot be closed at all without it or can be closed partially. Both belong in
-  the closure; they schedule differently.
+  the closure. They schedule differently.
 - **Transitive, to a fixed point.** A dependency may itself depend on another
   excluded finding. Keep walking until no new findings enter. Say how many
   passes it took if more than one.
 - **Kept visibly separate.** Closure items are *enabling work*, not defects the
   current snapshot introduced. Never merge them into the NEW/TRANSFORMED list or
-  renumber them into it. The attribution split — what this snapshot broke versus
-  what was already broken — is load-bearing downstream, and a fix plan that
-  blurs it will misreport what the newer work is responsible for.
+  renumber them into it. Downstream steps rely on the attribution split, which
+  distinguishes what this snapshot broke from what was already broken. A fix
+  plan that blurs it will misreport what the newer work is responsible for.
 - **Counted separately.** The closure does not change the reconciliation: the
   queue's NEW + TRANSFORMED count still equals the Disposition Rollup. Report
   the closure's own count alongside it, never folded into it.
 - **An empty closure is a result.** If every queued item is independently
   closable, say so explicitly. Silence reads as "not checked."
-- **Walked before attribution, pruned after.** Which provisional items are `NEW`
-  is not known yet, so the delta agent walks the closure over TRANSFORMED plus
-  every provisional item — a superset of the final closure — recording
+- **Walked before attribution, pruned after.** The delta agent does not yet know
+  which provisional items are `NEW`. It walks the closure over TRANSFORMED plus
+  every provisional item, a superset of the final closure, and records
   dependencies among provisional items too. The attribution agent prunes it to
   the settled set per section 2D.
 
-Because the exclusion is deliberate and consequential, the queue must say so in
-its own header — an UNCHANGED Critical is still a Critical, and a reader who
-mistakes this file for "everything that needs fixing" will act on a partial
-list. State the count of excluded findings by disposition, and name any
-excluded Critical or High explicitly, so the omission is visible without
-opening the full delta.
+The queue must state this deliberate exclusion in its own header. An UNCHANGED
+Critical is still a Critical. A reader who mistakes this file for "everything that needs fixing"
+will act on a partial list. State the count of excluded findings by disposition.
+Name any excluded Critical or High explicitly, so the omission is visible
+without opening the full delta.
 
 **Subsystem ownership** follows the conventions skill's rule, for closure items
-as well as queued ones. Cross-subsystem dependencies do not duplicate ownership;
-record them in `Blocked by` or `Pulled in by`.
+as well as queued ones. Cross-subsystem dependencies do not duplicate ownership.
+Record them in `Blocked by` or `Pulled in by`.
 
-**Structure.** The base fields carry their conventions-skill meanings; the
+**Structure.** The base fields carry their conventions-skill meanings. The
 fields marked below are this mode's additions.
 
 ```markdown
@@ -524,17 +525,17 @@ an item number alone.
 
 **Rules.**
 
-- **TRANSFORMED entries carry their history.** The baseline location and what
-  moved are the useful part: a defect that survived one restructuring intact
-  will survive a careless second one. Say what was tried and what it did not fix.
+- **TRANSFORMED entries carry their history.** Record the baseline location and
+  what moved. A defect that survived one restructuring intact will survive a
+  careless second one. Say what was tried and what it did not fix.
 - **Counts must agree with the full delta.** The queue's NEW + TRANSFORMED item
   count equals `NEW + TRANSFORMED` from the Disposition Rollup. If it does not,
   the delta is wrong, not the queue. Closure items are counted and reported
   separately.
-- **Every closure item traces back.** Each one names at least one queued item
-  that pulled it in, and every `Blocked by` reference above resolves to a
-  closure item that exists. A closure item nothing depends on is scope creep —
-  remove it.
+- **Every closure item traces back.** Each item names at least one queued item
+  that pulled it in. Every `Blocked by` reference above resolves to an existing
+  closure item. Remove any closure item that nothing depends on. It is scope
+  creep.
 - A queue with no NEW or TRANSFORMED items has no closure either — the closure
   is derived from them. Still write the file and say what was excluded.
 
@@ -542,18 +543,19 @@ an item number alone.
 
 ## 6. Evidence and voice rules
 
-- **Every disposition carries evidence.** A command and its result, a
+- **Every disposition carries evidence.** Use a command and its result, a
   `path:line` with its content, or a quoted sentence from one of the reports.
-  Prefer the trees over the reports when they disagree, and say which you used.
+  Prefer the trees when they disagree with the reports. Say which source you
+  used.
 - **Quote, don't paraphrase, when citing a report's own words** — especially in
   Coverage/Limitations and Positive Observations.
-- **State the judgement calls as judgement calls.** Where a different reader
-  could reasonably classify an item differently, say so, say what they would be
-  reading differently, and say whether the totals would move.
-- **Never present a net count without its composition.** A net is a summary of
-  two flows, and on its own it routinely says the opposite of what happened.
-  This applies to severity bands, dimensions, totals, and any figure quoted in
-  prose. See section 3A.
+- **State the judgement calls as judgement calls.** If another reader could
+  reasonably classify an item differently, say so. State what they would read
+  differently and whether the totals would move.
+- **Never present a net count without its composition.** A net summarizes two
+  flows. Alone, it can routinely say the opposite of what happened. Apply this
+  rule to severity bands, dimensions, totals, and every figure quoted in prose.
+  See section 3A.
 - **No hedging on the headline.** If the codebase got better, say it got better.
   If a dimension regressed, bold it and name the count. Do not average an
   improvement and a regression into "mixed results."
@@ -561,8 +563,8 @@ an item number alone.
   revocation. If neither audit walked git history, say so and say the credential
   must still be treated as compromised.
 - **Flag partial evidence rather than leaving it silent.** When a disposition
-  rests on narrower evidence than the rest, add it under Comparison Limitations
-  with what would settle it.
+  rests on narrower evidence than the rest, add it under Comparison Limitations.
+  State what would settle it.
 - Plain declarative prose. No corporate softeners, no "leverage", no
   "significant" where a number belongs.
 
@@ -570,10 +572,10 @@ an item number alone.
 
 ## 7. Before finishing
 
-Completeness proofs only — the cross-cutting checks no single section above can
-establish on its own. The rules themselves are stated once, where they are
-defined; do not re-derive them from this list. The last item is the attribution
-agent's (section 2D); the rest are the delta agent's.
+Use this list only for completeness proofs. These cross-cutting checks do not
+belong to one section. The rules are stated once where they are defined. Do not
+re-derive them from this list. The last item belongs to the attribution agent
+(section 2D). The other items belong to the delta agent.
 
 - [ ] Both sides' arithmetic closes against their reports' stated totals
       (section 3), with every merge and split enumerated in Reconciliation.
@@ -583,13 +585,13 @@ agent's (section 2D); the rest are the delta agent's.
       Info Findings — Rollup".
 - [ ] Every shared `(file, enclosing symbol)` position was adjudicated
       (section 2B) and the calibration guard (2C) was evaluated.
-- [ ] The queue exists; its NEW + TRANSFORMED count equals the Disposition
-      Rollup's; every `Blocked by` reference resolves to a closure item that
-      exists; the closure was walked to a fixed point, and an empty closure is
-      stated rather than left silent.
-- [ ] Both source trees are unmodified; the two deliverables are the only files
+- [ ] The queue exists. Its NEW + TRANSFORMED count equals the Disposition
+      Rollup's. Every `Blocked by` reference resolves to an existing closure
+      item. The closure was walked to a fixed point. State an empty closure
+      rather than leaving it silent.
+- [ ] Both source trees are unmodified. The two deliverables are the only files
       written.
-- [ ] Every retained finding passed the audit finding truth gate; every omitted
+- [ ] Every retained finding passed the audit finding truth gate. Every omitted
       finding has an explicit upstream correction reflected in the delta and
       queue without modifying either source audit.
 - [ ] No provisional marking survives.

@@ -11,6 +11,15 @@ INSTRUCTION_ROOT = REPO_ROOT / "source_of_truth/instructions"
 
 REMOVED_AGENT_LABEL = "Feature - " + "Decomposer"
 REMOVED_AGENT_SLUG = "03-feature-" + "decomposer"
+RETIRED_PHASE_AGENTS = (
+    ("03a-feature-plan-" + "expander", "Feature - Plan " + "Expander"),
+    ("03j-reviewer-blast-" + "radius", "03j Reviewer - Blast " + "Radius"),
+    ("03k-reviewer-test-" + "falsification", "03k Reviewer - Test " + "Falsification"),
+    ("03l-reviewer-plan-" + "blind", "03l Reviewer - Plan " + "Blind"),
+    ("03m-finding-" + "consolidator", "03m Finding " + "Consolidator"),
+    ("03n-finding-" + "validator", "03n Finding " + "Validator"),
+    ("03p-feature-" + "fixer", "03p Feature - " + "Fixer"),
+)
 
 
 def _corpus_paths() -> list[Path]:
@@ -64,3 +73,23 @@ def test_agent_apply_to_globs_resolve_to_existing_agents() -> None:
     assert not unresolved, f"applyTo glob resolves to no source agent: {unresolved}"
 
 
+def test_retired_phase_agents_have_no_authored_consumers() -> None:
+    roots = (
+        REPO_ROOT / "source_of_truth",
+        REPO_ROOT / "USAGE.md",
+        REPO_ROOT / "docs/ARCHITECTURE.md",
+    )
+    paths = [
+        path
+        for root in roots
+        for path in ([root] if root.is_file() else root.rglob("*"))
+        if path.is_file() and path.suffix in {".md", ".json", ".py"}
+    ]
+    errors: list[str] = []
+    for slug, label in RETIRED_PHASE_AGENTS:
+        assert not (SOURCE_AGENT_ROOT / f"{slug}.agent.md").exists()
+        for path in paths:
+            text = path.read_text(encoding="utf-8")
+            if slug in text or label in text:
+                errors.append(f"{path.relative_to(REPO_ROOT)}: {slug}")
+    assert not errors, f"retired Phase agent reference remains: {errors}"

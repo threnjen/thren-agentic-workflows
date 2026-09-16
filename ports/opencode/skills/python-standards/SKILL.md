@@ -6,7 +6,7 @@ description: "The complete Python standard — hard rules plus depth: uv command
 
 # Python Standards
 
-Self-contained: the Rules section is the standard; everything after it is the why, the edge cases, and the one example per rule that earns its place.
+The Rules section is the standard. Later sections explain why and cover edge cases. They include one example per rule when that example earns its place.
 
 PAIRED ASSET: `instructions/python.instructions.md` carries the same rules for Cursor and Copilot, which reach them by file glob rather than by loading this skill. Change both together.
 
@@ -24,7 +24,7 @@ PAIRED ASSET: `instructions/python.instructions.md` carries the same rules for C
 
 ## uv
 
-One venv at `.venv/` in the repo root. Never activate it — `uv run` does.
+Use one virtual environment at `.venv/` in the repository root. Do not activate it. Run commands with `uv run`.
 
 | Task | Command |
 |---|---|
@@ -34,13 +34,13 @@ One venv at `.venv/` in the repo root. Never activate it — `uv run` does.
 | Add / remove a dependency | `uv add <pkg>` (`--dev`, `--optional <group>`) / `uv remove <pkg>` |
 | Inspect the venv | `uv pip list`, `which python` → `.venv/bin/python` |
 
-`uv add` edits `pyproject.toml` and updates `uv.lock`. Commit `uv.lock` — it is what makes `uv sync` reproducible across machines and CI.
+`uv add` edits `pyproject.toml` and updates `uv.lock`. Commit `uv.lock`. It makes `uv sync` reproducible across machines and CI.
 
 Force the editable reinstall after adding a package directory, changing `[tool.hatch.build]`, or adding an `__init__.py`.
 
 ## Packaging layout
 
-`sys.path` hacks are invisible to static analysis and break across environments. They are always a symptom of unregistered packages. When importable code lives in a subdirectory, declare it as the source root — note `sources` is a list of directories:
+`sys.path` hacks are invisible to static analysis and break across environments. They always indicate unregistered packages. When importable code lives in a subdirectory, declare that directory as the source root. `sources` is a list of directories:
 
 ```toml
 [build-system]
@@ -56,11 +56,11 @@ packages = ["src-python/db", "src-python/core"]
 
 ## Classes
 
-Justified by state, inheritance, or a shared interface. A class whose methods don't share state through `self` and has no polymorphic role is a module of functions. Applying this is a simplicity judgement — see [simplicity-review](../simplicity-review/SKILL.md) for the general form. An abstract base with two implementations is justified even with no instance state; a bag of static helpers is not.
+Use a class when it has state, inheritance, or a shared interface. Use a module of functions when a class's methods do not share state through `self` and the class has no polymorphic role. Treat the class choice as a simplicity judgment. See [simplicity-review](../simplicity-review/SKILL.md) for the general form. An abstract base with two implementations is justified even without instance state. Do not use a class as a bag of static helpers.
 
-If you are about to write `__init__` only to assign attributes, the answer is `@dataclass`.
+If `__init__` would only assign attributes, use `@dataclass`.
 
-No I/O or heavy computation in `__init__` — a constructor that reads a file cannot be tested or reused. Use a classmethod factory:
+Do not perform I/O or heavy computation in `__init__`. A constructor that reads a file cannot be tested or reused. Use a classmethod factory:
 
 ```python
 class Pipeline:
@@ -75,11 +75,11 @@ class Pipeline:
 
 ## Truthiness
 
-`if not value` catches `None`, `0`, `""`, `[]`, `{}` at once. That is correct only when all of them mean the same thing. It is wrong wherever `0` or `""` is a real value — `if not score` hides a score of zero. When the distinction matters: `if value is None`, `if len(items) == 0`, `if count == 0`.
+Use `if not value` when `None`, `0`, `""`, `[]`, and `{}` all mean the same thing. Do not use it when `0` or `""` is a real value. For example, `if not score` hides a score of zero. When the distinction matters, use `if value is None`, `if len(items) == 0`, or `if count == 0`.
 
 ## Comprehensions
 
-Use a generator when the full list isn't needed in memory: `sum(x**2 for x in large_sequence)`.
+Use a generator when you do not need the full list in memory: `sum(x**2 for x in large_sequence)`.
 
 Avoid more than one `for` clause in a comprehension. Extract a named generator function instead:
 
@@ -95,15 +95,15 @@ result = [f(x) for x in positive_values(matrix)]
 
 ## Import scope
 
-Relative imports within a package (`from .helpers import truncate`), absolute across packages (`from mypackage.config import Settings`). A `..` chain beyond two levels means the package structure needs flattening, not more dots.
+Use relative imports within a package (`from .helpers import truncate`) and absolute imports across packages (`from mypackage.config import Settings`). If a `..` chain exceeds two levels, flatten the package structure.
 
-Function-local imports are usually an attempt to dodge a circular import. Fix the cycle instead — extract the shared piece into a third module.
+Function-local imports usually try to avoid a circular import. Fix the cycle. Extract the shared piece into a third module.
 
-If `import *` already exists in a file, leave it; do not extend the pattern.
+If a file already contains `import *`, leave it. Do not extend the pattern.
 
 ## Global mutable state
 
-A module-level object that functions mutate as a side effect is a hidden dependency and untestable. Pass it in:
+A module-level object that functions mutate as a side effect creates a hidden dependency. Tests cannot isolate that dependency. Pass the object in:
 
 ```python
 def get(key: str, cache: dict) -> str:
@@ -113,7 +113,7 @@ def get(key: str, cache: dict) -> str:
 
 ## Context managers
 
-When you own a class that holds a resource, implement `__enter__`/`__exit__` rather than making callers remember cleanup. For the simple acquire/release case, `contextlib.contextmanager` beats a full class:
+When your class holds a resource, implement `__enter__`/`__exit__`. Do not make callers remember cleanup. For simple acquire and release, use `contextlib.contextmanager` instead of a full class:
 
 ```python
 @contextmanager
@@ -127,7 +127,7 @@ def managed_resource():
 
 ## Async
 
-Prefer an async-native library (`aiofiles`, `asyncpg`, `httpx`). When a blocking call is genuinely unavoidable, offload it — this is the only sanctioned escape hatch:
+Prefer an async-native library (`aiofiles`, `asyncpg`, `httpx`). When a blocking call is genuinely unavoidable, offload it. This is the only permitted exception:
 
 ```python
 loop = asyncio.get_running_loop()
@@ -136,9 +136,9 @@ result = await loop.run_in_executor(None, blocking_function, arg)
 
 ## Logging
 
-`print` has no severity, cannot be silenced or redirected without a code change, and does not reach log aggregators. `exc_info=True` captures the full traceback for free. Never configure logging inside a library — configuration belongs to the application entry point only.
+`print` has no severity. A caller cannot silence or redirect it without a code change, and log aggregators do not receive it. `exc_info=True` captures the full traceback for free. Do not configure logging inside a library. Configure logging at the application entry point only.
 
-Instrument densely. A module that logs only its errors tells you a run failed and nothing about why.
+Log every step. A module that logs only errors tells you that a run failed, but not why.
 
 ```python
 logger.debug("fetching order %s from %s", order_id, url)
@@ -146,8 +146,8 @@ resp = await client.get(url)
 logger.debug("order %s returned %s in %.3fs", order_id, resp.status_code, elapsed)
 ```
 
-Lazy `%s` args cost nothing when the level is off, so a DEBUG line on every step is free in production. Put the identifying values in the message — an id, a path, a count, a duration. Log the caught exception with `logger.exception(...)` or `exc_info=True`, and log the state that produced it in the same call. Redact secrets at the call site.
+Lazy `%s` args cost nothing when the log level is off. A DEBUG line on every step is free in production. Put identifying values in the message, such as an id, a path, a count, or a duration. Log the caught exception with `logger.exception(...)` or `exc_info=True`. Log the state that produced it in the same call. Redact secrets at the call site.
 
 ## Tests
 
-`uv run pytest`; `uv run pytest path/to/test.py -x` for a single file. TDD discipline and test-status reporting are governed by `test-execution-evidence.instructions.md`, not here.
+Use `uv run pytest` for the full suite. Use `uv run pytest path/to/test.py -x` for one file. The `test-execution-evidence.instructions.md` instruction governs TDD discipline and test-status reporting, not this skill.

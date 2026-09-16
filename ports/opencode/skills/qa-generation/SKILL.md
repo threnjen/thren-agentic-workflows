@@ -6,112 +6,140 @@ description: "Contract for generating a repository's two complementary QA docume
 
 # QA Generation
 
-Produce two documents for one repository, from whatever inputs were supplied
-(all optional except the repository root): existing user QA, manual QA
-writeups, acceptance inputs (SOW, plans, deliverables specs, pasted ACs), and
-scope notes. Default outputs: `docs/QA_AUTOMATED.md` and `docs/QA_USER.md`;
-when an existing user-facing QA path is supplied, update that file in place
-instead of creating `QA_USER.md`.
+Generate two documents for one repository. Accept the repository root and any
+supplied inputs. Inputs may include existing user QA, manual QA writeups,
+acceptance inputs (SOW, plans, deliverables specs, pasted ACs), and scope
+notes. All inputs are optional except the repository root. Use
+`docs/QA_AUTOMATED.md` and `docs/QA_USER.md` as the default outputs. When an
+existing user-facing QA path is supplied, update that file in place instead of
+creating `QA_USER.md`.
 
-**Audience separation is absolute.** Source inspection, dependency audits,
-build commands, automated tests, packaging, and security checks belong in
-QA_AUTOMATED. Observable installation and product workflows belong in
-QA_USER. Never merge the audiences or force symmetry.
+**Keep audiences separate.** Put source inspection, dependency audits, build
+commands, automated tests, packaging, and security checks in QA_AUTOMATED. Put
+observable installation and product workflows in QA_USER. Do not merge the
+audiences or force symmetry.
 
 ## Operating rules
 
-- Read-only with respect to production source: only the two QA documents and
-  a small discoverability link (README/docs index) may change.
-- Never claim a build, test, install, update, integration, or runtime
-  behavior passed unless directly observed.
-- Never put credentials, tokens, connection strings, PINs, or passwords in QA
-  documents or evidence examples; never use production resources without
+- Keep production source read-only. Limit changes to the two QA documents and,
+  when applicable, a small discoverability link (README/docs index).
+- Do not claim that a build, test, install, update, integration, or runtime
+  behavior passed unless you directly observe it.
+- Do not put credentials, tokens, connection strings, PINs, or passwords in QA
+  documents or evidence examples. Do not use production resources without
   explicit written approval.
-- Record low-risk assumptions; ask only when an unresolved choice materially
+- Record low-risk assumptions. Ask only when an unresolved choice materially
   changes scope or acceptance.
-- Use exact commands verified for the repository's toolchain — no generic
-  placeholders where the repo defines a supported command. Consult current
-  primary documentation for SDK/CLI-dependent commands.
-- For PDF acceptance sources, inspect rendered pages as well as extracted
-  text when layout or scope labels may affect meaning.
+- Use exact commands verified for the repository's toolchain. Do not use
+  generic placeholders where the repository defines a supported command.
+  Consult current primary documentation for SDK/CLI-dependent commands.
+- For PDF acceptance sources, inspect rendered pages and extracted text when
+  layout or scope labels may affect meaning.
 
 ## Phase 1 — Inventory
 
-Record branch/commit, languages, application type, platforms, entry points,
-active workflows (do not assume legacy code is active), main user and
-integration flows, test fixtures and their environment constraints, build/
-publish/installer/update/config/logging/recovery behavior, compatibility-
-sensitive boundaries (APIs, headers, file formats, storage, queues, auth,
-outputs), prerequisites vs bundled dependencies, and known limitations.
+Record the branch and commit, languages, application type, platforms, and entry
+points. Record active workflows. Do not assume legacy code is active. Record
+main user and integration flows, test fixtures, and their environment
+constraints. Record build/publish/installer/update/config/logging/recovery
+behavior, compatibility-sensitive boundaries (APIs, headers, file formats,
+storage, queues, auth, outputs), prerequisites versus bundled dependencies,
+and known limitations.
 
 ## Phase 2 — Atomic acceptance inventory
 
 Before drafting, build an internal inventory of atomic targets with stable
-source IDs (`MANUAL-00N`, `SOW-00N`, `PLAN-00N`, `REPO-00N`). Per target
-record: exact source wording; direct-repo vs sister-project vs excluded/
-conditional/unresolved; evidence type needed (static, automated, packaging,
-manual, live integration); implemented behavior and existing evidence; the
-planned QA_AUTOMATED check; the planned QA_USER check or why agent-only.
+source IDs (`MANUAL-00N`, `SOW-00N`, `PLAN-00N`, `REPO-00N`). For each target,
+record the following:
 
-Source hierarchy: signed SOW/contract ACs > approved plan/phase ACs > client
-deliverables spec > existing manual QA > repository-derived evidence. Never
-silently discard a conflict: preserve the legacy wording verbatim (Appendix
-A), state the corrected active expectation and why, map both, and flag a
-contractual acceptance risk when the correction conflicts with an
-authoritative SOW. Sister-project internals never become a direct pass/fail
-gate for this repository — cross-system handoff stays an integration
-checkpoint. Without SOW/plan inputs, label targets repository-derived; never
-invent contract terms.
+- exact source wording
+- direct-repo, sister-project, excluded, conditional, or unresolved scope
+- needed evidence type (static, automated, packaging, manual, live integration)
+- implemented behavior and existing evidence
+- planned QA_AUTOMATED check
+- planned QA_USER check or why the target is agent-only
+
+Apply this source hierarchy: signed SOW/contract ACs > approved plan/phase ACs
+> client deliverables spec > existing manual QA > repository-derived evidence.
+Do not silently discard a conflict. Preserve the legacy wording verbatim
+(Appendix A). State the corrected active expectation and its reason. Map both
+expectations. Flag a contractual acceptance risk when the correction conflicts
+with an authoritative SOW. Sister-project internals never become a direct
+pass/fail gate for this repository. Keep the cross-system handoff as an
+integration checkpoint. Without SOW/plan inputs, label targets
+repository-derived. Do not invent contract terms.
 
 ## Phase 3 — QA_AUTOMATED
 
-The document's **first line after the title** is a machine-readable verdict
-line, exactly `VERDICT: NOT RUN` at generation time. An execution run
-rewrites it to `VERDICT: PASS` or `VERDICT: FAIL` (matching the Run results
-section's `FINAL VALIDATION`); downstream gates read only this line, so it
-appears exactly once.
+Place a machine-readable verdict line as the document's **first line after the
+title**. Set it to exactly `VERDICT: NOT RUN` at generation time. During an
+execution run, rewrite it to `VERDICT: PASS` or `VERDICT: FAIL`. Match the
+`Run results` section's `FINAL VALIDATION`. Downstream gates read only this
+line. Include it exactly once.
 
-Self-contained runbook containing: purpose/audience; acceptance sources and
-authority; scope, boundaries, exclusions; result vocabulary (PASS, FAIL,
-BLOCKED, NOT RUN, N/A) and final acceptance rules stating which unresolved
-statuses prevent signoff; a run-evidence header (commit, branch, environment,
-toolchain, version, approved test resources, test data, evidence location);
-safety/redaction rules; numbered stable `AG-QA-NNN` checks covering:
-repository and dependency scans; build/warning/analyzer/test/coverage gates;
-packaging, installer, signing, fresh-install, and update checks where
-applicable; auth/config/selection checks; every primary workflow with
-positive, negative, progress, recovery, and handoff paths; background work,
-resume, cancel, retry, cleanup, retention, diagnostics; compatibility
-boundaries; operations/maintenance/limitations; documentation and
-client-package completeness gates; a final verification-summary requirement;
-and a traceability matrix mapping every applicable target to one or more
-checks. Each check states the setup or command, exact expected result,
-required evidence, whether static evidence is insufficient, and how to
-classify blockers or cross-system failures. Never write a specific test,
-file, or item total into an expected result — a suite passes on a
-successful exit code with zero failures, not on matching a number that
-grows every time someone adds a test. Include a **Run results** section
-(initially "not yet run") where an execution run records per-check status and
-the overall result.
+Make the runbook self-contained. Include the following:
+
+- purpose and audience
+- acceptance sources and authority
+- scope, boundaries, and exclusions
+- result vocabulary (PASS, FAIL, BLOCKED, NOT RUN, N/A)
+- final acceptance rules that state which unresolved statuses prevent signoff
+- a run-evidence header (commit, branch, environment, toolchain, version,
+  approved test resources, test data, and evidence location)
+- safety/redaction rules
+
+Use numbered stable `AG-QA-NNN` checks. Cover the following:
+
+- repository and dependency scans
+- build, warning, analyzer, test, and coverage gates
+- packaging, installer, signing, fresh-install, and update checks where
+  applicable
+- auth, config, and selection checks
+- every primary workflow with positive, negative, progress, recovery, and
+  handoff paths
+- background work, resume, cancel, retry, cleanup, retention, and diagnostics
+- compatibility boundaries
+- operations, maintenance, and limitations
+- documentation and client-package completeness gates
+- a final verification-summary requirement
+- a traceability matrix mapping every applicable target to one or more checks
+
+Each check must state its setup or command, exact expected result, and required
+evidence. Each check must state whether static evidence is insufficient. Each
+check must define blocker and cross-system failure classification. Do not write
+a specific test, file, or item total into an expected result. A suite passes on
+a successful exit code with zero failures. Do not require a number that grows
+when someone adds a test. Include a **Run results** section. Set it initially to
+"not yet run". During an execution run, record per-check status and the overall
+result.
 
 ## Phase 4 — QA_USER
 
-Executable by a non-developer: plain-language purpose and scope; product vs
-sister-system distinction; Pass/Fail/Blocked definitions; a test record
-(tester, date, environment, version, account, evidence, overall result); a
-no-secrets warning; prerequisites and representative-test-data checklist;
-numbered stable `QA-NNN` checks covering installation and update, auth and
-authorization, every normal workflow with concrete actions and visible
-expected results, negative/error cases, responsiveness and recovery,
-cancel/retry/resume where implemented, end-to-end receiving-system checks
-(with sender-vs-receiver defect guidance), maintenance/reinstall/known
-limitations/out-of-scope statements, delivery-documentation checks, and a
-final signoff table.
+Make QA_USER executable by a non-developer. Include the following:
 
-**Check template (mandatory shape, mechanically verified downstream).**
-Prerequisites/test-data items are unchecked checkbox lines (`- [ ]`). Every
-check follows exactly this shape — numbered action steps, then every
-observable expected result as its own checkbox:
+- plain-language purpose and scope
+- product versus sister-system distinction
+- Pass/Fail/Blocked definitions
+- a test record (tester, date, environment, version, account, evidence, and
+  overall result)
+- a no-secrets warning
+- prerequisites and representative-test-data checklist
+- numbered stable `QA-NNN` checks covering:
+  - installation and update
+  - auth and authorization
+  - every normal workflow with concrete actions and visible expected results
+  - negative/error cases
+  - responsiveness and recovery
+  - cancel/retry/resume where implemented
+  - end-to-end receiving-system checks (with sender-vs-receiver defect guidance)
+  - maintenance/reinstall/known limitations/out-of-scope statements
+  - delivery-documentation checks
+  - a final signoff table
+
+**Check template (mandatory shape, mechanically verified downstream).** Use this
+shape for every check. Write prerequisite and test-data items as unchecked
+checkbox lines (`- [ ]`). Write numbered action steps first. Write every
+observable expected result as its own checkbox.
 
 ```markdown
 ### QA-NN - Title
@@ -129,50 +157,67 @@ Status: Pass / Fail / Blocked
 Evidence or issue:
 ```
 
-Write every box unchecked; the tester marks `- [x]` only after observing
-that result. Checkboxes appear **only** on prerequisite items and expected
-results — never on headings, notes, or appendix material — because
-downstream gates treat any remaining `[ ]` in QA_USER as "manual QA not
-complete". Never use the inline-prose alternative (`**Expected:** ...` with
-a `Result: ______` line) — it defeats the mechanical completeness check.
+Write every box unchecked. The tester marks `- [x]` only after observing that
+result. Use checkboxes **only** on prerequisite items and expected results. Do
+not use them on headings, notes, or appendix material. Downstream gates treat
+any remaining `[ ]` in QA_USER as "manual QA not complete". Do not use the
+inline-prose alternative (`**Expected:** ...` with a `Result: ______` line).
+It defeats the mechanical completeness check.
 
 ## Phase 5 — Appendix A (original manual QA)
 
-When any original manual QA writeup exists, append "Appendix A - Original
-manual QA checklist" to QA_USER reproducing every original heading and
-question verbatim in original order — no silent fixes — followed by labeled
-notes for any legacy wording whose active expectation was corrected. Original
-and appendix question counts must match exactly. Omit only when no original
-writeup exists.
+If any original manual QA writeup exists, append "Appendix A - Original manual QA checklist"
+to QA_USER. Reproduce every original heading and question
+verbatim and in original order. Do not apply silent fixes. Add labeled notes
+for legacy wording whose active expectation was corrected. Keep the original
+and appendix question counts exactly equal. Omit Appendix A only when no
+original writeup exists.
 
 ## Phase 6 — Appendix B (target traceability)
 
-Append "Appendix B - QA target traceability" to QA_USER: one row per atomic
-manual target and per directly applicable SOW/plan criterion, columns
-`Target ID | Source | Original target | Scope | QA_AUTOMATED coverage |
-QA_USER coverage`, linking to exact check headings via stable relative
-anchors. Use "Agent-only" for non-user-observable targets, "Integration
-boundary" for cross-system handoffs, "N/A - sister project" only with a
-reason. No grouping of unrelated targets, no blank cells, no "covered
-elsewhere".
+Append "Appendix B - QA target traceability" to QA_USER. Add one row per atomic
+manual target and per directly applicable SOW/plan criterion. Use these
+columns: `Target ID | Source | Original target | Scope | QA_AUTOMATED coverage |
+QA_USER coverage`. Link each row to exact check headings through stable
+relative anchors. Use "Agent-only" for non-user-observable targets. Use
+"Integration boundary" for cross-system handoffs. Use "N/A - sister project"
+only with a reason. Do not group unrelated targets. Do not leave blank cells.
+Do not write "covered elsewhere".
 
 ## Phase 7 — Cross-check
 
-Verify: every direct target maps to ≥1 AG-QA check; every user-observable
-target maps to ≥1 QA_USER check; Appendix A verbatim and counts; Appendix B
-completeness; sister-project separation; prerequisites vs bundled deps;
-static evidence not claiming live behavior; commands/paths/counts match the
-repository; Markdown structure, anchors, and IDs valid. Verify mechanically
-(grep, not judgment): QA_AUTOMATED contains exactly one `VERDICT:` line,
-reading `VERDICT: NOT RUN`, as the first line after the title; QA_USER
-contains at least one unchecked `- [ ]` box and no inline `Result: ___`
-prose forms. Add a
-discoverability link from the docs index or README when one exists.
+Run these cross-checks:
+
+- Map every direct target to ≥1 AG-QA check.
+- Map every user-observable target to ≥1 QA_USER check.
+- Preserve Appendix A verbatim and match its counts.
+- Complete Appendix B.
+- Keep sister-project scope separate.
+- Distinguish prerequisites from bundled dependencies.
+- Ensure static evidence does not claim live behavior.
+- Match commands, paths, and counts to the repository.
+- Validate Markdown structure, anchors, and IDs.
+
+Run these checks mechanically with grep, not judgment:
+
+- QA_AUTOMATED contains exactly one `VERDICT:` line reading `VERDICT: NOT RUN`
+  as the first line after the title.
+- QA_USER contains at least one unchecked `- [ ]` box and no inline `Result: ___`
+  prose forms.
+
+Add a discoverability link from the docs index or README when one exists.
 
 ## Report
 
-Return: both output paths; AG-QA and QA_USER check counts; preserved original
-question count; traceability row count; the most important scope separation
-or corrected legacy expectation; validation performed; any check blocked by a
-missing source, platform, credential, or environment. Never claim the product
-passed QA — this skill produces the specification only.
+Return the following:
+
+- both output paths
+- AG-QA and QA_USER check counts
+- preserved original question count
+- traceability row count
+- the most important scope separation or corrected legacy expectation
+- validation performed
+- any check blocked by a missing source, platform, credential, or environment
+
+Do not claim that the product passed QA. This skill produces the specification
+only.
