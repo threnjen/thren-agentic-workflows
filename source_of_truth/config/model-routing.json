@@ -9,8 +9,8 @@
       "reasoning_effort": "high"
     },
     "opencode": {
-      "model": "opencode-go/deepseek-v4-flash",
-      "reasoning_effort": "medium"
+      "model": "opencode-go/deepseek-v4.1-flash",
+      "reasoning_effort": "high"
     },
     "cursor": {
       "model": "grok-4.6",
@@ -30,7 +30,7 @@
       "reasoning_effort": "max"
     },
     "opencode": {
-      "model": "opencode-go/deepseek-v4-flash",
+      "model": "opencode-go/deepseek-v4.1-flash",
       "reasoning_effort": "high"
     },
     "cursor": {
@@ -51,8 +51,8 @@
       "reasoning_effort": "medium"
     },
     "opencode": {
-      "model": "opencode-go/deepseek-v4-pro",
-      "reasoning_effort": "high"
+      "model": "opencode-go/deepseek-v4.1-flash",
+      "reasoning_effort": "xhigh"
     },
     "cursor": {
       "model": "grok-4.6",

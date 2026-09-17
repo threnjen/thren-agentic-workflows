@@ -1,6 +1,6 @@
 ---
 description: "Reviews an implementation for plan conformance and executed test evidence, then repairs what it finds in one round."
-model: opencode-go/deepseek-v4-flash
+model: opencode-go/deepseek-v4.1-flash
 reasoningEffort: high
 mode: subagent
 hidden: true

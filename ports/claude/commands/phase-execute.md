@@ -93,15 +93,20 @@ The reviewer gets one review-and-repair pass. Never spawn it twice for the same 
 
 Run the affected suites yourself after the reviewer returns. Do not treat a reviewer report as test evidence.
 
-Emit the review checkpoint from `implementation-pipeline-loop`.
-
 ##### D. Integration test gate
 
 Run the selected feature's affected suites and manifest verification assets. Run the full suite for the final feature.
 
 Record `executed-green`, `executed-failing`, or `not-executed (<reason>)` with the exact command, results artifact, and counts.
 
-An `executed-failing` result is always a production blocker. Leave the feature incomplete. The pipeline must block every dependent feature.
+On the first `executed-failing` result, spawn **z-feature-implementer** once in `gate-remediation` mode.
+Give it the plan, delta, manifest, implementation record, review record, exact failing test names, command, artifact, and counts.
+The implementer may repair only root causes that explain those failures. Do not spawn the reviewer again.
+
+After the implementer returns, run the named failures first. If they pass, rerun the full integration command.
+Never open a second gate-remediation pass.
+
+If any rerun fails, record `executed-failing` as a production blocker. Leave the feature incomplete. Block every dependent feature.
 
 A `not-executed` result is a verification blocker. Record `implementation-complete, verification-pending`. Set `all-approved: no`. Continue only work that does not require the missing evidence.
 
@@ -113,7 +118,7 @@ Apply the direct-supervisor-attestation exception only when its instruction perm
 
 There is no exempt test. Do not delete a test. Do not skip a test. Do not weaken a test to reach green.
 
-Do not remediate here. The implementer and reviewer already owned repair.
+Emit the review checkpoint from `implementation-pipeline-loop` after the gate closes. Include any gate-remediation changes.
 
 Before continuing an independent feature after a production blocker, restore the pre-feature green state. Use a recorded revert commit for the feature checkpoints. Rerun the authoritative suite. Never rewrite branch history. Halt when the state cannot be restored.
 

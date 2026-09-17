@@ -1,6 +1,6 @@
 ---
 description: "Reviews changed tests for failure power and reports supplied coverage evidence for one confirmed local range."
-model: opencode-go/deepseek-v4-flash
+model: opencode-go/deepseek-v4.1-flash
 reasoningEffort: high
 mode: subagent
 hidden: true

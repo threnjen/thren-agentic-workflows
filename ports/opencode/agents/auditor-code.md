@@ -1,7 +1,7 @@
 ---
 description: "Audits source code for quality, security, readability, DRY, type hints, and dependencies. Produces a structured findings report."
-model: opencode-go/deepseek-v4-pro
-reasoningEffort: high
+model: opencode-go/deepseek-v4.1-flash
+reasoningEffort: xhigh
 mode: subagent
 hidden: true
 permission:

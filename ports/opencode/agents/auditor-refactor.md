@@ -1,7 +1,7 @@
 ---
 description: "Audits codebase structure and architecture — module organization, coupling, cohesion, and separation of concerns. Produces a structured findings report."
-model: opencode-go/deepseek-v4-pro
-reasoningEffort: high
+model: opencode-go/deepseek-v4.1-flash
+reasoningEffort: xhigh
 mode: subagent
 hidden: true
 permission:

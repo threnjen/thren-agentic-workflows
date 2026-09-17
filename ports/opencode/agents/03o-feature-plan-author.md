@@ -1,7 +1,7 @@
 ---
 description: "Owns Phase feature plans, selection deltas, the prerequisite graph, and the execution manifest."
-model: opencode-go/deepseek-v4-pro
-reasoningEffort: high
+model: opencode-go/deepseek-v4.1-flash
+reasoningEffort: xhigh
 mode: subagent
 hidden: true
 permission:

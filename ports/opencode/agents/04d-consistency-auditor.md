@@ -1,6 +1,6 @@
 ---
 description: "Detects convention drift introduced by a branch and recommends canonical forms."
-model: opencode-go/deepseek-v4-flash
+model: opencode-go/deepseek-v4.1-flash
 reasoningEffort: high
 mode: subagent
 hidden: true

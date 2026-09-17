@@ -335,8 +335,10 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
             phase,
             (
                 "one review-and-repair pass",
-                "always a production blocker",
-                "block every dependent feature",
+                "once in `gate-remediation` mode",
+                "Never open a second gate-remediation pass",
+                "If any rerun fails",
+                "Block every dependent feature",
                 "recorded revert commit",
                 "There is no exempt test",
             ),

@@ -33,6 +33,7 @@ Never infer the pipeline from files on disk.
 4. **Scope and non-goals** — derive both from the plan.
 5. **Environment State** — read it from the Phase manifest or the Audit/Test context file.
 6. **Optional AC scope** — implement only named AC labels when the orchestrator supplies them.
+7. **Optional gate remediation** — the orchestrator supplies `mode: gate-remediation`, both feature records, and exact failure evidence.
 
 ### Sibling Feature Awareness
 
@@ -62,6 +63,8 @@ Re-check every skill you load here in the Pre-Handoff Self-Check (step F5).
 ### Pre-Implementation: Test Baseline
 
 Establish the test baseline before any code change. This gate is mandatory.
+
+In `gate-remediation` mode, use the supplied failing gate as the pre-pass state. Skip Step 0 and continue to Gate Remediation Mode.
 
 **Step 0: Establish Test Baseline**
 
@@ -107,6 +110,19 @@ The authoritative runner cannot run here when the runner is missing, the project
 When an implementation record already exists from an earlier AC-scoped pass, preserve its original feature-level baseline.
 Treat the current test run as this invocation's pre-pass state.
 Update the record's final result to the post-pass state once the requested AC scope is complete.
+
+### Gate Remediation Mode
+
+Run this mode only when the orchestrator supplied exact failure evidence after the feature review.
+
+1. Reproduce every named failure.
+2. Trace each root cause through the feature changes and every affected caller.
+3. Repair only root causes that explain the named failures.
+4. Run the named failures once after repair. If they pass, run the supplied full gate once.
+5. Update the cumulative file tables and final test evidence in the implementation record.
+
+Do not add acceptance criteria or perform unrelated cleanup. Never delete, skip, or weaken a test.
+Return after this mode. Do not enter sections A through F.
 
 ### A. Traceability-First Mapping
 

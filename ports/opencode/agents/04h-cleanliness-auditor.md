@@ -1,6 +1,6 @@
 ---
 description: "Checks branch-added code for temporary artifacts, duplication, dead code, mixed concerns, and oversized modules."
-model: opencode-go/deepseek-v4-flash
+model: opencode-go/deepseek-v4.1-flash
 reasoningEffort: high
 mode: subagent
 hidden: true
