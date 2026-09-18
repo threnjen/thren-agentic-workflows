@@ -26,6 +26,7 @@ Phase - Execute supplies the following inputs:
 - The run mode: `initial`, `select`, or `revalidate`.
 - On `select`: the selected feature and the manifest's current validation commit.
 - On `revalidate`: the completed feature, its implementation record, review evidence, affected future features, and downstream dependents.
+- On `revalidate` of an adopted manifest: this run's Feature - Implementer `resolution_status`.
 
 Load the `feature-plan-set` skill before you write anything. It holds the canonical Lightweight Plan shape, Plan Template, Concrete Name Rule, Integration Feature Rule, Decomposition Rules, manifest field contract, and Quality Checklist. Follow those templates exactly.
 
@@ -101,8 +102,9 @@ On a `revalidate` run, do not rebuild the phase. Do not rewrite plan files. Read
 1. Read the completed feature's implementation record, its review evidence, and the tree as it now stands.
 2. Update manifest fields for each affected future feature and each downstream dependent. Update no other feature.
 3. Update each affected entry's `stale_reason` and `last_validation_commit`.
-4. Recompute the graph and order after every completed feature.
-5. Record every reorder, split, merge, or delay with evidence. Name the changed file, symbol, acceptance criterion, or prerequisite edge in that evidence.
+4. When Phase - Execute supplies a `resolution_status`, write it to `resolved_model_status` on every incomplete entry. Write no other field outside the affected entries.
+5. Recompute the graph and order after every completed feature.
+6. Record every reorder, split, merge, or delay with evidence. Name the changed file, symbol, acceptance criterion, or prerequisite edge in that evidence.
 
 A changed prerequisite edge can mark another entry stale. Repeat until the stale set empties and the order stops moving. Limit the work to five graph rounds per completed feature. Stop and report when the graph does not settle.
 

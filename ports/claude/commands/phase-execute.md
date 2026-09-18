@@ -26,10 +26,13 @@ Before asking anything, verify the Phase document. Before asking anything, locat
 Ask one opening question block that covers:
 
 - Offer optional `low`, `medium`, and `high` model overrides.
+- Offer `run: plan-only | full`. Use `full` as the default.
 - Offer `qa: yes | no`. Use `no` as the default.
 - Offer resume or restart only when the manifest has an in-progress feature and relevant uncommitted implementation files exist.
 
 A clean interrupted run resumes automatically from the first incomplete durable checkpoint. Do not add a resume choice for it.
+
+A `plan-only` run writes the feature plans, the manifest, and the first feature's delta. Then it stops. A later `full` run adopts those artifacts and starts at implementation. Do not add a resume choice for that handoff. A `plan-only` run ignores the `qa` choice.
 
 Do not ask any later scope, configuration, or routine workflow question. The shared Departure Preflight, a safety boundary, or an external blocker may still require a question.
 
@@ -59,6 +62,8 @@ Initial mode must write the following artifacts:
 
 When the manifest exists, adopt it. Do not decompose the Phase again.
 
+An adopted manifest may record another run's model route. Give this run's z-feature-implementer `resolution_status` to the author at the next `revalidate` spawn.
+
 Verify that every entry contains `status`, `execution_order`, `prerequisites`, `expected_read_set`, `expected_write_set`, `plan_revision`, `last_validation_commit`, `stale_reason`, and `resolved_model_status`. Re-spawn the author once if the output is malformed.
 
 Reject an unexplained departure from the Phase document. Preserve every `[PROPOSED - name TBD]` label. Treat each label as known risk.
@@ -75,7 +80,17 @@ Execute one feature at a time in manifest order. Select the first ready feature 
 
 Spawn **z-feature-plan-author** in `select` mode with the selected feature, its plan, the manifest, and the current validation commit.
 
+Skip the `select` spawn when the adopted selection is current. The adopted selection is current when all of these conditions hold:
+
+- The selected feature's `-delta.md` exists.
+- The selected feature has no implementation record.
+- The manifest's validation commit for the selected feature equals the current `HEAD` commit.
+
+When any condition fails, spawn `select` mode. The author replaces the old delta.
+
 Selection must write exactly one `-delta.md`. Selection may patch only the selected plan. It may patch that plan only when verified source contradicts that plan. Verify the plan, delta, and manifest before implementation.
+
+On a `plan-only` run, stop here. Run no later step. Report the manifest path, every plan path, and the delta path. Tell the user to run Phase - Execute again with `run: full` to implement.
 
 ### B. Implement
 

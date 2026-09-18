@@ -75,7 +75,12 @@ def test_phase_has_no_close_review_fleet() -> None:
 def test_opening_interaction_is_one_block_with_conditional_resume() -> None:
     text = _read(PHASE_PATH)
     section = text.split("## Opening Interaction", 1)[1].split("## Step 1:", 1)[0]
-    for token in ("model overrides", "qa: yes | no", "relevant uncommitted implementation files"):
+    for token in (
+        "model overrides",
+        "run: plan-only | full",
+        "qa: yes | no",
+        "relevant uncommitted implementation files",
+    ):
         assert token in section
     assert "A clean interrupted run resumes automatically" in section
     assert "Departure Preflight" in section
@@ -96,6 +101,23 @@ def test_phase_uses_plan_delta_and_manifest_only() -> None:
     assert "no `-context.md`, `-tasks.md`, or `-delta.md` files" in schedule
     assert "exactly one `-delta.md`" in selection
     assert "only when verified source contradicts" in selection
+
+
+def test_plan_only_run_stops_before_implementation_and_full_run_adopts_it() -> None:
+    text = _read(PHASE_PATH)
+    opening = text.split("## Opening Interaction", 1)[1].split("## Step 1:", 1)[0]
+    selection = text.split("### A. Select and Discover", 1)[1].split("### B.", 1)[0]
+    assert "Use `full` as the default" in opening
+    assert "Do not add a resume choice for that handoff" in opening
+    assert "Skip the `select` spawn when the adopted selection is current" in selection
+    for condition in (
+        "`-delta.md` exists",
+        "has no implementation record",
+        "equals the current `HEAD` commit",
+    ):
+        assert condition in selection
+    assert "When any condition fails, spawn `select` mode" in selection
+    assert "On a `plan-only` run, stop here. Run no later step." in selection
 
 
 def test_feature_loop_is_bounded_and_blocks_regressions() -> None:
