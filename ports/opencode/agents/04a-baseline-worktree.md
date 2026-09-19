@@ -1,7 +1,7 @@
 ---
 description: "Creates or reuses a clean detached worktree at a caller-specified local baseline commit and returns its absolute path."
-model: opencode-go/deepseek-v4-flash
-reasoningEffort: medium
+model: opencode-go/deepseek-v4.1-flash
+reasoningEffort: high
 mode: subagent
 hidden: true
 permission:

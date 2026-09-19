@@ -9,10 +9,30 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PHASE_PATH = REPO_ROOT / "source_of_truth/agents/03-phase-execute.agent.md"
+IMPLEMENTER_PATH = REPO_ROOT / "source_of_truth/agents/03b-feature-implementer.agent.md"
+LOOP_PATH = REPO_ROOT / "source_of_truth/skills/implementation-pipeline-loop/SKILL.md"
 
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def _gate_remediation_wiring_errors(loop: str, implementer: str) -> set[str]:
+    errors: set[str] = set()
+    if (
+        "**Phase**" not in loop
+        or "once in `gate-remediation` mode" not in loop
+        or "A failed rerun blocks the feature and its dependents" not in loop
+    ):
+        errors.add("phase loop invokes bounded remediation")
+    if (
+        "### Gate Remediation Mode" not in implementer
+        or "Reproduce every named failure" not in implementer
+        or "run the supplied full gate once" not in implementer
+        or "Return after this mode" not in implementer
+    ):
+        errors.add("implementer handles gate remediation")
+    return errors
 
 
 REMOVED_PHASE_AGENTS = (
@@ -55,7 +75,12 @@ def test_phase_has_no_close_review_fleet() -> None:
 def test_opening_interaction_is_one_block_with_conditional_resume() -> None:
     text = _read(PHASE_PATH)
     section = text.split("## Opening Interaction", 1)[1].split("## Step 1:", 1)[0]
-    for token in ("model overrides", "qa: yes | no", "relevant uncommitted implementation files"):
+    for token in (
+        "model overrides",
+        "run: plan-only | full",
+        "qa: yes | no",
+        "relevant uncommitted implementation files",
+    ):
         assert token in section
     assert "A clean interrupted run resumes automatically" in section
     assert "Departure Preflight" in section
@@ -78,16 +103,67 @@ def test_phase_uses_plan_delta_and_manifest_only() -> None:
     assert "only when verified source contradicts" in selection
 
 
+def test_plan_only_run_stops_before_implementation_and_full_run_adopts_it() -> None:
+    text = _read(PHASE_PATH)
+    opening = text.split("## Opening Interaction", 1)[1].split("## Step 1:", 1)[0]
+    selection = text.split("### A. Select and Discover", 1)[1].split("### B.", 1)[0]
+    assert "Use `full` as the default" in opening
+    assert "Do not add a resume choice for that handoff" in opening
+    assert "Skip the `select` spawn when the adopted selection is current" in selection
+    for condition in (
+        "`-delta.md` exists",
+        "has no implementation record",
+        "equals the current `HEAD` commit",
+    ):
+        assert condition in selection
+    assert "When any condition fails, spawn `select` mode" in selection
+    assert "On a `plan-only` run, stop here. Run no later step." in selection
+
+
 def test_feature_loop_is_bounded_and_blocks_regressions() -> None:
     text = _read(PHASE_PATH)
     review = text.split("### C. Review and Repair Once", 1)[1].split("### D.", 1)[0]
     gate = text.split("##### D. Integration test gate", 1)[1].split("##### E.", 1)[0]
     assert "one review-and-repair pass" in review
     assert "Never spawn it twice" in review
-    assert "always a production blocker" in gate
-    assert "block every dependent feature" in gate
+    assert "once in `gate-remediation` mode" in gate
+    assert "exact failing test names" in gate
+    assert "Do not spawn the reviewer again" in gate
+    assert "run the named failures first" in gate
+    assert "If they pass, rerun the full integration command" in gate
+    assert "Never open a second gate-remediation pass" in gate
+    assert "If any rerun fails" in gate
+    assert "Block every dependent feature" in gate
     assert "recorded revert commit" in gate
     assert "Never rewrite branch history" in gate
+
+
+def test_gate_remediation_is_wired_to_the_implementer() -> None:
+    errors = _gate_remediation_wiring_errors(_read(LOOP_PATH), _read(IMPLEMENTER_PATH))
+    assert not errors, sorted(errors)
+
+
+def test_gate_remediation_wiring_mutations_are_killed() -> None:
+    loop = _read(LOOP_PATH)
+    implementer = _read(IMPLEMENTER_PATH)
+
+    mutated_loop = loop.replace(
+        "once in `gate-remediation` mode",
+        "without a remediation mode",
+        1,
+    )
+    assert "phase loop invokes bounded remediation" in _gate_remediation_wiring_errors(
+        mutated_loop, implementer
+    )
+
+    mutated_implementer = implementer.replace(
+        "### Gate Remediation Mode",
+        "### Generic Repair Mode",
+        1,
+    )
+    assert "implementer handles gate remediation" in _gate_remediation_wiring_errors(
+        loop, mutated_implementer
+    )
 
 
 def test_optional_qa_and_documentation_gates_are_explicit() -> None:

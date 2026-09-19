@@ -1,7 +1,7 @@
 ---
 description: "Inventories dependencies added by a branch and reports supply-chain and duplication risks."
-model: opencode-go/deepseek-v4-pro
-reasoningEffort: high
+model: opencode-go/deepseek-v4.1-flash
+reasoningEffort: xhigh
 mode: subagent
 hidden: true
 permission:

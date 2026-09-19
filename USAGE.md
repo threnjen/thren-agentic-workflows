@@ -125,7 +125,7 @@ Step 4: 04 Phase - Final Checks          → Readiness report on what you wrote
 
 The refined Phase document from Step 2 contains detailed scope, requirements, and acceptance criteria — enough to implement directly. When you're ready for validation, run **04 Phase - Final Checks** to get a readiness verdict on your diff.
 
-**Tip:** The refined Phase document contains the scope and acceptance criteria. Use **03 Phase - Execute** when you want the agent to create the feature schedule and run the implementation pipeline.
+**Tip:** The refined Phase document contains the scope and acceptance criteria. Use **03 Phase - Execute** when you want the agent to create the feature schedule and run the implementation pipeline. Answer `run: plan-only` at the opening question to stop after the feature plans, the manifest, and the first feature's delta. Run the agent again, on any model, and it starts at implementation.
 
 ---
 

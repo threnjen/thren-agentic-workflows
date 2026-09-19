@@ -1,7 +1,7 @@
 ---
 description: "Final pre-production gate — cross-validates all pipeline documents across every feature in a phase and produces a go/no-go readiness assessment."
-model: opencode-go/deepseek-v4-pro
-reasoningEffort: high
+model: opencode-go/deepseek-v4.1-flash
+reasoningEffort: xhigh
 mode: subagent
 hidden: true
 permission:

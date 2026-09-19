@@ -71,8 +71,20 @@ def _phase_execute_errors(section: str) -> set[str]:
         or "supervisor-attested (no artifact exported)" not in section
     ):
         errors.add("supervisor attestation")
-    if "do not remediate here" not in lower:
-        errors.add("no orchestrator repair round")
+    if (
+        "once in `gate-remediation` mode" not in normalized
+        or "exact failing test names" not in normalized
+        or "Do not spawn the reviewer again" not in normalized
+        or "Never open a second gate-remediation pass" not in normalized
+    ):
+        errors.add("bounded gate remediation")
+    if (
+        "run the named failures first" not in lower
+        or "If they pass, rerun the full integration command" not in normalized
+        or "If any rerun fails" not in normalized
+        or "Block every dependent feature" not in normalized
+    ):
+        errors.add("failed-remediation hard stop")
     return errors
 
 
@@ -182,6 +194,16 @@ def test_consumers_do_not_duplicate_canonical_mechanics() -> None:
             "skips the preferred command",
             "decline or unattended fallback",
         ),
+        (
+            "Never open a second gate-remediation pass",
+            "Open another gate-remediation pass",
+            "bounded gate remediation",
+        ),
+        (
+            "If any rerun fails",
+            "If every rerun passes",
+            "failed-remediation hard stop",
+        ),
     ],
 )
 def test_phase_execute_mutations_are_killed(
@@ -245,5 +267,3 @@ def test_canonical_mechanics_duplication_mutations_are_killed() -> None:
     assert "unity_reviewer duplicates editor discovery" in _duplication_errors(
         discovery_mutation
     )
-
-

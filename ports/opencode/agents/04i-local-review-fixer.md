@@ -1,7 +1,7 @@
 ---
 description: "Applies one bounded repair pass to confirmed local-review findings without requiring phase artifacts."
-model: opencode-go/deepseek-v4-pro
-reasoningEffort: high
+model: opencode-go/deepseek-v4.1-flash
+reasoningEffort: xhigh
 mode: subagent
 hidden: true
 permission:
