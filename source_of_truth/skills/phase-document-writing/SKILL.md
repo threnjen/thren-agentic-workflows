@@ -21,7 +21,7 @@ Each `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` must include:
 
 ## What's New
 
-[Write a brief summary of changes or new features introduced in this phase. Focus this section on users. Use natural language to explain practical impact, not technical details. Include context that explains why these changes matter to the end user.]
+[Write a brief summary of what this phase adds. State what the user can do after the phase that the user cannot do today. Focus this section on users. Use natural language to explain practical impact, not technical details. Include context that explains why these changes matter to the end user.]
 
 ## Problem
 
@@ -79,6 +79,10 @@ Each `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` must include:
 ```markdown
 # Project Roadmap: [Project Name]
 
+## Where to Read Next
+[Two tables. By topic: each `project_notes/` file and when to read it.
+By phase: each phase's notes and summary path.]
+
 ## Vision
 [Describe the finished project in 1-2 sentences.]
 
@@ -94,9 +98,10 @@ Each `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md` must include:
 - [Explicit non-goal for the entire project]
 
 ## Architecture Notes
-[High-level architecture decisions that span multiple phases.
-Tech stack, patterns, infrastructure choices.]
+[One line that points at `docs/ARCHITECTURE.md`. That file owns code architecture.]
 ```
+
+**The roadmap stays referential.** It states scope, order, and status. A row description is one to three sentences that name the mechanics added or changed. It names no file, class, or test count. System design lives in `docs/phases/project_notes/<system>_design_notes.md`. A phase's full scope lives in its phase folder. Code architecture lives in `docs/ARCHITECTURE.md`.
 
 ## Quality Checklist
 
@@ -115,11 +120,14 @@ Before presenting or writing any Phase document, verify:
 - [ ] Document edge cases, failure modes, and key user flows
 - [ ] Dependencies and risks include mitigations
 - [ ] Identify integration points with other phases or systems
+- [ ] The roadmap holds no design paragraphs. Each row description is three sentences or fewer.
+- [ ] Every `project_notes/` file appears in the roadmap's "Where to Read Next" index
+- [ ] No document carries change narration, dated decisions, or superseded text
 
 ## Phase Numbering and Recorded Decisions
 
 - **A phase number is a public identifier. Changing its meaning breaks every document that cites it. No warning identifies the break.** Grep for the number before you re-point it. Read the dependency column for execution order, never the number.
 - **Agent numbers are pipeline positions, not phase numbers.** Do not "correct" them to match.
-- **A resolved decision does not change when later work reverses it.** Treat every entry as time-stamped intent. Check what actually shipped before trusting it.
+- **Planning documents describe what is true now, not what changed.** When later work reverses a decision, rewrite the statement as the current design. Never annotate it, date it, or keep the superseded text. Git holds the history. Check what actually shipped before you trust a recorded decision.
 - **If a rescope only relocates work, suspect that it preserves the old scope.** A good rescope deletes work.
 - **When inventory, counts, schemas, or contract rules change, update every summary surface in the same change.** Stale intros, comparison tables, and diagrams still list removed keys and mislead agents that bootstrap from them. Recounting cannot resolve a *definition* conflict. Reconcile the counted term first.
