@@ -10,6 +10,11 @@ dev/*
 __pycache__/
 *.pyc
 
+# Generated landing zone. `deploy_agents.py` propagates into it, deploys out of
+# it, and deletes it; nothing outside a deploy run may read it. `.github/` below
+# is the same kind of generated tree.
+ports/
+
 # Local benchmark runtime artifacts (reports/traces) to prevent branch checkout clashes
 docs/benchmarks/B001/runs/local/
 # Added by code-review-graph

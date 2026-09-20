@@ -517,9 +517,9 @@ The agents deploy **user-level**, not per-repository — install once and they a
 python3 deploy_agents.py
 ```
 
-This copies the generated per-harness outputs into the real config directories each harness reads (`~/.claude`, `~/.codex`, `~/.config/opencode`, `~/.cursor`) and mirrors the Copilot port into this repo's `.github/`. See [INSTALLATION.md](INSTALLATION.md).
+This regenerates the per-harness outputs from `source_of_truth/`, copies them into the real config directories each harness reads (`~/.claude`, `~/.codex`, `~/.config/opencode`, `~/.cursor`), mirrors the Copilot port into this repo's `.github/`, and then deletes the `ports/` staging directory. See [INSTALLATION.md](INSTALLATION.md).
 
-Do not hand-copy files out of `ports/` or `.github/` — both are generated. Edit `source_of_truth/`, propagate, then deploy.
+Do not hand-copy files out of `ports/` or `.github/` — both are generated. Edit `source_of_truth/`, then deploy.
 
 ---
 

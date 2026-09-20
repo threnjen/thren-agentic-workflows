@@ -5,16 +5,19 @@
 This repository is organized around one authoring surface and a two-stage pipeline:
 
 - `source_of_truth/` is the master source for agent definitions, skills, and instructions.
-- `ports/{claude,codex,opencode,cursor,github}` are generated outputs.
-- `.github/` at the repo root is a real, deployed mirror of `ports/github`.
+- `ports/{claude,codex,opencode,cursor,github}` are generated outputs. The directory is
+  untracked and exists only during a deploy run, which deletes it on the way out.
+- `.github/` at the repo root is a real, deployed mirror of `ports/github`, also untracked.
 - `docs/`, `eval/`, `benchmarks/`, and `packages/` are supporting material.
 
 The repository code is transform-and-deploy tooling. `scripts/propagate_master_assets.py`
-rewrites the generated `ports/` variants (and the `.github/` mirror) after changes in
-`source_of_truth/`. `deploy_agents.py` copies the converged `ports/` outputs out to the
-real user-level directories each harness reads. Both scripts share
+rewrites the generated `ports/` variants (and the `.github/` mirror) from
+`source_of_truth/`. `deploy_agents.py` calls that transform, copies the converged
+`ports/` outputs out to the real user-level directories each harness reads, and then
+deletes `ports/`. One command covers both stages; the propagator is also runnable on its
+own, which is how you read generated output without deploying. Both scripts share
 `scripts/asset_paths.py`, which owns the generated-output markers, the marker-ownership
-check, and the poll-based watch loop.
+check, and the poll-based watch loop the propagator uses for `--watch`.
 
 ## Top-Level Component Map
 
@@ -51,8 +54,8 @@ flowchart TD
 %% Shows how edits under source_of_truth are transformed into per-harness ports/ outputs and the .github mirror.
 ```mermaid
 flowchart LR
-    Author[Edit source_of_truth files] --> Watcher[Run with --once or --watch]
-    Watcher --> Script[propagate_master_assets.py]
+    Author[Edit source_of_truth files] --> Entry[deploy_agents.py or the propagator directly]
+    Entry --> Script[propagate_master_assets.py]
     Script --> ClaudeOut[ports/claude agents commands skills]
     Script --> CodexOut[ports/codex agents skills TOML]
     Script --> OpenCodeOut[ports/opencode agents skills]
@@ -69,21 +72,28 @@ regenerates skills, emits Cursor agents, commands, rules, and skills, and mirror
 that is absent is simply skipped.
 
 `--watch` monitors those same source directories. `--once` (the default when no flag is
-passed) and `--watch` use the same transformation logic.
+passed) and `--watch` use the same transformation logic. `--target DIR` writes the whole
+output to `DIR` instead, which is how generated output is read without a deploy deleting
+it.
 
-Propagation is a maintainer step run by hand. A `PreToolUse` hook
+Propagation and deployment are maintainer steps run by hand. A `PreToolUse` hook
 (`.claude/hooks/block-propagation.py`, wired in `.claude/settings.json`) blocks any agent
-attempt to execute the script, because a regeneration sweep buries the authored source
-diff. Reading or grepping the script stays allowed; only execution is blocked.
+attempt to execute either script. The propagator is blocked because a regeneration sweep
+buries the authored source diff; `deploy_agents.py` is blocked for that reason and
+because it writes to the user's live config directories outside this repository. Reading
+or grepping either script stays allowed; only execution is blocked.
 
 ### Stage 2 — Deploy (deploy_agents.py)
 
 %% Shows how converged ports/ outputs are deployed to real harness config directories.
 ```mermaid
 flowchart LR
-    Ports[ports/<harness>] --> Deploy[deploy_agents.py]
+    SOT[source_of_truth] --> Propagate[propagate step]
+    Propagate --> Ports[ports/<harness>]
+    Ports --> Deploy[deploy_agents.py copy step]
     Baseline[source_of_truth/baseline template] --> Deploy
     Config[.deploy-config.json selection] --> Deploy
+    Deploy --> Discard[delete ports/]
     Deploy --> Claude[~/.claude]
     Deploy --> Codex[~/.codex + ~/.agents/skills]
     Deploy --> OpenCode[~/.config/opencode]
@@ -91,7 +101,9 @@ flowchart LR
     Deploy --> Github[.github in this repo]
 ```
 
-Deploy is a simple direct copy with generated-marker ownership. A destination file is
+Deploy propagates first, so `ports/` is always freshly generated from the current
+`source_of_truth/` when the copy begins. The copy itself is direct, with
+generated-marker ownership. A destination file is
 copied only when its bytes differ, and overwritten or pruned only when it carries a
 generated marker (or lives inside a marked skill directory). Files without a marker are
 foreign and never touched — they are surfaced under `skipped_paths` in the run output so

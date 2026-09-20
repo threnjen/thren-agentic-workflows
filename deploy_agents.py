@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
-"""Deploy generated ports/ assets to real harness config directories.
+"""Propagate source_of_truth/ and deploy the result to real harness config dirs.
 
-Copies `ports/<harness>/` outputs to the user-level directories each harness
-reads (`~/.claude`, `~/.codex`, `~/.config/opencode`, `~/.cursor`). Safe by
-construction: a destination file is only ever overwritten or pruned when it
-positively carries a generated marker (or lives inside a generated skill
-directory) — hand-maintained files are never touched.
+One run does three things in order: propagate `source_of_truth/` into `ports/`,
+copy `ports/<harness>/` out to the user-level directories each harness reads
+(`~/.claude`, `~/.codex`, `~/.config/opencode`, `~/.cursor`), then delete
+`ports/`. `ports/` is a temporary landing zone, not an artifact — it is
+untracked, and nothing outside a deploy run may read it.
+
+The copy is safe by construction: a destination file is only ever overwritten or
+pruned when it positively carries a generated marker (or lives inside a
+generated skill directory) — hand-maintained files are never touched.
 
 Usage:
   deploy_agents.py                       # use saved selection; prompt if none (tty)
   deploy_agents.py --harness claude,cursor
   deploy_agents.py --all
-  deploy_agents.py --watch               # maintainer: auto-deploy on ports/ change
   deploy_agents.py --list                # show harnesses and resolved destinations
+
+To inspect generated output without deploying, propagate into a scratch
+directory instead: `scripts/propagate_master_assets.py --target DIR`.
 
 The selection is saved to `.deploy-config.json` (gitignored) so re-runs are just
 `python3 deploy_agents.py`.
@@ -30,7 +36,18 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Tuple
 
-from scripts.asset_paths import PORTS_DIR, REPO_ROOT, file_has_generated_marker, poll_watch
+from scripts.asset_paths import PORTS_DIR, REPO_ROOT, file_has_generated_marker
+
+# `propagate_master_assets` imports its own dependencies flat (`import
+# asset_paths`), the way a script run out of `scripts/` resolves them. Importing
+# it as `scripts.propagate_master_assets` therefore needs that directory on the
+# path first. The tests stage it the same way.
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+
+from propagate_master_assets import (  # noqa: E402
+    PropagationConvergenceError,
+    propagate_until_converged,
+)
 
 CONFIG_PATH = REPO_ROOT / ".deploy-config.json"
 
@@ -591,24 +608,56 @@ def list_harnesses(selected: List[str]) -> None:
         print("\nNo saved selection (.deploy-config.json missing).")
 
 
-def watch(harnesses: List[str]) -> None:
-    print(f"Starting ports deploy watcher for {{{','.join(harnesses)}}} ...")
-    deploy(harnesses)
+def propagate_ports() -> Dict[str, object]:
+    """Regenerate `ports/` (and the `.github/` mirror) from `source_of_truth/`.
 
-    def _on_change(changes: List[str]) -> None:
-        sample = ", ".join(Path(c).name for c in changes[:5])
-        more = "" if len(changes) <= 5 else f" (+{len(changes) - 5} more)"
-        print(f"Detected change in ports: {sample}{more}")
-        deploy(harnesses)
+    Raises `PropagationConvergenceError` when the propagator cannot reach a
+    fixed point. Deploying a tree that never converged would copy out whichever
+    half-rewritten pass happened to be last, so the caller must not continue.
+    """
+    result = propagate_until_converged()
+    return {
+        "converged": result.converged,
+        "passes": result.pass_count,
+        "changes": result.total_changes,
+    }
 
-    poll_watch([PORTS_DIR / name for name in harnesses], _on_change)
+
+def discard_ports() -> None:
+    """Delete the landing zone. Absent is the resting state, so missing is fine."""
+    shutil.rmtree(PORTS_DIR, ignore_errors=True)
+
+
+def run_cycle(
+    harnesses: List[str],
+    *,
+    home: Path | None = None,
+    environ: Mapping[str, str] | None = None,
+) -> int:
+    """Propagate, deploy, then discard `ports/`.
+
+    The discard runs only after a clean deploy. A run that fails partway leaves
+    the tree on disk so the failure can be inspected against the output that
+    produced it.
+    """
+    try:
+        summary = propagate_ports()
+    except PropagationConvergenceError as exc:
+        print(f"Propagation failed: {exc}", file=sys.stderr)
+        return 1
+    print(json.dumps({"propagation": summary}, indent=2))
+
+    deploy(harnesses, home=home, environ=environ)
+    discard_ports()
+    return 0
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Deploy ports/ assets to real harness config directories.")
+    parser = argparse.ArgumentParser(
+        description="Propagate source_of_truth/ and deploy the result to harness config directories."
+    )
     parser.add_argument("--harness", help="Comma-separated harnesses to deploy (e.g. claude,cursor).")
     parser.add_argument("--all", action="store_true", help="Deploy every supported harness.")
-    parser.add_argument("--watch", action="store_true", help="Watch ports/ and auto-deploy on changes.")
     parser.add_argument("--list", action="store_true", help="Show harnesses and resolved destinations.")
     parser.add_argument("--no-save", action="store_true", help="Do not persist the harness selection.")
     parser.add_argument(
@@ -645,12 +694,7 @@ def main() -> int:
     if not args.skip_tools:
         report_external_tools(ensure_external_tools(selected))
 
-    if args.watch:
-        watch(selected)
-        return 0
-
-    deploy(selected)
-    return 0
+    return run_cycle(selected)
 
 
 if __name__ == "__main__":

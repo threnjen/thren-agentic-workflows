@@ -11,19 +11,23 @@ variants under `ports/`, and then deployed into the real config directories each
 reads.
 
 `source_of_truth/` is the only authoring surface. Everything under `ports/` and the real
-`.github/` mirror are generated outputs — never hand-edit them.
+`.github/` mirror are generated outputs — never hand-edit them. Neither is tracked.
 
-The repository has two jobs, handled by two scripts:
+The repository has two jobs. `deploy_agents.py` runs both, in order, on every run:
 
-1. **Transform** — `scripts/propagate_master_assets.py` reads `source_of_truth/` and
-   regenerates platform-specific variants under `ports/{claude,codex,opencode,cursor}`.
-   It also emits GitHub-native copies to `ports/github` and to a real `.github/`
-   directory at the repository root (so GitHub Copilot reads the same source). This step
-   is for maintainers editing the agents; end users can skip it.
+1. **Transform** — the propagator in `scripts/propagate_master_assets.py` reads
+   `source_of_truth/` and regenerates platform-specific variants under
+   `ports/{claude,codex,opencode,cursor}`. It also emits GitHub-native copies to
+   `ports/github` and to a real `.github/` directory at the repository root (so GitHub
+   Copilot reads the same source).
 2. **Deploy** — `deploy_agents.py` copies the generated `ports/` outputs out to the real
    user-level config directories each harness reads (`~/.claude`, `~/.codex`,
-   `~/.config/opencode`, `~/.cursor`), and mirrors the `github` port into this repo's
-   `.github/`. This is the step end users run.
+   `~/.config/opencode`, `~/.cursor`), mirrors the `github` port into this repo's
+   `.github/`, and then deletes `ports/`.
+
+`ports/` exists only between those two steps. Run the propagator on its own when you want
+to read the generated output, and give it `--target DIR` so the output lands somewhere a
+deploy will not delete.
 
 Both steps are safe by construction: a destination file is only ever overwritten or
 pruned when it positively carries a generated marker (or lives inside a generated skill
@@ -54,7 +58,7 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 │   ├── skills/                     # 51 skill directories, each rooted at SKILL.md
 │   ├── instructions/               # 24 instruction files matched by applyTo globs
 │   └── baseline/                   # baseline-instructions.md, rendered at deploy time
-├── ports/                          # Generated outputs — do not edit by hand
+├── ports/                          # Generated landing zone — untracked, deleted after deploy
 │   ├── claude/                     # agents, commands, skills
 │   ├── codex/                      # agents, skills (TOML agents; profiles/ is a cleanup root)
 │   ├── opencode/                   # agents, skills
@@ -63,9 +67,9 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ├── .github/                        # Real mirror of ports/github (for Copilot)
 ├── scripts/
 │   ├── propagate_master_assets.py  # Transform: source_of_truth/ -> ports/ + .github/
-│   ├── asset_paths.py              # Shared markers + poll-watch primitives
+│   ├── asset_paths.py              # Shared markers + poll-watch primitives (watch: propagator only)
 │   └── extract_pdfs.py             # Utility
-├── deploy_agents.py                # Deploy: ports/ -> real harness config dirs
+├── deploy_agents.py                # Propagate, deploy to harness config dirs, delete ports/
 ├── docs/                           # ARCHITECTURE, CODEBASE_CONTEXT, LOCAL_DEVELOPMENT,
 │                                   # TROUBLESHOOTING, COPILOT_SETUP, porting/
 ├── eval/                           # Past benchmark run artifacts + deprecated/ (archived grader)
@@ -78,23 +82,31 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ## The Maintenance Loop
 
 There is no application to build or serve. The loop is: edit `source_of_truth/`,
-propagate, review the diff, deploy.
+review the source diff, deploy.
 
-### Regenerate ports/ and .github/ from source
+### Deploy
 
 ```bash
-python3 scripts/propagate_master_assets.py --once
+python3 deploy_agents.py
 ```
 
-Runs one propagation pass to a fixed point (converges, then exits). Run this only if you
-have edited files under `source_of_truth/`. Use `--watch` instead to re-propagate on
-every save under `source_of_truth/`.
+Propagates, deploys, and deletes `ports/`. This is the only command most changes need.
 
-`.vscode/` is gitignored, so a fresh clone ships no editor tasks — the two commands above
-are the canonical interface. Wire up your own tasks if you want them on folder open.
+### Read the generated output without deploying
 
-The test suite (`tests/test_propagate_master_assets.py`) fails when source and generated
-outputs drift; a sync failure means "rerun propagation," not "edit the output."
+```bash
+python3 scripts/propagate_master_assets.py --target /tmp/inspect-ports
+```
+
+Runs one propagation pass to a fixed point against `/tmp/inspect-ports`, leaving this
+repository untouched. Use this to check what a source edit produces. Omit `--target` to
+propagate in place, and `--watch` to re-propagate on every save under `source_of_truth/`.
+
+`.vscode/` is gitignored, so a fresh clone ships no editor tasks — the commands above are
+the canonical interface. Wire up your own tasks if you want them on folder open.
+
+The test suite propagates into a throwaway tree of its own, so it neither needs nor reads
+a `ports/` directory in this repository.
 
 ## Key Contents
 

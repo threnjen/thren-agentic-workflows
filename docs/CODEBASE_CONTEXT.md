@@ -6,7 +6,7 @@ Quick-reference for AI agents working in this repository.
 
 - Single source-of-truth repository for multi-harness agent assets.
 - Authoring surface is `source_of_truth/`. Everything else derived from it is generated.
-- Two-stage pipeline: transform (`source_of_truth/` → `ports/`) then deploy (`ports/` → real harness dirs).
+- Two-stage pipeline: transform (`source_of_truth/` → `ports/`) then deploy (`ports/` → real harness dirs). `deploy_agents.py` runs both and then deletes `ports/`, which is untracked and exists only mid-run.
 - Mostly Markdown plus two Python scripts (stdlib only) and a shared module.
 - No runtime dependencies. Root `pyproject.toml` is gitignored and carries pytest config only; no `package.json`. Python tests live under `tests/`.
 
@@ -33,7 +33,7 @@ source_of_truth/                           # THE authoring surface
   skills/                                  # 51 skill dirs, each rooted at SKILL.md
   instructions/                            # 24 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
-ports/                                     # GENERATED — do not hand-edit
+ports/                                     # GENERATED, untracked, deleted after each deploy
   claude/  {agents, commands, skills}
   codex/   {agents, skills}             # TOML agents; profiles/ = retired cleanup root
   opencode/{agents, skills}
@@ -41,11 +41,11 @@ ports/                                     # GENERATED — do not hand-edit
   github/  {agents, instructions, skills}          # GitHub-native mirror
 .github/                                   # real deployed mirror of ports/github; gitignored
 scripts/
-  propagate_master_assets.py               # transform entry point (--once | --watch)
+  propagate_master_assets.py               # transform entry point (--once | --watch | --target DIR)
   asset_paths.py                           # shared markers + poll_watch
   extract_pdfs.py                          # utility
-deploy_agents.py                           # deploy entry point (root, not scripts/)
-.claude/hooks/block-propagation.py         # PreToolUse hook: agents may not RUN propagation
+deploy_agents.py                           # propagate + deploy + delete ports/ (root, not scripts/)
+.claude/hooks/block-propagation.py         # PreToolUse hook: agents may not RUN propagation or deploy
 docs/ ARCHITECTURE.md AUTHORING.md CODEBASE_CONTEXT.md COPILOT_SETUP.md LOCAL_DEVELOPMENT.md TROUBLESHOOTING.md
 docs/ ai-instruction-framework.md UNDERSTANDING_AGENTIC_ECOSYSTEM.md
 docs/porting/                              # CLAUDE/CODEX/OPENCODE guides + TOOL_MAPPING
@@ -60,14 +60,18 @@ benchmarks/ packages/ tests/
 ## Pipeline Model
 
 - Edit `source_of_truth/{agents,skills,instructions}` first.
-- Transform: `python3 scripts/propagate_master_assets.py --once` (default) or `--watch`.
-  Runs to a fixed point via `propagate_until_converged` (max 25 passes).
-- Agents must NOT run the transform — the maintainer does it by hand. `.claude/settings.json`
+- Deploy: `python3 deploy_agents.py [--harness a,b | --all | --list | --no-save | --skip-tools]`.
+  One run propagates, copies out, then deletes `ports/`. There is no separate transform step.
+- Transform alone: `python3 scripts/propagate_master_assets.py [--once | --watch | --target DIR]`.
+  Runs to a fixed point via `propagate_until_converged` (max 25 passes). Use `--target DIR`
+  to read generated output somewhere a deploy will not delete.
+- Agents must NOT run either script — the maintainer does it by hand. `.claude/settings.json`
   wires a `PreToolUse` Bash hook (`.claude/hooks/block-propagation.py`) that exits 2 on any
-  command executing the script; inspection commands (grep, read) pass. After editing source,
-  report that propagation is pending. Sync tests fail until it runs; that is expected.
+  command executing one; inspection commands (grep, read) pass. The match is on the script
+  name anywhere in the command, so a command that merely quotes one is blocked too. After
+  editing source, report that deployment is pending. No test fails for want of it — the
+  suite propagates into a throwaway tree via `tests/_propagate_env.propagated_tree()`.
 - Transform targets: `ports/{claude,codex,opencode,cursor}` plus `ports/github` and `.github/`.
-- Deploy: `python3 deploy_agents.py [--harness a,b | --all | --watch | --list | --no-save | --skip-tools]`.
 - Deploy also bootstraps companion tools (code-review-graph via pip/pipx, Context7 via
   `npx ctx7 setup`) unless `--skip-tools`; failures warn and never block deployment.
 - code-review-graph is configured per selected harness via `CRG_PLATFORMS`; its bare
@@ -194,7 +198,11 @@ benchmarks/ packages/ tests/
 - Run with `uv run pytest tests/` (or `.venv/bin/python -m pytest tests/`); bare
   `python -m pytest` may lack pytest.
 - `tests/_propagate_env.py` redirects the propagator's directory globals to a temp tree
-  so tests never read/write the real repo.
+  so tests never read/write the real repo. `propagated_tree()` builds one converged
+  propagation per session and hands back its path; every test that asserts on generated
+  output reads that tree, because `ports/` is not in the repository.
+- `tests/conftest.py` fails the session if any test wrote to the real `ports/` or
+  `.github/`.
 - `tests/test_agent_corpus_invariants.py` holds the corpus guards: every frontmatter
   roster entry names a real agent and is spawnable, frontmatter is well-formed for agents
   and skills, every instruction declares an `applyTo` that matches at least one real file,

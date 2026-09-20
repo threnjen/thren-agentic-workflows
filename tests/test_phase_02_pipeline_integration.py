@@ -14,6 +14,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
+import _propagate_env as env  # noqa: E402
 import propagate_master_assets as propagator  # noqa: E402
 
 
@@ -209,6 +210,14 @@ def test_agent_targeting_apply_to_globs_resolve_and_mutation_fails() -> None:
 
 def test_all_generated_harness_agent_sets_and_routes_match_source() -> None:
     """The suite's generated tree contains the current source agent set and routes."""
+    # Every generated root below is a propagator global. `ports/` is a deploy-time
+    # landing zone that no longer survives a run, so the globals are redirected at
+    # a tree this suite propagates for itself.
+    with env.redirect(env.propagated_tree()):
+        _assert_generated_agent_sets_and_routes_match_source()
+
+
+def _assert_generated_agent_sets_and_routes_match_source() -> None:
     agents = list(propagator.load_source_agents())
     instructions = propagator.load_instruction_docs()
     routing = propagator.load_model_routing()

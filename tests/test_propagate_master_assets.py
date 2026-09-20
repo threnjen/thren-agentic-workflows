@@ -197,6 +197,10 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 )
 
     def test_diff_security_scan_agent_matches_all_generated_harness_outputs(self) -> None:
+        # Reads the generated roots through the propagator's globals. `ports/` is a
+        # deploy-time landing zone that does not survive a run, so those globals are
+        # redirected at a tree this suite propagates for itself.
+        env.use(self, env.propagated_tree())
         agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
         instructions = mod.load_instruction_docs()
         routing = mod.load_model_routing()
@@ -257,9 +261,12 @@ class PropagateMasterAssetsTests(unittest.TestCase):
             "ports/codex/agents/pr-review.toml": 'name = "pr-review"',
         }
 
+        # `ports/` is a deploy-time landing zone that does not survive a run, so
+        # the tree asserted on is one this suite propagates for itself.
+        tree = env.propagated_tree()
         for relative_path, marker in expected_markers.items():
             with self.subTest(path=relative_path):
-                output = REPO_ROOT / relative_path
+                output = tree / relative_path
                 self.assertTrue(output.is_file(), relative_path)
                 self.assertIn(marker, output.read_text(encoding="utf-8"))
 
@@ -285,24 +292,29 @@ class PropagateMasterAssetsTests(unittest.TestCase):
         #
         # `claude/agents/README.md` is hand-maintained inside a generated root -- it
         # documents the slug-to-filename mapping on purpose and is never rewritten.
-        agents = mod.load_source_agents()
+        # Redirected at the propagated tree: the identifiers below are derived
+        # from the filenames already in the Claude root, so they must be read
+        # from the same tree the outputs are read from.
+        tree = env.propagated_tree()
+        with env.redirect(tree):
+            agents = mod.load_source_agents()
 
-        claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
-        renamed_in_claude = {
-            agent.source_slug
-            for agent in agents
-            if mod._claude_identifier_for(agent, claude_stems) != agent.source_slug
-        }
-        renamed_in_codex = {
-            agent.source_slug
-            for agent in agents
-            if mod._codex_identifier_for(agent) != agent.source_slug
-        }
+            claude_stems = mod._discover_existing_stems(mod.CLAUDE_AGENTS_DIR)
+            renamed_in_claude = {
+                agent.source_slug
+                for agent in agents
+                if mod._claude_identifier_for(agent, claude_stems) != agent.source_slug
+            }
+            renamed_in_codex = {
+                agent.source_slug
+                for agent in agents
+                if mod._codex_identifier_for(agent) != agent.source_slug
+            }
 
         renaming_roots = (
-            (REPO_ROOT / "ports" / "claude" / "agents", "*.md", renamed_in_claude),
-            (REPO_ROOT / "ports" / "claude" / "commands", "*.md", renamed_in_claude),
-            (REPO_ROOT / "ports" / "codex" / "agents", "*.toml", renamed_in_codex),
+            (tree / "ports" / "claude" / "agents", "*.md", renamed_in_claude),
+            (tree / "ports" / "claude" / "commands", "*.md", renamed_in_claude),
+            (tree / "ports" / "codex" / "agents", "*.toml", renamed_in_codex),
         )
 
         offenders = []
@@ -313,7 +325,7 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 text = output.read_text(encoding="utf-8")
                 for token in set(re.findall(r"`([^`\n]+)`", text)):
                     if token in renamed:
-                        offenders.append(f"{output.relative_to(REPO_ROOT)} -> `{token}`")
+                        offenders.append(f"{output.relative_to(tree)} -> `{token}`")
 
         self.assertEqual(
             [],

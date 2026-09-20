@@ -24,6 +24,8 @@ phase-shaped evaluators the same way.
 import subprocess
 from pathlib import Path
 
+import _propagate_env as env
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SOT = REPO_ROOT / "source_of_truth"
 ARCHIVE = REPO_ROOT / "eval" / "deprecated"
@@ -71,9 +73,6 @@ EXEMPT_PREFIXES = (
     "eval/",
     # Historical phase records -- they describe what was built.
     "docs/phases/",
-    # Decision history and its propagated copies record their own
-    # earlier ledger removal there; that note is the reason, not a regression.
-    "ports/cursor/rules/",
     "dev/feature/",
 )
 
@@ -145,12 +144,13 @@ def test_archived_agents_are_absent_from_every_generated_root() -> None:
     `git rm` the output, which would mask the defect until the next rename.
     """
     stems = tuple(name.removesuffix(".agent.md") for name in ARCHIVED_AGENTS)
+    ports = env.propagated_ports()
     generated = {
-        REPO_ROOT / "ports" / "claude" / "agents": ("{stem}.md", "z-{stem}.md"),
-        REPO_ROOT / "ports" / "claude" / "commands": ("{stem}.md",),
-        REPO_ROOT / "ports" / "opencode" / "agents": ("{stem}.md",),
-        REPO_ROOT / "ports" / "codex" / "agents": ("{stem}.toml", "z-{stem}.toml"),
-        REPO_ROOT / "ports" / "cursor" / "commands": ("{stem}.md",),
+        ports / "claude" / "agents": ("{stem}.md", "z-{stem}.md"),
+        ports / "claude" / "commands": ("{stem}.md",),
+        ports / "opencode" / "agents": ("{stem}.md",),
+        ports / "codex" / "agents": ("{stem}.toml", "z-{stem}.toml"),
+        ports / "cursor" / "commands": ("{stem}.md",),
     }
 
     for root, templates in generated.items():

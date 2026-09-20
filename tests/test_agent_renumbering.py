@@ -10,6 +10,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
+import _propagate_env as env  # noqa: E402
 import propagate_master_assets as propagator  # noqa: E402
 
 
@@ -214,10 +215,15 @@ def test_agent_targeting_globs_resolve_and_character_classes_cover_both_families
 
 
 def test_generated_tree_has_no_pre_renumber_output_orphan() -> None:
-    ports = REPO_ROOT / "ports"
-    github = REPO_ROOT / ".github"
+    # Generated output is not in the repository: `deploy_agents.py` deletes
+    # `ports/` after every run, and `.github/` is gitignored. Propagate into a
+    # throwaway tree and assert on that.
+    ports = env.propagated_ports()
+    github = env.propagated_github()
     assert ports.is_dir()
-    assert (github / "copilot-instructions.md").is_file()
+    # `copilot-instructions.md` is not asserted here: deploy_agents.py renders it
+    # from the baseline template against the deploying machine's home directory,
+    # so propagation alone never produces it. BaselineDeployTests owns it.
     for subdir in ("agents", "hooks", "instructions", "skills"):
         assert (github / subdir).is_dir(), f"missing mirrored directory: {subdir}"
 
@@ -243,7 +249,8 @@ def test_unity_and_prod_review_stripped_stems_remain_stable() -> None:
         ("03f-prod-code-review", "prod-code-review"),
         ("03h-unity-reviewer", "unity-reviewer"),
     ):
-        assert (REPO_ROOT / "ports" / "claude" / "agents" / f"z-{stem}.md").is_file()
-        assert (REPO_ROOT / "ports" / "cursor" / "agents" / f"z-{stem}.md").is_file()
-        assert (REPO_ROOT / "ports" / "codex" / "agents" / f"z-{stem}.toml").is_file()
-        assert (REPO_ROOT / "ports" / "opencode" / "agents" / f"{new_slug}.md").is_file()
+        ports = env.propagated_ports()
+        assert (ports / "claude" / "agents" / f"z-{stem}.md").is_file()
+        assert (ports / "cursor" / "agents" / f"z-{stem}.md").is_file()
+        assert (ports / "codex" / "agents" / f"z-{stem}.toml").is_file()
+        assert (ports / "opencode" / "agents" / f"{new_slug}.md").is_file()

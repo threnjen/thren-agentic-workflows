@@ -1,11 +1,16 @@
 # Installation
 
-Deploy the generated agent assets to your real harness config directories with one
-command from the repository root:
+Deploy the agent assets to your real harness config directories with one command
+from the repository root:
 
 ```bash
 python3 deploy_agents.py
 ```
+
+One run does three things in order. It regenerates the per-harness outputs from
+`source_of_truth/` into `ports/`, copies them out to your config directories, and then
+deletes `ports/`. That directory is a landing zone, not an artifact: it is untracked,
+and nothing outside a deploy run reads it.
 
 The first run asks which harnesses you use (Claude, Codex, OpenCode, Cursor, GitHub) and
 saves the choice to `.deploy-config.json` (gitignored). Subsequent runs reuse it.
@@ -99,11 +104,12 @@ Both are best-effort: if a tool cannot be set up (for example, no Node.js on PAT
 Context7), deploy prints a warning explaining why and continues — a failed tool install
 never blocks asset deployment.
 
-Deploy copies from `ports/`. If you have edited anything under `source_of_truth/`, first
-regenerate the outputs:
+Deploy regenerates the outputs itself, so an edit under `source_of_truth/` needs no
+separate step. To see what propagation would produce without deploying anything, write
+it to a scratch directory instead:
 
 ```bash
-python3 scripts/propagate_master_assets.py --once
+python3 scripts/propagate_master_assets.py --target /tmp/inspect-ports
 ```
 
 **GitHub Copilot users**: the github harness deploys into this repo's own `.github/`;

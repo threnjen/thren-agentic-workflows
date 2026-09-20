@@ -3,9 +3,9 @@
 ## Purpose
 
 This repository is maintained by editing source-of-truth files under
-`source_of_truth/`, regenerating the derived `ports/` outputs, and (optionally)
-deploying those outputs to your real harness config directories. There is no root
-application to build or serve.
+`source_of_truth/` and deploying them to your real harness config directories. One
+command does it: it regenerates the derived `ports/` outputs, copies them out, and
+deletes `ports/`. There is no root application to build or serve.
 
 ## Prerequisites
 
@@ -28,22 +28,38 @@ line; no editor configuration is required.
 ## The Maintenance Loop
 
 1. Edit source-of-truth files under `source_of_truth/{agents,skills,instructions}`.
-2. Transform: regenerate `ports/` and `.github/` from source.
-3. Review the resulting diff before committing.
-4. Deploy (optional): copy the generated outputs to your real harness directories.
+2. Review the source diff before committing.
+3. Deploy: regenerate the outputs, copy them to your real harness directories, and
+   discard the staging tree.
+
+Generated output is not reviewed and not tracked, so there is no propagation diff in the
+loop. The only diff you read is the one you authored.
 
 ## Stage 1 — Transform (propagate)
 
-### One-shot run
+The deploy command below runs this stage for you. Run the propagator directly only when
+you want to read the generated output.
+
+### Read the output without deploying
+
+```bash
+python3 scripts/propagate_master_assets.py --target /tmp/inspect-ports
+```
+
+Writes the whole generated tree to `/tmp/inspect-ports` and leaves this repository
+untouched. `DIR` must contain a `source_of_truth/` directory; outputs land in
+`DIR/ports` and `DIR/.github`.
+
+### One-shot run in place
 
 ```bash
 python3 scripts/propagate_master_assets.py --once
 ```
 
 Runs a single propagation to a fixed point (it converges, then exits). `--once` is the
-default, so bare `python3 scripts/propagate_master_assets.py` behaves the same. Use this
-after a batch of source edits when you want a deterministic refresh. The command prints a
+default, so bare `python3 scripts/propagate_master_assets.py` behaves the same. The command prints a
 JSON convergence summary; a second run reporting zero changes confirms a fixed point.
+The `ports/` it leaves behind is deleted by the next deploy.
 
 ### Watch mode
 
@@ -60,16 +76,20 @@ Watch mode monitors the source directories and re-propagates when files change:
 It rewrites `ports/{claude,codex,opencode,cursor}`, plus `ports/github` and the real
 `.github/` mirror.
 
-### Propagation is yours, not an agent's
+### Propagation and deployment are yours, not an agent's
 
-Run the transform yourself. A `PreToolUse` hook (`.claude/hooks/block-propagation.py`,
-wired in `.claude/settings.json`) blocks an agent from executing the script and returns an
-explanation instead — regenerating every file under `ports/` and `.github/` buries the
-authored source diff you need to review. Agents may still read and grep the script.
+Run both yourself. A `PreToolUse` hook (`.claude/hooks/block-propagation.py`, wired in
+`.claude/settings.json`) blocks an agent from executing either script and returns an
+explanation instead. The propagator is blocked because a regeneration sweep buries the
+authored source diff; `deploy_agents.py` is blocked for that reason and because it
+rewrites your live config directories outside this repository. Agents may still read and
+grep both scripts.
 
-An agent that edits `source_of_truth/` should stop and report that propagation is pending.
-Sync tests, and any test that reads `ports/`, fail until you propagate. That failure is
-correct, not something to fix by propagating.
+The hook matches on the script names anywhere in a command, so it also blocks a command
+that merely quotes one — editing a doc that shows a deploy command needs a workaround.
+
+An agent that edits `source_of_truth/` should stop and report that deployment is pending.
+No test fails for want of it: the suite propagates into a throwaway tree of its own.
 
 ## Stage 2 — Deploy
 
@@ -78,10 +98,13 @@ python3 deploy_agents.py            # use saved selection, or prompt (tty) and s
 python3 deploy_agents.py --harness claude,cursor
 python3 deploy_agents.py --all
 python3 deploy_agents.py --list     # show harnesses and resolved destinations
-python3 deploy_agents.py --watch    # maintainer: auto-deploy on ports/ change
 python3 deploy_agents.py --no-save  # do not persist the harness selection
 python3 deploy_agents.py --skip-tools  # skip companion-tool install/config
 ```
+
+Every run propagates first, so the outputs copied out always reflect the current
+`source_of_truth/`. `ports/` is deleted once the copy finishes; a run that fails partway
+leaves it on disk so you can read the failure against the output that caused it.
 
 Unless `--skip-tools` is passed, deploy also bootstraps two optional companion tools:
 code-review-graph (via `pip`/`pipx`, then `code-review-graph install --platform <p>` once
@@ -140,18 +163,20 @@ you want it replaced.
 
 ## Editor Tasks (optional)
 
-`.vscode/` is gitignored, so a fresh clone ships no editor tasks. If you want the watchers
-to start on folder open, add your own `.vscode/tasks.json` wrapping
-`propagate_master_assets.py --watch` and `deploy_agents.py --watch`. Nothing in the
-maintenance loop depends on it.
+`.vscode/` is gitignored, so a fresh clone ships no editor tasks. If you want the
+propagation watcher to start on folder open, add your own `.vscode/tasks.json` wrapping
+`propagate_master_assets.py --watch`. Deploy has no watch mode: it is a manual step, and
+the `ports/` a watcher would have monitored no longer outlives a run. Nothing in the
+maintenance loop depends on any of this.
 
 ## What To Verify After Changes
 
 ### After editing `source_of_truth/`
 
-- Run the one-shot transform (or leave `--watch` running).
+- Propagate to a scratch directory with `--target`, or deploy.
 - Confirm the expected updates appear under `ports/{claude,opencode,codex,cursor}` and,
-  for the mirrored subdirs, under `ports/github` and `.github/`.
+  for the mirrored subdirs, under `ports/github` and `.github/` — inside the scratch
+  directory if you used `--target`, since a deploy leaves no `ports/` behind.
 - Check that filenames match platform conventions, including aliases and `z-` prefixes.
 
 ### After editing documentation

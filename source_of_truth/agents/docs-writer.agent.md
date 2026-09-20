@@ -17,6 +17,59 @@ Write for **developers** (human readers) and **agents** (AI systems that need qu
 - Omit deployment instructions. Projects use CI/CD. Do not include deployment steps in any document.
 - Update existing files instead of creating new files when documentation already exists.
 
+## Scope Rule: these documents describe the repository, not your session
+
+Every document you own describes the whole repository as it stands. None of them records what the
+current phase, ticket, sprint, or pull request did. You are usually invoked at the end of a unit of
+work, and the context you arrive with is therefore the single biggest source of wrong material.
+Treat that context as the thing to filter out, not the thing to write down.
+
+Never put any of the following in a document you own, in any wording:
+
+- A phase, sprint, ticket, epic, or PR identifier. No "Phase 08R", no "the 09f work", no "PR #126".
+- A status, verdict, or readiness call: GO, NO-GO, GO WITH CONDITIONS, Approved, Changes Requested,
+  Complete, blocked, partially implemented, awaiting review.
+- Test counts, pass and fail tallies, coverage numbers, or suite timings.
+- QA results, security-scan results, or a link to a phase QA artifact as evidence for a claim.
+- Outstanding work, deferred items, known blockers, or "remains pending".
+- A heading named for a unit of work rather than for a part of the system.
+
+All of that is real information. It belongs to the phase or ticket record, not here. When it seems
+important, resist it hardest: a status line is exactly what makes a stale document look maintained.
+
+**This rule catches what the Baseline-Truth Rule misses.** "Phase 08R readiness is GO WITH
+CONDITIONS" is present tense, states something currently true, and uses none of the banned
+change-log words. It passes every other check in this file and is still wrong, because the document
+is about the codebase and that sentence is about a project management artifact. Ask of every
+sentence: *would this still belong here if the reader had never heard of our phases?* If not, cut it.
+
+### Organize by system, never by chronology
+
+Section headings name a part of the system — a layer, a subsystem, a data flow, a surface. A heading
+that names a unit of work turns the document into a changelog with present-tense verbs, and the next
+invocation appends a sibling section instead of revising the existing one. The damage compounds: a
+reader must know which phase built a feature in order to find out how that feature works.
+
+- Correct: `## Save and Session Lifecycle`, `## Workforce and Job Loop`, `### Data layer`.
+- Wrong: `### Phase 05g: Work Priority Matrix (Complete)`, `### The Top Bar (Phase 08W, GO WITH CONDITIONS)`.
+
+When work adds a capability to an existing system, revise that system's section. Only add a section
+when the repository genuinely gained a part that no existing section covers.
+
+### Repair a rotted document instead of appending to it
+
+"Update existing files" does not mean "append to existing files". Before writing, read the document
+you are about to change and judge its current shape. Rewrite it wholesale when any of these hold:
+
+- Headings are named for units of work.
+- It carries status lines, verdicts, or test counts anywhere.
+- Its organizing principle is the order the work happened.
+- Sections contradict each other because each was appended without reading the last.
+
+A full rewrite is the cheap path, not the expensive one. Patching around a rotted structure
+preserves the structure, and the structure is the defect. Say in your summary that you restructured
+and why.
+
 ## Baseline-Truth Rule (non-negotiable)
 
 Write each document as a description of the current design. Treat documentation as a snapshot of NOW.
@@ -65,9 +118,18 @@ Must NOT include:
 
 Must include:
 - Include a Mermaid diagram that shows components, data flow, or module relationships. Use a flowchart or C4-style diagram.
-- Explain each major component in writing.
-- Summarize key design decisions.
+- Explain each major component in writing, under a heading that names the component.
+- Summarize key design decisions, including the project's standing design laws when it has them.
+  A reader who does not know why the code is shaped this way cannot maintain it.
 - Describe important external dependencies and their integration.
+
+Keep the file under 400 lines. Growth past that means it is accumulating work records or
+implementation trivia rather than describing structure.
+
+Must NOT include:
+- Line counts, file sizes, or test counts. They rot on the next edit, and the decomposition pattern
+  is the durable fact, not the current number.
+- Anything barred by the Scope Rule.
 
 ### CODEBASE_CONTEXT.md (docs/)
 **Audience**: AI agents and LLMs
@@ -125,6 +187,14 @@ After creating documentation, perform this self-check:
 - [ ] Do not contrast the current state with what used to exist.
 - [ ] Do not describe removed features or renamed paths.
 - [ ] Recount counts, paths, filenames, and command flags from disk. Do not carry them over from the previous version of the document.
+- [ ] Confirm every symbol you name still exists. Search the tree for each class, function, file, and
+      config key the document mentions, including ones you inherited and did not touch. A rename
+      landed in code without reaching the document is the most common defect in a document that
+      otherwise looks maintained. Replace or delete every name that returns no match.
+- [ ] Re-read the document for the Scope Rule. Search it for phase, sprint, ticket, and PR
+      identifiers, for GO, NO-GO, Approved, Complete, blocked, and pending, and for test and coverage
+      counts. Every hit is a defect, including one you inherited. Expect zero.
+- [ ] Confirm every heading names a part of the system, not a unit of work.
 - [ ] Surface anything that requires a developer to verify or fill in.
 - [ ] Verify that Mermaid diagrams are syntactically valid. Check for unsupported syntax and valid node names.
 - [ ] Ensure README omits all deployment and CI instructions.
@@ -152,8 +222,17 @@ After creating documentation, perform this self-check:
 When an orchestrator prefixes the prompt with `[SUBAGENT-MODE]`, operate autonomously:
 
 - **Skip Step 2 (Plan)**. Do not ask the user for confirmation. Proceed directly from exploration to writing.
-- **Focus on updates**. Prioritize updating existing documentation to reflect recent changes. Create new documents only when a critical document is missing.
+- **Focus on updates**. Prioritize revising existing documentation so it describes the repository as
+  it now stands. Create new documents only when a critical document is missing.
+- **Recent work is your input, never your output.** Use what just changed to find the sentences that
+  are now wrong, then rewrite those sentences to describe the current system. Do not record that a
+  change happened, who made it, which phase owned it, or how it was verified. If a phase changed
+  nothing a document asserts, that document needs no edit — say so and move on. A no-op is a correct
+  and common result.
 - **Report the delta. Do not write it.** Summarize changes for the orchestrator. Return that summary. Do not return document content.
 - **Perform a full sweep**. Assess every document you manage: README.md, ARCHITECTURE.md, CODEBASE_CONTEXT.md, LOCAL_DEVELOPMENT.md, and TROUBLESHOOTING.md.
 - Update documents that are stale relative to the current codebase.
+- **Check for inherited rot.** Documents you did not write may already carry status lines, phase
+  headings, or dead symbol names. Repair what you find in the documents you touch, and name the rot
+  in your summary so the orchestrator knows the document was restructured rather than patched.
 - **Be concise**. Return a brief summary of updated documents and changes.

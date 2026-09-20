@@ -13,6 +13,8 @@ re-lists them.
 import subprocess
 from pathlib import Path
 
+import _propagate_env as env
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # The canonical five. (source slug, display name) -- the display name matters
@@ -38,8 +40,6 @@ GITHUB_AGENTS_DIR = REPO_ROOT / "source_of_truth" / "agents"
 EXEMPT_PREFIXES = (
     # Historical phase records. They describe what was built and must retain it.
     "docs/phases/",
-    # Decision history, and its propagated copy -- generated, not authored.
-    "ports/cursor/rules/",
     # Feature planning documents. They name the retired agents in order to
     # describe retiring them; same category as docs/phases/ -- a record of the
     # work, not live harness wiring.
@@ -92,10 +92,11 @@ def test_retired_agents_are_absent_from_every_generated_root() -> None:
     Nothing here was hand-deleted. If this fails, the pruner is the bug -- do not
     `git rm` the output, which would mask the defect until the next rename.
     """
+    ports = env.propagated_ports()
     generated = {
-        REPO_ROOT / "ports" / "claude" / "agents": "z-{stem}.md",
-        REPO_ROOT / "ports" / "opencode" / "agents": "{slug}.md",
-        REPO_ROOT / "ports" / "codex" / "agents": "z-{stem}.toml",
+        ports / "claude" / "agents": "z-{stem}.md",
+        ports / "opencode" / "agents": "{slug}.md",
+        ports / "codex" / "agents": "z-{stem}.toml",
     }
 
     for root, template in generated.items():
@@ -126,14 +127,15 @@ def test_security_capability_survives_as_an_auditor_subagent() -> None:
         "consolidation removed"
     )
 
+    ports = env.propagated_ports()
     for output in (
-        REPO_ROOT / "ports" / "claude" / "agents" / "z-auditor-security.md",
-        REPO_ROOT / "ports" / "opencode" / "agents" / "auditor-security.md",
-        REPO_ROOT / "ports" / "codex" / "agents" / "z-auditor-security.toml",
+        ports / "claude" / "agents" / "z-auditor-security.md",
+        ports / "opencode" / "agents" / "auditor-security.md",
+        ports / "codex" / "agents" / "z-auditor-security.toml",
     ):
         assert output.exists(), f"Auditor - Security stopped propagating to {output}"
 
-    assert not (REPO_ROOT / "ports" / "claude" / "commands" / "security-scan.md").exists(), (
+    assert not (ports / "claude" / "commands" / "security-scan.md").exists(), (
         "Auditor - Security is user-invocable: false, so it must not keep a "
         "slash command"
     )

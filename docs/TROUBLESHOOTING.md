@@ -22,38 +22,46 @@ a working `python3`.
 
 ### Symptom
 
-Changes under `source_of_truth/` do not appear in `ports/` or `.github/`.
+Changes under `source_of_truth/` do not appear in `.github/`, or a harness still reads
+the old asset.
 
 ### Cause
 
-The transform watcher is not running, or you edited source files without rerunning the
-one-shot command.
+No deploy has run since the edit. `ports/` is not a place to look: it exists only during
+a deploy run and is deleted at the end of one.
 
 ### Fix
 
-- Run `python3 scripts/propagate_master_assets.py --once`.
-- If a `--watch` process was meant to be running, confirm it is still alive.
-- If you edited generated files directly, rerun the transform and recheck the diff.
+- Run `python3 deploy_agents.py`. It propagates and deploys in one step.
+- To read the generated output instead of deploying it, run
+  `python3 scripts/propagate_master_assets.py --target /tmp/inspect-ports`.
+- If you edited generated files directly, they are gone — the edit belonged in
+  `source_of_truth/`.
 
 ### Symptom
 
-`BLOCKED: propagation is the maintainer's manual step and must not be run by an agent.`
+`BLOCKED: propagation and deployment are the maintainer's manual step and must not be run
+by an agent.`
 
 ### Cause
 
-An agent tried to execute `scripts/propagate_master_assets.py`. The `PreToolUse` hook
-`.claude/hooks/block-propagation.py` exits 2 on any command that runs the script, because
-regenerating `ports/` and `.github/` swamps the authored source diff.
+An agent tried to execute `scripts/propagate_master_assets.py` or `deploy_agents.py`. The
+`PreToolUse` hook `.claude/hooks/block-propagation.py` exits 2 on any command that runs
+either. Propagation swamps the authored source diff; deploy does that and also rewrites
+your live config directories outside this repository.
 
 ### Fix
 
 - Nothing to fix in the agent session: edit `source_of_truth/` only, then report that
-  propagation is pending. Sync tests failing until then is the expected state.
-- Run the transform yourself from your own shell.
-- Inspection is not blocked — `grep propagate_master_assets ...` and reading the file pass.
-  If an inspection command is being blocked, it is matching the execution pattern (an
-  interpreter or `./` reaching the script at the start of a command or after a separator);
+  deployment is pending. No test fails for want of a deploy — the suite propagates into a
+  throwaway tree of its own.
+- Run the deploy yourself from your own shell.
+- Inspection is not blocked — `grep propagate_master_assets ...` and reading either file
+  pass. If an inspection command is blocked, it is matching the execution pattern (an
+  interpreter or `./` reaching a script at the start of a command or after a separator);
   rephrase it.
+- A command that only *quotes* a script name is matched too, so editing a doc that shows a
+  deploy command trips the hook. Put the edit in a script file and run that instead.
 
 ### Symptom
 
@@ -222,12 +230,14 @@ A harness cannot see a deployed skill or agent.
 
 ### Cause
 
-`ports/` was not regenerated before deploy, the destination differs from the expected env
-variable, or the harness session is stale.
+The destination differs from the expected env variable, the harness session is stale, or
+the last deploy failed partway and never reached that harness.
 
 ### Fix
 
-- Run the transform to a fixed point, then rerun deploy.
+- Rerun the deploy. It regenerates the outputs itself, so there is no transform step to
+  run first. A leftover `ports/` directory means the previous run failed before its
+  cleanup — read its output, then rerun.
 - Check `python3 deploy_agents.py --list` to see the resolved destinations (and whether
   `CLAUDE_CONFIG_DIR` / `CODEX_HOME` / `OPENCODE_CONFIG_DIR` are redirecting them).
 - Restart the harness session so it rediscovers the deployed files.

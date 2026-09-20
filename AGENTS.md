@@ -1,10 +1,10 @@
 ## What This Repo Is
 
-A library of AI development agents (planning, implementation, review, testing, auditing, docs) deployed across five harnesses: Claude Code, Codex, OpenCode, Cursor, and GitHub Copilot. There is no application to build or serve — the workflow is: edit source, propagate, review the diff, deploy.
+A library of AI development agents (planning, implementation, review, testing, auditing, docs) deployed across five harnesses: Claude Code, Codex, OpenCode, Cursor, and GitHub Copilot. There is no application to build or serve — the workflow is: edit source, review the diff, deploy (which propagates for you).
 
 ## The One Rule That Matters
 
-**`source_of_truth/` is the only authoring surface.** Everything under `ports/` and the real `.github/` directory is generated output — never hand-edit them. If generated output looks wrong, fix the source and re-propagate. A sync-test failure means "rerun propagation," not "edit the output."
+**`source_of_truth/` is the only authoring surface.** Everything under `ports/` and the real `.github/` directory is generated output — never hand-edit them. Neither is tracked. If generated output looks wrong, fix the source. `ports/` in particular is a landing zone that exists only during a deploy run, so a file you place there is deleted, not shipped.
 
 ## Know The Audience
 
@@ -113,25 +113,29 @@ cover what you need.
 
 ## Agents: never run propagation
 
-**Propagation is the maintainer's manual step. Do not run `scripts/propagate_master_assets.py` (`--once` or `--watch`) as part of agent work**, even to make tests pass. It regenerates every file under `ports/` and `.github/`, which swamps the diff and makes authored source changes impossible to review.
+**Propagation and deployment are the maintainer's manual step. Do not run `scripts/propagate_master_assets.py` or `deploy_agents.py` as part of agent work**, even to make tests pass. Both regenerate every file under `ports/` and `.github/`. `deploy_agents.py` then writes outside this repository, into the user's live harness config directories, and rewrites their global instruction files. A `PreToolUse` hook blocks both.
 
-Edit `source_of_truth/` only, then stop and report that propagation is pending. Sync tests and any test reading `ports/` will fail until the maintainer propagates — say so plainly rather than propagating to go green.
+Edit `source_of_truth/` only, then stop and report that deployment is pending. To read what propagation would produce, send it elsewhere: `python3 scripts/propagate_master_assets.py --target DIR`.
+
+The tests propagate into a throwaway tree of their own, so no test needs a `ports/` directory in this repository and none will fail for want of one.
 
 
 ## Commands
 
 ```bash
-# Transform: regenerate ports/ and .github/ from source_of_truth/
-python3 scripts/propagate_master_assets.py --once
-
-# Watch mode: re-propagate on every save under source_of_truth/
-python3 scripts/propagate_master_assets.py --watch
-
-# Deploy generated ports/ to real harness config dirs (~/.claude, ~/.codex, etc.)
+# Propagate, deploy to the real harness config dirs (~/.claude, ~/.codex, etc.),
+# then delete ports/. One command; nothing to run before it.
 python3 deploy_agents.py                     # uses saved selection in .deploy-config.json
 python3 deploy_agents.py --harness claude,cursor
 python3 deploy_agents.py --list              # show harnesses and resolved destinations
 python3 deploy_agents.py --skip-tools        # skip companion-tool bootstrap
+
+# Read the generated output without deploying: propagate somewhere else
+python3 scripts/propagate_master_assets.py --target /tmp/inspect-ports
+
+# Propagate in place (leaves a ports/ the next deploy deletes)
+python3 scripts/propagate_master_assets.py --once
+python3 scripts/propagate_master_assets.py --watch      # re-propagate on every save under source_of_truth/
 
 # Tests (pytest is a dev dep, not in the base interpreter)
 uv run pytest tests/
@@ -143,13 +147,15 @@ No third-party runtime dependencies — both scripts are stdlib-only Python.
 
 ## Architecture
 
-Two-stage pipeline, two scripts:
+Two-stage pipeline. `deploy_agents.py` runs both stages in order on every run, then deletes `ports/`:
 
-1. **Transform** — `scripts/propagate_master_assets.py` reads `source_of_truth/{agents,skills,instructions}` and regenerates per-harness variants under `ports/{claude,codex,opencode,cursor}` (Claude/OpenCode markdown agents, Codex TOML agents, Cursor subagents, commands, `.mdc` rules, and skills). It emits GitHub-native copies to `ports/github` and the real `.github/` (read by Copilot). GitHub agent copies receive routed models and omit command-only aliases. Runs to a fixed point; prints a JSON convergence summary — a second run reporting zero changes confirms convergence. `scripts/asset_paths.py` holds shared markers and watch primitives.
+1. **Transform** — `scripts/propagate_master_assets.py` reads `source_of_truth/{agents,skills,instructions}` and regenerates per-harness variants under `ports/{claude,codex,opencode,cursor}` (Claude/OpenCode markdown agents, Codex TOML agents, Cursor subagents, commands, `.mdc` rules, and skills). It emits GitHub-native copies to `ports/github` and the real `.github/` (read by Copilot). GitHub agent copies receive routed models and omit command-only aliases. Runs to a fixed point; prints a JSON convergence summary — a second run reporting zero changes confirms convergence. `scripts/asset_paths.py` holds shared markers and the poll-watch primitive, which only the propagator uses.
 
-2. **Deploy** — `deploy_agents.py` (repo root, not `scripts/`) copies `ports/` outputs into the real harness config dirs (`~/.claude`, `~/.codex` + `~/.agents/skills`, `~/.config/opencode`, `~/.cursor`; env overrides `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `OPENCODE_CONFIG_DIR`). It also splices a baseline instructions file per harness. The template `source_of_truth/baseline/baseline-instructions.md` is a manifest, not a body: each bullet names an instruction under `source_of_truth/instructions/` carrying `baseline: true`, and deploy splices that instruction's body under a `<!-- <name> -->` sentinel plus one aggregate `<!-- baseline-canary -->` naming every section it wrote. User content outside the sentinels is untouched. Deleting a bullet only stops the rewrite — add the name to `RETIRED_BASELINE_SECTIONS` to remove a block past deploys already wrote.
+2. **Deploy** — `deploy_agents.py` (repo root, not `scripts/`) runs the transform above, then copies the resulting `ports/` outputs into the real harness config dirs (`~/.claude`, `~/.codex` + `~/.agents/skills`, `~/.config/opencode`, `~/.cursor`; env overrides `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `OPENCODE_CONFIG_DIR`). It also splices a baseline instructions file per harness. The template `source_of_truth/baseline/baseline-instructions.md` is a manifest, not a body: each bullet names an instruction under `source_of_truth/instructions/` carrying `baseline: true`, and deploy splices that instruction's body under a `<!-- <name> -->` sentinel plus one aggregate `<!-- baseline-canary -->` naming every section it wrote. User content outside the sentinels is untouched. Deleting a bullet only stops the rewrite — add the name to `RETIRED_BASELINE_SECTIONS` to remove a block past deploys already wrote.
 
 Both stages are safe by construction: a destination file is only overwritten or pruned when it carries a generated marker (or lives inside a generated skill directory). Hand-placed files are skipped and reported under `skipped_paths`.
+
+`ports/` is deleted once the deploy finishes cleanly. A run that fails partway leaves it on disk so the failure can be read against the output that caused it.
 
 ### Content model
 
