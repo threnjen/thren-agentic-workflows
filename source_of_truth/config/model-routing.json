@@ -1,8 +1,8 @@
 {
   "low": {
     "claude": {
-      "model": "sonnet",
-      "reasoning_effort": "medium"
+      "model": "opus",
+      "reasoning_effort": "low"
     },
     "codex": {
       "model": "gpt-6-luna",
@@ -23,7 +23,7 @@
   "medium": {
     "claude": {
       "model": "opus",
-      "reasoning_effort": "low"
+      "reasoning_effort": "medium"
     },
     "codex": {
       "model": "gpt-6-luna",
@@ -44,7 +44,7 @@
   "high": {
     "claude": {
       "model": "opus",
-      "reasoning_effort": "low"
+      "reasoning_effort": "medium"
     },
     "codex": {
       "model": "gpt-6-sol",
