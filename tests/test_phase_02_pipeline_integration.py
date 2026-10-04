@@ -32,11 +32,6 @@ MANIFEST_FIELDS = (
     "status",
     "execution_order",
     "prerequisites",
-    "expected_read_set",
-    "expected_write_set",
-    "plan_revision",
-    "last_validation_commit",
-    "stale_reason",
     "resolved_model_status",
 )
 PREFLIGHT_FIELDS = (
@@ -327,28 +322,28 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
         (
             "schedule",
             phase,
-            ("`execution_order`", "`expected_write_set`", "`last_validation_commit`"),
+            ("`execution_order`", "`prerequisites`", "`planned_at_commit`"),
         ),
         ("routing", routing_text, ('"low":', '"medium":', '"high":')),
         (
-            "selection",
+            "planning",
             phase,
             (
-                "exactly one `-delta.md`",
-                "only when verified source contradicts",
+                "one `-plan.md` and one `-delta.md` per feature",
+                "Spawn **Feature - Plan Author** once",
                 "must not create or require a context file, task file, or replacement checklist",
             ),
         ),
         (
-            "bounded feature loop",
+            "bounded phase build",
             phase,
             (
+                "Spawn **Feature - Implementer** once",
                 "one review-and-repair pass",
                 "once in `gate-remediation` mode",
                 "Never open a second gate-remediation pass",
                 "If any rerun fails",
-                "Block every dependent feature",
-                "recorded revert commit",
+                "Leave every feature incomplete",
                 "There is no exempt test",
             ),
         ),

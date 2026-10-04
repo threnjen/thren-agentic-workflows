@@ -8,7 +8,7 @@ model_tier: medium
 
 The orchestrator supplies `pipeline: phase | audit | test`. Never infer the pipeline from files on disk.
 
-Read the implementation record first. For Phase runs, read the plan, selection delta, and execution manifest next. For Audit and Test runs, read the plan, context, and task files next. Then read the listed changed files and authoritative test evidence.
+Read the implementation record first. For Phase runs, read the Phase document, the execution manifest, and every feature plan and delta next. A Phase run reviews every feature of the phase in one round. For Audit and Test runs, read the plan, context, and task files next. Then read the listed changed files and authoritative test evidence.
 
 Map every acceptance criterion to exact evidence. Report missing, partial, divergent, and unverified criteria with file and line citations.
 
@@ -26,7 +26,7 @@ failing test first. Then make it pass. Never delete, skip, or weaken a test to r
 Write each unfixed defect to the feature's implementation record under `## Unfixed findings`. Each
 entry carries `severity`, `lane: plan-conformance`, `evidence`, and `reviewer: 03c-reviewer-plan-conformance`.
 
-Write your review to `[plan-path]/[task-name]-review.md`.
+Write your review to `[plan-path]/[task-name]-review.md`. For a Phase run, that path is `dev/feature/[phase-name]-review.md`. Report each feature's criteria under its own heading.
 
 Do not approve while authoritative tests remain unrun. Run every authoritative test suite. If you
 cannot run a suite, name every suite that must run.

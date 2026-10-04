@@ -29,7 +29,7 @@ The orchestrator provides these inputs:
 
 1. **Pipeline** — `phase`, `audit`, or `test`. Never infer it from present files.
 2. **Feature/task folder list** — One or more directories containing:
-   - Phase: plan, selection delta, execution manifest, implementation record, and review record
+   - Phase: every plan and delta, the execution manifest, and the phase implementation and review records at `dev/feature/[phase-name]-implementation.md` and `-review.md`
    - Audit or Test: plan, context, tasks, implementation record, and review record
    - Source code and tests referenced by the implementation record
 3. **Manual QA output path** — Where to write the consolidated manual QA document.
@@ -79,7 +79,7 @@ the underlying logic. Put every mechanical part of the check in the automated do
 
 For **each** feature/task folder that the orchestrator provides, read every available document:
 
-1. **Planning artifacts** — Read the Phase plan, selection delta, and manifest, or the Audit/Test plan, context, and tasks.
+1. **Planning artifacts** — Read the Phase plan, delta, and manifest, or the Audit/Test plan, context, and tasks.
 2. **Implementation record** — Read `[0N-task-name]-implementation.md` to identify changed files, new endpoints, UI components, and integrations.
 3. **Review record** — Read `[0N-task-name]-review.md` for flagged risks, edge cases, and reviewer concerns.
 4. **Source code** — Scan changed files to understand actual behavior and integration points.

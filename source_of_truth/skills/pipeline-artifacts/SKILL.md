@@ -15,11 +15,11 @@ Store the files inside `dev/feature/[0N-task-name]/`:
 | Suffix | Producer | Content |
 |--------|----------|---------|
 | `-plan.md` | Feature - Plan Author for Phase; Audit or Test planner otherwise | Plan with stages and acceptance criteria |
-| `-delta.md` | Feature - Plan Author in Phase selection mode | Selected feature's verified repository findings |
+| `-delta.md` | Feature - Plan Author for Phase | The feature's verified repository findings |
 | `-context.md` | Audit or Test planner | Key files, decisions, constraints |
 | `-tasks.md` | Audit or Test planner | Ordered checklist of work items |
-| `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results |
-| `-review.md` | 03c Reviewer - Plan Conformance | Verdict and issues found |
+| `-implementation.md` | Feature - Implementer | Files changed, AC traceability, test results. Phase writes one at `dev/feature/[phase-name]-implementation.md` |
+| `-review.md` | 03c Reviewer - Plan Conformance | Verdict and issues found. Phase writes one at `dev/feature/[phase-name]-review.md` |
 | `-qa.md` | Feature - QA Writer (per-feature mode) | Manual QA plan for a single feature |
 | `-qa-automated.md` | Feature - QA Writer (per-feature mode) | Automated QA checks for a single feature, executed by Feature - QA Runner |
 | `-coverage-map-qa.md` | Feature - QA Writer (per-feature mode) | AC coverage map for a single feature |

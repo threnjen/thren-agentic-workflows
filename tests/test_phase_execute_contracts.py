@@ -22,7 +22,7 @@ def _gate_remediation_wiring_errors(loop: str, implementer: str) -> set[str]:
     if (
         "**Phase**" not in loop
         or "once in `gate-remediation` mode" not in loop
-        or "A failed rerun blocks the feature and its dependents" not in loop
+        or "A failed rerun blocks the whole phase" not in loop
     ):
         errors.add("phase loop invokes bounded remediation")
     if (
@@ -94,38 +94,53 @@ def test_phase_starts_green_or_does_not_start() -> None:
     assert "no baseline exemption list" in section
 
 
-def test_phase_uses_plan_delta_and_manifest_only() -> None:
+def _section(text: str, start: str, end: str) -> str:
+    return text.split(start, 1)[1].split(end, 1)[0]
+
+
+def test_phase_plans_every_feature_in_one_spawn() -> None:
     text = _read(PHASE_PATH)
-    schedule = text.split("## Step 2: Obtain the Schedule", 1)[1].split("## Step 3:", 1)[0]
-    selection = text.split("### A. Select and Discover", 1)[1].split("### B.", 1)[0]
-    assert "no `-context.md`, `-tasks.md`, or `-delta.md` files" in schedule
-    assert "exactly one `-delta.md`" in selection
-    assert "only when verified source contradicts" in selection
+    planning = _section(text, "## Step 2: Plan Every Feature", "## Step 3:")
+    assert "Spawn **Feature - Plan Author** once" in planning
+    assert "one `-plan.md` and one `-delta.md` per feature" in planning
+    assert "no `-context.md` or `-tasks.md` files" in planning
+    plan_author = _read(REPO_ROOT / "source_of_truth/agents/03o-feature-plan-author.agent.md")
+    for retired in ("`select`", "`revalidate`", "`initial`"):
+        assert retired not in plan_author
 
 
 def test_plan_only_run_stops_before_implementation_and_full_run_adopts_it() -> None:
     text = _read(PHASE_PATH)
-    opening = text.split("## Opening Interaction", 1)[1].split("## Step 1:", 1)[0]
-    selection = text.split("### A. Select and Discover", 1)[1].split("### B.", 1)[0]
+    opening = _section(text, "## Opening Interaction", "## Step 1:")
+    planning = _section(text, "## Step 2: Plan Every Feature", "## Step 3:")
     assert "Use `full` as the default" in opening
     assert "Do not add a resume choice for that handoff" in opening
-    assert "Skip the `select` spawn when the adopted selection is current" in selection
     for condition in (
-        "`-delta.md` exists",
-        "has no implementation record",
-        "equals the current `HEAD` commit",
+        "every feature has a plan and a delta",
+        "no phase implementation record exists",
+        "`planned_at_commit` equals the current `HEAD` commit",
     ):
-        assert condition in selection
-    assert "When any condition fails, spawn `select` mode" in selection
-    assert "On a `plan-only` run, stop here. Run no later step." in selection
+        assert condition in planning
+    assert "On a `plan-only` run, stop here. Run no later step." in planning
 
 
-def test_feature_loop_is_bounded_and_blocks_regressions() -> None:
+def test_phase_builds_and_reviews_every_feature_in_one_spawn_each() -> None:
     text = _read(PHASE_PATH)
-    review = text.split("### C. Review and Repair Once", 1)[1].split("### D.", 1)[0]
-    gate = text.split("##### D. Integration test gate", 1)[1].split("##### E.", 1)[0]
+    build = _section(text, "### A. Implement Every Feature", "### B.")
+    review = _section(text, "### B. Review and Repair Once", "### C.")
+    assert "Spawn **Feature - Implementer** once" in build
+    assert "`dev/feature/[phase-name]-implementation.md`" in build
+    assert "Spawn **03c Reviewer - Plan Conformance** once" in review
+    assert "the Phase document" in review and "every plan and delta" in review
+    assert "`dev/feature/[phase-name]-review.md`" in review
     assert "one review-and-repair pass" in review
     assert "Never spawn it twice" in review
+    assert "Never build features concurrently" not in text
+
+
+def test_phase_gate_is_bounded_and_blocks_the_phase() -> None:
+    text = _read(PHASE_PATH)
+    gate = _section(text, "### C. Integration Test Gate", "## Step 4:")
     assert "once in `gate-remediation` mode" in gate
     assert "exact failing test names" in gate
     assert "Do not spawn the reviewer again" in gate
@@ -133,9 +148,8 @@ def test_feature_loop_is_bounded_and_blocks_regressions() -> None:
     assert "If they pass, rerun the full integration command" in gate
     assert "Never open a second gate-remediation pass" in gate
     assert "If any rerun fails" in gate
-    assert "Block every dependent feature" in gate
-    assert "recorded revert commit" in gate
-    assert "Never rewrite branch history" in gate
+    assert "Leave every feature incomplete" in gate
+    assert "Run the full authoritative suite" in gate
 
 
 def test_gate_remediation_is_wired_to_the_implementer() -> None:

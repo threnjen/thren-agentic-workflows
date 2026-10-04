@@ -9,7 +9,7 @@ The invoking pipeline selects one artifact contract explicitly:
 
 | Pipeline | Required planning artifacts |
 |----------|-----------------------------|
-| Phase | `-plan.md`, selection-time `-delta.md`, and the phase execution manifest |
+| Phase | `-plan.md`, `-delta.md`, and the phase execution manifest |
 | Audit or Test | `-plan.md`, `-context.md`, and `-tasks.md` |
 
 Shared consumers never infer a contract from existing files.
@@ -23,7 +23,7 @@ Each Phase work item gets two files over its lifecycle:
 ```
 dev/feature/[0N-task-name]/
 ├── [0N-task-name]-plan.md       # The plan with stages and acceptance criteria
-└── [0N-task-name]-delta.md      # Selection-time repository findings
+└── [0N-task-name]-delta.md      # Verified repository findings
 ```
 
 Each decomposed phase also gets one manifest:
@@ -32,13 +32,13 @@ Each decomposed phase also gets one manifest:
 dev/feature/[phase-name]-execution-manifest.md
 ```
 
-The manifest must list the phase document path, feature task names in order, and each feature's prerequisites. It must also list modified key files, reasons for sequential execution, expected artifacts, and verification assets.
+The manifest must list the phase document path, feature task names in order, and each feature's prerequisites. It must also list modified key files, expected artifacts, verification assets, and `planned_at_commit`, the commit the plans and deltas were researched against.
 
-The manifest is a living execution schedule. It is rewritten during execution, not frozen after decomposition. Feature - Plan Author rewrites it when Phase - Execute selects a feature, records an implementation result, resolves the feature's model route, completes a feature, or completes revalidation of affected future features.
+Feature - Plan Author writes the manifest once per planning run. Phase - Execute does not rewrite it during the build.
 
-The manifest also contains the Phase Environment State, test baseline, lint and format commands, phase test pattern, durable checkpoints, and verification assets for each feature.
+The manifest also contains the Phase Environment State, test baseline, lint and format commands, phase test pattern, and verification assets for each feature.
 
-The prerequisite graph orders the features. A feature is eligible once every feature it names as a prerequisite is complete. The graph sets order and drives revalidation. It never authorizes two concurrent feature builds.
+The prerequisite graph orders the features. Feature - Implementer builds every feature in one pass, in that order.
 
 Each per-feature entry records:
 
@@ -47,18 +47,11 @@ Each per-feature entry records:
 | `status` | The feature's current lifecycle state. |
 | `execution_order` | The feature's position in the phase's execution order. |
 | `prerequisites` | The features that must be complete before this feature is eligible. |
-| `expected_read_set` | The files the feature is expected to read during revalidation. |
-| `expected_write_set` | The files the feature is expected to write during revalidation. |
-| `plan_revision` | The revision identifier for the feature's current plan. |
-| `last_validation_commit` | The commit used for the feature's most recent validation. |
-| `stale_reason` | The reason the feature's plan or schedule entry is stale. |
 | `resolved_model_status` | The preflight record's `resolution_status` for the Feature - Implementer tier: `enforced`, `fallback`, or `unverified`. |
-
-Expected read and write sets are revalidation evidence only. They never authorize concurrent feature builds.
 
 ## Lightweight Plan
 
-Before scheduling, Feature - Plan Author writes one lightweight `-plan.md` per candidate feature. Each plan defines acceptance criteria, scope, dependency hypotheses, and expected file impact. Initial mode writes no context, task, or delta file.
+Before scheduling, Feature - Plan Author writes one lightweight `-plan.md` per candidate feature. Each plan defines acceptance criteria, scope, dependency hypotheses, and expected file impact. Phase planning writes no context or task file.
 
 **Naming**: `[0N-task-name]` is a zero-padded two-digit prefix followed by a short, descriptive, kebab-case identifier (e.g., `01-auth-login`, `02-rate-limiter`, `03-test-bootstrap`). The numeric prefix indicates recommended execution order. `[phase-name]` is always `PHASE_0N` — the literal `PHASE_` plus the zero-padded two-digit phase number (e.g., `PHASE_03`), matching the phase directory under `docs/phases/`.
 
@@ -129,20 +122,20 @@ A concrete name is any named file path, method, class, field, XML element, USS c
 
 For a test method, a fourth option applies: omit the name and describe the scenario instead. Never present an invented name as established fact. The implementer chooses the final idiomatic name for a `[PROPOSED - name TBD]` symbol. The implementer records that name in implementation notes.
 
-## Selection Delta (`-delta.md`)
+## Feature Delta (`-delta.md`)
 
-Feature - Plan Author writes one delta only when Phase - Execute selects a feature. The delta contains:
+Feature - Plan Author writes one delta per feature in the same run as the plans. The delta contains:
 
 - **Key Files** — verified files and symbols the feature reads or changes.
 - **Current Constraints** — applicable repository rules, plan non-goals, and relevant learnings.
-- **Verification Assets** — existing tests and commands that exercise the selected scope.
+- **Verification Assets** — existing tests and commands that exercise the feature scope.
 - **Discoveries** — facts that validate or contradict the plan.
 
-Selection mode may patch only the selected plan. It patches the plan only when verified source contradicts it. The delta records the contradiction and the patch.
+The author patches a plan only when verified source contradicts it. The delta records the contradiction and the patch.
 
 ## Phase-Level Discovery
 
-Feature - Plan Author captures Phase Environment State once in initial mode. It writes the results into the manifest, not a per-feature file.
+Feature - Plan Author captures Phase Environment State once per planning run. It writes the results into the manifest, not a per-feature file.
 
 | Result | Manifest location |
 |---|---|

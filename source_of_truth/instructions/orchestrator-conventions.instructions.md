@@ -115,8 +115,8 @@ After a subagent returns, verify that its output exists on disk before you move 
 Silence is not failure. A subagent that has produced no visible output, written no file, and sent no
 message is still working. Treat the subagent as running until the harness tells you otherwise.
 
-**A changed file proves the subagent is active.** Check its declared output path, the paths in its
-`expected_write_set`, and the working tree. Any new or modified file shows that the subagent is active. Stop
+**A changed file proves the subagent is active.** Check its declared output path, the files its
+plan expects it to change, and the working tree. Any new or modified file shows that the subagent is active. Stop
 deliberating. Keep waiting.
 
 **An unchanged file proves nothing.** A reviewer reads for the whole run. It writes its report at the
@@ -136,7 +136,7 @@ Leave a terminated subagent's edits on disk. Never revert them to clean up.
 
 ## Pipeline Discipline
 
-- Do not skip or reorder steps. The sequence matters. `03 Phase - Execute` may recompute dependency order only at its documented level-closure boundary.
+- Do not skip or reorder steps. The sequence matters.
 - Do not move past a subagent failure without attempting remediation.
 - Finish every step for one task or feature before you start the next.
 
@@ -177,10 +177,8 @@ Translate these before you speak. The list is an example, not a complete list.
 |---|---|
 | fixed point | the plan stopped changing |
 | expansion, expanded bundle | the detailed task list for this feature |
-| revalidation | re-checking the later features against what just got built |
 | the manifest | the build order |
 | AC7 | acceptance criterion 7, which says [its content] |
-| stale reason | why this plan needs review |
 | blast radius | what else this change touches |
 
 **BAD**: "Feature 06 expansion is still resolving the message schema and CLI boundaries against the

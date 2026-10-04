@@ -38,7 +38,7 @@
       "reasoning_effort": "medium"
     },
     "github": {
-      "model": "gpt-6-sol"
+      "model": "gpt-6.1-sol"
     }
   },
   "high": {
@@ -47,7 +47,7 @@
       "reasoning_effort": "medium"
     },
     "codex": {
-      "model": "gpt-6-sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "medium"
     },
     "opencode": {
@@ -59,7 +59,7 @@
       "reasoning_effort": "high"
     },
     "github": {
-      "model": "gpt-6-sol"
+      "model": "gpt-6.1-sol"
     }
   }
 }

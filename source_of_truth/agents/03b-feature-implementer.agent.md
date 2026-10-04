@@ -26,7 +26,7 @@ Implement the feature only from its selected pipeline contract. Produce a tracea
 The orchestrator supplies `[plan-path]`, `[task-name]`, and `pipeline: phase | audit | test`.
 Never infer the pipeline from files on disk.
 
-1. **Phase planning** — read `[task-name]-plan.md`, `[task-name]-delta.md`, and the supplied execution manifest.
+1. **Phase planning** — read the supplied execution manifest, then every supplied `-plan.md` and `-delta.md` in manifest order.
 2. **Audit or Test planning** — read `[task-name]-plan.md`, `[task-name]-context.md`, and `[task-name]-tasks.md`.
 3. **Existing implementation record** — read `[task-name]-implementation.md` before changing code when it already exists.
    Preserve accurate prior entries.
@@ -35,7 +35,19 @@ Never infer the pipeline from files on disk.
 6. **Optional AC scope** — implement only named AC labels when the orchestrator supplies them.
 7. **Optional gate remediation** — the orchestrator supplies `mode: gate-remediation`, both feature records, and exact failure evidence.
 
+### Phase Runs
+
+A Phase run implements every feature of the phase in one pass.
+`[plan-path]` is `dev/feature/` and `[task-name]` is `[phase-name]`.
+
+- Build the features in manifest order. Finish one feature's acceptance criteria before you start the next.
+- Label each acceptance criterion with its feature, such as `01-auth-login AC2`.
+- Write one implementation record for the whole phase at `dev/feature/[phase-name]-implementation.md`.
+- Skip Sibling Feature Awareness. You already hold every plan.
+
 ### Sibling Feature Awareness
+
+Audit and Test runs only.
 
 Before you start, scan the parent directory of `[plan-path]` for sibling task directories.
 Read only the **first 5 lines** of each sibling `-plan.md`.

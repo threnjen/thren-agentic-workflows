@@ -12,11 +12,6 @@ MANIFEST_FIELDS = (
     "status",
     "execution_order",
     "prerequisites",
-    "expected_read_set",
-    "expected_write_set",
-    "plan_revision",
-    "last_validation_commit",
-    "stale_reason",
     "resolved_model_status",
 )
 SCHEDULING_TOKEN = "wa" + "ve"
@@ -90,19 +85,18 @@ def test_manifest_schema_guard_names_a_removed_field() -> None:
     assert _missing_schema_fields(mutated) == [field]
 
 
-def test_manifest_is_a_living_schedule_with_execution_rewrite_events() -> None:
+def test_manifest_is_written_once_per_planning_run() -> None:
     text = _read_manifest_skill()
     required_phrases = (
-        "living execution schedule",
-        "rewritten during execution",
-        "not frozen after decomposition",
-        "selects a feature",
-        "records an implementation result",
-        "completes a feature",
-        "completes revalidation of affected future features",
+        "`planned_at_commit`",
+        "writes the manifest once per planning run",
+        "does not rewrite it during the build",
+        "builds every feature in one pass",
     )
     missing = [phrase for phrase in required_phrases if phrase not in text]
     assert not missing, f"manifest execution contract missing phrases: {', '.join(missing)}"
+    for retired in ("living execution schedule", "revalidat", "Selection Delta"):
+        assert retired not in text, f"retired manifest vocabulary remains: {retired}"
 
 
 def test_quality_checklist_requires_the_prerequisite_graph() -> None:

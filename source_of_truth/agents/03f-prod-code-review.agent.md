@@ -37,13 +37,13 @@ The invocation specifies `pipeline: phase | audit | test`. Never infer it from p
 | Document | Source Agent | Expected File |
 |----------|-------------|---------------|
 | Plan | Phase Plan Author, Audit, or Test planner | `[task-name]-plan.md` |
-| Phase selection delta | Feature - Plan Author | `[task-name]-delta.md` |
+| Phase feature delta | Feature - Plan Author | `[task-name]-delta.md` |
 | Audit/Test context | Audit or Test planner | `[task-name]-context.md` |
 | Audit/Test tasks | Audit or Test planner | `[task-name]-tasks.md` |
 | Implementation record | Feature - Implementer | `[0N-task-name]-implementation.md` |
 | Review record | 03c Reviewer - Plan Conformance | `[0N-task-name]-review.md` |
 
-Phase also requires its execution manifest. A Phase run does not require context or task files. Audit and Test do not require a selection delta or Phase manifest.
+Phase also requires its execution manifest. A Phase run writes one implementation record and one review record for the whole phase: `dev/feature/[phase-name]-implementation.md` and `dev/feature/[phase-name]-review.md`. Do not expect per-feature implementation or review records for Phase. A Phase run does not require context or task files. Audit and Test do not require a feature delta or Phase manifest.
 
 Record the Phase execution manifest in the Document Inventory before the per-feature rows.
 

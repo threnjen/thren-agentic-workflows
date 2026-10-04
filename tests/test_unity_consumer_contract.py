@@ -82,7 +82,7 @@ def _phase_execute_errors(section: str) -> set[str]:
         "run the named failures first" not in lower
         or "If they pass, rerun the full integration command" not in normalized
         or "If any rerun fails" not in normalized
-        or "Block every dependent feature" not in normalized
+        or "Leave every feature incomplete" not in normalized
     ):
         errors.add("failed-remediation hard stop")
     return errors
@@ -146,7 +146,7 @@ def test_required_unity_consumers_are_present() -> None:
 
 def test_phase_execute_integration_gate_stage_contract() -> None:
     text = _consumer_texts()["phase_execute"]
-    section = _section(text, "##### D. Integration test gate", 5)
+    section = _section(text, "### C. Integration Test Gate", 2)
     assert not _phase_execute_errors(section), sorted(_phase_execute_errors(section))
 
 
@@ -210,7 +210,7 @@ def test_phase_execute_mutations_are_killed(
     needle: str, replacement: str, obligation: str
 ) -> None:
     text = _consumer_texts()["phase_execute"]
-    section = _section(text, "##### D. Integration test gate", 5)
+    section = _section(text, "### C. Integration Test Gate", 2)
     assert needle in section, f"mutation target missing for {obligation}"
     assert obligation in _phase_execute_errors(section.replace(needle, replacement))
 

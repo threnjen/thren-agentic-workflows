@@ -44,12 +44,10 @@ The core development workflow. **You drive steps 1–2, step 3 runs to a verdict
 │  Feature - Plan Author  → Plans + deltas + graph + manifest      │
 │                                                                   │
 │  ┌──────────────────────────────────────────────────────────┐    │
-│  │  FOR EACH FEATURE (in manifest execution order):         │    │
-│  │  A. Plan Author             → Selection delta            │    │
-│  │  B. Feature - Implementer   → Code + tests (TDD)         │    │
-│  │  C. 03c Plan Conformance    → One review + repair pass   │    │
-│  │  D. Integration test gate   → Union of affected suites   │    │
-│  │  E. Complete                → Manifest revalidated       │    │
+│  │  WHOLE PHASE AT ONCE (in manifest execution order):      │    │
+│  │  A. Feature - Implementer   → Every feature, TDD         │    │
+│  │  B. 03c Plan Conformance    → One review + repair pass   │    │
+│  │  C. Integration test gate   → Full suite                 │    │
 │  └──────────────────────────────────────────────────────────┘    │
 │                                                                   │
 │  Optional QA Writer + Runner → Only when selected                 │
@@ -84,18 +82,17 @@ Interactive — you iterate to probe edge cases and dependencies before executio
 
 The orchestrator asks once for model overrides, optional QA, and any applicable dirty-run choice. It then:
 
-1. Reads `dev/feature/[phase-name]-execution-manifest.md`, or spawns **Feature - Plan
-   Author** to decompose the phase and write it. The manifest is the living schedule and
-   the single source of truth once it exists.
-2. Runs the authoritative suite before planning or child-agent work.
-3. For each feature in manifest execution order, runs five stages:
-   - **A. Select** → Plan Author verifies the selected scope and writes one `-delta.md`
-   - **B. Implement** → implements every acceptance criterion with Red-Green-Refactor TDD
-   - **C. Review** → Plan Conformance reviews and repairs once
-   - **D. Integration gate** → runs the union of affected suites to catch breakage of
-     earlier features
-   - **E. Complete** → records the result in the manifest, then has the Plan Author
-     revalidate affected manifest entries against what just landed
+1. Runs the authoritative suite before planning or child-agent work.
+2. Spawns **Feature - Plan Author** once to write every feature's `-plan.md` and `-delta.md`
+   plus `dev/feature/[phase-name]-execution-manifest.md`. It adopts existing artifacts
+   when they were planned against the current `HEAD`.
+3. Builds the whole phase in three stages:
+   - **A. Implement** → one Implementer builds every feature in manifest order with
+     Red-Green-Refactor TDD and writes one phase implementation record
+   - **B. Review** → one Plan Conformance pass reviews and repairs every feature against
+     the phase document, plans, and deltas
+   - **C. Integration gate** → runs the full suite; one failure-scoped remediation pass,
+     and a failed rerun blocks the phase
 4. Runs consolidated QA only when you selected it
 5. Runs **Prod Code Review**
 6. Runs **Docs Writer** only after `GO` or `GO WITH CONDITIONS`
@@ -215,7 +212,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 > Give it a single Phase document from the 01 Project - Planner (or describe a standalone feature). It iterates with you to refine scope, probe edge cases, surface hidden dependencies, stress-test decomposition readiness, and walk through user flows — deepening the Phase document until it's fully ready for automated execution. It updates the Phase document in place and will not write changes until you explicitly approve.
 
 **03 Phase - Execute** (orchestrator — delegates to subagents)
-> Give it a refined Phase document. It writes lightweight plans and the living execution manifest, creates one selection delta per feature, implements sequentially, runs optional QA, and closes with Prod Code Review.
+> Give it a refined Phase document. It writes a plan and delta per feature plus the execution manifest, implements every feature in one pass, reviews them in one pass, runs optional QA, and closes with Prod Code Review.
 
 **04 Phase - Final Checks** (orchestrator — delegates to evaluators)
 > Confirm a base and optional context for any local change. The command fixes one `base..HEAD` range, runs only the applicable checks, and writes an advisory report. It then offers one repair pass for confirmed security, outward-impact, and changed-test findings. `pr-review` invokes this same workflow as an alias.
@@ -269,7 +266,7 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **Feature - QA Runner** *(subagent of Phase - Execute, Audit orchestrator)* — Executes the automated QA document, compares each check's actual output to its stated expected result, and records per-check status plus a Run results section back into that document. Never fixes what a check exposes. Not to be confused with `QA - Runner`, which executes the repository-wide `docs/QA_AUTOMATED.md` runbook.
 
-**Feature - Plan Author** *(subagent of Phase - Execute)* — Owns `initial`, `select`, and `revalidate` modes. It writes lightweight plans and the manifest, writes one delta for the selected feature, and updates only affected manifest fields after completion.
+**Feature - Plan Author** *(subagent of Phase - Execute)* — Runs once per planning pass. It writes a lightweight plan and a delta for every feature, plus the execution manifest.
 
 **02a Phase - Final-Check Reviewer** *(subagent of Phase - Refiner)* — A stateless cold-start read of a completed Phase document. It has no memory of the refinement conversation, which is the point: it reports only what the document itself says, so anything the refiner and the user settled verbally but never wrote down shows up as a gap.
 

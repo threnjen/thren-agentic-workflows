@@ -109,13 +109,13 @@ def _manifest_status_errors(text: str) -> set[str]:
     return errors
 
 
-def test_preflight_runs_before_feature_selection_without_source_repo_coupling() -> None:
+def test_preflight_runs_before_planning_without_source_repo_coupling() -> None:
     phase = _read(PHASE_PATH)
     preflight_start = phase.index("### Session Model Preflight")
     execution_start = phase.index("## Execution Pipeline")
-    selection = phase.index("Execute one feature at a time")
+    planning = phase.index("## Step 2: Plan Every Feature")
 
-    assert preflight_start < execution_start < selection
+    assert preflight_start < execution_start < planning
     assert "load_model_routing()" not in phase
     assert "json.loads" not in phase
     assert "model-routing.json" not in phase

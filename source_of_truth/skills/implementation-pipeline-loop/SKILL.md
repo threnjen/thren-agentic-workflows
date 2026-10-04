@@ -5,7 +5,7 @@ description: "Standard feature development loop used by orchestrators. Defines t
 
 # Implementation Pipeline Loop
 
-Orchestrators use this standard development cycle to process tasks through subagents. Each task runs through the full loop before the next task begins.
+Orchestrators use this standard development cycle to process tasks through subagents. Each task runs through the full loop before the next task begins. A Phase run treats the whole phase as one task.
 
 ## Loop Steps
 
@@ -41,7 +41,7 @@ Read the test-execution statuses reported by the Implementer and Reviewer. The `
 
 - **`executed-green`** → Proceed to Step C.
 - **`executed-failing`** → Apply the matching pipeline branch.
-  - **Phase** — Spawn the Implementer once in `gate-remediation` mode with the exact failure evidence. Never spawn the Reviewer again. Rerun the named failures. If they pass, rerun the full required gate. A failed rerun blocks the feature and its dependents.
+  - **Phase** — Spawn the Implementer once in `gate-remediation` mode with the exact failure evidence. Never spawn the Reviewer again. Rerun the named failures. If they pass, rerun the full required gate. A failed rerun blocks the whole phase.
   - **Audit or Test** — Spawn the Implementer and Reviewer once again with the failing test names. Record a second failure as blocking.
 - **`not-executed`** → Do not treat this as green. Record `test-execution: not-executed (<reason>)` for the task. Report it to the orchestrator as a blocking status. The orchestrator cannot report a task with unrun tests as complete. The direct-supervisor-attestation exception in the Test Execution Evidence instruction applies only when the user-invocable root orchestrator itself receives an explicit supervisor assertion. Subagents still report `not-executed` without an artifact.
 
@@ -133,8 +133,8 @@ Update the todo list to mark this task as completed. Proceed to the next task.
 
 The orchestrator supplies all three tokens in its spawn prompt.
 
-- `[plan-path]` — the directory containing the task's plan files (phase pipeline: `dev/feature/[0N-task-name]/`; audit and test pipelines supply their own)
-- `[task-name]` — the kebab-case identifier for the task, matching the plan file prefix (including the `0N-` numeric prefix for feature directories)
+- `[plan-path]` — the directory containing the task's plan files (phase pipeline: `dev/feature/`; audit and test pipelines supply their own)
+- `[task-name]` — the kebab-case identifier for the task, matching the plan file prefix (phase pipeline: `[phase-name]`)
 - `[pipeline]` — `phase`, `audit`, or `test`. Shared agents never infer it from files.
 
 Token bindings are owned by the `dev-task-folder` instruction.
