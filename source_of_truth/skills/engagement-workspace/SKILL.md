@@ -34,8 +34,8 @@ Engagement repositories are client code. The `sow_document` and
 ## Root
 
 The standard root is `<repo-name>-engagement/`. It is a **sibling of the client
-repository**. For example, analyzing `ssx-surface-capture` puts every output in
-`ssx-surface-capture-engagement/` next to it. `<repo-name>` is the upgraded
+repository**. For example, analyzing `acme-billing` puts every output in
+`acme-billing-engagement/` next to it. `<repo-name>` is the upgraded
 side's repository directory name. For branch pairs, it is the `repo_path`
 directory name.
 
@@ -127,35 +127,52 @@ under `deliverables/`.
 
 `engagement-state.md` serves as one artifact for context offload, resume
 recovery, and the final run record. The orchestrator writes it as the run
-progresses.
+progresses. Each field is exactly one line that starts with its label.
 It contains:
 
 - **Resolved engagement inputs**: config path, repo paths (and branches, for
   branch pairs), SOW document path, deliverables-spec path, pair roster
   (name, type, `mode`).
+- **Statuses**: `pending`, `in-flight (spawned <UTC time>)`, `prepared`,
+  `complete`, or `failed (<reason>)`. A stage or side is `in-flight` from its
+  spawn until its child returns.
 - **Per-pair/per-side results**: Add one entry for each side of every pair.
-  Record status (e.g., pending / prepared / failed with reason / complete) and
-  artifact pointers (paths only, never content). For each side, retain the
-  exact QA package paths when present, its QA status, and compact workflow/check
-  coverage pointers. Record original-side QA absence. Do not silently convert
+  Record status and artifact pointers (paths only, never content). For each
+  side, retain the exact QA package paths when present, its QA status, and
+  compact workflow/check coverage pointers, and the system name Prepare
+  returned for the pair. Record original-side QA absence. Do not silently convert
   it into a claim that the upgraded workflow was untested.
-
+- **Synthesis results**: Record each engagement-level stage's status and
+  artifact pointers. Also record three one-line values: the Stage B
+  package-level regression line, the Stage D cost status (`present`, or
+  `not-applicable` with its reason), and any Stage D cost note. The
+  orchestrator passes the first two to the manifest assembler and the cost
+  note to Stage E. Record each owner question a stage returns, with its stage.
+- **Client document lengths**: one entry per client document with its
+  measured `wc -w` count and its Length Budgets ceiling.
 - **Attestation records**: Add one entry for each accepted owner attestation
   (see the `engagement-evidence-standard` skill's `attested` class). Record the
   finding ID, statement, form (remediation or researched disposition), date,
   repository, and attestor. This file is the record. Downstream stages read
   the closure from here instead of re-asking the user or re-opening the
-  finding. Record a finding whose attestation conflicts with retained evidence
-  as `conflicted-attestation`. Block finalization for that finding until the
-  conflict is resolved.
+  finding. Record a contradicted attestation as `conflicted-attestation` per
+  the `engagement-evidence-standard` skill.
+- **Client-acceptance records**: Add one entry for each out-of-SOW change the
+  client accepted, with the fields of the `engagement-evidence-standard`
+  skill's `client-accepted` class.
+- **Orchestrator-saved documents**: Record each contract path the orchestrator
+  saved after a child's write was refused, and the stage it belongs to. Always
+  write this line. Write `Orchestrator-saved documents: none` when it is empty.
+- **Repair pass**: One `Repair pass:` line. List each gap sent, its owner
+  stage, and its outcome (`fixed` or `open`). Write `not run` when no gap
+  qualified.
 
 Refresh both this file and `manifest.md` **after** the gap review. The gap
 review report is itself a manifest row. Neither file is the run's final record
 until that refresh runs. Refresh both files again after any later re-run.
 
 The state may also retain compact Stage E classifications. Name these with the
-`engagement-evidence-standard` skill's classes (`qa-backed`, `attested`,
-`comparison-only`, `unverified`, `sow-authorized`, `unresolved`). These are
+`engagement-evidence-standard` skill's class names, verbatim. These are
 statuses and pointers only. Never copy QA content or engagement source content
 into the state file.
 

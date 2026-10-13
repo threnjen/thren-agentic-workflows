@@ -1,6 +1,6 @@
 ---
 name: engagement-evidence-standard
-description: "The single classification vocabulary every engagement stage uses when judging what the evidence supports about a workflow, behavior, or SOW criterion — the evidence classes (qa-backed / comparison-only / unverified), the scope classes (sow-authorized / unresolved), and what each requires. Use when: classifying QA or comparison evidence, deciding whether a change is an authorized scoped delta, or consuming another stage's classifications."
+description: "The single classification vocabulary every engagement stage uses when judging what the evidence supports about a workflow, behavior, or SOW criterion — the evidence classes (qa-backed / attested / comparison-only / unverified), the scope classes (sow-authorized / client-accepted / unresolved), the conflicted-attestation status, and what each requires. Use when: classifying QA or comparison evidence, deciding whether a change is an authorized scoped delta, or consuming another stage's classifications."
 ---
 
 # Engagement Evidence Standard
@@ -30,7 +30,7 @@ checked path in the absence note.
 
 | Class | Requires |
 |---|---|
-| `qa-backed` | a completed PASS on an **exact matching** QA check on the upgraded side. The check must be either a `QA_AUTOMATED` check ID with a run result, or a checked (`- [x]`) expected result in the manual QA checklist |
+| `qa-backed` | a completed PASS on an **exact matching** QA check on the upgraded side or a consuming system (rule below). The check must be either a `QA_AUTOMATED` check ID with a run result, or a checked (`- [x]`) expected result in the manual QA checklist |
 | `attested` | an accepted statement from the engagement owner closing a specific finding. The statement must show that the finding was remediated or researched and dispositioned (rules below) |
 | `comparison-only` | before/after comparison evidence (docs sets, graphs, retained reports) with no matching QA check |
 | `unverified` | neither |
@@ -38,11 +38,15 @@ checked path in the absence note.
 - The QA record shows the upgraded behavior at the recorded QA standard. The
   `qa-backed` class does not, by itself, prove that the original side behaved
   identically.
+- A recorded PASS on a consuming system's check counts as `qa-backed` when
+  the check exercises the behavior end to end. An example is a client
+  application check that lists records through the upgraded API.
 - A generic repository-level PASS with no matching check never yields
   `qa-backed`. Record that claim as `unverified`.
 - Use only `comparison-only` or a stronger class for a "preserved from the
   original" statement.
-- Render `unverified` as **NOT VERIFIED** in client-facing compliance documents.
+- Render every class in client-facing documents with the `engagement-client-voice`
+  skill's evidence phrases. Never write a class token there.
 - When the original side has no QA package, runtime evidence is asymmetric.
   State the asymmetry. Never use it to claim that the upgraded behavior was
   untested. Never use it as proof of before/after equivalence.
@@ -82,7 +86,7 @@ reopen it.
 its form, its date, the repository, and the attestor.
 
 **What it closes, and only that.** Remove the attested finding from the
-introduced, residual-remediation, and open-work counts. It verifies no
+introduced, remediation-recommendations, and open-work counts. It verifies no
 unrelated behavior. It provides no repository-wide assurance. Client documents
 may describe the finding as remediated. They may instead use the severity that
 the owner's research established. Each methodology note must distinguish an
@@ -91,12 +95,13 @@ owner attestation from independently executed QA.
 **Finalization.** `attested` satisfies the finalization gate for its own
 finding. Never require refreshed audits solely to confirm an accepted
 attestation. After accepting the attestation, re-run synthesis only. Synthesis
-includes findings, security, narratives, compliance, manifest, and gap review.
+includes the comparison record, security, narratives, compliance, manifest, and gap review.
 Never rerun the source audits unless the user explicitly asks.
 
-**Conflict.** Classify retained evidence that directly contradicts an
-attestation as `conflicted-attestation`. Pause finalization for that finding.
-Request resolution. Never silently prefer either source.
+**Conflict.** Classify a finding as `conflicted-attestation` when retained
+evidence directly contradicts its attestation. This status is defined here
+only. Leave the finding open. Pause finalization for that finding. Request
+resolution. Never silently prefer either source.
 
 ## Scope classes — how an observed change is treated
 
@@ -106,8 +111,23 @@ any delta.
 | Class | Requires | Consequence |
 |---|---|---|
 | `sow-authorized` | expressly required or permitted by the SOW. Cite the clause or explicit scope exception | Treat the change as an approved scoped delta under any pair `mode`. Narrate the change as such. Never call it a framing discrepancy. Never call it an unverified nonconformance. |
-| `unresolved` | the change falls outside SOW scope, or the SOW does not resolve an ambiguity | Treat the change as a framing discrepancy and a compliance risk |
+| `client-accepted` | the change falls outside SOW scope, and a client-acceptance record exists for it (rules below) | Treat the change as an accepted out-of-SOW change. Never call it a framing discrepancy. |
+| `unresolved` | the change falls outside SOW scope with no client-acceptance record, or the SOW does not resolve an ambiguity | Treat the change as a framing discrepancy and a compliance risk |
+
+## `client-accepted` — recorded client acceptance
+
+The engagement owner states that the client accepted a specific change that
+the SOW does not cover. The `engagement-workspace` working-state file holds
+one client-acceptance record per change. Each record has four fields: the
+change, the acceptance date, the form (for example written or verbal), and who
+accepted it. Record an unknown field as `unknown`.
+
+Only the SOW compliance walkthrough states the acceptance. It never describes
+the change as SOW-authorized, required by the agreement, or as having written
+authority. State the form only when the record gives it.
+
+## Finalization gate
 
 Finalization is blocked only by an `unresolved` change, an `unverified` required
-behavior, or a `conflicted-attestation` finding. The `attested` class never
-blocks finalization.
+behavior, or a `conflicted-attestation` finding. Every other class and "no
+identifiable delta" never block finalization.

@@ -313,13 +313,19 @@ A separate engagement flow sits outside the phase pipeline:
   lives in the `engagement-preparation-runbook` skill.
 - **Client Deliverable** runs a client engagement end to end: it invokes
   Client Deliverable - Prepare first (reused unchanged), keeps on-disk working state in a
-  per-engagement workspace (`engagement-workspace` skill), and drives the per-pair
-  analysis stages via hidden subagents — comparative audit runs, delta synthesis with
-  SOW-exclusion routing, the client-facing security narrative with its internal
-  security-delta report, cited pricing research, narrative/spec documents, the SOW
-  compliance walkthrough, and a schema-defined package manifest
-  (`engagement-package-manifest` skill) plus a client-perspective gap review. Output
-  is markdown + manifest; PDF assembly happens outside the tool.
+  per-engagement workspace (`engagement-workspace` skill), and drives the stages via
+  hidden subagents. Each pair gets comparative audit runs. The engagement-level
+  synthesis stages then run once: an internal comparison record with SOW-exclusion
+  routing, the client-facing security appendix with its internal security-delta
+  report, cited pricing research (a client cost analysis only when the cost impact is
+  material), the narrative and specification documents, the SOW compliance
+  walkthrough, and a schema-defined package manifest with a how-to-read guide
+  (`engagement-package-manifest` skill). A client-perspective gap review with
+  package-consistency checks follows. One repair pass then sends each High or
+  Medium gap back to its owning stage, reruns the invalidated stages, and
+  re-reviews the rewritten documents. One client document set covers every
+  pair, and each claim type has one owner document. Output is markdown + manifest.
+  PDF assembly happens outside the tool.
 
 ## External Dependencies And Integrations
 

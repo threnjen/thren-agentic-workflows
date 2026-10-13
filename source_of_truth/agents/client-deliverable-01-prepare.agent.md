@@ -77,22 +77,58 @@ as evidence against that document and surface it to the user.
 **Original side (optional).** Original/legacy repositories may lack QA
 documents. The documents may be absent or incomplete. This is not a blocker.
 Record the original side's QA status as present with verdict, present but
-incomplete, or absent. Note the status in the QA appendix. The comparison shows
-what the upgraded side has. Treat original gaps as evidence, not failures.
+incomplete, or absent. Treat original gaps as evidence, not failures.
+
+### QA appendix
 
 After every **upgraded** repository passes the gate, write the client-facing
-QA appendix at `deliverables/qa-appendix.md`. Use the engagement workspace
-root defined by the `engagement-workspace` skill. Add one section per repository.
-Include its resolved manual QA checklist when present. Follow it with a summary
-of its automated QA run that covers targets the manual checklist marks
-agent-only. Note the absence of QA documents for original sides. Follow the
-`engagement-client-voice` skill. Include no secrets or internal paths. Write
-only this workspace document. The workspace already exists. Never create it.
-Treat the appendix as a presentation artifact, not a replacement for the
-source QA package. Retain the exact `QA_AUTOMATED.md` and resolved manual QA
-paths. Report the check IDs and statuses that cover the
-repository's primary workflows. Do not pass a generic repository-level PASS
-to later synthesis stages as workflow evidence without those mappings.
+QA appendix at `deliverables/qa-appendix.md` under the engagement workspace
+root. The workspace already exists. Never create it. Write only this
+workspace document. Its H1 is `Appendix — QA report`. Load
+`engagement-client-voice` and `engagement-package-manifest`, and apply both.
+Write every sentence about the QA runs in the past tense. Include no secrets
+or internal paths.
+
+**Names.** Name each repository's system by the H1 title of the upgraded
+repository's `README.md`. When the README has no H1, use the pair `name` in
+plain words. Call the sides "the original system" and "the upgraded system".
+Use each name unchanged throughout the appendix. In your own prose, name a
+component or job by its package name, such as "background job". Keep a raw
+tool name only inside a quoted tester note.
+
+**Original side.** Give each original side one sentence with its QA status
+from the gate.
+
+**Upgraded side.** Open with one sentence giving the run dates and the
+overall counts. Name each date's source, such as "automated run date". Count
+a checklist section as a section, never as a scenario. Then write exactly two
+tables. List no check in both.
+
+1. **Manual scenarios** — one row per scenario and one row per checklist
+   section with every box checked. Use the columns Scenario, Recorded status,
+   and What the tester recorded.
+2. **Automated checks** — grouped by what the checks verify, with ID ranges
+   allowed. Never group a credential scan under tests. Use the columns What
+   they verify, Checks, Recorded result, and Recorded limitation.
+
+Write each result as "recorded PASS", "recorded FAIL", or Blocked or Skipped
+as recorded. Report each status and note as the analysis-branch record states
+it. Never attribute a recorded status or note to the person who corrected it.
+Give every row its tester note or the run record's stated limitation,
+condensed to one clause. Keep every tester hedge: "not found" never becomes
+"lacked". Keep every non-empty per-check note, prefixed by its check ID.
+Write "None stated" when the record gives none.
+
+**Budget check.** Before returning, count the appendix with `wc -w` against
+its budget in the `engagement-package-manifest` Length Budgets section. Cut
+scope preambles and repeated facts first. Never cut a row, a status, or a
+recorded note.
+
+The appendix presents the QA package. It does not replace it. Retain the
+exact `QA_AUTOMATED.md` and resolved manual QA paths. Map each repository's
+primary workflows to the check IDs and statuses that cover them. Never pass a
+repository-level PASS to later stages as workflow evidence without those
+mappings.
 
 ## Hard Rule: Context Budget
 
@@ -232,6 +268,7 @@ NOT RUN with reason). Include the baseline snapshot path. Include artifact
 locations (local paths only).
 Include the exact QA_AUTOMATED and resolved manual QA paths. Include the
 per-repository QA-gate status. Include compact workflow or check coverage
-pointers. Include the QA appendix path. Include the three analysis-branch
+pointers. Include the QA appendix path, the system names it used, and its
+word count against its budget. Include the three analysis-branch
 invariant assertions with their evidence, including recorded HEAD SHAs. Do not
 include engagement file contents in this report.
