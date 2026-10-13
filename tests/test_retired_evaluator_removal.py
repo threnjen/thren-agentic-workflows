@@ -116,7 +116,7 @@ def test_security_capability_survives_as_an_auditor_subagent() -> None:
 
     Losing the retired parent first made it standalone. It was then folded into the auditor
     family as `Auditor - Security`, a hidden sibling of Code/Infra/Refactor
-    declared as a child by both the audit and engagement orchestrators. So the
+    declared as a child by the audit orchestrator. So the
     shape inverts: it gains a spawnable subagent file on every platform and
     correctly loses its user-invocable slash command.
     """

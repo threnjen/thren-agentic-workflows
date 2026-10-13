@@ -7,15 +7,15 @@ description: "Standard analysis flow used by the Client Deliverable orchestrator
 
 The workflow has two granularities, in order. **Stage A runs per pair** and
 produces the per-pair evidence. **Stages B–E run once per engagement** after
-every pair's Stage A is complete. These stages produce the single holistic
-client-facing document set at flat `deliverables/` paths, with one per-repo
-section per pair. They also produce each stage's per-pair internal basis
-documents.
+every pair's Stage A is complete. These stages produce the holistic client
+documents at flat `deliverables/` paths, with one per-repo section per pair.
+They also produce each stage's internal documents.
 
 Every spawn carries the orchestrator's standing boundaries (client-code
 security, analysis-branch invariants, compact handoff). Record Stage A
 results in the pair's working-state entry. Record Stage B–E results in
-engagement-level entries. Record status plus artifact pointers only. The
+engagement-level entries. Record status, artifact pointers, each owner
+question a stage returns, and the one-line return values named below. Record no other content. The
 agent names below are source names. Spawn each agent through its deployed
 identifier in the current harness. Hidden subagents deploy with a `z-`
 prefix.
@@ -71,7 +71,7 @@ provides evidence for it in either of two independent forms:
 | Pair-level delta | `code_delta_path` / `infra_delta_path` | the delta file, in place of the two per-side reports |
 
 Both forms may be present for one dimension. Pass whatever the config gave.
-A supplied dimension is **not scanned on either side**. Skip both spawns. The
+A supplied dimension is **not scanned on either side**. Skip both spawns.
 Treat the dimension as `supplied`. Never record it as `failed`. Never
 re-derive it from the trees. Scan a dimension with neither form normally.
 
@@ -134,30 +134,41 @@ untouched.
 Each stage below runs **once per engagement** and in order. Run it only after
 the orchestrator's §4 pair gate opens. Every spawn carries the full pair roster
 (names, `mode`s), the workspace root, the SOW path (or "none configured"),
-and every pair's relevant report pointers. Each stage writes one client
-document set at flat `deliverables/` paths. Include one per-repo section per
-pair. Also write its per-pair internal basis documents.
+and every pair's relevant report pointers.
 
-**Re-run invalidation**: Any Stage A re-run (either side of any pair)
-invalidates all Stage B–E outputs. After the re-run passes the A3 gate, re-run
-stages B–E in full before finalizing. An accepted owner attestation also
-invalidates B–E, but **not** Stage A. Re-run synthesis only. Never re-run the
-source audits.
+**Re-run invalidation**: A rerun invalidates every stage that consumes its
+output. Rerun the invalidated stages in order before finalizing:
 
-Every B–E spawn carries the working-state file's attestation records per the
-`engagement-workspace` skill. This lets each stage close the named findings
-under the `engagement-evidence-standard` skill's `attested` rules.
+1. A Stage A rerun (either side of any pair) invalidates Stages B–E and stage
+   5. Rerun them after the A3 gate passes.
+2. A Stage B (Delta Synthesizer) rerun invalidates Stages C–E and stage 5.
+3. A Stage D (Pricing Researcher) rerun invalidates Stage E and stage 5.
+4. A Stage E (Narrative Writer) rerun, a repair included, invalidates all of stage 5: the
+   Compliance Writer, the Manifest Assembler, and the Gap Reviewer. Never skip
+   the Compliance Writer because its document does not cite the edited text.
+5. A Prepare, Stage C (Security Narrative), or Compliance Writer rerun invalidates the Manifest
+   Assembler and the Gap Reviewer.
+6. A Manifest Assembler rerun invalidates the Gap Reviewer.
+
+An accepted owner attestation invalidates Stages B–E and stage 5, but **not**
+Stage A. Never re-run the source audits for it.
+
+Every B–E spawn carries the working-state file's attestation and
+client-acceptance records per the `engagement-workspace` skill. Each stage
+applies them under the `engagement-evidence-standard` skill's `attested` and
+`client-accepted` rules.
 
 ### Stage B: Delta
 
 Spawn **Client Deliverable - Delta Synthesizer** with every pair's audit report
 pointers. For any supplied dimension, use the workspace delta copy in place
 of that dimension's two per-side reports. Label it as a supplied delta so the
-synthesizer consumes its classifications rather than re-comparing. Record its
-client document pointers. Record each pair's exclusions-partition and
-remediation-recommendations pointers. Record any missing-SOW or user-review
-flags. Surface a non-empty remediation list to the user alongside Stage C's
-fix-and-re-run flow.
+synthesizer consumes its classifications rather than re-comparing. Record the
+internal comparison-record pointer. Record each pair's exclusions-partition and
+remediation-recommendations pointers. Record the package-level regression line
+from its return. Record any missing-SOW or user-review flags. Surface a
+non-empty remediation list to the user alongside Stage C's fix-and-re-run
+flow.
 
 ### Stage C: Security Synthesis
 
@@ -176,8 +187,11 @@ re-run stages B–E per the invalidation rule.
 Spawn **Client Deliverable - Pricing Researcher** with every pair's
 dependency/infra report pointers. It is the **only** agent permitted internet
 access during an engagement run. Every other subagent operates offline
-against local evidence. Record the client cloud/cost-analysis pointer, each
-pair's internal cost-basis pointer, and any NOT RESEARCHED status.
+against local evidence. Record the cost status from its return: `present`
+with the client cloud/cost-analysis pointer, or `not-applicable` with its
+one-line reason. With `not-applicable`, also record any one-sentence cost note
+it returns for the business design. Record each pair's internal cost-basis
+pointer and any NOT RESEARCHED status.
 
 ### Stage E: Narrative & Specification Documents
 
@@ -186,9 +200,13 @@ paths from the working-state file. For each side, pass the analysis-branch
 checkout path, the docs-set file paths on that branch, and the code-graph
 pointer. Also pass the exact `QA_AUTOMATED.md` and `QA_USER.md` paths, QA
 run-result/check coverage pointers, the SOW/contract path, and retained report
-pointers where available. Never pass abstract pointers. The docs, graphs, and
-QA packages live at the passed paths inside the client repository checkouts,
-not the workspace. State this in the spawn.
+pointers where available. Pass each pair's `remediation-recommendations.md`
+path from Stage B. Pass the Stage D cost status (`present` or
+`not-applicable`). Pass any recorded cost note, labelled `cost note`. Pass the system
+names recorded from Prepare's return. Never
+pass abstract pointers. The docs, graphs, and QA packages live at the passed
+paths inside the client repository checkouts, not the workspace. State this in
+the spawn.
 
 The spawn directs the writer to build its evidence map and classify every
 primary workflow and every mode-straining change per the
@@ -196,7 +214,7 @@ primary workflow and every mode-straining change per the
 
 Record its three client document pointers and each pair's internal
 narrative-basis pointer. The return must include compact counts/pointers per
-evidence class (`qa-backed`, `comparison-only`, `unverified`) and per scope
-class (`sow-authorized`, `unresolved`). If any `unresolved` change remains,
-surface it to the user before the compliance stage. Resolve a client narrative
+evidence class and per scope class of the `engagement-evidence-standard`
+skill, the `conflicted-attestation` count, and per-pair known-issue counts. If any `unresolved` change
+remains, surface it to the user before the compliance stage. Resolve a client narrative
 contradicted by evidence before delivery.
