@@ -40,7 +40,7 @@ directory). Hand-maintained files are never touched.
   that orchestrators spawn automatically.
 - **51 skills** — directory-based capabilities agents load on demand, each rooted at
   `SKILL.md`.
-- **24 instruction files** — cross-cutting guidance applied by `applyTo` file-glob
+- **25 instruction files** — cross-cutting guidance applied by `applyTo` file-glob
   matching.
 
 Only the destinations differ per harness; the agents behave the same everywhere.
@@ -56,7 +56,7 @@ Only the destinations differ per harness; the agents behave the same everywhere.
 ├── source_of_truth/                # THE authoring surface — edit here
 │   ├── agents/                     # 59 agent definitions (catalog lives in USAGE.md)
 │   ├── skills/                     # 51 skill directories, each rooted at SKILL.md
-│   ├── instructions/               # 24 instruction files matched by applyTo globs
+│   ├── instructions/               # 25 instruction files matched by applyTo globs
 │   └── baseline/                   # baseline-instructions.md, rendered at deploy time
 ├── ports/                          # Generated landing zone — untracked, deleted after deploy
 │   ├── claude/                     # agents, commands, skills

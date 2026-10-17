@@ -14,7 +14,7 @@ Quick-reference for AI agents working in this repository.
 
 - 59 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 43 hidden subagents (`user-invocable: false`) and 16 user-invocable.
 - 51 skills in `source_of_truth/skills/`.
-- 24 instructions in `source_of_truth/instructions/`.
+- 25 instructions in `source_of_truth/instructions/`.
 - 1 installable hook in `source_of_truth/hooks/`, mirrored verbatim to `ports/github/hooks/` and `.github/hooks/`. `creative-canon-guard.py` is installed by the writer into their own vault's `.claude/`; see `docs/CREATIVE_TOOLKIT.md`.
 - After propagation, `ports/claude/agents` = 45 and `ports/claude/commands` = 17. The command count includes one alias.
 - Four of the agents, five of the skills, and one of the instructions belong to the
@@ -31,7 +31,7 @@ source_of_truth/                           # THE authoring surface
   agents/
     *.agent.md                             # 59 agent definitions
   skills/                                  # 51 skill dirs, each rooted at SKILL.md
-  instructions/                            # 24 applyTo-glob instruction files
+  instructions/                            # 25 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
 ports/                                     # GENERATED, untracked, deleted after each deploy
   claude/  {agents, commands, skills}
