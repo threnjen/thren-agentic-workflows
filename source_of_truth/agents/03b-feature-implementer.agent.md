@@ -148,7 +148,7 @@ Return after this mode. Do not enter sections A through F.
 
 Process each active AC in plan order:
 
-1. **Red** — write tests for the AC.
+1. **Red** — write tests for the AC. Name and place them per the `test-naming` instruction. Map them to the AC only in the implementation record.
    Run them.
    Confirm that they fail.
 2. **Green** — write the minimal implementation code that makes every test pass, new and existing.

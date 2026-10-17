@@ -161,7 +161,7 @@ This bug has recurred multiple times. It is the most common UI Toolkit mistake i
 
 ## Refactor / Rewire Test Preservation Rules
 
-- Before planning a refactor, runtime rewire, API change, or behavior change, inventory the affected Unity tests and harnesses. Include the project's EditMode directory (verified reference convention: `Assets/Tests/Editor`), `Assets/Tests/PlayMode`, phase-scoped or editor tests, and UI Toolkit test root builders. Plan these files as part of the work. Do not defer them as cleanup.
+- Before planning a refactor, runtime rewire, API change, or behavior change, inventory the affected Unity tests and harnesses. Include the project's EditMode directory (verified reference convention: `Assets/Tests/Editor`), `Assets/Tests/PlayMode`, every other test assembly that exercises the changed code, and UI Toolkit test root builders. Plan these files as part of the work. Do not defer them as cleanup.
 - If the change alters a public API, bootstrap path, serialized asset layout, scene wiring, prefab, event contract, or lifecycle behavior, assume related tests will need updates. Include those files in the plan's scope and verification assets.
 - When a Unity test becomes obsolete because production behavior changed, update or retire it in the same feature. Document the reason. Leave no orphaned or silently broken tests behind.
 - For controller, UI Toolkit, or scene-wiring changes, include the corresponding test assembly and test root builder files in the planned scope. State whether each file needs test updates.

@@ -17,8 +17,8 @@ Write `[task-name]-implementation.md` to `[plan-path]/` using this exact templat
 
 ## AC Coverage Matrix
 
-| AC | Criterion ID | Planned Test ID | Planned Test Pattern | Status | Implementing Files | Evidence Paths | Implement Commit SHA | Review Commit SHA |
-|----|--------------|-----------------|----------------------|--------|--------------------|----------------|----------------------|-------------------|
+| AC | Criterion ID | Proving Tests | Status | Implementing Files | Evidence Paths | Implement Commit SHA | Review Commit SHA |
+|----|--------------|---------------|--------|--------------------|----------------|----------------------|-------------------|
 
 Use exact rubric or plan criterion IDs when available. If a commit SHA is not known yet, write `PENDING`.
 
@@ -72,6 +72,7 @@ Use exact rubric or plan criterion IDs when available. If a commit SHA is not kn
 Additional requirements:
 
 - Fill the `AC Coverage Matrix` for every planned AC, even if the current status is `Pending`.
+- `Proving Tests` lists the fully qualified name of each test that proves the AC. This column is the AC-to-test traceability. Test names never carry AC identifiers.
 - `Evidence Paths` should point to concrete source, test, or artifact locations that a grader can search locally.
 - The `Implement Commit SHA` and `Review Commit SHA` fields may start as `PENDING`. Keep both columns so later pipeline stages can fill them in.
 - Keep the `Acceptance Criteria Status` section aligned with the coverage matrix rather than inventing a second source of truth.

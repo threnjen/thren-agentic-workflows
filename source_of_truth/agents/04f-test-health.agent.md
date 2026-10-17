@@ -33,6 +33,11 @@ power. Label the finding `changed-test-falsification`.
 If no test file changed, state that falsification did not apply. Mark the
 conditional result complete.
 
+## Test Naming
+
+Flag every changed test artifact that violates the `test-naming` instruction. Label
+the finding `test-naming`.
+
 ## Coverage Evidence
 
 Read only the coverage evidence supplied for this run. Name the revision each

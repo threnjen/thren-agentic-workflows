@@ -23,7 +23,8 @@ Write only `04d-consistency-auditor-report.md`. Do not remediate drift.
 Compare branch additions with the established form for the same concern elsewhere in
 the repository. Check at least these dimensions:
 
-1. Naming: files, sections, identifiers, report fields, and status labels.
+1. Naming: files, sections, identifiers, report fields, status labels, and test
+   artifacts. The `test-naming` instruction defines the canonical test form.
 2. Error handling: failure posture, not-run/incomplete wording, ownership, and
    required follow-up.
 3. Repeated patterns: structure, evidence citation, check ordering,

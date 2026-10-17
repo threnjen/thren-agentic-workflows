@@ -36,7 +36,7 @@ The manifest must list the phase document path, feature task names in order, and
 
 Feature - Plan Author writes the manifest once per planning run. Phase - Execute does not rewrite it during the build.
 
-The manifest also contains the Phase Environment State, test baseline, lint and format commands, phase test pattern, and verification assets for each feature.
+The manifest also contains the Phase Environment State, test baseline, lint and format commands, the test location for each touched system, and verification assets for each feature.
 
 The prerequisite graph orders the features. Feature - Implementer builds every feature in one pass, in that order.
 
@@ -120,7 +120,7 @@ A concrete name is any named file path, method, class, field, XML element, USS c
 - Copied exactly from the Phase document or the request, and preserved
 - Labeled `[PROPOSED - name TBD]` when the name is neither verified nor copied
 
-For a test method, a fourth option applies: omit the name and describe the scenario instead. Never present an invented name as established fact. The implementer chooses the final idiomatic name for a `[PROPOSED - name TBD]` symbol. The implementer records that name in implementation notes.
+For a test method, a fourth option applies: omit the name and describe the scenario instead. Every test name, including one copied from the Phase document, follows the `test-naming` instruction. Never present an invented name as established fact. The implementer chooses the final idiomatic name for a `[PROPOSED - name TBD]` symbol. The implementer records that name in implementation notes.
 
 ## Feature Delta (`-delta.md`)
 
@@ -140,7 +140,7 @@ Feature - Plan Author captures Phase Environment State once per planning run. It
 | Result | Manifest location |
 |---|---|
 | Tech stack, test runner command, test baseline, lint command, format command | `## Environment State` |
-| Phase test pattern and shared or feature verification assets | `## Verification Assets` and the relevant feature entry |
+| Test location for each touched system, and shared or feature verification assets | `## Verification Assets` and the relevant feature entry |
 
 ## Stage Format
 
