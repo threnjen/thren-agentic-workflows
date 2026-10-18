@@ -63,16 +63,20 @@ OLD_IDENTIFIERS = tuple(
             for old_slug, _new_slug, old_name, _new_name, _display_name, _label in IDENTITY_ROWS
             for token in (old_slug, old_name, old_slug + "-report")
             if token
-        }
-        | set(OLD_SHORT_FORMS),
+        },
         key=len,
         reverse=True,
     )
 )
+# A bare short form names a retired agent. The same text after `Phase ` is a
+# phase label (docs-writer cites one as a bad heading example), not an agent
+# identifier, so the short forms alone skip that prefix.
 OLD_IDENTIFIER_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_-])(?:"
     + "|".join(re.escape(token) for token in OLD_IDENTIFIERS)
-    + r")(?![A-Za-z0-9_-])"
+    + r"|(?<!Phase )(?:"
+    + "|".join(re.escape(token) for token in OLD_SHORT_FORMS)
+    + r"))(?![A-Za-z0-9_-])"
 )
 
 FILE_TYPE_PATTERNS = {
@@ -133,6 +137,14 @@ def test_identifier_scan_fails_on_one_restored_identifier() -> None:
     mutated = [("README.md", "clean\n" + old_name + "\n")]
     errors = _identifier_errors(mutated)
     assert any(error.startswith("README.md:2:") and old_name in error for error in errors)
+
+
+def test_identifier_scan_flags_bare_short_form_but_not_phase_label() -> None:
+    short_form = "05" + "g"
+    bare = _identifier_errors([("README.md", "spawn " + short_form + " next\n")])
+    assert bare == [f"README.md:1: {short_form}"]
+    phase_label = _identifier_errors([("README.md", "### Phase " + short_form + ": X\n")])
+    assert phase_label == []
 
 
 def test_source_map_moves_files_and_numbered_names() -> None:

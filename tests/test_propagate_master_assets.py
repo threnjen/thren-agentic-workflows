@@ -147,7 +147,9 @@ class PropagateMasterAssetsTests(unittest.TestCase):
                 self.assertEqual(agents[slug].tools, expected_tools)
 
     def test_local_final_check_agents_match_all_generated_harness_outputs(self) -> None:
-        agents = {agent.source_slug: agent for agent in mod.load_source_agents()}
+        # `ports/` does not survive a deploy run. Read a tree this suite propagates.
+        env.use(self, env.propagated_tree())
+        agents ={agent.source_slug: agent for agent in mod.load_source_agents()}
         instructions = mod.load_instruction_docs()
         routing = mod.load_model_routing()
         expected_slugs = tuple(sorted(LOCAL_FINAL_CHECK_AGENT_TOOLS))
@@ -754,6 +756,9 @@ class OrphanPruningTests(unittest.TestCase):
         # CODEX_PROFILES_DIR is a retired cleanup root and stays at 0: Codex
         # profiles are configuration layers, not agent entry points. It is
         # asserted so a regression that starts writing there is caught.
+        #
+        # `ports/` does not survive a deploy run. Read a tree this suite propagates.
+        env.use(self, env.propagated_tree())
         roots = [
             (mod.CLAUDE_AGENTS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 45),
             (mod.CLAUDE_COMMANDS_DIR, "*.md", mod.GENERATED_AGENT_MARKDOWN_HEADER, 17),
@@ -797,6 +802,8 @@ class OrphanPruningTests(unittest.TestCase):
         pass today and break the moment that lands -- asserting the opposite of
         what it means.
         """
+        # `ports/` does not survive a deploy run. Read a tree this suite propagates.
+        env.use(self, env.propagated_tree())
         retired_stems = (
             "05g-artifact-sweeper",
             "05j-consistency-auditor",

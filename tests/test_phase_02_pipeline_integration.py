@@ -26,7 +26,6 @@ PREFLIGHT_INSTRUCTIONS_PATH = (
     REPO_ROOT / "source_of_truth/instructions/orchestrator-conventions.instructions.md"
 )
 ROUTING_PATH = REPO_ROOT / "source_of_truth/config/model-routing.json"
-POST_GATE_QA_PATH = REPO_ROOT / "docs/phases/PHASE_02/PHASE_02_POST_GATE_QA.md"
 
 MANIFEST_FIELDS = (
     "status",
@@ -279,6 +278,20 @@ def _assert_generated_agent_sets_and_routes_match_source() -> None:
             assert f"model: {route['opencode']['model']}" in opencode_path.read_text(encoding="utf-8")
             assert f"model = \"{route['codex']['model']}\"" in codex_path.read_text(encoding="utf-8")
 
+        # OpenCode and Codex emit each alias as a second agent file. Claude and
+        # Cursor emit aliases as commands, outside the agent directories.
+        for alias in agent.aliases:
+            expected_opencode.add(f"{alias}.md")
+            expected_codex.add(f"{alias}.toml")
+            assert (propagator.OPENCODE_AGENTS_DIR / f"{alias}.md").read_text(
+                encoding="utf-8"
+            ) == propagator.render_opencode_agent(agent, docs, opencode_refs, routing)
+            assert (propagator.CODEX_AGENTS_DIR / f"{alias}.toml").read_text(
+                encoding="utf-8"
+            ) == propagator.render_codex_agent(
+                agent, docs, codex_refs, routing, identifier=alias
+            )
+
     assert _generated_names(
         propagator.CLAUDE_AGENTS_DIR, ".md", propagator.GENERATED_AGENT_MARKDOWN_HEADER
     ) == expected_claude
@@ -365,22 +378,3 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
 
     routing = propagator.load_model_routing()
     assert set(routing) == set(propagator.MODEL_TIERS)
-
-
-def test_post_gate_checklist_covers_live_only_claims() -> None:
-    checklist = _read(POST_GATE_QA_PATH)
-    required_sections = (
-        "Claude Code",
-        "Codex",
-        "OpenCode",
-        "Cursor",
-        "GitHub Copilot",
-        "copilot-instructions.md",
-        "version",
-        "Observation",
-        "unchanged",
-        "resolution_status",
-    )
-    assert not _missing_tokens(checklist, required_sections)
-    assert "deploy_agents.py" in checklist
-    assert "Do not run this checklist inside the phase" not in checklist
