@@ -46,7 +46,7 @@ Capture phase-level discovery once:
 - Environment state
 - Test baseline
 - Lint and format commands
-- The phase-scoped test directory pattern
+- The existing test location for each system the phase touches, per the `test-naming` instruction
 
 Write these values into the manifest's `## Environment State` and `## Verification Assets` sections.
 

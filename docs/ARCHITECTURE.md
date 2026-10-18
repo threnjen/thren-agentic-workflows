@@ -37,7 +37,7 @@ flowchart TD
 
     SOT --> Agents[59 agent definitions]
     SOT --> Skills[51 skill directories]
-    SOT --> Instructions[24 instruction files]
+    SOT --> Instructions[25 instruction files]
 
     Scripts --> Propagate[propagate_master_assets.py]
     Scripts --> Shared[asset_paths.py]
@@ -148,7 +148,7 @@ The only authoring surface.
   the `.agent.md` suffix. Loading keys off `name`/`description` frontmatter, not the
   suffix, so the source glob stays `*.md`.
 - `skills/` — 51 directory-based skills, each rooted at `SKILL.md`.
-- `instructions/` — 24 instruction files matched by `applyTo` globs. Matching is
+- `instructions/` — 25 instruction files matched by `applyTo` globs. Matching is
   `fnmatch` against the agent's repo-relative path, so a `**/name.agent.md` pattern
   requires a `/` immediately before `name` — numbered agents must be named in full, and a
   pattern matching nothing fails silently.

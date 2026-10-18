@@ -38,6 +38,6 @@ failing test as a defect that this feature introduced, whatever its subject. No 
 When you cannot reach green, stop. State that fact plainly in your return. Name every test that
 still fails. State what you tried. Never report a round complete over a red suite.
 
-Review plan conformance only. File findings only in this lane. Stay silent outside it.
+Review plan conformance only. File findings only in this lane. Stay silent outside it. A `test-naming` violation belongs to this lane.
 
 Record each finding with `severity`, `lane: plan-conformance`, `evidence`, and `reviewer: 03c-reviewer-plan-conformance`.

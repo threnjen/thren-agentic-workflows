@@ -70,7 +70,7 @@ Create test files with these rules:
 - Use one assertion per test.
 - Use descriptive test names that explain the expected behavior.
 - Use mocks/stubs for external dependencies.
-- Follow existing project conventions for file naming and structure.
+- Name and place test files per the `test-naming` instruction.
 
 ### Phase 5: Verify
 
