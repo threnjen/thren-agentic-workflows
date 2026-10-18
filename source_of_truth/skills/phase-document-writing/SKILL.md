@@ -88,10 +88,13 @@ By phase: each phase's notes and summary path.]
 
 ## Phases
 
-| Phase | Name | Status | Depends On | Complexity | Description |
-|-------|------|--------|------------|------------|-------------|
-| 01    | ...  | Planned| None       | Medium     | ...         |
-| 02    | ...  | Planned| Phase 01   | Large      | ...         |
+| Phase | Name | Owner | Refined | Status | Depends On | Complexity | Description |
+|-------|------|-------|---------|--------|------------|------------|-------------|
+| 01    | ...  | Code  | Yes     | Planned| None       | Medium     | ...         |
+| 02    | ...  | Infra | No      | Planned| Phase 01   | Large      | ...         |
+| 03    | ...  | Code  | No spec | Planned| Phase 02   | Medium     | ...         |
+
+[One short paragraph that defines the Owner and Refined columns for readers.]
 
 ## Constraints & Non-Goals
 - [Project-wide constraint]
@@ -100,6 +103,14 @@ By phase: each phase's notes and summary path.]
 ## Architecture Notes
 [One line that points at `docs/ARCHITECTURE.md`. That file owns code architecture.]
 ```
+
+**Owner names the specialty best suited to do the phase, not a person.** Use the team's own specialty labels, such as Code, Infra, QA, or Other. Join two labels with `+` when the phase's features split between specialties. Owner lets team members split the phases between them, including who refines each one.
+
+**Refined says whether `@phase-refiner` has run on the phase summary.** Use exactly one of three values:
+
+- `Yes`: `@phase-refiner` refined and wrote the phase summary.
+- `No`: the phase summary exists but has not been refined.
+- `No spec`: the planner has not written the phase summary yet.
 
 **The roadmap stays referential.** It states scope, order, and status. A row description is one to three sentences that name the mechanics added or changed. It names no file, class, or test count. System design lives in `docs/phases/project_notes/<system>_design_notes.md`. A phase's full scope lives in its phase folder. Code architecture lives in `docs/ARCHITECTURE.md`.
 
@@ -121,6 +132,7 @@ Before presenting or writing any Phase document, verify:
 - [ ] Dependencies and risks include mitigations
 - [ ] Identify integration points with other phases or systems
 - [ ] The roadmap holds no design paragraphs. Each row description is three sentences or fewer.
+- [ ] Every roadmap row has an Owner value and a Refined value of `Yes`, `No`, or `No spec`
 - [ ] Every `project_notes/` file appears in the roadmap's "Where to Read Next" index
 - [ ] No document carries change narration, dated decisions, or superseded text
 

@@ -28,6 +28,7 @@ You connect a feature idea or zoomed-out project plan to phase execution. You en
 
 - After you write or update a Phase document, **read** `PROJECT_ROADMAP.md` or `PHASES_OVERVIEW.md` for legacy repos. Update this phase's entry with changes that belong at the roadmap level.
 - Make routine roadmap-level updates in the same pass. Do not wait for user approval. Include the phase name or description, high-level deliverables or goals, inter-phase dependencies, newly identified sequencing risks, and project-level scope additions or removals.
+- Set this phase's Refined value to `Yes` when you write the refined phase document. If the roadmap has no Refined column, tell the user that `@01 Project - Planner` adds it on its next run.
 - Do NOT rewrite the entire roadmap. Update only the section or sections for this phase.
 - Do NOT modify entries for other phases unless the user explicitly surfaced and resolved a cross-phase dependency during refinement.
 - If no roadmap file exists for the first phase, create a minimal `PROJECT_ROADMAP.md` that registers the phase.
