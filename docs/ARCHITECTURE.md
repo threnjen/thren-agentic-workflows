@@ -35,7 +35,7 @@ flowchart TD
     Root --> Pkg[packages com.threnjen.visual-verification UPM]
     Root --> Scripts[scripts and deploy_agents.py]
 
-    SOT --> Agents[59 agent definitions]
+    SOT --> Agents[60 agent definitions]
     SOT --> Skills[51 skill directories]
     SOT --> Instructions[25 instruction files]
 
@@ -144,7 +144,7 @@ with the reason and never aborts asset deployment.
 
 The only authoring surface.
 
-- `agents/` — 59 agent definitions (16 user-invocable, 43 hidden subagents), all using
+- `agents/` — 60 agent definitions (16 user-invocable, 44 hidden subagents), all using
   the `.agent.md` suffix. Loading keys off `name`/`description` frontmatter, not the
   suffix, so the source glob stays `*.md`.
 - `skills/` — 51 directory-based skills, each rooted at `SKILL.md`.
@@ -167,8 +167,8 @@ platform-specific transformations:
 - Claude emission splits by invocability: a hidden agent emits a subagent file only; a
   user-invocable agent emits a slash command, **plus** a subagent file when some
   orchestrator names it as a child (dual-use), so orchestrator commands can still spawn
-  it. That is why `ports/claude/agents` (45) and `ports/claude/commands` (17) differ:
-  43 hidden subagents plus the two dual-use agents (Docs Writer and Web Researcher)
+  it. That is why `ports/claude/agents` (46) and `ports/claude/commands` (17) differ:
+  44 hidden subagents plus the two dual-use agents (Docs Writer and Web Researcher)
   form the agent set. Sixteen user-invocable agents plus one validated alias form
   the command set.
 - applicable instruction content is inlined when the destination platform does not

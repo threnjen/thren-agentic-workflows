@@ -1,6 +1,6 @@
 ---
 name: phase-final-check
-description: "Shared contract for a cold-start review of a completed phase document. Use when Phase - Refiner or its final-check reviewer performs the optional last look."
+description: "Shared contract for a cold-start review of a completed phase document. Use when Phase - Refiner or its final-check reviewer performs the last look."
 ---
 
 # Phase Final-Check Contract

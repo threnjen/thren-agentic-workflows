@@ -30,7 +30,10 @@ READ_ONLY_INSTRUCTION_PATH = SOURCE_INSTRUCTIONS / "read-only-agent.instructions
 SKILL_PATH = SOURCE_SKILLS / "phase-final-check" / "SKILL.md"
 
 PHASE_6_HEADING = "### Phase 6: Finalize the Phase Document"
-OFFER_HEADING = "#### 6B: Optional Final Check (Entry A + Entry B)"
+OFFER_HEADING = "#### 6B: Validate the Written Document (Entry A + Entry B)"
+VALIDATOR_NAME = "Plan - Adversarial Validator"
+VALIDATOR_PATH = SOURCE_AGENTS / "adversarial-validator.agent.md"
+PLANNER_PATH = SOURCE_AGENTS / "01-project-planner.agent.md"
 SYNC_HEADING = "#### 6C: Synchronize the Completed Phase"
 PHASE_7_HEADING = "### Phase 7: Open Working Branch"
 
@@ -137,15 +140,16 @@ def _workflow_errors(text: str) -> set[str]:
         errors.add("entry convergence")
 
     write_position = normalized_phase_6_lower.find("write the phase document")
-    offer_position = normalized_phase_6_lower.find("optional final check")
+    offer_position = normalized_phase_6_lower.find("validate the written document")
     if write_position < 0 or offer_position < 0 or write_position >= offer_position:
         errors.add("document write before offer")
 
-    outcome_terms = ("optional", "advisory", "accept", "decline", "no answer")
-    if not all(term in normalized_offer.lower() for term in outcome_terms):
-        errors.add("offer continuation outcomes")
-    if "phase document remains unchanged" not in normalized_offer.lower():
-        errors.add("unchanged decline continuation")
+    if "without asking the user" not in normalized_offer.lower():
+        errors.add("mandatory validation")
+    if "advisory" not in normalized_offer.lower():
+        errors.add("advisory findings")
+    if VALIDATOR_NAME not in offer:
+        errors.add("validator delegation")
 
     offer_lines = [line.strip().lower() for line in offer.splitlines()]
     if not any(line.startswith("- repository path:") for line in offer_lines) or not any(
@@ -199,7 +203,7 @@ def _workflow_errors(text: str) -> set[str]:
         errors.add("discovery synchronization once")
     if normalized_sync.count("roadmap synchronization") != 1:
         errors.add("roadmap synchronization once")
-    if "after the offer and any fold-in" not in normalized_sync.lower():
+    if "after validation and any fold-in" not in normalized_sync.lower():
         errors.add("sync after fold-in")
     phase_7_position = text.find(PHASE_7_HEADING)
     if phase_7_position < 0 or phase_7_position <= text.find(SYNC_HEADING):
@@ -241,24 +245,24 @@ def test_phase_refiner_workflow_contract() -> None:
 @pytest.mark.parametrize(
     ("needle", "replacement", "obligation"),
     [
-        ("#### 6B: Optional Final Check (Entry A + Entry B)", "#### 6B: Entry-specific notes", "one shared offer"),
+        ("#### 6B: Validate the Written Document (Entry A + Entry B)", "#### 6B: Entry-specific notes", "one shared offer"),
         ("Write the phase document in place", "Review the draft before writing the phase document", "document write before offer"),
-        ("optional and advisory", "required and blocking", "offer continuation outcomes"),
-        ("accept, decline, or no answer", "accept only", "offer continuation outcomes"),
-        ("phase document remains unchanged", "phase document is always rewritten", "unchanged decline continuation"),
+        ("without asking the user", "if the user accepts", "mandatory validation"),
+        ("are advisory", "are blocking", "advisory findings"),
+        ("and `Plan - Adversarial Validator` once each", "once", "validator delegation"),
         ("repository path", "conversation summary", "exact reviewer paths"),
         ("phase document path", "Refiner assessment", "exact reviewer paths"),
         ("conversation content", "conversation content is required", "blindness boundary"),
         ("error, timeout, or unusable output", "successful output", "reviewer failure states"),
         ("failure in one line", "failure in a detailed report", "one-line failure report"),
-        ("do not retry", "retry as needed", "no retry or inline review"),
+        ("Do not retry", "Retry as needed", "no retry or inline review"),
         ("usable findings", "unusable notes", "verbatim findings relay"),
         ("verbatim", "summarized", "verbatim findings relay"),
         ("accepted findings only", "all findings", "accepted findings rewrite"),
-        ("never add change-log framing", "add change-log framing", "no change-log framing"),
+        ("Never add change-log framing", "Add change-log framing", "no change-log framing"),
         ("none are accepted", "all are accepted", "zero accepted findings"),
-        ("do not create a findings artifact", "create a findings artifact", "no findings artifact"),
-        ("after the offer and any fold-in", "before the offer and fold-in", "sync after fold-in"),
+        ("Do not create a findings artifact", "Create a findings artifact", "no findings artifact"),
+        ("after validation and any fold-in", "before validation and fold-in", "sync after fold-in"),
         ("phase-scoped discovery-context", "phase-scoped notes", "discovery synchronization once"),
         ("roadmap synchronization", "roadmap update", "roadmap synchronization once"),
         ("eval: phase-affirmed", "eval: phase-draft", "phase-affirmed commit"),
@@ -270,6 +274,28 @@ def test_workflow_mutations_are_killed(
     text = _read(REFINER_PATH)
     assert needle in text, f"mutation target missing for {obligation}"
     assert obligation in _workflow_errors(text.replace(needle, replacement, 1))
+
+
+def test_adversarial_validator_is_a_hidden_leaf_with_a_bounded_return() -> None:
+    validator = _source_agents()["adversarial-validator"]
+    assert validator.name == VALIDATOR_NAME
+    assert not validator.user_invocable
+    assert not validator.subagents
+    assert validator.tools == ["read", "search"]
+    assert "one to three reasons" in validator.body
+    instruction_fm, _ = propagator._parse_frontmatter(_read(READ_ONLY_INSTRUCTION_PATH))
+    assert "**/adversarial-validator.agent.md" in str(instruction_fm["applyTo"])
+
+
+def test_planner_always_runs_the_adversarial_validator_after_writing() -> None:
+    planner = _source_agents()["01-project-planner"]
+    assert VALIDATOR_NAME in planner.subagents
+    body = _normalized(planner.body)
+    write_position = body.find("Write exactly one phase summary")
+    validate_position = body.find("Validate the written documents")
+    commit_position = body.find("eval: plan-affirmed")
+    assert 0 <= write_position < validate_position < commit_position
+    assert "every time the user approves a write, without asking the user" in body
 
 
 def test_workflow_scope_non_vacuity_is_enforced() -> None:

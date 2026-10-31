@@ -12,7 +12,7 @@ Quick-reference for AI agents working in this repository.
 
 ## Current Counts
 
-- 59 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 43 hidden subagents (`user-invocable: false`) and 16 user-invocable.
+- 60 source agent definitions in `source_of_truth/agents/` (all `*.agent.md`), of which 44 hidden subagents (`user-invocable: false`) and 16 user-invocable.
 - 51 skills in `source_of_truth/skills/`.
 - 25 instructions in `source_of_truth/instructions/`.
 - 1 installable hook in `source_of_truth/hooks/`, mirrored verbatim to `ports/github/hooks/` and `.github/hooks/`. `creative-canon-guard.py` is installed by the writer into their own vault's `.claude/`; see `docs/CREATIVE_TOOLKIT.md`.
@@ -29,7 +29,7 @@ README.md USAGE.md CONTRIBUTING.md         # overview, agent catalog, contributo
 INSTALLATION.md                            # deploy pointer
 source_of_truth/                           # THE authoring surface
   agents/
-    *.agent.md                             # 59 agent definitions
+    *.agent.md                             # 60 agent definitions
   skills/                                  # 51 skill dirs, each rooted at SKILL.md
   instructions/                            # 25 applyTo-glob instruction files
   baseline/baseline-instructions.md        # sentinel-sectioned baseline template, rendered at deploy time
@@ -143,7 +143,7 @@ benchmarks/ packages/ tests/
   `ports/claude/agents` for that reason.
 - Claude emission rule: hidden -> subagent file only; user-invocable -> slash command,
   plus a subagent file only if an orchestrator names it as a child (dual-use). So
-  `ports/claude/agents` = 43 hidden subagents plus two dual-use agents = 45. The
+  `ports/claude/agents` = 44 hidden subagents plus two dual-use agents = 46. The
   16 user-invocable agents plus one alias produce 17 commands.
 - Codex and OpenCode emit every source agent; only Claude and Cursor split commands out.
 - Cursor subagent names are the Claude identifier with a `z-` prefix always applied, because
