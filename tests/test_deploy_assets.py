@@ -356,6 +356,8 @@ class EnsureCodeReviewGraphTests(unittest.TestCase):
                     ["deploy_agents.py", "--harness", "claude,cursor", "--no-save"],
                 ), \
                 mock.patch.object(mod, "ensure_external_tools", return_value={}) as tools, \
+                mock.patch.object(mod, "propagate_ports", return_value={}), \
+                mock.patch.object(mod, "discard_ports"), \
                 mock.patch.object(mod, "deploy", return_value={}):
             self.assertEqual(mod.main(), 0)
         tools.assert_called_once_with(["claude", "cursor"])
@@ -368,6 +370,8 @@ class EnsureCodeReviewGraphTests(unittest.TestCase):
                     mod, "ensure_external_tools",
                     return_value={"code_review_graph": {"status": "install-failed"}},
                 ), \
+                mock.patch.object(mod, "propagate_ports", return_value={}), \
+                mock.patch.object(mod, "discard_ports"), \
                 mock.patch.object(mod, "deploy", return_value={}) as deployed:
             self.assertEqual(mod.main(), 0)
         deployed.assert_called_once()
@@ -380,6 +384,8 @@ class EnsureCodeReviewGraphTests(unittest.TestCase):
                     ["deploy_agents.py", "--harness", "claude", "--no-save", "--skip-tools"],
                 ), \
                 mock.patch.object(mod, "ensure_external_tools") as tools, \
+                mock.patch.object(mod, "propagate_ports", return_value={}), \
+                mock.patch.object(mod, "discard_ports"), \
                 mock.patch.object(mod, "deploy", return_value={}):
             self.assertEqual(mod.main(), 0)
         tools.assert_not_called()
