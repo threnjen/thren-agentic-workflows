@@ -21,14 +21,14 @@ def _gate_remediation_wiring_errors(loop: str, implementer: str) -> set[str]:
     errors: set[str] = set()
     if (
         "**Phase**" not in loop
-        or "once in `gate-remediation` mode" not in loop
+        or "once per iteration in `gate-remediation` mode" not in loop
         or "A failed rerun blocks the whole phase" not in loop
     ):
         errors.add("phase loop invokes bounded remediation")
     if (
         "### Gate Remediation Mode" not in implementer
         or "Reproduce every named failure" not in implementer
-        or "run the supplied full gate once" not in implementer
+        or "The orchestrator runs the gate" not in implementer
         or "Return after this mode" not in implementer
     ):
         errors.add("implementer handles gate remediation")
@@ -141,12 +141,12 @@ def test_phase_builds_and_reviews_every_feature_in_one_spawn_each() -> None:
 def test_phase_gate_is_bounded_and_blocks_the_phase() -> None:
     text = _read(PHASE_PATH)
     gate = _section(text, "### C. Integration Test Gate", "## Step 4:")
-    assert "once in `gate-remediation` mode" in gate
+    assert "once per iteration in `gate-remediation` mode" in gate
     assert "exact failing test names" in gate
     assert "Do not spawn the reviewer again" in gate
     assert "run the named failures first" in gate
     assert "If they pass, rerun the full integration command" in gate
-    assert "Never open a second gate-remediation pass" in gate
+    assert "Never exceed the gate's iteration limit" in gate
     assert "If any rerun fails" in gate
     assert "Leave every feature incomplete" in gate
     assert "Run the full authoritative suite" in gate
@@ -162,7 +162,7 @@ def test_gate_remediation_wiring_mutations_are_killed() -> None:
     implementer = _read(IMPLEMENTER_PATH)
 
     mutated_loop = loop.replace(
-        "once in `gate-remediation` mode",
+        "once per iteration in `gate-remediation` mode",
         "without a remediation mode",
         1,
     )

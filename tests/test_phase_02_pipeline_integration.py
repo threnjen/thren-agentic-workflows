@@ -353,8 +353,8 @@ def test_integration_guards_fail_on_the_exact_contract_removal() -> None:
             (
                 "Spawn **Feature - Implementer** once",
                 "one review-and-repair pass",
-                "once in `gate-remediation` mode",
-                "Never open a second gate-remediation pass",
+                "once per iteration in `gate-remediation` mode",
+                "Never exceed the gate's iteration limit",
                 "If any rerun fails",
                 "Leave every feature incomplete",
                 "There is no exempt test",

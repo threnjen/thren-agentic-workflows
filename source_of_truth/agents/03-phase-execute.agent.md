@@ -40,11 +40,11 @@ Do not ask any later scope, configuration, or routine workflow question. The sha
 
 ## Step 1: Prove the Starting State
 
-Run the full authoritative test suite yourself before you plan or spawn a child agent. Run it unfiltered.
+Load the `test-gate` skill. Prove the full authoritative test suite yourself before you plan or spawn a child agent. Run `ensure` unfiltered. It reuses the last run when the code has not changed.
 
-- On green, record the command, results artifact, and counts. Continue execution.
+- On green, record the command, results artifact, and counts. Name any reused run. Continue execution.
 - If a test fails, stop immediately. Name every failure.
-- If the suite cannot run, stop immediately. Name the missing prerequisite.
+- If the suite cannot run, stop immediately. Name the missing prerequisite or the gate's refusal.
 
 Do not spawn a single agent before this gate passes. There is no baseline exemption list.
 
@@ -94,18 +94,24 @@ Do not treat a reviewer report as test evidence.
 
 ### C. Integration Test Gate
 
-Run the full authoritative suite and the manifest verification assets yourself after the reviewer returns.
+Emit the review checkpoint from `implementation-pipeline-loop` after the reviewer returns. The gate refuses uncommitted code.
+
+Run the full authoritative suite and the manifest verification assets yourself through the `test-gate` skill.
 
 Record `executed-green`, `executed-failing`, or `not-executed (<reason>)` with the exact command, results artifact, and counts.
 
-On the first `executed-failing` result, spawn **Feature - Implementer** once in `gate-remediation` mode.
-Give it the manifest, every plan and delta, the implementation record, review record, exact failing test names, command, artifact, and counts.
-The implementer may repair only root causes that explain those failures. Do not spawn the reviewer again.
+On an `executed-failing` result, follow Triage failures in the `test-gate` skill. Classify every failure yourself before any repair.
 
-After the implementer returns, run the named failures first. If they pass, rerun the full integration command.
-Never open a second gate-remediation pass.
+For each root cause, spawn **Feature - Implementer** once per iteration in `gate-remediation` mode.
+Give it the manifest, every plan and delta, the implementation record, review record, the classification, exact failing test names, command, artifact, and counts.
+The implementer may repair only the root cause that explains those failures. Do not spawn the reviewer again.
 
-If any rerun fails, record `executed-failing` as a production blocker. Leave every feature incomplete. Set `all-approved: no`.
+After the implementer returns, commit its files, then run the named failures first. Record the attempt with `triage iterate`. Follow its decision.
+Never exceed the gate's iteration limit. A stopped root cause gets no further repair.
+
+If they pass, rerun the full integration command, then run `triage close`. Report `triage report` and every `REPORT TO USER` line to the user.
+
+If any rerun fails, or a root cause stopped, record `executed-failing` as a production blocker. Leave every feature incomplete. Set `all-approved: no`.
 
 A `not-executed` result is a verification blocker. Record `implementation-complete, verification-pending`. Set `all-approved: no`.
 
@@ -116,8 +122,6 @@ Exhaust the Unity Execution Ladder before recording `not-executed`. Use `not-exe
 Apply the direct-supervisor-attestation exception only when its instruction permits it. Record `supervisor-attested (no artifact exported)`. Never promote a subagent report.
 
 There is no exempt test. Do not delete a test. Do not skip a test. Do not weaken a test to reach green.
-
-Emit the review checkpoint from `implementation-pipeline-loop` after the gate closes. Include any gate-remediation changes.
 
 On green, mark every todo entry complete. The phase implementation and review records hold each feature's outcome.
 

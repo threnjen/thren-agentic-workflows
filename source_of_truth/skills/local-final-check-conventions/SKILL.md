@@ -13,7 +13,7 @@ Use these rules for a local review of one confirmed `base..HEAD` range. Use
 
 The orchestrator supplies the fixed base and head, a clean baseline worktree,
 `changed-files.txt`, `range.diff`, and one output path. Never derive another
-base. Never create a worktree. Never modify either tree.
+base. Never modify either tree.
 
 Map every finding to lines the range added or to behavior those lines changed.
 Do not attribute pre-existing defects in a touched file to the range. Use the

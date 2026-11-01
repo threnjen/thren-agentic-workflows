@@ -72,10 +72,10 @@ def _phase_execute_errors(section: str) -> set[str]:
     ):
         errors.add("supervisor attestation")
     if (
-        "once in `gate-remediation` mode" not in normalized
+        "once per iteration in `gate-remediation` mode" not in normalized
         or "exact failing test names" not in normalized
         or "Do not spawn the reviewer again" not in normalized
-        or "Never open a second gate-remediation pass" not in normalized
+        or "Never exceed the gate's iteration limit" not in normalized
     ):
         errors.add("bounded gate remediation")
     if (
@@ -195,8 +195,8 @@ def test_consumers_do_not_duplicate_canonical_mechanics() -> None:
             "decline or unattended fallback",
         ),
         (
-            "Never open a second gate-remediation pass",
-            "Open another gate-remediation pass",
+            "Never exceed the gate's iteration limit",
+            "Exceed the iteration limit",
             "bounded gate remediation",
         ),
         (

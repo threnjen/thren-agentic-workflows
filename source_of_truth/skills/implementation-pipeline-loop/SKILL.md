@@ -41,7 +41,7 @@ Read the test-execution statuses reported by the Implementer and Reviewer. The `
 
 - **`executed-green`** → Proceed to Step C.
 - **`executed-failing`** → Apply the matching pipeline branch.
-  - **Phase** — Spawn the Implementer once in `gate-remediation` mode with the exact failure evidence. Never spawn the Reviewer again. Rerun the named failures. If they pass, rerun the full required gate. A failed rerun blocks the whole phase.
+  - **Phase** — Follow Triage failures in the `test-gate` skill. Spawn the Implementer once per iteration in `gate-remediation` mode with the exact failure evidence. Never spawn the Reviewer again. Rerun the named failures. If they pass, rerun the full required gate. A failed rerun blocks the whole phase.
   - **Audit or Test** — Spawn the Implementer and Reviewer once again with the failing test names. Record a second failure as blocking.
 - **`not-executed`** → Do not treat this as green. Record `test-execution: not-executed (<reason>)` for the task. Report it to the orchestrator as a blocking status. The orchestrator cannot report a task with unrun tests as complete. The direct-supervisor-attestation exception in the Test Execution Evidence instruction applies only when the user-invocable root orchestrator itself receives an explicit supervisor assertion. Subagents still report `not-executed` without an artifact.
 
@@ -59,7 +59,7 @@ apply once per run.
 | Checkpoint | When | Stages |
 |---|---|---|
 | Implement | After Step A returns, before review starts | The unit's source and test changes |
-| Review | After the review and any fix rounds close | The source and test files the fixes touched |
+| Review | After the review and any fix rounds close, and before a phase gate runs | The source and test files the fixes touched |
 | QA | Once, after the consolidated QA stage runs | The QA documents that stage wrote outside `dev/` |
 | Final review | Once, after the final review stage returns | The final review artifacts written outside `dev/` |
 

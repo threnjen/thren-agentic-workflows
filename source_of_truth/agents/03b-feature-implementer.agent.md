@@ -130,10 +130,10 @@ Run this mode only when the orchestrator supplied exact failure evidence after t
 1. Reproduce every named failure.
 2. Trace each root cause through the feature changes and every affected caller.
 3. Repair only root causes that explain the named failures.
-4. Run the named failures once after repair. If they pass, run the supplied full gate once.
+4. Run the named failures once after repair. The orchestrator runs the gate.
 5. Update the cumulative file tables and final test evidence in the implementation record.
 
-Do not add acceptance criteria or perform unrelated cleanup. Never delete, skip, or weaken a test.
+Do not add acceptance criteria or perform unrelated cleanup. Never delete, skip, or weaken a test. When the only repair would do so, stop and report that test.
 Return after this mode. Do not enter sections A through F.
 
 ### A. Traceability-First Mapping

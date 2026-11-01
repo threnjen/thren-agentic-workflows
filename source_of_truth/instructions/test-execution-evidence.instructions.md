@@ -23,6 +23,10 @@ A claim of `executed-green` or `executed-failing` must include all three items:
 
 If any item is missing, the status is `not-executed`. Do not treat an inferred or expected status as evidence, even when another agent reports it.
 
+### Reused evidence
+
+A `test-gate` result marked `REUSED` is execution evidence for the current code. Report its status, command, artifact, and counts, and name the reused run.
+
 ### Supervisor attestation
 
 Only a user-invocable root orchestrator can use this exception. Accept an explicit assertion from your direct supervisor that a named authoritative suite finished with zero failures when that supervisor exported no XML artifact. This exception never applies to a subagent or to an indirect report.
