@@ -269,9 +269,9 @@ Not directly invocable in any harness. They carry `user-invocable: false` and ru
 
 **Feature - Plan Author** *(subagent of Phase - Execute)* — Runs once per planning pass. It writes a lightweight plan and a delta for every feature, plus the execution manifest.
 
-**02a Phase - Final-Check Reviewer** *(subagent of Phase - Refiner)* — A stateless cold-start read of a completed Phase document. It has no memory of the refinement conversation, which is the point: it reports only what the document itself says, so anything the refiner and the user settled verbally but never wrote down shows up as a gap. It runs after every phase document write.
+**02a Phase - Final-Check Reviewer** *(subagent of Phase - Refiner)* — A stateless cold-start read of a completed Phase document. It has no memory of the refinement conversation, which is the point: it reports only what the document itself says, so anything the refiner and the user settled verbally but never wrote down shows up as a gap. It runs after every phase document write. Phase - Refiner applies the findings it judges justified and brings you only those that need your decision.
 
-**Plan - Adversarial Validator** *(subagent of Project - Planner and Phase - Refiner)* — A stateless cold-start attack on a written plan. It runs after every planner or refiner write and returns up to three reasons why the approach is the wrong call, each with evidence and a better route. You choose which reasons to apply.
+**Plan - Adversarial Validator** *(subagent of Project - Planner and Phase - Refiner)* — A stateless cold-start attack on a written plan. It runs after every planner or refiner write and returns up to three reasons why the approach is the wrong call, each with evidence and a better route. Project - Planner asks you which reasons to apply. Phase - Refiner applies the reasons it judges justified and brings you only those that need your decision.
 
 **03e Diff Security Scan** *(subagent of 04 Phase - Final Checks)* — Performs a diff-scoped security review of changed files plus immediate security context. It writes a compact report and does not replace the full-codebase Auditor - Security scan.
 

@@ -172,29 +172,32 @@ def _workflow_errors(text: str) -> set[str]:
     failure_tokens = set(re.findall(r"[a-z]+(?:-[a-z]+)?", normalized_offer.lower()))
     if not {"error", "timeout", "unusable"}.issubset(failure_tokens):
         errors.add("reviewer failure states")
-    if "one line" not in normalized_offer.lower():
+    if "failure in one line" not in normalized_offer.lower():
         errors.add("one-line failure report")
     if "do not retry" not in normalized_offer.lower() or "do not perform the review inline" not in normalized_offer.lower():
         errors.add("no retry or inline review")
     if "unchanged document" not in normalized_offer.lower():
         errors.add("failure unchanged continuation")
 
-    required_findings_terms = (
-        "usable findings",
-        "verbatim",
-        "which findings to apply",
-        "without filtering",
-        "without editorializing",
-    )
-    if not all(term in normalized_offer.lower() for term in required_findings_terms):
-        errors.add("verbatim findings relay")
-    if "accepted findings only" not in normalized_offer.lower():
+    if "usable findings, judge each finding" not in normalized_offer.lower():
+        errors.add("orchestrator judges findings")
+    if "justified and has one reasonable fix" not in normalized_offer.lower() or "apply it without asking" not in normalized_offer.lower():
+        errors.add("justified findings auto-applied")
+    if "every decision the user settled" not in normalized_offer.lower():
+        errors.add("settled decisions protected")
+    if "reverses a settled decision, changes scope, or has more than one workable form" not in normalized_offer.lower():
+        errors.add("decide outcome triggers")
+    if "relay each decide finding verbatim" not in normalized_offer.lower() or "as a decision under question triage" not in normalized_offer.lower():
+        errors.add("decide findings escalated")
+    if "each applied finding one line" not in normalized_offer.lower() or "each rejected finding one line" not in normalized_offer.lower():
+        errors.add("applied and rejected findings reported")
+    if "applied and user-accepted findings only" not in normalized_offer.lower():
         errors.add("accepted findings rewrite")
     if "clean current source of truth" not in normalized_offer.lower():
         errors.add("clean rewrite")
     if "never add change-log framing" not in normalized_offer.lower():
         errors.add("no change-log framing")
-    if "none are accepted" not in normalized_offer.lower() or "do not rewrite" not in normalized_offer.lower():
+    if "no finding is applied or accepted" not in normalized_offer.lower() or "do not rewrite" not in normalized_offer.lower():
         errors.add("zero accepted findings")
     if "do not create a findings artifact" not in normalized_offer.lower():
         errors.add("no findings artifact")
@@ -256,11 +259,16 @@ def test_phase_refiner_workflow_contract() -> None:
         ("error, timeout, or unusable output", "successful output", "reviewer failure states"),
         ("failure in one line", "failure in a detailed report", "one-line failure report"),
         ("Do not retry", "Retry as needed", "no retry or inline review"),
-        ("usable findings", "unusable notes", "verbatim findings relay"),
-        ("verbatim", "summarized", "verbatim findings relay"),
-        ("accepted findings only", "all findings", "accepted findings rewrite"),
+        ("usable findings, judge each finding", "usable findings, relay each finding", "orchestrator judges findings"),
+        ("Apply it without asking", "Ask the user whether to apply it", "justified findings auto-applied"),
+        ("every decision the user settled", "the current wording", "settled decisions protected"),
+        ("reverses a settled decision, changes scope, or has more than one workable form", "is large", "decide outcome triggers"),
+        ("Relay each Decide finding verbatim", "Summarize each Decide finding", "decide findings escalated"),
+        ("each applied finding one line", "each applied finding no report", "applied and rejected findings reported"),
+        ("each rejected finding one line", "each rejected finding no report", "applied and rejected findings reported"),
+        ("applied and user-accepted findings only", "all findings", "accepted findings rewrite"),
         ("Never add change-log framing", "Add change-log framing", "no change-log framing"),
-        ("none are accepted", "all are accepted", "zero accepted findings"),
+        ("no finding is applied or accepted", "every finding is applied or accepted", "zero accepted findings"),
         ("Do not create a findings artifact", "Create a findings artifact", "no findings artifact"),
         ("after validation and any fold-in", "before validation and fold-in", "sync after fold-in"),
         ("phase-scoped discovery-context", "phase-scoped notes", "discovery synchronization once"),

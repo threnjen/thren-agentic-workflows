@@ -186,7 +186,7 @@ After you work through the identified gaps and additional concerns, present the 
 > - **Dependencies**: [What was surfaced or resolved]
 > - **Execution guidance**: [How the Phase - Execute notes were improved]
 >
-> **Let me know if there's anything you'd like to revisit, adjust, or dig into further. When you say the phase is ready, I'll write the document. I'll then run the cold-start reviewer and the adversarial validator on it, and bring you their findings.**
+> **Let me know if there's anything you'd like to revisit, adjust, or dig into further. When you say the phase is ready, I'll write the document. I'll then run the cold-start reviewer and the adversarial validator on it, apply the findings I judge justified, and bring you anything that needs your decision.**
 
 Write the file when the user signals that iteration is complete.
 
@@ -196,7 +196,7 @@ Write the file when the user signals that iteration is complete.
 
 - **If refining an existing document**: Write the phase document in place at its existing path as a clean, current source of truth. Do not preserve old wording alongside new wording. Do not add inline change notes. Do not leave traces of overridden decisions.
 - **If creating a new document**: Save the phase document to the determined path, such as `docs/phases/PHASE_0N/PHASE_0N_SUMMARY.md`.
-- Do not synchronize discovery context or the roadmap yet. Perform both actions once in 6C after validation and any accepted fold-in.
+- Do not synchronize discovery context or the roadmap yet. Perform both actions once in 6C.
 
 #### 6B: Validate the Written Document (Entry A + Entry B)
 
@@ -211,7 +211,15 @@ The spawn prompts must contain no conversation content, session summary, settled
 
 If either agent returns an error, timeout, or unusable output, report that failure in one line. Do not retry. Do not perform the review inline. Continue with the other agent's response, or with the unchanged document when neither response is usable.
 
-For usable findings, relay each response verbatim, without filtering and without editorializing, under its agent's name. Ask the user which findings to apply. Rewrite the phase document in place for accepted findings only as a clean current source of truth. Never add change-log framing. If none are accepted, do not rewrite the document. Do not create a findings artifact.
+For usable findings, judge each finding against the phase document, the repository, and the refinement conversation. Give it exactly one outcome:
+
+- **Apply** — The finding is justified and has one reasonable fix. That fix keeps the phase scope and every decision the user settled. Apply it without asking.
+- **Decide** — You cannot tell whether the finding is justified. Or it is justified, and the fix reverses a settled decision, changes scope, or has more than one workable form.
+- **Reject** — The finding is wrong, or the document or repository already answers it. Do not apply it.
+
+Rewrite the phase document in place for applied and user-accepted findings only as a clean current source of truth. Never add change-log framing. If no finding is applied or accepted, do not rewrite the document. Do not create a findings artifact.
+
+Report the outcomes under each agent's name. Give each applied finding one line that names the change. Give each rejected finding one line with the reason. Pass on any statement that a reviewer omitted findings. Relay each Decide finding verbatim and present it as a decision under Question Triage.
 
 #### 6C: Synchronize the Completed Phase
 
