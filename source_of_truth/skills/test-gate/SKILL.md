@@ -32,6 +32,9 @@ Use `--force` only after an environment repair or when the user asks. Reuse comp
 {
   "ignore_paths": ["docs/"],
   "lock_paths": ["../project-agent-tests/Temp/UnityLockfile"],
+  "test_only_paths": ["Assets/Tests/"],
+  "full_rerun_paths": ["Assets/Tests/Editor/Shared/"],
+  "scoped_always": ["Project.Tests.Policy"],
   "scopes": {
     "full": {
       "command": "bash scripts/run-tests.sh --sha {sha} --results {results} --log {log}",
@@ -45,6 +48,9 @@ Use `--force` only after an environment repair or when the user asks. Reuse comp
 
 - `ignore_paths` lists paths that cannot change a test result. Omit a path when any test reads it.
 - `lock_paths` replaces the default check of `Temp/UnityLockfile` in the checkout. Name the project the suite actually opens.
+- `test_only_paths` lists paths that hold test code only. A repair confined to them may close a failed gate with a scoped rerun.
+- `full_rerun_paths` lists shared test code inside `test_only_paths` whose change still needs a full rerun, such as a shared harness.
+- `scoped_always` lists suites every scoped rerun must include, such as policy guards that scan test source.
 - `timeout_env` and `timeout_source` name a wrapper's own limit. The gate confirms that the wrapper reads the variable, then sets it.
 
 ## Triage failures
@@ -63,7 +69,10 @@ Use this mode after a failing integration gate.
    - `continue`: repair the same root cause again.
    - `resolved`: start the next root cause.
    - `stopped-no-progress`, `stopped-limit`, or `stopped-integrity`: stop work on this root cause and report it.
-6. Run the full `ensure`, then `triage close --run <run id>`. Report `triage report` to the user.
+6. Close the gate with the narrowest run the repairs allow:
+   - Every repair since the failing run touched only `test_only_paths` and none of `full_rerun_paths`: run `ensure --scope rerun --command "<command>"` once. The command runs every failing fixture, every test folder a repair touched, and every `scoped_always` suite. Then run `triage close --scoped --run <run id>`.
+   - Otherwise: run the full `ensure`, then `triage close --run <run id>`.
+   Report `triage report` to the user.
 
 The gate allows 3 iterations per root cause. An iteration without fewer failures stops early.
 

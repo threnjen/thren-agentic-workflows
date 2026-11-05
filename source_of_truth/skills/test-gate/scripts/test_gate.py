@@ -85,13 +85,17 @@ def _now() -> str:
 # --- Code state ---
 
 
-def _is_ignored(path: str, patterns: list[str]) -> bool:
-    for pattern in (*ALWAYS_IGNORED, *patterns):
+def _matches(path: str, patterns: list[str]) -> bool:
+    for pattern in patterns:
         if pattern.endswith("/") and path.startswith(pattern):
             return True
         if fnmatch.fnmatch(path, pattern):
             return True
     return False
+
+
+def _is_ignored(path: str, patterns: list[str]) -> bool:
+    return _matches(path, [*ALWAYS_IGNORED, *patterns])
 
 
 def code_state(repo: Path, ignore: list[str]) -> dict[str, Any]:
@@ -705,11 +709,60 @@ def cmd_triage_iterate(args: argparse.Namespace, repo: Path, store: Path) -> int
     return EXIT_FAILING if outcome["decision"].startswith("stopped") else EXIT_GREEN
 
 
+def _scoped_close_problems(
+    repo: Path, config: dict[str, Any], ledger: dict[str, Any], baseline: dict[str, Any],
+    run: dict[str, Any], parsed: dict[str, Any],
+) -> list[str]:
+    """A scoped run closes a failed full run only when every repair touched test code alone."""
+    test_only = config.get("test_only_paths") or []
+    if not test_only:
+        return [f"no test_only_paths in {CONFIG_NAME}, so no repair qualifies for a scoped close"]
+    full_rerun = config.get("full_rerun_paths") or []
+    ignored = config.get("ignore_paths") or []
+    diff = _git(repo, "diff", "--name-status", "--no-renames", baseline["commit"], run["commit"])
+    changes = [line.split("\t", 1) for line in diff.splitlines() if line.strip()]
+    logger.info("scoped close: %d paths changed between %s and %s", len(changes), baseline["commit"], run["commit"])
+    problems = []
+    if not any(not _is_ignored(path, ignored) for _, path in changes):
+        problems.append("no repair landed since the failing run; a pass proves nothing")
+    for status, path in changes:
+        if _is_ignored(path, ignored):
+            continue
+        if not _matches(path, test_only):
+            problems.append(f"repair touched non-test path {path}; run the full gate")
+        elif _matches(path, full_rerun):
+            problems.append(f"repair touched shared test code {path}; run the full gate")
+        elif status == "D":
+            problems.append(f"repair deleted test file {path}; run the full gate")
+    problems += [f"scoped run did not run failing test {n}" for n in ledger["failures"] if n not in parsed["cases"]]
+    problems += [f"failing test now skipped: {n}" for n in ledger["failures"] if parsed["cases"].get(n) == "skipped"]
+    for suite in config.get("scoped_always") or []:
+        if not any(name.startswith(suite + ".") for name in parsed["cases"]):
+            problems.append(f"scoped run did not include required suite {suite}")
+    problems += [f"still failing: {n}" for n, r in parsed["cases"].items() if r == "failed"]
+    if parsed["suite_failed"]:
+        problems.append("scoped run root result is Failed")
+    return problems
+
+
 def cmd_triage_close(args: argparse.Namespace, repo: Path, store: Path) -> int:
     """Compare the closing full run with the baseline, since narrow reruns cannot see the suite."""
     ledger = _read_json(_ledger_path(store, args.baseline))
     run = _load_run(store, args.run)
     parsed = parse_results(Path(run["results_artifact"]))
+    if args.scoped:
+        if run["status"] not in (GREEN, FAILING) or parsed is None:
+            raise Refusal(f"run {args.run} did not execute")
+        baseline = _load_run(store, ledger["baseline_run"])
+        problems = _scoped_close_problems(repo, _load_config(repo), ledger, baseline, run, parsed)
+        for problem in problems:
+            print(f"REPORT TO USER: {problem}")
+        if not problems:
+            print(
+                f"closed: scoped run {args.run} is green over failing run {ledger['baseline_run']}, "
+                "and every repair touched test code only"
+            )
+        return EXIT_FAILING if problems else EXIT_GREEN
     if run["scope"] != ledger["baseline_scope"] or parsed is None:
         raise Refusal(f"run {args.run} is not an executed {ledger['baseline_scope']} run")
     base, counts = ledger["baseline_counts"], parsed["counts"]
@@ -780,6 +833,7 @@ def build_parser() -> argparse.ArgumentParser:
     iterate.set_defaults(handler=cmd_triage_iterate)
     close = steps.add_parser("close")
     close.add_argument("--run", required=True)
+    close.add_argument("--scoped", action="store_true", help="close with a scoped run after a test-only repair")
     close.set_defaults(handler=cmd_triage_close)
     report = steps.add_parser("report")
     report.set_defaults(handler=cmd_triage_report)

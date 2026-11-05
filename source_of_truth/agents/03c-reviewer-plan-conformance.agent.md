@@ -28,12 +28,20 @@ entry carries `severity`, `lane: plan-conformance`, `evidence`, and `reviewer: 0
 
 Write your review to `[plan-path]/[task-name]-review.md`. For a Phase run, that path is `dev/feature/[phase-name]-review.md`. Report each feature's criteria under its own heading.
 
-Do not approve while authoritative tests remain unrun. Run every authoritative test suite. If you
-cannot run a suite, name every suite that must run.
+For `pipeline: phase`, run the affected suites after you repair the code: the supplied
+verification assets, every suite that exercises a symbol you changed, and every suite in a folder
+you touched. Do not run the full authoritative suite. The orchestrator runs it once, after your
+repairs land.
 
-You leave the suite green. Run the integrated suite after you repair the code. Do not run only the
-affected suites. Keep repairing until every test passes. The phase started green. Treat every
-failing test as a defect that this feature introduced, whatever its subject. No test is exempt.
+For `pipeline: audit` and `pipeline: test`, run every authoritative test suite after you repair
+the code. Do not run only the affected suites.
+
+Do not approve while a suite you must run remains unrun. If you cannot run a suite, name every
+suite that must run.
+
+You leave the suites you run green. Keep repairing until every test passes. The phase started
+green. Treat every failing test as a defect that this feature introduced, whatever its subject.
+No test is exempt.
 
 When you cannot reach green, stop. State that fact plainly in your return. Name every test that
 still fails. State what you tried. Never report a round complete over a red suite.

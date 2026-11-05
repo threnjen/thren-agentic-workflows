@@ -41,7 +41,7 @@ Read the test-execution statuses reported by the Implementer and Reviewer. The `
 
 - **`executed-green`** → Proceed to Step C.
 - **`executed-failing`** → Apply the matching pipeline branch.
-  - **Phase** — Follow Triage failures in the `test-gate` skill. Spawn the Implementer once per iteration in `gate-remediation` mode with the exact failure evidence. Never spawn the Reviewer again. Rerun the named failures. If they pass, rerun the full required gate. A failed rerun blocks the whole phase.
+  - **Phase** — Follow Triage failures in the `test-gate` skill. Spawn the Implementer once per iteration in `gate-remediation` mode with the exact failure evidence. Never spawn the Reviewer again. Rerun the named failures. If they pass and every repair touched only test code, close the gate with one scoped rerun, per the `test-gate` skill. Otherwise rerun the full required gate. A failed rerun blocks the whole phase.
   - **Audit or Test** — Spawn the Implementer and Reviewer once again with the failing test names. Record a second failure as blocking.
 - **`not-executed`** → Do not treat this as green. Record `test-execution: not-executed (<reason>)` for the task. Report it to the orchestrator as a blocking status. The orchestrator cannot report a task with unrun tests as complete. The direct-supervisor-attestation exception in the Test Execution Evidence instruction applies only when the user-invocable root orchestrator itself receives an explicit supervisor assertion. Subagents still report `not-executed` without an artifact.
 

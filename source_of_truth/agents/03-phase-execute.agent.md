@@ -92,11 +92,15 @@ The reviewer checks every feature's acceptance criteria against the implementati
 
 Do not treat a reviewer report as test evidence.
 
+Neither the implementer nor the reviewer runs the full authoritative suite. Each runs the affected suites only. The full suite runs once, in Step C.
+
 ### C. Integration Test Gate
 
 Emit the review checkpoint from `implementation-pipeline-loop` after the reviewer returns. The gate refuses uncommitted code.
 
-Run the full authoritative suite and the manifest verification assets yourself through the `test-gate` skill.
+The order is fixed: implement, review, repair, squash, then one full gate. Never start a full run before every review repair is committed. When the repository lands a phase as one squashed commit, squash first, then run the gate on the squashed commit. The gate reuses a run by tree content, so a squash that keeps the tree reuses it.
+
+Run the full authoritative suite and the manifest verification assets yourself through the `test-gate` skill. Run it once.
 
 Record `executed-green`, `executed-failing`, or `not-executed (<reason>)` with the exact command, results artifact, and counts.
 
@@ -109,7 +113,12 @@ The implementer may repair only the root cause that explains those failures. Do 
 After the implementer returns, commit its files, then run the named failures first. Record the attempt with `triage iterate`. Follow its decision.
 Never exceed the gate's iteration limit. A stopped root cause gets no further repair.
 
-If they pass, rerun the full integration command, then run `triage close`. Report `triage report` and every `REPORT TO USER` line to the user.
+If they pass, the files the repairs touched decide what closes the gate:
+
+- Every repair touched only the repository's `test_only_paths` in `.test-gate.json`, and none of its `full_rerun_paths`: run one scoped rerun of every failing fixture, every test folder a repair touched, and every `scoped_always` suite. Then run `triage close --scoped --run <scoped run id>`. That scoped run, with the failed full run before it, is the gate.
+- Any repair touched anything else, or the repository declares no `test_only_paths`: rerun the full integration command, then run `triage close --run <full run id>`.
+
+Report `triage report` and every `REPORT TO USER` line to the user.
 
 If any rerun fails, or a root cause stopped, record `executed-failing` as a production blocker. Leave every feature incomplete. Set `all-approved: no`.
 
