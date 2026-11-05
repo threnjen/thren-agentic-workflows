@@ -80,7 +80,8 @@ def _phase_execute_errors(section: str) -> set[str]:
         errors.add("bounded gate remediation")
     if (
         "run the named failures first" not in lower
-        or "If they pass, rerun the full integration command" not in normalized
+        or "If they pass, the files the repairs touched decide what closes the gate" not in normalized
+        or "rerun the full integration command" not in normalized
         or "If any rerun fails" not in normalized
         or "Leave every feature incomplete" not in normalized
     ):

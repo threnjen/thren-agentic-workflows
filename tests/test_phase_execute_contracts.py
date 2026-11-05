@@ -145,7 +145,10 @@ def test_phase_gate_is_bounded_and_blocks_the_phase() -> None:
     assert "exact failing test names" in gate
     assert "Do not spawn the reviewer again" in gate
     assert "run the named failures first" in gate
-    assert "If they pass, rerun the full integration command" in gate
+    assert "If they pass, the files the repairs touched decide what closes the gate" in gate
+    assert "triage close --scoped --run <scoped run id>" in gate
+    assert "rerun the full integration command, then run `triage close --run <full run id>`" in gate
+    assert "Never start a full run before every review repair is committed" in gate
     assert "Never exceed the gate's iteration limit" in gate
     assert "If any rerun fails" in gate
     assert "Leave every feature incomplete" in gate

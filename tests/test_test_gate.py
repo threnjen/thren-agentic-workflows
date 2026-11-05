@@ -453,3 +453,108 @@ def test_junit_results_are_supported(repo: Path, env: dict[str, str]) -> None:
     assert done.returncode == 1 and "total=3 passed=1 failed=1 skipped=1" in done.stdout
     opened = json.loads(_gate(repo, env, "triage", "open").stdout)
     assert opened["failures"] == {"m.bad": "boom"}
+
+
+SCOPED_CONFIG = {
+    "test_only_paths": ["tests/"],
+    "full_rerun_paths": ["tests/shared/"],
+    "scoped_always": ["Policy"],
+}
+
+
+def _scoped_setup(repo: Path, env: dict[str, str], config: dict | None = SCOPED_CONFIG) -> None:
+    """Fail a full run with test A failing, over a repo that declares its test-only paths."""
+    (repo / "tests/shared").mkdir(parents=True)
+    (repo / "tests/a_test.txt").write_text("a\n")
+    (repo / "tests/shared/harness.txt").write_text("h\n")
+    if config is not None:
+        (repo / ".test-gate.json").write_text(json.dumps(config))
+    _commit(repo, "tests")
+    _start_triage(repo, env, A="Failed", B="Passed", **{"Policy.Guard": "Passed"})
+
+
+def _scoped_close(repo: Path, env: dict[str, str], change, **results: str):
+    """Land one repair, run a scoped rerun, and close the gate against it."""
+    change(repo)
+    _commit(repo, "repair")
+    Path(env["RESULT_XML"]).write_text(_xml(**results))
+    _ensure(repo, env, "--scope", "rerun")
+    return _gate(repo, env, "triage", "close", "--scoped", "--run", _runs(repo)[-1]["run_id"])
+
+
+def _edit_test(repo: Path) -> None:
+    (repo / "tests/a_test.txt").write_text("fixed\n")
+
+
+GREEN_SCOPED = {"A": "Passed", "Policy.Guard": "Passed"}
+
+
+def test_scoped_close_accepts_a_test_only_repair(repo: Path, env: dict[str, str]) -> None:
+    _scoped_setup(repo, env)
+    closed = _scoped_close(repo, env, _edit_test, **GREEN_SCOPED)
+    assert closed.returncode == 0, closed.stdout
+    assert "every repair touched test code only" in closed.stdout
+
+
+@pytest.mark.parametrize(
+    ("change", "problem"),
+    [
+        (lambda r: (r / "code.txt").write_text("prod fix\n"), "repair touched non-test path code.txt"),
+        (lambda r: (r / "tests/shared/harness.txt").write_text("x\n"), "shared test code tests/shared/harness.txt"),
+        (lambda r: (r / "tests/a_test.txt").unlink(), "repair deleted test file tests/a_test.txt"),
+    ],
+)
+def test_scoped_close_refuses_a_repair_outside_test_only_code(
+    repo: Path, env: dict[str, str], change, problem: str
+) -> None:
+    _scoped_setup(repo, env)
+    closed = _scoped_close(repo, env, change, **GREEN_SCOPED)
+    assert closed.returncode == 1 and problem in closed.stdout
+
+
+def test_scoped_close_refuses_a_run_missing_a_failing_test(repo: Path, env: dict[str, str]) -> None:
+    _scoped_setup(repo, env)
+    closed = _scoped_close(repo, env, _edit_test, **{"Policy.Guard": "Passed", "B": "Passed"})
+    assert closed.returncode == 1 and "did not run failing test A" in closed.stdout
+
+
+def test_scoped_close_refuses_a_skipped_failing_test(repo: Path, env: dict[str, str]) -> None:
+    _scoped_setup(repo, env)
+    closed = _scoped_close(repo, env, _edit_test, A="Skipped", **{"Policy.Guard": "Passed"})
+    assert closed.returncode == 1 and "failing test now skipped: A" in closed.stdout
+
+
+def test_scoped_close_refuses_a_run_missing_a_required_suite(repo: Path, env: dict[str, str]) -> None:
+    _scoped_setup(repo, env)
+    closed = _scoped_close(repo, env, _edit_test, A="Passed")
+    assert closed.returncode == 1 and "did not include required suite Policy" in closed.stdout
+
+
+def test_scoped_close_refuses_a_still_failing_run(repo: Path, env: dict[str, str]) -> None:
+    _scoped_setup(repo, env)
+    closed = _scoped_close(repo, env, _edit_test, A="Failed", **{"Policy.Guard": "Passed"})
+    assert closed.returncode == 1 and "still failing: A" in closed.stdout
+
+
+def test_scoped_close_refuses_when_no_repair_landed(repo: Path, env: dict[str, str]) -> None:
+    _scoped_setup(repo, env)
+    Path(env["RESULT_XML"]).write_text(_xml(**GREEN_SCOPED))
+    _ensure(repo, env, "--scope", "rerun")
+    closed = _gate(repo, env, "triage", "close", "--scoped", "--run", _runs(repo)[-1]["run_id"])
+    assert closed.returncode == 1 and "no repair landed" in closed.stdout
+
+
+def test_scoped_close_is_refused_without_test_only_paths(repo: Path, env: dict[str, str]) -> None:
+    _scoped_setup(repo, env, config=None)
+    closed = _scoped_close(repo, env, _edit_test, **GREEN_SCOPED)
+    assert closed.returncode == 1 and "no test_only_paths" in closed.stdout
+
+
+def test_unscoped_close_still_refuses_a_scoped_run(repo: Path, env: dict[str, str]) -> None:
+    _scoped_setup(repo, env)
+    _edit_test(repo)
+    _commit(repo, "repair")
+    Path(env["RESULT_XML"]).write_text(_xml(**GREEN_SCOPED))
+    _ensure(repo, env, "--scope", "rerun")
+    closed = _gate(repo, env, "triage", "close", "--run", _runs(repo)[-1]["run_id"])
+    assert closed.returncode == 2 and "is not an executed full run" in closed.stdout
